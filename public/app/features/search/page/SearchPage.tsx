@@ -1,12 +1,18 @@
-import { DataFrameView, LoadingState, NavModelItem } from '@grafana/data';
-import { Input } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
-import Page from 'app/core/components/Page/Page';
+import { DataFrameView, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Input, useStyles2 } from '@grafana/ui';
 import { useAsync } from 'react-use';
-import { buildStatsTable, filterDataFrame, getDashboardData } from './data';
-import { config, PanelRenderer } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { css } from '@emotion/css';
+
+import Page from 'app/core/components/Page/Page';
+import { buildStatsTable, filterDataFrame, getDashboardData } from './data';
 import { DashboardResult } from './types';
+import { SearchPageDashboards } from './SearchPageDashboards';
+import { SearchPagePanels } from './SearchPagePanels';
+import { SearchPageStats } from './SearchPageStats';
+import { SearchPageDashboardList } from './SearchPageDashboardList';
 
 export default function SearchPage() {
   const node: NavModelItem = {
@@ -15,6 +21,8 @@ export default function SearchPage() {
     icon: 'dashboard',
     url: 'search',
   };
+
+  const styles = useStyles2(getStyles);
 
   const data = useAsync(getDashboardData, []);
   const [query, setQuery] = useState('');
@@ -33,7 +41,7 @@ export default function SearchPage() {
   }, [query, data]);
 
   if (!config.featureToggles.panelTitleSearch) {
-    return <div>Unsupported</div>;
+    return <div className={styles.unsupported}>Unsupported</div>;
   }
 
   return (
@@ -51,80 +59,22 @@ export default function SearchPage() {
                 const dashboards = new DataFrameView<DashboardResult>(filtered.dashboards);
                 return (
                   <div>
-                    <div style={{ maxHeight: '300px', overflow: 'scroll' }}>
-                      {dashboards.map((dash) => (
-                        <div key={dash.UID}>
-                          <a href={dash.URL}>{dash.Name}</a>
-                        </div>
-                      ))}
-                    </div>
-
-                    <hr />
-                    <hr />
-
-                    {filtered.dashboards.length > 0 && (
-                      <>
-                        <h1>Dashboards ({filtered.dashboards.length})</h1>
-                        <PanelRenderer
-                          pluginId="table"
-                          title="Dashboards"
-                          data={{ series: [filtered.dashboards], state: LoadingState.Done } as any}
-                          options={{}}
-                          width={width - 2} // ?????? otherwise it keeps growing!!!
-                          height={300}
-                          fieldConfig={{ defaults: {}, overrides: [] }}
-                          timeZone="browser"
-                        />
-                        <br />
-                      </>
-                    )}
-
-                    {filtered.panels.length > 0 && (
-                      <>
-                        <h1>Panels ({filtered.panels.length})</h1>
-                        <PanelRenderer
-                          pluginId="table"
-                          title="Panels"
-                          data={{ series: [filtered.panels], state: LoadingState.Done } as any}
-                          options={{}}
-                          width={width - 2} // ?????? otherwise it keeps growing!!!
-                          height={300}
-                          fieldConfig={{ defaults: {}, overrides: [] }}
-                          timeZone="browser"
-                        />
-                      </>
-                    )}
+                    <SearchPageDashboardList dashboards={dashboards} />
 
                     <br />
-                    <h1>Stats</h1>
-                    <table style={{ width: '100%' }}>
-                      <tr>
-                        <td>
-                          <PanelRenderer
-                            pluginId="table"
-                            title="Panels"
-                            data={{ series: [filtered.panelTypes], state: LoadingState.Done } as any}
-                            options={{}}
-                            width={width / 2 - 50} // ?????? otherwise it keeps growing!!!
-                            height={200}
-                            fieldConfig={{ defaults: {}, overrides: [] }}
-                            timeZone="browser"
-                          />
-                        </td>
-                        <td>
-                          <PanelRenderer
-                            pluginId="table"
-                            title="Panels"
-                            data={{ series: [filtered.schemaVersions], state: LoadingState.Done } as any}
-                            options={{}}
-                            width={width / 2 - 50} // ?????? otherwise it keeps growing!!!
-                            height={200}
-                            fieldConfig={{ defaults: {}, overrides: [] }}
-                            timeZone="browser"
-                          />
-                        </td>
-                      </tr>
-                    </table>
+
+                    {filtered.dashboards.length > 0 && (
+                      <SearchPageDashboards dashboards={filtered.dashboards} width={width} />
+                    )}
+
+                    {filtered.panels.length > 0 && <SearchPagePanels panels={filtered.panels} width={width} />}
+
+                    <br />
+                    <SearchPageStats
+                      panelTypes={filtered.panelTypes}
+                      schemaVersions={filtered.schemaVersions}
+                      width={width}
+                    />
                   </div>
                 );
               }}
@@ -135,3 +85,14 @@ export default function SearchPage() {
     </Page>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  unsupported: css`
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 18px;
+  `,
+});
