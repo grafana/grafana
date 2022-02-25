@@ -24,6 +24,7 @@ export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction
 
 export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, Action>;
 
+// Typed useDispatch & useSelector hooks
 export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
 export const useDispatch = () => useDispatchUntyped<AppDispatch>();
 export const useSelector: TypedUseSelectorHook<StoreState> = useSelectorUntyped;

@@ -30,6 +30,7 @@ import (
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -135,6 +136,7 @@ type HTTPServer struct {
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
 	DatasourcePermissionsService DatasourcePermissionsService
+	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
 	DashboardsnapshotsService    *dashboardsnapshots.Service
 	preferencesService           prefs.Service
@@ -168,7 +170,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service, preferencesService prefs.Service,
+	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, preferencesService prefs.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -233,6 +235,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
+		commentsService:              commentsService,
 		teamPermissionsService:       permissionsServices.GetTeamService(),
 		AlertNotificationService:     alertNotificationService,
 		DashboardsnapshotsService:    dashboardsnapshotsService,

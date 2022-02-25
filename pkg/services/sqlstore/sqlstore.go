@@ -129,7 +129,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.addPlaylistQueryAndCommandHandlers()
 	ss.addLoginAttemptQueryAndCommandHandlers()
 	ss.addTeamQueryAndCommandHandlers()
-	ss.addDashboardProvisioningQueryAndCommandHandlers()
 	ss.addOrgQueryAndCommandHandlers()
 
 	bus.AddHandler("sql", ss.GetDBHealthQuery)
@@ -464,6 +463,7 @@ type InitTestDBOpt struct {
 
 var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
+	featuremgmt.FlagDashboardComments,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
