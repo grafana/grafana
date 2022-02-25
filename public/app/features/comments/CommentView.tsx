@@ -28,8 +28,9 @@ export const CommentView = ({ comments, packetCounter, addComment }: Props) => {
   }, [packetCounter]);
 
   const onUpdateComment = (event: FormEvent<HTMLTextAreaElement>) => {
-    const element = event.target as HTMLInputElement;
-    setComment(element.value);
+    if (event.target instanceof HTMLInputElement) {
+      setComment(event.target.value);
+    }
   };
 
   const onKeyPress = async (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
