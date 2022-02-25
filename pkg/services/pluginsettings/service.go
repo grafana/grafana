@@ -12,20 +12,31 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type ServiceImpl struct {
-	Bus            bus.Bus
-	SQLStore       *sqlstore.SQLStore
-	SecretsService secrets.Service
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
+	s := &Service{
+		bus:            bus,
+		sqlStore:       store,
+		secretsService: secretsService,
+		logger:         log.New("pluginsettings"),
+		pluginSettingDecryptionCache: secureJSONDecryptionCache{
+			cache: make(map[int64]cachedDecryptedJSON),
+		},
+	}
+
+	s.bus.AddHandler(s.GetPluginSettingById)
+	s.bus.AddHandler(s.UpdatePluginSetting)
+	s.bus.AddHandler(s.UpdatePluginSettingVersion)
+
+	return s
+}
+
+type Service struct {
+	bus            bus.Bus
+	sqlStore       *sqlstore.SQLStore
+	secretsService secrets.Service
 
 	logger                       log.Logger
 	pluginSettingDecryptionCache secureJSONDecryptionCache
-}
-
-type Service interface {
-	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error)
-	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
-	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
-	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
 }
 
 type cachedDecryptedJSON struct {
@@ -38,43 +49,29 @@ type secureJSONDecryptionCache struct {
 	sync.Mutex
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *ServiceImpl {
-	s := &ServiceImpl{
-		Bus:            bus,
-		SQLStore:       store,
-		SecretsService: secretsService,
-		logger:         log.New("pluginsettings"),
-		pluginSettingDecryptionCache: secureJSONDecryptionCache{
-			cache: make(map[int64]cachedDecryptedJSON),
-		},
-	}
-
-	s.Bus.AddHandler(s.GetPluginSettingById)
-	s.Bus.AddHandler(s.UpdatePluginSetting)
-	s.Bus.AddHandler(s.UpdatePluginSettingVersion)
-
-	return s
+func (s *Service) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+	return s.sqlStore.GetPluginSettings(ctx, orgID)
 }
 
-func (s *ServiceImpl) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-	return s.SQLStore.GetPluginSettingById(ctx, query)
+func (s *Service) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	return s.sqlStore.GetPluginSettingById(ctx, query)
 }
 
-func (s *ServiceImpl) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	cmd.EncryptedSecureJsonData, err = s.secretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
 
-	return s.SQLStore.UpdatePluginSetting(ctx, cmd)
+	return s.sqlStore.UpdatePluginSetting(ctx, cmd)
 }
 
-func (s *ServiceImpl) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
-	return s.SQLStore.UpdatePluginSettingVersion(ctx, cmd)
+func (s *Service) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+	return s.sqlStore.UpdatePluginSettingVersion(ctx, cmd)
 }
 
-func (s *ServiceImpl) DecryptedValues(ps *models.PluginSetting) map[string]string {
+func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
 	s.pluginSettingDecryptionCache.Lock()
 	defer s.pluginSettingDecryptionCache.Unlock()
 
@@ -82,7 +79,7 @@ func (s *ServiceImpl) DecryptedValues(ps *models.PluginSetting) map[string]strin
 		return item.json
 	}
 
-	json, err := s.SecretsService.DecryptJsonData(context.Background(), ps.SecureJsonData)
+	json, err := s.secretsService.DecryptJsonData(context.Background(), ps.SecureJsonData)
 	if err != nil {
 		s.logger.Error("Failed to decrypt secure json data", "error", err)
 		return map[string]string{}

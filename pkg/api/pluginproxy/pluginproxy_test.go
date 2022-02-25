@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -267,11 +266,11 @@ func TestPluginProxy(t *testing.T) {
 				Resp: responseWriter,
 			},
 		}
-		store := &mockPluginsSettingsService{}
-		store.pluginSetting = &models.PluginSetting{
+		pluginSettingsService := &mockPluginsSettingsService{}
+		pluginSettingsService.pluginSetting = &models.PluginSetting{
 			SecureJsonData: map[string][]byte{},
 		}
-		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, store, secretsService)
+		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, pluginSettingsService, secretsService)
 		proxy.ServeHTTP(ctx.Resp, ctx.Req)
 
 		for {
@@ -285,7 +284,7 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, store pluginsettings.Service) *http.Request {
+func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, pluginSettingsService plugins.SettingsService) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.Route{
@@ -294,7 +293,7 @@ func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, store, secretsService)
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, pluginSettingsService, secretsService)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)
@@ -307,15 +306,19 @@ type mockPluginsSettingsService struct {
 	err           error
 }
 
-func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+func (s *mockPluginsSettingsService) GetPluginSettings(_ context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+	return nil, s.err
+}
+
+func (s *mockPluginsSettingsService) GetPluginSettingById(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
 	query.Result = s.pluginSetting
 	return s.err
 }
 
-func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(_ context.Context, _ *models.UpdatePluginSettingVersionCmd) error {
 	return s.err
 }
 
-func (s *mockPluginsSettingsService) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+func (s *mockPluginsSettingsService) UpdatePluginSetting(_ context.Context, _ *models.UpdatePluginSettingCmd) error {
 	return s.err
 }
