@@ -138,6 +138,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
+    span.childSpanCount = node.children.length;
     span.warnings = span.warnings || [];
     span.tags = span.tags || [];
     span.references = span.references || [];
