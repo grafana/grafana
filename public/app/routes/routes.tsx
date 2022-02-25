@@ -400,7 +400,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/search',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "TestStuffPage"*/ 'app/features/search/page/SearchPage')
+        () => import(/* webpackChunkName: "SearchPage"*/ 'app/features/search/page/SearchPage')
       ),
     },
     {
