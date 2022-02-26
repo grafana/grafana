@@ -597,7 +597,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 		},
 		{
 			Type:        "webhook",
-			Name:        "webhook",
+			Name:        "Webhook",
 			Description: "Sends HTTP POST request to a URL",
 			Heading:     "Webhook settings",
 			Options: []alerting.NotifierOption{
