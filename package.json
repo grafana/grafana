@@ -170,7 +170,7 @@
     "cypress": "9.5.0",
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.6.2",
-    "eslint": "8.9.0",
+    "eslint": "8.10.0",
     "eslint-config-prettier": "8.4.0",
     "eslint-plugin-jest": "^26.1.0",
     "eslint-plugin-jsdoc": "37.9.1",
