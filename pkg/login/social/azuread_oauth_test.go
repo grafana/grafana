@@ -151,7 +151,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "",
+				Role:    "Viewer",
 				Groups:  []string{},
 			},
 		},
@@ -281,7 +281,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Error if user role is invalid and strict attribute role is true",
+			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
 				roleAttributeStrict: true,
 			},
@@ -293,8 +293,16 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want:    nil,
-			wantErr: true,
+			want: &BasicUserInfo{
+				Id:      "1234",
+				Name:    "My Name",
+				Email:   "me@example.com",
+				Login:   "me@example.com",
+				Company: "",
+				Role:    "",
+				Groups:  []string{},
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
