@@ -111,10 +111,26 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  timescaleAggCheck() {
+    const baseOpts = this.selectParts[0][1].def.params[0].baseOptions;
+    const timescaleOpts = baseOpts.concat(this.selectParts[0][1].def.params[0].timescaleOptions);
+    if (this.datasource.jsonData.timescaledb === true) {
+      return timescaleOpts;
+    } else {
+      return baseOpts;
+    }
+  }
+
   updateProjection() {
     this.selectParts = map(this.target.select, (parts: any) => {
       return map(parts, sqlPart.create).filter((n) => n);
     });
+
+    // add/remove TimescaleDB aggregate functions as needed
+    if (this.selectParts[0][1].def.type === 'aggregate') {
+      this.selectParts[0][1].def.params[0].options = this.timescaleAggCheck();
+    }
+
     this.whereParts = map(this.target.where, sqlPart.create).filter((n) => n);
     this.groupParts = map(this.target.group, sqlPart.create).filter((n) => n);
   }
