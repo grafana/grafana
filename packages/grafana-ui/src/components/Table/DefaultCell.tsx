@@ -22,7 +22,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
 
   const showFilters = field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
-  const cellStyle = getCellStyle(tableStyles, field, displayValue, showActions);
+  const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
 
   const { link, onClick } = getCellLinks(field, row);
 
@@ -39,15 +39,20 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   );
 };
 
-function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: DisplayValue, showActions = false) {
+function getCellStyle(
+  tableStyles: TableStyles,
+  field: Field,
+  displayValue: DisplayValue,
+  disableOverflowOnHover = false
+) {
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !showActions);
+    return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
   }
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
     const bgColor = tinycolor(displayValue.color);
     const textColor = getTextColorForBackground(displayValue.color!);
-    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !showActions);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
   }
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
@@ -62,9 +67,9 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
     return tableStyles.buildCellContainerStyle(
       textColor,
       `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
-      !showActions
+      !disableOverflowOnHover
     );
   }
 
-  return showActions ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
+  return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
 }

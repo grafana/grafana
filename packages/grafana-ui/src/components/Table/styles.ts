@@ -16,6 +16,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
     return css`
+      label: ${overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow'};
       padding: ${cellPadding}px;
       width: 100%;
       height: 100%;
@@ -31,42 +32,41 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
         border-right: none;
         padding-right: ${lastChildExtraPadding}px;
       }
+      &:hover {
+        .cellActions {
+          visibility: visible;
+          opacity: 1;
+        }
+      }
 
-      ${overflowOnHover
-        ? `&:hover {
+      ${overflowOnHover &&
+      `&:hover {
         overflow: visible;
         width: auto !important;
         box-shadow: 0 0 2px ${theme.colors.primary.main};
         background: ${background ?? rowHoverBg};
         z-index: 1;
-      }`
-        : `&:hover {
-            .cellActions {
-              visibility: visible;
-              opacity: 1;
-              transform: translate3d(0, 0, 0);
-            }
-            .cellActionsLeft {
-              transform: translate3d(0, 0, 0) !important;
-            }
-        }`}
+        
+        }
+      }`}
+
       a {
         color: inherit;
       }
 
       .cellActions {
         display: flex;
+        ${overflowOnHover
+          ? `margin: ${theme.spacing(0, -1, 0, 0.5)};`
+          : `position: absolute;
+          top: 0;
+          right: 0; margin: auto;`}
         visibility: hidden;
         opacity: 0;
         align-items: center;
         height: 100%;
-        position: absolute;
-        top: 0;
-        right: 0;
         padding: ${theme.spacing(1, 0.5, 1, 0.5)};
         background: ${background ? 'none' : theme.colors.emphasize(theme.colors.background.primary, 0.03)};
-        transform: translate3d(50%, 0, 0);
-        transition: all 0.1s ease-in-out;
 
         svg {
           color: ${color};
@@ -75,7 +75,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       .cellActionsLeft {
         right: auto !important;
-        transform: translate3d(-50%, 0, 0) !important;
         left: 0;
       }
 
