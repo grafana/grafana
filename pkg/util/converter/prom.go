@@ -210,6 +210,13 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 								f.Append("") // no matching label
 							}
 						}
+
+					default:
+						iter.Skip()
+						frame.AppendNotices(data.Notice{
+							Severity: data.NoticeSeverityError,
+							Text:     fmt.Sprintf("unable to parse key: %s in response body", l2Field),
+						})
 					}
 				}
 			}
