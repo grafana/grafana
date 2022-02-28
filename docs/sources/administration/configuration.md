@@ -582,6 +582,21 @@ Set Content Security Policy template used when adding the Content-Security-Polic
 
 <hr />
 
+### angular_support_enabled
+
+This currently defaults to `true` but will in Grafana v9 default to `false`. When set to false the angular framework and support components will not be loaded. This means that
+all plugins and core features that depend on angular support will stop working.
+
+Current core features that will stop working:
+
+- Heatmap panel
+- Old graph panel
+- Old table panel
+- Postgres, MySQL and MSSQL data source query editors
+- Legacy alerting edit rule UI
+
+Before we disable angular support by default we plan to migrate these remaining areas to React.
+
 ## [snapshots]
 
 ### external_enabled
@@ -750,6 +765,12 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
+
+### oauth_skip_org_role_update_sync
+
+Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
+Use this setting to distribute users with external login to multiple organizations.
+Otherwise, the users' organization would get reset on every new login, for example, via AzureAD.
 
 ### api_key_max_seconds_to_live
 

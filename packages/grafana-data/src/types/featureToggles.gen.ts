@@ -23,6 +23,7 @@ export interface FeatureToggles {
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsScheduler?: boolean;
+  dashboardPreviewsAdmin?: boolean;
   ['live-config']?: boolean;
   ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
@@ -41,5 +42,7 @@ export interface FeatureToggles {
   validatedQueries?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
+  dashboardComments?: boolean;
+  annotationComments?: boolean;
   migrationLocking?: boolean;
 }

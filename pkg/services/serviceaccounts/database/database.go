@@ -25,7 +25,7 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceaccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceAccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
 	// create a new service account - "user" with empty permissions
 	generatedLogin := "Service-Account-" + uuid.New().String()
 	cmd := models.CreateUserCommand{
@@ -128,9 +128,9 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var sess *xorm.Session
 
-		sess = dbSession.Limit(100, 0).
+		sess = dbSession.
 			Join("inner", "user", "user.id = api_key.service_account_id").
-			Where("user.org_id=? AND user.id=? AND ( expires IS NULL or expires >= ?)", orgID, serviceAccountID, time.Now().Unix()).
+			Where("user.org_id=? AND user.id=?", orgID, serviceAccountID).
 			Asc("name")
 
 		return sess.Find(&result)
@@ -177,12 +177,88 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	if len(query.Result) != 1 {
 		return nil, serviceaccounts.ErrServiceAccountNotFound
 	}
-	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
-		Id:    query.Result[0].UserId,
-		Name:  query.Result[0].Name,
-		Login: query.Result[0].Login,
+
+	// Get Teams of service account. Can be optimized by combining with the query above
+	// in refactor
+	getTeamQuery := models.GetTeamsByUserQuery{UserId: serviceAccountID, OrgId: orgID}
+	if err := s.sqlStore.GetTeamsByUser(ctx, &getTeamQuery); err != nil {
+		return nil, err
 	}
-	return saProfile, err
+	teams := make([]string, len(getTeamQuery.Result))
+
+	for i := range getTeamQuery.Result {
+		teams[i] = getTeamQuery.Result[i].Name
+	}
+
+	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
+		Id:        query.Result[0].UserId,
+		Name:      query.Result[0].Name,
+		Login:     query.Result[0].Login,
+		OrgId:     query.Result[0].OrgId,
+		UpdatedAt: query.Result[0].Updated,
+		CreatedAt: query.Result[0].Created,
+		Role:      query.Result[0].Role,
+		Teams:     teams,
+	}
+	return saProfile, nil
+}
+
+func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
+	orgID, serviceAccountID int64,
+	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	updatedUser := &models.OrgUserDTO{}
+
+	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		query := models.GetOrgUsersQuery{UserID: serviceAccountID, OrgId: orgID, IsServiceAccount: true}
+		if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
+			return err
+		}
+		if len(query.Result) != 1 {
+			return serviceaccounts.ErrServiceAccountNotFound
+		}
+
+		updatedUser = query.Result[0]
+
+		if saForm.Name == nil && saForm.Role == nil {
+			return nil
+		}
+
+		updateTime := time.Now()
+		if saForm.Role != nil {
+			var orgUser models.OrgUser
+			orgUser.Role = *saForm.Role
+			orgUser.Updated = updateTime
+
+			if _, err := sess.ID(orgUser.Id).Update(&orgUser); err != nil {
+				return err
+			}
+
+			updatedUser.Role = string(*saForm.Role)
+		}
+
+		if saForm.Name != nil {
+			user := models.User{
+				Name:    *saForm.Name,
+				Updated: updateTime,
+			}
+
+			if _, err := sess.ID(serviceAccountID).Update(&user); err != nil {
+				return err
+			}
+
+			updatedUser.Name = *saForm.Name
+		}
+
+		return nil
+	})
+
+	return &serviceaccounts.ServiceAccountDTO{
+		Id:    updatedUser.UserId,
+		Name:  updatedUser.Name,
+		Login: updatedUser.Login,
+		Role:  updatedUser.Role,
+		OrgId: updatedUser.OrgId,
+	}, err
 }
 
 func contains(s []int64, e int64) bool {

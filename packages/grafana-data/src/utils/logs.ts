@@ -229,4 +229,4 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
 };
 
 export const escapeUnescapedString = (string: string) =>
-  string.replace(/\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
+  string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
