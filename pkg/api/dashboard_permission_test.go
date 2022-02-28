@@ -19,25 +19,38 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	starstests "github.com/grafana/grafana/pkg/services/stars/starstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
+<<<<<<< HEAD
 		dashboardStore := &dashboards.FakeDashboardStore{}
+=======
+		dashboardStore := &database.FakeDashboardStore{}
+		starsFake := starstests.NewStarsServiceFake()
+>>>>>>> de58dcb3a9 (Fix: Bug fix)
 		defer dashboardStore.AssertExpectations(t)
 
 		features := featuremgmt.WithFeatures()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
 		hs := &HTTPServer{
+<<<<<<< HEAD
 			Cfg:      settings,
 			SQLStore: mockSQLStore,
 			Features: features,
 			dashboardService: dashboardservice.ProvideDashboardService(
 				settings, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
 			),
+=======
+			Cfg:              settings,
+			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore, nil, starsFake),
+			SQLStore:         mockSQLStore,
+			Features:         featuremgmt.WithFeatures(),
+>>>>>>> de58dcb3a9 (Fix: Bug fix)
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {

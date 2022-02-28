@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	starstests "github.com/grafana/grafana/pkg/services/stars/starstests"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -219,6 +220,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 		dashboardStore := database.ProvideDashboardStore(sqlstore.InitTestDB(t))
+		starsFake := starstests.NewStarsServiceFake()
 		hs := &HTTPServer{
 			Cfg:                   cfg,
 			Live:                  newTestLive(t),
@@ -226,7 +228,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              mockSQLStore,
 			dashboardService: service.ProvideDashboardService(
-				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), starsFake,
 			),
 		}
 		hs.SQLStore = mockSQLStore
@@ -940,9 +942,10 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := mockLibraryElementService{}
+
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-
+	starsFake := starstests.NewStarsServiceFake()
 	hs := &HTTPServer{
 		Cfg:                   cfg,
 		LibraryPanelService:   &libraryPanelsService,
@@ -950,7 +953,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		SQLStore:              sc.sqlStore,
 		ProvisioningService:   provisioningService,
 		dashboardProvisioningService: service.ProvideDashboardService(
-			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), starsFake,
 		),
 	}
 
