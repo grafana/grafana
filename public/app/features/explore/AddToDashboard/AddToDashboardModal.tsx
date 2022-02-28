@@ -68,7 +68,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
           invalid={!!errors.dashboardName}
         >
           <Input
-            id="dahboard_name"
+            id="dashboard_name"
             {...register('dashboardName', {
               shouldUnregister: true,
               required: { value: true, message: 'This field is required' },

@@ -111,7 +111,7 @@ describe('Add to Dashboard Modal', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent('empty name');
     });
 
-    it('Correctly handles empty name API Error', async () => {
+    it('Correctly handles name match API Error', async () => {
       // name-match, triggered when trying to create a dashboard in a folder that has the same name.
       // it doesn't seem to ever be triggered, but matches the error in
       // https://github.com/grafana/grafana/blob/44f1e381cbc7a5e236b543bc6bd06b00e3152d7f/pkg/models/dashboards.go#L71
