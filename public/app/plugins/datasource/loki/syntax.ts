@@ -240,12 +240,12 @@ export const lokiGrammar: Grammar = {
     },
   ],
   quote: {
-    pattern: /".*?"/,
+    pattern: /"(?:\\.|[^\\"])*"/,
     alias: 'string',
     greedy: true,
   },
   backticks: {
-    pattern: /`.*?`/,
+    pattern: /`(?:\\.|[^\\`])*`/,
     alias: 'string',
     greedy: true,
   },
