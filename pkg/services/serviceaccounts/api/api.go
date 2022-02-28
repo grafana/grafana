@@ -197,8 +197,10 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 		}
 	}
 
+	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
+	metadata := api.getAccessControlMetadata(ctx, map[string]bool{saIDString: true})
 	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
-
+	serviceAccount.AccessControl = metadata[saIDString]
 	return response.JSON(http.StatusOK, serviceAccount)
 }
 

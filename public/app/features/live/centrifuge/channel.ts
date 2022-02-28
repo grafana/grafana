@@ -61,7 +61,7 @@ export class CentrifugeLiveChannel<T = any> {
     this.initalized = true;
 
     const events: SubscriptionEvents = {
-      // Called when a message is recieved from the socket
+      // Called when a message is received from the socket
       publish: (ctx: PublicationContext) => {
         try {
           if (ctx.data) {

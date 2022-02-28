@@ -11,45 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLoki(t *testing.T) {
-	t.Run("converting metric name", func(t *testing.T) {
-		metric := map[p.LabelName]p.LabelValue{
-			p.LabelName("app"):    p.LabelValue("backend"),
-			p.LabelName("device"): p.LabelValue("mobile"),
-		}
-
-		query := &lokiQuery{
-			LegendFormat: "legend {{app}} {{ device }} {{broken}}",
-		}
-
-		require.Equal(t, "legend backend mobile ", formatLegend(metric, query))
-	})
-
-	t.Run("build full series name", func(t *testing.T) {
-		metric := map[p.LabelName]p.LabelValue{
-			p.LabelName(p.MetricNameLabel): p.LabelValue("http_request_total"),
-			p.LabelName("app"):             p.LabelValue("backend"),
-			p.LabelName("device"):          p.LabelValue("mobile"),
-		}
-
-		query := &lokiQuery{
-			LegendFormat: "",
-		}
-
-		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
-	})
-}
-
 func TestParseResponse(t *testing.T) {
-	t.Run("value is not of type matrix", func(t *testing.T) {
-		queryRes := data.Frames{}
+	t.Run("value is not of supported type", func(t *testing.T) {
 		value := loghttp.QueryResponse{
 			Data: loghttp.QueryResponseData{
-				Result: loghttp.Vector{},
+				Result: loghttp.Scalar{},
 			},
 		}
 		res, err := parseResponse(&value, nil)
-		require.Equal(t, queryRes, res)
+		require.Equal(t, len(res), 0)
 		require.Error(t, err)
 	})
 
@@ -74,6 +44,7 @@ func TestParseResponse(t *testing.T) {
 
 		query := &lokiQuery{
 			Expr:         "up(ALERTS)",
+			QueryType:    QueryTypeRange,
 			LegendFormat: "legend {{app}}",
 			Step:         time.Second * 42,
 		}
@@ -117,7 +88,8 @@ func TestParseResponse(t *testing.T) {
 		}
 
 		query := &lokiQuery{
-			Step: time.Second * 42,
+			Step:      time.Second * 42,
+			QueryType: QueryTypeRange,
 		}
 
 		frames, err := parseResponse(&value, query)
