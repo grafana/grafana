@@ -8,17 +8,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// DiffReport is a simple custom reporter that only records differences
-// detected during comparison.
-type DiffReport struct {
-	path  cmp.Path
-	Diffs []Diff
-}
+type DiffReport []Diff
 
 // GetDiffsForField returns subset of the diffs which path starts with the provided path
-func (r *DiffReport) GetDiffsForField(path string) []Diff {
+func (r DiffReport) GetDiffsForField(path string) DiffReport {
 	var result []Diff
-	for _, diff := range r.Diffs {
+	for _, diff := range r {
 		if strings.HasPrefix(path, diff.Path) {
 			result = append(result, diff)
 		}
@@ -26,15 +21,22 @@ func (r *DiffReport) GetDiffsForField(path string) []Diff {
 	return result
 }
 
-func (r *DiffReport) PushStep(ps cmp.PathStep) {
+// DiffReporter is a simple custom reporter that only records differences
+// detected during comparison. Implements an interface required by cmp.Reporter option
+type DiffReporter struct {
+	path  cmp.Path
+	Diffs DiffReport
+}
+
+func (r *DiffReporter) PushStep(ps cmp.PathStep) {
 	r.path = append(r.path, ps)
 }
 
-func (r *DiffReport) PopStep() {
+func (r *DiffReporter) PopStep() {
 	r.path = r.path[:len(r.path)-1]
 }
 
-func (r *DiffReport) Report(rs cmp.Result) {
+func (r *DiffReporter) Report(rs cmp.Result) {
 	if !rs.Equal() {
 		vx, vy := r.path.Last().Values()
 		r.Diffs = append(r.Diffs, Diff{
@@ -67,9 +69,9 @@ func printPath(p cmp.Path) string {
 	return strings.TrimPrefix(ss.String(), ".")
 }
 
-func (r *DiffReport) String() string {
+func (r DiffReport) String() string {
 	b := strings.Builder{}
-	for _, diff := range r.Diffs {
+	for _, diff := range r {
 		b.WriteString(diff.String())
 		b.WriteByte('\n')
 	}
@@ -86,6 +88,8 @@ type Diff struct {
 
 func (d *Diff) String() string {
 	left := d.Left.String()
+	// invalid reflect.Value is produced when two collections (slices\maps) are compared and one misses value.
+	// This way go-cmp indicates that an element was added\removed from a list.
 	if !d.Left.IsValid() {
 		left = "<none>"
 	}

@@ -111,8 +111,8 @@ type AlertRule struct {
 }
 
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
-func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) *cmputil.DiffReport {
-	var reporter cmputil.DiffReport
+func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
+	var reporter cmputil.DiffReporter
 	ops := make([]cmp.Option, 0, 4)
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
@@ -124,11 +124,8 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) *cmputil.Dif
 	if len(ignore) > 0 {
 		ops = append(ops, cmpopts.IgnoreFields(AlertRule{}, ignore...))
 	}
-
-	if cmp.Equal(alertRule, rule, ops...) {
-		return nil
-	}
-	return &reporter
+	cmp.Equal(alertRule, rule, ops...)
+	return reporter.Diffs
 }
 
 // AlertRuleKey is the alert definition identifier

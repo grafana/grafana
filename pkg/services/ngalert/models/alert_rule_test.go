@@ -233,7 +233,7 @@ func TestDiff(t *testing.T) {
 		rule1 := AlertRuleGen()()
 		rule2 := CopyRule(rule1)
 		result := rule1.Diff(rule2)
-		require.Nilf(t, result, "expected diff to be empty. rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, result)
+		require.Emptyf(t, result, "expected diff to be empty. rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, result)
 	})
 
 	t.Run("should respect fields to ignore", func(t *testing.T) {
@@ -243,7 +243,7 @@ func TestDiff(t *testing.T) {
 		rule2.Version = rule1.Version/2 + 1
 		rule2.Updated = rule1.Updated.Add(1 * time.Second)
 		result := rule1.Diff(rule2, "ID", "Version", "Updated")
-		require.Nilf(t, result, "expected diff to be empty. rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, result)
+		require.Emptyf(t, result, "expected diff to be empty. rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, result)
 	})
 
 	t.Run("should find diff in simple fields", func(t *testing.T) {
@@ -377,7 +377,7 @@ func TestDiff(t *testing.T) {
 			difCnt++
 		}
 
-		require.Lenf(t, diffs.Diffs, difCnt, "Got some unexpected diffs. Either add to ignore or add assert to it")
+		require.Lenf(t, diffs, difCnt, "Got some unexpected diffs. Either add to ignore or add assert to it")
 
 		if t.Failed() {
 			t.Logf("rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, diffs)
@@ -417,7 +417,7 @@ func TestDiff(t *testing.T) {
 		assert.Equal(t, "value3", d[0].Right.String())
 
 		if t.Failed() {
-			t.Logf("rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, diff)
+			t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 		}
 	})
 
@@ -490,7 +490,7 @@ func TestDiff(t *testing.T) {
 			assert.Nil(t, diff)
 
 			if t.Failed() {
-				t.Logf("rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, diff)
+				t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 			}
 		})
 
@@ -502,14 +502,14 @@ func TestDiff(t *testing.T) {
 
 			diff := rule1.Diff(rule2)
 
-			assert.Len(t, diff.Diffs, 2)
+			assert.Len(t, diff, 2)
 
 			d := diff.GetDiffsForField("Data[0].QueryType")
 			assert.Len(t, d, 1)
 			d = diff.GetDiffsForField("Data[0].RefID")
 			assert.Len(t, d, 1)
 			if t.Failed() {
-				t.Logf("rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, diff)
+				t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 			}
 		})
 
@@ -524,9 +524,9 @@ func TestDiff(t *testing.T) {
 
 			diff := rule1.Diff(rule2)
 
-			assert.Len(t, diff.Diffs, 2)
+			assert.Len(t, diff, 2)
 
-			for _, d := range diff.Diffs {
+			for _, d := range diff {
 				assert.Equal(t, "Data", d.Path)
 				if d.Left.IsValid() {
 					assert.Equal(t, query1, d.Left.Interface())
@@ -535,7 +535,7 @@ func TestDiff(t *testing.T) {
 				}
 			}
 			if t.Failed() {
-				t.Logf("rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, diff)
+				t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 			}
 		})
 	})
