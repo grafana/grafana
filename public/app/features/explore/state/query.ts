@@ -2,15 +2,18 @@ import { mergeMap, throttleTime } from 'rxjs/operators';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
+  CircularDataFrame,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
+  Field,
   hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
   PanelEvents,
   QueryFixAction,
@@ -441,7 +444,6 @@ export const runQueries = (
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
-      console.log('new');
       newQuerySub = runRequest(datasourceInstance, transaction.request)
         .pipe(
           // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
@@ -867,6 +869,27 @@ export const processQueryResponse = (
   if (state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
+  }
+
+  if (series && series.length > 0) {
+    var traceIDField = series[0].fields.find((field: Field) => {
+      return field.name === 'traceID';
+    });
+
+    if (traceIDField && logsResult) {
+      const cd = new CircularDataFrame({ capacity: traceIDField.values.length });
+      cd.addField(series[0].fields[0]);
+      cd.addField(series[0].fields[1]);
+      cd.addField(series[0].fields[2]);
+      cd.addField(series[0].fields[3]);
+      cd.addField(series[0].fields[4]);
+      cd.meta = series[0].meta;
+      cd.refId = series[0].refId;
+
+      for (var i = 0; i < logsResult.rows.length; i++) {
+        logsResult.rows[i].dataFrame = cd;
+      }
+    }
   }
 
   return {

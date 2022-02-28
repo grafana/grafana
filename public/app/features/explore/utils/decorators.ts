@@ -7,6 +7,8 @@ import {
   sortLogsResult,
   standardTransformers,
   DataQuery,
+  Field,
+  CircularDataFrame,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { groupBy } from 'lodash';
@@ -137,6 +139,7 @@ export const decorateWithLogsResult =
       refreshInterval?: string;
       queries?: DataQuery[];
       fullRangeLogsVolumeAvailable?: boolean;
+      queryResponse?: PanelData;
     } = {}
   ) =>
   (data: ExplorePanelData): ExplorePanelData => {
@@ -151,6 +154,29 @@ export const decorateWithLogsResult =
     const rows = sortedNewResults.rows;
     const series = options.fullRangeLogsVolumeAvailable ? undefined : sortedNewResults.series;
     const logsResult = { ...sortedNewResults, rows, series };
+
+    if (options.queryResponse && options.queryResponse?.series && options.queryResponse?.series.length > 0) {
+      var traceIDField = options.queryResponse?.series[0].fields.find((field: Field) => {
+        return field.name === 'traceID';
+      });
+
+      if (traceIDField) {
+        const cd = new CircularDataFrame({ capacity: traceIDField.values.length });
+        cd.addField(options.queryResponse?.series[0].fields[0]);
+        cd.addField(options.queryResponse?.series[0].fields[1]);
+        cd.addField(options.queryResponse?.series[0].fields[2]);
+        cd.addField(options.queryResponse?.series[0].fields[3]);
+        cd.addField(options.queryResponse?.series[0].fields[4]);
+        cd.meta = options.queryResponse?.series[0].meta;
+        cd.refId = options.queryResponse?.series[0].refId;
+
+        const data2 = { ...data };
+        data2.series = [];
+        data2.series.push(cd);
+
+        return { ...data2, logsResult };
+      }
+    }
 
     return { ...data, logsResult };
   };
@@ -168,7 +194,9 @@ export function decorateData(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
-    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
+    map(
+      decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable, queryResponse })
+    ),
     mergeMap(decorateWithTableResult)
   );
 }
