@@ -74,6 +74,7 @@ LIMIT 1
   }
 
   buildSchemaConstraint() {
+    // wrap table_schema in quote_ident() to sanitize hyphenated schemes
     const query = `
 quote_ident(table_schema) IN (
   SELECT
