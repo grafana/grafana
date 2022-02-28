@@ -22,7 +22,7 @@ func TestMiddlewareCSRF(t *testing.T) {
 			name:        "mismatched origin and host is forbidden",
 			cookieName:  "foo",
 			method:      "GET",
-			origin:      "notLocalhost",
+			origin:      "http://notLocalhost",
 			host:        "localhost",
 			defaultPort: "80",
 			code:        http.StatusForbidden,
@@ -31,16 +31,59 @@ func TestMiddlewareCSRF(t *testing.T) {
 			name:        "mismatched origin and host is NOT forbidden with a 'Safe Method'",
 			cookieName:  "foo",
 			method:      "TRACE",
-			origin:      "notLocalhost",
+			origin:      "http://notLocalhost",
 			host:        "localhost",
 			defaultPort: "80",
+			code:        http.StatusOK,
+		},
+		{
+			name:        "mismatched origin and host is NOT forbidden without a cookie",
+			cookieName:  "",
+			method:      "GET",
+			origin:      "http://notLocalhost",
+			host:        "localhost",
+			defaultPort: "80",
+			code:        http.StatusOK,
+		},
+		{
+			name:        "malformed host is a bad request",
+			cookieName:  "foo",
+			method:      "GET",
+			host:        "localhost:80:80",
+			defaultPort: "80",
+			code:        http.StatusBadRequest,
+		},
+		{
+			name:        "should work without port",
+			cookieName:  "foo",
+			method:      "GET",
+			host:        "localhost",
+			origin:      "http://localhost",
+			defaultPort: "80",
+			code:        http.StatusOK,
+		},
+		{
+			name:       "IPv6 host work with port",
+			cookieName: "foo",
+			method:     "GET",
+			host:       "[::1]:3000",
+			origin:     "http://[::1]:3000",
+			code:       http.StatusOK,
+		},
+		{
+			name:        "IPv6 host should get default port",
+			cookieName:  "foo",
+			method:      "GET",
+			host:        "[::1]",
+			origin:      "http://[::1]",
+			defaultPort: "3000",
 			code:        http.StatusOK,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rr := csrfScenario(t, tt.cookieName, tt.method, tt.host, tt.origin, tt.defaultPort)
-			require.Equal(t, rr.Code, tt.code)
+			rr := csrfScenario(t, tt.cookieName, tt.method, tt.origin, tt.host, tt.defaultPort)
+			require.Equal(t, tt.code, rr.Code)
 		})
 	}
 
@@ -55,8 +98,11 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host, defaultPort st
 		Name: cookieName,
 	})
 
-	req.Header.Add("ORIGIN", origin)
-	req.Header.Add("HOST", host)
+	// Note: Not sure where host header populates req.Host, or how that works.
+	req.Host = host
+	req.Header.Set("HOST", host)
+
+	req.Header.Set("ORIGIN", origin)
 
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 

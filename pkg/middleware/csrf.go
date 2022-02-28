@@ -34,6 +34,10 @@ func CSRF(loginCookieName, defaultPort string) func(http.Handler) http.Handler {
 			}
 
 			origin, err := url.Parse(r.Header.Get("Origin"))
+			// Possible TODO: If Origin, but malformed, error?
+			// Per url.Parse: The url may be relative (a path, without a host) or absolute (starting with
+			// a scheme). Trying to parse a hostname and path without a scheme is invalid but may not
+			//  necessarily return an error, due to parsing ambiguities.
 			if err != nil || netAddr.Host == "" || (origin.String() != "" && origin.Hostname() != netAddr.Host) {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
 				return
