@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import * as React from 'react';
+
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
-import IoNetwork from 'react-icons/lib/io/network';
 import MdFileUpload from 'react-icons/lib/md/file-upload';
 import { css, keyframes } from '@emotion/css';
 import cx from 'classnames';
-import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import ReferencesButton from './ReferencesButton';
@@ -510,7 +510,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 tooltipText="Contains multiple references"
                 focusSpan={focusSpan}
               >
-                <IoNetwork />
+                <Icon name="link" />
               </ReferencesButton>
             )}
             {span.subsidiarilyReferencedBy && span.subsidiarilyReferencedBy.length > 0 && (

@@ -177,12 +177,30 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	if len(query.Result) != 1 {
 		return nil, serviceaccounts.ErrServiceAccountNotFound
 	}
-	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
-		Id:    query.Result[0].UserId,
-		Name:  query.Result[0].Name,
-		Login: query.Result[0].Login,
+
+	// Get Teams of service account. Can be optimized by combining with the query above
+	// in refactor
+	getTeamQuery := models.GetTeamsByUserQuery{UserId: serviceAccountID, OrgId: orgID}
+	if err := s.sqlStore.GetTeamsByUser(ctx, &getTeamQuery); err != nil {
+		return nil, err
 	}
-	return saProfile, err
+	teams := make([]string, len(getTeamQuery.Result))
+
+	for i := range getTeamQuery.Result {
+		teams[i] = getTeamQuery.Result[i].Name
+	}
+
+	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
+		Id:        query.Result[0].UserId,
+		Name:      query.Result[0].Name,
+		Login:     query.Result[0].Login,
+		OrgId:     query.Result[0].OrgId,
+		UpdatedAt: query.Result[0].Updated,
+		CreatedAt: query.Result[0].Created,
+		Role:      query.Result[0].Role,
+		Teams:     teams,
+	}
+	return saProfile, nil
 }
 
 func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,

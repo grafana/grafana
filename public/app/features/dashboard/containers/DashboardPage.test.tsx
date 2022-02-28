@@ -103,7 +103,6 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
           initPhase: DashboardInitPhase.NotStarted,
-          isInitSlow: false,
           initError: null,
           initDashboard: jest.fn(),
           notifyApp: mockToolkitActionCreator(notifyApp),
@@ -169,18 +168,6 @@ describe('DashboardPage', () => {
         urlSlug: 'my-dash',
         urlUid: '11',
       });
-      expect(ctx.container).toBeEmptyDOMElement();
-    });
-  });
-
-  dashboardPageScenario('Given dashboard slow loading state', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.rerender({ isInitSlow: true });
-    });
-
-    it('Should show spinner', () => {
-      expect(screen.getByText('Cancel loading dashboard')).toBeInTheDocument();
     });
   });
 

@@ -60,7 +60,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
 };
 
 const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPrefix = '', readOnly = false }) => {
-  const { control, register, unregister } = useFormContext();
+  const { control, register, unregister, getValues } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
@@ -87,11 +87,11 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
       return (
         <Input
           id={id}
-          readOnly={readOnly}
+          readOnly={readOnly || determineReadOnly(option, getValues)}
           invalid={invalid}
           type={option.inputType}
           {...register(name, {
-            required: option.required ? 'Required' : false,
+            required: determineRequired(option, getValues),
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
           placeholder={option.placeholder}
@@ -157,10 +157,27 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
 
 const styles = {
   checkbox: css`
-    height: auto; // native chekbox has fixed height which does not take into account description
+    height: auto; // native checkbox has fixed height which does not take into account description
   `,
 };
 
 const validateOption = (value: string, validationRule: string) => {
   return RegExp(validationRule).test(value) ? true : 'Invalid format';
+};
+
+const determineRequired = (option: NotificationChannelOption, getValues: any) => {
+  if (!option.dependsOn) {
+    return option.required ? 'Required' : false;
+  }
+
+  const dependentOn = getValues(`items[0].${option.dependsOn}`);
+  return !dependentOn && option.required ? 'Required' : false;
+};
+
+const determineReadOnly = (option: NotificationChannelOption, getValues: any) => {
+  if (!option.dependsOn) {
+    return false;
+  }
+
+  return getValues(`items[0].${option.dependsOn}`);
 };

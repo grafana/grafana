@@ -68,7 +68,9 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-
+		if timeRange.From.UTC().Unix() < 0 {
+			return fmt.Sprintf("%s BETWEEN DATE_ADD(FROM_UNIXTIME(0), INTERVAL %d SECOND) AND FROM_UNIXTIME(%d)", args[0], timeRange.From.UTC().Unix(), timeRange.To.UTC().Unix()), nil
+		}
 		return fmt.Sprintf("%s BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", args[0], timeRange.From.UTC().Unix(), timeRange.To.UTC().Unix()), nil
 	case "__timeFrom":
 		return fmt.Sprintf("FROM_UNIXTIME(%d)", timeRange.From.UTC().Unix()), nil

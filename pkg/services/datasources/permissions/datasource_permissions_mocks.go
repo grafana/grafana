@@ -1,4 +1,4 @@
-package api
+package permissions
 
 import (
 	"context"
@@ -7,14 +7,14 @@ import (
 )
 
 type mockDatasourcePermissionService struct {
-	dsResult []*models.DataSource
+	DsResult []*models.DataSource
 }
 
 func (m *mockDatasourcePermissionService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error {
-	cmd.Result = m.dsResult
+	cmd.Result = m.DsResult
 	return nil
 }
 
-func newMockDatasourcePermissionService() *mockDatasourcePermissionService {
+func NewMockDatasourcePermissionService() *mockDatasourcePermissionService {
 	return &mockDatasourcePermissionService{}
 }
