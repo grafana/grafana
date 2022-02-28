@@ -470,7 +470,7 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 		OrgId: orgID,
 	}
 
-	_, err := sess.ID(userID).Update(&user)
+	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
 	return err
 }
 

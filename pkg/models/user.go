@@ -231,7 +231,7 @@ type UserProfileDTO struct {
 	Name           string          `json:"name"`
 	Login          string          `json:"login"`
 	Theme          string          `json:"theme"`
-	OrgId          int64           `json:"orgId"`
+	OrgId          int64           `json:"orgId,omitempty"`
 	IsGrafanaAdmin bool            `json:"isGrafanaAdmin"`
 	IsDisabled     bool            `json:"isDisabled"`
 	IsExternal     bool            `json:"isExternal"`
