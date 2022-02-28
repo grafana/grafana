@@ -9,12 +9,45 @@ import (
 )
 
 func TestMiddlewareCSRF(t *testing.T) {
-	rr := csrfScenario(t, "foo", "localhost", "notLocalhost", "80")
-	require.Equal(t, rr.Code, http.StatusForbidden)
+	tests := []struct {
+		name        string
+		cookieName  string
+		method      string
+		origin      string
+		host        string
+		defaultPort string
+		code        int
+	}{
+		{
+			name:        "mismatched origin and host is forbidden",
+			cookieName:  "foo",
+			method:      "GET",
+			origin:      "notLocalhost",
+			host:        "localhost",
+			defaultPort: "80",
+			code:        http.StatusForbidden,
+		},
+		{
+			name:        "mismatched origin and host is NOT forbidden with a 'Safe Method'",
+			cookieName:  "foo",
+			method:      "TRACE",
+			origin:      "notLocalhost",
+			host:        "localhost",
+			defaultPort: "80",
+			code:        http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rr := csrfScenario(t, tt.cookieName, tt.method, tt.host, tt.origin, tt.defaultPort)
+			require.Equal(t, rr.Code, tt.code)
+		})
+	}
+
 }
 
-func csrfScenario(t *testing.T, cookieName, origin, host, defaultPort string) *httptest.ResponseRecorder {
-	req, err := http.NewRequest("GET", "/", nil)
+func csrfScenario(t *testing.T, cookieName, method, origin, host, defaultPort string) *httptest.ResponseRecorder {
+	req, err := http.NewRequest(method, "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
