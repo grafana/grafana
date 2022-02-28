@@ -1,9 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -185,6 +189,28 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 }
 
+func TestMakePluginResourceRequest(t *testing.T) {
+	pluginClient := &fakePluginClient{}
+	hs := HTTPServer{
+		Cfg:          setting.NewCfg(),
+		log:          log.New(),
+		pluginClient: pluginClient,
+	}
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	resp := httptest.NewRecorder()
+	pCtx := backend.PluginContext{}
+	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	require.NoError(t, err)
+
+	for {
+		if resp.Flushed {
+			break
+		}
+	}
+
+	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
+}
+
 func callGetPluginAsset(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
@@ -220,4 +246,26 @@ type logger struct {
 
 func (l *logger) Warn(msg string, ctx ...interface{}) {
 	l.warnings = append(l.warnings, msg)
+}
+
+type fakePluginClient struct {
+	plugins.Client
+
+	req *backend.CallResourceRequest
+}
+
+func (c *fakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	c.req = req
+	bytes, err := json.Marshal(map[string]interface{}{
+		"message": "hello",
+	})
+	if err != nil {
+		return err
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  http.StatusOK,
+		Headers: make(map[string][]string),
+		Body:    bytes,
+	})
 }

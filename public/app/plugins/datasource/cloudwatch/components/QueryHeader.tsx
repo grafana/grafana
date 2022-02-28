@@ -1,12 +1,11 @@
-import React from 'react';
-import { pick } from 'lodash';
-
 import { ExploreMode, SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect } from '@grafana/experimental';
+import { pick } from 'lodash';
+import React from 'react';
 
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchQuery, CloudWatchQueryMode } from '../types';
 import { useRegions } from '../hooks';
+import { CloudWatchQuery, CloudWatchQueryMode } from '../types';
 import MetricsQueryHeader from './MetricsQueryHeader';
 
 interface QueryHeaderProps {
@@ -59,7 +58,7 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({
     <EditorHeader>
       <InlineSelect
         label="Region"
-        value={regions.find((v) => v.value === region)}
+        value={region}
         placeholder="Select region"
         allowCustomValue
         onChange={({ value: region }) => region && onRegion({ value: region })}

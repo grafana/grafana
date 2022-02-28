@@ -38,14 +38,16 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
 
 export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const existingTitle = field.state?.displayName;
+  const multipleFrames = Boolean(allFrames && allFrames.length > 1);
 
-  if (existingTitle) {
+  if (existingTitle && multipleFrames === field.state?.multipleFrames) {
     return existingTitle;
   }
 
   const displayName = calculateFieldDisplayName(field, frame, allFrames);
   field.state = field.state || {};
   field.state.displayName = displayName;
+  field.state.multipleFrames = multipleFrames;
 
   return displayName;
 }

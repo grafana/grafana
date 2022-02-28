@@ -1,21 +1,28 @@
+import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList } from '@grafana/experimental';
 import { isEqual } from 'lodash';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { LabelFilterItem } from './LabelFilterItem';
 
 export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
   onChange: (labelFilters: QueryBuilderLabelFilter[]) => void;
-  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
-  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
+  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
+  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
 }
 
 export function LabelFilters({ labelsFilters, onChange, onGetLabelNames, onGetLabelValues }: Props) {
   const defaultOp = '=';
-  const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>(
-    labelsFilters.length === 0 ? [{ op: defaultOp }] : labelsFilters
-  );
+  const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
+
+  useEffect(() => {
+    if (labelsFilters.length > 0) {
+      setItems(labelsFilters);
+    } else {
+      setItems([{ op: defaultOp }]);
+    }
+  }, [labelsFilters]);
 
   const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
     setItems(newItems);

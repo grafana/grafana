@@ -50,7 +50,7 @@ const kbn = {
   addSlashes: (str: string) => str.replace(/[\'\"\\0]/g, '\\$&'),
   /** @deprecated since 7.2, use grafana/data */
   describeInterval: (str: string) => {
-    deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
+    deprecationWarning('kbn.ts', 'kbn.describeInterval()', '@grafana/data');
     return rangeUtil.describeInterval(str);
   },
   /** @deprecated since 7.2, use grafana/data */

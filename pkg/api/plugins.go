@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -74,7 +74,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Category:      pluginDef.Category,
 			Info:          pluginDef.Info,
 			Dependencies:  pluginDef.Dependencies,
-			DefaultNavUrl: pluginDef.DefaultNavURL,
+			DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
@@ -130,7 +130,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		Includes:      plugin.Includes,
 		BaseUrl:       plugin.BaseURL,
 		Module:        plugin.Module,
-		DefaultNavUrl: plugin.DefaultNavURL,
+		DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 		State:         plugin.State,
 		Signature:     plugin.Signature,
 		SignatureType: plugin.SignatureType,
@@ -143,7 +143,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.PluginSettings.GetPluginSettingById(c.Req.Context(), &query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
 			return response.Error(500, "Failed to get login settings", nil)
 		}
@@ -175,7 +175,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
@@ -230,12 +230,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
-	if !exists {
-		return response.Error(404, "Plugin not found", nil)
-	}
-
-	resp, err := hs.pluginClient.CollectMetrics(c.Req.Context(), plugin.ID)
+	resp, err := hs.pluginClient.CollectMetrics(c.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}
@@ -613,6 +608,9 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 					w.Header().Add(k, v)
 				}
 			}
+
+			proxyutil.SetProxyResponseHeaders(w.Header())
+
 			w.WriteHeader(resp.Status)
 		}
 

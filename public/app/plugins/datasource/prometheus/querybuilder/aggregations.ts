@@ -5,27 +5,29 @@ import {
   defaultAddOperationHandler,
   functionRendererLeft,
   getPromAndLokiOperationDisplayName,
+  getRangeVectorParamDef,
 } from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
-import { PromVisualQueryOperationCategory } from './types';
+import { PromVisualQueryOperationCategory, PromOperationId } from './types';
 
 export function getAggregationOperations(): QueryBuilderOperationDef[] {
   return [
-    ...createAggregationOperation('sum'),
-    ...createAggregationOperation('avg'),
-    ...createAggregationOperation('min'),
-    ...createAggregationOperation('max'),
-    ...createAggregationOperation('count'),
-    ...createAggregationOperation('topk'),
-    createAggregationOverTime('sum'),
-    createAggregationOverTime('avg'),
-    createAggregationOverTime('min'),
-    createAggregationOverTime('max'),
-    createAggregationOverTime('count'),
-    createAggregationOverTime('last'),
-    createAggregationOverTime('present'),
-    createAggregationOverTime('stddev'),
-    createAggregationOverTime('stdvar'),
+    ...createAggregationOperation(PromOperationId.Sum),
+    ...createAggregationOperation(PromOperationId.Avg),
+    ...createAggregationOperation(PromOperationId.Min),
+    ...createAggregationOperation(PromOperationId.Max),
+    ...createAggregationOperation(PromOperationId.Count),
+    ...createAggregationOperation(PromOperationId.Topk),
+    ...createAggregationOperation(PromOperationId.BottomK),
+    createAggregationOverTime(PromOperationId.SumOverTime),
+    createAggregationOverTime(PromOperationId.AvgOverTime),
+    createAggregationOverTime(PromOperationId.MinOverTime),
+    createAggregationOverTime(PromOperationId.MaxOverTime),
+    createAggregationOverTime(PromOperationId.CountOverTime),
+    createAggregationOverTime(PromOperationId.LastOverTime),
+    createAggregationOverTime(PromOperationId.PresentOverTime),
+    createAggregationOverTime(PromOperationId.AbsentOverTime),
+    createAggregationOverTime(PromOperationId.StddevOverTime),
   ];
 }
 
@@ -67,13 +69,34 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       renderer: getAggregationByRenderer(name),
       addOperationHandler: defaultAddOperationHandler,
       paramChangedHandler: getLastLabelRemovedHandler(name),
-      explainHandler: getAggregationExplainer(name),
+      explainHandler: getAggregationExplainer(name, 'by'),
+      hideFromList: true,
+    },
+    {
+      id: `__${name}_without`,
+      name: `${getPromAndLokiOperationDisplayName(name)} without`,
+      params: [
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          editor: LabelParamEditor,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'aggregations by',
+      category: PromVisualQueryOperationCategory.Aggregations,
+      renderer: getAggregationWithoutRenderer(name),
+      addOperationHandler: defaultAddOperationHandler,
+      paramChangedHandler: getLastLabelRemovedHandler(name),
+      explainHandler: getAggregationExplainer(name, 'without'),
       hideFromList: true,
     },
   ];
 
   // Handle some special aggregations that have parameters
-  if (name === 'topk') {
+  if (name === 'topk' || name === 'bottomk') {
     const param: QueryBuilderOperationParamDef = {
       name: 'K-value',
       type: 'number',
@@ -94,14 +117,24 @@ function getAggregationByRenderer(aggregation: string) {
   };
 }
 
+function getAggregationWithoutRenderer(aggregation: string) {
+  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    return `${aggregation} without(${model.params.join(', ')}) (${innerExpr})`;
+  };
+}
+
 /**
  * Very simple poc implementation, needs to be modified to support all aggregation operators
  */
-function getAggregationExplainer(aggregationName: string) {
+function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without') {
   return function aggregationExplainer(model: QueryBuilderOperation) {
     const labels = model.params.map((label) => `\`${label}\``).join(' and ');
     const labelWord = pluralize('label', model.params.length);
-    return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+    if (mode === 'by') {
+      return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+    } else {
+      return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
+    }
   };
 }
 
@@ -141,24 +174,15 @@ function getOnLabelAdddedHandler(changeToOperartionId: string) {
 }
 
 function createAggregationOverTime(name: string): QueryBuilderOperationDef {
-  const functionName = `${name}_over_time`;
   return {
-    id: functionName,
-    name: getPromAndLokiOperationDisplayName(functionName),
-    params: [getAggregationOverTimeRangeVector()],
-    defaultParams: ['auto'],
+    id: name,
+    name: getPromAndLokiOperationDisplayName(name),
+    params: [getRangeVectorParamDef()],
+    defaultParams: ['$__interval'],
     alternativesKey: 'overtime function',
     category: PromVisualQueryOperationCategory.RangeFunctions,
     renderer: operationWithRangeVectorRenderer,
     addOperationHandler: addOperationWithRangeVector,
-  };
-}
-
-function getAggregationOverTimeRangeVector(): QueryBuilderOperationParamDef {
-  return {
-    name: 'Range vector',
-    type: 'string',
-    options: ['auto', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
   };
 }
 
@@ -167,11 +191,6 @@ function operationWithRangeVectorRenderer(
   def: QueryBuilderOperationDef,
   innerExpr: string
 ) {
-  let rangeVector = (model.params ?? [])[0] ?? 'auto';
-
-  if (rangeVector === 'auto') {
-    rangeVector = '$__interval';
-  }
-
+  let rangeVector = (model.params ?? [])[0] ?? '$__interval';
   return `${def.id}(${innerExpr}[${rangeVector}])`;
 }

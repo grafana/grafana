@@ -9,15 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
@@ -30,6 +31,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		DisableAnonymous:               true,
 		NGAlertAdminConfigPollInterval: 2 * time.Second,
 		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 3
+		AppModeProduction:              true,
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
@@ -57,9 +59,9 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	})
 
 	// Create a couple of "fake" Alertmanagers
-	fakeAM1 := schedule.NewFakeExternalAlertmanager(t)
-	fakeAM2 := schedule.NewFakeExternalAlertmanager(t)
-	fakeAM3 := schedule.NewFakeExternalAlertmanager(t)
+	fakeAM1 := store.NewFakeExternalAlertmanager(t)
+	fakeAM2 := store.NewFakeExternalAlertmanager(t)
+	fakeAM3 := store.NewFakeExternalAlertmanager(t)
 
 	// Now, let's test the configuration API.
 	{
@@ -67,7 +69,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"no admin configuration available\",\"error\": \"no admin configuration available\"}")
+		require.JSONEq(t, `{"message": "no admin configuration available"}`, string(b))
 	}
 
 	// An invalid alertmanager choice should return an error.
@@ -84,7 +86,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"Invalid alertmanager choice specified\"}")
+		require.JSONEq(t, `{"message": "Invalid alertmanager choice specified"}`, string(b))
 	}
 
 	// Let's try to send all the alerts to an external Alertmanager
@@ -102,7 +104,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"At least one Alertmanager must be provided to choose this option\"}")
+		require.JSONEq(t, `{"message": "At least one Alertmanager must be provided to choose this option"}`, string(b))
 	}
 
 	// Now, lets re-set external Alertmanagers for main organisation
@@ -121,7 +123,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"admin configuration updated\"}")
+		require.JSONEq(t, `{"message": "admin configuration updated"}`, string(b))
 	}
 
 	// If we get the configuration again, it shows us what we've set.
@@ -130,7 +132,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers))
+		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers), string(b))
 	}
 
 	// With the configuration set, we should eventually discover those Alertmanagers.
@@ -221,7 +223,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"admin configuration updated\"}")
+		require.JSONEq(t, "{\"message\": \"admin configuration updated\"}", string(b))
 	}
 
 	// If we get the configuration again, it shows us what we've set.
@@ -230,7 +232,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers))
+		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers), string(b))
 	}
 
 	// With the configuration set, we should eventually not discover Alertmanagers.

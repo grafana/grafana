@@ -6,6 +6,8 @@ import { PrometheusDatasource } from '../../datasource';
 import { QueryEditorMode } from '../shared/types';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import PromQlLanguageProvider from '../../language_provider';
+import { cloneDeep, defaultsDeep } from 'lodash';
+import { PromQuery } from '../../types';
 
 // We need to mock this because it seems jest has problem importing monaco in tests
 jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
@@ -82,9 +84,34 @@ describe('PromQueryEditorSelector', () => {
     switchToMode(QueryEditorMode.Builder);
     expect(onChange).toBeCalledWith({
       refId: 'A',
-      expr: '',
+      expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Builder,
     });
+  });
+
+  it('Can enable preview', async () => {
+    const { onChange } = renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
+
+    screen.getByLabelText('Preview').click();
+
+    expect(onChange).toBeCalledWith({
+      refId: 'A',
+      expr: defaultQuery.expr,
+      range: true,
+      editorMode: QueryEditorMode.Builder,
+      editorPreview: true,
+    });
+  });
+
+  it('Should show preview', async () => {
+    renderWithProps({
+      editorPreview: true,
+      editorMode: QueryEditorMode.Builder,
+      expr: 'my_metric',
+    });
+    expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
   });
 
   it('changes to code mode', async () => {
@@ -92,7 +119,8 @@ describe('PromQueryEditorSelector', () => {
     switchToMode(QueryEditorMode.Code);
     expect(onChange).toBeCalledWith({
       refId: 'A',
-      expr: '',
+      expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Code,
     });
   });
@@ -102,26 +130,47 @@ describe('PromQueryEditorSelector', () => {
     switchToMode(QueryEditorMode.Explain);
     expect(onChange).toBeCalledWith({
       refId: 'A',
-      expr: '',
+      expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Explain,
     });
+  });
+
+  it('parses query when changing to builder mode', async () => {
+    const { rerender } = renderWithProps({
+      refId: 'A',
+      expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
+      editorMode: QueryEditorMode.Code,
+    });
+    switchToMode(QueryEditorMode.Builder);
+    rerender(
+      <PromQueryEditorSelector
+        {...defaultProps}
+        query={{
+          refId: 'A',
+          expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
+          editorMode: QueryEditorMode.Builder,
+        }}
+      />
+    );
+
+    await screen.findByText('test_metric');
+    expect(screen.getByText('host.docker.internal:3000')).toBeInTheDocument();
+    expect(screen.getByText('Rate')).toBeInTheDocument();
+    expect(screen.getByText('$__interval')).toBeInTheDocument();
   });
 });
 
 function renderWithMode(mode: QueryEditorMode) {
+  return renderWithProps({ editorMode: mode } as any);
+}
+
+function renderWithProps(overrides?: Partial<PromQuery>) {
+  const query = defaultsDeep(overrides ?? {}, cloneDeep(defaultQuery));
   const onChange = jest.fn();
-  render(
-    <PromQueryEditorSelector
-      {...defaultProps}
-      onChange={onChange}
-      query={{
-        refId: 'A',
-        expr: '',
-        editorMode: mode,
-      }}
-    />
-  );
-  return { onChange };
+
+  const stuff = render(<PromQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />);
+  return { onChange, ...stuff };
 }
 
 function expectCodeEditor() {
@@ -130,7 +179,7 @@ function expectCodeEditor() {
 }
 
 function expectBuilder() {
-  expect(screen.getByText('Select metric')).toBeInTheDocument();
+  expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
 function expectExplain() {
