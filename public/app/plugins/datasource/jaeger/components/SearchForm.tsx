@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect, InlineField, InlineFieldRow, Input } from '@grafana/ui';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
@@ -15,7 +15,6 @@ type Props = {
   query: JaegerQuery;
   onChange: (value: JaegerQuery) => void;
 };
-type Options = { dataSource: JaegerDatasource; url: string; notFoundLabel: string };
 
 export const ALL_OPERATIONS_KEY = 'All';
 const allOperationsOption: SelectableValue<string> = {
@@ -34,55 +33,43 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     operations: false,
   });
 
-  const loadServices = async (
-    { dataSource, url, notFoundLabel }: Options,
-    loaderOfType: string
-  ): Promise<Array<SelectableValue<string>>> => {
-    setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: true }));
+  const loadServices = useCallback(
+    async (url: string, loaderOfType: string): Promise<Array<SelectableValue<string>>> => {
+      setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: true }));
 
-    try {
-      const services: string[] | null = await dataSource.metadataRequest(url);
-      if (!services) {
+      try {
+        const values: string[] | null = await datasource.metadataRequest(url);
+        if (!values) {
+          return [{ label: `No ${loaderOfType} found`, value: `No ${loaderOfType} found` }];
+        }
+
+        const serviceOptions: SelectableValue[] = values.sort().map((service) => ({
+          label: service,
+          value: service,
+        }));
+        return serviceOptions;
+      } catch (error) {
+        dispatch(notifyApp(createErrorNotification('Error', error)));
+        return [];
+      } finally {
         setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
-        return [{ label: notFoundLabel, value: notFoundLabel }];
       }
-
-      const serviceOptions: SelectableValue[] = services.sort().map((service) => ({
-        label: service,
-        value: service,
-      }));
-      setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
-      return serviceOptions;
-    } catch (error) {
-      dispatch(notifyApp(createErrorNotification('Error', error)));
-      setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
-      return [];
-    }
-  };
+    },
+    [datasource]
+  );
 
   useEffect(() => {
     const getServices = async () => {
-      const services = await loadServices(
-        {
-          dataSource: datasource,
-          url: '/api/services',
-          notFoundLabel: 'No service found',
-        },
-        'services'
-      );
+      const services = await loadServices('/api/services', 'services');
       setServiceOptions(services);
     };
     getServices();
-  }, [datasource]);
+  }, [datasource, loadServices]);
 
   useEffect(() => {
     const getOperations = async () => {
       const operations = await loadServices(
-        {
-          dataSource: datasource,
-          url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
-          notFoundLabel: 'No operation found',
-        },
+        `/api/services/${encodeURIComponent(query.service!)}/operations`,
         'operations'
       );
       setOperationOptions([allOperationsOption, ...operations]);
@@ -90,7 +77,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     if (query.service) {
       getOperations();
     }
-  }, [datasource, query.service]);
+  }, [datasource, query.service, loadServices]);
 
   return (
     <div className={css({ maxWidth: '500px' })}>
@@ -100,26 +87,8 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             inputId="service"
             menuShouldPortal
             cacheOptions={false}
-            loadOptions={() =>
-              loadServices(
-                {
-                  dataSource: datasource,
-                  url: '/api/services',
-                  notFoundLabel: 'No service found',
-                },
-                'services'
-              )
-            }
-            onOpenMenu={() =>
-              loadServices(
-                {
-                  dataSource: datasource,
-                  url: '/api/services',
-                  notFoundLabel: 'No service found',
-                },
-                'services'
-              )
-            }
+            loadOptions={() => loadServices('/api/services', 'services')}
+            onOpenMenu={() => loadServices('/api/services', 'services')}
             isLoading={isLoading.services}
             value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
             onChange={(v) =>
@@ -143,24 +112,10 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             menuShouldPortal
             cacheOptions={false}
             loadOptions={() =>
-              loadServices(
-                {
-                  dataSource: datasource,
-                  url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
-                  notFoundLabel: 'No operation found',
-                },
-                'operations'
-              )
+              loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
             }
             onOpenMenu={() =>
-              loadServices(
-                {
-                  dataSource: datasource,
-                  url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
-                  notFoundLabel: 'No operation found',
-                },
-                'operations'
-              )
+              loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
