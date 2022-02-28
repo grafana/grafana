@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -20,19 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type APIKeyStore interface {
-	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
-	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
-}
-
 type ServiceAccountsAPI struct {
 	cfg            *setting.Cfg
 	service        serviceaccounts.Service
 	accesscontrol  accesscontrol.AccessControl
 	RouterRegister routing.RouteRegister
 	store          serviceaccounts.Store
-	apiKeyStore    APIKeyStore
 	log            log.Logger
 }
 
@@ -47,7 +39,6 @@ func NewServiceAccountsAPI(
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
 	store serviceaccounts.Store,
-	apiKeyStore APIKeyStore,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		cfg:            cfg,
@@ -55,7 +46,6 @@ func NewServiceAccountsAPI(
 		accesscontrol:  accesscontrol,
 		RouterRegister: routerRegister,
 		store:          store,
-		apiKeyStore:    apiKeyStore,
 		log:            log.New("serviceaccounts.api"),
 	}
 }
