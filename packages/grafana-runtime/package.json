@@ -25,7 +25,7 @@
     "@grafana/data": "8.5.0-pre",
     "@grafana/e2e-selectors": "8.5.0-pre",
     "@grafana/ui": "8.5.0-pre",
-    "@sentry/browser": "6.17.4",
+    "@sentry/browser": "6.18.1",
     "history": "4.10.1",
     "lodash": "4.17.21",
     "react": "17.0.2",
