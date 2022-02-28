@@ -54,6 +54,7 @@ describe('<SpanBarRow>', () => {
       },
       spanID,
       logs: [],
+      references: [],
     },
   };
 
@@ -84,29 +85,27 @@ describe('<SpanBarRow>', () => {
   });
 
   it('render references button', () => {
-    const span = Object.assign(
-      {
-        references: [
-          {
-            refType: 'CHILD_OF',
-            traceID: 'trace1',
+    const newSpan = Object.assign({}, props.span);
+    const span = Object.assign(newSpan, {
+      references: [
+        {
+          refType: 'CHILD_OF',
+          traceID: 'trace1',
+          spanID: 'span0',
+          span: {
             spanID: 'span0',
-            span: {
-              spanID: 'span0',
-            },
           },
-          {
-            refType: 'CHILD_OF',
-            traceID: 'otherTrace',
+        },
+        {
+          refType: 'CHILD_OF',
+          traceID: 'otherTrace',
+          spanID: 'span1',
+          span: {
             spanID: 'span1',
-            span: {
-              spanID: 'span1',
-            },
           },
-        ],
-      },
-      props.span
-    );
+        },
+      ],
+    });
 
     const spanRow = shallow(<SpanBarRow {...props} span={span} />)
       .dive()

@@ -45,6 +45,7 @@ type NotifierOption struct {
 	Required       bool           `json:"required"`
 	ValidationRule string         `json:"validationRule"`
 	Secure         bool           `json:"secure"`
+	DependsOn      string         `json:"dependsOn"`
 }
 
 // InputType is the type of input that can be rendered in the frontend.

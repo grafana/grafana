@@ -503,6 +503,7 @@ func (m *SQLStoreMock) GetDataSourcesByType(ctx context.Context, query *models.G
 }
 
 func (m *SQLStoreMock) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	query.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
