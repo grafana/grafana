@@ -12,6 +12,7 @@ import { TableFieldOptions } from '@grafana/schema';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { TableSuggestionsSupplier } from './suggestions';
+import { PageSizeEditor } from './PageSizeEditor';
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -138,10 +139,12 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         defaultValue: '',
         showIf: (cfg) => cfg.footer?.show,
       })
-      .addNumberInput({
+      .addCustomEditor({
+        id: 'pageSize',
         path: 'pageSize',
         name: 'Page size',
         description: 'Number of rows to display per page',
+        editor: PageSizeEditor,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

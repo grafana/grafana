@@ -212,7 +212,6 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   useEffect(() => {
     if (pageSize) {
-      console.log('set page size', pageSize);
       setPageSize(pageSize);
     }
   }, [pageSize, setPageSize]);
