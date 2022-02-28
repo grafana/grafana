@@ -132,7 +132,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
       return map(parts, sqlPart.create).filter((n) => n);
     });
     this.timescaleAggCheck();
-
     this.whereParts = map(this.target.where, sqlPart.create).filter((n) => n);
     this.groupParts = map(this.target.group, sqlPart.create).filter((n) => n);
   }
