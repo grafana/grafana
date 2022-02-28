@@ -219,7 +219,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Live:                  newTestLive(t),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
-			dashboardService:      service.ProvideDashboardService(dashboardStore),
+			dashboardService:      service.ProvideDashboardService(dashboardStore, nil),
 			SQLStore:              mockSQLStore,
 		}
 		hs.SQLStore = mockSQLStore
@@ -939,7 +939,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		LibraryPanelService:          &libraryPanelsService,
 		LibraryElementService:        &libraryElementsService,
 		ProvisioningService:          provisioningService,
-		dashboardProvisioningService: service.ProvideDashboardService(dashboardStore),
+		dashboardProvisioningService: service.ProvideDashboardService(dashboardStore, nil),
 		SQLStore:                     sc.sqlStore,
 	}
 
