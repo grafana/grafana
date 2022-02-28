@@ -120,7 +120,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	r.opts = rendering.Opts{
 		AuthOpts: authOpts,
 		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout:                  10 * time.Second,
+			Timeout:                  20 * time.Second,
 			RequestTimeoutMultiplier: 3,
 		},
 		Theme:           theme,

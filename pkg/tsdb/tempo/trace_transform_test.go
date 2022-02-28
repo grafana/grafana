@@ -106,5 +106,6 @@ var fields = []string{
 	"startTime",
 	"duration",
 	"logs",
+	"references",
 	"tags",
 }

@@ -27,8 +27,9 @@ func TestDashboardService(t *testing.T) {
 		fakeStore := database.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 		service := &DashboardServiceImpl{
-			log:            log.New("test.logger"),
-			dashboardStore: &fakeStore,
+			log:                log.New("test.logger"),
+			dashboardStore:     &fakeStore,
+			dashAlertExtractor: &dummyDashAlertExtractor{},
 		}
 
 		origNewDashboardGuardian := guardian.New

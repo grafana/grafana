@@ -44,6 +44,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
+import { transformBackendResult } from './backendResultTransformer';
 import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 
 import {
@@ -153,19 +154,7 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    // if all these are true, run query through backend:
-    // - feature-flag is enabled
-    // - we are in explore-mode
-    // - for every query it is true that:
-    //   - query is range query
-    //   - and query is metric query
-    //   - and query is not a log-volume-query (those need a custom http header)
-    const shouldRunBackendQuery =
-      config.featureToggles.lokiBackendMode &&
-      request.app === CoreApp.Explore &&
-      request.targets.every(
-        (query) => query.queryType === LokiQueryType.Range && isMetricsQuery(query.expr) && !query.volumeQuery
-      );
+    const shouldRunBackendQuery = config.featureToggles.lokiBackendMode && request.app === CoreApp.Explore;
 
     if (shouldRunBackendQuery) {
       // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
@@ -173,7 +162,7 @@ export class LokiDatasource
         ...request,
         targets: request.targets.map(getNormalizedLokiQuery),
       };
-      return super.query(fixedRequest);
+      return super.query(fixedRequest).pipe(map((response) => transformBackendResult(response, fixedRequest)));
     }
 
     const filteredTargets = request.targets

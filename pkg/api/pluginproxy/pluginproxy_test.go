@@ -9,11 +9,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -30,9 +29,10 @@ func TestPluginProxy(t *testing.T) {
 				{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 			},
 		}
-		store := mockstore.NewSQLStoreMock()
+
+		store := &mockPluginsSettingsService{}
 		key, _ := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
-		store.ExpectedPluginSetting = &models.PluginSetting{
+		store.pluginSetting = &models.PluginSetting{
 			SecureJsonData: map[string][]byte{
 				"key": key,
 			},
@@ -63,8 +63,9 @@ func TestPluginProxy(t *testing.T) {
 	t.Run("When SendUserHeader config is enabled", func(t *testing.T) {
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 		require.NoError(t, err)
-		store := mockstore.NewSQLStoreMock()
-		store.ExpectedPluginSetting = &models.PluginSetting{}
+
+		store := &mockPluginsSettingsService{}
+		store.pluginSetting = &models.PluginSetting{}
 
 		req := getPluginProxiedRequest(
 			t,
@@ -89,8 +90,9 @@ func TestPluginProxy(t *testing.T) {
 	t.Run("When SendUserHeader config is disabled", func(t *testing.T) {
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 		require.NoError(t, err)
-		store := mockstore.NewSQLStoreMock()
-		store.ExpectedPluginSetting = &models.PluginSetting{}
+
+		store := &mockPluginsSettingsService{}
+		store.pluginSetting = &models.PluginSetting{}
 
 		req := getPluginProxiedRequest(
 			t,
@@ -114,8 +116,9 @@ func TestPluginProxy(t *testing.T) {
 	t.Run("When SendUserHeader config is enabled but user is anonymous", func(t *testing.T) {
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 		require.NoError(t, err)
-		store := mockstore.NewSQLStoreMock()
-		store.ExpectedPluginSetting = &models.PluginSetting{}
+
+		store := &mockPluginsSettingsService{}
+		store.pluginSetting = &models.PluginSetting{}
 
 		req := getPluginProxiedRequest(
 			t,
@@ -140,8 +143,9 @@ func TestPluginProxy(t *testing.T) {
 			URL:    "{{.JsonData.dynamicUrl}}",
 			Method: "GET",
 		}
-		store := mockstore.NewSQLStoreMock()
-		store.ExpectedPluginSetting = &models.PluginSetting{
+
+		store := &mockPluginsSettingsService{}
+		store.pluginSetting = &models.PluginSetting{
 			JsonData: map[string]interface{}{
 				"dynamicUrl": "https://dynamic.grafana.com",
 			},
@@ -174,8 +178,9 @@ func TestPluginProxy(t *testing.T) {
 			URL:    "{{if .JsonData.apiHost}}{{.JsonData.apiHost}}{{else}}https://example.com{{end}}",
 			Method: "GET",
 		}
-		store := mockstore.NewSQLStoreMock()
-		store.ExpectedPluginSetting = &models.PluginSetting{}
+
+		store := &mockPluginsSettingsService{}
+		store.pluginSetting = &models.PluginSetting{}
 
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 		require.NoError(t, err)
@@ -205,14 +210,13 @@ func TestPluginProxy(t *testing.T) {
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 		}
 
-		store := mockstore.NewSQLStoreMock()
-
+		store := &mockPluginsSettingsService{}
 		encryptedJsonData, _ := secretsService.EncryptJsonData(
 			context.Background(),
 			map[string]string{"key": "123"},
 			secrets.WithoutScope(),
 		)
-		store.ExpectedPluginSetting = &models.PluginSetting{
+		store.pluginSetting = &models.PluginSetting{
 			JsonData:       map[string]interface{}{"dynamicUrl": "https://dynamic.grafana.com"},
 			SecureJsonData: encryptedJsonData,
 		}
@@ -263,9 +267,8 @@ func TestPluginProxy(t *testing.T) {
 				Resp: responseWriter,
 			},
 		}
-		store := mockstore.NewSQLStoreMock()
-
-		store.ExpectedPluginSetting = &models.PluginSetting{
+		store := &mockPluginsSettingsService{}
+		store.pluginSetting = &models.PluginSetting{
 			SecureJsonData: map[string][]byte{},
 		}
 		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, store, secretsService)
@@ -282,7 +285,7 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, store sqlstore.Store) *http.Request {
+func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, store pluginsettings.Service) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.Route{
@@ -297,4 +300,22 @@ func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *
 	require.NoError(t, err)
 	proxy.Director(req)
 	return req
+}
+
+type mockPluginsSettingsService struct {
+	pluginSetting *models.PluginSetting
+	err           error
+}
+
+func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	query.Result = s.pluginSetting
+	return s.err
+}
+
+func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+	return s.err
+}
+
+func (s *mockPluginsSettingsService) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+	return s.err
 }

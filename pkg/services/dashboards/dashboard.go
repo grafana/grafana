@@ -26,6 +26,7 @@ type DashboardProvisioningService interface {
 	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
+	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 }
 
 //go:generate mockery --name Store --structname FakeDashboardStore --output database --outpkg database --filename database_mock.go
@@ -41,6 +42,7 @@ type Store interface {
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
+	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 	UnprovisionDashboard(ctx context.Context, id int64) error
