@@ -86,7 +86,6 @@ func TestMiddlewareCSRF(t *testing.T) {
 			require.Equal(t, tt.code, rr.Code)
 		})
 	}
-
 }
 
 func csrfScenario(t *testing.T, cookieName, method, origin, host, defaultPort string) *httptest.ResponseRecorder {
