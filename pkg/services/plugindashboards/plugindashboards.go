@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -17,14 +18,16 @@ type pluginSettingsStore interface {
 }
 
 func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, pluginStore plugins.Store,
-	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service) *Service {
-	s := new(sqlStore, bus, pluginStore, pluginDashboardManager, dashboardImportService)
+	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service,
+	pluginSettingsStore *pluginsettings.ServiceImpl) *Service {
+	s := new(sqlStore, bus, pluginStore, pluginDashboardManager, dashboardImportService, pluginSettingsStore)
 	s.updateAppDashboards()
 	return s
 }
 
 func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugins.Store,
-	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service) *Service {
+	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service,
+	pluginSettings pluginsettings.Service) *Service {
 	s := &Service{
 		pluginSettingsStore:    pluginSettingsStore,
 		bus:                    bus,
@@ -32,6 +35,7 @@ func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugi
 		pluginDashboardManager: pluginDashboardManager,
 		dashboardImportService: dashboardImportService,
 		logger:                 log.New("plugindashboards"),
+		pluginSettings:         pluginSettings,
 	}
 	bus.AddEventListener(s.handlePluginStateChanged)
 
@@ -45,6 +49,7 @@ type Service struct {
 	pluginDashboardManager plugins.PluginDashboardManager
 	dashboardImportService dashboardimport.Service
 	logger                 log.Logger
+	pluginSettings         pluginsettings.Service
 }
 
 func (s *Service) updateAppDashboards() {
@@ -106,7 +111,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 
 	// update version in plugin_setting table to mark that we have processed the update
 	query := models.GetPluginSettingByIdQuery{PluginId: plugin.ID, OrgId: orgID}
-	if err := s.bus.Dispatch(ctx, &query); err != nil {
+	if err := s.pluginSettings.GetPluginSettingById(ctx, &query); err != nil {
 		s.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
@@ -118,7 +123,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 		PluginVersion: plugin.Info.Version,
 	}
 
-	if err := s.bus.Dispatch(ctx, &cmd); err != nil {
+	if err := s.pluginSettings.UpdatePluginSettingVersion(ctx, &cmd); err != nil {
 		s.logger.Error("Failed to update plugin setting version", "error", err)
 	}
 }
