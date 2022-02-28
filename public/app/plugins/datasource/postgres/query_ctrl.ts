@@ -111,13 +111,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  timescaleAggCheck(aggIndex: number) {
-    const baseOpts = this.selectParts[0][aggIndex].def.params[0].baseOptions;
-    const timescaleOpts = baseOpts.concat(this.selectParts[0][aggIndex].def.params[0].timescaleOptions);
-    if (this.datasource.jsonData.timescaledb === true) {
-      return timescaleOpts;
-    } else {
-      return baseOpts;
+  timescaleAggCheck() {
+    const aggIndex = this.findAggregateIndex(this.selectParts[0]);
+
+    // add or remove TimescaleDB aggregate functions as needed
+    if (aggIndex !== -1) {
+      const baseOpts = this.selectParts[0][aggIndex].def.params[0].baseOptions;
+      const timescaleOpts = baseOpts.concat(this.selectParts[0][aggIndex].def.params[0].timescaleOptions);
+
+      if (this.datasource.jsonData.timescaledb === true) {
+        this.selectParts[0][aggIndex].def.params[0].options = timescaleOpts;
+      } else {
+        this.selectParts[0][aggIndex].def.params[0].options = baseOpts;
+      }
     }
   }
 
@@ -125,12 +131,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.selectParts = map(this.target.select, (parts: any) => {
       return map(parts, sqlPart.create).filter((n) => n);
     });
-    const aggIndex = this.findAggregateIndex(this.selectParts[0]);
-
-    // add or remove TimescaleDB aggregate functions as needed
-    if (aggIndex !== -1) {
-      this.selectParts[0][aggIndex].def.params[0].options = this.timescaleAggCheck(aggIndex);
-    }
+    this.timescaleAggCheck();
 
     this.whereParts = map(this.target.where, sqlPart.create).filter((n) => n);
     this.groupParts = map(this.target.group, sqlPart.create).filter((n) => n);
@@ -142,6 +143,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         return { type: part.def.type, datatype: part.datatype, params: part.params };
       });
     });
+    this.timescaleAggCheck();
     this.target.where = map(this.whereParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, name: part.name, params: part.params };
     });
