@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, CSSObject } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getScrollbarWidth } from '../../utils';
 
@@ -15,6 +15,24 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
   const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
+    const cellActionsOverflow: CSSObject = {
+      margin: theme.spacing(0, -0.5, 0, 0.5),
+    };
+    const cellActionsNoOverflow: CSSObject = {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      margin: 'auto',
+    };
+
+    const onHoverOverflow: CSSObject = {
+      overflow: 'visible',
+      width: 'auto !important',
+      boxShadow: `0 0 2px ${theme.colors.primary.main}`,
+      background: background ?? rowHoverBg,
+      zIndex: 1,
+    };
+
     return css`
       label: ${overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow'};
       padding: ${cellPadding}px;
@@ -32,23 +50,15 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
         border-right: none;
         padding-right: ${lastChildExtraPadding}px;
       }
+
       &:hover {
+        ${overflowOnHover && onHoverOverflow};
         .cellActions {
           visibility: visible;
           opacity: 1;
+          width: auto;
         }
       }
-
-      ${overflowOnHover &&
-      `&:hover {
-        overflow: visible;
-        width: auto !important;
-        box-shadow: 0 0 2px ${theme.colors.primary.main};
-        background: ${background ?? rowHoverBg};
-        z-index: 1;
-        
-        }
-      }`}
 
       a {
         color: inherit;
@@ -56,13 +66,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       .cellActions {
         display: flex;
-        ${overflowOnHover
-          ? `margin: ${theme.spacing(0, -1, 0, 0.5)};`
-          : `position: absolute;
-          top: 0;
-          right: 0; margin: auto;`}
+        ${overflowOnHover ? cellActionsOverflow : cellActionsNoOverflow}
         visibility: hidden;
         opacity: 0;
+        width: 0;
         align-items: center;
         height: 100%;
         padding: ${theme.spacing(1, 0.5, 1, 0.5)};
