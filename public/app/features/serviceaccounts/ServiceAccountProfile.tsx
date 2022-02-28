@@ -1,9 +1,8 @@
 import React, { PureComponent, useRef, useState } from 'react';
 import { Role, ServiceAccountDTO } from 'app/types';
 import { css, cx } from '@emotion/css';
-import { config } from 'app/core/config';
-import { dateTimeFormat, GrafanaTheme, OrgRole, TimeZone } from '@grafana/data';
-import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
+import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
+import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, useStyles2 } from '@grafana/ui';
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 
 interface Props {
@@ -56,7 +55,7 @@ export function ServiceAccountProfile({
     });
   };
 
-  const styles = getStyles(config.theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -91,12 +90,17 @@ export function ServiceAccountProfile({
         </div>
         <div className={styles.buttonRow}>
           <>
-            <Button variant="destructive" onClick={showDeleteServiceAccountModal(true)} ref={deleteServiceAccountRef}>
+            <Button
+              type={'button'}
+              variant="destructive"
+              onClick={showDeleteServiceAccountModal(true)}
+              ref={deleteServiceAccountRef}
+            >
               Delete service account
             </Button>
             <ConfirmModal
               isOpen={showDeleteModal}
-              title="Delete serviceaccount"
+              title="Delete service account"
               body="Are you sure you want to delete this service account?"
               confirmText="Delete service account"
               onConfirm={handleServiceAccountDelete}
@@ -104,7 +108,7 @@ export function ServiceAccountProfile({
             />
           </>
           {serviceAccount.isDisabled ? (
-            <Button variant="secondary" onClick={handleServiceAccountEnable}>
+            <Button type={'button'} variant="secondary" onClick={handleServiceAccountEnable}>
               Enable service account
             </Button>
           ) : (
@@ -128,16 +132,16 @@ export function ServiceAccountProfile({
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     buttonRow: css`
-      margin-top: 0.8rem;
+      margin-top: ${theme.spacing(1.5)};
       > * {
-        margin-right: 16px;
+        margin-right: ${theme.spacing(2)};
       }
     `,
   };
-});
+};
 
 interface ServiceAccountProfileRowProps {
   label: string;
