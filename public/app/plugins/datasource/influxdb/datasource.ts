@@ -560,7 +560,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           if (!res || !res.data || res.state !== LoadingState.Done) {
             return {
               status: 'error',
-              message: 'Error reading InfluxDB. Please make sure you have sufficient permissions.',
+              message: 'Error reading InfluxDB.',
             };
           }
           if (res.data?.length) {
@@ -568,8 +568,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           }
           return {
             status: 'error',
-            message:
-              'Successfully connected to InfluxDB but was unable to retrieve any data. Usually, this happens because of insufficient permissions or when there is no data to retrieve.',
+            message: 'Successfully connected to InfluxDB, but no tags found.',
           };
         })
         .catch((err: any) => {
