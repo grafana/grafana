@@ -49,7 +49,7 @@ register({
     {
       name: 'name',
       type: 'string',
-      options: ['avg', 'count', 'min', 'max', 'sum', 'stddev', 'variance'],
+      options: [],
       baseOptions: ['avg', 'count', 'min', 'max', 'sum', 'stddev', 'variance'],
       timescaleOptions: ['first', 'last'],
     },

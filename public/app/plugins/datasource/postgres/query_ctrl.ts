@@ -127,7 +127,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     });
     const aggIndex = this.findAggregateIndex(this.selectParts[0]);
 
-    // add/remove TimescaleDB aggregate functions as needed
+    // add or remove TimescaleDB aggregate functions as needed
     if (aggIndex !== -1) {
       this.selectParts[0][aggIndex].def.params[0].options = this.timescaleAggCheck(aggIndex);
     }
