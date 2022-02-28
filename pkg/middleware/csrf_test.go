@@ -5,17 +5,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMiddlewareCSRF(t *testing.T) {
-	rr := csrfScenario(t, "foo", "localhost", "notLocalhost")
-	spew.Dump(rr.Body)
+	rr := csrfScenario(t, "foo", "localhost", "notLocalhost", "80")
 	require.Equal(t, rr.Code, http.StatusForbidden)
 }
 
-func csrfScenario(t *testing.T, cookieName, origin string, host string) *httptest.ResponseRecorder {
+func csrfScenario(t *testing.T, cookieName, origin, host, defaultPort string) *httptest.ResponseRecorder {
 	req, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -32,7 +30,7 @@ func csrfScenario(t *testing.T, cookieName, origin string, host string) *httptes
 	})
 
 	rr := httptest.NewRecorder()
-	handler := CSRF(cookieName)(testHandler)
+	handler := CSRF(cookieName, defaultPort)(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
 }

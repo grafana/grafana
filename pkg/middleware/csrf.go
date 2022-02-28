@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"errors"
-	"net"
 	"net/http"
 	"net/url"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func CSRF(loginCookieName string) func(http.Handler) http.Handler {
+func CSRF(loginCookieName, defaultPort string) func(http.Handler) http.Handler {
 	// As per RFC 7231/4.2.2 these methods are idempotent:
 	// (GET is excluded because it may have side effects in some APIs)
 	safeMethods := []string{"HEAD", "OPTIONS", "TRACE"}
@@ -27,13 +28,13 @@ func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 				}
 			}
 			// Otherwise - verify that Origin matches the server origin
-			host, _, err := net.SplitHostPort(r.Host)
+			netAddr, err := util.SplitHostPortDefault(r.Host, "", defaultPort)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 			}
 
 			origin, err := url.Parse(r.Header.Get("Origin"))
-			if err != nil || host == "" || (origin.String() != "" && origin.Hostname() != host) {
+			if err != nil || netAddr.Host == "" || (origin.String() != "" && origin.Hostname() != netAddr.Host) {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
 				return
 			}
