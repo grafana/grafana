@@ -38,7 +38,8 @@ func CSRF(loginCookieName string, logger log.Logger) func(http.Handler) http.Han
 			origin, err := url.Parse(r.Header.Get("Origin"))
 			if err != nil {
 				logger.Error("error parsing Origin header", "err", err)
-			} else if netAddr.Host == "" || (origin.String() != "" && origin.Hostname() != netAddr.Host) {
+			}
+			if err != nil || netAddr.Host == "" || (origin.String() != "" && origin.Hostname() != netAddr.Host) {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
 				return
 			}
