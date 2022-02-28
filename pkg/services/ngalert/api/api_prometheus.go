@@ -43,14 +43,16 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		if alertState.State == eval.Alerting {
 			valString = alertState.LastEvaluationString
 		}
+
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
-			Annotations: map[string]string{}, //TODO: Once annotations are added to the evaluation result, set them here
+			Annotations: alertState.Annotations,
 			State:       alertState.State.String(),
 			ActiveAt:    &startsAt,
 			Value:       valString,
 		})
 	}
+
 	return response.JSON(http.StatusOK, alertResponse)
 }
 
