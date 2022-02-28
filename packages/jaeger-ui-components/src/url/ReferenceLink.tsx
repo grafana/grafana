@@ -41,6 +41,7 @@ export default function ReferenceLink(props: ReferenceLinkProps) {
         if (!createLinkToExternalSpan) {
           throw new Error("ExternalLinkContext does not have a value, you probably forgot to setup it's provider");
         }
+
         return (
           <a
             href={createLinkToExternalSpan(reference.traceID, reference.spanID)}

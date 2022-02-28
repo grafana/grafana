@@ -43,5 +43,7 @@ export interface FeatureToggles {
   lokiLive?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
+  dashboardComments?: boolean;
+  annotationComments?: boolean;
   migrationLocking?: boolean;
 }

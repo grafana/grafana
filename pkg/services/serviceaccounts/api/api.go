@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -20,19 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type APIKeyStore interface {
-	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
-	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
-}
-
 type ServiceAccountsAPI struct {
 	cfg            *setting.Cfg
 	service        serviceaccounts.Service
 	accesscontrol  accesscontrol.AccessControl
 	RouterRegister routing.RouteRegister
 	store          serviceaccounts.Store
-	apiKeyStore    APIKeyStore
 	log            log.Logger
 }
 
@@ -47,7 +39,6 @@ func NewServiceAccountsAPI(
 	accesscontrol accesscontrol.AccessControl,
 	routerRegister routing.RouteRegister,
 	store serviceaccounts.Store,
-	apiKeyStore APIKeyStore,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		cfg:            cfg,
@@ -55,7 +46,6 @@ func NewServiceAccountsAPI(
 		accesscontrol:  accesscontrol,
 		RouterRegister: routerRegister,
 		store:          store,
-		apiKeyStore:    apiKeyStore,
 		log:            log.New("serviceaccounts.api"),
 	}
 }
@@ -70,13 +60,15 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
-		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
+		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
+		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
 		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.updateServiceAccount))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
 		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
-		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
 		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
@@ -92,6 +84,8 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
+	cmd.OrgID = c.OrgId
+
 	user, err := api.service.CreateServiceAccount(c.Req.Context(), &cmd)
 	switch {
 	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -192,6 +186,11 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
 		}
 	}
+
+	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
+	metadata := api.getAccessControlMetadata(ctx, map[string]bool{saIDString: true})
+	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
+	serviceAccount.AccessControl = metadata[saIDString]
 	return response.JSON(http.StatusOK, serviceAccount)
 }
 

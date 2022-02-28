@@ -8,14 +8,8 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/BarGauge/BarGauge.test.tsx:2315765050": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/BigValue/BigValue.test.tsx:261212211": [
-      [1, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.test.tsx:1355456933": [
       [1, 31, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.test.tsx:3838344574": [
-      [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/FileUpload/FileUpload.test.tsx:3475964456": [
       [1, 19, 13, "RegExp match", "2409514259"]
@@ -49,9 +43,6 @@ exports[`no enzyme tests`] = {
     ],
     "packages/grafana-ui/src/components/Logs/LogRows.test.tsx:2288254498": [
       [3, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Modal/Modal.test.tsx:4235780832": [
-      [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:1906163280": [
       [1, 19, 13, "RegExp match", "2409514259"]
@@ -113,7 +104,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:2127169675": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:2454947085": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:814916029": [
       [15, 26, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianKeyValues.test.js:2200354834": [
@@ -122,7 +113,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianLogs.test.js:3242453659": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianReferences.test.js:3043344541": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianReferences.test.js:1301875390": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianText.test.js:2881451220": [
@@ -281,6 +272,9 @@ exports[`no enzyme tests`] = {
     "public/app/features/folders/FolderSettingsPage.test.tsx:1751147194": [
       [2, 19, 13, "RegExp match", "2409514259"]
     ],
+    "public/app/features/invites/InviteesTable.test.tsx:3077684439": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
     "public/app/features/org/OrgDetailsPage.test.tsx:2540662821": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -308,13 +302,10 @@ exports[`no enzyme tests`] = {
     "public/app/features/teams/TeamSettings.test.tsx:2628968507": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/users/InviteesTable.test.tsx:2271264692": [
-      [1, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/users/UsersActionBar.test.tsx:4031641375": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/users/UsersListPage.test.tsx:2523261097": [
+    "public/app/features/users/UsersListPage.test.tsx:2626906707": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/users/UsersTable.test.tsx:3051231816": [

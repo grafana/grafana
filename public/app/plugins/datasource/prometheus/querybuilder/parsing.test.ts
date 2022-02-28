@@ -365,6 +365,17 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('lone aggregation without params', () => {
+    expect(buildVisualQueryFromString('sum()')).toEqual({
+      errors: [],
+      query: {
+        metric: '',
+        labels: [],
+        operations: [{ id: 'sum', params: [] }],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
