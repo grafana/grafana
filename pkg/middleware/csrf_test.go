@@ -11,57 +11,59 @@ import (
 
 func TestMiddlewareCSRF(t *testing.T) {
 	tests := []struct {
-		name        string
-		cookieName  string
-		method      string
-		origin      string
-		host        string
-		defaultPort string
-		code        int
+		name       string
+		cookieName string
+		method     string
+		origin     string
+		host       string
+		code       int
 	}{
 		{
-			name:        "mismatched origin and host is forbidden",
-			cookieName:  "foo",
-			method:      "GET",
-			origin:      "http://notLocalhost",
-			host:        "localhost",
-			defaultPort: "80",
-			code:        http.StatusForbidden,
+			name:       "mismatched origin and host is forbidden",
+			cookieName: "foo",
+			method:     "GET",
+			origin:     "http://notLocalhost",
+			host:       "localhost",
+			code:       http.StatusForbidden,
 		},
 		{
-			name:        "mismatched origin and host is NOT forbidden with a 'Safe Method'",
-			cookieName:  "foo",
-			method:      "TRACE",
-			origin:      "http://notLocalhost",
-			host:        "localhost",
-			defaultPort: "80",
-			code:        http.StatusOK,
+			name:       "mismatched origin and host is NOT forbidden with a 'Safe Method'",
+			cookieName: "foo",
+			method:     "TRACE",
+			origin:     "http://notLocalhost",
+			host:       "localhost",
+			code:       http.StatusOK,
 		},
 		{
-			name:        "mismatched origin and host is NOT forbidden without a cookie",
-			cookieName:  "",
-			method:      "GET",
-			origin:      "http://notLocalhost",
-			host:        "localhost",
-			defaultPort: "80",
-			code:        http.StatusOK,
+			name:       "mismatched origin and host is NOT forbidden without a cookie",
+			cookieName: "",
+			method:     "GET",
+			origin:     "http://notLocalhost",
+			host:       "localhost",
+			code:       http.StatusOK,
 		},
 		{
-			name:        "malformed host is a bad request",
-			cookieName:  "foo",
-			method:      "GET",
-			host:        "localhost:80:80",
-			defaultPort: "80",
-			code:        http.StatusBadRequest,
+			name:       "malformed host is a bad request",
+			cookieName: "foo",
+			method:     "GET",
+			host:       "localhost:80:80",
+			code:       http.StatusBadRequest,
 		},
 		{
-			name:        "should works without port",
-			cookieName:  "foo",
-			method:      "GET",
-			host:        "localhost",
-			origin:      "http://localhost",
-			defaultPort: "80",
-			code:        http.StatusOK,
+			name:       "host works without port",
+			cookieName: "foo",
+			method:     "GET",
+			host:       "localhost",
+			origin:     "http://localhost",
+			code:       http.StatusOK,
+		},
+		{
+			name:       "port does not have to match",
+			cookieName: "foo",
+			method:     "GET",
+			host:       "localhost:80",
+			origin:     "http://localhost:3000",
+			code:       http.StatusOK,
 		},
 		{
 			name:       "IPv6 host works with port",
@@ -80,24 +82,23 @@ func TestMiddlewareCSRF(t *testing.T) {
 			code:       http.StatusOK,
 		},
 		{
-			name:        "IPv6 host (with longer address) should get default port",
-			cookieName:  "foo",
-			method:      "GET",
-			host:        "[2001:db8::1]",
-			origin:      "http://[2001:db8::1]",
-			defaultPort: "3000",
-			code:        http.StatusOK,
+			name:       "IPv6 host (with longer address) works without port",
+			cookieName: "foo",
+			method:     "GET",
+			host:       "[2001:db8::1]",
+			origin:     "http://[2001:db8::1]",
+			code:       http.StatusOK,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rr := csrfScenario(t, tt.cookieName, tt.method, tt.origin, tt.host, tt.defaultPort)
+			rr := csrfScenario(t, tt.cookieName, tt.method, tt.origin, tt.host)
 			require.Equal(t, tt.code, rr.Code)
 		})
 	}
 }
 
-func csrfScenario(t *testing.T, cookieName, method, origin, host, defaultPort string) *httptest.ResponseRecorder {
+func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httptest.ResponseRecorder {
 	req, err := http.NewRequest(method, "/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +118,7 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host, defaultPort st
 	})
 
 	rr := httptest.NewRecorder()
-	handler := CSRF(cookieName, defaultPort, log.New())(testHandler)
+	handler := CSRF(cookieName, log.New())(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
 }

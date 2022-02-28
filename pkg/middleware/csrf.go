@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func CSRF(loginCookieName, defaultPort string, logger log.Logger) func(http.Handler) http.Handler {
+func CSRF(loginCookieName string, logger log.Logger) func(http.Handler) http.Handler {
 	// As per RFC 7231/4.2.2 these methods are idempotent:
 	// (GET is excluded because it may have side effects in some APIs)
 	safeMethods := []string{"HEAD", "OPTIONS", "TRACE"}
@@ -29,17 +29,13 @@ func CSRF(loginCookieName, defaultPort string, logger log.Logger) func(http.Hand
 				}
 			}
 			// Otherwise - verify that Origin matches the server origin
-			netAddr, err := util.SplitHostPortDefault(r.Host, "", defaultPort)
+			netAddr, err := util.SplitHostPortDefault(r.Host, "", "0") // we ignore the port
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
 			origin, err := url.Parse(r.Header.Get("Origin"))
-			// Possible TODO: If Origin, but malformed, error?
-			// Per url.Parse: The url may be relative (a path, without a host) or absolute (starting with
-			// a scheme). Trying to parse a hostname and path without a scheme is invalid but may not
-			//  necessarily return an error, due to parsing ambiguities.
 			if err != nil {
 				logger.Error("error parsing Origin header", "err", err)
 			} else if netAddr.Host == "" || (origin.String() != "" && origin.Hostname() != netAddr.Host) {
