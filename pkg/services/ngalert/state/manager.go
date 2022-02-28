@@ -189,7 +189,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.createAlertAnnotation(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
+		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
 	}
 	return currentState
 }
@@ -237,7 +237,7 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) createAlertAnnotation(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state eval.State, previousState eval.State) {
+func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state eval.State, previousState eval.State) {
 	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", state.String(), "oldState", previousState.String())
 
 	labels = removePrivateLabels(labels)
@@ -299,6 +299,10 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 
 			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
+			}
+
+			if s.State == eval.Alerting {
+				st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
 			}
 		}
 	}

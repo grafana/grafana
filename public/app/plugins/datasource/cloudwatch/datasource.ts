@@ -1,9 +1,3 @@
-import React from 'react';
-import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
-import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
-import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
-import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
   DataQueryError,
@@ -22,44 +16,50 @@ import {
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
-
+import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { AppNotificationTimeout } from 'app/types';
-import { store } from 'app/store/store';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { VariableWithMultiSupport } from 'app/features/variables/types';
+import { store } from 'app/store/store';
+import { AppNotificationTimeout } from 'app/types';
+import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
+import React from 'react';
+import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
+
+import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
+import { CloudWatchLanguageProvider } from './language_provider';
 import memoizedDebounce from './memoizedDebounce';
+import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
 import {
-  MetricEditorMode,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
+  CloudWatchLogsRequest,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   DescribeLogGroupsRequest,
+  Dimensions,
   GetLogEventsRequest,
   GetLogGroupFieldsRequest,
   GetLogGroupFieldsResponse,
   isCloudWatchLogsQuery,
   LogAction,
-  MetricQueryType,
+  MetricEditorMode,
   MetricQuery,
+  MetricQueryType,
   MetricRequest,
   StartQueryRequest,
   TSDBResponse,
-  Dimensions,
-  CloudWatchLogsRequest,
 } from './types';
-import { CloudWatchLanguageProvider } from './language_provider';
-import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { increasingInterval } from './utils/rxjs/increasingInterval';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
 import { runWithRetry } from './utils/logsRetry';
-import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
-import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
+import { increasingInterval } from './utils/rxjs/increasingInterval';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -268,7 +268,7 @@ export class CloudWatchDatasource
     const validMetricsQueries = metricQueries
       .filter(this.filterMetricQuery)
       .map((item: CloudWatchMetricsQuery): MetricQuery => {
-        item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
+        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
         item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
         item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
         item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);

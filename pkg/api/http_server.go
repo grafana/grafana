@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -47,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -134,10 +136,11 @@ type HTTPServer struct {
 	dashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
-	DatasourcePermissionsService DatasourcePermissionsService
+	DatasourcePermissionsService permissions.DatasourcePermissionsService
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
 	DashboardsnapshotsService    *dashboardsnapshots.Service
+	PluginSettings               *pluginsettings.ServiceImpl
 }
 
 type ServerOptions struct {
@@ -167,8 +170,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	authInfoService login.AuthInfoService, permissionsServices accesscontrol.PermissionsServices,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
-	datasourcePermissionsService DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service,
+	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
+	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginsettings.ServiceImpl,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -237,6 +240,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamPermissionsService:       permissionsServices.GetTeamService(),
 		AlertNotificationService:     alertNotificationService,
 		DashboardsnapshotsService:    dashboardsnapshotsService,
+		PluginSettings:               pluginSettings,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
