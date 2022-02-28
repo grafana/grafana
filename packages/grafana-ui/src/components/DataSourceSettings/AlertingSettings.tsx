@@ -106,7 +106,7 @@ export function AlertingSettings<T extends AlertingDataSourceJsonData>({
           </div>
         )}
         {customRulerHTTPSettings && (
-          <div className="page-body">
+          <div className="page-body" data-testid="custom-ruler-url-settings-section">
             <DataSourceHttpSettings
               title="Ruler"
               defaultUrl="http://localhost:9090/ruler"
