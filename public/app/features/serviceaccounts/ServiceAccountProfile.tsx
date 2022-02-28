@@ -46,8 +46,14 @@ export function ServiceAccountProfile({
   };
 
   const handleServiceAccountDelete = () => onServiceAccountDelete(serviceAccount.id);
-  const handleServiceAccountDisable = () => onServiceAccountUpdate({ ...serviceAccount, isDisabled: true });
-  const handleServiceAccountEnable = () => onServiceAccountUpdate({ ...serviceAccount, isDisabled: false });
+  const handleServiceAccountDisable = () => {
+    onServiceAccountUpdate({ ...serviceAccount, isDisabled: true });
+    setShowDisableModal(false);
+  };
+  const handleServiceAccountEnable = () => {
+    onServiceAccountUpdate({ ...serviceAccount, isDisabled: false });
+  };
+
   const onServiceAccountNameChange = (newValue: string) => {
     onServiceAccountUpdate({
       ...serviceAccount,
@@ -113,7 +119,12 @@ export function ServiceAccountProfile({
             </Button>
           ) : (
             <>
-              <Button variant="secondary" onClick={showDisableServiceAccountModal(true)} ref={disableServiceAccountRef}>
+              <Button
+                type={'button'}
+                variant="secondary"
+                onClick={showDisableServiceAccountModal(true)}
+                ref={disableServiceAccountRef}
+              >
                 Disable service account
               </Button>
               <ConfirmModal
