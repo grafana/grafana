@@ -1,0 +1,23 @@
+name: Run commands when issues are labeled
+on:
+  issues:
+    types: [labeled]
+  pull_request:
+    types: [labeled]    
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: ./actions
+          ref: main
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Run Commands
+        uses: ./actions/commands
+        with:          
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN_ISSUES_TO_PROJECTS}}
+          configPath: issue_commands

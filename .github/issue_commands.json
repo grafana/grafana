@@ -1,0 +1,10 @@
+[   
+    {
+      "type": "label",
+      "name": "team/grafana-partners",
+      "action": "addToProject",
+      "addToProject": {
+        "url": "https://github.com/orgs/grafana/projects/87"
+      }
+    }
+]
