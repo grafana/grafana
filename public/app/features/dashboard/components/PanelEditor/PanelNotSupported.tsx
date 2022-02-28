@@ -1,7 +1,5 @@
 import React, { useCallback } from 'react';
-import { Button, VerticalGroup } from '@grafana/ui';
-
-import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Alert, Button, FlexBox } from '@grafana/ui';
 import { PanelEditorTabId } from './types';
 import { locationService } from '@grafana/runtime';
 
@@ -15,15 +13,13 @@ export function PanelNotSupported({ message }: Props): JSX.Element {
   }, []);
 
   return (
-    <Layout justify="center" style={{ marginTop: '100px' }}>
-      <VerticalGroup spacing="md">
-        <h2>{message}</h2>
-        <div>
-          <Button size="md" variant="secondary" icon="arrow-left" onClick={onBackToQueries}>
-            Go back to Queries
-          </Button>
-        </div>
-      </VerticalGroup>
-    </Layout>
+    <FlexBox justifyContent="center" padding={2}>
+      <Alert title={message}>
+        <br />
+        <Button size="md" variant="secondary" fill="outline" onClick={onBackToQueries}>
+          Go back to Query tab
+        </Button>
+      </Alert>
+    </FlexBox>
   );
 }

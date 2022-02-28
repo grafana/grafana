@@ -205,6 +205,7 @@ export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
+export { FlexBox } from './FlexBox/FlexBox';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
