@@ -9,22 +9,19 @@ interface Props {
   serviceAccount: ServiceAccountDTO;
   timeZone: TimeZone;
 
-  onServiceAccountUpdate: (serviceAccount: ServiceAccountDTO) => void;
-  onServiceAccountDelete: (serviceAccountId: number) => void;
-
-  onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
+  deleteServiceAccount: (serviceAccountId: number) => void;
+  updateServiceAccount: (serviceAccount: ServiceAccountDTO) => void;
 }
 
 export function ServiceAccountProfile({
   serviceAccount,
   timeZone,
-  onServiceAccountUpdate,
-  onServiceAccountDelete,
-  onRoleChange,
   roleOptions,
   builtInRoles,
+  deleteServiceAccount,
+  updateServiceAccount,
 }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
@@ -45,20 +42,24 @@ export function ServiceAccountProfile({
     }
   };
 
-  const handleServiceAccountDelete = () => onServiceAccountDelete(serviceAccount.id);
+  const handleServiceAccountDelete = () => {
+    deleteServiceAccount(serviceAccount.id);
+  };
   const handleServiceAccountDisable = () => {
-    onServiceAccountUpdate({ ...serviceAccount, isDisabled: true });
+    updateServiceAccount({ ...serviceAccount, isDisabled: true });
     setShowDisableModal(false);
   };
+
   const handleServiceAccountEnable = () => {
-    onServiceAccountUpdate({ ...serviceAccount, isDisabled: false });
+    updateServiceAccount({ ...serviceAccount, isDisabled: false });
+  };
+
+  const handleServiceAccountRoleChange = (role: OrgRole) => {
+    updateServiceAccount({ ...serviceAccount, role: role });
   };
 
   const onServiceAccountNameChange = (newValue: string) => {
-    onServiceAccountUpdate({
-      ...serviceAccount,
-      name: newValue,
-    });
+    updateServiceAccount({ ...serviceAccount, name: newValue });
   };
 
   const styles = useStyles2(getStyles);
@@ -82,7 +83,7 @@ export function ServiceAccountProfile({
               <ServiceAccountRoleRow
                 label="Roles"
                 serviceAccount={serviceAccount}
-                onRoleChange={onRoleChange}
+                onRoleChange={handleServiceAccountRoleChange}
                 builtInRoles={builtInRoles}
                 roleOptions={roleOptions}
               />

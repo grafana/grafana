@@ -15,7 +15,7 @@ import {
   deleteServiceAccount,
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, NavModel, OrgRole } from '@grafana/data';
+import { getTimeZone, NavModel } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { CreateTokenModal } from './CreateTokenModal';
 import { contextSrv } from 'app/core/core';
@@ -95,18 +95,6 @@ const ServiceAccountPageUnconnected = ({
     setNewToken('');
   };
 
-  const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
-    updateServiceAccount({ ...serviceAccount, role: role });
-  };
-
-  const onServiceAccountUpdate = (updatedServiceAccount: ServiceAccountDTO) => {
-    updateServiceAccount(updatedServiceAccount);
-  };
-
-  const onServiceAccountDelete = (serviceAccountId: number) => {
-    deleteServiceAccount(serviceAccountId);
-  };
-
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={isLoading}>
@@ -115,11 +103,10 @@ const ServiceAccountPageUnconnected = ({
             <ServiceAccountProfile
               serviceAccount={serviceAccount}
               timeZone={timezone}
-              onServiceAccountDelete={onServiceAccountDelete}
-              onServiceAccountUpdate={onServiceAccountUpdate}
-              onRoleChange={onRoleChange}
               roleOptions={roleOptions}
               builtInRoles={builtInRoles}
+              updateServiceAccount={updateServiceAccount}
+              deleteServiceAccount={deleteServiceAccount}
             />
           </>
         )}
