@@ -29,16 +29,15 @@ func TestStore_AddServiceAccountToken(t *testing.T) {
 			require.NoError(t, err)
 
 			cmd := models.AddApiKeyCommand{
-				Name:             keyName,
-				Role:             "Viewer",
-				OrgId:            user.OrgId,
-				Key:              key.HashedKey,
-				SecondsToLive:    tc.secondsToLive,
-				ServiceAccountId: &user.Id,
-				Result:           &models.ApiKey{},
+				Name:          keyName,
+				Role:          "Viewer",
+				OrgId:         user.OrgId,
+				Key:           key.HashedKey,
+				SecondsToLive: tc.secondsToLive,
+				Result:        &models.ApiKey{},
 			}
 
-			err = store.AddServiceAccountToken(context.Background(), &cmd)
+			err = store.AddServiceAccountToken(context.Background(), user.Id, &cmd)
 			if tc.secondsToLive < 0 {
 				require.Error(t, err)
 				return
@@ -81,16 +80,15 @@ func TestStore_DeleteServiceAccountToken(t *testing.T) {
 	require.NoError(t, err)
 
 	cmd := models.AddApiKeyCommand{
-		Name:             keyName,
-		Role:             "Viewer",
-		OrgId:            user.OrgId,
-		Key:              key.HashedKey,
-		SecondsToLive:    0,
-		ServiceAccountId: &user.Id,
-		Result:           &models.ApiKey{},
+		Name:          keyName,
+		Role:          "Viewer",
+		OrgId:         user.OrgId,
+		Key:           key.HashedKey,
+		SecondsToLive: 0,
+		Result:        &models.ApiKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), &cmd)
+	err = store.AddServiceAccountToken(context.Background(), user.Id, &cmd)
 	require.NoError(t, err)
 	newKey := cmd.Result
 

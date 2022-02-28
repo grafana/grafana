@@ -97,7 +97,6 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	}
 
 	// Force affected service account to be the one referenced in the URL
-	cmd.ServiceAccountId = &saID
 	cmd.OrgId = c.OrgId
 
 	if !cmd.Role.IsValid() {
@@ -120,7 +119,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := api.store.AddServiceAccountToken(c.Req.Context(), &cmd); err != nil {
+	if err := api.store.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}

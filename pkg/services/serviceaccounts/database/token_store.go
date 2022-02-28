@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, cmd *models.AddApiKeyCommand) error {
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, saID int64, cmd *models.AddApiKeyCommand) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
@@ -33,7 +33,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, c
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: cmd.ServiceAccountId,
+			ServiceAccountId: &saID,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {

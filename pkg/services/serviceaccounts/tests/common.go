@@ -132,7 +132,7 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccountToken(ctx context.Context
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, cmd *models.AddApiKeyCommand) error {
+func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *models.AddApiKeyCommand) error {
 	s.Calls.AddServiceAccountToken = append(s.Calls.AddServiceAccountToken, []interface{}{ctx, cmd})
 	return nil
 }

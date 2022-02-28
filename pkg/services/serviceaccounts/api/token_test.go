@@ -35,16 +35,15 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 	require.NoError(t, err)
 
 	cmd := models.AddApiKeyCommand{
-		Name:             keyName,
-		Role:             "Viewer",
-		OrgId:            orgID,
-		Key:              key.HashedKey,
-		SecondsToLive:    secondsToLive,
-		ServiceAccountId: &saID,
-		Result:           &models.ApiKey{},
+		Name:          keyName,
+		Role:          "Viewer",
+		OrgId:         orgID,
+		Key:           key.HashedKey,
+		SecondsToLive: secondsToLive,
+		Result:        &models.ApiKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), &cmd)
+	err = store.AddServiceAccountToken(context.Background(), saID, &cmd)
 	require.NoError(t, err)
 	return cmd.Result
 }
