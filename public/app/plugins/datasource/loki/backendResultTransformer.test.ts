@@ -76,6 +76,9 @@ describe('loki backendResultTransformer', () => {
       executedQueryString: 'something1',
       preferredVisualisationType: 'logs',
       searchWords: ['thing1'],
+      custom: {
+        lokiQueryStatKey: 'Summary: total bytes processed',
+      },
     };
     expectedFrame.fields[2].type = FieldType.time;
     expectedFrame.fields.push({
