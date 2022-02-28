@@ -21,7 +21,7 @@ describe('Add to Dashboard Modal', () => {
 
   const waitForSearchFolderResponse = async () => {
     return act(async () => {
-      // FolderPicker asyncrounously sets its internal state based on search results, causing warnings when testing.
+      // FolderPicker asynchronously sets its internal state based on search results, causing warnings when testing.
       // Given we are not aware of the component implementation to wait on certain element to appear or disappear (for example a loading indicator),
       // we wait for the mocked promise we know it internally uses.
       // This is less than ideal as we are relying on implementation details, but is a reasonable solution for this test's scope
