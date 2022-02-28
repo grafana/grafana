@@ -17,6 +17,7 @@ import templatingReducers from 'app/features/variables/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
+import perconaReducers from 'app/percona/shared/core/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -38,7 +39,9 @@ const rootReducers = {
   plugins: pluginsReducer,
 };
 
-const addedReducers = {};
+const addedReducers = {
+  ...perconaReducers,
+};
 
 export const addReducer = (newReducers: any) => {
   Object.assign(addedReducers, newReducers);

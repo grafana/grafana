@@ -1,8 +1,10 @@
 import React, { FC, useState } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
+import { useDispatch } from 'react-redux';
 import { useStyles } from '@grafana/ui';
 import validators from 'app/percona/shared/helpers/validators';
-import { ConnectProps, ConnectRenderProps } from '../types';
+import { setSettings } from 'app/percona/shared/core/reducers';
+import { ConnectRenderProps } from '../types';
 import { Messages } from '../Platform.messages';
 import { getStyles } from './Connect.styles';
 import { CONNECT_DELAY, INITIAL_VALUES } from '../Platform.constants';
@@ -11,9 +13,10 @@ import { logger, LoaderButton, PasswordInputField, TextInputField } from '@perco
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 
-export const Connect: FC<ConnectProps> = ({ getSettings }) => {
+export const Connect: FC = () => {
   const styles = useStyles(getStyles);
   const [connecting, setConnecting] = useState(false);
+  const dispatch = useDispatch();
 
   const handleConnect = async ({ pmmServerName, email, password }: ConnectRenderProps) => {
     setConnecting(true);
@@ -27,9 +30,9 @@ export const Connect: FC<ConnectProps> = ({ getSettings }) => {
 
       // We need some short delay for changes to apply before immediately calling getSettings
       setTimeout(() => {
-        getSettings();
         appEvents.emit(AppEvents.alertSuccess, [Messages.connectSucceeded]);
         setConnecting(false);
+        dispatch(setSettings({ isConnectedToPortal: true }));
       }, CONNECT_DELAY);
     } catch (e) {
       logger.error(e);

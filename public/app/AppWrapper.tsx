@@ -16,6 +16,7 @@ import { AppNotificationList } from './core/components/AppNotifications/AppNotif
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { AngularRoot } from './angular/AngularRoot';
+import { PerconaBootstrapper } from 'app/percona/shared/components/PerconaBootstrapper';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -102,6 +103,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 <GlobalStyles />
                 <div className="grafana-app">
                   <Router history={locationService.getHistory()}>
+                    <PerconaBootstrapper />
                     {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
                     <main className="main-view">
                       {pageBanners.map((Banner, index) => (

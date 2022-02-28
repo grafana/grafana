@@ -1,53 +1,23 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
+import { useSelector } from 'react-redux';
 import { Spinner, useStyles } from '@grafana/ui';
-import { logger } from '@percona/platform-core';
-import { isApiCancelError } from 'app/percona/shared/helpers/api';
-import { SettingsService } from 'app/percona/settings/Settings.service';
-import { useCancelToken } from '../../hooks/cancelToken.hook';
+import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { EmptyBlock } from '../EmptyBlock';
 import { FeatureLoaderProps } from './FeatureLoader.types';
 import { Messages } from './FeatureLoader.messages';
-import { GET_SETTINGS_CANCEL_TOKEN, PMM_SETTINGS_URL } from './FeatureLoader.constants';
+import { PMM_SETTINGS_URL } from './FeatureLoader.constants';
 import { getStyles } from './FeatureLoader.styles';
 
 export const FeatureLoader: FC<FeatureLoaderProps> = ({
   featureName,
-  featureFlag,
+  featureSelector,
   messagedataTestId = 'settings-link',
   children,
-  onError = () => null,
-  onSettingsLoaded,
 }) => {
   const styles = useStyles(getStyles);
-  const [loadingSettings, setLoadingSettings] = useState(true);
-  const [featureEnabled, setFeatureEnabled] = useState(false);
-  const [hasNoAccess, setHasNoAccess] = useState(false);
-  const [generateToken] = useCancelToken();
-
-  useEffect(() => {
-    const getSettings = async () => {
-      setLoadingSettings(true);
-
-      try {
-        const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
-        setFeatureEnabled(!!settings[featureFlag]);
-        onSettingsLoaded?.(settings);
-      } catch (e) {
-        if (isApiCancelError(e)) {
-          return;
-        }
-        if (e.response?.status === 401) {
-          setHasNoAccess(true);
-        }
-        logger.error(e);
-        onError(e);
-      }
-      setLoadingSettings(false);
-    };
-
-    getSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const featureEnabled = useSelector(featureSelector);
+  const { isAuthorized } = useSelector(getPerconaUser);
+  const { isLoading } = useSelector(getPerconaSettings);
 
   if (featureEnabled) {
     return <>{children}</>;
@@ -56,17 +26,17 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
   return (
     <div className={styles.emptyBlock}>
       <EmptyBlock dataTestId="empty-block">
-        {loadingSettings ? (
+        {isLoading ? (
           <Spinner />
-        ) : hasNoAccess ? (
-          <div data-testid="unauthorized">{Messages.unauthorized}</div>
-        ) : (
+        ) : isAuthorized ? (
           <>
             {Messages.featureDisabled(featureName)}&nbsp;
             <a data-testid={messagedataTestId} className={styles.link} href={PMM_SETTINGS_URL}>
               {Messages.pmmSettings}
             </a>
           </>
+        ) : (
+          <div data-testid="unauthorized">{Messages.unauthorized}</div>
         )}
       </EmptyBlock>
     </div>

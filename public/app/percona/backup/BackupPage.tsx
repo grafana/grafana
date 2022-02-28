@@ -1,5 +1,6 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useCallback } from 'react';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { StoreState } from 'app/types';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
@@ -42,6 +43,8 @@ const BackupPage: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) 
   const { path: basePath } = PAGE_MODEL;
   const tab = match.params.tab;
 
+  const featureSelector = useCallback((state: StoreState) => !!state.perconaSettings.backupEnabled, []);
+
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <TechnicalPreview />
@@ -50,7 +53,7 @@ const BackupPage: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) 
         tabs={tabs}
         basePath={basePath}
         renderTab={({ Content }) => (
-          <FeatureLoader featureName={Messages.backupManagement} featureFlag="backupEnabled">
+          <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
             <Content />
           </FeatureLoader>
         )}

@@ -1,5 +1,6 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useCallback, useMemo } from 'react';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { StoreState } from 'app/types';
 import { PAGE_MODEL } from './IntegratedAlerting.constants';
 import { TabKeys } from './IntegratedAlerting.types';
 import { AlertRules, AlertRuleTemplate, Alerts, NotificationChannel } from './components';
@@ -39,6 +40,8 @@ const IntegratedAlertingPage: FC<GrafanaRouteComponentProps<{ tab: string }>> = 
     []
   );
 
+  const featureSelector = useCallback((state: StoreState) => !!state.perconaSettings.alertingEnabled, []);
+
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <TechnicalPreview />
@@ -47,7 +50,7 @@ const IntegratedAlertingPage: FC<GrafanaRouteComponentProps<{ tab: string }>> = 
         tabs={tabs}
         basePath={basePath}
         renderTab={({ Content }) => (
-          <FeatureLoader featureName={Messages.integratedAlerting} featureFlag="alertingEnabled">
+          <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
             <Content />
           </FeatureLoader>
         )}

@@ -33,8 +33,5 @@ export const STT_CHECK_INTERVALS = [
 
 export const TECHNICAL_PREVIEW_DOC_URL = 'https://per.co.na/pmm-feature-status';
 
-// features that need refresh after update
-export const REFRESH_FEATURE_KEYS: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'dbaas', 'stt'];
-
 // all feature flags
-export const FEATURE_KEYS: Array<keyof AdvancedFormProps> = [...REFRESH_FEATURE_KEYS, 'azureDiscover'];
+export const FEATURE_KEYS: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'dbaas', 'stt', 'azureDiscover'];

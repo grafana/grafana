@@ -1,6 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, Provider } from 'react-redux';
 import { Tab } from '@grafana/ui';
+import { configureStore } from 'app/store/configureStore';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { stub as settingsStub } from './__mocks__/Settings.service';
 import { SettingsService } from './Settings.service';
@@ -31,15 +32,18 @@ describe('SettingsPanel::', () => {
   beforeEach(() => {
     console.error = jest.fn();
     (useSelector as jest.Mock).mockImplementation((callback) => {
-      return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
+      return callback({ perconaUser: { isAuthorized: true }, perconaSettings: { isLoading: false } });
     });
   });
+
   it('Renders correctly without rendering hidden tab', async () => {
     jest
       .spyOn(SettingsService, 'getSettings')
       .mockImplementationOnce(() => Promise.resolve({ ...settingsStub, alertingEnabled: false }));
     const root = await getMount(
-      <SettingsPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />
+      <Provider store={configureStore()}>
+        <SettingsPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />
+      </Provider>
     );
     root.update();
 

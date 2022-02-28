@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { AppEvents } from '@grafana/data';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { appEvents } from 'app/core/app_events';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { KubernetesService } from './Kubernetes.service';
@@ -15,7 +17,6 @@ import {
   OperatorsList,
   Operator,
   ManageKubernetes,
-  UseKubernetesProps,
 } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
 import {
@@ -25,9 +26,10 @@ import {
 } from './Kubernetes.hooks.constants';
 import { OPERATOR_COMPONENT_TO_UPDATE_MAP } from './Kubernetes.constants';
 
-export const useKubernetes = ({ settings }: UseKubernetesProps): ManageKubernetes => {
+export const useKubernetes = (): ManageKubernetes => {
   const [kubernetes, setKubernetes] = useState<Kubernetes[]>([]);
   const [loading, setLoading] = useState(false);
+  const { dbaasEnabled } = useSelector(getPerconaSettings);
   const [generateToken] = useCancelToken();
   const {
     kubernetes: { deleteSuccess },
@@ -85,11 +87,11 @@ export const useKubernetes = ({ settings }: UseKubernetesProps): ManageKubernete
   };
 
   useEffect(() => {
-    if (settings && settings.dbaasEnabled) {
+    if (dbaasEnabled) {
       getKubernetes();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings]);
+  }, [dbaasEnabled]);
 
   return [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, loading];
 };

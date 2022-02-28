@@ -18,7 +18,6 @@ import {
   STT_CHECK_INTERVAL_STEP,
   STT_CHECK_INTERVALS,
   TECHNICAL_PREVIEW_DOC_URL,
-  REFRESH_FEATURE_KEYS,
   FEATURE_KEYS,
 } from './Advanced.constants';
 import { AdvancedProps, AdvancedFormProps } from './Advanced.types';
@@ -119,7 +118,7 @@ export const Advanced: FC<AdvancedProps> = ({
       standard_interval: `${convertHoursStringToSeconds(standardInterval)}s`,
       frequent_interval: `${convertHoursStringToSeconds(frequentInterval)}s`,
     };
-    const refresh = !!REFRESH_FEATURE_KEYS.find((feature) => !!values[feature] !== initialValues[feature]);
+
     const body: AdvancedChangePayload = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
       disable_telemetry: !telemetry,
@@ -142,7 +141,7 @@ export const Advanced: FC<AdvancedProps> = ({
     };
     const onError = () => FEATURE_KEYS.forEach((key) => form.change(key, initialValues[key]));
 
-    updateSettings(body, setLoading, refresh, onError);
+    updateSettings(body, setLoading, onError);
   };
   const { Form } = withTypes<AdvancedFormProps>();
 

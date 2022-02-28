@@ -1,4 +1,3 @@
-import { Settings } from 'app/percona/settings/Settings.types';
 import { Databases } from 'app/percona/shared/core';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { KubernetesOperatorStatus } from './OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
@@ -110,8 +109,4 @@ export interface KubernetesProps {
   getKubernetes: GetKubernetesAction;
   setLoading: SetKubernetesLoadingAction;
   loading: boolean;
-}
-
-export interface UseKubernetesProps {
-  settings?: Settings | null;
 }

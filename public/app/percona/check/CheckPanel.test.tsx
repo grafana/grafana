@@ -37,7 +37,7 @@ jest.mock('@percona/platform-core', () => {
 describe('CheckPanel::', () => {
   beforeEach(() => {
     (useSelector as jest.Mock).mockImplementation((callback) => {
-      return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
+      return callback({ perconaUser: { isAuthorized: true }, perconaSettings: { isLoading: false } });
     });
   });
 
