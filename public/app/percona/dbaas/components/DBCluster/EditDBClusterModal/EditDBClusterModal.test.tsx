@@ -1,7 +1,5 @@
-import { dataTestId } from '@percona/platform-core';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
 
@@ -13,9 +11,9 @@ jest.mock('../DBCluster.service');
 jest.mock('../PSMDB.service');
 jest.mock('../XtraDB.service');
 
-xdescribe('EditDBClusterModal::', () => {
+describe('EditDBClusterModal::', () => {
   it('should render advanced options', async () => {
-    const root = await getMount(
+    render(
       <EditDBClusterModal
         isVisible
         setVisible={setVisibleStub}
@@ -24,11 +22,11 @@ xdescribe('EditDBClusterModal::', () => {
       />
     );
 
-    expect(root.find(dataTestId('resources-radio-button'))).toBeTruthy();
-    expect(root.find(dataTestId('memory-field-container'))).toBeTruthy();
-    expect(root.find(dataTestId('cpu-field-container'))).toBeTruthy();
-    expect(root.find(dataTestId('disk-field-container'))).toBeTruthy();
-    expect(root.find(dataTestId('disk-number-input')).prop('disabled')).toBeTruthy();
-    expect(root.find(dataTestId('resources-bar'))).toBeTruthy();
+    expect(await screen.findAllByTestId('resources-radio-button')).toBeTruthy();
+    expect(screen.getByTestId('memory-field-container')).toBeInTheDocument();
+    expect(screen.getByTestId('cpu-field-container')).toBeInTheDocument();
+    expect(screen.getByTestId('disk-field-container')).toBeInTheDocument();
+    expect(screen.getByTestId('disk-number-input')).toBeDisabled();
+    expect(await screen.findAllByTestId('resources-bar')).toBeTruthy();
   });
 });

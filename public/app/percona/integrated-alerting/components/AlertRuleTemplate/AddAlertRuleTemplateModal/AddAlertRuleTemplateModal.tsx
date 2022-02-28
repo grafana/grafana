@@ -48,7 +48,7 @@ export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
       <Form
         onSubmit={onSubmit}
         render={({ handleSubmit, valid, pristine, submitting, form: { change } }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="add-alert-rule-template-modal-form">
             <>
               <input type="file" accept=".yml, .yaml" ref={inputRef} onChange={onUploadFile(change)} hidden />
               <TextareaInputField

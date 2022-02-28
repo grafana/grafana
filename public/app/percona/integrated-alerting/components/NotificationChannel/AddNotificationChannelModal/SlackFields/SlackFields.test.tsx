@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Form } from 'react-final-form';
 
@@ -7,20 +6,20 @@ import { Messages } from '../AddNotificationChannelModal.messages';
 
 import { SlackFields } from './SlackFields';
 
-xdescribe('SlackFields', () => {
+describe('SlackFields', () => {
   it('should render correct fields', () => {
-    const wrapper = mount(<Form onSubmit={jest.fn()} render={() => <SlackFields />} />);
+    render(<Form onSubmit={jest.fn()} render={() => <SlackFields />} />);
 
-    expect(wrapper.find(dataTestId('channel-text-input')).length).toBe(1);
+    expect(screen.getByTestId('channel-text-input')).toBeInTheDocument();
   });
 
   it('should show error when channel has #', () => {
-    const wrapper = mount(<Form onSubmit={jest.fn()} render={() => <SlackFields />} />);
+    render(<Form onSubmit={jest.fn()} render={() => <SlackFields />} />);
+    expect(screen.getByTestId('channel-field-error-message').innerText).toBeFalsy();
 
-    expect(wrapper.find(dataTestId('channel-field-error-message')).text()).toEqual('');
+    const channelInput = screen.getByTestId('channel-text-input');
+    fireEvent.change(channelInput, { target: { value: '#testchannel' } });
 
-    wrapper.find(dataTestId('channel-text-input')).simulate('change', { target: { value: '#testchannel' } });
-
-    expect(wrapper.find(dataTestId('channel-field-error-message')).text()).toEqual(Messages.invalidChannelName);
+    expect(screen.getByTestId('channel-field-error-message').textContent).toEqual(Messages.invalidChannelName);
   });
 });

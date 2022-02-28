@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { render, fireEvent, screen } from '@testing-library/react';
 import React from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
 
@@ -10,24 +9,25 @@ import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions';
 import { kubernetesClusterNameValidator } from './DBClusterBasicOptions.utils';
 
-xdescribe('DBClusterBasicOptions::', () => {
+describe('DBClusterBasicOptions::', () => {
   it('renders correctly', () => {
-    const root = mount(
+    render(
       <Form
         onSubmit={jest.fn()}
         render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
       />
     );
-    const databaseVersionField = root.find(dataTestId('dbcluster-database-version-field'));
+    const databaseVersionField = screen.getByTestId('dbcluster-database-version-field');
 
-    expect(root.find(dataTestId('name-text-input'))).toBeTruthy();
-    expect(root.find(dataTestId('dbcluster-kubernetes-cluster-field'))).toBeTruthy();
-    expect(root.find(dataTestId('dbcluster-database-type-field'))).toBeTruthy();
-    expect(databaseVersionField).toBeTruthy();
-    expect(databaseVersionField.find('input').prop('disabled')).toBeTruthy();
+    expect(screen.getByTestId('name-text-input')).toBeInTheDocument();
+    expect(screen.getByTestId('dbcluster-kubernetes-cluster-field')).toBeInTheDocument();
+    expect(screen.getByTestId('dbcluster-database-type-field')).toBeInTheDocument();
+    expect(databaseVersionField).toBeInTheDocument();
+    expect(databaseVersionField.querySelector('input')).toBeDisabled();
   });
+
   it('renders correctly with default values', () => {
-    const root = mount(
+    render(
       <Form
         initialValues={{
           [AddDBClusterFields.name]: 'dbcluster',
@@ -36,9 +36,7 @@ xdescribe('DBClusterBasicOptions::', () => {
         render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
       />
     );
-    const name = root.find(dataTestId('name-text-input'));
-
-    expect(name.prop('value')).toEqual('dbcluster');
+    expect(screen.getByTestId('name-text-input')).toHaveValue('dbcluster');
   });
 
   it('should validate cluster name correctly', () => {
@@ -56,7 +54,7 @@ xdescribe('DBClusterBasicOptions::', () => {
   });
 
   it('should validate cluster name length', () => {
-    const root = mount(
+    render(
       <Form
         initialValues={{
           [AddDBClusterFields.name]: 'testname',
@@ -66,12 +64,9 @@ xdescribe('DBClusterBasicOptions::', () => {
       />
     );
 
-    root.find(dataTestId('name-text-input')).simulate('change', {
-      target: {
-        value: 'testinvalidnamelength',
-      },
-    });
+    const name = screen.getByTestId('name-text-input');
+    fireEvent.change(name, { target: { value: 'testinvalidnamelength' } });
 
-    expect(root.find(dataTestId('name-field-error-message')).text().length).toBeGreaterThan(0);
+    expect(screen.getByTestId('name-field-error-message').textContent?.length).toBeGreaterThan(0);
   });
 });

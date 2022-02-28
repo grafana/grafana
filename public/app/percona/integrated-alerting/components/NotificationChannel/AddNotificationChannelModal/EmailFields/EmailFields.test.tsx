@@ -1,14 +1,13 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Form } from 'react-final-form';
 
 import { EmailFields } from './EmailFields';
 
-xdescribe('EmailFields', () => {
+describe('EmailFields', () => {
   it('should render correct fields', () => {
-    const wrapper = mount(<Form onSubmit={jest.fn()} render={() => <EmailFields />} />);
+    render(<Form onSubmit={jest.fn()} render={() => <EmailFields />} />);
 
-    expect(wrapper.find(dataTestId('emails-textarea-input')).length).toBe(1);
+    expect(screen.getByTestId('emails-textarea-input')).toBeInTheDocument();
   });
 });

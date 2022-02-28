@@ -15,7 +15,7 @@ import { stubLocations } from './__mocks__/StorageLocations.service';
 jest.mock('./StorageLocations.service');
 jest.mock('app/core/app_events');
 
-xdescribe('StorageLocations', () => {
+describe('StorageLocations', () => {
   it('should render table with data', async () => {
     const wrapper = await getMount(<StorageLocations />);
     wrapper.update();
