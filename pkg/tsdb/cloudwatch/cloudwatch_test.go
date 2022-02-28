@@ -1,12 +1,20 @@
 package cloudwatch
 
 import (
+	"context"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,4 +79,45 @@ func TestNewInstanceSettings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_CheckHealth(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
+
+	var client FakeCWClient
+
+	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return client
+	}
+
+	metrics := []*cloudwatch.Metric{
+		{MetricName: aws.String("EstimatedCharges"), Dimensions: []*cloudwatch.Dimension{
+			{Name: aws.String("Dimension1"), Value: aws.String("Dimension1")},
+			{Name: aws.String("Dimension2"), Value: aws.String("Dimension2")},
+		}},
+	}
+
+	client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return datasourceInfo{}, nil
+	})
+
+	executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+	request := &backend.CheckHealthRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		},
+	}
+	resp, err := executor.CheckHealth(context.Background(), request)
+	require.NoError(t, err)
+
+	expResponse := &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Successfully queried the CloudWatch API.",
+	}
+
+	assert.Equal(t, expResponse, resp)
 }
