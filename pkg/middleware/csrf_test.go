@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,7 +55,7 @@ func TestMiddlewareCSRF(t *testing.T) {
 			code:        http.StatusBadRequest,
 		},
 		{
-			name:        "should work without port",
+			name:        "should works without port",
 			cookieName:  "foo",
 			method:      "GET",
 			host:        "localhost",
@@ -63,7 +64,7 @@ func TestMiddlewareCSRF(t *testing.T) {
 			code:        http.StatusOK,
 		},
 		{
-			name:       "IPv6 host work with port",
+			name:       "IPv6 host works with port",
 			cookieName: "foo",
 			method:     "GET",
 			host:       "[::1]:3000",
@@ -71,11 +72,19 @@ func TestMiddlewareCSRF(t *testing.T) {
 			code:       http.StatusOK,
 		},
 		{
-			name:        "IPv6 host should get default port",
+			name:       "IPv6 host (with longer address) works with port",
+			cookieName: "foo",
+			method:     "GET",
+			host:       "[2001:db8::1]:3000",
+			origin:     "http://[2001:db8::1]:3000",
+			code:       http.StatusOK,
+		},
+		{
+			name:        "IPv6 host (with longer address) should get default port",
 			cookieName:  "foo",
 			method:      "GET",
-			host:        "[::1]",
-			origin:      "http://[::1]",
+			host:        "[2001:db8::1]",
+			origin:      "http://[2001:db8::1]",
 			defaultPort: "3000",
 			code:        http.StatusOK,
 		},
@@ -108,7 +117,7 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host, defaultPort st
 	})
 
 	rr := httptest.NewRecorder()
-	handler := CSRF(cookieName, defaultPort)(testHandler)
+	handler := CSRF(cookieName, defaultPort, log.New())(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
 }
