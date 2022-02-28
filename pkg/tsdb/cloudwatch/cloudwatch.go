@@ -169,6 +169,28 @@ func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.Call
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
+func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	// use billing metrics for test
+	namespace := "AWS/Billing"
+	metric := "EstimatedCharges"
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  &namespace,
+		MetricName: &metric,
+	}
+
+	_, err := e.listMetrics(req.PluginContext, defaultRegion, params)
+	status := backend.HealthStatusOk
+	message := "Successfully queried the CloudWatch API."
+	if err != nil {
+		status = backend.HealthStatusError
+		message = "Plugin request failed"
+	}
+	return &backend.CheckHealthResult{
+		Status:  status,
+		Message: message,
+	}, nil
+}
+
 func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region string) (*session.Session, error) {
 	dsInfo, err := e.getDSInfo(pluginCtx)
 	if err != nil {
