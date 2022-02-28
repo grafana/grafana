@@ -262,29 +262,29 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
 	// TODO add create rules authz logic
 
-	var changes *changes = nil
+	var groupChanges *changes = nil
 	err := srv.store.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		var err error
-		changes, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
+		groupChanges, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
 		if err != nil {
 			return err
 		}
 
-		if len(changes.Delete) == 0 && len(changes.Update) == 0 && len(changes.New) == 0 {
+		if len(groupChanges.Delete) == 0 && len(groupChanges.Update) == 0 && len(groupChanges.New) == 0 {
 			srv.log.Info("no changes detected in the request. Do nothing")
 			return nil
 		}
 
-		if len(changes.Update) > 0 || len(changes.New) > 0 {
-			upsert := make([]store.UpsertRule, len(changes.Update)+len(changes.New))
-			for _, update := range changes.Update {
+		if len(groupChanges.Update) > 0 || len(groupChanges.New) > 0 {
+			upsert := make([]store.UpsertRule, 0, len(groupChanges.Update)+len(groupChanges.New))
+			for _, update := range groupChanges.Update {
 				srv.log.Debug("updating rule", "uid", update.New.UID, "diff", update.Diff.String())
 				upsert = append(upsert, store.UpsertRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})
 			}
-			for _, rule := range changes.New {
+			for _, rule := range groupChanges.New {
 				upsert = append(upsert, store.UpsertRule{
 					Existing: nil,
 					New:      *rule,
@@ -297,13 +297,13 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		for _, rule := range changes.Delete {
+		for _, rule := range groupChanges.Delete {
 			if err = srv.store.DeleteAlertRuleByUID(tranCtx, c.SignedInUser.OrgId, rule.UID); err != nil {
 				return fmt.Errorf("failed to delete rule %d with UID %s: %w", rule.ID, rule.UID, err)
 			}
 		}
 
-		if len(changes.New) > 0 {
+		if len(groupChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
 				OrgId:  c.OrgId,
 				UserId: c.UserId,
@@ -329,14 +329,14 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, rule := range changes.Update {
+	for _, rule := range groupChanges.Update {
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
 		})
 	}
 
-	for _, rule := range changes.Delete {
+	for _, rule := range groupChanges.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.UID,
