@@ -386,11 +386,9 @@ func (m *importDashboardServiceMock) ImportDashboard(ctx context.Context, req *d
 type pluginsSettingsServiceMock struct {
 	pluginsettings.Service
 
-	pluginSetting         *models.PluginSetting
 	storedPluginSettings  []*models.PluginSettingInfoDTO
 	getPluginSettingsArgs []int64
-
-	err error
+	err                   error
 }
 
 func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
@@ -465,9 +463,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 	}
 
 	sCtx.pluginSettingsService = &pluginsSettingsServiceMock{
-		pluginSetting:         nil,
-		storedPluginSettings:  input.storedPluginSettings,
-		getPluginSettingsArgs: nil,
+		storedPluginSettings: input.storedPluginSettings,
 	}
 
 	sCtx.pluginStore = &pluginStoreMock{

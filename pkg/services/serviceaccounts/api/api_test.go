@@ -102,7 +102,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
 	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) *web.Mux {
-	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, saStore, sqlStore)
+	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, saStore)
 	a.RegisterAPIEndpoints(featuremgmt.WithFeatures(featuremgmt.FlagServiceAccounts))
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration

@@ -266,9 +266,10 @@ func TestPluginProxy(t *testing.T) {
 				Resp: responseWriter,
 			},
 		}
-		pluginSettingsService := &mockPluginsSettingsService{}
-		pluginSettingsService.pluginSetting = &models.PluginSetting{
-			SecureJsonData: map[string][]byte{},
+		pluginSettingsService := &mockPluginsSettingsService{
+			pluginSetting: &models.PluginSetting{
+				SecureJsonData: map[string][]byte{},
+			},
 		}
 		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, pluginSettingsService, secretsService)
 		proxy.ServeHTTP(ctx.Resp, ctx.Req)
@@ -306,7 +307,7 @@ type mockPluginsSettingsService struct {
 	err           error
 }
 
-func (s *mockPluginsSettingsService) GetPluginSettings(_ context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+func (s *mockPluginsSettingsService) GetPluginSettings(_ context.Context, _ int64) ([]*models.PluginSettingInfoDTO, error) {
 	return nil, s.err
 }
 
