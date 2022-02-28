@@ -33,16 +33,11 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = fa
     ];
   }, []);
 
-  // no need to show the picker if there's only one option
-  if (options.length === 1) {
-    return null;
-  }
-
   return (
     <Field
       className={styles.field}
       label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
-      disabled={disabled}
+      disabled={disabled || options.length === 1}
       data-testid="alertmanager-picker"
     >
       <Select

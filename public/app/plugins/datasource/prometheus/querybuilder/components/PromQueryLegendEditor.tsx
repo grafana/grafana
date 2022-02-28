@@ -1,8 +1,9 @@
 import React, { useRef } from 'react';
 import { EditorField } from '@grafana/experimental';
 import { SelectableValue } from '@grafana/data';
-import { Input, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { LegendFormatMode, PromQuery } from '../../types';
+import { AutoSizeInput } from '../shared/AutoSizeInput';
 
 export interface Props {
   query: PromQuery;
@@ -27,7 +28,7 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
   const mode = getLegendMode(query.legendFormat);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const onLegendFormatChanged = (evt: React.FocusEvent<HTMLInputElement>) => {
+  const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
     let legendFormat = evt.currentTarget.value;
     if (legendFormat.length === 0) {
       legendFormat = LegendFormatMode.Auto;
@@ -62,12 +63,12 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
     >
       <>
         {mode === LegendFormatMode.Custom && (
-          <Input
+          <AutoSizeInput
             id="legendFormat"
-            width={22}
+            minWidth={22}
             placeholder="auto"
             defaultValue={query.legendFormat}
-            onBlur={onLegendFormatChanged}
+            onCommitChange={onLegendFormatChanged}
             ref={inputRef}
           />
         )}

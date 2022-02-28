@@ -190,15 +190,6 @@ func TestService(t *testing.T) {
 				require.Equal(t, models.ROLE_ADMIN, ctx.importDashboardArgs[0].User.OrgRole)
 				require.Equal(t, int64(0), ctx.importDashboardArgs[0].FolderId)
 				require.True(t, ctx.importDashboardArgs[0].Overwrite)
-
-				require.Len(t, ctx.getPluginSettingsByIdArgs, 1)
-				require.Equal(t, int64(2), ctx.getPluginSettingsByIdArgs[0].OrgId)
-				require.Equal(t, "test", ctx.getPluginSettingsByIdArgs[0].PluginId)
-
-				require.Len(t, ctx.updatePluginSettingVersionArgs, 1)
-				require.Equal(t, int64(2), ctx.updatePluginSettingVersionArgs[0].OrgId)
-				require.Equal(t, "test", ctx.updatePluginSettingVersionArgs[0].PluginId)
-				require.Equal(t, "1.0.1", ctx.updatePluginSettingVersionArgs[0].PluginVersion)
 			})
 	})
 
@@ -340,15 +331,6 @@ func TestService(t *testing.T) {
 			require.Equal(t, models.ROLE_ADMIN, ctx.importDashboardArgs[2].User.OrgRole)
 			require.Equal(t, int64(0), ctx.importDashboardArgs[2].FolderId)
 			require.True(t, ctx.importDashboardArgs[2].Overwrite)
-
-			require.Len(t, ctx.getPluginSettingsByIdArgs, 1)
-			require.Equal(t, int64(2), ctx.getPluginSettingsByIdArgs[0].OrgId)
-			require.Equal(t, "test", ctx.getPluginSettingsByIdArgs[0].PluginId)
-
-			require.Len(t, ctx.updatePluginSettingVersionArgs, 1)
-			require.Equal(t, int64(2), ctx.updatePluginSettingVersionArgs[0].OrgId)
-			require.Equal(t, "test", ctx.updatePluginSettingVersionArgs[0].PluginId)
-			require.Equal(t, "1.0.0", ctx.updatePluginSettingVersionArgs[0].PluginVersion)
 		})
 }
 
@@ -516,24 +498,13 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		return nil
 	})
 
-	sCtx.bus.AddHandler(func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-		for _, p := range input.storedPluginSettings {
-			if p.PluginId == query.PluginId {
-				query.Result = &models.PluginSetting{
-					PluginId: p.PluginId,
-					OrgId:    p.OrgId,
-				}
-			}
+	mock := &mockPluginsSettingsService{}
+	for _, p := range input.storedPluginSettings {
+		mock.pluginSetting = &models.PluginSetting{
+			PluginId: p.PluginId,
+			OrgId:    p.OrgId,
 		}
-
-		sCtx.getPluginSettingsByIdArgs = append(sCtx.getPluginSettingsByIdArgs, query)
-		return nil
-	})
-
-	sCtx.bus.AddHandler(func(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
-		sCtx.updatePluginSettingVersionArgs = append(sCtx.updatePluginSettingVersionArgs, cmd)
-		return nil
-	})
+	}
 
 	sCtx.bus.AddHandler(func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 		sCtx.getDashboardsByPluginIdQueryArgs = append(sCtx.getDashboardsByPluginIdQueryArgs, query)
@@ -565,11 +536,29 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		return nil
 	})
 
-	sCtx.s = new(sCtx.pluginSettingsStore, sCtx.bus, sCtx.pluginStore, sCtx.pluginDashboardManager, sCtx.importDashboardService)
+	sCtx.s = new(sCtx.pluginSettingsStore, sCtx.bus, sCtx.pluginStore, sCtx.pluginDashboardManager, sCtx.importDashboardService, mock)
 
 	t.Cleanup(bus.ClearBusHandlers)
 
 	t.Run(desc, func(t *testing.T) {
 		f(sCtx)
 	})
+}
+
+type mockPluginsSettingsService struct {
+	pluginSetting *models.PluginSetting
+	err           error
+}
+
+func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	query.Result = s.pluginSetting
+	return s.err
+}
+
+func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+	return s.err
+}
+
+func (s *mockPluginsSettingsService) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+	return s.err
 }
