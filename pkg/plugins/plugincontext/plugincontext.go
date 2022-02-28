@@ -22,7 +22,7 @@ import (
 
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginStore plugins.Store,
 	dataSourceCache datasources.CacheService, secretsService secrets.Service,
-	pluginSettingsService *pluginsettings.Service) *Provider {
+	pluginSettingsService *pluginsettings.ServiceImpl) *Provider {
 	return &Provider{
 		Bus:                   bus,
 		CacheService:          cacheService,
@@ -40,7 +40,7 @@ type Provider struct {
 	pluginStore           plugins.Store
 	DataSourceCache       datasources.CacheService
 	SecretsService        secrets.Service
-	PluginSettingsService *pluginsettings.Service
+	PluginSettingsService *pluginsettings.ServiceImpl
 	logger                log.Logger
 }
 
