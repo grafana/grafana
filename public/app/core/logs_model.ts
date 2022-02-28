@@ -334,12 +334,12 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         allLabels.push(stringField.labels);
       }
 
+      const nsFieldName = series.meta?.custom?.tsNsName;
+
       return {
         series,
         timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-          ? fieldCache.getFieldByName('tsNs')
-          : undefined,
+        timeNanosecondField: nsFieldName !== undefined ? fieldCache.getFieldByName(nsFieldName) : undefined,
         stringField,
         logLevelField: fieldCache.getFieldByName('level'),
         idField: getIdField(fieldCache),
