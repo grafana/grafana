@@ -118,7 +118,7 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	})
 
 	rr := httptest.NewRecorder()
-	handler := CSRF(cookieName, log.New())(testHandler)
+	handler := CSRF(cookieName, log.New("test"))(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
 }
