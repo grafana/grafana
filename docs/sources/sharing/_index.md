@@ -18,6 +18,6 @@ You must have an authorized viewer permission to see an image rendered by a dire
 
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
-*Note:* As of Grafana 8.0, anonymous access permission is no available for Grafana Cloud.
+> *Note:* As of Grafana 8.0, anonymous access permission is no available for Grafana Cloud.
 
 When you share a panel or dashboard as a snapshot, a snapshot (of the panel or the dashboard at that moment in time) is publicly available on the web. Anyone with a link to it can access it. Since snapshots do not need any authorization to view, Grafana strips information related to the account it came from, as well as any sensitive data from the snapshot.
