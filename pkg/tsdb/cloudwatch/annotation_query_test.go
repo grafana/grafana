@@ -97,10 +97,3 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 		}, client.calls.describeAlarms[0])
 	})
 }
-
-func pointerString(s string) *string {
-	return &s
-}
-func pointerInt64(i int64) *int64 {
-	return &i
-}
