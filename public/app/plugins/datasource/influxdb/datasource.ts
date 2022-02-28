@@ -22,7 +22,6 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
-  CoreApp,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
@@ -165,7 +164,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super.query(filteredRequest);
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy' && request.app === CoreApp.Explore) {
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
       return super.query(filteredRequest).pipe(
         map((res) => {
           if (res.error) {
@@ -449,7 +448,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux || (config.featureToggles.influxdbBackendMigration && this.access === 'proxy')) {
+    if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query,
@@ -550,6 +549,33 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         })
         .catch((err: any) => {
           console.error('InfluxDB Error', err);
+          return { status: 'error', message: err.message };
+        });
+    }
+
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
+      const target: InfluxQuery = {
+        refId: 'metricFindQuery',
+        query: 'SHOW TAG KEYS',
+        rawQuery: true,
+      };
+      return lastValueFrom(super.query({ targets: [target] } as DataQueryRequest))
+        .then((res: DataQueryResponse) => {
+          if (!res || !res.data || res.state !== LoadingState.Done) {
+            return {
+              status: 'error',
+              message: 'Error reading InfluxDB.',
+            };
+          }
+          if (res.data?.length) {
+            return { status: 'success', message: 'Data source is working.' };
+          }
+          return {
+            status: 'error',
+            message: 'Successfully connected to InfluxDB, but no tags found.',
+          };
+        })
+        .catch((err: any) => {
           return { status: 'error', message: err.message };
         });
     }
@@ -699,5 +725,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     return date.valueOf() + 'ms';
+  }
+
+  isMigrationToggleOnAndIsAccessProxy() {
+    return config.featureToggles.influxdbBackendMigration && this.access === 'proxy';
   }
 }
