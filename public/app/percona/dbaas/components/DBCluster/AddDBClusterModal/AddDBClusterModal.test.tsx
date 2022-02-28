@@ -1,28 +1,26 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { AddDBClusterModal } from './AddDBClusterModal';
 import { setVisibleStub, onDBClusterAddedStub } from './__mocks__/addDBClusterModalStubs';
 import { kubernetesStub } from '../../Kubernetes/__mocks__/kubernetesStubs';
+import { render, fireEvent, screen } from '@testing-library/react';
 
 jest.mock('app/core/app_events');
 
-xdescribe('AddDBClusterModal::', () => {
-  const openStep = (root: ReactWrapper, step: string) => {
-    root.find(`[data-testid="${step}"]`).find('[data-testid="step-header"]').simulate('click');
+describe('AddDBClusterModal::', () => {
+  const openStep = (step: string) => {
+    const stepNode = screen.getByTestId(`${step}`).querySelector('[data-testid="step-header"]');
+    if (stepNode) {
+      fireEvent.click(stepNode);
+    }
   };
 
-  const isStepActive = (root: ReactWrapper, step: string) =>
-    root
-      .find(`[data-testid="${step}"]`)
-      .find('[data-testid="step-content"]')
-      .find('div')
-      .at(1)
-      .prop('className')
-      ?.includes('current');
+  const isStepActive = (step: string) => {
+    const stepNode = screen.getByTestId(`${step}`).querySelector('[data-testid="step-content"]');
+    return stepNode ? stepNode.getElementsByTagName('div')[0].className.split('-')?.includes('current') : false;
+  };
 
   it('renders correctly', () => {
-    const root = mount(
+    render(
       <AddDBClusterModal
         kubernetes={kubernetesStub}
         isVisible
@@ -32,19 +30,19 @@ xdescribe('AddDBClusterModal::', () => {
       />
     );
 
-    expect(root.find('form')).toBeTruthy();
-    expect(root.find('[data-testid="name-text-input"]')).toBeTruthy();
-    expect(root.find('[data-testid="dbcluster-kubernetes-cluster-field"]')).toBeTruthy();
-    expect(root.find('[data-testid="dbcluster-database-type-field"]')).toBeTruthy();
-    expect(root.find('[data-testid="step-progress-submit-button"]')).toBeTruthy();
-    expect(root.find('[data-testid="dbcluster-basic-options-step"]')).toBeTruthy();
-    expect(root.find('[data-testid="dbcluster-advanced-options-step"]')).toBeTruthy();
-    expect(root.find('[data-testid="dbcluster-advanced-options-step"]')).toBeTruthy();
-    expect(root.find(dataTestId('add-cluster-monitoring-warning'))).toBeTruthy();
+    expect(screen.findByRole('form')).toBeTruthy();
+    expect(screen.getByTestId('name-text-input')).toBeTruthy();
+    expect(screen.getByTestId('dbcluster-kubernetes-cluster-field')).toBeTruthy();
+    expect(screen.getByTestId('dbcluster-database-type-field')).toBeTruthy();
+    expect(screen.getByTestId('step-progress-submit-button')).toBeTruthy();
+    expect(screen.getByTestId('dbcluster-basic-options-step')).toBeTruthy();
+    expect(screen.getByTestId('dbcluster-advanced-options-step')).toBeTruthy();
+    expect(screen.getByTestId('dbcluster-advanced-options-step')).toBeTruthy();
+    expect(screen.findByTestId('add-cluster-monitoring-warning')).toBeTruthy();
   });
 
   it('should disable submit button when there is no values', () => {
-    const root = mount(
+    render(
       <AddDBClusterModal
         kubernetes={kubernetesStub}
         isVisible
@@ -53,15 +51,14 @@ xdescribe('AddDBClusterModal::', () => {
       />
     );
 
-    openStep(root, 'dbcluster-advanced-options-step');
+    openStep('dbcluster-advanced-options-step');
 
-    const button = root.find('[data-testid="step-progress-submit-button"]').find('button');
-
-    expect(button.prop('disabled')).toBeTruthy();
+    const button = screen.getByTestId('step-progress-submit-button');
+    expect(button).toBeDisabled();
   });
 
   it('should change step correctly', () => {
-    const root = mount(
+    render(
       <AddDBClusterModal
         kubernetes={kubernetesStub}
         isVisible
@@ -70,9 +67,9 @@ xdescribe('AddDBClusterModal::', () => {
       />
     );
 
-    expect(isStepActive(root, 'dbcluster-basic-options-step')).toBeTruthy();
-    openStep(root, 'dbcluster-advanced-options-step');
-    expect(isStepActive(root, 'dbcluster-advanced-options-step')).toBeTruthy();
-    expect(isStepActive(root, 'dbcluster-basic-options-step')).toBeFalsy();
+    expect(isStepActive('dbcluster-basic-options-step')).toBeTruthy();
+    openStep('dbcluster-advanced-options-step');
+    expect(isStepActive('dbcluster-advanced-options-step')).toBeTruthy();
+    expect(isStepActive('dbcluster-basic-options-step')).toBeFalsy();
   });
 });

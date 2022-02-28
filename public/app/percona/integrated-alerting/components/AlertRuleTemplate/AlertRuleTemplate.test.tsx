@@ -1,8 +1,8 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { AlertRuleTemplate } from './AlertRuleTemplate';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
+import { Overlay } from '../../../shared/components/Elements/Overlay/Overlay';
 
 jest.mock('./AlertRuleTemplate.service');
 jest.mock('@percona/platform-core', () => {
@@ -14,31 +14,30 @@ jest.mock('@percona/platform-core', () => {
     },
   };
 });
+jest.mock('../../../shared/components/Elements/Overlay/Overlay', () => ({
+  Overlay: jest.fn(({ children }) => <div>{children}</div>),
+}));
 
-xdescribe('AlertRuleTemplate', () => {
+describe('AlertRuleTemplate', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
   it('should render add modal', async () => {
-    const wrapper = await getMount(<AlertRuleTemplate />);
+    await waitFor(() => render(<AlertRuleTemplate />));
 
-    expect(wrapper.find('textarea')).toBeTruthy();
-    expect(wrapper.contains(dataTestId('modal-wrapper'))).toBeFalsy();
-
-    wrapper.find(dataTestId('alert-rule-template-add-modal-button')).find('button').simulate('click');
-
-    expect(wrapper.find(dataTestId('modal-wrapper'))).toBeTruthy();
+    expect(screen.queryByTestId('modal-wrapper')).not.toBeInTheDocument();
+    const button = screen.getByTestId('alert-rule-template-add-modal-button');
+    fireEvent.click(button);
+    expect(screen.getByTestId('modal-wrapper')).toBeInTheDocument();
   });
 
   it('should render table content', async () => {
-    const wrapper = await getMount(<AlertRuleTemplate />);
+    await waitFor(() => render(<AlertRuleTemplate />));
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(4);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
+    expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(5);
+    expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
 
   it('should render correctly without data', async () => {
@@ -46,19 +45,19 @@ xdescribe('AlertRuleTemplate', () => {
       throw Error('test error');
     });
 
-    const wrapper = await getMount(<AlertRuleTemplate />);
+    render(<AlertRuleTemplate />);
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
+    expect(screen.queryByTestId('table-thead')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('table-tbody')).not.toBeInTheDocument();
+    expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
   });
 
   it('should have table initially loading', async () => {
-    const wrapper = await getMount(<AlertRuleTemplate />);
+    render(<AlertRuleTemplate />);
 
-    expect(wrapper.find(dataTestId('table-loading'))).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
+    expect(Overlay).toHaveBeenNthCalledWith(1, expect.objectContaining({ isPending: true }), expect.anything());
+
+    expect(Overlay).toHaveBeenNthCalledWith(2, expect.objectContaining({ isPending: false }), expect.anything());
+    expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
   });
 });

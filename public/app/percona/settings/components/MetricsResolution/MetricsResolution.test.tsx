@@ -1,97 +1,77 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { MetricsResolution } from './MetricsResolution';
 import { defaultResolutions } from './MetricsResolution.constants';
 import { removeUnits } from './MetricsResolution.utils';
-import { dataTestId } from '@percona/platform-core';
+import { fireEvent, render, screen } from '@testing-library/react';
 
-xdescribe('MetricsResolution::', () => {
+describe('MetricsResolution::', () => {
   it('Renders correctly with props for standard resolution', () => {
-    const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[1]} updateSettings={() => {}} />);
-    const lrInput = root.find('[data-testid="lr-number-input"]');
-    const mrInput = root.find('[data-testid="mr-number-input"]');
-    const hrInput = root.find('[data-testid="hr-number-input"]');
+    render(<MetricsResolution metricsResolutions={defaultResolutions[1]} updateSettings={() => {}} />);
+
     const standardRes = removeUnits(defaultResolutions[1]);
 
-    expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
-    expect(mrInput.find('input').prop('value')).toEqual(standardRes.mr);
-    expect(hrInput.find('input').prop('value')).toEqual(standardRes.hr);
+    expect(screen.getByTestId('lr-number-input')).toHaveValue(+standardRes.lr);
+    expect(screen.getByTestId('mr-number-input')).toHaveValue(+standardRes.mr);
+    expect(screen.getByTestId('hr-number-input')).toHaveValue(+standardRes.hr);
   });
 
   it('Renders correctly with props for rare resolution', () => {
-    const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
+    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
 
-    const lrInput = root.find('[data-testid="lr-number-input"]');
-    const mrInput = root.find('[data-testid="mr-number-input"]');
-    const hrInput = root.find('[data-testid="hr-number-input"]');
     const standardRes = removeUnits(defaultResolutions[0]);
 
-    expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
-    expect(mrInput.find('input').prop('value')).toEqual(standardRes.mr);
-    expect(hrInput.find('input').prop('value')).toEqual(standardRes.hr);
+    expect(screen.getByTestId('lr-number-input')).toHaveValue(+standardRes.lr);
+    expect(screen.getByTestId('mr-number-input')).toHaveValue(+standardRes.mr);
+    expect(screen.getByTestId('hr-number-input')).toHaveValue(+standardRes.hr);
   });
 
   it('Renders correctly with props for frequent resolution', () => {
-    const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[2]} updateSettings={() => {}} />);
+    render(<MetricsResolution metricsResolutions={defaultResolutions[2]} updateSettings={() => {}} />);
 
-    const lrInput = root.find('[data-testid="lr-number-input"]');
-    const mrInput = root.find('[data-testid="mr-number-input"]');
-    const hrInput = root.find('[data-testid="hr-number-input"]');
     const standardRes = removeUnits(defaultResolutions[2]);
 
-    expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
-    expect(mrInput.find('input').prop('value')).toEqual(standardRes.mr);
-    expect(hrInput.find('input').prop('value')).toEqual(standardRes.hr);
+    expect(screen.getByTestId('lr-number-input')).toHaveValue(+standardRes.lr);
+    expect(screen.getByTestId('mr-number-input')).toHaveValue(+standardRes.mr);
+    expect(screen.getByTestId('hr-number-input')).toHaveValue(+standardRes.hr);
   });
 
   it('Renders correctly with props for custom resolution', () => {
-    const root = mount(
-      <MetricsResolution metricsResolutions={{ lr: '400s', mr: '100s', hr: '50s' }} updateSettings={() => {}} />
-    );
+    render(<MetricsResolution metricsResolutions={{ lr: '400s', mr: '100s', hr: '50s' }} updateSettings={() => {}} />);
 
-    const lrInput = root.find('[data-testid="lr-number-input"]');
-    const mrInput = root.find('[data-testid="mr-number-input"]');
-    const hrInput = root.find('[data-testid="hr-number-input"]');
-
-    expect(lrInput.find('input').prop('value')).toEqual('400');
-    expect(mrInput.find('input').prop('value')).toEqual('100');
-    expect(hrInput.find('input').prop('value')).toEqual('50');
+    expect(screen.getByTestId('lr-number-input')).toHaveValue(400);
+    expect(screen.getByTestId('mr-number-input')).toHaveValue(100);
+    expect(screen.getByTestId('hr-number-input')).toHaveValue(50);
   });
 
   it('Changes input values when changing resolution', () => {
-    const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
-    let radio = root.find(dataTestId('resolutions-radio-button')).at(2);
+    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
+    const radio = screen.getAllByTestId('resolutions-radio-button')[2];
 
-    radio.simulate('click');
+    fireEvent.click(radio);
 
-    const lrInput = root.find('[data-testid="lr-number-input"]');
-    const mrInput = root.find('[data-testid="mr-number-input"]');
-    const hrInput = root.find('[data-testid="hr-number-input"]');
-    const standardRes = removeUnits(defaultResolutions[0]);
+    const standardRes = removeUnits(defaultResolutions[2]);
 
-    expect(lrInput.find('input').prop('value')).toEqual(standardRes.lr);
-    expect(mrInput.find('input').prop('value')).toEqual(standardRes.mr);
-    expect(hrInput.find('input').prop('value')).toEqual(standardRes.hr);
+    expect(screen.getByTestId('lr-number-input')).toHaveValue(+standardRes.lr);
+    expect(screen.getByTestId('mr-number-input')).toHaveValue(+standardRes.mr);
+    expect(screen.getByTestId('hr-number-input')).toHaveValue(+standardRes.hr);
   });
 
   it('Disables apply changes on initial values', () => {
-    const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
-    const button = root.find('button');
+    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
+    const button = screen.getByTestId('metrics-resolution-button');
 
-    expect(button.prop('disabled')).toBeTruthy();
+    expect(button).toBeDisabled();
   });
 
   it('Calls apply changes', () => {
     const updateSettings = jest.fn();
-    const root = mount(
-      <MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={updateSettings} />
-    );
+    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={updateSettings} />);
 
-    root
-      .find('[data-testid="lr-number-input"]')
-      .find('input')
-      .simulate('change', { target: { value: '70' } });
-    root.find('form').simulate('submit');
+    const input = screen.getByTestId('lr-number-input');
+    fireEvent.change(input, { target: { value: '70' } });
+
+    const form = screen.getByTestId('metrics-resolution-form');
+    fireEvent.submit(form);
 
     expect(updateSettings).toHaveBeenCalled();
   });

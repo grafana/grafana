@@ -1,10 +1,10 @@
 /* eslint-disable react/display-name */
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
 import { LoaderButton, TextInputField, TextareaInputField } from '@percona/platform-core';
 import { StepProgress } from './StepProgress';
+import { render, fireEvent, screen } from '@testing-library/react';
 
-xdescribe('StepProgress::', () => {
+describe('StepProgress::', () => {
   const steps = [
     {
       render: () => (
@@ -28,26 +28,24 @@ xdescribe('StepProgress::', () => {
     },
   ];
 
-  const isCurrentStep = (wrapper: ReactWrapper, dataTestId: string) =>
-    wrapper
-      .find(`[data-testid="${dataTestId}"]`)
-      .find('[data-testid="step-content"]')
-      .find('div')
-      .at(1)
-      .prop('className')
-      ?.includes('current');
+  const isCurrentStep = (dataTestId: string) => {
+    const stepContent = screen.getByTestId(`${dataTestId}`).querySelector('[data-testid="step-content"]');
+    return stepContent ? stepContent.getElementsByTagName('div')[0].className.split('-')?.includes('current') : false;
+  };
 
   it('renders steps correctly', () => {
-    const wrapper = mount(<StepProgress steps={steps} submitButtonMessage="Confirm" onSubmit={() => {}} />);
+    render(<StepProgress steps={steps} submitButtonMessage="Confirm" onSubmit={() => {}} />);
+    const a = screen.queryAllByRole('textbox');
+    expect(a.filter((item) => item.tagName === 'INPUT')).toHaveLength(2);
+    expect(a.filter((item) => item.tagName === 'TEXTAREA')).toHaveLength(1);
 
-    expect(wrapper.find('input').length).toBe(2);
-    expect(wrapper.find('textarea').length).toBe(1);
-    expect(wrapper.find('button').length).toBe(2);
-    expect(wrapper.find('[data-testid="step-header"]').length).toBe(2);
-    expect(isCurrentStep(wrapper, 'step-1')).toBeTruthy();
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getAllByTestId('step-header')).toHaveLength(2);
+    expect(isCurrentStep('step-1')).toBeTruthy();
   });
+
   it('renders steps correctly with initial values', () => {
-    const wrapper = mount(
+    render(
       <StepProgress
         steps={steps}
         submitButtonMessage="Confirm"
@@ -59,22 +57,28 @@ xdescribe('StepProgress::', () => {
       />
     );
 
-    expect(wrapper.find('input').at(0).prop('value')).toEqual('Test name');
-    expect(wrapper.find('textarea').at(0).prop('value')).toEqual('Test description');
+    expect(screen.getByTestId('name-text-input')).toHaveValue('Test name');
+    expect(screen.getByTestId('description-textarea-input')).toHaveValue('Test description');
   });
+
   it('changes current step correctly', () => {
-    const wrapper = mount(<StepProgress steps={steps} submitButtonMessage="Confirm" onSubmit={() => {}} />);
+    render(<StepProgress steps={steps} submitButtonMessage="Confirm" onSubmit={() => {}} />);
 
-    expect(isCurrentStep(wrapper, 'step-1')).toBeTruthy();
+    expect(isCurrentStep('step-1')).toBeTruthy();
 
-    wrapper.find('[data-testid="step-2"]').find('[data-testid="step-header"]').simulate('click');
+    const stepHeader = screen.getByTestId('step-2').querySelector('[data-testid="step-header"]');
+    expect(stepHeader).toBeTruthy();
+    if (stepHeader) {
+      fireEvent.click(stepHeader);
+    }
 
-    expect(isCurrentStep(wrapper, 'step-1')).toBeFalsy();
-    expect(isCurrentStep(wrapper, 'step-2')).toBeTruthy();
+    expect(isCurrentStep('step-1')).toBeFalsy();
+    expect(isCurrentStep('step-2')).toBeTruthy();
   });
+
   it('calls submit correctly', () => {
     const onSubmit = jest.fn();
-    const wrapper = mount(
+    render(
       <StepProgress
         steps={steps}
         submitButtonMessage="Confirm"
@@ -86,11 +90,11 @@ xdescribe('StepProgress::', () => {
       />
     );
 
-    wrapper
-      .find('input')
-      .at(1)
-      .simulate('change', { target: { value: 'test@test.com' } });
-    wrapper.find('form').simulate('submit');
+    const email = screen.getByTestId('email-text-input');
+    fireEvent.change(email, { target: { value: 'test@test.com' } });
+
+    const form = screen.getByTestId('step-progress');
+    fireEvent.submit(form);
 
     expect(onSubmit).toHaveBeenCalled();
   });

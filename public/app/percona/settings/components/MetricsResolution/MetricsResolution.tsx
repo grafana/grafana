@@ -81,7 +81,7 @@ export const MetricsResolution: FC<MetricsResolutionProps> = ({ metricsResolutio
         onSubmit={applyChanges}
         initialValues={initialValues}
         render={({ form, handleSubmit, valid, pristine }) => (
-          <form onSubmit={handleSubmit} onChange={() => updateResolutions(form)}>
+          <form onSubmit={handleSubmit} onChange={() => updateResolutions(form)} data-testid="metrics-resolution-form">
             <div className={settingsStyles.labelWrapper} data-testid="metrics-resolution-label">
               <span>{label}</span>
               <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />

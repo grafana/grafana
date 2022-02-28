@@ -5,7 +5,7 @@ import { dataTestId } from '@percona/platform-core';
 import { PostgreSQLConnectionDetails } from './PostgreSQLConnectionDetails';
 
 describe('PostgreSQL connection details:: ', () => {
-  it('should have database attribute', async () => {
+  it('should have database attribute', () => {
     const root = mount(
       <Form onSubmit={jest.fn()} render={() => <PostgreSQLConnectionDetails remoteInstanceCredentials={{}} />} />
     );

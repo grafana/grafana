@@ -1,35 +1,41 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
 import { NotificationChannel } from './NotificationChannel';
 import { DeleteNotificationChannelModal } from './DeleteNotificationChannelModal/DeleteNotificationChannelModal';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 jest.mock('./NotificationChannel.service');
+jest.mock('./DeleteNotificationChannelModal/DeleteNotificationChannelModal', () => ({
+  DeleteNotificationChannelModal: jest.fn(({ children }) => (
+    <div data-testid="DeleteNotificationChannelModal">{children}</div>
+  )),
+}));
 
-xdescribe('NotificationChannel', () => {
+describe('NotificationChannel', () => {
   it('should render table correctly', async () => {
-    const wrapper = await getMount(<NotificationChannel />);
+    render(<NotificationChannel />);
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(3);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
+    expect((await screen.findByTestId('table-thead')).querySelectorAll('tr')).toHaveLength(1);
+    expect((await screen.findByTestId('table-tbody')).querySelectorAll('tr')).toHaveLength(3);
+    expect(screen.queryAllByTestId('table-no-data')).toHaveLength(0);
   });
 
   it('should render add modal', async () => {
-    const wrapper = await getMount(<NotificationChannel />);
+    render(<NotificationChannel />);
 
-    expect(wrapper.contains(dataTestId('modal-wrapper'))).toBeFalsy();
+    expect(await waitFor(() => screen.queryByTestId('modal-wrapper'))).toBeFalsy();
 
-    wrapper.find(dataTestId('notification-channel-add-modal-button')).find('button').simulate('click');
+    const button = screen.getByTestId('notification-channel-add-modal-button');
+    fireEvent.click(button);
 
-    expect(wrapper.find(dataTestId('modal-wrapper'))).toBeTruthy();
+    expect(screen.getByTestId('modal-wrapper')).toBeInTheDocument();
   });
 
   it('should render delete modal', async () => {
-    const wrapper = await getMount(<NotificationChannel />);
+    await waitFor(() => render(<NotificationChannel />));
 
-    expect(wrapper.find(DeleteNotificationChannelModal).length).toBe(1);
+    expect(DeleteNotificationChannelModal).toHaveBeenCalledWith(
+      expect.objectContaining({ isVisible: false }),
+      expect.anything()
+    );
   });
 });

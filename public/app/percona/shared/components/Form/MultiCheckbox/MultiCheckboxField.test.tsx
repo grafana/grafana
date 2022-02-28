@@ -1,8 +1,7 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { Form } from 'react-final-form';
-import { dataTestId } from '@percona/platform-core';
 import { MultiCheckboxField } from './MultiCheckboxField';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 const optionsStub = [
   { name: 'v1.0', label: '1.0', value: false },
@@ -12,20 +11,20 @@ const optionsStub = [
   { name: 'v7.0', label: '7.0', value: true },
 ];
 
-xdescribe('MultiCheckboxField', () => {
+describe('MultiCheckboxField', () => {
   it('renders correct options', () => {
-    const wrapper = mount(
+    render(
       <Form onSubmit={jest.fn()} render={() => <MultiCheckboxField name="test" initialOptions={optionsStub} />} />
     );
 
-    const optionsWrapper = wrapper.find(dataTestId('test-options'));
+    const optionsWrapper = screen.getByTestId('test-options');
 
-    expect(optionsWrapper.children().length).toBe(optionsStub.length);
-    expect(optionsWrapper.find(dataTestId('v1.0-option')).text().includes('1.0')).toBeTruthy();
-    expect(optionsWrapper.find(dataTestId('v5.3.1-option')).text().includes('5.3.1')).toBeTruthy();
+    expect(optionsWrapper.children.length).toBe(optionsStub.length);
+    expect(screen.getByTestId('v1.0-option').textContent).toBe('1.0');
+    expect(screen.getByTestId('v5.3.1-option').textContent).toBe('5.3.1');
   });
   it('renders recommended option', () => {
-    const wrapper = mount(
+    render(
       <Form
         onSubmit={jest.fn()}
         render={() => (
@@ -39,22 +38,22 @@ xdescribe('MultiCheckboxField', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('v2.2-option')).text().includes('Recommended')).toBeTruthy();
+    expect(screen.getByTestId('v2.2-option').textContent).toContain('Recommended');
   });
   it('submits correct values', () => {
     const onSubmit = jest.fn();
-    const wrapper = mount(
+    render(
       <Form
         onSubmit={onSubmit}
         render={({ handleSubmit }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="test-form">
             <MultiCheckboxField name="test" initialOptions={optionsStub} />
           </form>
         )}
       />
     );
-
-    wrapper.find('form').simulate('submit');
+    const form = screen.getByTestId('test-form');
+    fireEvent.submit(form);
 
     expect(onSubmit).toHaveBeenCalledWith({ test: optionsStub }, expect.anything(), expect.anything());
   });

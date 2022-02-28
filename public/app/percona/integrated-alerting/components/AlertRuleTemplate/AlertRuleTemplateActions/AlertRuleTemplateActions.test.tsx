@@ -1,72 +1,60 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { dataTestId } from '@percona/platform-core';
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions';
 import { formattedTemplateStubs } from '../__mocks__/alertRuleTemplateStubs';
+import { fireEvent, render, screen } from '@testing-library/react';
 
-xdescribe('AlertRuleTemplateActions', () => {
+describe('AlertRuleTemplateActions', () => {
   it('should render component correctly', () => {
-    const wrapper = mount(
-      <AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />
-    );
+    render(<AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />);
 
-    expect(wrapper.contains(dataTestId('alert-rule-template-edit-button'))).toBeFalsy();
-    expect(wrapper.find(dataTestId('edit-template-button'))).toBeTruthy();
+    expect(screen.queryByTestId(dataTestId('alert-rule-template-edit-button'))).toBeFalsy();
+    expect(screen.getByTestId('edit-template-button')).toBeTruthy();
   });
 
   it('should open edit modal when clicking edit button', () => {
-    const wrapper = mount(
-      <AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />
-    );
-
-    wrapper.find(dataTestId('edit-template-button')).find('button').simulate('click');
-
-    expect(wrapper.find(dataTestId('alert-rule-template-edit-button'))).toBeTruthy();
+    render(<AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />);
+    const button = screen.getByTestId('edit-template-button');
+    fireEvent.click(button);
+    expect(screen.findByTestId('alert-rule-template-edit-button')).toBeTruthy();
   });
 
   it('should open delete modal when clicking delete button', () => {
-    const wrapper = mount(
-      <AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />
-    );
+    render(<AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />);
 
-    wrapper.find(dataTestId('delete-template-button')).find('button').simulate('click');
+    const button = screen.getByTestId('delete-template-button');
+    fireEvent.click(button);
 
-    expect(wrapper.find(dataTestId('confirm-delete-modal-button'))).toBeTruthy();
+    expect(screen.findByTestId('confirm-delete-modal-button')).toBeTruthy();
   });
 
   it('should disable edit and delete buttons when template is built-in', () => {
-    const wrapper = mount(
-      <AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />
-    );
+    render(<AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />);
 
-    const editButton = wrapper.find(dataTestId('edit-template-button')).find('button');
-    const deleteButton = wrapper.find(dataTestId('delete-template-button')).find('button');
+    const editButton = screen.getByTestId('edit-template-button');
+    const deleteButton = screen.getByTestId('delete-template-button');
 
-    expect(editButton.prop('disabled')).toBeTruthy();
-    expect(deleteButton.prop('disabled')).toBeTruthy();
+    expect(editButton).toBeDisabled();
+    expect(deleteButton).toBeDisabled();
   });
 
   it('should disable edit and delete buttons when template is from a file', () => {
-    const wrapper = mount(
-      <AlertRuleTemplateActions template={formattedTemplateStubs[2]} getAlertRuleTemplates={jest.fn()} />
-    );
+    render(<AlertRuleTemplateActions template={formattedTemplateStubs[2]} getAlertRuleTemplates={jest.fn()} />);
 
-    const editButton = wrapper.find(dataTestId('edit-template-button')).find('button');
-    const deleteButton = wrapper.find(dataTestId('delete-template-button')).find('button');
+    const editButton = screen.getByTestId('edit-template-button');
+    const deleteButton = screen.getByTestId('delete-template-button');
 
-    expect(editButton.prop('disabled')).toBeTruthy();
-    expect(deleteButton.prop('disabled')).toBeTruthy();
+    expect(editButton).toBeDisabled();
+    expect(deleteButton).toBeDisabled();
   });
 
   it('should disable edit and delete buttons when Portal is the template source', () => {
-    const wrapper = mount(
-      <AlertRuleTemplateActions template={formattedTemplateStubs[4]} getAlertRuleTemplates={jest.fn()} />
-    );
+    render(<AlertRuleTemplateActions template={formattedTemplateStubs[4]} getAlertRuleTemplates={jest.fn()} />);
 
-    const editButton = wrapper.find(dataTestId('edit-template-button')).find('button');
-    const deleteButton = wrapper.find(dataTestId('delete-template-button')).find('button');
+    const editButton = screen.getByTestId('edit-template-button');
+    const deleteButton = screen.getByTestId('delete-template-button');
 
-    expect(editButton.prop('disabled')).toBeTruthy();
-    expect(deleteButton.prop('disabled')).toBeTruthy();
+    expect(editButton).toBeDisabled();
+    expect(deleteButton).toBeDisabled();
   });
 });

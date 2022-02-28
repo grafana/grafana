@@ -1,6 +1,4 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal';
 import { kubernetesStub } from '../__mocks__/kubernetesStubs';
 import {
@@ -9,31 +7,30 @@ import {
   versionsFieldNameStub,
   versionsStubs,
 } from './__mocks__/componentsVersionsStubs';
+import { render, fireEvent, screen } from '@testing-library/react';
 
 jest.mock('app/core/app_events');
 jest.mock('./ManageComponentsVersions.hooks');
 
-xdescribe('ManageComponentsVersionsModal::', () => {
+describe('ManageComponentsVersionsModal::', () => {
   it('renders form with operator, component and versions field with correct values', () => {
-    const root = mount(
-      <ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={jest.fn()} />
-    );
-    const operator = root.find(dataTestId('kubernetes-operator'));
-    const component = root.find(dataTestId('kubernetes-component'));
-    const versions = root.find(dataTestId(`${versionsFieldNameStub}-options`));
+    render(<ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={jest.fn()} />);
 
-    expect(operator.text().includes(operatorsOptionsStubs[0].label)).toBeTruthy();
-    expect(component.text().includes(psmdbComponentOptionsStubs[0].label)).toBeTruthy();
-    expect(versions.children().length).toBe(versionsStubs.length);
-    expect(root.find(dataTestId('kubernetes-default-version')).exists()).toBeTruthy();
+    expect(
+      screen.getByTestId('kubernetes-operator').textContent?.includes(operatorsOptionsStubs[0].label)
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('kubernetes-component').textContent?.includes(psmdbComponentOptionsStubs[0].label)
+    ).toBeTruthy();
+    expect(screen.getByTestId(`${versionsFieldNameStub}-options`).children).toHaveLength(versionsStubs.length);
+    expect(screen.getByTestId('kubernetes-default-version')).toBeInTheDocument();
   });
   it('calls setVisible on cancel', () => {
     const setVisible = jest.fn();
-    const root = mount(
-      <ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={setVisible} />
-    );
+    render(<ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={setVisible} />);
 
-    root.find(dataTestId('kubernetes-components-versions-cancel')).find('button').simulate('click');
+    const btn = screen.getByTestId('kubernetes-components-versions-cancel');
+    fireEvent.click(btn);
 
     expect(setVisible).toHaveBeenCalledWith(false);
   });

@@ -1,18 +1,19 @@
 import React from 'react';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
-import { Backup } from './BackupInventory.types';
-import { stubs } from './__mocks__/BackupInventory.service';
 import { BackupInventory } from './BackupInventory';
+import { render, waitFor } from '@testing-library/react';
+import { stubs } from './__mocks__/BackupInventory.service';
 
 jest.mock('./BackupInventory.service');
 jest.mock('../../hooks/recurringCall.hook');
+jest.mock('app/percona/integrated-alerting/components/Table', () => ({
+  Table: jest.fn(({ children }) => <div data-testid="table">{children}</div>),
+}));
 
 describe('BackupInventory', () => {
   it('should send correct data to Table', async () => {
-    const wrapper = await getMount(<BackupInventory />);
+    await waitFor(() => render(<BackupInventory />));
 
-    wrapper.update();
-    expect(wrapper.find(Table).prop('data')).toEqual<Backup[]>(stubs);
+    expect(Table).toHaveBeenCalledWith(expect.objectContaining({ data: stubs }), expect.anything());
   });
 });

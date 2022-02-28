@@ -33,7 +33,7 @@ export const Slack: FC<SlackProps> = ({ updateSettings, settings }) => {
         onSubmit={applyChanges}
         initialValues={settings}
         render={({ handleSubmit, valid, pristine }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="slack-form">
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.slackURL.label}</span>
               <LinkTooltip

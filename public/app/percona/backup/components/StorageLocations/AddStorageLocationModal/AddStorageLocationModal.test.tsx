@@ -1,13 +1,10 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { LocationType, S3Location, StorageLocation } from '../StorageLocations.types';
-import { LocalFields } from './LocalFields';
-import { S3Fields } from './S3Fields';
 import { AddStorageLocationModal } from './AddStorageLocationModal';
 import { Messages } from './AddStorageLocationModal.messages';
+import { fireEvent, render, screen } from '@testing-library/react';
 
-xdescribe('AddStorageLocationModal', () => {
+describe('AddStorageLocationModal', () => {
   it('should render local TypeField', () => {
     const location: StorageLocation = {
       locationID: 'Location_1',
@@ -16,12 +13,8 @@ xdescribe('AddStorageLocationModal', () => {
       type: LocationType.CLIENT,
       path: '/foo/bar',
     };
-    const wrapper = mount(
-      <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
-    );
-
-    expect(wrapper.find(LocalFields).exists()).toBeTruthy();
-    expect(wrapper.find(LocalFields).prop('name')).toBe('client');
+    render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+    expect(screen.getByTestId('client-field-container')).toBeInTheDocument();
   });
 
   it('should render S3 TypeField', () => {
@@ -35,12 +28,12 @@ xdescribe('AddStorageLocationModal', () => {
       secretKey: 'secretKey',
       bucketName: 'bucket',
     };
-    const wrapper = mount(
-      <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
-    );
-
-    expect(wrapper.find(S3Fields).exists()).toBeTruthy();
-    expect(wrapper.find(S3Fields).prop('endpoint')).toBe('/foo/bar');
+    render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+    expect(screen.queryByTestId('bucketName-field-container')).toBeInTheDocument();
+    expect(screen.queryByTestId('accessKey-field-container')).toBeInTheDocument();
+    expect(screen.queryByTestId('secretKey-field-container')).toBeInTheDocument();
+    expect(screen.queryByTestId('endpoint-field-container')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /endpoint/i })).toHaveValue('/foo/bar');
   });
 
   it('should not render unknown type fields', () => {
@@ -51,12 +44,16 @@ xdescribe('AddStorageLocationModal', () => {
       path: '',
       type: 'unknwon' as LocationType,
     };
-    const wrapper = mount(
-      <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
-    );
+    render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
-    expect(wrapper.find(S3Fields).exists()).toBeFalsy();
-    expect(wrapper.find(LocalFields).exists()).toBeFalsy();
+    //S3Fields
+    expect(screen.queryByTestId('bucketName-field-container')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('accessKey-field-container')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('secretKey-field-container')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('endpoint-field-container')).not.toBeInTheDocument();
+    //LocalFields
+    expect(screen.queryByTestId('server-field-container')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('client-field-container')).not.toBeInTheDocument();
   });
 
   it('should call onAdd callback', () => {
@@ -71,16 +68,19 @@ xdescribe('AddStorageLocationModal', () => {
       secretKey: 'secretKey',
       bucketName: 'bucket',
     };
-    const wrapper = mount(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={onAdd} isVisible />);
-    wrapper.find(dataTestId('endpoint-text-input')).simulate('change', { target: { value: 's3://foo' } });
-    wrapper.find('form').simulate('submit');
+    render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={onAdd} isVisible />);
+
+    const endpointInput = screen.getByTestId('endpoint-text-input');
+    fireEvent.change(endpointInput, { target: { value: 's3://foo' } });
+    const form = screen.getByTestId('add-storage-location-modal-form');
+    fireEvent.submit(form);
 
     expect(onAdd).toHaveBeenCalled();
   });
 
   it('should show the "Add" button when no location passed', () => {
-    const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
-    expect(wrapper.find(dataTestId('storage-location-add-button')).first().text()).toBe(Messages.addAction);
+    render(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+    expect(screen.getAllByTestId('storage-location-add-button')[0].textContent).toBe(Messages.addAction);
   });
 
   it('should show the "Edit" button when a location is passed', () => {
@@ -91,22 +91,20 @@ xdescribe('AddStorageLocationModal', () => {
       type: LocationType.CLIENT,
       path: '/foo/bar',
     };
-    const wrapper = mount(
-      <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
-    );
-    expect(wrapper.find(dataTestId('storage-location-add-button')).first().text()).toBe(Messages.editAction);
+    render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+    expect(screen.getAllByTestId('storage-location-add-button')[0].textContent).toBe(Messages.editAction);
   });
 
   it('should have the test button', () => {
-    const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+    render(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
-    expect(wrapper.find(dataTestId('storage-location-test-button')).exists()).toBeTruthy();
+    expect(screen.getByTestId('storage-location-test-button')).toBeInTheDocument();
   });
 
   it('should disable the test button if the form is invalid', () => {
-    const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
-
-    expect(wrapper.find(dataTestId('storage-location-test-button')).last().props().disabled).toBe(true);
+    render(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+    const buttons = screen.getAllByTestId('storage-location-test-button');
+    expect(buttons[buttons.length - 1]).toBeDisabled();
   });
 
   it('should enable the test button if the form is valid', () => {
@@ -117,11 +115,10 @@ xdescribe('AddStorageLocationModal', () => {
       type: LocationType.CLIENT,
       path: '/foo/bar',
     };
-    const wrapper = mount(
-      <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
-    );
+    render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
-    expect(wrapper.find(dataTestId('storage-location-test-button')).last().props().disabled).toBe(false);
+    const buttons = screen.getAllByTestId('storage-location-test-button');
+    expect(buttons[buttons.length - 1]).not.toBeDisabled();
   });
 
   it('should disable the add button while waiting for test validation', () => {
@@ -132,7 +129,7 @@ xdescribe('AddStorageLocationModal', () => {
       type: LocationType.CLIENT,
       path: '/foo/bar',
     };
-    const wrapper = mount(
+    render(
       <AddStorageLocationModal
         location={location}
         waitingLocationValidation
@@ -142,6 +139,7 @@ xdescribe('AddStorageLocationModal', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('storage-location-add-button')).last().props().disabled).toBe(true);
+    const buttons = screen.getAllByTestId('storage-location-add-button');
+    expect(buttons[buttons.length - 1]).toBeDisabled();
   });
 });

@@ -74,7 +74,7 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
         initialValues={initialValues}
         onSubmit={onSubmit}
         render={({ handleSubmit, valid, pristine, submitting, values }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="add-storage-location-modal-form">
             <TextInputField
               inputProps={{ maxLength: MAX_NAME_LENGTH }}
               name="name"
