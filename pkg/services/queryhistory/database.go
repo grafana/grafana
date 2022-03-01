@@ -67,18 +67,18 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 			query_history.uid,
 			query_history.datasource_uid,
 			query_history.created_by,
-			query_history.created_at as "created_at",
+			query_history.created_at AS created_at,
 			query_history.comment,
 			query_history.queries,
 		`
 
 		if query.OnlyStarred {
-			sql = sql + ` ` + s.SQLStore.Dialect.BooleanStr(true) + ` as "starred"
+			sql = sql + s.SQLStore.Dialect.BooleanStr(true) + ` AS starred
 				FROM query_history
 				INNER JOIN query_history_star ON query_history_star.query_uid = query_history.uid
 			`
 		} else {
-			sql = sql + `CASE WHEN query_history_star.query_uid IS NULL THEN false ELSE true END AS starred
+			sql = sql + `CASE WHEN query_history_star.query_uid IS NULL THEN ` + s.SQLStore.Dialect.BooleanStr(false) + ` ELSE ` + s.SQLStore.Dialect.BooleanStr(true) + ` END AS starred
 				FROM query_history
 				LEFT JOIN query_history_star ON query_history_star.query_uid = query_history.uid
 			`
