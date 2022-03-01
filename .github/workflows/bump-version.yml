@@ -77,7 +77,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main
+          ref: chore/fix-yarn-lock
       - uses: actions/setup-node@v2.5.1
         with:
           node-version: '16'

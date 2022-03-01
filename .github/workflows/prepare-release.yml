@@ -7,14 +7,14 @@ on:
         required: true
 jobs:
   call-bump-version:
-    uses: grafana/grafana/.github/workflows/bump-version.yml@main
+    uses: ./.github/workflows/bump-version.yml
     with:
       version_call: ${{ github.event.inputs.version_input }}
     secrets:
       token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
       metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
   call-update-changelog:
-    uses: grafana/grafana/.github/workflows/update-changelog.yml@main
+    uses: ./.github/workflows/update-changelog.yml
     with:
       version_call: ${{ github.event.inputs.version_input }}
     secrets:
