@@ -77,4 +77,5 @@ type SavePreferencesCommand struct {
 	WeekStart       string               `json:"weekStart"`
 	Theme           string               `json:"theme"`
 	JsonData        *PreferencesJsonData `json:"jsonData"`
+	// Navbar          []NavbarPreference `json:"navbar"`
 }
