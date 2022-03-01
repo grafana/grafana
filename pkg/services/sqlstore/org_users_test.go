@@ -150,20 +150,20 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	store := InitTestDB(t)
 
 	// create org and admin
-	_, err := store.CreateUser(context.Background(), models.CreateUserCommand{
-		Login: fmt.Sprintf("admin"),
+	store.CreateUser(context.Background(), models.CreateUserCommand{
+		Login: "admin",
 		OrgId: 1,
 	})
 
 	// create a user with no org
-	_, err = store.CreateUser(context.Background(), models.CreateUserCommand{
-		Login:        fmt.Sprintf("user"),
+	store.CreateUser(context.Background(), models.CreateUserCommand{
+		Login:        "user",
 		OrgId:        1,
 		SkipOrgSetup: true,
 	})
 
 	// assign the user to the org
-	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+	store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
 		Role:   "Viewer",
 		OrgId:  1,
 		UserId: 2,
@@ -175,7 +175,7 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	require.Equal(t, user.Result.OrgId, int64(1))
 
 	// remove the only org
-	err = store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
+	err := store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
 		UserId:                   2,
 		OrgId:                    1,
 		ShouldDeleteOrphanedUser: false,
