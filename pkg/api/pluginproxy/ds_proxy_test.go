@@ -579,18 +579,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			createAuthTest(t, secretsService, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, true),
 
 			// no ruler proxy path; basic auth should be used
-			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, ""),
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, "http://localhost:9090", authTypeBasic, authCheckHeader, ""),
 			// valid ruler proxy paths; ruler basic auth should be used
-			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/api/v1/rules"),
-			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace"),
-			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, "http://localhost:9090", authTypeBasic, authCheckHeader, "/api/v1/rules"),
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, "http://localhost:9090", authTypeBasic, authCheckHeader, "/rules/namespace"),
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, "http://localhost:9090", authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
 
 			// no ruler proxy path; basic auth should be used
-			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, ""),
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, "http://localhost:9090", authTypeBasic, authCheckHeader, ""),
 			// valid ruler proxy paths; ruler basic auth should be used
-			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, "/api/v1/rules"),
-			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace"),
-			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, "http://localhost:9090", authTypeBasic, authCheckHeader, "/api/v1/rules"),
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, "http://localhost:9090", authTypeBasic, authCheckHeader, "/rules/namespace"),
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, "http://localhost:9090", authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
 		}
 		for _, test := range tests {
 			runDatasourceAuthTest(t, secretsService, test)
@@ -995,7 +995,7 @@ func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string,
 	return test
 }
 
-func createRulerAuthTest(t *testing.T, secretsService secrets.Service, dsType string, authType string, authCheck string, proxyPath string) *testCase {
+func createRulerAuthTest(t *testing.T, secretsService secrets.Service, dsType string, url string, authType string, authCheck string, proxyPath string) *testCase {
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 	// Ruler basic ruler user:ruler password
@@ -1015,6 +1015,7 @@ func createRulerAuthTest(t *testing.T, secretsService secrets.Service, dsType st
 			Id:       1,
 			Type:     dsType,
 			JsonData: jsonData,
+			Url:      url,
 		},
 	}
 
