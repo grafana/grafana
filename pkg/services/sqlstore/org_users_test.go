@@ -146,6 +146,48 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 	}
 }
 
+func TestSQLStore_RemoveOrgUser(t *testing.T) {
+	store := InitTestDB(t)
+
+	// create org and admin
+	_, err := store.CreateUser(context.Background(), models.CreateUserCommand{
+		Login: fmt.Sprintf("admin"),
+		OrgId: 1,
+	})
+
+	// create a user with no org
+	_, err = store.CreateUser(context.Background(), models.CreateUserCommand{
+		Login:        fmt.Sprintf("user"),
+		OrgId:        1,
+		SkipOrgSetup: true,
+	})
+
+	// assign the user to the org
+	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		Role:   "Viewer",
+		OrgId:  1,
+		UserId: 2,
+	})
+
+	// assert the org has been assigned
+	user := &models.GetUserByIdQuery{Id: 2}
+	store.GetUserById(context.Background(), user)
+	require.Equal(t, user.Result.OrgId, int64(1))
+
+	// remove the only org
+	err = store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
+		UserId:                   2,
+		OrgId:                    1,
+		ShouldDeleteOrphanedUser: false,
+	})
+
+	// assert the org has been removed
+	require.NoError(t, err)
+	user = &models.GetUserByIdQuery{Id: 2}
+	store.GetUserById(context.Background(), user)
+	require.Equal(t, user.Result.OrgId, int64(0))
+}
+
 func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 	t.Helper()
 	// Seed users
