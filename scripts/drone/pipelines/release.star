@@ -34,6 +34,7 @@ load(
     'store_storybook_step',
     'upload_packages_step',
     'store_packages_step',
+    'import_packages_to_artifacts_repo_step',
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
@@ -392,8 +393,9 @@ def publish_packages_pipeline():
     }
     steps = [
         download_grabpl_step(),
-        store_packages_step(edition='oss', ver_mode='release'),
-        store_packages_step(edition='enterprise', ver_mode='release'),
+        import_packages_to_artifacts_repo_step(ver_mode='release'),
+        # store_packages_step(edition='oss', ver_mode='release'),
+        # store_packages_step(edition='enterprise', ver_mode='release'),
     ]
 
     return [pipeline(

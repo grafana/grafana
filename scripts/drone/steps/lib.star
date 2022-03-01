@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.5'
+grabpl_version = 'v2.9.8'
 build_image = 'grafana/build-container:1.5.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -976,6 +976,24 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
             'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
             'GPG_PUB_KEY': from_secret('gpg_pub_key'),
             'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
+        },
+        'commands': [
+            cmd,
+        ],
+    }
+
+def import_packages_to_artifacts_repo_step(ver_mode):
+    if ver_mode != 'release':
+        return {}
+    cmd = './bin/grabpl import-packages'
+    return {
+        'name': 'import-packages',
+        'image': publish_image,
+        'depends_on': [
+             'grabpl',
+        ],
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
         },
         'commands': [
             cmd,
