@@ -9,9 +9,14 @@ type Props = {
   max: number;
 };
 
+type HoverState = {
+  isShown: boolean;
+  value: number;
+};
+
 export const ColorScale = ({ colorPalette, min, max }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
-  const [hover, setHover] = useState({ isShown: false, value: null });
+  const [hover, setHover] = useState<HoverState>({ isShown: false, value: 0 });
   const [cursor, setCursor] = useState({ clientX: 0, clientY: 0 });
 
   useEffect(() => {
@@ -21,9 +26,9 @@ export const ColorScale = ({ colorPalette, min, max }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, colors);
 
-  const onScaleMouseMove = (event) => {
+  const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
-    const offsetWidth = event.target.offsetWidth;
+    const offsetWidth = (event.target as any).offsetWidth as number;
     let normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     let scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
     setHover({ isShown: true, value: scaleValue });
@@ -31,7 +36,7 @@ export const ColorScale = ({ colorPalette, min, max }: Props) => {
   };
 
   const onScaleMouseLeave = () => {
-    setHover({ isShown: false, value: null });
+    setHover({ isShown: false, value: 0 });
   };
 
   return (

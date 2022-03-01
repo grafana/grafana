@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -91,13 +91,16 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   }, [options, data.structureRev]);
 
   const renderLegend = () => {
-    if (options.legend.displayMode === LegendDisplayMode.Hidden) {
+    if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
       return null;
     }
 
+    const field = info.heatmap.fields[2];
+    const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
+
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale colorPalette={palette} min={1} max={100} />
+        <ColorScale colorPalette={palette} min={min} max={max} />
       </VizLayout.Legend>
     );
   };
