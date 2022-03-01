@@ -37,7 +37,7 @@ export class ServiceAccountRoleRow extends PureComponent<Props> {
               userId={serviceAccount.id}
               orgId={serviceAccount.orgId}
               builtInRole={serviceAccount.role}
-              onBuiltinRoleChange={(newRole) => onRoleChange(newRole)}
+              onBuiltinRoleChange={onRoleChange}
               roleOptions={roleOptions}
               builtInRoles={builtInRoles}
               disabled={rolePickerDisabled}
@@ -47,7 +47,7 @@ export class ServiceAccountRoleRow extends PureComponent<Props> {
               aria-label="Role"
               value={serviceAccount.role}
               disabled={!canUpdateRole}
-              onChange={(newRole) => onRoleChange(newRole)}
+              onChange={onRoleChange}
             />
           )}
         </td>
