@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   FieldConfigEditorProps,
   toIntegerOrUndefined,
@@ -13,7 +13,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   item,
 }) => {
   const { settings } = item;
-
+  const valueRef = useRef<string | undefined>();
   const onSafeChange = useCallback(
     (value: string) => {
       let num = settings?.integer ? toIntegerOrUndefined(value) : toFloatOrUndefined(value);
@@ -37,12 +37,14 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
       if (e.hasOwnProperty('key')) {
         // handling keyboard event
         const evt = e as React.KeyboardEvent<HTMLInputElement>;
+        valueRef.current = evt.currentTarget.value;
         if (evt.key === 'Enter') {
           onSafeChange(evt.currentTarget.value);
         }
       } else {
         // handling form event
         const evt = e as React.FormEvent<HTMLInputElement>;
+        valueRef.current = evt.currentTarget.value;
         onSafeChange(evt.currentTarget.value);
       }
     },
@@ -60,6 +62,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
       placeholder={settings?.placeholder}
       onBlur={onValueChange}
       onKeyDown={onValueChange}
+      key={valueRef.current}
     />
   );
 };
