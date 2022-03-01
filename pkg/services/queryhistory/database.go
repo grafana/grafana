@@ -78,7 +78,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 				INNER JOIN query_history_star ON query_history_star.query_uid = query_history.uid
 			`
 		} else {
-			sql = sql + `IIF(query_history_star.query_uid IS NULL, false, true) AS starred
+			sql = sql + `CASE WHEN query_history_star.query_uid IS NULL THEN false ELSE true END AS starred
 				FROM query_history
 				LEFT JOIN query_history_star ON query_history_star.query_uid = query_history.uid
 			`
