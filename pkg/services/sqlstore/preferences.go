@@ -144,11 +144,27 @@ func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.SavePrefer
 		if !exists {
 			// TODO return err here
 		}
-		prefs.JsonData = cmd.JsonData
-		prefs.HomeDashboardId = cmd.HomeDashboardId
-		prefs.Timezone = cmd.Timezone
-		prefs.WeekStart = cmd.WeekStart
-		prefs.Theme = cmd.Theme
+
+		if cmd.JsonData != nil {
+			prefs.JsonData = cmd.JsonData
+		}
+
+		if cmd.HomeDashboardId > 0 {
+			prefs.HomeDashboardId = cmd.HomeDashboardId
+		}
+
+		if cmd.Timezone != "" {
+			prefs.Timezone = cmd.Timezone
+		}
+
+		if cmd.WeekStart != "" {
+			prefs.WeekStart = cmd.WeekStart
+		}
+
+		if cmd.Theme != "" {
+			prefs.Theme = cmd.Theme
+		}
+
 		prefs.Updated = time.Now()
 		prefs.Version += 1
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
