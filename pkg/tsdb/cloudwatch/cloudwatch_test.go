@@ -3,12 +3,12 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	awsrequest "github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"

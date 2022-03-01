@@ -170,18 +170,17 @@ func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.Call
 }
 
 func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	// use billing metrics for test
+	status := backend.HealthStatusOk
+	metricsTest := "Successfully queried the CloudWatch metrics API."
+	logsTest := "Successfully queried the CloudWatch logs API."
+
+	// use billing metrics for metrics test
 	namespace := "AWS/Billing"
 	metric := "EstimatedCharges"
 	params := &cloudwatch.ListMetricsInput{
 		Namespace:  &namespace,
 		MetricName: &metric,
 	}
-
-	status := backend.HealthStatusOk
-	metricsTest := "Successfully queried the CloudWatch metrics API."
-	logsTest := "Successfully queried the CloudWatch logs API."
-
 	_, err := e.listMetrics(req.PluginContext, defaultRegion, params)
 	if err != nil {
 		status = backend.HealthStatusError
