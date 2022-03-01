@@ -86,7 +86,7 @@ Returns a list of queries in the query history that matches the search criteria.
 
 Query parameters:
 
-- **datasourceUid** - Use this parameter to filter query history items for selected data source. At least 1 data source uid needs to be specified. To do an "AND" filtering with multiple data sources, specify the data source parameter multiple times e.g. `datasourceUid=uid1&datasourceUid=uid2`.
+- **datasourceUid** - Filter the query history for selected data sources. You must specify at least one data source UID. To perform an "AND" filtering with multiple data sources, specify the data source parameter using the following format: `datasourceUid=uid1&datasourceUid=uid2`.
 - **searchString** – Use searchString parameter for filtering query history items based on the content of queries.
 - **sort** - Sorting order. Can be `time-asc` or `time-desc`. Defaults to `time-desc`.
 - **onlyStarred** - Search for queries that are starred. Defaults to `false`.
