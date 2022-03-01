@@ -22,11 +22,9 @@ type file struct {
 }
 
 type fileMeta struct {
-	Path    string    `xorm:"path"`
-	Key     string    `xorm:"key"`
-	Value   string    `xorm:"value"`
-	Updated time.Time `xorm:"updated"`
-	Created time.Time `xorm:"created"`
+	Path  string `xorm:"path"`
+	Key   string `xorm:"key"`
+	Value string `xorm:"value"`
 }
 
 type dbFileStorage struct {
@@ -213,16 +211,13 @@ func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key st
 	}
 
 	if exists {
-		existing.Updated = now
 		existing.Value = val
 		_, err = sess.Where("path = ? AND key = ?", strings.ToLower(path), key).Update(existing)
 	} else {
 		_, err = sess.Insert(&fileMeta{
-			Path:    strings.ToLower(path),
-			Key:     key,
-			Value:   val,
-			Updated: now,
-			Created: now,
+			Path:  strings.ToLower(path),
+			Key:   key,
+			Value: val,
 		})
 	}
 	return err
