@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-type Store interface {
+type Manager interface {
 	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error
 	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
 	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error
@@ -28,7 +28,7 @@ type SQLStore interface {
 }
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, alertingService Store, sqlstore SQLStore, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+func Provision(ctx context.Context, configDirectory string, alertingService Manager, sqlstore SQLStore, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
 	dc := newNotificationProvisioner(sqlstore, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
@@ -37,14 +37,14 @@ func Provision(ctx context.Context, configDirectory string, alertingService Stor
 type NotificationProvisioner struct {
 	log             log.Logger
 	cfgProvider     *configReader
-	alertingService Store
+	alertingManager Manager
 	sqlstore        SQLStore
 }
 
-func newNotificationProvisioner(store SQLStore, alertingService Store, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(store SQLStore, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log:             log,
-		alertingService: alertingService,
+		alertingManager: alertingManager,
 		cfgProvider: &configReader{
 			encryptionService:   encryptionService,
 			notificationService: notifiationService,
@@ -83,13 +83,13 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 
 		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
 
-		if err := dc.alertingService.GetAlertNotificationsWithUid(ctx, getNotification); err != nil {
+		if err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
 			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
-			if err := dc.alertingService.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
+			if err := dc.alertingManager.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -111,7 +111,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 		}
 
 		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
-		err := dc.alertingService.GetAlertNotificationsWithUid(ctx, cmd)
+		err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, cmd)
 		if err != nil {
 			return err
 		}
@@ -131,7 +131,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := dc.alertingService.CreateAlertNotificationCommand(ctx, insertCmd); err != nil {
+			if err := dc.alertingManager.CreateAlertNotificationCommand(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
@@ -149,7 +149,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := dc.alertingService.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
+			if err := dc.alertingManager.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
 				return err
 			}
 		}
