@@ -48,6 +48,20 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 2, len(response.Result))
+			require.Equal(t, true, response.Result[0].Starred)
+			require.Equal(t, false, response.Result[1].Starred)
+		})
+
+	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries with datasourceUid and sort, it should return correct queries",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.Req.Form.Add("datasourceUid", sc.initialResult.Result.DatasourceUID)
+			sc.reqContext.Req.Form.Add("sort", "time-asc")
+			resp := sc.service.searchHandler(sc.reqContext)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 2, len(response.Result))
 			require.Equal(t, false, response.Result[0].Starred)
 			require.Equal(t, true, response.Result[1].Starred)
 		})

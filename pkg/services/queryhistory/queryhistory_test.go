@@ -115,6 +115,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		resp1 := sc.service.createHandler(sc.reqContext)
 		sc.initialResult = validateAndUnMarshalResponse(t, resp1)
 
+		time.Sleep(1 * time.Second)
 		command2 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
 			Queries: simplejson.NewFromAny(map[string]interface{}{
@@ -127,6 +128,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result2.Result.UID})
 		sc.service.starHandler(sc.reqContext)
 
+		time.Sleep(1 * time.Second)
 		command3 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID2,
 			Queries: simplejson.NewFromAny(map[string]interface{}{
