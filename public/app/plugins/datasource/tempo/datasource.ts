@@ -10,7 +10,7 @@ import {
   isValidGoDuration,
   LoadingState,
 } from '@grafana/data';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -325,17 +325,17 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         links: [
           makePromLink(
             'Request rate',
-            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__interval])`,
+            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
           makePromLink(
             'Request histogram',
-            `histogram_quantile(0.9, rate(${histogramMetric}{server="\${__data.fields.id}"}[$__interval]))`,
+            `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${__data.fields.id}"}[$__rate_interval])) by (le, client, server))`,
             datasourceUid
           ),
           makePromLink(
             'Failed request rate',
-            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__interval])`,
+            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
         ],

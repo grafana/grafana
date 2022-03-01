@@ -24,7 +24,7 @@ func TestDingDingNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		_, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 	t.Run("settings should trigger incident", func(t *testing.T) {
@@ -37,7 +37,7 @@ func TestDingDingNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		notifier := not.(*DingDingNotifier)
 
 		require.Nil(t, err)
@@ -50,7 +50,7 @@ func TestDingDingNotifier(t *testing.T) {
 				&alerting.Rule{
 					State:   models.AlertStateAlerting,
 					Message: `{host="localhost"}`,
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 			_, err = notifier.genBody(evalContext, "")
 			require.Nil(t, err)
 		})

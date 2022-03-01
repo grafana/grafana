@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import React from 'react';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
 import { FuncInstance } from '../gfunc';
 import { css } from '@emotion/css';
@@ -19,13 +19,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize, // to match .gf-form-label
       cursor: 'pointer',
       display: 'inline-block',
-      paddingBottom: '2px',
     }),
   };
 };
 
 const FunctionEditor: React.FC<FunctionEditorProps> = ({ onMoveLeft, onMoveRight, func, ...props }) => {
-  const triggerRef = useRef<HTMLSpanElement>(null);
   const styles = useStyles2(getStyles);
 
   const renderContent = ({ updatePopperPosition }: any) => (
@@ -44,41 +42,16 @@ const FunctionEditor: React.FC<FunctionEditorProps> = ({ onMoveLeft, onMoveRight
   );
 
   return (
-    <PopoverController content={renderContent} placement="top" hideAfter={100}>
-      {(showPopper, hidePopper, popperProps) => {
-        return (
-          <>
-            {triggerRef.current && (
-              <Popover
-                {...popperProps}
-                referenceElement={triggerRef.current}
-                wrapperClassName="popper"
-                className="popper__background"
-                renderArrow={({ arrowProps, placement }) => (
-                  <div className="popper__arrow" data-placement={placement} {...arrowProps} />
-                )}
-              />
-            )}
-            <ClickOutsideWrapper
-              onClick={() => {
-                if (popperProps.show) {
-                  hidePopper();
-                }
-              }}
-            >
-              <span ref={triggerRef} onClick={popperProps.show ? hidePopper : showPopper} className={styles.label}>
-                {func.def.unknown && (
-                  <Tooltip content={<TooltipContent />} placement="bottom">
-                    <Icon data-testid="warning-icon" name="exclamation-triangle" size="xs" className={styles.icon} />
-                  </Tooltip>
-                )}
-                {func.def.name}
-              </span>
-            </ClickOutsideWrapper>
-          </>
-        );
-      }}
-    </PopoverController>
+    <>
+      {func.def.unknown && (
+        <Tooltip content={<TooltipContent />} placement="bottom" interactive>
+          <Icon data-testid="warning-icon" name="exclamation-triangle" size="xs" className={styles.icon} />
+        </Tooltip>
+      )}
+      <Tooltip content={renderContent} placement="top" interactive>
+        <span className={styles.label}>{func.def.name}</span>
+      </Tooltip>
+    </>
   );
 };
 

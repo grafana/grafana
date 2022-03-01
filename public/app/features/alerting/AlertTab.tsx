@@ -2,13 +2,10 @@ import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { Alert, Button, ConfirmModal, Container, CustomScrollbar, HorizontalGroup, IconName, Modal } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
+import { AngularComponent, config, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { getAlertingValidationMessage } from './getAlertingValidationMessage';
-
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
-import 'app/features/alerting/AlertTabCtrl';
-
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
@@ -57,8 +54,14 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     showTestRule: false,
   };
 
-  componentDidMount() {
-    this.loadAlertTab();
+  async componentDidMount() {
+    if (config.angularSupportEnabled) {
+      await import(/* webpackChunkName: "AlertTabCtrl" */ 'app/features/alerting/AlertTabCtrl');
+      this.loadAlertTab();
+    } else {
+      // TODO probably need to migrate AlertTab to react
+      alert('Angular support disabled, legacy alerting cannot function without angular support');
+    }
   }
 
   onAngularPanelUpdated = () => {

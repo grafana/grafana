@@ -8,6 +8,7 @@ CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 STORIES_COUNT="$(find ./packages/grafana-ui/src/components -name "*.story.tsx" | wc -l)"
 MDX_COUNT="$(find ./packages/grafana-ui/src/components -name "*.mdx" | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
+ENZYME_TEST_COUNT="$(grep -l -R --include="*.test.*" "from 'enzyme'" public packages | wc -l)"
 
 STRICT_LINT_RESULTS="$(yarn run eslint --rule '@typescript-eslint/no-explicit-any: ["error"]' --format unix --ext .ts,.tsx ./public || true)"
 STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit-any" | wc -l)"
@@ -35,6 +36,7 @@ echo -e "Low vulnerabilities: $LOW_VULNERABILITIES"
 echo -e "Med vulnerabilities: $MED_VULNERABILITIES"
 echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
 echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
+echo -e "Number of enzyme tests: $ENZYME_TEST_COUNT"
 
 echo "Metrics: {
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
@@ -46,5 +48,6 @@ echo "Metrics: {
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
   \"grafana.ci-code.strictLint.noExplicitAny\": \"${STRICT_LINT_EXPLICIT_ANY}\",
   \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
-  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\"
+  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
+  \"grafana.ci-code.enzymeTests\": \"${ENZYME_TEST_COUNT}\"
 }"

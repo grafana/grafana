@@ -34,7 +34,6 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
-import { getVariables } from 'app/features/variables/state/selectors';
 
 import { StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
@@ -55,6 +54,7 @@ import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
+import { getVariablesByKey } from '../../../variables/state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -62,7 +62,7 @@ interface OwnProps {
   tab?: string;
 }
 
-const mapStateToProps = (state: StoreState) => {
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const panel = state.panelEditor.getPanel();
   const panelState = getPanelStateForModel(state, panel);
 
@@ -73,7 +73,7 @@ const mapStateToProps = (state: StoreState) => {
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
-    variables: getVariables(state),
+    variables: getVariablesByKey(ownProps.dashboard.uid, state),
   };
 };
 

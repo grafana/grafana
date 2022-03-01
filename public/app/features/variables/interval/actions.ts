@@ -1,6 +1,6 @@
 import { rangeUtil } from '@grafana/data';
 
-import { toVariablePayload, VariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
 import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
@@ -8,11 +8,14 @@ import { getVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { toVariablePayload } from '../utils';
 
 export const updateIntervalVariableOptions =
-  (identifier: VariableIdentifier): ThunkResult<void> =>
+  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
   async (dispatch) => {
-    await dispatch(createIntervalOptions(toVariablePayload(identifier)));
+    const { rootStateKey } = identifier;
+    await dispatch(toKeyedAction(rootStateKey, createIntervalOptions(toVariablePayload(identifier))));
     await dispatch(updateAutoValue(identifier));
     await dispatch(validateVariableSelectionState(identifier));
   };
@@ -25,7 +28,7 @@ export interface UpdateAutoValueDependencies {
 
 export const updateAutoValue =
   (
-    identifier: VariableIdentifier,
+    identifier: KeyedVariableIdentifier,
     dependencies: UpdateAutoValueDependencies = {
       calculateInterval: rangeUtil.calculateInterval,
       getTimeSrv: getTimeSrv,
@@ -33,7 +36,7 @@ export const updateAutoValue =
     }
   ): ThunkResult<void> =>
   (dispatch, getState) => {
-    const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
+    const variableInState = getVariable<IntervalVariableModel>(identifier, getState());
     if (variableInState.auto) {
       const res = dependencies.calculateInterval(
         dependencies.getTimeSrv().timeRange(),

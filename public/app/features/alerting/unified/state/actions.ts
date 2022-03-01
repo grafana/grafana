@@ -2,6 +2,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
+  ExternalAlertmanagerConfig,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   ExternalAlertmanagersResponse,
@@ -11,7 +12,14 @@ import {
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleNamespace, RuleWithLocation, StateHistoryItem } from 'app/types/unified-alerting';
+import {
+  CombinedRuleGroup,
+  CombinedRuleNamespace,
+  RuleIdentifier,
+  RuleNamespace,
+  RuleWithLocation,
+  StateHistoryItem,
+} from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
@@ -48,12 +56,13 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import {
   getAllRulesSourceNames,
+  getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
   isGrafanaRulesSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
-import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
+import { withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
@@ -62,10 +71,11 @@ import {
   isPrometheusRuleIdentifier,
   isRulerNotSupportedResponse,
 } from '../utils/rules';
-import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute, isFetchError } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
+import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
@@ -121,7 +131,7 @@ export const fetchExternalAlertmanagersAction = createAsyncThunk(
 
 export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
   'unifiedAlerting/fetchExternAlertmanagersConfig',
-  (): Promise<{ alertmanagers: string[] }> => {
+  (): Promise<ExternalAlertmanagerConfig> => {
     return withSerializedError(fetchExternalAlertmanagerConfig());
   }
 );
@@ -259,6 +269,24 @@ async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
     ...group,
     rules: group.rules.filter((r) => r !== rule),
   });
+}
+
+export function deleteRulesGroupAction(
+  namespace: CombinedRuleNamespace,
+  ruleGroup: CombinedRuleGroup
+): ThunkResult<void> {
+  return async (dispatch) => {
+    withAppEvents(
+      (async () => {
+        const sourceName = getRulesSourceName(namespace.rulesSource);
+
+        await deleteRulerRulesGroup(sourceName, namespace.name, ruleGroup.name);
+        dispatch(fetchRulerRulesAction({ rulesSourceName: sourceName }));
+        dispatch(fetchPromRulesAction({ rulesSourceName: sourceName }));
+      })(),
+      { successMessage: 'Group deleted' }
+    );
+  };
 }
 
 export function deleteRuleAction(
@@ -636,7 +664,8 @@ export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk<boolean, 
             (isFetchError(e) &&
               (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
                 e.data.message?.includes('page not found'))) || // ruler api disabled
-            e.message?.includes('404 from rules config endpoint') // ruler api disabled
+            e.message?.includes('404 from rules config endpoint') || // ruler api disabled
+            e.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
           ) {
             return false;
           }
@@ -806,11 +835,11 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
 
 export const addExternalAlertmanagersAction = createAsyncThunk(
   'unifiedAlerting/addExternalAlertmanagers',
-  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+  async (alertmanagerConfig: ExternalAlertmanagerConfig, thunkAPI): Promise<void> => {
     return withAppEvents(
       withSerializedError(
         (async () => {
-          await addAlertManagers(alertManagerUrls);
+          await addAlertManagers(alertmanagerConfig);
           thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
         })()
       ),

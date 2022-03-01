@@ -11,8 +11,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"golang.org/x/oauth2"
 )
 
 var (
@@ -132,7 +132,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 			return nil
 		}
 
-		hashedState := hashStatecode(state, provider.ClientSecret)
+		hashedState := hs.hashStatecode(state, provider.ClientSecret)
 		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		if provider.HostedDomain != "" {
 			opts = append(opts, oauth2.SetAuthURLParam("hd", provider.HostedDomain))
@@ -155,7 +155,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		return nil
 	}
 
-	queryState := hashStatecode(ctx.Query("state"), provider.ClientSecret)
+	queryState := hs.hashStatecode(ctx.Query("state"), provider.ClientSecret)
 	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
 	if cookieState != queryState {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -234,8 +234,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		return nil
 	}
 
-	loginInfo.ExternalUser = *buildExternalUserInfo(token, userInfo, name)
-	loginInfo.User, err = syncUser(ctx, &loginInfo.ExternalUser, connect)
+	loginInfo.ExternalUser = *hs.buildExternalUserInfo(token, userInfo, name)
+	loginInfo.User, err = hs.SyncUser(ctx, &loginInfo.ExternalUser, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
 		return nil
@@ -265,7 +265,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
-func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *models.ExternalUserInfo {
+func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *models.ExternalUserInfo {
 	oauthLogger.Debug("Building external user info from OAuth user info")
 
 	extUser := &models.ExternalUserInfo{
@@ -279,13 +279,13 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 		Groups:     userInfo.Groups,
 	}
 
-	if userInfo.Role != "" {
+	if userInfo.Role != "" && !hs.Cfg.OAuthSkipOrgRoleUpdateSync {
 		rt := models.RoleType(userInfo.Role)
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
 			var orgID int64
-			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-				orgID = int64(setting.AutoAssignOrgId)
+			if hs.Cfg.AutoAssignOrg && hs.Cfg.AutoAssignOrgId > 0 {
+				orgID = int64(hs.Cfg.AutoAssignOrgId)
 				plog.Debug("The user has a role assignment and organization membership is auto-assigned",
 					"role", userInfo.Role, "orgId", orgID)
 			} else {
@@ -300,8 +300,8 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 	return extUser
 }
 
-// syncUser syncs a Grafana user profile with the corresponding OAuth profile.
-func syncUser(
+// SyncUser syncs a Grafana user profile with the corresponding OAuth profile.
+func (hs *HTTPServer) SyncUser(
 	ctx *models.ReqContext,
 	extUser *models.ExternalUserInfo,
 	connect social.SocialConnector,
@@ -313,7 +313,8 @@ func syncUser(
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-	if err := bus.Dispatch(ctx.Req.Context(), cmd); err != nil {
+
+	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {
 		return nil, err
 	}
 
@@ -327,8 +328,8 @@ func syncUser(
 	return cmd.Result, nil
 }
 
-func hashStatecode(code, seed string) string {
-	hashBytes := sha256.Sum256([]byte(code + setting.SecretKey + seed))
+func (hs *HTTPServer) hashStatecode(code, seed string) string {
+	hashBytes := sha256.Sum256([]byte(code + hs.Cfg.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
 }
 

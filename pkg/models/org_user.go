@@ -147,6 +147,8 @@ type OrgUserDTO struct {
 	Login         string          `json:"login"`
 	Role          string          `json:"role"`
 	LastSeenAt    time.Time       `json:"lastSeenAt"`
+	Updated       time.Time       `json:"-"`
+	Created       time.Time       `json:"-"`
 	LastSeenAtAge string          `json:"lastSeenAtAge"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }

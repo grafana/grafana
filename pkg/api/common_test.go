@@ -25,9 +25,11 @@ import (
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -102,6 +104,7 @@ func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
 	require.NoError(sc.t, err)
+	req.Header.Add("Content-Type", "application/json")
 	sc.req = req
 
 	return sc
@@ -117,6 +120,8 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 		panic(fmt.Sprintf("Making request failed: %s", err))
 	}
 
+	req.Header.Add("Content-Type", "application/json")
+
 	q := req.URL.Query()
 	for k, v := range queryParams {
 		q.Add(k, v)
@@ -129,6 +134,7 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 func (sc *scenarioContext) fakeReqNoAssertions(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, _ := http.NewRequest(method, url, nil)
+	req.Header.Add("Content-Type", "application/json")
 	sc.req = req
 
 	return sc
@@ -140,7 +146,7 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 
 	req, _ := http.NewRequest(method, url, nil)
 	req.Header = http.Header{"Cookie": sc.resp.Header()["Set-Cookie"]}
-
+	req.Header.Add("Content-Type", "application/json")
 	sc.req = req
 
 	return sc
@@ -158,6 +164,7 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	sqlStore             sqlstore.Store
+	authInfoService      *mockAuthInfoService
 }
 
 func (sc *scenarioContext) exec() {
@@ -271,15 +278,18 @@ type accessControlScenarioContext struct {
 
 	// cfg is the setting provider
 	cfg *setting.Cfg
+
+	dashboardsStore dashboards.Store
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
-	acmock.GetUserPermissionsFunc = func(_ context.Context, u *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-		if u.OrgId == org {
-			return perms, nil
+	acmock.GetUserPermissionsFunc =
+		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+			if u.OrgId == org {
+				return perms, nil
+			}
+			return nil, nil
 		}
-		return nil, nil
-	}
 }
 
 // setInitCtxSignedInUser sets a copy of the user in initCtx
@@ -311,9 +321,10 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
-		Cfg:      cfg,
-		Features: features,
-		Bus:      bus.GetBus(),
+		Cfg:           cfg,
+		Features:      features,
+		Bus:           bus.GetBus(),
+		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 }
 
@@ -340,6 +351,8 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 
 	bus := bus.GetBus()
 
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
+
 	routeRegister := routing.NewRouteRegister()
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
@@ -351,6 +364,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		RouteRegister:      routeRegister,
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
+		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore, nil),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -360,20 +374,21 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 			acmock = acmock.WithDisabled()
 		}
 		hs.AccessControl = acmock
-		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)
-		hs.TeamPermissionsService = teamPermissionService
+		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t}, database.ProvideService(db))
+		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
+			database.ProvideService(db), routing.NewRouteRegister())
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
 		require.NoError(t, err)
 		err = ac.RegisterFixedRoles()
 		require.NoError(t, err)
-		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)
-		hs.TeamPermissionsService = teamPermissionService
+		hs.teamPermissionsService = teamPermissionService
 	}
 
 	// Instantiate a new Server
@@ -394,12 +409,13 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	hs.RouteRegister.Register(m.Router)
 
 	return accessControlScenarioContext{
-		server:  m,
-		initCtx: initCtx,
-		hs:      hs,
-		acmock:  acmock,
-		db:      db,
-		cfg:     cfg,
+		server:          m,
+		initCtx:         initCtx,
+		hs:              hs,
+		acmock:          acmock,
+		db:              db,
+		cfg:             cfg,
+		dashboardsStore: dashboardsStore,
 	}
 }
 

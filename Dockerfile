@@ -11,7 +11,7 @@ COPY plugins-bundled plugins-bundled
 
 RUN yarn install
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
 COPY public public
 COPY tools tools
 COPY scripts scripts
@@ -20,7 +20,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.17.6-alpine3.15 as go-builder
+FROM golang:1.17.7-alpine3.15 as go-builder
 
 RUN apk add --no-cache gcc g++ make
 
@@ -30,6 +30,7 @@ COPY go.mod go.sum embed.go Makefile build.go package.json ./
 COPY cue cue
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
+COPY public/api-spec.json public/api-spec.json
 COPY pkg pkg
 COPY scripts scripts
 COPY cue.mod cue.mod

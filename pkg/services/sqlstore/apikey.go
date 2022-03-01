@@ -34,6 +34,8 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 				Asc("name")
 		}
 
+		sess = sess.Where("service_account_id IS NULL")
+
 		query.Result = make([]*models.ApiKey, 0)
 		return sess.Find(&query.Result)
 	})
@@ -61,7 +63,7 @@ func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCo
 }
 
 func deleteAPIKey(sess *DBSession, id, orgID int64) error {
-	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=?"
+	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
 	result, err := sess.Exec(rawSQL, id, orgID)
 	if err != nil {
 		return err
@@ -101,7 +103,7 @@ func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: cmd.ServiceAccountId,
+			ServiceAccountId: nil,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
@@ -125,7 +127,7 @@ func (ss *SQLStore) UpdateApikeyServiceAccount(ctx context.Context, apikeyId int
 			ss.log.Warn("API key not found", "err", err)
 			return models.ErrApiKeyNotFound
 		}
-		key.ServiceAccountId = saccountId
+		key.ServiceAccountId = &saccountId
 
 		if _, err := sess.ID(key.Id).Update(&key); err != nil {
 			ss.log.Warn("Could not update api key", "err", err)

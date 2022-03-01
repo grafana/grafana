@@ -33,6 +33,9 @@
         "allowDeclareFields": true
       }
     ],
+    // added to mitigate https://github.com/babel/babel/issues/14289
+    // package (and following line) can be removed once the issue is fixed and released
+    "@babel/plugin-proposal-class-properties",
     ["@babel/plugin-proposal-object-rest-spread", { "loose": true }],
     "@babel/plugin-transform-react-constant-elements",
     "@babel/plugin-proposal-nullish-coalescing-operator",
