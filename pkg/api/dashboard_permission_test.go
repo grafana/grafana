@@ -30,7 +30,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 		hs := &HTTPServer{
 			Cfg:              settings,
-			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore),
+			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore, nil),
 			SQLStore:         mockSQLStore,
 			Features:         featuremgmt.WithFeatures(),
 		}

@@ -45,7 +45,7 @@
     "@react-aria/menu": "3.4.1",
     "@react-aria/overlays": "3.7.3",
     "@react-stately/menu": "3.2.3",
-    "@sentry/browser": "6.17.4",
+    "@sentry/browser": "6.18.1",
     "ansicolor": "1.1.100",
     "calculate-size": "1.1.1",
     "classnames": "2.3.1",

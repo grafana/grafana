@@ -133,7 +133,7 @@ var DashboardViewActions = []string{accesscontrol.ActionDashboardsRead}
 var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete, accesscontrol.ActionDashboardsEdit}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
 var FolderViewActions = []string{accesscontrol.ActionFoldersRead}
-var FolderEditActions = append(FolderViewActions, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionFoldersEdit, accesscontrol.ActionDashboardsCreate}...)
+var FolderEditActions = append(FolderViewActions, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionDashboardsCreate}...)
 var FolderAdminActions = append(FolderEditActions, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
 
 func provideDashboardService(router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
@@ -238,7 +238,7 @@ var _ accesscontrol.PermissionsService = new(emptyPermissionsService)
 
 type emptyPermissionsService struct{}
 
-func (e emptyPermissionsService) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (e emptyPermissionsService) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return nil, nil
 }
 

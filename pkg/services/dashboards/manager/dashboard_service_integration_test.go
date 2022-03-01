@@ -5,6 +5,7 @@ package service
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,14 +22,6 @@ const testOrgID int64 = 1
 
 func TestIntegratedDashboardService(t *testing.T) {
 	t.Run("Given saved folders and dashboards in organization A", func(t *testing.T) {
-		origUpdateAlerting := UpdateAlerting
-		t.Cleanup(func() {
-			UpdateAlerting = origUpdateAlerting
-		})
-		UpdateAlerting = func(ctx context.Context, store dashbboardservice.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
-			return nil
-		}
-
 		// Basic validation tests
 
 		permissionScenario(t, "When saving a dashboard with non-existing id", true,
@@ -861,7 +854,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	res, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
+	res, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -870,7 +863,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	_, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
+	_, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
 	return err
 }
 
@@ -897,7 +890,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	res, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
+	res, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -925,7 +918,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	res, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
+	res, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -941,4 +934,15 @@ func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashbboardservice.SaveD
 		User:      &models.SignedInUser{UserId: cmd.UserId},
 		Overwrite: cmd.Overwrite,
 	}
+}
+
+type dummyDashAlertExtractor struct {
+}
+
+func (d *dummyDashAlertExtractor) GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*models.Alert, error) {
+	return nil, nil
+}
+
+func (d *dummyDashAlertExtractor) ValidateAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) error {
+	return nil
 }

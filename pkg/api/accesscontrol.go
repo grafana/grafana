@@ -315,7 +315,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:folders:creator",
 			DisplayName: "Folder creator",
-			Description: "Create folders",
+			Description: "Create folders.",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionFoldersCreate},
@@ -329,7 +329,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:folders:reader",
 			DisplayName: "Folder reader",
-			Description: "Read all folders and dashboards",
+			Description: "Read all folders and dashboards.",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionFoldersRead, Scope: ac.ScopeFoldersAll},
@@ -350,7 +350,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				foldersReaderRole.Role.Permissions,
 				[]ac.Permission{
 					{Action: ac.ActionFoldersCreate},
-					{Action: ac.ActionFoldersEdit, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionFoldersWrite, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionFoldersDelete, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionDashboardsEdit, Scope: ac.ScopeFoldersAll},

@@ -344,7 +344,6 @@ const (
 	// Folder actions
 	ActionFoldersCreate           = "folders:create"
 	ActionFoldersRead             = "folders:read"
-	ActionFoldersEdit             = "folders:edit"
 	ActionFoldersWrite            = "folders:write"
 	ActionFoldersDelete           = "folders:delete"
 	ActionFoldersPermissionsRead  = "folders.permissions:read"

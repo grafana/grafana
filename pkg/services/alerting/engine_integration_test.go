@@ -24,7 +24,7 @@ func TestEngineTimeouts(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
-	engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, setting.NewCfg())
+	engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, setting.NewCfg(), nil)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
 	engine.resultHandler = &FakeResultHandler{}
