@@ -270,7 +270,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return err
 		}
 
-		if len(groupChanges.Delete) == 0 && len(groupChanges.Update) == 0 && len(groupChanges.New) == 0 {
+		if groupChanges.isEmpty() {
 			srv.log.Info("no changes detected in the request. Do nothing")
 			return nil
 		}
@@ -343,6 +343,10 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		})
 	}
 
+	if groupChanges.isEmpty() {
+		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
+	}
+
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
 }
 
@@ -393,6 +397,10 @@ type changes struct {
 	New    []*ngmodels.AlertRule
 	Update []ruleUpdate
 	Delete []*ngmodels.AlertRule
+}
+
+func (c *changes) isEmpty() bool {
+	return len(c.Update) == 0 && len(c.New) == 0 && len(c.Delete) == 0
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).

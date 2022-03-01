@@ -1787,7 +1787,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}`, body)
 	}
 
-	// update the rule; keep title, condition, no data state, error state, queries and expressions if not provided
+	// update the rule; keep title, condition, no data state, error state, queries and expressions if not provided. should be noop
 	{
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
@@ -1817,7 +1817,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
+		require.JSONEq(t, `{"message":"no changes detected in the rule group"}`, string(b))
 
 		// let's make sure that rule definitions are updated correctly.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1872,7 +1872,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
 					  "intervalSeconds":60,
-					  "version":4,
+					  "version":3,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
 					  "namespace_id":1,
