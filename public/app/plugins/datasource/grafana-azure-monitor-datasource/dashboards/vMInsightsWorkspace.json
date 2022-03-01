@@ -1718,7 +1718,7 @@
           "subscription": ""
         }
       ],
-      "title": "Max vailable Logical Space Disk Used % ",
+      "title": "Max available Logical Space Disk Used % ",
       "transformations": [
         {
           "id": "organize",
