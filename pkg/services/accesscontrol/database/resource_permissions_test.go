@@ -313,6 +313,7 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 
 type getResourcesPermissionsTest struct {
 	desc        string
+	user        *models.SignedInUser
 	numUsers    int
 	actions     []string
 	resource    string
@@ -323,14 +324,24 @@ type getResourcesPermissionsTest struct {
 func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 	tests := []getResourcesPermissionsTest{
 		{
-			desc:        "should return permissions for all resource ids",
+			desc: "should return permissions for all resource ids",
+			user: &models.SignedInUser{
+				OrgId: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
+				}},
 			numUsers:    3,
 			actions:     []string{"datasources:query"},
 			resource:    "datasources",
 			resourceIDs: []string{"1", "2"},
 		},
 		{
-			desc:        "should return manage permissions for all resource ids",
+			desc: "should return manage permissions for all resource ids",
+			user: &models.SignedInUser{
+				OrgId: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
+				}},
 			numUsers:    3,
 			actions:     []string{"datasources:query"},
 			resource:    "datasources",
@@ -345,7 +356,7 @@ func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 
 			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				role := &accesscontrol.Role{
-					OrgID:   1,
+					OrgID:   test.user.OrgId,
 					UID:     "seeded",
 					Name:    "seeded",
 					Updated: time.Now(),
@@ -382,7 +393,8 @@ func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 				seedResourcePermissions(t, store, sql, test.actions, test.resource, id, test.numUsers)
 			}
 
-			permissions, err := store.GetResourcesPermissions(context.Background(), 1, types.GetResourcesPermissionsQuery{
+			permissions, err := store.GetResourcesPermissions(context.Background(), test.user.OrgId, types.GetResourcesPermissionsQuery{
+				User:        test.user,
 				Actions:     test.actions,
 				Resource:    test.resource,
 				ResourceIDs: test.resourceIDs,
