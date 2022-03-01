@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -573,25 +572,25 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, true),
 			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, false),
 
-			// no ruler proxy path; basic auth should be used
-			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, ""),
-			// valid ruler proxy paths; ruler basic auth should be used
-			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/api/v1/rules"),
-			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace"),
-			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
-
-			// no ruler proxy path; basic auth should be used
-			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, ""),
-			// valid ruler proxy paths; ruler basic auth should be used
-			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/api/v1/rules"),
-			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace"),
-			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
-
 			// These two should be enough for any other datasource at the moment. Proxy has special handling
 			// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
 			// do not go through proxy but through TSDB API which is not tested here.
 			createAuthTest(t, secretsService, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, false),
 			createAuthTest(t, secretsService, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, true),
+
+			// no ruler proxy path; basic auth should be used
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, ""),
+			// valid ruler proxy paths; ruler basic auth should be used
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/api/v1/rules"),
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace"),
+			createRulerAuthTest(t, secretsService, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
+
+			// no ruler proxy path; basic auth should be used
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, ""),
+			// valid ruler proxy paths; ruler basic auth should be used
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, "/api/v1/rules"),
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace"),
+			createRulerAuthTest(t, secretsService, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
 		}
 		for _, test := range tests {
 			runDatasourceAuthTest(t, secretsService, test)
@@ -996,7 +995,7 @@ func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string,
 	return test
 }
 
-func createRulerAuthTest(t *testing.T, dsType string, authType string, authCheck string, proxyPath string) *testCase {
+func createRulerAuthTest(t *testing.T, secretsService secrets.Service, dsType string, authType string, authCheck string, proxyPath string) *testCase {
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 	// Ruler basic ruler user:ruler password
@@ -1031,12 +1030,12 @@ func createRulerAuthTest(t *testing.T, dsType string, authType string, authCheck
 	message := fmt.Sprintf("%v should add%sbasic auth username and password from securejsondata to auth header", dsType, rulerBasicAuthTxt)
 	test.datasource.BasicAuth = true
 	test.datasource.BasicAuthUser = "user"
-	test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(
+	test.datasource.SecureJsonData, err = secretsService.EncryptJsonData(
 		ctx,
 		map[string]string{
 			"basicAuthPassword":      "password",
 			"rulerBasicAuthPassword": "ruler password",
-		}, setting.SecretKey)
+		}, secrets.WithoutScope())
 	require.NoError(t, err)
 
 	test.checkReq = func(req *http.Request) {
@@ -1064,13 +1063,8 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, test *t
 	require.NoError(t, err)
 
 	var routes []*plugins.Route
-	alertingEnabled := true
 	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
-	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{
-		UnifiedAlerting: setting.UnifiedAlertingSettings{
-			Enabled: &alertingEnabled,
-		},
-	}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
+	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, test.proxyPath, &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)

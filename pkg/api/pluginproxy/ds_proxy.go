@@ -86,7 +86,7 @@ func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ct
 	tracer tracing.Tracer, secretsService secrets.Service) (*DataSourceProxy, error) {
 
 	url := ds.Url
-	if *cfg.UnifiedAlerting.Enabled && isLotex(ds.Type) && isRulerPath(proxyPath) {
+	if cfg.UnifiedAlerting.IsEnabled() && isLotex(ds.Type) && isRulerPath(proxyPath) {
 		rulerProps := ds.GetRulerProperties()
 		if rulerProps.Url != "" {
 			url = rulerProps.Url
