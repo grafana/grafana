@@ -129,7 +129,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
           marks={marks}
           included={included}
         />
-        {/* Uses text input so that the number spinners are not shown */}
+        {/* Uses text input so that the number spinners are not shown; manually implements arrow keys and validation */}
         <Input
           type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
@@ -137,8 +137,6 @@ export const Slider: FunctionComponent<SliderProps> = ({
           onChange={onSliderInputChange}
           onBlur={onSliderInputBlur}
           onKeyDown={onKeyDown}
-          min={min}
-          max={max}
         />
       </label>
     </div>
