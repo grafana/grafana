@@ -87,11 +87,13 @@ function nullInsertThreshold(refValues: number[], frameValues: any[][], threshol
     prevValue = curValue;
   }
 
+  refValuesNew.push(getInsertValue(prevValue, prevValue, threshold));
+
   const filledLen = refValuesNew.length;
 
-  if (filledLen === len) {
-    return frameValues;
-  }
+  // if (filledLen === len) {
+  //   return frameValues;
+  // }
 
   const filledFieldValues: any[][] = [];
 
