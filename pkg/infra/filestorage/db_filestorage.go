@@ -230,10 +230,17 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 		var foundFiles = make([]*file, 0)
 
 		sess.Table("file")
+		lowerFolderPath := strings.ToLower(folderPath)
 		if options.Recursive {
-			sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(folderPath), "%"))
+			var nestedFolders string
+			if folderPath == Delimiter {
+				nestedFolders = "%"
+			} else {
+				nestedFolders = fmt.Sprintf("%s%s%s", lowerFolderPath, Delimiter, "%")
+			}
+			sess.Where("(LOWER(parent_folder_path) = ?) OR (LOWER(parent_folder_path) LIKE ?)", lowerFolderPath, nestedFolders)
 		} else {
-			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(folderPath))
+			sess.Where("LOWER(parent_folder_path) = ?", lowerFolderPath)
 		}
 		sess.Where("LOWER(path) NOT LIKE ?", fmt.Sprintf("%s%s%s", "%", Delimiter, directoryMarker))
 

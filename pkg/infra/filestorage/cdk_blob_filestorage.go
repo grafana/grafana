@@ -157,9 +157,13 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 	}
 
 	hasMore := true
-	var files []FileMetadata
+	files := make([]FileMetadata, 0)
 	for {
 		obj, err := iterator.Next(ctx)
+		if obj != nil && strings.HasSuffix(obj.Key, directoryMarker) {
+			continue
+		}
+
 		if err == io.EOF {
 			hasMore = false
 			break
@@ -179,11 +183,6 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 		path := obj.Key
 
 		allowed := options.isAllowed(obj.Key)
-
-		if strings.HasSuffix(path, directoryMarker) {
-			continue
-		}
-
 		if obj.IsDir && recursive {
 			newPaging := &Paging{
 				First: pageSize - len(files),

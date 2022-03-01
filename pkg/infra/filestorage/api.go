@@ -96,18 +96,11 @@ type FileStorage interface {
 	Delete(ctx context.Context, path string) error
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
-	// todo: tests for both /a/folder and /a/folder/
-	ListFiles(ctx context.Context, prefix string, paging *Paging, options *ListOptions) (*ListFilesResponse, error)
-	ListFolders(ctx context.Context, prefix string, options *ListOptions) ([]FileMetadata, error)
+	ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error)
+	ListFolders(ctx context.Context, folderPath string, options *ListOptions) ([]FileMetadata, error)
 
 	CreateFolder(ctx context.Context, path string) error
 	DeleteFolder(ctx context.Context, path string) error
 
 	close() error
 }
-
-// Get(ctx, "/myGit/dashboards/xyz123")
-// Get(ctx, "/ryansGit/dashboards/xyz124")
-// Get(ctx, "/general/dashboards/xyz124")    ?? general
-//   VS
-// s3Storage.Get(ctx, "/dashboards/xyz123")

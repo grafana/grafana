@@ -176,7 +176,10 @@ func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, opt
 		paging = &Paging{
 			First: 100,
 		}
+	} else if paging.First <= 0 {
+		paging.First = 100
 	}
+
 	return b.wrapped.ListFiles(ctx, path, paging, b.withDefaults(options, false))
 }
 
