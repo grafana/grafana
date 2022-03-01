@@ -67,14 +67,15 @@ func SetupMockAccesscontrol(t *testing.T,
 var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
-	CreateServiceAccount   []interface{}
-	ListServiceAccounts    []interface{}
-	RetrieveServiceAccount []interface{}
-	DeleteServiceAccount   []interface{}
-	UpgradeServiceAccounts []interface{}
-	ConvertServiceAccounts []interface{}
-	ListTokens             []interface{}
-	UpdateServiceAccount   []interface{}
+	CreateServiceAccount     []interface{}
+	ListServiceAccounts      []interface{}
+	RetrieveServiceAccount   []interface{}
+	DeleteServiceAccount     []interface{}
+	UpgradeServiceAccounts   []interface{}
+	ConvertServiceAccounts   []interface{}
+	ListTokens               []interface{}
+	UpdateServiceAccount     []interface{}
+	SearchOrgServiceAccounts []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -126,5 +127,6 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 }
 
 func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
+	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, query})
 	return nil, nil
 }

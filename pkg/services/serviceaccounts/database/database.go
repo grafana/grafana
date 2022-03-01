@@ -4,11 +4,14 @@ package database
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
@@ -247,114 +250,109 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	}, err
 }
 
+// func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
+// 	// force that it is service accounts that we query
+// 	query.IsServiceAccount = true
+
+// 	// translate between users and serviceaccountsDTO
+// 	err := s.sqlStore.SearchOrgUsers(ctx, query)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	result := make([]*serviceaccounts.ServiceAccountDTO, 0, len(query.Result.OrgUsers))
+// 	for _, user := range query.Result.OrgUsers {
+// 		sa := &serviceaccounts.ServiceAccountDTO{
+// 			Id:    user.UserId,
+// 			Name:  user.Name,
+// 			Login: user.Login,
+// 			Role:  user.Role,
+// 			OrgId: user.OrgId,
+// 		}
+// 		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		sa.Tokens = int64(len(tokens))
+
+// 		result = append(result, sa)
+// 	}
+// 	return result, nil
+// }
+
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	// force that it is service accounts that we query
 	query.IsServiceAccount = true
 
-	// translate between users and serviceaccountsDTO
-	err := s.sqlStore.SearchOrgUsers(ctx, query)
+	serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
+
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
+
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
+
+		whereConditions = append(whereConditions, "org_user.org_id = ?")
+		whereParams = append(whereParams, query.OrgID)
+
+		// TODO: add to chore, for cleaning up after we have created
+		// service accounts table in the modelling
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", s.sqlStore.Dialect.Quote("user"), query.IsServiceAccount))
+
+		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "serviceaccounts:read", query.User)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
+
+		if query.Query != "" {
+			queryWithWildcards := "%" + query.Query + "%"
+			whereConditions = append(whereConditions, "(email "+s.sqlStore.Dialect.LikeStr()+" ? OR name "+s.sqlStore.Dialect.LikeStr()+" ? OR login "+s.sqlStore.Dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
+
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
+
+		sess.Cols(
+			"org_user.org_id",
+			"org_user.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"org_user.role",
+			"user.last_seen_at",
+		)
+		sess.Asc("user.email", "user.login")
+
+		if err := sess.Find(&serviceAccounts); err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
+
 	result := make([]*serviceaccounts.ServiceAccountDTO, 0, len(query.Result.OrgUsers))
-	for _, user := range query.Result.OrgUsers {
-		sa := &serviceaccounts.ServiceAccountDTO{
-			Id:    user.UserId,
-			Name:  user.Name,
-			Login: user.Login,
-			Role:  user.Role,
-			OrgId: user.OrgId,
-		}
-		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
+	for _, sa := range serviceAccounts {
+		tokens, err := s.ListTokens(ctx, sa.OrgId, sa.Id)
 		if err != nil {
 			return nil, err
 		}
 		sa.Tokens = int64(len(tokens))
-
 		result = append(result, sa)
 	}
+
 	return result, nil
 }
-
-// func (s *ServiceAccountsStoreImpl) SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error {
-
-// 	query.Result = models.SearchOrgUsersQueryResult{
-// 		OrgUsers: make([]*models.OrgUserDTO, 0),
-// 	}
-
-// 	sess := x.Table("org_user")
-// 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
-
-// 	whereConditions := make([]string, 0)
-// 	whereParams := make([]interface{}, 0)
-
-// 	whereConditions = append(whereConditions, "org_user.org_id = ?")
-// 	whereParams = append(whereParams, query.OrgID)
-
-// 	// TODO: add to chore, for cleaning up after we have created
-// 	// service accounts table in the modelling
-// 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
-
-// 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-// 		acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "org.users:read", query.User)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		whereConditions = append(whereConditions, acFilter.Where)
-// 		whereParams = append(whereParams, acFilter.Args...)
-// 	}
-
-// 	if query.Query != "" {
-// 		queryWithWildcards := "%" + query.Query + "%"
-// 		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
-// 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
-// 	}
-
-// 	if len(whereConditions) > 0 {
-// 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-// 	}
-
-// 	if query.Limit > 0 {
-// 		offset := query.Limit * (query.Page - 1)
-// 		sess.Limit(query.Limit, offset)
-// 	}
-
-// 	sess.Cols(
-// 		"org_user.org_id",
-// 		"org_user.user_id",
-// 		"user.email",
-// 		"user.name",
-// 		"user.login",
-// 		"org_user.role",
-// 		"user.last_seen_at",
-// 	)
-// 	sess.Asc("user.email", "user.login")
-
-// 	if err := sess.Find(&query.Result.OrgUsers); err != nil {
-// 		return err
-// 	}
-
-// 	// get total count
-// 	orgUser := models.OrgUser{}
-// 	countSess := x.Table("org_user").
-// 		Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
-
-// 	if len(whereConditions) > 0 {
-// 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-// 	}
-
-// 	count, err := countSess.Count(&orgUser)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	query.Result.TotalCount = count
-
-// 	for _, user := range query.Result.OrgUsers {
-// 		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
-// 	}
-
-// 	return nil
-// }
 
 func contains(s []int64, e int64) bool {
 	for _, a := range s {
