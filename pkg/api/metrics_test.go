@@ -13,7 +13,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -190,7 +189,10 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 
 // `/api/dashboards/:dashboardId/panels/:panelId` endpoints test
 func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
+	ss := mockstore.NewSQLStoreMock()
 	sc := setupHTTPServer(t, false, false)
+	sc.db = ss
+
 	setInitCtxSignedInViewer(sc.initCtx)
 	sc.hs.queryDataService = query.ProvideService(
 		nil,
@@ -213,16 +215,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	}
 
 	t.Run("Can query a valid dashboard", func(t *testing.T) {
-		defer bus.ClearBusHandlers()
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-			query.Result = &models.Dashboard{
-				Id:    1,
-				OrgId: testOrgID,
-				Data:  dashboardJson,
-			}
-			return nil
-		})
+		ss.ExpectedDashboard = &models.Dashboard{
+			Id:    1,
+			OrgId: testOrgID,
+			Data:  dashboardJson,
+		}
 
 		response := callAPI(
 			sc.server,
@@ -393,18 +391,8 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 	ss := mockstore.NewSQLStoreMock()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//defer bus.ClearBusHandlers()
 
 			if test.dashboardQueryResult != nil {
-
-				//bus.AddHandler(
-				//"test",
-				//func(ctx context.Context, query *models.GetDashboardQuery) error {
-				//query.Result = test.dashboardQueryResult.result
-				//return test.dashboardQueryResult.err
-				//},
-				//)
-
 				ss.ExpectedDashboard = test.dashboardQueryResult.result
 				ss.ExpectedError = test.dashboardQueryResult.err
 			}
