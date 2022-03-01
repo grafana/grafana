@@ -19,7 +19,7 @@ export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTr
       const val = evt.currentTarget.valueAsNumber;
       onChange({
         ...options,
-        bucketSize: isNaN(val) ? undefined : val,
+        bucketSize: isNaN(val) || val < 0 ? undefined : val,
       });
     },
     [onChange, options]
@@ -30,7 +30,7 @@ export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTr
       const val = evt.currentTarget.valueAsNumber;
       onChange({
         ...options,
-        bucketOffset: isNaN(val) ? undefined : val,
+        bucketOffset: isNaN(val) || val < 0 ? undefined : val,
       });
     },
     [onChange, options]
@@ -51,7 +51,13 @@ export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTr
           label={histogramFieldInfo.bucketSize.name}
           tooltip={histogramFieldInfo.bucketSize.description}
         >
-          <Input type="number" value={options.bucketSize} placeholder="auto" onChange={onBucketSizeChanged} min={0} />
+          <Input
+            type="number"
+            value={options.bucketSize ?? ''}
+            placeholder="auto"
+            onChange={onBucketSizeChanged}
+            min={0}
+          />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>

@@ -14,29 +14,39 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
 }) => {
   const { settings } = item;
 
+  const onSafeChange = useCallback(
+    (value: string) => {
+      let num = settings?.integer ? toIntegerOrUndefined(value) : toFloatOrUndefined(value);
+      if (num !== undefined) {
+        if (settings?.min !== undefined && settings.min > num) {
+          num = settings.min;
+        }
+
+        if (settings?.max !== undefined && settings.max > num) {
+          num = settings.max;
+        }
+      }
+
+      onChange(num);
+    },
+    [settings?.integer, settings?.min, settings?.max, onChange]
+  );
+
   const onValueChange = useCallback(
     (e: React.SyntheticEvent) => {
       if (e.hasOwnProperty('key')) {
         // handling keyboard event
         const evt = e as React.KeyboardEvent<HTMLInputElement>;
         if (evt.key === 'Enter') {
-          onChange(
-            settings?.integer
-              ? toIntegerOrUndefined(evt.currentTarget.value)
-              : toFloatOrUndefined(evt.currentTarget.value)
-          );
+          onSafeChange(evt.currentTarget.value);
         }
       } else {
         // handling form event
         const evt = e as React.FormEvent<HTMLInputElement>;
-        onChange(
-          settings?.integer
-            ? toIntegerOrUndefined(evt.currentTarget.value)
-            : toFloatOrUndefined(evt.currentTarget.value)
-        );
+        onSafeChange(evt.currentTarget.value);
       }
     },
-    [onChange, settings?.integer]
+    [onSafeChange]
   );
 
   const defaultValue = value === undefined || value === null || isNaN(value) ? '' : value.toString();
