@@ -2,6 +2,8 @@ package migrations
 
 import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
+// TODO: remove nolint as part of https://github.com/grafana/grafana/issues/45498
+// nolint:unused,deadcode
 func addDbFileStorageMigration(mg *migrator.Migrator) {
 	filesTable := migrator.Table{
 		Name: "file",
