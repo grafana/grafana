@@ -7,6 +7,11 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
 
     & > span {
       flex: 0 1 50%;
+      word-break: break-all;
+
+      &:first-child {
+        margin-right: ${spacing.sm};
+      }
     }
   `,
   detailLabel: css`

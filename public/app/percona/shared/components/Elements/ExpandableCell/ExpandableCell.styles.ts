@@ -5,5 +5,11 @@ export const getStyles = () => ({
     display: flex;
     justify-content: space-between;
     align-items: center;
+
+    & > span {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   `,
 });

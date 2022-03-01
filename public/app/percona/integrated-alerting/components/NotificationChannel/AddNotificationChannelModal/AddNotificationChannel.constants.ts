@@ -56,3 +56,5 @@ export const WEBHOOK_TYPE_OPTIONS = [
     label: Messages.fields.noAuth,
   },
 ];
+
+export const MAX_NAME_LENGTH = 50;

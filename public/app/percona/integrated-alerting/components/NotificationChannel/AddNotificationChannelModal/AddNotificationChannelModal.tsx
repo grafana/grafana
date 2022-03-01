@@ -13,7 +13,7 @@ import {
 } from '../NotificationChannel.types';
 import { AddNotificationChannelModalProps } from './AddNotificationChannelModal.types';
 import { Messages } from './AddNotificationChannelModal.messages';
-import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
+import { TYPE_OPTIONS, MAX_NAME_LENGTH } from './AddNotificationChannel.constants';
 import { NotificationChannelService } from '../NotificationChannel.service';
 import { getInitialValues } from './AddNotificationChannelModal.utils';
 import { EmailFields } from './EmailFields/EmailFields';
@@ -21,7 +21,7 @@ import { SlackFields } from './SlackFields/SlackFields';
 import { PagerDutyFields } from './PagerDutyFields/PagerDutyFields';
 import { WebHookFields } from './WebHookFields/WebHookFields';
 
-const { required } = validators;
+const { required, maxLength } = validators;
 // Our "values" typings won't be right without using this
 const { Form } = withTypes<NotificationChannelRenderProps>();
 
@@ -83,7 +83,11 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
               <Field name="type">
                 {({ input }) => <SelectField label={Messages.fields.type} options={TYPE_OPTIONS} {...input} />}
               </Field>
-              <TextInputField name="name" label={Messages.fields.name} validators={[required]} />
+              <TextInputField
+                name="name"
+                label={Messages.fields.name}
+                validators={[required, maxLength(MAX_NAME_LENGTH)]}
+              />
               <TypeField values={values} />
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
