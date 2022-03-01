@@ -142,13 +142,11 @@ func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.SavePrefer
 		}
 
 		if !exists {
-			// TODO return err here
 			prefs = models.Preferences{
-				Theme:           ss.Cfg.DefaultTheme,
-				Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
-				WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
-				HomeDashboardId: 0,
-				JsonData:        &models.PreferencesJsonData{},
+				UserId:  cmd.UserId,
+				OrgId:   cmd.OrgId,
+				TeamId:  cmd.TeamId,
+				Created: time.Now(),
 			}
 		}
 
