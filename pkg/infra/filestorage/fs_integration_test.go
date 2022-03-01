@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"gocloud.dev/blob"
 )
 
@@ -37,7 +36,7 @@ func runTestCase(t *testing.T, testCase fsTestCase, ctx context.Context, filesto
 
 func runTests(createCases func() []fsTestCase, t *testing.T) {
 	var testLogger log.Logger
-	var sqlStore *sqlstore.SQLStore
+	//var sqlStore *sqlstore.SQLStore
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string
@@ -49,7 +48,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	cleanUp := func() {
 		testLogger = nil
-		sqlStore = nil
+		//sqlStore = nil
 		if filestorage != nil {
 			_ = filestorage.close()
 			filestorage = nil
