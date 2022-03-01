@@ -82,7 +82,6 @@ Status codes:
 `GET /api/query-history`
 
 Returns a list of queries in the query history that matches the search criteria. Query history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100. You can also use the `page` query parameter to fetch queries from any page other than the first one.
-		
 
 Query parameters:
 
