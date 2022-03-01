@@ -86,12 +86,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 	}
-
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDbFileStorage) {
-			addDbFileStorageMigration(mg)
-		}
-	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
