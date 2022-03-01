@@ -5,6 +5,25 @@ import { DashboardMeta } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { RemovePanelEvent } from '../../../types/events';
+import { BackendSrvRequest } from '@grafana/runtime';
+import { lastValueFrom } from 'rxjs';
+
+export interface SaveDashboardOptions {
+  /** The complete dashboard model. If `dashboard.id` is not set a new dashboard will be created. */
+  dashboard: DashboardModel;
+  /** Set a commit message for the version history. */
+  message?: string;
+  /** The id of the folder to save the dashboard in. */
+  folderId?: number;
+  /** The UID of the folder to save the dashboard in. Overrides `folderId`. */
+  folderUid?: string;
+  /** Set to `true` if you want to overwrite existing dashboard with newer version,
+   *  same dashboard title in folder or same dashboard uid. */
+  overwrite?: boolean;
+  /** Set the dashboard refresh interval.
+   *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
+  refresh?: string;
+}
 
 export class DashboardSrv {
   dashboard?: DashboardModel;
@@ -41,6 +60,23 @@ export class DashboardSrv {
       dashboard: parsedJson,
       folderId: this.dashboard?.meta.folderId || parsedJson.folderId,
     });
+  }
+
+  saveDashboard(
+    data: SaveDashboardOptions,
+    requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
+  ) {
+    return lastValueFrom(
+      getBackendSrv().fetch({
+        url: '/api/dashboards/db/',
+        method: 'POST',
+        data: {
+          ...data,
+          dashboard: data.dashboard.getSaveModelClone(),
+        },
+        ...requestOptions,
+      })
+    );
   }
 
   starDashboard(dashboardId: string, isStarred: any) {
