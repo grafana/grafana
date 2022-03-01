@@ -651,7 +651,7 @@ JSON Body schema:
 - **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
 - **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
 
-In addition, each data source has its own specific properties that should be added in a request.
+In addition, each data source has its own specific properties that should be added in a request. In order to understand how to form a query for a certain datasource, please use the Developer Tools in your browser of choice and inspect the HTTP requests being made to /api/ds/query.
 
 **Example Test data source time series query response:**
 
