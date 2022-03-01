@@ -15,6 +15,12 @@ export type TraceLog = {
   fields: TraceKeyValuePair[];
 };
 
+export type TraceSpanReference = {
+  traceID: string;
+  spanID: string;
+  tags?: TraceKeyValuePair[];
+};
+
 /**
  * This describes the structure of the dataframe that should be returned from a tracing data source to show trace
  * in a TraceView component.
@@ -31,7 +37,7 @@ export interface TraceSpanRow {
   // Milliseconds
   duration: number;
   logs?: TraceLog[];
-
+  references?: TraceSpanReference[];
   // Note: To mark spen as having error add tag error: true
   tags?: TraceKeyValuePair[];
   warnings?: string[];
