@@ -9,6 +9,7 @@ import (
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
@@ -24,6 +25,7 @@ import (
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
 	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
 	dashboardService dashboardservice.DashboardProvisioningService,
+	datasourceService datasourceservice.DataSourceService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
@@ -37,6 +39,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 		dashboardService:        dashboardService,
+		datasourceService:       datasourceService,
 	}
 	return s, nil
 }
@@ -94,6 +97,7 @@ type ProvisioningServiceImpl struct {
 	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Store) error
 	mutex                   sync.Mutex
 	dashboardService        dashboardservice.DashboardProvisioningService
+	datasourceService       datasourceservice.DataSourceService
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -146,7 +150,7 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
-	if err := ps.provisionDatasources(ctx, datasourcePath, ps.SQLStore, ps.SQLStore); err != nil {
+	if err := ps.provisionDatasources(ctx, datasourcePath, ps.datasourceService, ps.SQLStore); err != nil {
 		err = errutil.Wrap("Datasource provisioning error", err)
 		ps.log.Error("Failed to provision data sources", "error", err)
 		return err

@@ -8,6 +8,7 @@ import {
   MutableDataFrame,
   TraceKeyValuePair,
   TraceLog,
+  TraceSpanReference,
   TraceSpanRow,
   dateTimeFormat,
 } from '@grafana/data';
@@ -230,6 +231,24 @@ function getSpanTags(
   return spanTags;
 }
 
+function getReferences(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
+  const references: TraceSpanReference[] = [];
+  if (span.links) {
+    for (const link of span.links) {
+      const { traceId, spanId } = link;
+      const tags: TraceKeyValuePair[] = [];
+      if (link.attributes) {
+        for (const attribute of link.attributes) {
+          tags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
+        }
+      }
+      references.push({ traceID: traceId, spanID: spanId, tags });
+    }
+  }
+
+  return references;
+}
+
 function getLogs(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
   const logs: TraceLog[] = [];
   if (span.events) {
@@ -262,6 +281,7 @@ export function transformFromOTLP(
       { name: 'startTime', type: FieldType.number },
       { name: 'duration', type: FieldType.number },
       { name: 'logs', type: FieldType.other },
+      { name: 'references', type: FieldType.other },
       { name: 'tags', type: FieldType.other },
     ],
     meta: {
@@ -287,6 +307,7 @@ export function transformFromOTLP(
             duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
             tags: getSpanTags(span, librarySpan.instrumentationLibrary),
             logs: getLogs(span),
+            references: getReferences(span),
           } as TraceSpanRow);
         }
       }
@@ -513,7 +534,7 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
  * Change fields which are json string into JS objects. Modifies the frame in place.
  */
 function parseJsonFields(frame: DataFrame) {
-  for (const fieldName of ['serviceTags', 'logs', 'tags']) {
+  for (const fieldName of ['serviceTags', 'logs', 'tags', 'references']) {
     const field = frame.fields.find((f) => f.name === fieldName);
     if (field) {
       const fieldIndex = frame.fields.indexOf(field);
