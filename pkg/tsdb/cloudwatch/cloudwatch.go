@@ -178,16 +178,31 @@ func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.Check
 		MetricName: &metric,
 	}
 
-	_, err := e.listMetrics(req.PluginContext, defaultRegion, params)
 	status := backend.HealthStatusOk
-	message := "Successfully queried the CloudWatch API."
+	metricsTest := "Successfully queried the CloudWatch metrics API."
+	logsTest := "Successfully queried the CloudWatch logs API."
+
+	_, err := e.listMetrics(req.PluginContext, defaultRegion, params)
 	if err != nil {
 		status = backend.HealthStatusError
-		message = fmt.Sprintf("Plugin request failed: %v", err)
+		metricsTest = fmt.Sprintf("CloudWatch metrics query failed: %s", err.Error())
 	}
+
+	logsClient, err := e.getCWLogsClient(req.PluginContext, defaultRegion)
+	if err != nil {
+		status = backend.HealthStatusError
+		logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
+	} else {
+		_, err = e.handleDescribeLogGroups(ctx, logsClient, simplejson.NewFromAny(map[string]interface{}{"limit": "1"}))
+		if err != nil {
+			status = backend.HealthStatusError
+			logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
+		}
+	}
+
 	return &backend.CheckHealthResult{
 		Status:  status,
-		Message: message,
+		Message: fmt.Sprintf("1. %s\n2. %s", metricsTest, logsTest),
 	}, nil
 }
 
