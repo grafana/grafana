@@ -143,8 +143,8 @@ func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission 
 	return true, nil
 }
 
+// GetAcl translate access control permissions to dashboard acl info
 func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
-	// translate access control permissions to dashboard acl info
 	if err := a.loadDashboard(); err != nil {
 		return nil, err
 	}
