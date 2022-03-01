@@ -20,7 +20,7 @@ var (
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
-	prefFake := preftests.NewPreferenceServiceFake()
+	prefFake := preftests.NewPreferenceManagerFake()
 	sc.prefManager = prefFake
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInViewer(sc.initCtx)
-	sc.prefManager = preftests.NewPreferenceServiceFake()
+	sc.prefManager = preftests.NewPreferenceManagerFake()
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInViewer(sc.initCtx)
-	sc.prefManager = preftests.NewPreferenceServiceFake()
+	sc.prefManager = preftests.NewPreferenceManagerFake()
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)

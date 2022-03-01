@@ -42,7 +42,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
-	prefFake := preftests.NewPreferenceServiceFake()
+	prefFake := preftests.NewPreferenceManagerFake()
 	prefFake.ExpectedPreferences = &models.Preferences{}
 	hs := &HTTPServer{
 		Cfg: cfg, Bus: bus.New(),

@@ -375,7 +375,7 @@ func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.prefManager = preftests.NewPreferenceServiceFake()
+	sc.prefManager = preftests.NewPreferenceManagerFake()
 
 	setInitCtxSignedInViewer(sc.initCtx)
 
@@ -399,7 +399,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 
-	prefFake := preftests.NewPreferenceServiceFake()
+	prefFake := preftests.NewPreferenceManagerFake()
 	prefFake.ExpectedPreferences = &models.Preferences{
 		Theme: "dark",
 	}

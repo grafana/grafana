@@ -353,7 +353,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	db.Cfg = cfg
 
 	bus := bus.GetBus()
-	prefFake := preftests.NewPreferenceServiceFake()
+	prefFake := preftests.NewPreferenceManagerFake()
 	prefFake.ExpectedPreferences = &models.Preferences{Theme: "dark"}
 
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)

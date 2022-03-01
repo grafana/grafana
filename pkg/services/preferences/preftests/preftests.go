@@ -6,24 +6,24 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type FakePreferencesService struct {
+type FakePreferencesManager struct {
 	ExpectedPreferences *models.Preferences
 	ExpectedError       error
 }
 
-func NewPreferenceServiceFake() *FakePreferencesService {
-	return &FakePreferencesService{}
+func NewPreferenceManagerFake() *FakePreferencesManager {
+	return &FakePreferencesManager{}
 }
 
-func (f *FakePreferencesService) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error) {
+func (f *FakePreferencesManager) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error) {
 	return f.ExpectedPreferences, f.ExpectedError
 }
 
-func (f *FakePreferencesService) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
+func (f *FakePreferencesManager) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
 	return f.ExpectedPreferences, f.ExpectedError
 }
 
-func (f *FakePreferencesService) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
+func (f *FakePreferencesManager) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
 	return f.ExpectedError
 }
 
@@ -45,7 +45,7 @@ func (f *FakePreferencesStore) Get(ctx context.Context, query *models.GetPrefere
 	return f.ExpectedPreferences, f.ExpectedError
 }
 
-func (f *FakePreferencesService) GetDefault() *models.Preferences {
+func (f *FakePreferencesStore) GetDefaults() *models.Preferences {
 	return f.ExpectedPreferences
 }
 
