@@ -29,7 +29,7 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-    ...state.serviceAccounts
+    ...state.serviceAccounts,
   };
 }
 
@@ -60,7 +60,7 @@ const ServiceAccountsListPage = ({
   changeQuery,
   query,
   filters,
-  toRemove,
+  serviceAccountToRemove,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -133,13 +133,16 @@ const ServiceAccountsListPage = ({
             </div>
           </>
         )}
-        {toRemove && (
+        {serviceAccountToRemove && (
           <ConfirmModal
             body={
               <div>
-                Are you sure you want to delete &apos;{toRemove.name}&apos;
-                {Boolean(toRemove.tokens) &&
-                  ` and ${toRemove.tokens} accompanying ${pluralize('token', toRemove.tokens)}`}
+                Are you sure you want to delete &apos;{serviceAccountToRemove.name}&apos;
+                {Boolean(serviceAccountToRemove.tokens) &&
+                  ` and ${serviceAccountToRemove.tokens} accompanying ${pluralize(
+                    'token',
+                    serviceAccountToRemove.tokens
+                  )}`}
                 ?
               </div>
             }
@@ -150,7 +153,7 @@ const ServiceAccountsListPage = ({
             }}
             isOpen={true}
             onConfirm={() => {
-              removeServiceAccount(toRemove.id);
+              removeServiceAccount(serviceAccountToRemove.id);
               setServiceAccountToRemove(null);
             }}
           />

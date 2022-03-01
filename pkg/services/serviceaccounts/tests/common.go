@@ -67,15 +67,17 @@ func SetupMockAccesscontrol(t *testing.T,
 var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
-	CreateServiceAccount     []interface{}
-	ListServiceAccounts      []interface{}
-	RetrieveServiceAccount   []interface{}
-	DeleteServiceAccount     []interface{}
-	UpgradeServiceAccounts   []interface{}
-	ConvertServiceAccounts   []interface{}
-	ListTokens               []interface{}
-	UpdateServiceAccount     []interface{}
-	SearchOrgServiceAccounts []interface{}
+	CreateServiceAccount      []interface{}
+	ListServiceAccounts       []interface{}
+	RetrieveServiceAccount    []interface{}
+	DeleteServiceAccount      []interface{}
+	UpgradeServiceAccounts    []interface{}
+	ConvertServiceAccounts    []interface{}
+	ListTokens                []interface{}
+	DeleteServiceAccountToken []interface{}
+	UpdateServiceAccount      []interface{}
+	AddServiceAccountToken    []interface{}
+	SearchOrgServiceAccounts  []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -129,4 +131,14 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
 	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, query})
 	return nil, nil
+}
+
+func (s *ServiceAccountsStoreMock) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error {
+	s.Calls.DeleteServiceAccountToken = append(s.Calls.DeleteServiceAccountToken, []interface{}{ctx, orgID, serviceAccountID, tokenID})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *models.AddApiKeyCommand) error {
+	s.Calls.AddServiceAccountToken = append(s.Calls.AddServiceAccountToken, []interface{}{ctx, cmd})
+	return nil
 }

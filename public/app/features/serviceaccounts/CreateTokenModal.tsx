@@ -15,6 +15,7 @@ import {
   RadioButtonGroup,
   useStyles2,
 } from '@grafana/ui';
+import { ApiKey, OrgRole } from 'app/types';
 
 const EXPIRATION_OPTIONS = [
   { label: 'No expiration', value: false },
@@ -24,7 +25,7 @@ const EXPIRATION_OPTIONS = [
 interface CreateTokenModalProps {
   isOpen: boolean;
   token: string;
-  onCreateToken: (name: string) => void;
+  onCreateToken: (token: ApiKey) => void;
   onClose: () => void;
 }
 
@@ -87,7 +88,16 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
               </Field>
             )}
           </FieldSet>
-          <Button onClick={() => onCreateToken(newTokenName)} disabled={isWithExpirationDate && !isExpirationDateValid}>
+          <Button
+            onClick={() =>
+              onCreateToken({
+                name: newTokenName,
+                role: OrgRole.Viewer,
+                secondsToLive: getSecondsToLive(newTokenExpirationDate),
+              })
+            }
+            disabled={isWithExpirationDate && !isExpirationDateValid}
+          >
             Generate token
           </Button>
         </>
@@ -126,6 +136,13 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
       )}
     </Modal>
   );
+};
+
+const getSecondsToLive = (date: Date | string) => {
+  const dateAsDate = new Date(date);
+  const now = new Date();
+
+  return Math.ceil((dateAsDate.getTime() - now.getTime()) / 1000);
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
