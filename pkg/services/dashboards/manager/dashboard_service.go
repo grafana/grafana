@@ -120,7 +120,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	guard := guardian.New(ctx, dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
 	if dash.Id == 0 {
-		if canSave, err := guard.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canSave {
+		if canCreate, err := guard.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
 				return nil, err
 			}
