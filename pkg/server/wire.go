@@ -215,6 +215,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboards.ProvideService,
 	prefs.ProvideService,
+	alerting.ProvideDashAlertExtractorService,
+	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 )
 

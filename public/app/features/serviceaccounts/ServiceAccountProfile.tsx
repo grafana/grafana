@@ -1,35 +1,27 @@
 import React, { PureComponent, useRef, useState } from 'react';
 import { Role, ServiceAccountDTO } from 'app/types';
 import { css, cx } from '@emotion/css';
-import { config } from 'app/core/config';
-import { dateTimeFormat, GrafanaTheme, OrgRole, TimeZone } from '@grafana/data';
-import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
+import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
+import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, useStyles2 } from '@grafana/ui';
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 
 interface Props {
   serviceAccount: ServiceAccountDTO;
   timeZone: TimeZone;
 
-  onServiceAccountUpdate: (serviceAccount: ServiceAccountDTO) => void;
-  onServiceAccountDelete: (serviceAccountId: number) => void;
-  onServiceAccountDisable: (serviceAccountId: number) => void;
-  onServiceAccountEnable: (serviceAccountId: number) => void;
-
-  onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
+  deleteServiceAccount: (serviceAccountId: number) => void;
+  updateServiceAccount: (serviceAccount: ServiceAccountDTO) => void;
 }
 
 export function ServiceAccountProfile({
   serviceAccount,
   timeZone,
-  onServiceAccountUpdate,
-  onServiceAccountDelete,
-  onServiceAccountDisable,
-  onServiceAccountEnable,
-  onRoleChange,
   roleOptions,
   builtInRoles,
+  deleteServiceAccount,
+  updateServiceAccount,
 }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
@@ -50,20 +42,27 @@ export function ServiceAccountProfile({
     }
   };
 
-  const handleServiceAccountDelete = () => onServiceAccountDelete(serviceAccount.id);
-
-  const handleServiceAccountDisable = () => onServiceAccountDisable(serviceAccount.id);
-
-  const handleServiceAccountEnable = () => onServiceAccountEnable(serviceAccount.id);
-
-  const onServiceAccountNameChange = (newValue: string) => {
-    onServiceAccountUpdate({
-      ...serviceAccount,
-      name: newValue,
-    });
+  const handleServiceAccountDelete = () => {
+    deleteServiceAccount(serviceAccount.id);
+  };
+  const handleServiceAccountDisable = () => {
+    updateServiceAccount({ ...serviceAccount, isDisabled: true });
+    setShowDisableModal(false);
   };
 
-  const styles = getStyles(config.theme);
+  const handleServiceAccountEnable = () => {
+    updateServiceAccount({ ...serviceAccount, isDisabled: false });
+  };
+
+  const handleServiceAccountRoleChange = (role: OrgRole) => {
+    updateServiceAccount({ ...serviceAccount, role: role });
+  };
+
+  const onServiceAccountNameChange = (newValue: string) => {
+    updateServiceAccount({ ...serviceAccount, name: newValue });
+  };
+
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -84,7 +83,7 @@ export function ServiceAccountProfile({
               <ServiceAccountRoleRow
                 label="Roles"
                 serviceAccount={serviceAccount}
-                onRoleChange={onRoleChange}
+                onRoleChange={handleServiceAccountRoleChange}
                 builtInRoles={builtInRoles}
                 roleOptions={roleOptions}
               />
@@ -98,26 +97,35 @@ export function ServiceAccountProfile({
         </div>
         <div className={styles.buttonRow}>
           <>
-            <Button variant="destructive" onClick={showDeleteServiceAccountModal(true)} ref={deleteServiceAccountRef}>
+            <Button
+              type={'button'}
+              variant="destructive"
+              onClick={showDeleteServiceAccountModal(true)}
+              ref={deleteServiceAccountRef}
+            >
               Delete service account
             </Button>
             <ConfirmModal
               isOpen={showDeleteModal}
-              title="Delete serviceaccount"
+              title="Delete service account"
               body="Are you sure you want to delete this service account?"
               confirmText="Delete service account"
               onConfirm={handleServiceAccountDelete}
               onDismiss={showDeleteServiceAccountModal(false)}
             />
           </>
-          {serviceAccount.isDisabled && (
-            <Button variant="secondary" onClick={handleServiceAccountEnable}>
+          {serviceAccount.isDisabled ? (
+            <Button type={'button'} variant="secondary" onClick={handleServiceAccountEnable}>
               Enable service account
             </Button>
-          )}
-          {!serviceAccount.isDisabled && (
+          ) : (
             <>
-              <Button variant="secondary" onClick={showDisableServiceAccountModal(true)} ref={disableServiceAccountRef}>
+              <Button
+                type={'button'}
+                variant="secondary"
+                onClick={showDisableServiceAccountModal(true)}
+                ref={disableServiceAccountRef}
+              >
                 Disable service account
               </Button>
               <ConfirmModal
@@ -136,16 +144,16 @@ export function ServiceAccountProfile({
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     buttonRow: css`
-      margin-top: 0.8rem;
+      margin-top: ${theme.spacing(1.5)};
       > * {
-        margin-right: 16px;
+        margin-right: ${theme.spacing(2)};
       }
     `,
   };
-});
+};
 
 interface ServiceAccountProfileRowProps {
   label: string;

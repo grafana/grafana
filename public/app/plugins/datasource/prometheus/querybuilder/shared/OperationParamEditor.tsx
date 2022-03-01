@@ -1,7 +1,8 @@
 import { SelectableValue, toOption } from '@grafana/data';
-import { Input, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import React, { ComponentType } from 'react';
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
+import { AutoSizeInput } from './AutoSizeInput';
 import { getOperationParamId } from './operationUtils';
 
 export function getOperationParamEditor(
@@ -20,18 +21,10 @@ export function getOperationParamEditor(
 
 function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
-    <Input
+    <AutoSizeInput
       id={getOperationParamId(props.operationIndex, props.index)}
-      defaultValue={props.value ?? ''}
-      onKeyDown={(evt) => {
-        if (evt.key === 'Enter') {
-          if (evt.currentTarget.value !== props.value) {
-            props.onChange(props.index, evt.currentTarget.value);
-          }
-          props.onRunQuery();
-        }
-      }}
-      onBlur={(evt) => {
+      defaultValue={props.value}
+      onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
       }}
     />

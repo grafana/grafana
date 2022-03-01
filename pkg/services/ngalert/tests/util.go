@@ -41,7 +41,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
-	folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore), dashboardStore, nil)
+	folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore, nil), dashboardStore, nil)
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore,
 		nil, nil, nil, nil, secretsService, nil, m, folderService,
