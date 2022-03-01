@@ -698,7 +698,7 @@ In addition, each data source has its own specific properties that should be add
 
 Please note that these resources have been deprecated and will be removed in a future release.
 
-## Query a data source by ID
+### Query a data source by ID
 
 > **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
 
