@@ -26,7 +26,8 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
 
-	if err := hs.preferencesManager.SavePreferences(c.Req.Context(), &cmd); err != nil {
+	_, err := hs.preferencesManager.SavePreferences(c.Req.Context(), &cmd)
+	if err != nil {
 		return response.Error(500, "Failed to set home dashboard", err)
 	}
 
@@ -75,7 +76,8 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		HomeDashboardId: dtoCmd.HomeDashboardID,
 	}
 
-	if err := hs.preferencesManager.SavePreferences(ctx, &saveCmd); err != nil {
+	_, err := hs.preferencesManager.SavePreferences(ctx, &saveCmd)
+	if err != nil {
 		return response.Error(500, "Failed to save preferences", err)
 	}
 

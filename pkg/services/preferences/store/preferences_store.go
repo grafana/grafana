@@ -19,7 +19,7 @@ type Store interface {
 	Get(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
 	GetDefaults() *models.Preferences
 	List(ctx context.Context, query *models.ListPreferencesQuery) ([]*models.Preferences, error)
-	Set(context.Context, *models.SavePreferencesCommand) error
+	Set(context.Context, *models.SavePreferencesCommand) (*models.Preferences, error)
 }
 
 func NewPreferencesStore(cfg *setting.Cfg, sqlStore sqlstore.Store) Store {
@@ -87,9 +87,9 @@ func (s *StoreImpl) Get(ctx context.Context, query *models.GetPreferencesQuery) 
 	return &prefs, err
 }
 
-func (s *StoreImpl) Set(ctx context.Context, cmd *models.SavePreferencesCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var prefs models.Preferences
+func (s *StoreImpl) Set(ctx context.Context, cmd *models.SavePreferencesCommand) (*models.Preferences, error) {
+	var prefs models.Preferences
+	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
 		if err != nil {
 			return err
@@ -119,4 +119,8 @@ func (s *StoreImpl) Set(ctx context.Context, cmd *models.SavePreferencesCommand)
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
 		return err
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &prefs, nil
 }

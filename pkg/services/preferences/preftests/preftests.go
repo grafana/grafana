@@ -23,8 +23,8 @@ func (f *FakePreferencesManager) GetPreferences(ctx context.Context, query *mode
 	return f.ExpectedPreferences, f.ExpectedError
 }
 
-func (f *FakePreferencesManager) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
-	return f.ExpectedError
+func (f *FakePreferencesManager) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) (*models.Preferences, error) {
+	return f.ExpectedPreferences, f.ExpectedError
 }
 
 type FakePreferencesStore struct {
@@ -49,6 +49,6 @@ func (f *FakePreferencesStore) GetDefaults() *models.Preferences {
 	return f.ExpectedPreferences
 }
 
-func (f *FakePreferencesStore) Set(ctx context.Context, cmd *models.SavePreferencesCommand) error {
-	return f.ExpectedError
+func (f *FakePreferencesStore) Set(ctx context.Context, cmd *models.SavePreferencesCommand) (*models.Preferences, error) {
+	return f.ExpectedPreferences, f.ExpectedError
 }

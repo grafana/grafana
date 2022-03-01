@@ -12,7 +12,7 @@ import (
 type Manager interface {
 	GetPreferencesWithDefaults(context.Context, *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error)
 	GetPreferences(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
-	SavePreferences(context.Context, *models.SavePreferencesCommand) error
+	SavePreferences(context.Context, *models.SavePreferencesCommand) (*models.Preferences, error)
 }
 
 type ManagerImpl struct {
@@ -59,6 +59,6 @@ func (s *ManagerImpl) GetPreferences(ctx context.Context, query *models.GetPrefe
 	return s.preferenceStore.Get(ctx, query)
 }
 
-func (s *ManagerImpl) SavePreferences(ctx context.Context, query *models.SavePreferencesCommand) error {
+func (s *ManagerImpl) SavePreferences(ctx context.Context, query *models.SavePreferencesCommand) (*models.Preferences, error) {
 	return s.preferenceStore.Set(ctx, query)
 }
