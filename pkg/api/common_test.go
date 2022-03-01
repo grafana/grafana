@@ -274,7 +274,7 @@ type accessControlScenarioContext struct {
 	acmock *accesscontrolmock.Mock
 
 	// db is a test database initialized with InitTestDB
-	db *sqlstore.SQLStore
+	db sqlstore.Store
 
 	// cfg is the setting provider
 	cfg *setting.Cfg

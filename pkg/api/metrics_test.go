@@ -176,21 +176,22 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool
 	return ts.passThruEnabled
 }
 
-type fakePluginClient struct {
+func (c *dashboardFakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	c.req = req
+	return nil, nil
+}
+
+type dashboardFakePluginClient struct {
 	plugins.Client
 
 	req *backend.QueryDataRequest
 }
 
-func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	c.req = req
-	return &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{}}, nil
-}
-
 // `/api/dashboards/:dashboardId/panels/:panelId` endpoints test
 func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
-	ss := mockstore.NewSQLStoreMock()
 	sc := setupHTTPServer(t, false, false)
+
+	ss := mockstore.NewSQLStoreMock()
 	sc.db = ss
 
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -200,7 +201,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		nil,
 		&fakePluginRequestValidator{},
 		fakes.NewFakeSecretsService(),
-		&fakePluginClient{},
+		&dashboardFakePluginClient{},
 		&fakeOAuthTokenService{},
 	)
 
@@ -397,7 +398,7 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 				ss.ExpectedError = test.dashboardQueryResult.err
 			}
 
-			assert.Equal(t, test.expectedError, checkDashboardAndPanel(ss, test.dashboardId, test.panelId))
+			assert.Equal(t, test.expectedError, checkDashboardAndPanel(context.Background(), ss, test.dashboardId, test.panelId))
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -43,15 +44,24 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
-func checkDashboardAndPanel(ss sqlstore.Store, dashboardUid, panelId string) error {
+func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, dashboardUid, panelId string) error {
 	if dashboardUid == "" || panelId == "" {
 		return models.ErrDashboardOrPanelIdentifierNotSet
 	}
 
-	dashboard, err := ss.GetDashboard(0, 0, dashboardUid, "")
-	if err != nil {
-		return err
+	query := models.GetDashboardQuery{
+		Uid: dashboardUid,
 	}
+
+	if err := ss.GetDashboard(ctx, &query); err != nil {
+		return models.ErrDashboardIdentifierInvalid
+	}
+
+	if query.Result == nil {
+		return models.ErrDashboardCorrupt
+	}
+
+	dashboard := query.Result
 
 	// dashboard saved but no panels
 	if dashboard.Data == nil {
@@ -98,7 +108,7 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 	panelId := params[":panelId"]
 
 	// 404 if dashboard or panel not found
-	if err := checkDashboardAndPanel(hs.SQLStore, dashboardUid, panelId); err != nil {
+	if err := checkDashboardAndPanel(c.Req.Context(), hs.SQLStore, dashboardUid, panelId); err != nil {
 		c.Logger.Warn("Failed to find dashboard or panel for validated query", "err", err)
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
