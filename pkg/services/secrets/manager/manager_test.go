@@ -328,11 +328,11 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 		// Decrypt to ensure data key is cached
 		_, err := svc.Decrypt(ctx, ciphertext)
 		require.NoError(t, err)
-		require.NotEmpty(t, svc.dataKeyCache)
+		require.NotEmpty(t, svc.dataKeyCache.entries)
 
 		err = svc.ReEncryptDataKeys(ctx)
 		require.NoError(t, err)
 
-		assert.Empty(t, svc.dataKeyCache)
+		assert.Empty(t, svc.dataKeyCache.entries)
 	})
 }
