@@ -59,6 +59,6 @@ func (b service) IsFolderEmpty(ctx context.Context, path string) (bool, error) {
 	return true, errors.New("not available")
 }
 
-func (c service) close() error {
+func (b service) close() error {
 	return errors.New("not implemented")
 }

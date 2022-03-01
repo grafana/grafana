@@ -248,6 +248,6 @@ func (b wrapper) isFolderEmpty(ctx context.Context, path string) (bool, error) {
 	return true, nil
 }
 
-func (c wrapper) close() error {
-	return c.wrapped.close()
+func (b wrapper) close() error {
+	return b.wrapped.close()
 }
