@@ -150,41 +150,46 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	store := InitTestDB(t)
 
 	// create org and admin
-	store.CreateUser(context.Background(), models.CreateUserCommand{
+	_, err := store.CreateUser(context.Background(), models.CreateUserCommand{
 		Login: "admin",
 		OrgId: 1,
 	})
+	require.NoError(t, err)
 
 	// create a user with no org
-	store.CreateUser(context.Background(), models.CreateUserCommand{
+	_, err = store.CreateUser(context.Background(), models.CreateUserCommand{
 		Login:        "user",
 		OrgId:        1,
 		SkipOrgSetup: true,
 	})
+	require.NoError(t, err)
 
 	// assign the user to the org
-	store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
 		Role:   "Viewer",
 		OrgId:  1,
 		UserId: 2,
 	})
+	require.NoError(t, err)
 
 	// assert the org has been assigned
 	user := &models.GetUserByIdQuery{Id: 2}
-	store.GetUserById(context.Background(), user)
+	err = store.GetUserById(context.Background(), user)
+	require.NoError(t, err)
 	require.Equal(t, user.Result.OrgId, int64(1))
 
 	// remove the user org
-	err := store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
+	err = store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
 		UserId:                   2,
 		OrgId:                    1,
 		ShouldDeleteOrphanedUser: false,
 	})
+	require.NoError(t, err)
 
 	// assert the org has been removed
-	require.NoError(t, err)
 	user = &models.GetUserByIdQuery{Id: 2}
-	store.GetUserById(context.Background(), user)
+	err = store.GetUserById(context.Background(), user)
+	require.NoError(t, err)
 	require.Equal(t, user.Result.OrgId, int64(0))
 }
 
