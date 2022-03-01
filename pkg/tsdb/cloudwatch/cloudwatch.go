@@ -183,7 +183,7 @@ func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.Check
 	message := "Successfully queried the CloudWatch API."
 	if err != nil {
 		status = backend.HealthStatusError
-		message = "Plugin request failed"
+		message = fmt.Sprintf("Plugin request failed: %v", err)
 	}
 	return &backend.CheckHealthResult{
 		Status:  status,
