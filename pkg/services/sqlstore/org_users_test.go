@@ -174,7 +174,7 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	store.GetUserById(context.Background(), user)
 	require.Equal(t, user.Result.OrgId, int64(1))
 
-	// remove the only org
+	// remove the user org
 	err := store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
 		UserId:                   2,
 		OrgId:                    1,
