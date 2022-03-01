@@ -13,7 +13,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 2,
@@ -40,7 +40,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": 0,
       "scale": "__fixed/na-na/na-na/auto/linear/na",
       "show": true,
       "side": 3,
@@ -105,6 +105,7 @@ Object {
   },
   "hooks": Object {},
   "mode": 1,
+  "ms": 1,
   "padding": undefined,
   "scales": Object {
     "__fixed/na-na/na-na/auto/linear/na": Object {

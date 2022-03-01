@@ -75,7 +75,7 @@ describe('UPlotChart', () => {
 
     const { unmount } = render(
       <UPlotChart
-        data={preparePlotData(data)} // mock
+        data={preparePlotData({ frames: data }).aligned} // mock
         config={config}
         timeRange={timeRange}
         width={100}
@@ -94,7 +94,7 @@ describe('UPlotChart', () => {
 
       const { rerender } = render(
         <UPlotChart
-          data={preparePlotData(data)} // mock
+          data={preparePlotData({ frames: data }).aligned} // mock
           config={config}
           timeRange={timeRange}
           width={100}
@@ -108,7 +108,7 @@ describe('UPlotChart', () => {
 
       rerender(
         <UPlotChart
-          data={preparePlotData(data)} // changed
+          data={preparePlotData({ frames: data }).aligned} // changed
           config={config}
           timeRange={timeRange}
           width={100}
@@ -124,7 +124,13 @@ describe('UPlotChart', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
       const { data, timeRange, config } = mockData();
       const { queryAllByTestId } = render(
-        <UPlotChart data={preparePlotData(data)} config={config} timeRange={timeRange} width={0} height={0} />
+        <UPlotChart
+          data={preparePlotData({ frames: data }).aligned}
+          config={config}
+          timeRange={timeRange}
+          width={0}
+          height={0}
+        />
       );
 
       expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
@@ -136,7 +142,7 @@ describe('UPlotChart', () => {
 
       const { rerender } = render(
         <UPlotChart
-          data={preparePlotData(data)} // frame
+          data={preparePlotData({ frames: data }).aligned} // frame
           config={config}
           timeRange={timeRange}
           width={100}
@@ -150,7 +156,13 @@ describe('UPlotChart', () => {
       nextConfig.addSeries({} as SeriesProps);
 
       rerender(
-        <UPlotChart data={preparePlotData(data)} config={nextConfig} timeRange={timeRange} width={100} height={100} />
+        <UPlotChart
+          data={preparePlotData({ frames: data }).aligned}
+          config={nextConfig}
+          timeRange={timeRange}
+          width={100}
+          height={100}
+        />
       );
 
       expect(destroyMock).toBeCalledTimes(1);
@@ -162,7 +174,7 @@ describe('UPlotChart', () => {
 
       const { rerender } = render(
         <UPlotChart
-          data={preparePlotData(data)} // frame
+          data={preparePlotData({ frames: data }).aligned} // frame
           config={config}
           timeRange={timeRange}
           width={100}
@@ -173,7 +185,7 @@ describe('UPlotChart', () => {
       // we wait 1 frame for plugins initialisation logic to finish
       rerender(
         <UPlotChart
-          data={preparePlotData(data)} // frame
+          data={preparePlotData({ frames: data }).aligned} // frame
           config={config}
           timeRange={timeRange}
           width={200}

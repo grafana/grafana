@@ -199,7 +199,7 @@ describe('GraphNG utils', () => {
       eventBus: new EventBusSrv(),
       sync: () => DashboardCursorSync.Tooltip,
       allFrames: [frame!],
-    }).getConfig();
+    })!.builder.getConfig();
     expect(result).toMatchSnapshot();
   });
 });

@@ -27,7 +27,7 @@ describe('preparePlotData', () => {
   });
 
   it('creates array from DataFrame', () => {
-    expect(preparePlotData([df])).toMatchInlineSnapshot(`
+    expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
       Array [
         Array [
           9997,
@@ -63,7 +63,7 @@ describe('preparePlotData', () => {
           { name: 'c', values: [20, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
         ],
       });
-      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+      expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -97,7 +97,7 @@ describe('preparePlotData', () => {
           { name: 'c', values: [20, 20, 20] },
         ],
       });
-      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+      expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -145,7 +145,7 @@ describe('preparePlotData', () => {
           },
         ],
       });
-      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+      expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
               Array [
                 Array [
                   9997,
@@ -192,7 +192,7 @@ describe('preparePlotData', () => {
           },
         ],
       });
-      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+      expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -248,7 +248,7 @@ describe('preparePlotData', () => {
           },
         ],
       });
-      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+      expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -316,7 +316,7 @@ describe('preparePlotData', () => {
         ],
       });
 
-      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+      expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -391,7 +391,7 @@ describe('preparePlotData', () => {
         ],
       });
 
-      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+      expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -450,7 +450,7 @@ describe('preparePlotData', () => {
           ],
         });
 
-        expect(preparePlotData([df])).toMatchInlineSnapshot(`
+        expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
           Array [
             Array [
               9997,
@@ -512,7 +512,7 @@ describe('preparePlotData', () => {
           ],
         });
 
-        expect(preparePlotData([df])).toMatchInlineSnapshot(`
+        expect(preparePlotData({ frames: [df] }).aligned).toMatchInlineSnapshot(`
           Array [
             Array [
               9997,
@@ -579,7 +579,8 @@ describe('preparePlotData', () => {
           ],
         });
 
-        expect(preparePlotData([df], undefined, { sortBy: 'Max', sortDesc: false } as any)).toMatchInlineSnapshot(`
+        expect(preparePlotData({ frames: [df], legend: { sortBy: 'Max', sortDesc: false } as any }).aligned)
+          .toMatchInlineSnapshot(`
                   Array [
                     Array [
                       9997,
@@ -603,7 +604,8 @@ describe('preparePlotData', () => {
                     ],
                   ]
               `);
-        expect(preparePlotData([df], undefined, { sortBy: 'Max', sortDesc: true } as any)).toMatchInlineSnapshot(`
+        expect(preparePlotData({ frames: [df], legend: { sortBy: 'Max', sortDesc: true } as any }).aligned)
+          .toMatchInlineSnapshot(`
                   Array [
                     Array [
                       9997,
