@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DataQuery } from '@grafana/data';
 import { Alert, Button, Field, Input, InputControl, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -24,17 +24,17 @@ function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}
 }
 
 export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }: Props) => {
-  const [submissionError, setSubmissionError] = useState<string>();
   const {
     register,
     handleSubmit,
     control,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormDTO>({ defaultValues: { queries, visualization } });
+    clearErrors,
+    // fakeField is used to track non-specific-input-bound form errors.
+  } = useForm<FormDTO & { fakeField: unknown }>({ defaultValues: { queries, visualization } });
 
   const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
-    setSubmissionError(undefined);
     const error = await onSave(data, withRedirect);
 
     if (error) {
@@ -46,12 +46,19 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
           setError('dashboardName', { message: error.message ?? 'This field is invalid' });
           break;
         default:
-          setSubmissionError(
-            error.message ?? 'An unknown error occurred while saving the dashboard. Please try again.'
-          );
+          setError('fakeField', {
+            message: error.message ?? 'An unknown error occurred while saving the dashboard. Please try again.',
+          });
       }
     }
   };
+
+  function withErrorClear(fn: ReturnType<typeof handleSubmit>) {
+    return (...args: Parameters<ReturnType<typeof handleSubmit>>) => {
+      clearErrors('fakeField');
+      return fn(...args);
+    };
+  }
 
   return (
     <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
@@ -97,9 +104,9 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
           />
         </Field>
 
-        {submissionError && (
+        {errors.fakeField && (
           <Alert severity="error" title="Unknown error">
-            {submissionError}
+            {errors.fakeField.message}
           </Alert>
         )}
 
@@ -109,7 +116,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
           </Button>
           <Button
             type="submit"
-            onClick={handleSubmit(withRedirect(onSubmit, false))}
+            onClick={withErrorClear(handleSubmit(withRedirect(onSubmit, false)))}
             variant="secondary"
             icon="compass"
             disabled={isSubmitting}
@@ -118,7 +125,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
           </Button>
           <Button
             type="submit"
-            onClick={handleSubmit(withRedirect(onSubmit, true))}
+            onClick={withErrorClear(handleSubmit(withRedirect(onSubmit, true)))}
             variant="primary"
             icon="plus"
             disabled={isSubmitting}
