@@ -62,8 +62,15 @@ type QueryHistoryResponse struct {
 	Result QueryHistoryDTO `json:"result"`
 }
 
+type QueryHistorySearchResult struct {
+	TotalCount   int               `json:"totalCount"`
+	QueryHistory []QueryHistoryDTO `json:"queryHistory"`
+	Page         int               `json:"page"`
+	PerPage      int               `json:"perPage"`
+}
+
 type QueryHistorySearchResponse struct {
-	Result []QueryHistoryDTO `json:"result"`
+	Result QueryHistorySearchResult `json:"result"`
 }
 
 // DeleteQueryFromQueryHistoryResponse is the response struct for deleting a query from query history

@@ -25,7 +25,7 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 0, len(response.Result))
+			require.Equal(t, 0, response.Result.TotalCount)
 		})
 
 	testScenarioWithQueryInQueryHistory(t, "When users tries to get query with valid datasourceUid, it should succeed",
@@ -36,7 +36,7 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 1, len(response.Result))
+			require.Equal(t, 1, response.Result.TotalCount)
 		})
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries with datasourceUid, it should return correct queries",
@@ -47,9 +47,9 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 2, len(response.Result))
-			require.Equal(t, true, response.Result[0].Starred)
-			require.Equal(t, false, response.Result[1].Starred)
+			require.Equal(t, 2, response.Result.TotalCount)
+			require.Equal(t, true, response.Result.QueryHistory[0].Starred)
+			require.Equal(t, false, response.Result.QueryHistory[1].Starred)
 		})
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries with datasourceUid and sort, it should return correct queries",
@@ -61,9 +61,9 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 2, len(response.Result))
-			require.Equal(t, false, response.Result[0].Starred)
-			require.Equal(t, true, response.Result[1].Starred)
+			require.Equal(t, 2, response.Result.TotalCount)
+			require.Equal(t, false, response.Result.QueryHistory[0].Starred)
+			require.Equal(t, true, response.Result.QueryHistory[1].Starred)
 		})
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries with invalid datasourceUid, it should return empty result",
@@ -74,10 +74,10 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 0, len(response.Result))
+			require.Equal(t, 0, response.Result.TotalCount)
 		})
 
-	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries with multiple datasourceUid, it should return empty result",
+	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries with multiple datasourceUid,  it should return correct queries",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID2)
@@ -86,7 +86,7 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 3, len(response.Result))
+			require.Equal(t, 3, response.Result.TotalCount)
 		})
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get starred queries, it should return correct queries",
@@ -98,8 +98,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 1, len(response.Result))
-			require.Equal(t, true, response.Result[0].Starred)
+			require.Equal(t, 1, response.Result.TotalCount)
+			require.Equal(t, true, response.Result.QueryHistory[0].Starred)
 		})
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries including search string, it should return correct queries",
@@ -111,7 +111,7 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 1, len(response.Result))
-			require.Equal(t, true, response.Result[0].Starred)
+			require.Equal(t, 1, response.Result.TotalCount)
+			require.Equal(t, true, response.Result.QueryHistory[0].Starred)
 		})
 }

@@ -46,12 +46,12 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 		Limit:          c.QueryInt("limit"),
 	}
 
-	queries, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)
+	result, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get query history", err)
 	}
 
-	return response.JSON(http.StatusOK, QueryHistorySearchResponse{Result: queries})
+	return response.JSON(http.StatusOK, QueryHistorySearchResponse{Result: result})
 }
 
 func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Response {

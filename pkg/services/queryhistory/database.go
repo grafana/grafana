@@ -3,7 +3,6 @@ package queryhistory
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -43,11 +42,12 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *models.Signe
 	return dto, nil
 }
 
-func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.SignedInUser, query SearchInQueryHistoryQuery) ([]QueryHistoryDTO, error) {
-	var queries []QueryHistoryDTO
+func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
+	var dtos []QueryHistoryDTO
+	var allQueries []interface{}
 
 	if len(query.DatasourceUIDs) == 0 {
-		return nil, errors.New("no selected data source for query history search")
+		return QueryHistorySearchResult{}, errors.New("no selected data source for query history search")
 	}
 
 	if query.Page <= 0 {
@@ -63,57 +63,47 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 	}
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		sql := `SELECT
+		dtosBuilder := sqlstore.SQLBuilder{}
+		dtosBuilder.Write(`SELECT
 			query_history.uid,
 			query_history.datasource_uid,
 			query_history.created_by,
 			query_history.created_at AS created_at,
 			query_history.comment,
 			query_history.queries,
-		`
+		`)
+		writeStarredSQL(query, s.SQLStore, &dtosBuilder)
+		writeFiltersSQL(query, user, s.SQLStore, &dtosBuilder)
+		writeSortSQL(query, s.SQLStore, &dtosBuilder)
+		writeLimitSQL(query, s.SQLStore, &dtosBuilder)
+		writeOffsetSQL(query, s.SQLStore, &dtosBuilder)
 
-		if query.OnlyStarred {
-			sql = sql + s.SQLStore.Dialect.BooleanStr(true) + ` AS starred
-				FROM query_history
-				INNER JOIN query_history_star ON query_history_star.query_uid = query_history.uid
-			`
-		} else {
-			sql = sql + `CASE WHEN query_history_star.query_uid IS NULL THEN ` + s.SQLStore.Dialect.BooleanStr(false) + ` ELSE ` + s.SQLStore.Dialect.BooleanStr(true) + ` END AS starred
-				FROM query_history
-				LEFT JOIN query_history_star ON query_history_star.query_uid = query_history.uid
-			`
+		err := session.SQL(dtosBuilder.GetSQLString(), dtosBuilder.GetParams()...).Find(&dtos)
+		if err != nil {
+			return err
 		}
 
-		sql = sql + `WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.queries ` + s.SQLStore.Dialect.LikeStr() + ` ? AND query_history.datasource_uid IN (?` + strings.Repeat(",?", len(query.DatasourceUIDs)-1) + `)
-		`
-
-		if query.Sort == "time-asc" {
-			sql = sql + `ORDER BY created_at ASC
-			`
-		} else {
-			sql = sql + `ORDER BY created_at DESC
-			`
-		}
-
-		sql = sql + `LIMIT ? OFFSET ?
-		`
-
-		params := []interface{}{user.OrgId, user.UserId, "%" + query.SearchString + "%"}
-		for _, uid := range query.DatasourceUIDs {
-			params = append(params, uid)
-		}
-		offset := query.Limit * (query.Page - 1)
-		params = append(params, query.Limit, offset)
-
-		err := session.SQL(sql, params...).Find(&queries)
+		countBuilder := sqlstore.SQLBuilder{}
+		countBuilder.Write(`SELECT
+		`)
+		writeStarredSQL(query, s.SQLStore, &countBuilder)
+		writeFiltersSQL(query, user, s.SQLStore, &countBuilder)
+		err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&allQueries)
 		return err
 	})
 
 	if err != nil {
-		return nil, err
+		return QueryHistorySearchResult{}, err
 	}
 
-	return queries, nil
+	response := QueryHistorySearchResult{
+		QueryHistory: dtos,
+		TotalCount:   len(allQueries),
+		Page:         query.Page,
+		PerPage:      query.Limit,
+	}
+
+	return response, nil
 }
 
 func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
