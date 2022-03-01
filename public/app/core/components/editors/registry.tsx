@@ -5,7 +5,6 @@ import {
   FieldType,
   standardEditorsRegistry,
   StandardEditorsRegistryItem,
-  stringOverrideProcessor,
   ThresholdsConfig,
   ThresholdsFieldConfigSettings,
   ThresholdsMode,
@@ -85,16 +84,5 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
-  const icon: FieldConfigPropertyItem<any, string, any> = {
-    id: 'icon',
-    path: 'icon',
-    name: 'Icon',
-    editor: standardEditorsRegistry.get('text').editor as any,
-    override: standardEditorsRegistry.get('text').editor as any,
-    hideFromDefaults: true,
-    shouldApply: () => true,
-    process: stringOverrideProcessor,
-  };
-
-  return [...getStandardFieldConfigs(), icon, mappings, thresholds];
+  return [...getStandardFieldConfigs(), mappings, thresholds];
 };
