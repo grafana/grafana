@@ -20,11 +20,11 @@ type Store interface {
 	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error
 	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
 	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
+	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
 }
 type SQLStore interface {
 	GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery) error
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
-	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
 }
 
 // Provision alert notifiers
@@ -149,7 +149,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := dc.sqlstore.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
+			if err := dc.alertingService.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
 				return err
 			}
 		}

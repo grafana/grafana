@@ -361,3 +361,7 @@ func (f *fakeAlertNotification) DeleteAlertNotificationWithUid(ctx context.Conte
 func (f *fakeAlertNotification) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 	return nil
 }
+
+func (f *fakeAlertNotification) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	return nil
+}
