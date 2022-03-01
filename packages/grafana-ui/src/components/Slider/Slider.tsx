@@ -67,7 +67,6 @@ export const Slider: FunctionComponent<SliderProps> = ({
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
-      //onSliderChange(value + step)
       if (isNaN(+e.key) && !e.ctrlKey) {
         switch (e.key) {
           case 'ArrowUp':
@@ -78,7 +77,12 @@ export const Slider: FunctionComponent<SliderProps> = ({
             break;
 
           // Do normal behavior
+          case 'ArrowLeft':
+          case 'ArrowRight':
           case 'Backspace':
+          case 'Delete':
+          case '-': // negative numbers
+          case '.': // decimal places
             return;
 
           // Skip everything else
@@ -88,7 +92,6 @@ export const Slider: FunctionComponent<SliderProps> = ({
         e.preventDefault();
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [value, step, onSliderChange]
   );
 
