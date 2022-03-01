@@ -324,7 +324,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 					folderPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersPermissionsRead)), routing.Wrap(hs.GetFolderPermissionList))
-					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateFolderPermissions))
+					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersPermissionsWrite)), routing.Wrap(hs.UpdateFolderPermissions))
 				})
 			})
 		})
