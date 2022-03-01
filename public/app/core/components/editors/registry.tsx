@@ -91,7 +91,6 @@ export const getAllStandardFieldConfigs = () => {
     name: 'Icon',
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
-    requireExplicitAdd: true,
     hideFromDefaults: true,
     shouldApply: () => true,
     process: stringOverrideProcessor,

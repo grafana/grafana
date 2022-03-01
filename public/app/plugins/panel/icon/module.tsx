@@ -9,7 +9,13 @@ import { CanvasElementOptions } from 'app/features/canvas';
 export const plugin = new PanelPlugin<PanelOptions>(IconPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig({
-    enableUncommonOptions: [FieldConfigProperty.Icon],
+    standardOptions: {
+      [FieldConfigProperty.Mappings]: {
+        settings: {
+          icon: true,
+        },
+      },
+    },
   })
   .setPanelOptions((builder) => {
     builder.addNestedOptions<CanvasElementOptions<IconConfig>>({

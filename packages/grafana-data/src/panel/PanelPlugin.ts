@@ -53,17 +53,6 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   disableStandardOptions?: FieldConfigProperty[];
 
   /**
-   * Array of uncommon field config properties that should be available in the panel
-   * @example
-   * ```typescript
-   * {
-   *   enableUncommonOptions: [FieldConfigProperty.Icon]
-   * }
-   * ```
-   */
-  enableUncommonOptions?: FieldConfigProperty[];
-
-  /**
    * Function that allows custom field config properties definition.
    *
    * @param builder

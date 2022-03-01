@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FieldConfigProperty, GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
+import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
 import { css } from '@emotion/css';
 import { buildEditRowModels, editModelToSaveModel, ValueMappingsEditorModal } from './ValueMappingsEditorModal';
 import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
@@ -14,7 +14,7 @@ export const ValueMappingsEditor = React.memo((props: Props) => {
   const { value, onChange, item } = props;
 
   const styles = useStyles2(getStyles);
-  const showIconPicker = item.settings?.enableUncommonOptions?.includes(FieldConfigProperty.Icon);
+  const showIconPicker = item.settings?.icon;
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const onCloseEditor = useCallback(() => {
     setIsEditorOpen(false);
@@ -68,7 +68,7 @@ export const ValueMappingsEditor = React.memo((props: Props) => {
                 </td>
               )}
               {showIconPicker && row.result.icon && (
-                <td>
+                <td data-testid="iconPicker">
                   <ResourcePicker
                     onChange={(icon) => onChangeIcon(icon, rowIndex)}
                     value={row.result.icon}

@@ -48,11 +48,7 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
         continue;
       }
     }
-    if (fieldConfigProp.requireExplicitAdd) {
-      if (!config.enableUncommonOptions?.includes(fieldConfigProp.id as any)) {
-        continue;
-      }
-    }
+
     if (config.standardOptions) {
       const customDefault: any = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.defaultValue;
       const customSettings: any = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.settings;
@@ -69,16 +65,6 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
           settings: fieldConfigProp.settings ? { ...fieldConfigProp.settings, ...customSettings } : customSettings,
         };
       }
-    }
-
-    if (fieldConfigProp.id === FieldConfigProperty.Mappings) {
-      fieldConfigProp = {
-        ...fieldConfigProp,
-        settings: {
-          ...fieldConfigProp.settings,
-          enableUncommonOptions: config.enableUncommonOptions,
-        },
-      };
     }
 
     registry.register(fieldConfigProp);

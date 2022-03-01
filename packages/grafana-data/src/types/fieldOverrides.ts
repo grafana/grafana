@@ -103,9 +103,6 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
 
-  /** Indicates that uncommon option should be explicitly available */
-  requireExplicitAdd?: boolean;
-
   /** Convert the override value to a well typed value */
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
 
@@ -133,5 +130,4 @@ export enum FieldConfigProperty {
   Mappings = 'mappings',
   Links = 'links',
   Color = 'color',
-  Icon = 'icon',
 }
