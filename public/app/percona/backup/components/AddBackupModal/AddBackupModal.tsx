@@ -32,6 +32,7 @@ import {
   MIN_RETENTION,
   MONTH_OPTIONS,
   WEEKDAY_OPTIONS,
+  MAX_BACKUP_NAME,
 } from './AddBackupModal.constants';
 import { Messages } from './AddBackupModal.messages';
 import { AddBackupModalService } from './AddBackupModal.service';
@@ -110,7 +111,11 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                 />
               </div>
               <div className={styles.formHalf}>
-                <TextInputField name="backupName" label={Messages.backupName} validators={[validators.required]} />
+                <TextInputField
+                  name="backupName"
+                  label={Messages.backupName}
+                  validators={[validators.required, validators.maxLength(MAX_BACKUP_NAME)]}
+                />
                 <Field name="location" validate={validators.required}>
                   {({ input }) => (
                     <div>

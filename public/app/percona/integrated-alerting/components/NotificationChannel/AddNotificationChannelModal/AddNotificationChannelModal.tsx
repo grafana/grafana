@@ -15,7 +15,7 @@ import {
   PagerDutyKeyType,
 } from '../NotificationChannel.types';
 
-import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
+import { TYPE_OPTIONS, MAX_NAME_LENGTH } from './AddNotificationChannel.constants';
 import { Messages } from './AddNotificationChannelModal.messages';
 import { AddNotificationChannelModalProps } from './AddNotificationChannelModal.types';
 import { getInitialValues } from './AddNotificationChannelModal.utils';
@@ -24,7 +24,7 @@ import { PagerDutyFields } from './PagerDutyFields/PagerDutyFields';
 import { SlackFields } from './SlackFields/SlackFields';
 import { WebHookFields } from './WebHookFields/WebHookFields';
 
-const { required } = validators;
+const { required, maxLength } = validators;
 // Our "values" typings won't be right without using this
 const { Form } = withTypes<NotificationChannelRenderProps>();
 
@@ -86,7 +86,11 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
               <Field name="type">
                 {({ input }) => <SelectField label={Messages.fields.type} options={TYPE_OPTIONS} {...input} />}
               </Field>
-              <TextInputField name="name" label={Messages.fields.name} validators={[required]} />
+              <TextInputField
+                name="name"
+                label={Messages.fields.name}
+                validators={[required, maxLength(MAX_NAME_LENGTH)]}
+              />
               <TypeField values={values} />
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton

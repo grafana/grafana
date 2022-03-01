@@ -56,7 +56,6 @@ const typeOptions: Array<SelectableValue<LocationType>> = [
 ];
 
 const { Form } = withTypes<AddStorageLocationFormProps>();
-const required = [validators.required];
 
 export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
   isVisible,
@@ -82,7 +81,7 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
               inputProps={{ maxLength: MAX_NAME_LENGTH }}
               name="name"
               label={Messages.name}
-              validators={required}
+              validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
             />
             <TextareaInputField name="description" label={Messages.description} />
             {/* TODO remove disabled when API allows all three types */}
