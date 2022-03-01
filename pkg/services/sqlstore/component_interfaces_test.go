@@ -18,7 +18,7 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 	t.Run("Insert / Update / Delete with Gets", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		ctx := context.Background()
-		dsStore := datasource.Store(ProvideDataSourceSchemaStore(sqlStore))
+		dsStore := ProvideDataSourceSchemaStore(sqlStore)
 
 		uid := "MySpecialUIDisDEARtoMe"
 		jd := make(map[string]interface{})
@@ -37,8 +37,11 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get
-		fetchedDS, err := dsStore.Get(ctx, uid)
+		fetched, err := dsStore.Get(ctx, uid)
 		require.NoError(t, err)
+
+		fetchedDS, ok := fetched.(datasource.Datasource)
+		require.True(t, ok)
 
 		modelToInsertWithVersionBumped := datasource.Datasource{
 			Spec: datasource.Model{

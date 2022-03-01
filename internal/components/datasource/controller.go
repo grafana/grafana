@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/internal/components/store"
 	"github.com/grafana/grafana/pkg/models"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -13,19 +14,12 @@ import (
 
 type DatasourceReconciler struct {
 	cli rest.Interface
-	sto Store
+	sto store.Store
 }
 
-type Store interface {
-	Get(ctx context.Context, uid string) (Datasource, error)
-	//Upsert(context.Context, string, DataSource) error
-	Insert(ctx context.Context, ds Datasource) error
-	Update(ctx context.Context, ds Datasource) error
-	Delete(ctx context.Context, uid string) error
-}
 
 // We could also accept Bridge instead
-func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Store) (*DatasourceReconciler, error) {
+func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor store.Store) (*DatasourceReconciler, error) {
 	d := &DatasourceReconciler{
 		cli: cli,
 	}
@@ -50,7 +44,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 
 	// TODO: check ACTUAL error
 	if errors.Is(err, errNotFound) {
-		return reconcile.Result{}, d.sto.Delete(ctx, req.Name)
+		return reconcile.Result{}, d.sto.Delete(ctx, string(ds.UID))
 	}
 
 	if err != nil {
@@ -69,7 +63,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 			}, err 
 		}
 
-		if err := d.sto.Insert(ctx, ds); err != nil {
+		if err := d.sto.Insert(ctx, &ds); err != nil {
 			return reconcile.Result{
 				Requeue:      true,
 				RequeueAfter: 1 * time.Minute,
@@ -77,7 +71,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}
 	}
 
-	if err := d.sto.Update(ctx, ds); err != nil {
+	if err := d.sto.Update(ctx, &ds); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: 1 * time.Minute,

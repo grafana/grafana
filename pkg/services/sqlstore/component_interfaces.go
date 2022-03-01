@@ -2,10 +2,12 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/google/wire"
 	"github.com/grafana/grafana/internal/components/datasource"
+	"github.com/grafana/grafana/internal/components/store"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"k8s.io/apimachinery/pkg/types"
@@ -23,7 +25,7 @@ Until this comment is removed, if you are wondering if you should use things in 
 
 var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
 	ProvideDataSourceSchemaStore,
-	wire.Bind(new(datasource.Store), new(*storeDS)),
+	wire.Bind(new(store.Store), new(*storeDS)),
 )
 
 func ProvideDataSourceSchemaStore(ss *SQLStore) *storeDS {
@@ -37,7 +39,7 @@ type storeDS struct {
 	ss *SQLStore
 }
 
-func (s storeDS) Get(ctx context.Context, uid string) (datasource.Datasource, error) {
+func (s storeDS) Get(ctx context.Context, uid string) (store.UniqueObject, error) {
 	cmd := &models.GetDataSourceQuery{
 		OrgId: 1, // Hardcode for now
 		Uid:   uid,
@@ -50,7 +52,11 @@ func (s storeDS) Get(ctx context.Context, uid string) (datasource.Datasource, er
 	return s.oldToNew(cmd.Result), nil
 }
 
-func (s storeDS) Insert(ctx context.Context, ds datasource.Datasource) error {
+func (s storeDS) Insert(ctx context.Context, o store.UniqueObject) error {
+	ds, ok := o.(datasource.Datasource)
+	if !ok {
+		return fmt.Errorf("unexpected type: %T", o)
+	}
 	cmd := &models.AddDataSourceCommand{
 		Name:              ds.Name,
 		Type:              ds.Spec.Type,
@@ -66,13 +72,17 @@ func (s storeDS) Insert(ctx context.Context, ds datasource.Datasource) error {
 		IsDefault:         ds.Spec.IsDefault,
 		JsonData:          simplejson.NewFromAny(ds.Spec.JsonData),
 		// SecureJsonData: TODO,
-		Uid:   string(ds.UID),
+		Uid:   string(ds.GetIdentifier()),
 		OrgId: 1, // hardcode for now, TODO
 	}
 	return s.ss.AddDataSource(ctx, cmd)
 }
 
-func (s storeDS) Update(ctx context.Context, ds datasource.Datasource) error {
+func (s storeDS) Update(ctx context.Context, o store.UniqueObject) error {
+	ds, ok := o.(datasource.Datasource)
+	if !ok {
+		return fmt.Errorf("unexpected type: %T", o)
+	}
 	rv, err := strconv.Atoi(ds.ResourceVersion)
 	if err != nil {
 		return err
@@ -92,7 +102,7 @@ func (s storeDS) Update(ctx context.Context, ds datasource.Datasource) error {
 		IsDefault:         ds.Spec.IsDefault,
 		JsonData:          simplejson.NewFromAny(ds.Spec.JsonData),
 		// SecureJsonData: TODO,
-		Uid:     string(ds.UID),
+		Uid:     string(ds.GetIdentifier()),
 		OrgId:   1, // hardcode for now, TODO
 		Version: rv,
 		// TODO: sets updated timestamp

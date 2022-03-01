@@ -1,0 +1,13 @@
+
+apiVersion: "grafana.core.group/v1alpha1"
+kind: "Datasource"
+metadata:
+    name: "test-ds"
+spec:
+    type: "prom"
+    access: "proxy"
+    url: "http://localhost:9090"
+    basicAuth: true
+    basicAuthUser: "admin"
+
+

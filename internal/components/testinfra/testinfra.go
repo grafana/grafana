@@ -1,7 +1,6 @@
-package datasource
+package testinfra
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,12 +9,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
-func getConfig(schm *runtime.Scheme) *rest.Config {
+func getConfig(schm *runtime.Scheme, gv schema.GroupVersion) *rest.Config {
 	return &rest.Config{
 		Host: "localhost:6443",
 		Username: "admin",
@@ -27,13 +27,13 @@ func getConfig(schm *runtime.Scheme) *rest.Config {
 			CAFile: "/Users/josefk/go/src/github.com/grafana/grafana/devenv/docker/blocks/intentapi/certs/ca.pem",
 		},
 		ContentConfig: rest.ContentConfig{
-			GroupVersion: &schema.GroupVersion{Group: "grafana.core.group", Version: "v1alpha1"},
+			GroupVersion: &gv,
 			NegotiatedSerializer: serializer.NewCodecFactory(schm),
 		},
 	}
 }
 
-type compCfg struct {
+type TestCompCfg struct {
 	GroupVersion schema.GroupVersion
 	CRDDirectoryPaths []string
 	Objects []runtime.Object
@@ -41,13 +41,13 @@ type compCfg struct {
 }
 
 
-type testManager struct {
+type TestManager struct {
 	manager.Manager
 	Client rest.RESTClient
 	env *envtest.Environment
 }
 
-func setup(t *testing.T, componentCfg compCfg) testManager {
+func SetupTest(t *testing.T, componentCfg TestCompCfg) TestManager {
 	schemaBuilder := &scheme.Builder{GroupVersion: componentCfg.GroupVersion}
 
 	schemaBuilder.Register(componentCfg.Objects...)
@@ -59,7 +59,7 @@ func setup(t *testing.T, componentCfg compCfg) testManager {
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			CleanUpAfterUse: true,
 		},
-		Config: getConfig(schm),
+		Config: getConfig(schm, componentCfg.GroupVersion),
 		UseExistingCluster: pointer.Bool(true),
 		Scheme: schm,
 	}
@@ -75,30 +75,22 @@ func setup(t *testing.T, componentCfg compCfg) testManager {
 	c, err := rest.RESTClientFor(cfg)
 	require.NoError(t, err)
 
-	/*
-	ossMigrations := migrations.ProvideOSSMigrations()
-	sqlStore, err := sqlstore.ProvideServiceForTests(ossMigrations)
-	require.NoError(t, err)
-
-	dsStore := sqlstore.ProvideDataSourceSchemaStore(sqlStore)
-	_, err = setupControllerWithManagerFunc(mgr, c, dsStore)
-	*/
 	err = componentCfg.ControllerProvider(mgr, c)
 	require.NoError(t, err)
 
 	go func() {
-		err = mgr.Start(context.Background())
+		err = mgr.Start(ctrl.SetupSignalHandler())
 		require.NoError(t, err)
 	}()
 
-	return testManager{
+	return TestManager{
 		mgr,
 		*c,
 		&testEnv,
 	}
 }
 
-func tearDown(t *testing.T, mgr testManager) {
+func TearDownTest(t *testing.T, mgr TestManager) {
 	err := mgr.env.Stop()
 	require.NoError(t, err)
 }
