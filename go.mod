@@ -280,4 +280,6 @@ replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
 
+// TODO: remove once gocloud.dev releases 0.25.x
+// `fileblob` implementation has buggy key ordering in 0.24.0
 replace gocloud.dev v0.24.0 => github.com/google/go-cloud v0.24.1-0.20220209172924-99801bbb523a
