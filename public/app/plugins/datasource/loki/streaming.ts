@@ -1,9 +1,8 @@
 import { DataFrameJSON, DataQueryRequest, DataQueryResponse, LiveChannelScope, LoadingState } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
-import { map, Observable } from 'rxjs';
+import { map, Observable, defer, mergeMap } from 'rxjs';
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
-import sha1 from 'tiny-hashes/sha1';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 /**
@@ -11,9 +10,13 @@ import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
  * be unique for each distinct query execution plan.  This key is not secure and is only picked to avoid
  * possible collisions
  */
-export function getLiveStreamKey(query: LokiQuery): string {
-  const txt = sha1(JSON.stringify({ expr: query.expr }));
-  return txt.substring(0, 12);
+export async function getLiveStreamKey(query: LokiQuery): Promise<string> {
+  const str = JSON.stringify({ expr: query.expr });
+
+  const msgUint8 = new TextEncoder().encode(str); // encode as (utf-8) Uint8Array
+  const hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8); // hash the message
+  const hashArray = Array.from(new Uint8Array(hashBuffer.slice(0, 8))); // first 8 bytes
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 // This will get both v1 and v2 result formats
@@ -48,26 +51,30 @@ export function doLokiChannelStream(
     return frame;
   };
 
-  return getGrafanaLiveSrv()
-    .getStream<any>({
-      scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
-      path: `tail/${getLiveStreamKey(query)}`,
-      data: {
-        ...query,
-        timeRange: {
-          from: range.from.valueOf().toString(),
-          to: range.to.valueOf().toString(),
-        },
-      },
+  return defer(() => getLiveStreamKey(query)).pipe(
+    mergeMap((key) => {
+      return getGrafanaLiveSrv()
+        .getStream<any>({
+          scope: LiveChannelScope.DataSource,
+          namespace: ds.uid,
+          path: `tail/${key}`,
+          data: {
+            ...query,
+            timeRange: {
+              from: range.from.valueOf().toString(),
+              to: range.to.valueOf().toString(),
+            },
+          },
+        })
+        .pipe(
+          map((evt) => {
+            const frame = updateFrame(evt);
+            return {
+              data: frame ? [frame] : [],
+              state: LoadingState.Streaming,
+            };
+          })
+        );
     })
-    .pipe(
-      map((evt) => {
-        const frame = updateFrame(evt);
-        return {
-          data: frame ? [frame] : [],
-          state: LoadingState.Streaming,
-        };
-      })
-    );
+  );
 }
