@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 	"github.com/grafana/grafana/pkg/util/maputil"
 
@@ -19,6 +20,7 @@ type Provider struct {
 	jsonData       map[string]interface{}
 	httpMethod     string
 	clientProvider httpclient.Provider
+	features       featuremgmt.FeatureToggles
 	log            log.Logger
 }
 
@@ -26,6 +28,7 @@ func NewProvider(
 	settings backend.DataSourceInstanceSettings,
 	jsonData map[string]interface{},
 	clientProvider httpclient.Provider,
+	features featuremgmt.FeatureToggles,
 	log log.Logger,
 ) *Provider {
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
@@ -34,6 +37,7 @@ func NewProvider(
 		jsonData:       jsonData,
 		httpMethod:     httpMethod,
 		clientProvider: clientProvider,
+		features:       features,
 		log:            log,
 	}
 }

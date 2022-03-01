@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -32,16 +33,16 @@ type Service struct {
 	tracer             tracing.Tracer
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
 	plog.Debug("initializing")
 	return &Service{
 		intervalCalculator: intervalv2.NewCalculator(),
-		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, features)),
 		tracer:             tracer,
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		var jsonData map[string]interface{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -49,7 +50,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		p := promclient.NewProvider(settings, jsonData, httpClientProvider, plog)
+		p := promclient.NewProvider(settings, jsonData, httpClientProvider, features, plog)
 		pc, err := promclient.NewProviderCache(p)
 		if err != nil {
 			return nil, err
