@@ -44,7 +44,7 @@ describe('useDetailState', () => {
     const { result } = renderHook(() => useDetailState(sampleFrame));
     act(() => result.current.toggleDetail('span1'));
     act(() => result.current.detailReferencesToggle('span1'));
-    expect(result.current.detailStates.get('span1')?.isReferencesOpen).toBe(true);
+    expect(result.current.detailStates.get('span1')?.references.isOpen).toBe(true);
   });
 
   it('toggles processes', async () => {

@@ -61,7 +61,7 @@ type schedule struct {
 
 	clock clock.Clock
 
-	heartbeat *alerting.Ticker
+	ticker *alerting.Ticker
 
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
@@ -130,7 +130,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
 		log:                     cfg.Logger,
-		heartbeat:               ticker,
+		ticker:                  ticker,
 		evalAppliedFunc:         cfg.EvalAppliedFunc,
 		stopAppliedFunc:         cfg.StopAppliedFunc,
 		evaluator:               cfg.Evaluator,
@@ -157,7 +157,7 @@ func (sch *schedule) Pause() error {
 	if sch == nil {
 		return fmt.Errorf("scheduler is not initialised")
 	}
-	sch.heartbeat.Pause()
+	sch.ticker.Pause()
 	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
 	return nil
 }
@@ -166,7 +166,7 @@ func (sch *schedule) Unpause() error {
 	if sch == nil {
 		return fmt.Errorf("scheduler is not initialised")
 	}
-	sch.heartbeat.Unpause()
+	sch.ticker.Unpause()
 	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
 	return nil
 }
@@ -367,8 +367,12 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {
-		case tick := <-sch.heartbeat.C:
-			start := time.Now()
+		case tick := <-sch.ticker.C:
+			// We use Round(0) on the start time to remove the monotonic clock.
+			// This is required as ticks from the ticker and time.Now() can have
+			// a monotonic clock that when subtracted do not represent the delta
+			// in wall clock time.
+			start := time.Now().Round(0)
 			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
 
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
@@ -468,7 +472,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, updateCh <-chan struct{}) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan struct{}) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
@@ -541,16 +545,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		return q.Result, nil
 	}
 
-	evaluate := func(ctx context.Context, alertRule *models.AlertRule, attempt int64, evalCtx *evalContext) error {
-		logger := logger.New("version", alertRule.Version, "attempt", attempt, "now", evalCtx.now)
+	evaluate := func(ctx context.Context, r *models.AlertRule, attempt int64, e *evaluation) error {
+		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
 		condition := models.Condition{
-			Condition: alertRule.Condition,
-			OrgID:     alertRule.OrgID,
-			Data:      alertRule.Data,
+			Condition: r.Condition,
+			OrgID:     r.OrgID,
+			Data:      r.Data,
 		}
-		results, err := sch.evaluator.ConditionEval(&condition, evalCtx.now, sch.expressionService)
+		results, err := sch.evaluator.ConditionEval(&condition, e.scheduledAt, sch.expressionService)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
@@ -562,7 +566,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		}
 		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, alertRule, results)
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, r, results)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
@@ -616,7 +620,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				evalRunning = true
 				defer func() {
 					evalRunning = false
-					sch.evalApplied(key, ctx.now)
+					sch.evalApplied(key, ctx.scheduledAt)
 				}()
 
 				err := retryIfError(func(attempt int64) error {
@@ -741,7 +745,7 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 }
 
 type alertRuleInfo struct {
-	evalCh   chan *evalContext
+	evalCh   chan *evaluation
 	updateCh chan struct{}
 	ctx      context.Context
 	stop     context.CancelFunc
@@ -749,15 +753,15 @@ type alertRuleInfo struct {
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evalContext), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
+	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
 func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
 	select {
-	case a.evalCh <- &evalContext{
-		now:     t,
-		version: version,
+	case a.evalCh <- &evaluation{
+		scheduledAt: t,
+		version:     version,
 	}:
 		return true
 	case <-a.ctx.Done():
@@ -775,16 +779,16 @@ func (a *alertRuleInfo) update() bool {
 	}
 }
 
-type evalContext struct {
-	now     time.Time
-	version int64
+type evaluation struct {
+	scheduledAt time.Time
+	version     int64
 }
 
 // overrideCfg is only used on tests.
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
-	sch.heartbeat = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch.ticker = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }

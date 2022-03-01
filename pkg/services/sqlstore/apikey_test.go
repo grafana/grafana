@@ -34,20 +34,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 		})
 
 		t.Run("Add non expiring key", func(t *testing.T) {
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0, ServiceAccountId: nil}
-			err := ss.AddAPIKey(context.Background(), &cmd)
-			assert.Nil(t, err)
-
-			query := models.GetApiKeyByNameQuery{KeyName: "non-expiring", OrgId: 1}
-			err = ss.GetApiKeyByName(context.Background(), &query)
-			assert.Nil(t, err)
-
-			assert.Nil(t, query.Result.Expires)
-		})
-
-		t.Run("Add key for service account", func(t *testing.T) {
-			var one int64 = 1
-			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "non-expiring-SA", Key: "sa1-key", ServiceAccountId: &one}
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0}
 			err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 

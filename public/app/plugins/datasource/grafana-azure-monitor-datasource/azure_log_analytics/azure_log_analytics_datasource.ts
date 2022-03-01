@@ -1,26 +1,27 @@
-import { map } from 'lodash';
-import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
-import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
-import {
-  AzureMonitorQuery,
-  AzureDataSourceJsonData,
-  AzureLogsVariable,
-  AzureQueryType,
-  DatasourceValidationResult,
-} from '../types';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  ScopedVars,
   DataSourceInstanceSettings,
   DataSourceRef,
+  ScopedVars,
 } from '@grafana/data';
-import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import { Observable, from } from 'rxjs';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { map } from 'lodash';
+import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+
 import { isGUIDish } from '../components/ResourcePicker/utils';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
+import {
+  AzureDataSourceJsonData,
+  AzureLogsVariable,
+  AzureMonitorQuery,
+  AzureQueryType,
+  DatasourceValidationResult,
+} from '../types';
 import { interpolateVariable, routeNames } from '../utils/common';
+import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
 
 interface AdhocQuery {
   datasource: DataSourceRef;
@@ -60,7 +61,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    return item.hide !== true && !!item.azureLogAnalytics?.query && !!item.azureLogAnalytics.resource;
+    return (
+      item.hide !== true &&
+      !!item.azureLogAnalytics?.query &&
+      (!!item.azureLogAnalytics.resource || !!item.azureLogAnalytics.workspace)
+    );
   }
 
   async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {
