@@ -123,7 +123,7 @@ func (s *ImportDashboardService) setDashboardPermissions(ctx context.Context, us
 		{UserID: user.UserId, Permission: models.PERMISSION_ADMIN.String()},
 	}
 
-	if dashboard.FolderId != 0 {
+	if dashboard.FolderId == 0 {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
