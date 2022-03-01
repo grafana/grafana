@@ -375,7 +375,7 @@ func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.prefService = preftests.NewPreferenceServiceFake()
+	sc.prefManager = preftests.NewPreferenceServiceFake()
 
 	setInitCtxSignedInViewer(sc.initCtx)
 
@@ -403,7 +403,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 	prefFake.ExpectedPreferences = &models.Preferences{
 		Theme: "dark",
 	}
-	sc.prefService = prefFake
+	sc.prefManager = prefFake
 
 	setInitCtxSignedInViewer(sc.initCtx)
 
@@ -414,7 +414,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 
 		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1}
-		res, err := sc.prefService.GetPreferences(context.Background(), prefQuery)
+		res, err := sc.prefManager.GetPreferences(context.Background(), prefQuery)
 		require.NoError(t, err)
 		assert.Equal(t, "dark", res.Theme)
 	})
@@ -426,7 +426,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 
 		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1}
-		res, err := sc.prefService.GetPreferences(context.Background(), prefQuery)
+		res, err := sc.prefManager.GetPreferences(context.Background(), prefQuery)
 		assert.NoError(t, err)
 		assert.Equal(t, "dark", res.Theme)
 	})

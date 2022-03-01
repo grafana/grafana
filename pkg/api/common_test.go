@@ -282,7 +282,7 @@ type accessControlScenarioContext struct {
 	cfg *setting.Cfg
 
 	dashboardsStore dashboards.Store
-	prefService     prefs.Service
+	prefManager     prefs.Manager
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
@@ -370,7 +370,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore),
-		preferencesService: prefFake,
+		preferencesManager: prefFake,
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -422,7 +422,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		db:              db,
 		cfg:             cfg,
 		dashboardsStore: dashboardsStore,
-		prefService:     prefFake,
+		prefManager:     prefFake,
 	}
 }
 

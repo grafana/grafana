@@ -140,7 +140,7 @@ type HTTPServer struct {
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
 	DashboardsnapshotsService    *dashboardsnapshots.Service
-	preferencesService           prefs.Service
+	preferencesManager           prefs.Manager
 	PluginSettings               *pluginsettings.ServiceImpl
 }
 
@@ -172,7 +172,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, preferencesService prefs.Service,
+	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, preferencesManager prefs.Manager,
 	pluginSettings *pluginsettings.ServiceImpl) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -241,7 +241,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamPermissionsService:       permissionsServices.GetTeamService(),
 		AlertNotificationService:     alertNotificationService,
 		DashboardsnapshotsService:    dashboardsnapshotsService,
-		preferencesService:           preferencesService,
+		preferencesManager:           preferencesManager,
 		PluginSettings:               pluginSettings,
 	}
 	if hs.Listener != nil {

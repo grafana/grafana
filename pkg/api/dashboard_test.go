@@ -48,7 +48,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		Cfg: cfg, Bus: bus.New(),
 		pluginStore:        &fakePluginStore{},
 		SQLStore:           mockstore.NewSQLStoreMock(),
-		preferencesService: prefFake,
+		preferencesManager: prefFake,
 	}
 
 	tests := []struct {
