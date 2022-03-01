@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
+import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -97,10 +97,11 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     const field = info.heatmap.fields[2];
     const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
+    const display = field.display ? (v: number) => formattedValueToString(field.display!(v)) : (v: number) => `${v}`;
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale colorPalette={palette} min={min} max={max} />
+        <ColorScale colorPalette={palette} min={min} max={max} display={display} />
       </VizLayout.Legend>
     );
   };
@@ -113,9 +114,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
-          //   {JSON.stringify(scatterData, null, 2)}
-          // </pre>
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
             {/*children ? children(config, alignedFrame) : null*/}
           </UPlotChart>

@@ -7,6 +7,9 @@ type Props = {
   colorPalette: string[];
   min: number;
   max: number;
+
+  // Show a value as string -- when not defined, the raw values will not be shown
+  display?: (v: number) => string;
 };
 
 type HoverState = {
@@ -14,7 +17,7 @@ type HoverState = {
   value: number;
 };
 
-export const ColorScale = ({ colorPalette, min, max }: Props) => {
+export const ColorScale = ({ colorPalette, min, max, display }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   const [hover, setHover] = useState<HoverState>({ isShown: false, value: 0 });
   const [cursor, setCursor] = useState({ clientX: 0, clientY: 0 });
@@ -29,8 +32,8 @@ export const ColorScale = ({ colorPalette, min, max }: Props) => {
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
     const offsetWidth = (event.target as any).offsetWidth as number;
-    let normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
-    let scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
+    const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
+    const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
     setHover({ isShown: true, value: scaleValue });
     setCursor({ clientX: event.clientX, clientY: event.clientY });
   };
@@ -43,16 +46,18 @@ export const ColorScale = ({ colorPalette, min, max }: Props) => {
     <div className={styles.scaleWrapper}>
       <div>
         <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
-          {hover.isShown && (
+          {display && hover.isShown && (
             <VizTooltipContainer position={{ x: cursor.clientX, y: cursor.clientY }} offset={{ x: 10, y: 10 }}>
-              {hover.value}
+              {display(hover.value)}
             </VizTooltipContainer>
           )}
         </div>
-        <div>
-          <span>{min}</span>
-          <span className={styles.maxDisplay}>{max}</span>
-        </div>
+        {display && (
+          <div>
+            <span>{display(min)}</span>
+            <span className={styles.maxDisplay}>{display(max)}</span>
+          </div>
+        )}
       </div>
     </div>
   );

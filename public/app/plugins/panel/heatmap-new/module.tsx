@@ -42,11 +42,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.source === HeatmapSourceMode.Calculate) {
       addHeatmapCalculationOptions('heatmap.', builder, opts.heatmap, category);
-    } else if (opts.source === HeatmapSourceMode.Data) {
-      // builder.addSliderInput({
-      //   name: 'heatmap from the data...',
-      //   path: 'xxx',
-      // });
     }
 
     category = ['Colors'];
@@ -131,11 +126,11 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder
       .addSliderInput({
         path: 'color.steps',
-        name: 'Max steps',
+        name: 'Steps',
         defaultValue: defaultPanelOptions.color.steps,
         category,
         settings: {
-          min: 2, // 1 for on/off?
+          min: 2,
           max: 128,
           step: 1,
         },
