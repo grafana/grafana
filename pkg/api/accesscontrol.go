@@ -315,7 +315,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:folders:creator",
 			DisplayName: "Folder creator",
-			Description: "Create folders",
+			Description: "Create folders.",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionFoldersCreate},
