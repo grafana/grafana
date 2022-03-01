@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -9,10 +8,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -44,32 +43,15 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
-func checkDashboardAndPanel(ctx context.Context, dashboardId, panelId string) error {
-	if dashboardId == "" || panelId == "" {
+func checkDashboardAndPanel(ss sqlstore.Store, dashboardUid, panelId string) error {
+	if dashboardUid == "" || panelId == "" {
 		return models.ErrDashboardOrPanelIdentifierNotSet
 	}
 
-	id, err := strconv.ParseInt(dashboardId, 10, 64)
+	dashboard, err := ss.GetDashboard(0, 0, dashboardUid, "")
 	if err != nil {
-		return models.ErrDashboardIdentifierInvalid
-	}
-
-	query := models.GetDashboardQuery{
-		Id: id,
-	}
-
-	if err := bus.Dispatch(ctx, &query); err != nil {
 		return err
 	}
-
-	// Dashboard has no properties. This would be weird, haven't written a test
-	// for this yet, but would most likely be a bug and return an error from
-	// bus.Dispatch
-	if query.Result == nil {
-		panic("missing result from dashboard query with no error")
-	}
-
-	dashboard := query.Result
 
 	// dashboard saved but no panels
 	if dashboard.Data == nil {
@@ -112,11 +94,11 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 	}
 
 	params := web.Params(c.Req)
-	dashboardId := params[":dashboardId"]
+	dashboardUid := params[":dashboardUid"]
 	panelId := params[":panelId"]
 
 	// 404 if dashboard or panel not found
-	if err := checkDashboardAndPanel(c.Req.Context(), dashboardId, panelId); err != nil {
+	if err := checkDashboardAndPanel(hs.SQLStore, dashboardUid, panelId); err != nil {
 		c.Logger.Warn("Failed to find dashboard or panel for validated query", "err", err)
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {

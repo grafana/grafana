@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
 	"golang.org/x/oauth2"
 
@@ -388,21 +389,27 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 		},
 	}
 
+	//sqlStore := sqlstore.InitTestDB(t)
+	ss := mockstore.NewSQLStoreMock()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			defer bus.ClearBusHandlers()
+			//defer bus.ClearBusHandlers()
 
 			if test.dashboardQueryResult != nil {
-				bus.AddHandler(
-					"test",
-					func(ctx context.Context, query *models.GetDashboardQuery) error {
-						query.Result = test.dashboardQueryResult.result
-						return test.dashboardQueryResult.err
-					},
-				)
+
+				//bus.AddHandler(
+				//"test",
+				//func(ctx context.Context, query *models.GetDashboardQuery) error {
+				//query.Result = test.dashboardQueryResult.result
+				//return test.dashboardQueryResult.err
+				//},
+				//)
+
+				ss.ExpectedDashboard = test.dashboardQueryResult.result
+				ss.ExpectedError = test.dashboardQueryResult.err
 			}
 
-			assert.Equal(t, test.expectedError, checkDashboardAndPanel(context.Background(), test.dashboardId, test.panelId))
+			assert.Equal(t, test.expectedError, checkDashboardAndPanel(ss, test.dashboardId, test.panelId))
 		})
 	}
 }
