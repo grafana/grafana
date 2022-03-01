@@ -107,7 +107,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "result": [{
+  "result": {
+    "totalCount": 150,
+    "page": 1,
+    "perPage": 100
+    "queryHistory":[{
     "uid": "Ahg678z",
     "datasourceUid": "PE1C5CBDA0504A6A3",
     "createdBy": 1,
