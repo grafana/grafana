@@ -13,6 +13,7 @@ func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetPreferences)
 	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", ss.SavePreferences)
+	bus.AddHandler("sql", ss.PatchPreferences)
 }
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
@@ -120,13 +121,35 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 		}
 		if cmd.JsonData != nil {
 			prefs.JsonData = cmd.JsonData
-		} else {
-			prefs.HomeDashboardId = cmd.HomeDashboardId
-			prefs.Timezone = cmd.Timezone
-			prefs.WeekStart = cmd.WeekStart
-			prefs.Theme = cmd.Theme
-			prefs.Updated = time.Now()
 		}
+		prefs.HomeDashboardId = cmd.HomeDashboardId
+		prefs.Timezone = cmd.Timezone
+		prefs.WeekStart = cmd.WeekStart
+		prefs.Theme = cmd.Theme
+		prefs.Updated = time.Now()
+		prefs.Version += 1
+		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
+		return err
+	})
+}
+
+func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		var prefs models.Preferences
+		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			// TODO return err here
+		}
+		prefs.JsonData = cmd.JsonData
+		prefs.HomeDashboardId = cmd.HomeDashboardId
+		prefs.Timezone = cmd.Timezone
+		prefs.WeekStart = cmd.WeekStart
+		prefs.Theme = cmd.Theme
+		prefs.Updated = time.Now()
 		prefs.Version += 1
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
 		return err
