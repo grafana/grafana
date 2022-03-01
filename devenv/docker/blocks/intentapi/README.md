@@ -18,5 +18,20 @@ $ make -C devenv/docker/blocks/intentapi
 $ make devenv sources=intentapi
 
 # Test that the environment is working correctly:
-$ kubectl --kubeconfig=devenv/docker/blocks/intentapi/admin.kubeconfig api-resources
+$ kubectl --kubeconfig=devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources
+```
+
+## Using the Intent API in Grafana
+
+Make sure you have the environment up & running, then run Grafana with Intent API specific settings:
+
+```sh
+# Build Grafana server:
+$ make build-go
+
+# Run with Intent API specific config:
+$ ./bin/grafana-server -config conf/intentapi.ini
+
+# Test it:
+$ kubectl --kubeconfig=devenv/docker/blocks/intentapi/intentapi.kubeconfig api-resources
 ```

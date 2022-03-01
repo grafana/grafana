@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,16 +23,14 @@ type HTTPServerConfig struct {
 }
 
 // NewHTTPServerConfig parses and returns a new HTTPServerConfig from setting.Cfg.
-func NewHTTPServerConfig(cfg *setting.Cfg) (HTTPServerConfig, error) {
-	sec := cfg.Raw.Section("intentapi")
-	enabled := sec.Key("enabled").MustBool(true)
-	if !enabled {
+func NewHTTPServerConfig(cfg *setting.Cfg, featureEnabled bool) (HTTPServerConfig, error) {
+	if !featureEnabled {
 		return HTTPServerConfig{
 			Enabled: false,
 		}, nil
 	}
 
-	sec = cfg.Raw.Section("intentapi.server")
+	sec := cfg.Raw.Section("intentapi.server")
 
 	serverCert, err := tls.LoadX509KeyPair(
 		sec.Key("cert_file_path").MustString(""),
@@ -42,7 +41,7 @@ func NewHTTPServerConfig(cfg *setting.Cfg) (HTTPServerConfig, error) {
 	}
 
 	c := HTTPServerConfig{}
-	c.Enabled = enabled
+	c.Enabled = featureEnabled
 	c.ListenAddress = sec.Key("listen_address").MustString("127.0.0.1:8443")
 	c.ReadTimeout = sec.Key("read_timeout").MustDuration(1 * time.Minute)
 	c.WriteTimeout = sec.Key("write_timeout").MustDuration(1 * time.Minute)
@@ -65,8 +64,10 @@ type HTTPServer struct {
 }
 
 // ProvideHTTPServer provides a new HTTP server for Intent API.
-func ProvideHTTPServer(cfg *setting.Cfg, handler Handler) (*HTTPServer, error) {
-	config, err := NewHTTPServerConfig(cfg)
+func ProvideHTTPServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, handler Handler) (*HTTPServer, error) {
+	en := features.IsEnabled("intentapi")
+
+	config, err := NewHTTPServerConfig(cfg, en)
 	if err != nil {
 		return nil, err
 	}
@@ -78,14 +79,13 @@ func ProvideHTTPServer(cfg *setting.Cfg, handler Handler) (*HTTPServer, error) {
 	}, nil
 }
 
+func (s *HTTPServer) IsDisabled() bool {
+	return !s.config.Enabled
+}
+
 // Run runs the server until ctx is canceled.
 // When the context is canceled, the server will be shut down gracefully, depending on the shutdown timeout.
 func (s *HTTPServer) Run(ctx context.Context) error {
-	// Don't run anything if the API is disabled.
-	if !s.config.Enabled {
-		return nil
-	}
-
 	server := &http.Server{
 		Handler:      s.handler,
 		ReadTimeout:  s.config.ReadTimeout,

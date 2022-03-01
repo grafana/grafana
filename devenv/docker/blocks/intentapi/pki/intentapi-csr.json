@@ -1,0 +1,16 @@
+{
+  "CN": "intentapi",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CH",
+      "L": "Geneva",
+      "O": "Kubernetes",
+      "OU": "IntentAPI",
+      "ST": "Canton of Geneva"
+    }
+  ]
+}

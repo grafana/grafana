@@ -20,17 +20,12 @@ type ApiserverProxyConfig struct {
 // NewApiserverProxyConfig parses and returns a new ApiserverProxyConfig.
 func NewApiserverProxyConfig(cfg *setting.Cfg) (ApiserverProxyConfig, error) {
 	sec := cfg.Raw.Section("intentapi.proxy")
+	configPath := sec.Key("kubeconfig_path").MustString("")
 
-	configPath := sec.Key("config_path").MustString("")
-	targetUrl := sec.Key("target_url").MustString("https://127.0.0.1:6443")
-
-	// use the current context in kubeconfig
 	config, err := clientcmd.BuildConfigFromFlags("", configPath)
 	if err != nil {
 		return ApiserverProxyConfig{}, err
 	}
-
-	config.Host = targetUrl
 
 	return ApiserverProxyConfig{
 		RestCfg:          config,
