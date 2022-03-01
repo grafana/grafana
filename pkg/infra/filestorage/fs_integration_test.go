@@ -349,6 +349,54 @@ func TestFsStorage(t *testing.T) {
 	createFolderCrudCases := func() []fsTestCase {
 		return []fsTestCase{
 			{
+				name: "recreating a folder after it was already created via upserting a file is a no-op",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/aB/cD/eF/file.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/aB")),
+							checks(fPath("/aB/cD")),
+							checks(fPath("/aB/cD/eF")),
+						},
+					},
+					cmdCreateFolder{
+						path: "/ab/cd/ef",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/aB")),
+							checks(fPath("/aB/cD")),
+							checks(fPath("/aB/cD/eF")),
+						},
+					},
+					cmdCreateFolder{
+						path: "/ab/cd/ef/GH",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/aB")),
+							checks(fPath("/aB/cD")),
+							checks(fPath("/aB/cD/eF")),
+							checks(fPath("/aB/cD/eF/GH")),
+						},
+					},
+				},
+			},
+			{
 				name: "creating a folder with the same name or same name but different casing is a no-op",
 				steps: []interface{}{
 					cmdCreateFolder{

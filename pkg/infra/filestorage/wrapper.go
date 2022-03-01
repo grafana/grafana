@@ -35,6 +35,9 @@ func getParentFolderPath(path string) string {
 
 	split := strings.Split(path, Delimiter)
 	splitWithoutLastPart := split[:len(split)-1]
+	if len(splitWithoutLastPart) == 1 && split[0] == "" {
+		return Delimiter
+	}
 	return strings.Join(splitWithoutLastPart, Delimiter)
 }
 
@@ -125,6 +128,12 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 
 	if !b.pathFilters.isAllowed(file.Path) {
 		return nil
+	}
+
+	path := getParentFolderPath(file.Path)
+	b.log.Info("Creating folder before upserting file", "file", file.Path, "folder", path)
+	if err := b.CreateFolder(ctx, path); err != nil {
+		return err
 	}
 
 	if file.Contents != nil && file.MimeType == "" {
