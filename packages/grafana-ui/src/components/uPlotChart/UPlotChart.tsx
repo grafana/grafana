@@ -24,7 +24,7 @@ export type EventType = 'hover' | 'move';
 export interface UPlotChartEvent {
   x: number;
   y: number;
-  dataIdxs: (number | null)[];
+  dataIdxs: Array<number | null>;
   // rects?
 }
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { EventBus, Field, FieldMatcherID, fieldMatchers, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, EventBus, Field, FieldMatcherID, fieldMatchers, PanelProps, TimeRange } from '@grafana/data';
 import {
   UPlotChart2,
   preparePlotFrame,
@@ -42,9 +42,11 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   const theme = useTheme2();
   const timeRange = useRef<TimeRange>();
   const eventBus = useRef<EventBus>();
+  const series = useRef<DataFrame[]>();
 
   timeRange.current = otherProps.timeRange;
   eventBus.current = otherProps.eventBus;
+  series.current = data.series;
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange.current! });
@@ -55,13 +57,13 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   const cfg = useMemo(() => {
     debugLog('TimeSeriesPanel.preparePlotConfigBuilder memo');
 
-    const alignedFrame = preparePlotFrame(data.series, {
+    const alignedFrame = preparePlotFrame(series.current!, {
       x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
       y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
     });
 
     return preparePlotConfigBuilder({
-      allFrames: data.series,
+      allFrames: series.current!,
       frame: alignedFrame!,
       timeZone: timeZone,
       eventBus: eventBus.current!,
@@ -69,7 +71,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       getTimeRange: () => timeRange.current!,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.structureRev, timeZone]); //, options.legend, options.tooltip
+  }, [data.structureRev, timeZone, theme]); //, options.legend, options.tooltip
 
   const plotData = useMemo(() => {
     if (!cfg) {

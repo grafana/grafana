@@ -48,7 +48,7 @@ export const UPlotReact = ({ opts, width, height, data, onInit }: UPlotReactProp
     } else if (width !== prevWidth || height !== prevHeight) {
       debugLog('u.setSize()');
       plot.current.setSize({ width, height });
-    } else if (data != prevData) {
+    } else if (data !== prevData) {
       debugLog('u.setData()');
       plot.current.setData(data);
     }
@@ -61,6 +61,7 @@ export const UPlotReact = ({ opts, width, height, data, onInit }: UPlotReactProp
     return () => {
       onInit?.(null);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

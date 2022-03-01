@@ -27,9 +27,8 @@ import {
   StackingMode,
 } from '@grafana/schema';
 import { collectStackingGroups, INTERNAL_NEGATIVE_Y_PREFIX, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
-import uPlot from 'uplot';
+import uPlot, { AlignedData } from 'uplot';
 import { buildScaleKey } from '../GraphNG/utils';
-import { AlignedData } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
