@@ -11,6 +11,7 @@ import { QueryBuilderLabelFilter } from '../shared/types';
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
 import { PromQueryBuilderHints } from './PromQueryBuilderHints';
+import { getMetadataString } from '../../language_provider';
 
 export interface Props {
   query: PromVisualQuery;
@@ -26,18 +27,23 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     onChange({ ...query, labels });
   };
 
-  const withTemplateVariableOptions = async (optionsPromise: Promise<string[]>): Promise<SelectableValue[]> => {
+  const withTemplateVariableOptions = async (
+    optionsPromise: Promise<Array<{ value: string; description?: string }>>
+  ): Promise<SelectableValue[]> => {
     const variables = datasource.getVariables();
     const options = await optionsPromise;
-    return [...variables, ...options].map((value) => ({ label: value, value }));
+    return [
+      ...variables.map((value) => ({ label: value, value })),
+      ...options.map((option) => ({ label: option.value, value: option.value, tooltip: option.description })),
+    ];
   };
 
-  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<string[]> => {
+  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<{ value: string }>> => {
     // If no metric we need to use a different method
     if (!query.metric) {
       // Todo add caching but inside language provider!
       await datasource.languageProvider.fetchLabels();
-      return datasource.languageProvider.getLabelKeys();
+      return datasource.languageProvider.getLabelKeys().map((k) => ({ value: k }));
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
@@ -46,9 +52,9 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     const labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
 
     // filter out already used labels
-    return Object.keys(labelsIndex).filter(
-      (labelName) => !labelsToConsider.find((filter) => filter.label === labelName)
-    );
+    return Object.keys(labelsIndex)
+      .filter((labelName) => !labelsToConsider.find((filter) => filter.label === labelName))
+      .map((k) => ({ value: k }));
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
@@ -58,7 +64,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 
     // If no metric we need to use a different method
     if (!query.metric) {
-      return await datasource.languageProvider.getLabelValues(forLabel.label);
+      return (await datasource.languageProvider.getLabelValues(forLabel.label)).map((v) => ({ value: v }));
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
@@ -66,16 +72,27 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     const expr = promQueryModeller.renderLabels(labelsToConsider);
     const result = await datasource.languageProvider.fetchSeriesLabels(expr);
     const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result[forLabelInterpolated] ?? [];
+    return result[forLabelInterpolated].map((v) => ({ value: v })) ?? [];
   };
 
   const onGetMetrics = async () => {
+    if (!datasource.languageProvider.metricsMetadata) {
+      // TODO this is doing more than is needed
+      await datasource.languageProvider.start();
+    }
+
+    let metrics;
     if (query.labels.length > 0) {
       const expr = promQueryModeller.renderLabels(query.labels);
-      return (await datasource.languageProvider.getSeries(expr, true))['__name__'] ?? [];
+      metrics = (await datasource.languageProvider.getSeries(expr, true))['__name__'] ?? [];
     } else {
-      return (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
+      metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
     }
+
+    return metrics.map((m) => ({
+      value: m,
+      description: getMetadataString(m, datasource.languageProvider.metricsMetadata!),
+    }));
   };
 
   return (

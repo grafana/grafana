@@ -6,6 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface SelectMenuProps {
   maxHeight: number;
@@ -18,7 +19,13 @@ export const SelectMenu: FC<SelectMenuProps> = ({ children, maxHeight, innerRef,
   const styles = getSelectStyles(theme);
 
   return (
-    <div {...innerProps} className={styles.menu} style={{ maxHeight }} aria-label="Select options menu">
+    <div
+      id="select-menu-list-test"
+      {...innerProps}
+      className={styles.menu}
+      style={{ maxHeight }}
+      aria-label="Select options menu"
+    >
       <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
         {children}
       </CustomScrollbar>
@@ -50,7 +57,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
-  return (
+  const content = (
     <div
       ref={innerRef}
       className={cx(
@@ -71,6 +78,15 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
       </div>
     </div>
   );
+
+  if (data.tooltip) {
+    return (
+      <Tooltip content={data.tooltip} show={isFocused} interactive={false} placement={'right'}>
+        {content}
+      </Tooltip>
+    );
+  }
+  return content;
 };
 
 SelectMenuOptions.displayName = 'SelectMenuOptions';

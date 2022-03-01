@@ -8,5 +8,6 @@ export interface SelectableValue<T = any> {
   imgUrl?: string;
   icon?: string;
   description?: string;
+  tooltip?: string;
   [key: string]: any;
 }
