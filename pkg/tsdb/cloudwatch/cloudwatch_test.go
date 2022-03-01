@@ -101,97 +101,82 @@ func Test_CheckHealth(t *testing.T) {
 		return client
 	}
 
-	t.Run("successfully query metrics and logs", func(t *testing.T) {
-		client = FakeCheckHealthClient{}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+	tests := []struct {
+		name             string
+		metricFn         listMetricsFn
+		logFn            describeLogGroupsFn
+		sessionCache     fakeSessionCache
+		expectedResponse *backend.CheckHealthResult
+	}{
+		{
+			"successfully query metrics and logs",
+			nil,
+			nil,
+			fakeSessionCache{},
+			&backend.CheckHealthResult{
+				Status:  backend.HealthStatusOk,
+				Message: "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
 			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
-
-		assert.Equal(t, &backend.CheckHealthResult{
-			Status:  backend.HealthStatusOk,
-			Message: "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
-		}, resp)
-	})
-
-	t.Run("successfully queries metrics, fails during logs query", func(t *testing.T) {
-		client = FakeCheckHealthClient{
-			describeLogGroupsWithContext: func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput,
+		},
+		{
+			"successfully queries metrics, fails during logs query",
+			nil,
+			func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput,
 				options ...awsrequest.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 				return nil, fmt.Errorf("some logs query error")
-			}}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
-
-		assert.Equal(t, &backend.CheckHealthResult{
-			Status:  backend.HealthStatusError,
-			Message: "1. Successfully queried the CloudWatch metrics API.\n2. CloudWatch logs query failed: some logs query error",
-		}, resp)
-	})
-
-	t.Run("successfully queries logs, fails during metrics query", func(t *testing.T) {
-		client = FakeCheckHealthClient{
-			listMetricsPages: func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+			fakeSessionCache{},
+			&backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "1. Successfully queried the CloudWatch metrics API.\n2. CloudWatch logs query failed: some logs query error",
+			},
+		},
+		{
+			"successfully queries logs, fails during metrics query",
+			func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 				return fmt.Errorf("some list metrics error")
-			}}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
-
-		assert.Equal(t, &backend.CheckHealthResult{
-			Status:  backend.HealthStatusError,
-			Message: "1. CloudWatch metrics query failed: some list metrics error\n2. Successfully queried the CloudWatch logs API.",
-		}, resp)
-	})
-
-	t.Run("fail to get clients", func(t *testing.T) {
-		client = FakeCheckHealthClient{}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-
-		sessionsCli := fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
-			return nil, fmt.Errorf("some sessions error")
-		}}
-		executor := newExecutor(im, newTestConfig(), sessionsCli)
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			nil,
+			fakeSessionCache{},
+			&backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "1. CloudWatch metrics query failed: some list metrics error\n2. Successfully queried the CloudWatch logs API.",
 			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
+		},
+		{
+			"fail to get clients",
+			nil,
+			nil,
+			fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+				return nil, fmt.Errorf("some sessions error")
+			}},
+			&backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "1. CloudWatch metrics query failed: some sessions error\n2. CloudWatch logs query failed: some sessions error",
+			},
+		},
+	}
 
-		assert.Equal(t, &backend.CheckHealthResult{
-			Status:  backend.HealthStatusError,
-			Message: "1. CloudWatch metrics query failed: some sessions error\n2. CloudWatch logs query failed: some sessions error",
-		}, resp)
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client = FakeCheckHealthClient{
+				listMetricsPages:             test.metricFn,
+				describeLogGroupsWithContext: test.logFn,
+			}
+			im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+				return datasourceInfo{}, nil
+			})
+
+			executor := newExecutor(im, newTestConfig(), test.sessionCache)
+			request := &backend.CheckHealthRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+				},
+			}
+			resp, err := executor.CheckHealth(context.Background(), request)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedResponse, resp)
+		})
+	}
 }

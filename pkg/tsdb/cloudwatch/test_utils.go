@@ -172,12 +172,14 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 	return nil
 }
 
+type listMetricsFn func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
+type describeLogGroupsFn func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput, options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
 type FakeCheckHealthClient struct {
 	cloudwatchiface.CloudWatchAPI
 	cloudwatchlogsiface.CloudWatchLogsAPI
 
-	listMetricsPages             func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
-	describeLogGroupsWithContext func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput, options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
+	listMetricsPages             listMetricsFn
+	describeLogGroupsWithContext describeLogGroupsFn
 }
 
 func (c FakeCheckHealthClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {

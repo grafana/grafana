@@ -169,11 +169,7 @@ func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.Call
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
-func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	status := backend.HealthStatusOk
-	metricsTest := "Successfully queried the CloudWatch metrics API."
-	logsTest := "Successfully queried the CloudWatch logs API."
-
+func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext) error {
 	// use billing metrics for metrics test
 	namespace := "AWS/Billing"
 	metric := "EstimatedCharges"
@@ -181,22 +177,34 @@ func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.Check
 		Namespace:  &namespace,
 		MetricName: &metric,
 	}
-	_, err := e.listMetrics(req.PluginContext, defaultRegion, params)
+	_, err := e.listMetrics(pluginCtx, defaultRegion, params)
+	return err
+}
+
+func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx backend.PluginContext) error {
+	logsClient, err := e.getCWLogsClient(pluginCtx, defaultRegion)
+	if err != nil {
+		return err
+	}
+	_, err = e.handleDescribeLogGroups(ctx, logsClient, simplejson.NewFromAny(map[string]interface{}{"limit": "1"}))
+	return err
+}
+
+func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	status := backend.HealthStatusOk
+	metricsTest := "Successfully queried the CloudWatch metrics API."
+	logsTest := "Successfully queried the CloudWatch logs API."
+
+	err := e.checkHealthMetrics(req.PluginContext)
 	if err != nil {
 		status = backend.HealthStatusError
 		metricsTest = fmt.Sprintf("CloudWatch metrics query failed: %s", err.Error())
 	}
 
-	logsClient, err := e.getCWLogsClient(req.PluginContext, defaultRegion)
+	err = e.checkHealthLogs(ctx, req.PluginContext)
 	if err != nil {
 		status = backend.HealthStatusError
 		logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
-	} else {
-		_, err = e.handleDescribeLogGroups(ctx, logsClient, simplejson.NewFromAny(map[string]interface{}{"limit": "1"}))
-		if err != nil {
-			status = backend.HealthStatusError
-			logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
-		}
 	}
 
 	return &backend.CheckHealthResult{
