@@ -31,4 +31,5 @@ export enum DataTransformerID {
   heatmap = 'heatmap',
   spatial = 'spatial',
   extractFields = 'extractFields',
+  groupingToMatrix = 'groupingToMatrix',
 }

@@ -28,16 +28,41 @@ func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
 func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
-	qs.Set("step", query.Step.String())
-	qs.Set("start", strconv.FormatInt(query.Start.UnixNano(), 10))
-	qs.Set("end", strconv.FormatInt(query.End.UnixNano(), 10))
+
+	// MaxLines defaults to zero when not received,
+	// and Loki does not like limit=0, even when it is not needed
+	// (for example for metric queries), so we
+	// only send it when it's set
+	if query.MaxLines > 0 {
+		qs.Set("limit", fmt.Sprintf("%d", query.MaxLines))
+	}
 
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	lokiUrl.Path = "/loki/api/v1/query_range"
+	switch query.QueryType {
+	case QueryTypeRange:
+		{
+			qs.Set("start", strconv.FormatInt(query.Start.UnixNano(), 10))
+			qs.Set("end", strconv.FormatInt(query.End.UnixNano(), 10))
+			// NOTE: technically for streams-producing queries `step`
+			// is ignored, so it would be nicer to not send it in such cases,
+			// but we cannot detect that situation, so we always send it.
+			// it should not break anything.
+			qs.Set("step", query.Step.String())
+			lokiUrl.Path = "/loki/api/v1/query_range"
+		}
+	case QueryTypeInstant:
+		{
+			qs.Set("time", strconv.FormatInt(query.End.UnixNano(), 10))
+			lokiUrl.Path = "/loki/api/v1/query"
+		}
+	default:
+		return nil, fmt.Errorf("invalid QueryType: %v", query.QueryType)
+	}
+
 	lokiUrl.RawQuery = qs.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, "GET", lokiUrl.String(), nil)
@@ -51,11 +76,10 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 	// so it is not a regression.
 	// twe need to have that when we migrate to backend-queries.
 	//
-	// 2. we will have to send a custom http header based on the VolumeQuery prop
-	// (again, not needed for the alerting scenario)
-	// if query.VolumeQuery {
-	// 	req.Header.Set("X-Query-Tags", "Source=logvolhist")
-	// }
+
+	if query.VolumeQuery {
+		req.Header.Set("X-Query-Tags", "Source=logvolhist")
+	}
 
 	return req, nil
 }
@@ -103,7 +127,7 @@ func makeLokiError(body io.ReadCloser) error {
 	return fmt.Errorf("%v", errorMessage)
 }
 
-func (api *LokiAPI) QueryRange(ctx context.Context, query lokiQuery) (*loghttp.QueryResponse, error) {
+func (api *LokiAPI) Query(ctx context.Context, query lokiQuery) (*loghttp.QueryResponse, error) {
 	req, err := makeRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err

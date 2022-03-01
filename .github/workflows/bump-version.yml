@@ -80,7 +80,7 @@ jobs:
           ref: main
       - uses: actions/setup-node@v2.5.1
         with:
-          node-version: '14'
+          node-version: '16'
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run bump version (manually invoked)

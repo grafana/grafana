@@ -35,7 +35,7 @@ func ProvideBackgroundServiceRegistry(
 	metrics *metrics.InternalMetricsService, secretsService *secretsManager.SecretsService,
 	remoteCache *remotecache.RemoteCache, thumbnailsService thumbs.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
-	_ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ *pluginsettings.Service,
+	_ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ *pluginsettings.ServiceImpl,
 	_ *alerting.AlertNotificationService, _ serviceaccounts.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
