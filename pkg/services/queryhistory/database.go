@@ -73,7 +73,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 		`
 
 		if query.OnlyStarred {
-			sql = sql + `1 as "starred"
+			sql = sql + `? as "starred"
 				FROM query_history
 				INNER JOIN query_history_star ON query_history_star.query_uid = query_history.uid
 			`
@@ -98,7 +98,11 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 		sql = sql + `LIMIT ? OFFSET ?
 		`
 
-		params := []interface{}{user.OrgId, user.UserId, "%" + query.SearchString + "%"}
+		params := make([]interface{}, 0)
+		if query.OnlyStarred {
+			params = append(params, s.SQLStore.Dialect.BooleanStr(true))
+		}
+		params = append(params, user.OrgId, user.UserId, "%"+query.SearchString+"%")
 		for _, uid := range query.DatasourceUIDs {
 			params = append(params, uid)
 		}
