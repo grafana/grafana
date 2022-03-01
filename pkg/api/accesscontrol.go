@@ -329,7 +329,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:folders:reader",
 			DisplayName: "Folder reader",
-			Description: "Read all folders and dashboards",
+			Description: "Read all folders and dashboards.",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionFoldersRead, Scope: ac.ScopeFoldersAll},
