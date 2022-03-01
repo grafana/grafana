@@ -350,7 +350,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				foldersReaderRole.Role.Permissions,
 				[]ac.Permission{
 					{Action: ac.ActionFoldersCreate},
-					{Action: ac.ActionFoldersEdit, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionFoldersWrite, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionFoldersDelete, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionDashboardsEdit, Scope: ac.ScopeFoldersAll},

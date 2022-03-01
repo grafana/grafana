@@ -67,7 +67,7 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersEdit, folderScope(a.dashboardID)))
+		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersWrite, folderScope(a.dashboardID)))
 	}
 
 	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAny(
@@ -154,7 +154,7 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 		svc = a.permissionServices.GetFolderService()
 	}
 
-	permissions, err := svc.GetPermissions(a.ctx, a.dashboard.OrgId, strconv.FormatInt(a.dashboard.Id, 10))
+	permissions, err := svc.GetPermissions(a.ctx, a.user, strconv.FormatInt(a.dashboard.Id, 10))
 	if err != nil {
 		return nil, err
 	}

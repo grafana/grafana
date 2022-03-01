@@ -41,14 +41,12 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 	}...),
 	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
 		ac.ActionFoldersRead,
-		ac.ActionFoldersEdit,
 		ac.ActionFoldersWrite,
 		ac.ActionFoldersCreate,
 		ac.ActionFoldersDelete,
 	}...),
 	models.PERMISSION_ADMIN: append(dashboardPermissionTranslation[models.PERMISSION_ADMIN], []string{
 		ac.ActionFoldersRead,
-		ac.ActionFoldersEdit,
 		ac.ActionFoldersWrite,
 		ac.ActionFoldersCreate,
 		ac.ActionFoldersDelete,
