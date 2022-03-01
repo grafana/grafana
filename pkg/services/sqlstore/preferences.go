@@ -143,6 +143,13 @@ func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.SavePrefer
 
 		if !exists {
 			// TODO return err here
+			prefs = models.Preferences{
+				Theme:           ss.Cfg.DefaultTheme,
+				Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
+				WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
+				HomeDashboardId: 0,
+				JsonData:        &models.PreferencesJsonData{},
+			}
 		}
 
 		if cmd.JsonData != nil {
@@ -167,7 +174,12 @@ func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.SavePrefer
 
 		prefs.Updated = time.Now()
 		prefs.Version += 1
-		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
+
+		if exists {
+			_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
+		} else {
+			_, err = sess.Insert(&prefs)
+		}
 		return err
 	})
 }
