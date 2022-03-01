@@ -90,6 +90,7 @@ Query parameters:
 - **sort** - Sorting order. Can be `time-asc` or `time-desc`. Defaults to `time-desc`.
 - **onlyStarred** - Search for queries that are starred. Defaults to `false`.
 - **page** - Number of page you would like to to get. Search supports pagination and it is limits results to 100 queries per page.
+- **limit** - Limits the number of returned query history items per page. Defaults to 100.
 
 **Example request for query history search**:
 
