@@ -13,7 +13,6 @@ import {
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
-  LogRowModel,
   PanelData,
   PanelEvents,
   QueryFixAction,
