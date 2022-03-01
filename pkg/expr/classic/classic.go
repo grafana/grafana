@@ -129,7 +129,7 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 		}
 
 		thisCondFiring := firingCount > 0
-		thisCondNoData := nilReducedCount > 0
+		thisCondNoData := len(querySeriesSet.Values) == nilReducedCount
 
 		if i == 0 {
 			firing = thisCondFiring
@@ -144,7 +144,7 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			noDataFound = noDataFound && thisCondNoData
 		}
 
-		if len(querySeriesSet.Values) == nilReducedCount {
+		if thisCondNoData {
 			matches = append(matches, EvalMatch{
 				Metric: "NoData",
 			})
