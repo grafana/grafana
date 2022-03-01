@@ -157,5 +157,11 @@ var (
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
 		},
+		{
+			Name:            "dbFileStorage",
+			Description:     "Store files in the database",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
 	}
 )
