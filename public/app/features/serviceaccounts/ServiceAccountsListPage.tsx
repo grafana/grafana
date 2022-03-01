@@ -29,14 +29,7 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-    serviceAccounts: state.serviceAccounts.serviceAccounts,
-    query: state.serviceAccounts.query,
-    page: state.serviceAccounts.page,
-    isLoading: state.serviceAccounts.isLoading,
-    roleOptions: state.serviceAccounts.roleOptions,
-    builtInRoles: state.serviceAccounts.builtInRoles,
-    toRemove: state.serviceAccounts.serviceAccountToRemove,
-    filters: state.serviceAccounts.filters,
+    ...state.serviceAccounts
   };
 }
 
