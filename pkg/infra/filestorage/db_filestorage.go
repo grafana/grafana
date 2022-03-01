@@ -44,7 +44,7 @@ func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, pathFilters *PathFilter
 }
 
 func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, lowerCasePaths []string) (map[string]map[string]string, error) {
-	attributesByPath := make(map[string]map[string]string, 0)
+	attributesByPath := make(map[string]map[string]string)
 
 	entities := make([]*fileMeta, 0)
 	if err := sess.Table("file_meta").In("path", lowerCasePaths).Find(&entities); err != nil {
@@ -107,24 +107,28 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		table := &file{}
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Get(table)
+		exists, innerErr := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Get(table)
+		if innerErr != nil {
+			return innerErr
+		}
+
 		if !exists {
 			return nil
 		}
 
-		number, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Delete(table)
-		if err != nil {
-			return err
+		number, innerErr := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Delete(table)
+		if innerErr != nil {
+			return innerErr
 		}
 		s.log.Info("Deleted file", "path", filePath, "affectedRecords", number)
 
 		metaTable := &fileMeta{}
-		number, err = sess.Table("file_meta").Where("path = ?", strings.ToLower(filePath)).Delete(metaTable)
-		if err != nil {
-			return err
+		number, innerErr = sess.Table("file_meta").Where("path = ?", strings.ToLower(filePath)).Delete(metaTable)
+		if innerErr != nil {
+			return innerErr
 		}
 		s.log.Info("Deleted metadata", "path", filePath, "affectedRecords", number)
-		return err
+		return innerErr
 	})
 
 	return err
@@ -282,7 +286,7 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 			if foundProps, ok := propertiesByLowerPath[strings.ToLower(path)]; ok {
 				props = foundProps
 			} else {
-				props = make(map[string]string, 0)
+				props = make(map[string]string)
 			}
 
 			files = append(files, FileMetadata{
@@ -384,7 +388,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 			exists, err := sess.Table("file").Where("LOWER(path) = ?", lower).Get(existing)
 			if err != nil {
 				insertErr = err
-				return err
+				break
 			}
 
 			if exists {

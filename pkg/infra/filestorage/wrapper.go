@@ -15,7 +15,7 @@ import (
 
 var (
 	directoryMarker = ".___gf_dir_marker___"
-	pathRegex       = regexp.MustCompile("(^/$)|(^(/[A-Za-z0-9!\\-_.*'()]+)+$)")
+	pathRegex       = regexp.MustCompile(`(^/$)|(^(/[A-Za-z0-9!\-_.*'()]+)+$)`)
 )
 
 type wrapper struct {

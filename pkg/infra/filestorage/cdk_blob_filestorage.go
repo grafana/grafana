@@ -2,6 +2,7 @@ package filestorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -33,12 +34,6 @@ func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, p
 	}
 }
 
-func (c cdkBlobStorage) closeReader(reader *blob.Reader) {
-	if err := reader.Close(); err != nil {
-		c.log.Error("Failed to close reader", "err", err)
-	}
-}
-
 func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error) {
 	contents, err := c.bucket.ReadAll(ctx, strings.ToLower(filePath))
 	if err != nil {
@@ -61,7 +56,7 @@ func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error)
 			delete(props, originalPathAttributeKey)
 		}
 	} else {
-		props = make(map[string]string, 0)
+		props = make(map[string]string)
 		originalPath = filePath
 	}
 
@@ -164,7 +159,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 			continue
 		}
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			hasMore = false
 			break
 		} else {
@@ -203,6 +198,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 
 			files = append(files, resp.Files...)
 			if len(files) >= pageSize {
+				//nolint: staticcheck
 				hasMore = resp.HasMore
 			}
 		} else if !obj.IsDir && allowed {
@@ -233,7 +229,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 					delete(props, originalPathAttributeKey)
 				}
 			} else {
-				props = make(map[string]string, 0)
+				props = make(map[string]string)
 				originalPath = fixPath(path)
 			}
 
@@ -321,7 +317,7 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 	foundPaths := make([]string, 0)
 	for {
 		obj, err := iterator.Next(ctx)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 
@@ -351,7 +347,7 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 				return nil, err
 			}
 
-			if resp != nil && len(resp) > 0 {
+			if len(resp) > 0 {
 				foundPaths = append(foundPaths, resp...)
 			}
 			continue
@@ -429,7 +425,7 @@ func (c cdkBlobStorage) CreateFolder(ctx context.Context, path string) error {
 	c.log.Info("Creating folder", "path", path)
 
 	precedingFolders := precedingFolders(path)
-	folderToOriginalCasing := make(map[string]string, 0)
+	folderToOriginalCasing := make(map[string]string)
 	foundFolderIndex := -1
 
 	for i := len(precedingFolders) - 1; i >= 0; i-- {
@@ -488,7 +484,6 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string) err
 
 	err = c.bucket.Delete(ctx, strings.ToLower(directoryMarkerPath))
 	return err
-
 }
 
 func (c cdkBlobStorage) close() error {

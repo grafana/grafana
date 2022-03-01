@@ -31,10 +31,6 @@ func Path(path string, storageName StorageName) string {
 	return fmt.Sprintf("%s%s%s", string(storageName), Delimiter, path)
 }
 
-func belongsToStorage(path string, storageName StorageName) bool {
-	return strings.HasPrefix(path, string(storageName))
-}
-
 type File struct {
 	Contents []byte
 	FileMetadata
