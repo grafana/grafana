@@ -208,9 +208,10 @@ func (c *PostableRuleGroupConfig) validate() error {
 
 // swagger:model
 type GettableRuleGroupConfig struct {
-	Name     string                     `yaml:"name" json:"name"`
-	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
-	Rules    []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+	Name          string                     `yaml:"name" json:"name"`
+	Interval      model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	SourceTenants []string                   `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	Rules         []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
