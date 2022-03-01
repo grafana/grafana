@@ -82,7 +82,7 @@ type resourcePermissionDTO struct {
 func (a *api) getPermissions(c *models.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
-	permissions, err := a.service.GetPermissions(c.Req.Context(), c.OrgId, resourceID)
+	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
