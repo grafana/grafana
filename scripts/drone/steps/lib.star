@@ -1,9 +1,8 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.7'
+grabpl_version = 'v2.9.4'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
-grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
@@ -64,12 +63,20 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
+            environment = {
+                  'GITHUB_TOKEN': from_secret(github_token),
+            }
+            token = "--github-token $${GITHUB_TOKEN}"
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
+            environment = {}
+            token = ""
         else:
+            environment = {}
             if is_downstream:
                 source_commit = ' $${SOURCE_COMMIT}'
             committish = '${DRONE_COMMIT}'
+            token = ""
         steps = [
             identify_runner,
             clone_enterprise(committish),
@@ -79,14 +86,12 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'depends_on': [
                     'clone-enterprise',
                 ],
-                'environment': {
-                  'GITHUB_TOKEN': from_secret(github_token),
-                },
+                'environment': environment,
                 'commands': [
                                 'mv bin/grabpl /tmp/',
                                 'rmdir bin',
                                 'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise --github-token $${{GITHUB_TOKEN}} /tmp/grafana-enterprise{}'.format(source_commit),
+                                '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
                                 'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
@@ -278,8 +283,10 @@ def store_storybook_step(edition, ver_mode):
 
 
 def upload_cdn_step(edition, ver_mode):
+    src_dir = ''
     if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+        bucket = "$${PRERELEASE_BUCKET}"
+        src_dir = " --src-dir artifacts/static-assets"
     else:
         bucket = "grafana-static-assets"
 
@@ -298,11 +305,11 @@ def upload_cdn_step(edition, ver_mode):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
+            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
 
@@ -688,8 +695,11 @@ def copy_packages_for_docker_step():
     }
 
 
-def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    cmd = './bin/grabpl build-docker --edition {} --shouldSave'.format(edition)
+def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+    cmd = './bin/grabpl build-docker --edition {}'.format(edition)
+    if publish:
+        cmd += ' --shouldSave'
+
     ubuntu_sfx = ''
     if ubuntu:
         ubuntu_sfx = '-ubuntu'
@@ -699,12 +709,10 @@ def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publ
         cmd += ' -archs {}'.format(','.join(archs))
 
     return {
-        'name': 'package-docker-images' + ubuntu_sfx,
+        'name': 'build-docker-images' + ubuntu_sfx,
         'image': 'google/cloud-sdk',
         'depends_on': ['copy-packages-for-docker'],
         'commands': [
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
             cmd
         ],
         'volumes': [{
@@ -716,27 +724,34 @@ def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publ
         },
     }
 
-def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    ubuntu_sfx = ''
-    if ubuntu:
-        ubuntu_sfx = '-ubuntu'
+def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
+    if mode == 'security':
+        mode = '--{} '.format(mode)
+    else:
+        mode = ''
 
-    settings = {
-        'dry_run': not publish,
-        'edition': edition,
-        'ubuntu': ubuntu,
-    }
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(mode, docker_repo)
 
-    if publish:
-        settings['username'] = from_secret('docker_user')
-        settings['password'] = from_secret('docker_password')
-    if archs:
-        settings['archs'] = ','.join(archs)
+    if ver_mode == 'release':
+        deps = ['fetch-images-{}'.format(edition)]
+        cmd += ' --version-tag ${TAG}'
+    else:
+        deps = ['build-docker-images', 'build-docker-images-ubuntu']
+
     return {
-        'name': 'build-docker-images' + ubuntu_sfx,
-        'image': grafana_docker_image,
-        'depends_on': ['copy-packages-for-docker'],
-        'settings': settings,
+        'name': 'publish-images-{}'.format(docker_repo),
+        'image': 'google/cloud-sdk',
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'DOCKER_USER': from_secret('docker_username'),
+            'DOCKER_PASSWORD': from_secret('docker_password'),
+        },
+        'commands': [cmd],
+        'depends_on': deps,
+        'volumes': [{
+            'name': 'docker',
+            'path': '/var/run/docker.sock'
+        }],
     }
 
 
@@ -861,8 +876,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
-    packages_bucket = ' --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads' + enterprise2_suffix(edition)
-
     if ver_mode == 'release':
         packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
@@ -884,7 +897,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
         'commands': [cmd, ],
@@ -921,7 +934,6 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
             'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
         },
         'commands': [
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             cmd,
         ],
     }
@@ -960,6 +972,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             dir = 'release'
         else:
             dir = 'main'
+            bucket = 'grafana-downloads'
+            bucket_part = ' --packages-bucket {}'.format(bucket)
             if not is_downstream:
                 build_no = 'DRONE_BUILD_NUMBER'
             else:
