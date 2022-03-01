@@ -121,7 +121,7 @@ func (s *ServiceAccountsStoreMock) RetrieveServiceAccount(ctx context.Context, o
 
 func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 	orgID, serviceAccountID int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	s.Calls.UpdateServiceAccount = append(s.Calls.UpdateServiceAccount, []interface{}{ctx, orgID, serviceAccountID, saForm})
 
 	return nil, nil
