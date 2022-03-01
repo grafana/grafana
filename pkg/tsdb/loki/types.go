@@ -1,10 +1,6 @@
 package loki
 
-import (
-	"time"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-)
+import "time"
 
 type QueryType string
 
@@ -23,13 +19,4 @@ type lokiQuery struct {
 	End          time.Time
 	RefID        string
 	VolumeQuery  bool
-}
-
-type lokiResponse struct {
-	Streams []lokiStream `json:"streams"`
-}
-
-type lokiStream struct {
-	Stream data.Labels `json:"stream"`
-	Values [][2]string `json:"values"`
 }

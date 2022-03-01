@@ -20913,7 +20913,6 @@ __metadata:
     test: "link:./public/test"
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
-    tiny-hashes: ^1.0.1
     tinycolor2: 1.4.2
     ts-jest: 27.1.3
     ts-loader: 9.2.6
@@ -34921,13 +34920,6 @@ __metadata:
   version: 0.3.0
   resolution: "timsort@npm:0.3.0"
   checksum: 1a66cb897dacabd7dd7c91b7e2301498ca9e224de2edb9e42d19f5b17c4b6dc62a8d4cbc64f28be82aaf1541cb5a78ab49aa818f42a2989ebe049a64af731e2a
-  languageName: node
-  linkType: hard
-
-"tiny-hashes@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "tiny-hashes@npm:1.0.1"
-  checksum: 24834183e448a15c3f96f90c304f98328057a020ccf3bf56f449c318fd727b6a532e9769f31d1bfa25bf2ce39be609009fff23368d10307efa649d313b2ec044
   languageName: node
   linkType: hard
 

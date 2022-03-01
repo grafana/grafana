@@ -367,7 +367,6 @@
     "symbol-observable": "4.0.0",
     "test": "link:./public/test",
     "tether-drop": "https://github.com/torkelo/drop",
-    "tiny-hashes": "^1.0.1",
     "tinycolor2": "1.4.2",
     "tslib": "2.3.1",
     "uplot": "1.6.19",

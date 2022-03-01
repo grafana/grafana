@@ -8,6 +8,15 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+type lokiResponse struct {
+	Streams []lokiStream `json:"streams"`
+}
+
+type lokiStream struct {
+	Stream data.Labels `json:"stream"`
+	Values [][2]string `json:"values"`
+}
+
 func lokiBytesToLabeledFrame(msg []byte) (*data.Frame, error) {
 	rsp := &lokiResponse{}
 	err := json.Unmarshal(msg, rsp)
