@@ -21,7 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "5.0.2",
+    "@braintree/sanitize-url": "6.0.0",
     "@grafana/schema": "8.5.0-pre",
     "@types/d3-interpolate": "^1.4.0",
     "d3-interpolate": "1.4.0",
