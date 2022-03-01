@@ -72,7 +72,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionNotifiers func(context.Context, string, notifiers.Store, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error,
+	provisionNotifiers func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, utils.OrgStore) error,
 	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Store) error,
 ) *ProvisioningServiceImpl {
@@ -95,7 +95,7 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	dashboardProvisioner    dashboards.DashboardProvisioner
-	provisionNotifiers      func(context.Context, string, notifiers.Store, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
+	provisionNotifiers      func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources    func(context.Context, string, datasources.Store, utils.OrgStore) error
 	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Store) error
 	mutex                   sync.Mutex
