@@ -604,9 +604,103 @@ Content-Type: application/json
 
 Proxies all calls to the actual data source.
 
-## [Deprecated] Query a data source by ID
+## Query a data source
 
-> **Warning:** This API is deprecated and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
+Queries a data source having backend implementation.
+
+`POST /api/ds/query`
+
+> **Note:** Most of Grafana's builtin data sources have backend implementation.
+
+**Example request for the Test data source**:
+
+```http
+POST /api/ds/query HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+   "queries":[
+      {
+         "refId":"A",
+         "scenarioId":"csv_metric_values",
+         "datasource":{
+            "uid":"PD8C576611E62080A",
+            "type":"testdata"
+         },
+         "stringInput":"1,20,90,30,5,0",
+         "datasourceId":6,
+         "maxDataPoints":1848,
+         "intervalMs":200,
+      }
+   ],
+   "from":"now-5m",
+   "to":"now"
+}
+```
+
+> **Note:** The `from`, `to`, and `queries` properties are required.
+
+JSON Body schema:
+
+- **queries** – Specifies one or more queries. Must contain at least 1.
+- **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
+- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each `query` in the request must have an unique `datasource`.
+- **queries.datasource.type** – Specifies the data source plugin identifier to be queried.
+- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and defaults to 100.
+- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
+
+In addition, each data source has its own specific properties that should be added in a request.
+
+**Example Test data source time series query response:**
+
+```json
+{
+  "results": {
+    "A": {
+      "frames": [
+        {
+          "schema": {
+            "refId": "A",
+            "fields": [
+              {
+                "name": "time",
+                "type": "time",
+                "typeInfo": {
+                  "frame": "time.Time"
+                }
+              },
+              {
+                "name": "A-series",
+                "type": "number",
+                "typeInfo": {
+                  "frame": "int64",
+                  "nullable": true
+                }
+              }
+            ]
+          },
+          "data": {
+            "values": [
+              [1644488152084, 1644488212084, 1644488272084, 1644488332084, 1644488392084, 1644488452084],
+              [1, 20, 90, 30, 5, 0]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## Deprecated resources
+
+Please note that these resources have been deprecated and will be removed in a future release.
+
+## Query a data source by ID
+
+> **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
 
 Queries a data source having backend implementation.
 
@@ -708,96 +802,6 @@ Content-Type: application/json
               1420070400000
             ]
           ]
-        }
-      ]
-    }
-  }
-}
-```
-
-## Query a data source by ID
-
-Queries a data source having backend implementation.
-
-`POST /api/ds/query`
-
-> **Note:** Most of Grafana's builtin data sources have backend implementation.
-
-**Example request for the Test data source**:
-
-```http
-POST /api/ds/query HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-
-{
-   "queries":[
-      {
-         "refId":"A",
-         "scenarioId":"csv_metric_values",
-         "datasource":{
-            "uid":"PD8C576611E62080A",
-            "type":"testdata"
-         },
-         "stringInput":"1,20,90,30,5,0",
-         "datasourceId":6,
-         "maxDataPoints":1848,
-         "intervalMs":200,
-      }
-   ],
-   "from":"now-5m",
-   "to":"now"
-}
-```
-
-> **Note:** The `from`, `to`, and `queries` properties are required.
-
-JSON Body schema:
-
-- **queries** – Specifies one or more queries. Must contain at least 1.
-- **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
-- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each `query` in the request must have an unique `datasource`.
-- **queries.datasource.type** – Specifies the data source plugin identifier to be queried.
-- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and defaults to 100.
-- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
-- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
-
-  In addition, each data source has its own specific properties that should be added in a request.
-
-**Example Test data source time series query response:**
-
-```json
-{
-  "results": {
-    "A": {
-      "frames": [
-        {
-          "schema": {
-            "refId": "A",
-            "fields": [
-              {
-                "name": "time",
-                "type": "time",
-                "typeInfo": {
-                  "frame": "time.Time"
-                }
-              },
-              {
-                "name": "A-series",
-                "type": "number",
-                "typeInfo": {
-                  "frame": "int64",
-                  "nullable": true
-                }
-              }
-            ]
-          },
-          "data": {
-            "values": [
-              [1644488152084, 1644488212084, 1644488272084, 1644488332084, 1644488392084, 1644488452084],
-              [1, 20, 90, 30, 5, 0]
-            ]
-          }
         }
       ]
     }
