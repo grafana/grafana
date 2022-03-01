@@ -192,7 +192,7 @@ var wireBasicSet = wire.NewSet(
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	pluginsettings.ProvideService,
-	wire.Bind(new(plugins.SettingsService), new(*pluginsettings.Service)),
+	wire.Bind(new(pluginsettings.Store), new(*pluginsettings.Service)),
 	alerting.ProvideService,
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsmanager.ServiceAccountsService)),

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -285,7 +286,7 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, pluginSettingsService plugins.SettingsService) *http.Request {
+func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, pluginSettingsService pluginsettings.Store) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.Route{

@@ -9,17 +9,18 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
 func ProvideService(bus bus.Bus, pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
-	dashboardImportService dashboardimport.Service, pluginSettingsService plugins.SettingsService) *Service {
+	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Store) *Service {
 	s := newService(bus, pluginStore, pluginDashboardManager, dashboardImportService, pluginSettingsService)
 	s.updateAppDashboards()
 	return s
 }
 
 func newService(bus bus.Bus, pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
-	dashboardImportService dashboardimport.Service, pluginSettingsService plugins.SettingsService) *Service {
+	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Store) *Service {
 	s := &Service{
 		bus:                    bus,
 		pluginStore:            pluginStore,
@@ -38,7 +39,7 @@ type Service struct {
 	pluginStore            plugins.Store
 	pluginDashboardManager plugins.PluginDashboardManager
 	dashboardImportService dashboardimport.Service
-	pluginSettingsService  plugins.SettingsService
+	pluginSettingsService  pluginsettings.Store
 	logger                 log.Logger
 }
 
