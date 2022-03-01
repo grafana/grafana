@@ -31,7 +31,6 @@ type cmdUpsert struct {
 
 type cmdCreateFolder struct {
 	path  string
-	name  string
 	error *cmdErrorOutput
 }
 
@@ -173,9 +172,9 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 		}
 		expectedErr = c.error
 	case cmdCreateFolder:
-		err = fs.CreateFolder(ctx, c.path, c.name)
+		err = fs.CreateFolder(ctx, c.path)
 		if c.error == nil {
-			require.NoError(t, err, "%s: should be able to create folder %s in %s", cmdName, c.name, c.path)
+			require.NoError(t, err, "%s: should be able to create folder %s", cmdName, c.path)
 		}
 		expectedErr = c.error
 	case cmdDeleteFolder:
@@ -256,6 +255,17 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 
 }
 
+func formatPathStructure(files []FileMetadata) string {
+	if len(files) == 0 {
+		return "<<EMPTY>>"
+	}
+	res := "\n"
+	for _, f := range files {
+		res = fmt.Sprintf("%s%s\n", res, f.FullPath)
+	}
+	return res
+}
+
 func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName string, fs FileStorage) {
 	t.Helper()
 
@@ -287,7 +297,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		}
 
 		if q.files != nil {
-			require.Equal(t, len(resp.Files), len(q.files), "%s %s", queryName, inputPath)
+			require.Equal(t, len(resp.Files), len(q.files), "%s expected a check for each actual file at path: \"%s\". actual: %s", queryName, inputPath, formatPathStructure(resp.Files))
 			for i, file := range resp.Files {
 				runChecks(t, queryName, inputPath, file, q.files[i])
 			}
@@ -299,7 +309,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		require.NoError(t, err, "%s: should be able to list folders in %s", queryName, inputPath)
 
 		if q.checks != nil {
-			require.Equal(t, len(resp), len(q.checks), "%s %s", queryName, inputPath)
+			require.Equal(t, len(resp), len(q.checks), "%s: expected a check for each actual folder at path: \"%s\". actual: %s", queryName, inputPath, formatPathStructure(resp))
 			for i, file := range resp {
 				runChecks(t, queryName, inputPath, file, q.checks[i])
 			}

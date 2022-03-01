@@ -17,19 +17,30 @@ import (
 )
 
 const (
-	pngImageBase64 = "iVBORw0KGgoAAAANSUhEUgAAAC4AAAAmCAYAAAC76qlaAAAABHNCSVQICAgIfAhkiAAAABl0RVh0U29mdHdhcmUAZ25vbWUtc2NyZWVuc2hvdO8Dvz4AAABFSURBVFiF7c5BDQAhEACx4/x7XjzwGELSKuiamfke9N8OnBKvidfEa+I18Zp4TbwmXhOvidfEa+I18Zp4TbwmXhOvidc2lcsESD1LGnUAAAAASUVORK5CYII="
+	pngImageBase64 = "iVBORw0KGgoNAANSUhEUgAAAC4AAAAmCAYAAAC76qlaAAAABHNCSVQICAgIfAhkiAAAABl0RVh0U29mdHdhcmUAZ25vbWUtc2NyZWVuc2hvdO8Dvz4AAABFSURBVFiF7c5BDQAhEACx4/x7XjzwGELSKuiamfke9N8OnBKvidfEa+I18Zp4TbwmXhOvidfEa+I18Zp4TbwmXhOvidc2lcsESD1LGnUAAAAASUVORK5CYII="
 )
 
-func TestFsStorage(t *testing.T) {
+type fsTestCase struct {
+	name  string
+	skip  *bool
+	steps []interface{}
+}
 
+func runTestCase(t *testing.T, testCase fsTestCase, ctx context.Context, filestorage FileStorage) {
+	if testCase.skip != nil {
+		return
+	}
+	for i, step := range testCase.steps {
+		executeTestStep(t, ctx, step, i, filestorage)
+	}
+}
+
+func runTests(createCases func() []fsTestCase, t *testing.T) {
 	var testLogger log.Logger
 	var sqlStore *sqlstore.SQLStore
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string
-	emptyFileBytes := make([]byte, 0)
-	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)
-	pngImageSize := int64(len(pngImage))
 
 	commonSetup := func() {
 		testLogger = log.New("testStorageLogger")
@@ -68,37 +79,77 @@ func TestFsStorage(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		bucket, err := blob.OpenBucket(context.Background(), "file://"+tmpDir)
+		bucket, err := blob.OpenBucket(context.Background(), fmt.Sprintf("file://%s", tmpDir))
 		if err != nil {
 			t.Fatal(err)
 		}
 		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
-	createTests := func() []struct {
+	backends := []struct {
+		setup func()
 		name  string
-		steps []interface{}
-	} {
-		return []struct {
-			name  string
-			steps []interface{}
-		}{
+	}{
+		{
+			setup: setupLocalFs,
+			name:  "Local FS",
+		},
+		{
+			setup: setupInMemFS,
+			name:  "In-mem FS",
+		},
+		{
+			setup: setupSqlFS,
+			name:  "SQL FS",
+		},
+	}
+
+	for _, backend := range backends {
+		for _, tt := range createCases() {
+			t.Run(fmt.Sprintf("%s: %s", backend.name, tt.name), func(t *testing.T) {
+				backend.setup()
+				defer cleanUp()
+				runTestCase(t, tt, ctx, filestorage)
+			})
+		}
+	}
+}
+
+func TestFsStorage(t *testing.T) {
+	//skipTest := true
+	emptyFileBytes := make([]byte, 0)
+	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)
+	pngImageSize := int64(len(pngImage))
+
+	createFileCRUDTests := func() []fsTestCase {
+		return []fsTestCase{
+			{
+				name: "getting a non-existent file",
+				steps: []interface{}{
+					queryGet{
+						input: queryGetInput{
+							path: "/folder/a.png",
+						},
+					},
+				},
+			},
 			{
 				name: "inserting a file",
 				steps: []interface{}{
 					cmdUpsert{
 						cmd: UpsertFileCommand{
-							Path:       "/folder1/file.png",
+							Path:       "/folder/a.png",
 							Contents:   &pngImage,
 							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 						},
 					},
 					queryGet{
 						input: queryGetInput{
-							path: "/folder1/file.png",
+							path: "/folder/a.png",
 						},
 						checks: checks(
-							fName("file.png"),
+							fPath("/folder/a.png"),
+							fName("a.png"),
 							fMimeType("image/png"),
 							fProperties(map[string]string{"prop1": "val1", "prop2": "val"}),
 							fSize(pngImageSize),
@@ -108,15 +159,338 @@ func TestFsStorage(t *testing.T) {
 				},
 			},
 			{
-				name: "getting a non-existent file",
+				name: "preserved original path/name casing when getting a file",
 				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/Folder/A.png",
+							Contents: &emptyFileBytes,
+						},
+					},
 					queryGet{
 						input: queryGetInput{
-							path: "/folder1/file12412.png",
+							path: "/fOlder/a.png",
+						},
+						checks: checks(
+							fPath("/Folder/A.png"),
+							fName("A.png"),
+						),
+					},
+				},
+			},
+			{
+				name: "modifying file metadata",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/a.png",
+							Contents:   &pngImage,
+							Properties: map[string]string{"a": "av", "b": "bv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/a.png",
+						},
+						checks: checks(
+							fContents(pngImage),
+							fProperties(map[string]string{"a": "av", "b": "bv"}),
+						),
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/a.png",
+							Properties: map[string]string{"b": "bv2", "c": "cv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/a.png",
+						},
+						checks: checks(
+							fContents(pngImage),
+							fProperties(map[string]string{"b": "bv2", "c": "cv"}),
+						),
+					},
+				},
+			},
+			{
+				name: "modifying file metadata preserves original path casing",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/aB.png",
+							Contents:   &emptyFileBytes,
+							Properties: map[string]string{"a": "av", "b": "bv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/ab.png",
+						},
+						checks: checks(
+							fPath("/aB.png"),
+							fName("aB.png"),
+						),
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/ab.png",
+							Properties: map[string]string{"b": "bv2", "c": "cv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/ab.png",
+						},
+						checks: checks(
+							fPath("/aB.png"),
+							fName("aB.png"),
+							fProperties(map[string]string{"b": "bv2", "c": "cv"}),
+						),
+					},
+				},
+			},
+			{
+				name: "modifying file contents",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/FILE.png",
+							Contents:   &emptyFileBytes,
+							Properties: map[string]string{"a": "av", "b": "bv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fName("FILE.png"),
+							fProperties(map[string]string{"a": "av", "b": "bv"}),
+							fSize(0),
+							fContents(emptyFileBytes),
+						),
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/file.png",
+							Contents: &pngImage,
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fName("FILE.png"),
+							fMimeType("image/png"),
+							fProperties(map[string]string{"a": "av", "b": "bv"}),
+							fSize(pngImageSize),
+							fContents(pngImage),
+						),
+					},
+				},
+			},
+			{
+				name: "deleting a file",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/FILE.png",
+							Contents:   &emptyFileBytes,
+							Properties: map[string]string{"a": "av", "b": "bv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fPath("/FILE.png"),
+						),
+					},
+					cmdDelete{
+						path: "/file.png",
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/file.png",
+							Contents:   &emptyFileBytes,
+							Properties: map[string]string{"a": "av", "b": "bv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fPath("/file.png"),
+						),
+					},
+				},
+			},
+			{
+				name: "deleting a non-existent file should be no-op",
+				steps: []interface{}{
+					cmdDelete{
+						path: "/file.png",
+					},
+				},
+			},
+		}
+	}
+
+	createFolderCrudCases := func() []fsTestCase {
+		return []fsTestCase{
+			{
+				name: "creating a folder with the same name or same name but different casing is a no-op",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/aB",
+					},
+					cmdCreateFolder{
+						path: "/ab",
+					},
+					cmdCreateFolder{
+						path: "/aB",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/aB")),
+						},
+					},
+					cmdCreateFolder{
+						path: "/Ab",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/aB")),
 						},
 					},
 				},
 			},
+			{
+				name: "creating folder is recursive",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/a/b/c",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/a")),
+							checks(fPath("/a/b")),
+							checks(fPath("/a/b/c")),
+						},
+					},
+				},
+			},
+			{
+				name: "deleting a leaf directory does not delete parent directories even if they are empty",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/a/b/c",
+					},
+					cmdDeleteFolder{
+						path: "/a/b/c",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/a")),
+							checks(fPath("/a/b")),
+						},
+					},
+				},
+			},
+			{
+				name: "folders preserve their original casing",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/aB/cD/e",
+					},
+					cmdCreateFolder{
+						path: "/ab/cd/f",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{
+							path: "/",
+						},
+						checks: [][]interface{}{
+							checks(fPath("/aB")),
+							checks(fPath("/aB/cD")),
+							checks(fPath("/aB/cD/e")),
+							checks(fPath("/aB/cD/f")),
+						},
+					},
+				},
+			},
+			{
+				name:  "folders can't be deleted through the `delete` method",
+				steps: []interface{}{},
+			},
+			{
+				name:  "folders can not be retrieved through the `get` method",
+				steps: []interface{}{},
+			},
+			{
+				name: "should not be able to delete folders with files",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/folder/dashboards/myNewFolder",
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder/dashboards/myNewFolder/file.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdDeleteFolder{
+						path: "/folder/dashboards/myNewFolder",
+						error: &cmdErrorOutput{
+							message: "folder %s is not empty - cant remove it",
+							args:    []interface{}{"/folder/dashboards/myNewFolder"},
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{
+							checks(fPath("/folder")),
+							checks(fPath("/folder/dashboards")),
+							checks(fPath("/folder/dashboards/myNewFolder")),
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/folder/dashboards/myNewFolder/file.jpg",
+						},
+						checks: checks(
+							fName("file.jpg"),
+						),
+					},
+				},
+			},
+		}
+	}
+
+	createTests := func() []fsTestCase {
+		return []fsTestCase{
 			{
 				name: "listing files",
 				steps: []interface{}{
@@ -280,201 +654,11 @@ func TestFsStorage(t *testing.T) {
 					},
 				},
 			},
-			{
-				name: "creating and deleting folders",
-				steps: []interface{}{
-					cmdUpsert{
-						cmd: UpsertFileCommand{
-							Path:     "/folder1/folder2/file.jpg",
-							Contents: &[]byte{},
-						},
-					},
-					cmdCreateFolder{
-						path: "/folder/dashboards",
-						name: "myNewFolder",
-					},
-					cmdCreateFolder{
-						path: "/folder/icons",
-						name: "emojis",
-					},
-					queryListFolders{
-						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
-						checks: [][]interface{}{
-							checks(fPath("/folder")),
-							checks(fPath("/folder/dashboards")),
-							checks(fPath("/folder/dashboards/myNewFolder")),
-							checks(fPath("/folder/icons")),
-							checks(fPath("/folder/icons/emojis")),
-							checks(fPath("/folder1")),
-							checks(fPath("/folder1/folder2")),
-						},
-					},
-					cmdDeleteFolder{
-						path: "/folder/dashboards/myNewFolder",
-					},
-					queryListFolders{
-						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
-						checks: [][]interface{}{
-							checks(fPath("/folder")),
-							checks(fPath("/folder/icons")),
-							checks(fPath("/folder/icons/emojis")),
-							checks(fPath("/folder1")),
-							checks(fPath("/folder1/folder2")),
-						},
-					},
-				},
-			},
-			{
-				name: "should not be able to delete folders with files",
-				steps: []interface{}{
-					cmdCreateFolder{
-						path: "/folder/dashboards",
-						name: "myNewFolder",
-					},
-					cmdUpsert{
-						cmd: UpsertFileCommand{
-							Path:     "/folder/dashboards/myNewFolder/file.jpg",
-							Contents: &[]byte{},
-						},
-					},
-					cmdDeleteFolder{
-						path: "/folder/dashboards/myNewFolder",
-						error: &cmdErrorOutput{
-							message: "folder %s is not empty - cant remove it",
-							args:    []interface{}{"/folder/dashboards/myNewFolder"},
-						},
-					},
-					queryListFolders{
-						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
-						checks: [][]interface{}{
-							checks(fPath("/folder")),
-							checks(fPath("/folder/dashboards")),
-							checks(fPath("/folder/dashboards/myNewFolder")),
-						},
-					},
-					queryGet{
-						input: queryGetInput{
-							path: "/folder/dashboards/myNewFolder/file.jpg",
-						},
-						checks: checks(
-							fName("file.jpg"),
-						),
-					},
-				},
-			},
-			{
-				name: "should be able to modify file metadata",
-				steps: []interface{}{
-					cmdUpsert{
-						cmd: UpsertFileCommand{
-							Path:       "/FILE.png",
-							Contents:   &pngImage,
-							Properties: map[string]string{"a": "av", "b": "bv"},
-						},
-					},
-					queryGet{
-						input: queryGetInput{
-							path: "/file.png",
-						},
-						checks: checks(
-							fName("FILE.png"),
-							fMimeType("image/png"),
-							fProperties(map[string]string{"a": "av", "b": "bv"}),
-							fSize(pngImageSize),
-							fContents(pngImage),
-						),
-					},
-					cmdUpsert{
-						cmd: UpsertFileCommand{
-							Path:       "/file.png",
-							Properties: map[string]string{"b": "bv2", "c": "cv"},
-						},
-					},
-					queryGet{
-						input: queryGetInput{
-							path: "/file.png",
-						},
-						checks: checks(
-							fName("FILE.png"),
-							fMimeType("image/png"),
-							fProperties(map[string]string{"b": "bv2", "c": "cv"}),
-							fSize(pngImageSize),
-							fContents(pngImage),
-						),
-					},
-				},
-			},
-			{
-				name: "should be able to modify file contents",
-				steps: []interface{}{
-					cmdUpsert{
-						cmd: UpsertFileCommand{
-							Path:       "/FILE.png",
-							Contents:   &emptyFileBytes,
-							Properties: map[string]string{"a": "av", "b": "bv"},
-						},
-					},
-					queryGet{
-						input: queryGetInput{
-							path: "/file.png",
-						},
-						checks: checks(
-							fName("FILE.png"),
-							fProperties(map[string]string{"a": "av", "b": "bv"}),
-							fSize(0),
-							fContents(emptyFileBytes),
-						),
-					},
-					cmdUpsert{
-						cmd: UpsertFileCommand{
-							Path:     "/file.png",
-							Contents: &pngImage,
-						},
-					},
-					queryGet{
-						input: queryGetInput{
-							path: "/file.png",
-						},
-						checks: checks(
-							fName("FILE.png"),
-							fMimeType("image/png"),
-							fProperties(map[string]string{"a": "av", "b": "bv"}),
-							fSize(pngImageSize),
-							fContents(pngImage),
-						),
-					},
-				},
-			},
 		}
 	}
 
-	for _, tt := range createTests() {
-		t.Run(fmt.Sprintf("%s: %s", "Local FS", tt.name), func(t *testing.T) {
-			setupLocalFs()
-			defer cleanUp()
-			for i, step := range tt.steps {
-				executeTestStep(t, ctx, step, i, filestorage)
-			}
-		})
-	}
+	runTests(createTests, t)
+	runTests(createFileCRUDTests, t)
+	runTests(createFolderCrudCases, t)
 
-	for _, tt := range createTests() {
-		t.Run(fmt.Sprintf("%s: %s", "IN MEM FS", tt.name), func(t *testing.T) {
-			setupInMemFS()
-			defer cleanUp()
-			for i, step := range tt.steps {
-				executeTestStep(t, ctx, step, i, filestorage)
-			}
-		})
-	}
-
-	for _, tt := range createTests() {
-		t.Run(fmt.Sprintf("%s: %s", "SQL FS", tt.name), func(t *testing.T) {
-			setupSqlFS()
-			defer cleanUp()
-			for i, step := range tt.steps {
-				executeTestStep(t, ctx, step, i, filestorage)
-			}
-		})
-	}
 }

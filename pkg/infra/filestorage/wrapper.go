@@ -24,10 +24,6 @@ type wrapper struct {
 	pathFilters *PathFilters
 }
 
-func getPath(folderPath string, name string) string {
-	return fmt.Sprintf("%s%s%s", folderPath, Delimiter, name)
-}
-
 func getParentFolderPath(path string) string {
 	if path == Delimiter || path == "" {
 		return Delimiter
@@ -80,8 +76,16 @@ func validatePath(path string) error {
 	return nil
 }
 
-func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
+func (b wrapper) validatePath(path string) error {
 	if err := validatePath(path); err != nil {
+		b.log.Error("Path failed validation", "path", path, "error", err)
+		return err
+	}
+	return nil
+}
+
+func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
+	if err := b.validatePath(path); err != nil {
 		return nil, err
 	}
 
@@ -92,7 +96,7 @@ func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 	return b.wrapped.Get(ctx, path)
 }
 func (b wrapper) Delete(ctx context.Context, path string) error {
-	if err := validatePath(path); err != nil {
+	if err := b.validatePath(path); err != nil {
 		return err
 	}
 
@@ -115,7 +119,7 @@ func detectContentType(path string, originalGuess string) string {
 }
 
 func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
-	if err := validatePath(file.Path); err != nil {
+	if err := b.validatePath(file.Path); err != nil {
 		return err
 	}
 
@@ -155,7 +159,7 @@ func (b wrapper) withDefaults(options *ListOptions, folderQuery bool) *ListOptio
 }
 
 func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
-	if err := validatePath(path); err != nil {
+	if err := b.validatePath(path); err != nil {
 		return nil, err
 	}
 
@@ -168,28 +172,15 @@ func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, opt
 }
 
 func (b wrapper) ListFolders(ctx context.Context, path string, options *ListOptions) ([]FileMetadata, error) {
-	if err := validatePath(path); err != nil {
+	if err := b.validatePath(path); err != nil {
 		return nil, err
 	}
 
 	return b.wrapped.ListFolders(ctx, path, b.withDefaults(options, true))
 }
 
-func (b wrapper) CreateFolder(ctx context.Context, path string, folderName string) error {
-	fullPath := getPath(path, folderName)
-	if err := validatePath(fullPath); err != nil {
-		return err
-	}
-
-	if !b.pathFilters.isAllowed(fullPath) {
-		return nil
-	}
-
-	return b.wrapped.CreateFolder(ctx, path, folderName)
-}
-
-func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
-	if err := validatePath(path); err != nil {
+func (b wrapper) CreateFolder(ctx context.Context, path string) error {
+	if err := b.validatePath(path); err != nil {
 		return err
 	}
 
@@ -197,16 +188,52 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 		return nil
 	}
 
-	filesInFolder, err := b.ListFiles(ctx, path, &Paging{First: 1}, &ListOptions{Recursive: true})
+	return b.wrapped.CreateFolder(ctx, path)
+}
+
+func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
+	if err := b.validatePath(path); err != nil {
+		return err
+	}
+
+	if !b.pathFilters.isAllowed(path) {
+		return nil
+	}
+
+	isEmpty, err := b.isFolderEmpty(ctx, path)
 	if err != nil {
 		return err
 	}
 
-	if len(filesInFolder.Files) > 0 {
+	if !isEmpty {
 		return fmt.Errorf("folder %s is not empty - cant remove it", path)
 	}
 
 	return b.wrapped.DeleteFolder(ctx, path)
+}
+
+func (b wrapper) isFolderEmpty(ctx context.Context, path string) (bool, error) {
+	filesInFolder, err := b.ListFiles(ctx, path, &Paging{First: 1}, &ListOptions{Recursive: true})
+	if err != nil {
+		return false, err
+	}
+
+	if len(filesInFolder.Files) > 0 {
+		return false, nil
+	}
+
+	folders, err := b.ListFolders(ctx, path, &ListOptions{
+		Recursive: true,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if len(folders) > 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (c wrapper) close() error {

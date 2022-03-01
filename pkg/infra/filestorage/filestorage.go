@@ -134,12 +134,16 @@ func (b service) ListFolders(ctx context.Context, path string, options *ListOpti
 	return filestorage.ListFolders(ctx, path, options)
 }
 
-func (b service) CreateFolder(ctx context.Context, path string, folderName string) error {
+func (b service) CreateFolder(ctx context.Context, path string) error {
 	return errors.New("not available")
 }
 
 func (b service) DeleteFolder(ctx context.Context, path string) error {
 	return errors.New("not available")
+}
+
+func (b service) IsFolderEmpty(ctx context.Context, path string) (bool, error) {
+	return true, errors.New("not available")
 }
 
 func (c service) close() error {

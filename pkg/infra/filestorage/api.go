@@ -96,10 +96,11 @@ type FileStorage interface {
 	Delete(ctx context.Context, path string) error
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
-	ListFiles(ctx context.Context, path string, paging *Paging, options *ListOptions) (*ListFilesResponse, error)
-	ListFolders(ctx context.Context, path string, options *ListOptions) ([]FileMetadata, error)
+	// todo: tests for both /a/folder and /a/folder/
+	ListFiles(ctx context.Context, prefix string, paging *Paging, options *ListOptions) (*ListFilesResponse, error)
+	ListFolders(ctx context.Context, prefix string, options *ListOptions) ([]FileMetadata, error)
 
-	CreateFolder(ctx context.Context, path string, name string) error
+	CreateFolder(ctx context.Context, path string) error
 	DeleteFolder(ctx context.Context, path string) error
 
 	close() error

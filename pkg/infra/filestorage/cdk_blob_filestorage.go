@@ -360,7 +360,7 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 	}
 
 	if currentDirPath != "" {
-		foundPaths = append(foundPaths, currentDirPath)
+		foundPaths = append(foundPaths, fixPath(currentDirPath))
 	}
 	return foundPaths, nil
 }
@@ -400,26 +400,79 @@ func (c cdkBlobStorage) ListFolders(ctx context.Context, prefix string, options 
 	return folders, err
 }
 
-func (c cdkBlobStorage) CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error {
-	directoryMarkerParentPath := fmt.Sprintf("%s%s%s", parentFolderPath, Delimiter, folderName)
-	directoryMarkerPath := fmt.Sprintf("%s%s%s", directoryMarkerParentPath, Delimiter, directoryMarker)
-
-	exists, err := c.bucket.Exists(ctx, strings.ToLower(directoryMarkerPath))
-
-	if err != nil {
-		return err
+func precedingFolders(path string) []string {
+	parts := strings.Split(path, Delimiter)
+	if len(parts) == 0 {
+		return []string{}
 	}
 
-	if exists {
-		return nil
+	if len(parts) == 1 {
+		return []string{path}
 	}
 
-	metadata := make(map[string]string)
-	metadata[originalPathAttributeKey] = directoryMarkerPath
-	err = c.bucket.WriteAll(ctx, strings.ToLower(directoryMarkerPath), make([]byte, 0), &blob.WriterOptions{
-		Metadata: metadata,
-	})
-	return err
+	currentDirPath := ""
+	firstPart := 0
+	if parts[0] == "" {
+		firstPart = 1
+		currentDirPath = Delimiter
+	}
+
+	res := make([]string, 0)
+	for i := firstPart; i < len(parts); i++ {
+		res = append(res, currentDirPath+parts[i])
+		currentDirPath += parts[i] + Delimiter
+	}
+
+	return res
+}
+
+func (c cdkBlobStorage) CreateFolder(ctx context.Context, path string) error {
+	c.log.Info("Creating folder", "path", path)
+
+	precedingFolders := precedingFolders(path)
+	folderToOriginalCasing := make(map[string]string, 0)
+	foundFolderIndex := -1
+
+	for i := len(precedingFolders) - 1; i >= 0; i-- {
+		currentFolder := precedingFolders[i]
+		att, err := c.bucket.Attributes(ctx, strings.ToLower(currentFolder+Delimiter+directoryMarker))
+		if err != nil {
+			if gcerrors.Code(err) != gcerrors.NotFound {
+				return err
+			}
+			folderToOriginalCasing[currentFolder] = currentFolder
+			continue
+		}
+
+		if path, ok := att.Metadata[originalPathAttributeKey]; ok {
+			folderToOriginalCasing[currentFolder] = getParentFolderPath(path)
+			foundFolderIndex = i
+			break
+		} else {
+			folderToOriginalCasing[currentFolder] = currentFolder
+		}
+	}
+
+	for i := foundFolderIndex + 1; i < len(precedingFolders); i++ {
+		currentFolder := precedingFolders[i]
+
+		previousFolderOriginalCasing := ""
+		if i > 0 {
+			previousFolderOriginalCasing = folderToOriginalCasing[precedingFolders[i-1]]
+		}
+
+		metadata := make(map[string]string)
+		currentFolderWithOriginalCasing := previousFolderOriginalCasing + Delimiter + getName(currentFolder)
+		metadata[originalPathAttributeKey] = currentFolderWithOriginalCasing + Delimiter + directoryMarker
+		if err := c.bucket.WriteAll(ctx, strings.ToLower(metadata[originalPathAttributeKey]), make([]byte, 0), &blob.WriterOptions{
+			Metadata: metadata,
+		}); err != nil {
+			return err
+		}
+		c.log.Info("Created folder", "path", currentFolderWithOriginalCasing, "marker", metadata[originalPathAttributeKey])
+	}
+
+	return nil
 }
 
 func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string) error {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type file struct {
@@ -364,31 +365,54 @@ func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string,
 	return folders, err
 }
 
-func (s dbFileStorage) CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error {
+func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 	now := time.Now()
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		existing := &file{}
+	precedingFolders := precedingFolders(path)
 
-		directoryMarkerParentPath := fmt.Sprintf("%s%s%s", parentFolderPath, Delimiter, folderName)
-		directoryMarkerPath := fmt.Sprintf("%s%s%s", directoryMarkerParentPath, Delimiter, directoryMarker)
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(directoryMarkerPath)).Get(existing)
-		if err != nil {
-			return err
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var insertErr error
+		sess.MustLogSQL(true)
+		previousFolder := ""
+		for i := 0; i < len(precedingFolders); i++ {
+			existing := &file{}
+			directoryMarkerParentPath := previousFolder + Delimiter + getName(precedingFolders[i])
+			previousFolder = directoryMarkerParentPath
+			directoryMarkerPath := fmt.Sprintf("%s%s%s", directoryMarkerParentPath, Delimiter, directoryMarker)
+			lower := strings.ToLower(directoryMarkerPath)
+			exists, err := sess.Table("file").Where("LOWER(path) = ?", lower).Get(existing)
+			if err != nil {
+				insertErr = err
+				return err
+			}
+
+			if exists {
+				previousFolder = existing.ParentFolderPath
+				continue
+			}
+
+			file := &file{
+				Path:             strings.ToLower(directoryMarkerPath),
+				ParentFolderPath: directoryMarkerParentPath,
+				Contents:         make([]byte, 0),
+				Updated:          now,
+				Created:          now,
+			}
+			_, err = sess.Insert(file)
+			if err != nil {
+				insertErr = err
+				break
+			}
+			s.log.Info("Created folder", "markerPath", file.Path, "parent", file.ParentFolderPath)
 		}
 
-		if exists {
-			return nil
+		if insertErr != nil {
+			if rollErr := sess.Rollback(); rollErr != nil {
+				return errutil.Wrapf(insertErr, "Rolling back transaction due to error failed: %s", rollErr)
+			}
+			return insertErr
 		}
 
-		file := &file{
-			Path:             directoryMarkerPath,
-			ParentFolderPath: directoryMarkerParentPath,
-			Contents:         make([]byte, 0),
-			Updated:          now,
-			Created:          now,
-		}
-		_, err = sess.Insert(file)
-		return err
+		return sess.Commit()
 	})
 
 	return err
