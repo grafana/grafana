@@ -45,6 +45,7 @@ export interface Props extends Themeable2 {
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
+  cellLinkFn?: () => { link: any; onClick: any; cellLinkStyle: any };
 }
 
 export enum BarGaugeDisplayMode {
@@ -107,7 +108,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderBasicAndGradientBars(): ReactNode {
-    const { value, showUnfilled } = this.props;
+    const { value, showUnfilled, cellLinkFn } = this.props;
 
     const styles = getBasicAndGradientStyles(this.props);
 
@@ -117,6 +118,7 @@ export class BarGauge extends PureComponent<Props> {
           data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={styles.value}
+          cellLinkFn={cellLinkFn}
         />
         {showUnfilled && <div style={styles.emptyBar} />}
         <div style={styles.bar} />
@@ -125,7 +127,8 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
+    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text, cellLinkFn } =
+      this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
       calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -192,6 +195,7 @@ export class BarGauge extends PureComponent<Props> {
           data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={valueStyles}
+          cellLinkFn={cellLinkFn}
         />
       </div>
     );

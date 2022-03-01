@@ -5,6 +5,7 @@ export interface Props extends Omit<HTMLProps<HTMLDivElement>, 'className' | 'va
   value: FormattedValue;
   className?: string;
   style?: CSSProperties;
+  cellLinkFn?: () => { link: any; onClick: any; cellLinkStyle: any };
 }
 
 function fontSizeReductionFactor(fontSize: number) {
@@ -17,7 +18,7 @@ function fontSizeReductionFactor(fontSize: number) {
   return 0.6;
 }
 
-export const FormattedValueDisplay: FC<Props> = ({ value, className, style, ...htmlProps }) => {
+export const FormattedValueDisplay: FC<Props> = ({ value, className, style, cellLinkFn, ...htmlProps }) => {
   const hasPrefix = (value.prefix ?? '').length > 0;
   const hasSuffix = (value.suffix ?? '').length > 0;
   let suffixStyle;
@@ -28,13 +29,26 @@ export const FormattedValueDisplay: FC<Props> = ({ value, className, style, ...h
     suffixStyle = { fontSize: fontSize * reductionFactor };
   }
 
+  const { link, onClick, cellLinkStyle } = cellLinkFn
+    ? cellLinkFn()
+    : { link: null, onClick: null, cellLinkStyle: null };
+
   return (
     <div className={className} style={style} {...htmlProps}>
-      <div>
-        {hasPrefix && <span>{value.prefix}</span>}
-        <span>{value.text}</span>
-        {hasSuffix && <span style={suffixStyle}>{value.suffix}</span>}
-      </div>
+      {!link && (
+        <>
+          {hasPrefix && <span>{value.prefix}</span>}
+          <span>{value.text}</span>
+          {hasSuffix && <span style={suffixStyle}>{value.suffix}</span>}
+        </>
+      )}
+      {link && (
+        <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={cellLinkStyle}>
+          {hasPrefix && <span>{value.prefix}</span>}
+          <span>{value.text}</span>
+          {hasSuffix && <span style={suffixStyle}>{value.suffix}</span>}
+        </a>
+      )}
     </div>
   );
 };
