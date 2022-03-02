@@ -78,7 +78,7 @@ func (s *StoreImpl) GetUserStars(ctx context.Context, query *models.GetUserStars
 		var stars = make([]models.Star, 0)
 		err := dbSession.Where("user_id=?", query.UserId).Find(&stars)
 
-		query.Result = make(map[int64]bool)
+		userStars = make(map[int64]bool)
 		for _, star := range stars {
 			query.Result[star.DashboardId] = true
 		}
