@@ -16,14 +16,22 @@ import {
   SuggestionsPlugin,
 } from '../../slate-plugins';
 
-import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
+import {
+  makeValue,
+  SCHEMA,
+  CompletionItemGroup,
+  TypeaheadOutput,
+  TypeaheadInput,
+  SuggestionsState,
+  Themeable2,
+} from '../..';
 import { selectors } from '@grafana/e2e-selectors';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { withTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
-export interface QueryFieldProps {
+export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
   cleanText?: (text: string) => string;
   disabled?: boolean;
