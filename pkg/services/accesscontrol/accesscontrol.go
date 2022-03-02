@@ -44,7 +44,7 @@ type PermissionsServices interface {
 
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
