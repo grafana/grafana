@@ -112,6 +112,7 @@ export function OperationList<T extends QueryWithOperations>({
               autoFocus={true}
               alwaysOpen={true}
               showActiveLevelLabel={false}
+              placeholder={'Search'}
             />
           ) : (
             <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} />
