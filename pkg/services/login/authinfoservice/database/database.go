@@ -48,7 +48,7 @@ func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *m
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
-	if err := s.bus.Dispatch(ctx, authInfoQuery); err != nil {
+	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		return err
 	}
 

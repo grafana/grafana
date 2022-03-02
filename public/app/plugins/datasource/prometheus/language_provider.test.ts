@@ -382,6 +382,7 @@ describe('Language completion provider', () => {
     });
 
     it('returns a refresher on label context and unavailable metric', async () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('metric{}');
       const ed = new SlateEditor({ value });
@@ -394,6 +395,7 @@ describe('Language completion provider', () => {
       });
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toEqual([]);
+      expect(console.warn).toHaveBeenCalledWith('Server did not return any values for selector = {__name__="metric"}');
     });
 
     it('returns label values on label context when given a metric and a label key', async () => {
@@ -598,6 +600,7 @@ describe('Language completion provider', () => {
   });
   describe('disabled metrics lookup', () => {
     it('does not issue any metadata requests when lookup is disabled', async () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
       const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
@@ -619,6 +622,7 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
       await instance.provideCompletionItems(args);
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(console.warn).toHaveBeenCalledWith('Server did not return any values for selector = {}');
     });
     it('issues metadata requests when lookup is not disabled', async () => {
       const datasource: PrometheusDatasource = {

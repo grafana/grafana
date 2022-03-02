@@ -151,12 +151,10 @@ describe('RichHistoryLocalStorage', () => {
 
       // one not starred replaced with a newly added starred item
       const removedNotStarredItems = extraItems + 1; // + 1 to make space for the new item
-      const newHistory = store.getObject(key);
+      const newHistory = store.getObject<typeof history>(key)!;
       expect(newHistory).toHaveLength(MAX_HISTORY_ITEMS); // starred item added
-      expect(newHistory.filter((h: RichHistoryQuery) => h.starred)).toHaveLength(starredItemsInHistory + 1); // starred item added
-      expect(newHistory.filter((h: RichHistoryQuery) => !h.starred)).toHaveLength(
-        starredItemsInHistory - removedNotStarredItems
-      );
+      expect(newHistory.filter((h) => h.starred)).toHaveLength(starredItemsInHistory + 1); // starred item added
+      expect(newHistory.filter((h) => !h.starred)).toHaveLength(starredItemsInHistory - removedNotStarredItems);
     });
   });
 

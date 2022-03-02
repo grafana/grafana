@@ -189,7 +189,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
   const xRange: Scale.Range = (u, min, max) => {
     min = 0;
-    max = u.data[0].length - 1;
+    max = Math.max(1, u.data[0].length - 1);
 
     let pctOffset = 0;
 
@@ -199,13 +199,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     // expand scale range by equal amounts on both ends
-    let rn = max - min; // TODO: clamp to 1?
+    let rn = max - min;
 
-    let upScale = 1 / (1 - pctOffset * 2);
-    let offset = (upScale * rn - rn) / 2;
+    if (pctOffset === 0.5) {
+      min -= rn;
+    } else {
+      let upScale = 1 / (1 - pctOffset * 2);
+      let offset = (upScale * rn - rn) / 2;
 
-    min -= offset;
-    max += offset;
+      min -= offset;
+      max += offset;
+    }
 
     return [min, max];
   };

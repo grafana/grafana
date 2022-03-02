@@ -267,7 +267,7 @@ export class CloudWatchDatasource
     const validMetricsQueries = metricQueries
       .filter(this.filterMetricQuery)
       .map((item: CloudWatchMetricsQuery): MetricQuery => {
-        item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
+        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
         item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
         item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
         item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);
@@ -669,7 +669,7 @@ export class CloudWatchDatasource
       region: this.templateSrv.replace(this.getActualRegion(region)),
     });
 
-    return values.map((v) => ({ metricName: v.label, namespace: v.text }));
+    return values.map((v) => ({ metricName: v.value, namespace: v.text }));
   }
 
   async getDimensionKeys(
@@ -867,45 +867,6 @@ export class CloudWatchDatasource
       target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
       find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
-  }
-
-  async testDatasource() {
-    // use billing metrics for test
-    const region = this.defaultRegion;
-    const namespace = 'AWS/Billing';
-    const metricName = 'EstimatedCharges';
-    const dimensions = {};
-
-    let queryTypes: string[] = [];
-    const statuses = [];
-    try {
-      await this.getDimensionValues(region ?? '', namespace, metricName, 'ServiceName', dimensions);
-      queryTypes.push('metrics');
-    } catch (error) {
-      console.log('metrics!!', error);
-      statuses.push(error.message); // TODO: return the aws response info (access denied, etc) from the backend
-    }
-
-    try {
-      // TODO: find a good logs permission query
-      throw new Error('some error');
-      queryTypes.push('logs');
-    } catch (error) {
-      statuses.push(error.message);
-    }
-
-    if (queryTypes.length) {
-      return {
-        status: 'success',
-        message: `Test successful for ${queryTypes.join(' and ')}`,
-      };
-    }
-
-    return {
-      status: 'error',
-      message: statuses.join(', '),
-      details: 'Health check failed',
-    };
   }
 
   awsRequest(url: string, data: MetricRequest, headers: Record<string, any> = {}): Observable<TSDBResponse> {
