@@ -36,14 +36,14 @@ describe('Slider', () => {
     expect(wrapper.html()).toContain('aria-valuenow="50"');
   });
 
-  it('defaults after blur if input value is outside of range', () => {
+  it('check that input is clamped within range', () => {
     const wrapper = mount(<Slider {...sliderProps} value={10} min={10} max={100} />);
     const sliderInput = wrapper.find('input');
     sliderInput.simulate('focus');
     sliderInput.simulate('change', { target: { value: 200 } });
     // re-grab to check value is out of range before blur
     const sliderInputIncorrect = wrapper.find('input');
-    expect(sliderInputIncorrect.get(0).props.value).toEqual('200');
+    expect(sliderInputIncorrect.get(0).props.value).toEqual('100');
 
     sliderInput.simulate('blur');
     expect(wrapper.html()).toContain('aria-valuenow="100"');

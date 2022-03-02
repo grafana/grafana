@@ -1,4 +1,4 @@
-import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
+import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent, KeyboardEvent } from 'react';
 import SliderComponent from 'rc-slider';
 
 import { cx } from '@emotion/css';
@@ -32,13 +32,20 @@ export const Slider: FunctionComponent<SliderProps> = ({
 
   const onSliderChange = useCallback(
     (v: number) => {
+      if (v > max) {
+        v = max;
+      }
+      if (v < min) {
+        v = min;
+      }
+
       setSliderValue(v);
 
       if (onChange) {
         onChange(v);
       }
     },
-    [setSliderValue, onChange]
+    [setSliderValue, onChange, min, max]
   );
 
   const onSliderInputChange = useCallback(
@@ -49,17 +56,43 @@ export const Slider: FunctionComponent<SliderProps> = ({
         v = 0;
       }
 
-      setSliderValue(v);
-
-      if (onChange) {
-        onChange(v);
-      }
+      onSliderChange(v);
 
       if (onAfterChange) {
         onAfterChange(v);
       }
     },
-    [onChange, onAfterChange]
+    [onSliderChange, onAfterChange]
+  );
+
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (isNaN(+e.key) && !e.ctrlKey) {
+        switch (e.key) {
+          case 'ArrowUp':
+            onSliderChange(value! + (step ?? 1));
+            break;
+          case 'ArrowDown':
+            onSliderChange(value! - (step ?? 1));
+            break;
+
+          // Do normal behavior
+          case 'ArrowLeft':
+          case 'ArrowRight':
+          case 'Backspace':
+          case 'Delete':
+          case '-': // negative numbers
+          case '.': // decimal places
+            return;
+
+          // Skip everything else
+          default:
+            console.log('SKIP key', e.key);
+        }
+        e.preventDefault();
+      }
+    },
+    [value, step, onSliderChange]
   );
 
   // Check for min/max on input blur so user is able to enter
@@ -99,15 +132,14 @@ export const Slider: FunctionComponent<SliderProps> = ({
           marks={marks}
           included={included}
         />
-        {/* Uses text input so that the number spinners are not shown */}
+        {/* Uses text input so that the number spinners are not shown; manually implements arrow keys and validation */}
         <Input
           type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
           value={`${sliderValue}`} // to fix the react leading zero issue
           onChange={onSliderInputChange}
           onBlur={onSliderInputBlur}
-          min={min}
-          max={max}
+          onKeyDown={onKeyDown}
         />
       </label>
     </div>
