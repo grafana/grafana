@@ -11,47 +11,47 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   const [inputValue, setInputValue] = useState(isNaN(value) ? '' : value.toString());
 
   const onValueChange = useCallback(
-    (e: React.SyntheticEvent) => {
-      let v: number | undefined = +inputValue;
-      if (isNaN(v)) {
-        v = undefined;
+    (e: React.SyntheticEvent<HTMLInputElement>) => {
+      const num = e.currentTarget.value;
+      let value: number | undefined = undefined;
+
+      if (num && !Number.isNaN(e.currentTarget.valueAsNumber)) {
+        value = e.currentTarget.valueAsNumber;
       }
+
       if (e.hasOwnProperty('key')) {
         // handling keyboard event
         const evt = e as React.KeyboardEvent<HTMLInputElement>;
         if (evt.key === 'Enter') {
-          onChange(v);
+          onChange(value);
         }
       } else {
         // handling form event
-        onChange(v);
+        onChange(value);
       }
     },
-    [onChange, inputValue]
+    [onChange]
   );
 
   const onLocalChange = useCallback(
     (e: React.SyntheticEvent<HTMLInputElement>) => {
-      let num = e.currentTarget.valueAsNumber;
+      const num = e.currentTarget.valueAsNumber;
+      let newValue: number | undefined = undefined;
 
-      if (isNaN(num)) {
-        const v = e.currentTarget.value;
-        if (v === '' || v === '-') {
-          setInputValue(v);
-        }
-      } else {
+      if (!Number.isNaN(num)) {
         if (settings?.min !== undefined && settings.min > num) {
-          num = settings.min;
+          newValue = settings.min;
+        } else if (settings?.max !== undefined && settings?.max < num) {
+          newValue = settings.max;
+        } else {
+          newValue = Number(e.currentTarget.value);
         }
 
-        if (settings?.max !== undefined && settings.max > num) {
-          num = settings.max;
-        }
         if (settings?.integer) {
-          num = Math.floor(num);
+          newValue = Math.floor(newValue);
         }
-        setInputValue(num.toString());
       }
+      setInputValue(newValue ? newValue.toString() : '');
     },
     [settings?.max, settings?.min, settings?.integer, setInputValue]
   );
