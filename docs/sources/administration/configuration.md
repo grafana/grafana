@@ -1863,7 +1863,7 @@ Which address the Intent API will be listening on, must be in `host:port` format
 
 ### cert_file_path
 
-Path to TLS certificate that would be used by the Intent API. Since k8s effectively enforces TLS, this is required. Unset by default, make sure to set it if using the Intent API.
+Path to TLS certificate that would be used by the Intent API. Since k8s effectively enforces TLS, this is required. Unset by default, it must be set to enable Intent API.
 
 ### key_file_path
 
