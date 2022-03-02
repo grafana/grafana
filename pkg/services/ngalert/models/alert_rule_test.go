@@ -319,33 +319,11 @@ func TestDiff(t *testing.T) {
 		if rule1.DashboardUID != rule2.DashboardUID {
 			diff := diffs.GetDiffsForField("DashboardUID")
 			assert.Len(t, diff, 1)
-
-			if rule1.DashboardUID == nil {
-				assert.True(t, diff[0].Left.IsNil())
-			} else {
-				assert.Equal(t, *rule1.DashboardUID, diff[0].Left.Elem().String())
-			}
-			if rule2.DashboardUID == nil {
-				assert.True(t, diff[0].Right.IsNil())
-			} else {
-				assert.Equal(t, *rule2.DashboardUID, diff[0].Right.Elem().String())
-			}
 			difCnt++
 		}
 		if rule1.PanelID != rule2.PanelID {
 			diff := diffs.GetDiffsForField("PanelID")
 			assert.Len(t, diff, 1)
-
-			if rule1.PanelID == nil {
-				assert.True(t, diff[0].Left.IsNil())
-			} else {
-				assert.Equal(t, *rule1.PanelID, diff[0].Left.Elem().Int())
-			}
-			if rule2.PanelID == nil {
-				assert.True(t, diff[0].Right.IsNil())
-			} else {
-				assert.Equal(t, *rule2.PanelID, diff[0].Right.Elem().Int())
-			}
 			difCnt++
 		}
 		if rule1.RuleGroup != rule2.RuleGroup {

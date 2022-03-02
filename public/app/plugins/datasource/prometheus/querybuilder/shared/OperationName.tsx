@@ -47,7 +47,7 @@ export const OperationName = React.memo<Props>(({ operation, def, index, onChang
           title={'Click to replace with alternative function'}
         >
           {nameElement}
-          <Icon className={`${styles.dropdown} operation-header-show-on-hover`} name="arrow-down" size="sm" />
+          <Icon className={`${styles.dropdown} operation-header-show-on-hover`} name="angle-down" size="md" />
         </button>
       )}
       {state.isOpen && (

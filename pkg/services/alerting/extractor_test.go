@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -293,6 +295,69 @@ func TestAlertRuleExtraction(t *testing.T) {
 		query := condition.Get("query")
 		require.EqualValues(t, 15, query.Get("datasourceId").MustInt64())
 	})
+}
+
+func TestFilterPermissionsErrors(t *testing.T) {
+	RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
+		return &FakeCondition{}, nil
+	})
+
+	// mock data
+	defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
+
+	json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
+	require.Nil(t, err)
+	dashJSON, err := simplejson.NewJson(json)
+	require.Nil(t, err)
+
+	dsPermissions := permissions.NewMockDatasourcePermissionService()
+	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
+	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService)
+
+	tc := []struct {
+		name        string
+		result      []*models.DataSource
+		err         error
+		expectedErr error
+	}{
+		{
+			"Data sources are filtered and return results don't return an error",
+			[]*models.DataSource{defaultDs},
+			nil,
+			nil,
+		},
+		{
+			"Data sources are filtered but return empty results should return error",
+			nil,
+			nil,
+			models.ErrDataSourceAccessDenied,
+		},
+		{
+			"Using default OSS implementation doesn't return an error",
+			nil,
+			permissions.ErrNotImplemented,
+			nil,
+		},
+		{
+			"Returning an error different from ErrNotImplemented should fails",
+			nil,
+			errors.New("random error"),
+			errors.New("random error"),
+		},
+	}
+
+	for _, test := range tc {
+		t.Run(test.name, func(t *testing.T) {
+			dsPermissions.DsResult = test.result
+			dsPermissions.ErrResult = test.err
+			_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true), DashAlertInfo{
+				User:  nil,
+				Dash:  models.NewDashboardFromJson(dashJSON),
+				OrgID: 1,
+			})
+			assert.Equal(t, err, test.expectedErr)
+		})
+	}
 }
 
 type fakeDatasourceService struct {
