@@ -3,16 +3,15 @@ package filestorage
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 )
 
-type StorageName string
+// type StorageName string
 
-const (
-	StorageNameGrafanaDS StorageName = "grafanads"
-)
+// const (
+// 	StorageNameGrafanaDS StorageName = "grafanads"
+// )
 
 var (
 	ErrRelativePath          = errors.New("path cant be relative")
@@ -23,13 +22,13 @@ var (
 	Delimiter                = "/"
 )
 
-func Path(path string, storageName StorageName) string {
-	if strings.HasPrefix(path, Delimiter) {
-		return fmt.Sprintf("%s%s", string(storageName), path)
-	}
+// func Path(path string, storageName StorageName) string {
+// 	if strings.HasPrefix(path, Delimiter) {
+// 		return fmt.Sprintf("%s%s", string(storageName), path)
+// 	}
 
-	return fmt.Sprintf("%s%s%s", string(storageName), Delimiter, path)
-}
+// 	return fmt.Sprintf("%s%s%s", string(storageName), Delimiter, path)
+// }
 
 type File struct {
 	Contents []byte

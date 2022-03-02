@@ -24,6 +24,10 @@ type wrapper struct {
 	pathFilters *PathFilters
 }
 
+var (
+	_ FileStorage = (*wrapper)(nil) // wrapper implements FileStorage
+)
+
 func getParentFolderPath(path string) string {
 	if path == Delimiter || path == "" {
 		return Delimiter
