@@ -171,9 +171,24 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       cursor: pointer;
     `,
     paginationWrapper: css`
-      align-self: center;
-      padding-top: ${theme.spacing(0.5)};
+      display: flex;
+      background: ${headerBg};
+      height: ${cellHeight}px;
+      justify-content: space-between;
+      padding-left: ${theme.spacing(0.5)};
+      padding-right: ${theme.spacing(0.5)};
+      align-items: center;
+      width: 100%;
+      border-top: 1px solid ${theme.colors.border.weak};
+      li {
+        margin-bottom: 0;
+      }
     `,
+    paginationSummary: css`
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+    `,
+
     tableContentWrapper: (totalColumnsWidth: number) => css`
       width: ${totalColumnsWidth ?? '100%'};
       display: flex;

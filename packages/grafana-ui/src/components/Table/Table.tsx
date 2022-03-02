@@ -245,8 +245,30 @@ export const Table: FC<Props> = memo((props: Props) => {
   if (pageSize) {
     listHeight -= tableStyles.cellHeight;
   }
-  const itemCount = pageSize ? page.length : data.length;
 
+  const itemCount = pageSize ? page.length : data.length;
+  let paginationEl = null;
+  if (pageSize) {
+    const itemsRangeStart = state.pageIndex * pageSize + 1;
+    let itemsRangeEnd = itemsRangeStart + pageSize - 1;
+    if (itemsRangeEnd > itemCount) {
+      itemsRangeEnd = data.length;
+    }
+    paginationEl = (
+      <div className={tableStyles.paginationWrapper}>
+        <div className={tableStyles.paginationSummary}>
+          {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
+        </div>
+        <div>
+          <Pagination
+            currentPage={state.pageIndex + 1}
+            numberOfPages={pageOptions.length}
+            onNavigate={(toPage) => gotoPage(toPage - 1)}
+          />
+        </div>
+      </div>
+    );
+  }
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
@@ -276,15 +298,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               totalColumnsWidth={totalColumnsWidth}
             />
           )}
-          {pageSize && (
-            <div className={tableStyles.paginationWrapper}>
-              <Pagination
-                currentPage={state.pageIndex + 1}
-                numberOfPages={pageOptions.length}
-                onNavigate={(toPage) => gotoPage(toPage - 1)}
-              />
-            </div>
-          )}
+          {paginationEl}
         </div>
       </CustomScrollbar>
     </div>
