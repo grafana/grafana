@@ -249,6 +249,26 @@ describe('datasource', () => {
       });
     });
   });
+  describe('resource requests', () => {
+    it('should map resource response to metric response', async () => {
+      const datasource = setupMockedDataSource().datasource;
+      datasource.doMetricResourceRequest = jest.fn().mockResolvedValue([
+        {
+          text: 'AWS/EC2',
+          value: 'CPUUtilization',
+        },
+        {
+          text: 'AWS/Redshift',
+          value: 'CPUPercentage',
+        },
+      ]);
+      const allMetrics = await datasource.getAllMetrics('us-east-2');
+      expect(allMetrics[0].metricName).toEqual('CPUUtilization');
+      expect(allMetrics[0].namespace).toEqual('AWS/EC2');
+      expect(allMetrics[1].metricName).toEqual('CPUPercentage');
+      expect(allMetrics[1].namespace).toEqual('AWS/Redshift');
+    });
+  });
 
   describe('performTimeSeriesQuery', () => {
     it('should return the same length of data as result', async () => {
