@@ -195,7 +195,7 @@ datasources:
       timeInterval: 10s
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: 7.10.0
 
   - name: gdev-elasticsearch-v7-logs
     type: elasticsearch
@@ -205,7 +205,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: 7.10.0
 
   - name: gdev-elasticsearch-v7-filebeat
     type: elasticsearch
@@ -215,7 +215,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: 7.10.0
       timeInterval: "10s"
       logMessageField: message
       logLevelField: fields.level
@@ -228,7 +228,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: 7.10.0
       timeInterval: "10s"
 
   - name: gdev-mysql

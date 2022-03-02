@@ -47,7 +47,7 @@ export const OperationName = React.memo<Props>(({ operation, def, index, onChang
           title={'Click to replace with alternative function'}
         >
           {nameElement}
-          <Icon className={`${styles.dropdown} operation-header-show-on-hover`} name="arrow-down" size="sm" />
+          <Icon className={`${styles.dropdown} operation-header-show-on-hover`} name="angle-down" size="md" />
         </button>
       )}
       {state.isOpen && (
@@ -60,10 +60,9 @@ export const OperationName = React.memo<Props>(({ operation, def, index, onChang
           onCloseMenu={onToggleSwitcher}
           onChange={(value) => {
             if (value.value) {
-              onChange(index, {
-                ...operation,
-                id: value.value.id,
-              });
+              const newDef = queryModeller.getOperationDef(value.value.id);
+              let changedOp = { ...operation, id: value.value.id };
+              onChange(index, def.changeTypeHandler ? def.changeTypeHandler(changedOp, newDef) : changedOp);
             }
           }}
         />

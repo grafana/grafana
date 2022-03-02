@@ -22,6 +22,7 @@ import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupT
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
 import { heatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
+import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -48,5 +49,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     fieldLookupTransformRegistryItem,
     extractFieldsTransformRegistryItem,
     heatmapTransformRegistryItem,
+    groupingToMatrixTransformRegistryItem,
   ];
 };

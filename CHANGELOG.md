@@ -1,3 +1,17 @@
+<!-- 8.4.2 START -->
+
+# 8.4.2 (2022-02-23)
+
+### Features and enhancements
+
+- **OAuth:** Add setting to skip org assignment for external users. [#34834](https://github.com/grafana/grafana/pull/34834), [@baez90](https://github.com/baez90)
+- **Tracing:** Add option to map tag names to log label names in trace to logs settings. [#45178](https://github.com/grafana/grafana/pull/45178), [@connorlindsey](https://github.com/connorlindsey)
+
+### Bug fixes
+
+- **Explore:** Fix closing split pane when logs panel is used. [#45602](https://github.com/grafana/grafana/pull/45602), [@ifrost](https://github.com/ifrost)
+
+<!-- 8.4.2 END -->
 <!-- 8.4.1 START -->
 
 # 8.4.1 (2022-02-18)
@@ -86,6 +100,16 @@ AngularJS plugin support is now in a deprecated state, meaning it will be remove
 - **Navigation:** Implement Keyboard Navigation. [#41618](https://github.com/grafana/grafana/pull/41618), [@axelavargas](https://github.com/axelavargas)
 - **News:** Reload feed when changing the time range or refreshing. [#42217](https://github.com/grafana/grafana/pull/42217), [@ashharrison90](https://github.com/ashharrison90)
 - **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
+
+<!-- 8.3.7 START -->
+
+# 8.3.7 (2022-03-01)
+
+### Bug fixes
+
+- **Provisioning:** Ensure that the default value for orgID is set when provisioning datasources to be deleted. [#44244](https://github.com/grafana/grafana/pull/44244), [@filewalkwithme](https://github.com/filewalkwithme)
+
+<!-- 8.3.7 END -->
 
 <!-- 8.3.6 START -->
 
