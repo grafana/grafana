@@ -77,8 +77,7 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 }
 
 type AccessControlDashboardPermissionFilter struct {
-	User            *models.SignedInUser
-	PermissionLevel models.PermissionType
+	User *models.SignedInUser
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {

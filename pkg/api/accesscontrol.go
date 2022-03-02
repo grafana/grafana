@@ -267,11 +267,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:dashboards:creator",
 			DisplayName: "Dashboard creator",
-			Description: "Create dashboard in general folder",
+			Description: "Create dashboard in general folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionFoldersRead, Scope: "folders:id:0"},
-				{Action: ac.ActionDashboardsCreate, Scope: "folders:id:0"},
+				{Action: ac.ActionFoldersRead, Scope: ac.Scope("folders","id","0")},
+				{Action: ac.ActionDashboardsCreate, Scope: ac.Scope("folders","id","0")},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -282,7 +282,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:dashboards:reader",
 			DisplayName: "Dashboard reader",
-			Description: "Read all dashboards",
+			Description: "Read all dashboards.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeDashboardsAll},
