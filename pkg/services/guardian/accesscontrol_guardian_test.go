@@ -517,6 +517,13 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			desc:        "should not be able to create folders without permissions",
+			isFolder:    true,
+			folderID:    100,
+			permissions: []*accesscontrol.Permission{},
+			expected:    false,
+		},
 	}
 
 	for _, tt := range tests {
