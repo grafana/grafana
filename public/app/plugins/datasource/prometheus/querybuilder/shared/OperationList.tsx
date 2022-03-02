@@ -111,7 +111,7 @@ export function OperationList<T extends QueryWithOperations>({
               onBlur={onCascaderBlur}
               autoFocus={true}
               alwaysOpen={true}
-              showActiveLevelLabel={false}
+              hideActiveLevelLabel={true}
               placeholder={'Search'}
             />
           ) : (
