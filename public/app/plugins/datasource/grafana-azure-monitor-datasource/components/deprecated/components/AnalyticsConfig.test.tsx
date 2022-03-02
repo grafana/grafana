@@ -1,7 +1,8 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import AnalyticsConfig, { Props } from './AnalyticsConfig';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import AnalyticsConfig, { Props } from './AnalyticsConfig';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
