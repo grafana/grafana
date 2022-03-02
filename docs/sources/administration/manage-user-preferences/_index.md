@@ -16,14 +16,13 @@ You can also view important information about your account, such as the organiza
 
 You can change your Grafana password at any time.
 
-> **Note**: If your Grafana instance uses an [external authentication provider]({{< relref "../../auth/_index.md">}}), then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+> **Note**: If your Grafana instance uses an <!--[external authentication provider]({{< relref "../../auth/_index.md">}})--> external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
 
 **To change your password**:
 
 1. Sign in to Grafana.
 1. Hover your mouse over the user icon in the lower-left corner of the page.
 1. Click **Change Password**.
-
    Grafana opens the **Change Password** tab.
 
 1. Enter your old password and a new password.
