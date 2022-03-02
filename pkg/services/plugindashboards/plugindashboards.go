@@ -13,14 +13,14 @@ import (
 )
 
 func ProvideService(bus bus.Bus, pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
-	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Store) *Service {
+	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service) *Service {
 	s := newService(bus, pluginStore, pluginDashboardManager, dashboardImportService, pluginSettingsService)
 	s.updateAppDashboards()
 	return s
 }
 
 func newService(bus bus.Bus, pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
-	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Store) *Service {
+	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service) *Service {
 	s := &Service{
 		bus:                    bus,
 		pluginStore:            pluginStore,
@@ -39,7 +39,7 @@ type Service struct {
 	pluginStore            plugins.Store
 	pluginDashboardManager plugins.PluginDashboardManager
 	dashboardImportService dashboardimport.Service
-	pluginSettingsService  pluginsettings.Store
+	pluginSettingsService  pluginsettings.Service
 	logger                 log.Logger
 }
 

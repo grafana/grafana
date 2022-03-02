@@ -1,4 +1,4 @@
-package pluginsettings
+package service
 
 import (
 	"context"

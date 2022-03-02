@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/stretchr/testify/require"
 )
 
@@ -384,7 +384,7 @@ func (m *importDashboardServiceMock) ImportDashboard(ctx context.Context, req *d
 }
 
 type pluginsSettingsServiceMock struct {
-	pluginsettings.Service
+	service.Service
 
 	storedPluginSettings  []*models.PluginSettingInfoDTO
 	getPluginSettingsArgs []int64

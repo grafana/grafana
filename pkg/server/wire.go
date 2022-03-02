@@ -57,6 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -191,8 +192,8 @@ var wireBasicSet = wire.NewSet(
 	dashboardsnapshots.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
-	pluginsettings.ProvideService,
-	wire.Bind(new(pluginsettings.Store), new(*pluginsettings.Service)),
+	service.ProvideService,
+	wire.Bind(new(pluginsettings.Service), new(*service.Service)),
 	alerting.ProvideService,
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsmanager.ServiceAccountsService)),
