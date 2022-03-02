@@ -15,14 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginStore plugins.Store,
 	dataSourceCache datasources.CacheService, secretsService secrets.Service,
-	pluginSettingsService *service.Service) *Provider {
+	pluginSettingsService *pluginSettings.Service) *Provider {
 	return &Provider{
 		bus:                   bus,
 		cacheService:          cacheService,
@@ -40,7 +40,7 @@ type Provider struct {
 	pluginStore           plugins.Store
 	dataSourceCache       datasources.CacheService
 	secretsService        secrets.Service
-	pluginSettingsService *service.Service
+	pluginSettingsService *pluginSettings.Service
 	logger                log.Logger
 }
 
