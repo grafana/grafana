@@ -20,7 +20,7 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
 
 3. [Create a periodic service token](https://learn.hashicorp.com/tutorials/vault/tokens#periodic-service-tokens).
 
-4. From within Grafana, turn on [envelope encryption]({{< relref "../../administration/envelope-encryption.md" >}}).
+4. From within Grafana, turn on [envelope encryption]({{< relref "../../administration/database-encryption.md" >}}).
 
 5. Add your Hashicorp Vault details to the Grafana configuration file; depending on your operating system, is usually named `grafana.ini`:
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.hashicorpvault.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
