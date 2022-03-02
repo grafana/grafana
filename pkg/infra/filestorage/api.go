@@ -3,7 +3,6 @@ package filestorage
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 )
@@ -23,12 +22,8 @@ var (
 	Delimiter                = "/"
 )
 
-func Path(path string, storageName StorageName) string {
-	if strings.HasPrefix(path, Delimiter) {
-		return fmt.Sprintf("%s%s", string(storageName), path)
-	}
-
-	return fmt.Sprintf("%s%s%s", string(storageName), Delimiter, path)
+func Join(parts ...string) string {
+	return Delimiter + strings.Join(parts, Delimiter)
 }
 
 func belongsToStorage(path string, storageName StorageName) bool {
