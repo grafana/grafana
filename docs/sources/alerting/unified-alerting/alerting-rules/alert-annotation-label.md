@@ -13,6 +13,8 @@ Annotations and labels are key value pairs associated with alerts originating fr
 
 Annotations are key-value pairs that provide additional meta-information about an alert. For example: a description, a summary, and runbook URL. These are displayed in rule and alert details in the UI and can be used in contact point message templates.
 
+You can use the following annotations: `description`, `summary`, `runbook_url`, `alertId`, `dashboardUid`, and `panelId`.
+
 ## Labels
 
 Labels are key-value pairs that contain information about, and are used to uniquely identify an alert. The label set for an alert is generated and added to throughout the alerting evaluation and notification process.
