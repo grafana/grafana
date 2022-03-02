@@ -106,16 +106,13 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
 
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
 		assert.Equal(t, &backend.CheckHealthResult{
 			Status:  backend.HealthStatusOk,
 			Message: "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
@@ -131,16 +128,13 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
 
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
 		assert.Equal(t, &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: "1. Successfully queried the CloudWatch metrics API.\n2. CloudWatch logs query failed: some logs query error",
@@ -155,16 +149,13 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
 
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
 		assert.Equal(t, &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: "1. CloudWatch metrics query failed: some list metrics error\n2. Successfully queried the CloudWatch logs API.",
@@ -176,19 +167,15 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-
-		sessionsCli := fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+		executor := newExecutor(im, newTestConfig(), fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
 			return nil, fmt.Errorf("some sessions error")
-		}}
-		executor := newExecutor(im, newTestConfig(), sessionsCli)
-		request := &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			},
-		}
-		resp, err := executor.CheckHealth(context.Background(), request)
-		require.NoError(t, err)
+		}})
 
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
 		assert.Equal(t, &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: "1. CloudWatch metrics query failed: some sessions error\n2. CloudWatch logs query failed: some sessions error",
