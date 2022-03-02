@@ -174,9 +174,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       display: flex;
       background: ${headerBg};
       height: ${cellHeight}px;
-      justify-content: space-between;
-      padding-left: ${theme.spacing(0.5)};
-      padding-right: ${theme.spacing(0.5)};
+      justify-content: center;
       align-items: center;
       width: 100%;
       border-top: 1px solid ${theme.colors.border.weak};
@@ -187,6 +185,8 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
+      position: absolute;
+      right: ${theme.spacing(0.5)};
     `,
 
     tableContentWrapper: (totalColumnsWidth: number) => css`
