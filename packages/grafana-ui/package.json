@@ -166,7 +166,7 @@
     "react-docgen-typescript-loader": "3.7.2",
     "react-test-renderer": "17.0.2",
     "rimraf": "3.0.2",
-    "rollup": "2.68.0",
+    "rollup": "2.69.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
     "sass-loader": "12.6.0",
