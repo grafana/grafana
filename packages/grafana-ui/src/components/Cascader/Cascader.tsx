@@ -24,6 +24,9 @@ export interface CascaderProps {
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
   formatCreateLabel?: (val: string) => string;
   displayAllSelectedLevels?: boolean;
+  onBlur?: () => void;
+  autoFocus?: boolean;
+  alwaysOpen?: boolean;
 }
 
 interface CascaderState {
@@ -159,12 +162,15 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
         rcValue: [],
       });
     }
+    this.props.onBlur?.();
   };
 
   onBlurCascade = () => {
     this.setState({
       focusCascade: false,
     });
+
+    this.props.onBlur?.();
   };
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -181,6 +187,14 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       focusCascade: false,
       isSearching: true,
     });
+  };
+
+  onSelectInputChange = (value: string) => {
+    if (value === '') {
+      this.setState({
+        isSearching: false,
+      });
+    }
   };
 
   render() {
@@ -203,6 +217,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onCreateOption={this.onCreateOption}
             formatCreateLabel={formatCreateLabel}
             width={width}
+            onInputChange={this.onSelectInputChange}
           />
         ) : (
           <RCCascader
@@ -212,9 +227,11 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
+            open={this.props.alwaysOpen}
           >
             <div className={disableDivFocus}>
               <Input
+                autoFocus={this.props.autoFocus}
                 width={width}
                 placeholder={placeholder}
                 onBlur={this.onBlurCascade}
