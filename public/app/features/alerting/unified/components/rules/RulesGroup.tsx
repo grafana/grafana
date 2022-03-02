@@ -43,6 +43,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+  const isFederated = isFederatedRuleGroup(group);
 
   const deleteGroup = () => {
     dispatch(deleteRulesGroupAction(namespace, group));
@@ -88,16 +89,18 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
       }
     }
   } else if (hasRuler(rulesSource)) {
-    actionIcons.push(
-      <ActionIcon
-        aria-label="edit rule group"
-        data-testid="edit-group"
-        key="edit"
-        icon="pen"
-        tooltip="edit rule group"
-        onClick={() => setIsEditingGroup(true)}
-      />
-    );
+    if (!isFederated) {
+      actionIcons.push(
+        <ActionIcon
+          aria-label="edit rule group"
+          data-testid="edit-group"
+          key="edit"
+          icon="pen"
+          tooltip="edit rule group"
+          onClick={() => setIsEditingGroup(true)}
+        />
+      );
+    }
 
     actionIcons.push(
       <ActionIcon
@@ -112,7 +115,6 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   }
 
   const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
-  const isFederated = isFederatedRuleGroup(group);
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">

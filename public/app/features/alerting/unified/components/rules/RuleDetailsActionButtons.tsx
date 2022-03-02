@@ -42,7 +42,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const rightButtons: JSX.Element[] = [];
 
   const isFederated = isFederatedRuleGroup(group);
-  const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule, group);
+  const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
 
@@ -177,7 +177,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (isEditable && rulerRule) {
+  if (isEditable && rulerRule && !isFederated) {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
