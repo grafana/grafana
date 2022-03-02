@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import pluralize from 'pluralize';
@@ -10,7 +10,7 @@ import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditCloudGroupModal';
@@ -112,6 +112,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   }
 
   const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
+  const isFederated = isFederatedRuleGroup(group);
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
@@ -132,7 +133,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
             />
           </Tooltip>
         )}
-        <h6 className={styles.heading}>{groupName}</h6>
+        <h6 className={styles.heading}>
+          {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+        </h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
           <RuleStats showInactive={false} group={group} />
