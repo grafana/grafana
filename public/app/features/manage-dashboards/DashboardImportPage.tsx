@@ -34,7 +34,7 @@ type DashboardImportPageRouteSearchParams = {
 
 type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
 
-const IMPORT_STARTED_EVENT_NAME = 'cloud_user_loaded_dashboard_import';
+const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'import', undefined, true),

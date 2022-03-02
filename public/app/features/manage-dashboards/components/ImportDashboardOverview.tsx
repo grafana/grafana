@@ -8,7 +8,7 @@ import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
 import { locationService, reportInteraction } from '@grafana/runtime';
 
-const IMPORT_FINISHED_EVENT_NAME = 'cloud_user_imported_dashboard';
+const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
 const mapStateToProps = (state: StoreState) => {
   const searchObj = locationService.getSearchObject();
