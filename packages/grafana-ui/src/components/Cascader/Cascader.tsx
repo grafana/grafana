@@ -27,6 +27,7 @@ export interface CascaderProps {
   onBlur?: () => void;
   autoFocus?: boolean;
   alwaysOpen?: boolean;
+  showActiveLevelLabel?: boolean;
 }
 
 interface CascaderState {
@@ -120,12 +121,15 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   //For rc-cascader
   onChange = (value: string[], selectedOptions: CascaderOption[]) => {
+    const activeLabel = this.props.showActiveLevelLabel
+      ? this.props.displayAllSelectedLevels
+        ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
+        : selectedOptions[selectedOptions.length - 1].label
+      : '';
     this.setState({
       rcValue: value,
       focusCascade: true,
-      activeLabel: this.props.displayAllSelectedLevels
-        ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
-        : selectedOptions[selectedOptions.length - 1].label,
+      activeLabel,
     });
 
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, ButtonCascader, Cascader, CascaderOption, useStyles2 } from '@grafana/ui';
+import { Button, Cascader, CascaderOption, useStyles2 } from '@grafana/ui';
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
@@ -53,6 +53,9 @@ export function OperationList<T extends QueryWithOperations>({
 
   const onAddOperation = (value: string) => {
     const operationDef = queryModeller.getOperationDef(value);
+    if (!operationDef) {
+      return;
+    }
     onChange(operationDef.addOperationHandler(operationDef, query, queryModeller));
     setCascaderOpen(false);
   };
@@ -108,6 +111,7 @@ export function OperationList<T extends QueryWithOperations>({
               onBlur={onCascaderBlur}
               autoFocus={true}
               alwaysOpen={true}
+              showActiveLevelLabel={false}
             />
           ) : (
             <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} />
