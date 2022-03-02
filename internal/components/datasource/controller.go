@@ -12,6 +12,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// requeueAfter can be overidden by the tests
+var requeueAfter = 1 * time.Minute
+
 type DatasourceReconciler struct {
 	cli rest.Interface
 	sto store.Store
@@ -29,8 +32,8 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor stor
 		Named("datasource-controller").
 		For(&Datasource{}).
 		Complete(reconcile.Func(d.Reconcile)); err != nil {
-		return nil, err
-	}
+			return nil, err
+		}
 
 	return d, nil
 }
@@ -44,13 +47,14 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 
 	// TODO: check ACTUAL error
 	if errors.Is(err, errNotFound) {
+		// TODO: fix me: we don't know the UID at this point (it's empty)
 		return reconcile.Result{}, d.sto.Delete(ctx, string(ds.UID))
 	}
 
 	if err != nil {
 		return reconcile.Result{
 			Requeue:      true,
-			RequeueAfter: 1 * time.Minute,
+			RequeueAfter: requeueAfter,
 		}, err
 	}
 
@@ -59,14 +63,14 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		if !errors.Is(err, models.ErrDataSourceNotFound) {
 			return reconcile.Result{
 				Requeue:      true,
-				RequeueAfter: 1 * time.Minute,
+				RequeueAfter: requeueAfter,
 			}, err 
 		}
 
 		if err := d.sto.Insert(ctx, &ds); err != nil {
 			return reconcile.Result{
 				Requeue:      true,
-				RequeueAfter: 1 * time.Minute,
+				RequeueAfter: requeueAfter,
 			}, err
 		}
 	}
@@ -74,7 +78,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 	if err := d.sto.Update(ctx, &ds); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
-			RequeueAfter: 1 * time.Minute,
+			RequeueAfter: requeueAfter,
 		}, err
 	}
 

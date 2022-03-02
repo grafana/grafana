@@ -34,6 +34,10 @@ func (s FakeStore) Delete(ctx context.Context, uid string) error {
 	return nil
 }
 
+func (s FakeStore) Len() int {
+	return len(s.objects)
+}
+
 /*
 func GetTestStore(t *testing.T) store.Store {
 	ossMigrations := migrations.ProvideOSSMigrations()

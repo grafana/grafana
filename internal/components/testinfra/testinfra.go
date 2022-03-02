@@ -69,6 +69,7 @@ func SetupTest(t *testing.T, componentCfg TestCompCfg) TestManager {
 
 	mgr, err := manager.New(cfg, manager.Options{
 		Scheme: schm,
+		//SyncPeriod: pointer.Duration(time.Second),
 	})
 	require.NoError(t, err)
 

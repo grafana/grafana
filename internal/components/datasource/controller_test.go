@@ -16,19 +16,24 @@ import (
 )
 
 func TestDatasource(t *testing.T) {
+	store := testinfra.FakeStore{}
 	testCompCfg := testinfra.TestCompCfg{
 		GroupVersion: schema.GroupVersion{Group: "grafana.core.group", Version: "v1alpha1"},
 		// TODO generate CRD from thema (for ThemaSchema components)
 		CRDDirectoryPaths: []string{"./crd.yml"},
 		Objects: []runtime.Object{&Datasource{}, &CRList{}},
 		ControllerProvider: func(mgr manager.Manager, cli rest.Interface) error {
-			_, err := ProvideDatasourceController(mgr, cli, testinfra.FakeStore{})
+			_, err := ProvideDatasourceController(mgr, cli, store)
 			return err
 		},
 	}
 	mgr := testinfra.SetupTest(t, testCompCfg)
+
+	origReconciliationPeriod := requeueAfter
+	requeueAfter = time.Second
 	defer func () {
 		testinfra.TearDownTest(t, mgr)
+		requeueAfter = origReconciliationPeriod
 	}()
 
 	testCases := []struct {
@@ -60,6 +65,11 @@ func TestDatasource(t *testing.T) {
 				req.Body(&d)
 				res := req.Do(context.TODO())
 				require.NoError(t, res.Error())
+				/*
+				var resultDatasource Datasource
+				err := res.Into(&resultDatasource)
+				require.NoError(t, err)
+				*/
 
 				defer func () {
 					res := c.Delete().
@@ -86,6 +96,11 @@ func TestDatasource(t *testing.T) {
 					Name(datasourceName).
 					Do(context.TODO())
 					return res.Error() == nil
+
+					/*
+					_, err := store.Get(context.TODO(), string(resultDatasource.UID))
+					return err == nil
+					*/
 				}, 10 * time.Second, 250 * time.Millisecond)
 				
 				return nil
