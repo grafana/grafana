@@ -23,7 +23,6 @@ type DashboardGuardian interface {
 	CanAdmin() (bool, error)
 	CanDelete() (bool, error)
 	CanCreate(folderID int64, isFolder bool) (bool, error)
-	HasPermission(permission models.PermissionType) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
 
 	// GetAcl returns ACL.
