@@ -87,9 +87,9 @@ export interface QueryBuilderOperationParamEditorProps {
 }
 
 export enum QueryEditorMode {
-  Builder,
-  Code,
-  Explain,
+  Code = 'code',
+  Builder = 'builder',
+  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {

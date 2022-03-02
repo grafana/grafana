@@ -291,16 +291,15 @@ When configured, Grafana will pass the user's token to the plugin in an Authoriz
 
 ```go
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-    for _, q := range req.Queries {
-        token := strings.Fields(q.Headers.Get("Authorization"))
+  token := strings.Fields(req.Headers["Authorization"])
+	var (
+		tokenType   = token[0]
+		accessToken = token[1]
+	)
 
-        var (
-          tokenType = token[0]
-          accessToken = token[1]
-        )
-
-        // ...
-    }
+	for _, q := range req.Queries {
+		// ...
+	}
 }
 ```
 

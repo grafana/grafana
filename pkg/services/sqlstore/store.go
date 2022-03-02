@@ -42,6 +42,7 @@ type Store interface {
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
+	SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error
 	DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error
 	BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error
 	DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error
