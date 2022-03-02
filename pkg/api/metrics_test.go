@@ -178,7 +178,8 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool
 
 func (c *dashboardFakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	c.req = req
-	return nil, nil
+	resp := backend.Responses{}
+	return &backend.QueryDataResponse{Responses: resp}, nil
 }
 
 type dashboardFakePluginClient struct {
@@ -190,9 +191,6 @@ type dashboardFakePluginClient struct {
 // `/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query` endpoints test
 func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	sc := setupHTTPServer(t, false, false)
-
-	ss := mockstore.NewSQLStoreMock()
-	sc.db = ss
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	sc.hs.queryDataService = query.ProvideService(
@@ -212,16 +210,16 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		t.Fatalf("Failed to unmarshal dashboard json: %v", err)
 	}
 
+	mockDb := sc.hs.SQLStore.(*mockstore.SQLStoreMock)
+
 	t.Run("Can query a valid dashboard", func(t *testing.T) {
 
-		ss.ExpectedDashboard = &models.Dashboard{
+		mockDb.ExpectedDashboard = &models.Dashboard{
 			Uid:   "1",
 			OrgId: testOrgID,
 			Data:  dashboardJson,
 		}
-
-		//url := fmt.Sprintf("/api/dashboards/org/%d/uid/%s/panels/%s/query", testOrgID, "1", "2")
-		//fmt.Println("POTATO", url)
+		mockDb.ExpectedError = nil
 
 		response := callAPI(
 			sc.server,
@@ -234,10 +232,14 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	})
 
 	t.Run("Cannot query without a valid orgid or dashboard or panel ID", func(t *testing.T) {
+
+		mockDb.ExpectedDashboard = nil
+		mockDb.ExpectedError = models.ErrDashboardOrPanelIdentifierNotSet
+
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			"/api/dashboards/orgid//uid//panels//query",
+			"/api/dashboards/org//uid//panels//query",
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
@@ -256,7 +258,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			"/api/dashboards/orgid//uid/%s/panels/%s/query",
+			fmt.Sprintf("/api/dashboards/org//uid/%s/panels/%s/query", "1", "2"),
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)

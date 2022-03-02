@@ -86,8 +86,6 @@ func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, query models
 	// FIXME: parse the dashboard JSON in a more performant/structured way.
 	panels := dashboard.Data.Get("panels")
 
-	//fmt.Println("POTATO", panels)
-
 	for i := 0; ; i++ {
 		panel, ok := panels.CheckGetIndex(i)
 		if !ok {
@@ -98,8 +96,6 @@ func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, query models
 			return nil
 		}
 	}
-
-	//fmt.Println("POTATO", "NO PANEL")
 
 	// no panel with that ID
 	return models.ErrDashboardPanelNotFound
