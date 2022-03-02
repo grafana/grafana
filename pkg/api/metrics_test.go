@@ -415,9 +415,11 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 
 func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 	tests := []struct {
-		name          string
-		params        map[string]string
-		expectedError error
+		name                   string
+		params                 map[string]string
+		expectedDashboardQuery models.GetDashboardQuery
+		expectedPanelId        int64
+		expectedError          error
 	}{
 		{
 			name: "Work when correct orgId, dashboardId and panelId given",
@@ -426,7 +428,12 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 				":dashboardUid": "1",
 				":panelId":      "2",
 			},
-			expectedError: nil,
+			expectedDashboardQuery: models.GetDashboardQuery{
+				Uid:   "1",
+				OrgId: 1,
+			},
+			expectedPanelId: 2,
+			expectedError:   nil,
 		},
 		{
 			name: "Get error when dashboardUid not given",
@@ -435,7 +442,9 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 				":dashboardUid": "",
 				":panelId":      "1",
 			},
-			expectedError: models.ErrDashboardOrPanelIdentifierNotSet,
+			expectedDashboardQuery: models.GetDashboardQuery{},
+			expectedPanelId:        0,
+			expectedError:          models.ErrDashboardOrPanelIdentifierNotSet,
 		},
 		{
 			name: "Get error when panelId not given",
@@ -444,7 +453,9 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 				":dashboardUid": "1",
 				":panelId":      "",
 			},
-			expectedError: models.ErrDashboardOrPanelIdentifierNotSet,
+			expectedDashboardQuery: models.GetDashboardQuery{},
+			expectedPanelId:        0,
+			expectedError:          models.ErrDashboardOrPanelIdentifierNotSet,
 		},
 		{
 			name: "Get error when orgId not given",
@@ -453,7 +464,9 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 				":dashboardUid": "1",
 				":panelId":      "2",
 			},
-			expectedError: models.ErrDashboardOrPanelIdentifierNotSet,
+			expectedDashboardQuery: models.GetDashboardQuery{},
+			expectedPanelId:        0,
+			expectedError:          models.ErrDashboardOrPanelIdentifierNotSet,
 		},
 		{
 			name: "Get error when panelId not is invalid",
@@ -462,7 +475,9 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 				":dashboardUid": "1",
 				":panelId":      "aaa",
 			},
-			expectedError: models.ErrDashboardPanelIdentifierInvalid,
+			expectedDashboardQuery: models.GetDashboardQuery{},
+			expectedPanelId:        0,
+			expectedError:          models.ErrDashboardPanelIdentifierInvalid,
 		},
 		{
 			name: "Get error when orgId not is invalid",
@@ -471,14 +486,18 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 				":dashboardUid": "1",
 				":panelId":      "2",
 			},
-			expectedError: models.ErrDashboardPanelIdentifierInvalid,
+			expectedDashboardQuery: models.GetDashboardQuery{},
+			expectedPanelId:        0,
+			expectedError:          models.ErrDashboardPanelIdentifierInvalid,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// other validations?
-			_, _, err := parseDashboardQueryParams(test.params)
+			dashboardQuery, panelId, err := parseDashboardQueryParams(test.params)
+			assert.Equal(t, test.expectedDashboardQuery, dashboardQuery)
+			assert.Equal(t, test.expectedPanelId, panelId)
 			assert.Equal(t, test.expectedError, err)
 		})
 	}
