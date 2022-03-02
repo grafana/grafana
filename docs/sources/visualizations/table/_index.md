@@ -96,6 +96,12 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 {{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
 
+## Cell value inspect
+
+Enables value inspection from table cell. The raw value is presented in a modal window.
+
+> **Note:** Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
+
 ## Column filter
 
 You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "./filter-table-columns.md" >}}).

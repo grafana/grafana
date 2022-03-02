@@ -552,7 +552,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedAnnotations: 2,
+			expectedAnnotations: 3,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -578,7 +578,7 @@ func TestProcessEvalResults(t *testing.T) {
 							Values:          make(map[string]*float64),
 						},
 					},
-					StartsAt:           evaluationTime,
+					StartsAt:           evaluationTime.Add(20 * time.Second),
 					EndsAt:             evaluationTime.Add(30 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(30 * time.Second),
 					EvaluationDuration: evaluationDuration,
