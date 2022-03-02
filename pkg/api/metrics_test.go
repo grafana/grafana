@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -406,6 +407,77 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			}
 
 			assert.Equal(t, test.expectedError, checkDashboardAndPanel(context.Background(), ss, query, test.panelId))
+		})
+	}
+}
+
+func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
+	tests := []struct {
+		name          string
+		params        map[string]string
+		expectedError error
+	}{
+		{
+			name: "Work when correct orgId, dashboardId and panelId given",
+			params: map[string]string{
+				":orgId":        strconv.FormatInt(testOrgID, 10),
+				":dashboardUid": "1",
+				":panelId":      "2",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Get error when dashboardUid not given",
+			params: map[string]string{
+				":orgId":        strconv.FormatInt(testOrgID, 10),
+				":dashboardUid": "",
+				":panelId":      "1",
+			},
+			expectedError: models.ErrDashboardOrPanelIdentifierNotSet,
+		},
+		{
+			name: "Get error when panelId not given",
+			params: map[string]string{
+				":orgId":        strconv.FormatInt(testOrgID, 10),
+				":dashboardUid": "1",
+				":panelId":      "",
+			},
+			expectedError: models.ErrDashboardOrPanelIdentifierNotSet,
+		},
+		{
+			name: "Get error when orgId not given",
+			params: map[string]string{
+				":orgId":        "",
+				":dashboardUid": "1",
+				":panelId":      "2",
+			},
+			expectedError: models.ErrDashboardOrPanelIdentifierNotSet,
+		},
+		{
+			name: "Get error when panelId not is invalid",
+			params: map[string]string{
+				":orgId":        strconv.FormatInt(testOrgID, 10),
+				":dashboardUid": "1",
+				":panelId":      "aaa",
+			},
+			expectedError: models.ErrDashboardPanelIdentifierInvalid,
+		},
+		{
+			name: "Get error when orgId not is invalid",
+			params: map[string]string{
+				":orgId":        "aaa",
+				":dashboardUid": "1",
+				":panelId":      "2",
+			},
+			expectedError: models.ErrDashboardPanelIdentifierInvalid,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// other validations?
+			_, _, err := parseDashboardQueryParams(test.params)
+			assert.Equal(t, test.expectedError, err)
 		})
 	}
 }

@@ -46,7 +46,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 
 func parseDashboardQueryParams(params map[string]string) (models.GetDashboardQuery, int64, error) {
 	query := models.GetDashboardQuery{}
-	query.Uid = params[":dashboardUid"]
 
 	if params[":orgId"] == "" || params[":dashboardUid"] == "" || params[":panelId"] == "" {
 		return query, 0, models.ErrDashboardOrPanelIdentifierNotSet
@@ -56,12 +55,14 @@ func parseDashboardQueryParams(params map[string]string) (models.GetDashboardQue
 	if err != nil {
 		return query, 0, models.ErrDashboardPanelIdentifierInvalid
 	}
-	query.OrgId = orgId
 
 	panelId, err := strconv.ParseInt(params[":panelId"], 10, 64)
 	if err != nil {
 		return query, 0, models.ErrDashboardPanelIdentifierInvalid
 	}
+
+	query.Uid = params[":dashboardUid"]
+	query.OrgId = orgId
 
 	return query, panelId, nil
 }
