@@ -72,7 +72,6 @@ func ErrStateFromString(opt string) (ExecutionErrorState, error) {
 }
 
 const (
-	OkErrState       ExecutionErrorState = "OK"
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
 	OkErrState       ExecutionErrorState = "OK"
