@@ -109,12 +109,12 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
-	return response.Success("service account deleted")
+	return response.Success("Service account deleted")
 }
 
 func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) response.Response {
 	if err := api.store.UpgradeServiceAccounts(ctx.Req.Context()); err == nil {
-		return response.Success("service accounts upgraded")
+		return response.Success("Service accounts upgraded")
 	} else {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
@@ -123,10 +123,10 @@ func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) re
 func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) response.Response {
 	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "keyId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
 	if err := api.store.ConvertToServiceAccounts(ctx.Req.Context(), []int64{keyId}); err == nil {
-		return response.Success("service accounts converted")
+		return response.Success("Service accounts converted")
 	} else {
 		return response.Error(500, "Internal server error", err)
 	}
@@ -163,6 +163,11 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
 		serviceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceAccounts[i].Id, 10)]
+		// tokens, err := api.store.ListTokens(ctx, serviceAccounts[i].OrgId, serviceAccounts[i].Id)
+		// if err != nil {
+		// 	api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccounts[i].Id)
+		// }
+		// serviceAccounts[i].Tokens = int64(len(tokens))
 	}
 
 	type SearchOrgServiceAccountsQueryResult struct {
@@ -200,7 +205,7 @@ func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, sa
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
@@ -223,12 +228,12 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	cmd := &serviceaccounts.UpdateServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	if cmd.Role != nil && !cmd.Role.IsValid() {

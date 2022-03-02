@@ -670,7 +670,7 @@ export class CloudWatchDatasource
       region: this.templateSrv.replace(this.getActualRegion(region)),
     });
 
-    return values.map((v) => ({ metricName: v.label, namespace: v.text }));
+    return values.map((v) => ({ metricName: v.value, namespace: v.text }));
   }
 
   async getDimensionKeys(

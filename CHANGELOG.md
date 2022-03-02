@@ -101,6 +101,16 @@ AngularJS plugin support is now in a deprecated state, meaning it will be remove
 - **News:** Reload feed when changing the time range or refreshing. [#42217](https://github.com/grafana/grafana/pull/42217), [@ashharrison90](https://github.com/ashharrison90)
 - **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
 
+<!-- 8.3.7 START -->
+
+# 8.3.7 (2022-03-01)
+
+### Bug fixes
+
+- **Provisioning:** Ensure that the default value for orgID is set when provisioning datasources to be deleted. [#44244](https://github.com/grafana/grafana/pull/44244), [@filewalkwithme](https://github.com/filewalkwithme)
+
+<!-- 8.3.7 END -->
+
 <!-- 8.3.6 START -->
 
 # 8.3.6 (2022-02-09)

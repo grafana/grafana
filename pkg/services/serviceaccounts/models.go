@@ -24,8 +24,9 @@ type ServiceAccount struct {
 }
 
 type UpdateServiceAccountForm struct {
-	Name *string          `json:"name"`
-	Role *models.RoleType `json:"role"`
+	Name       *string          `json:"name"`
+	Role       *models.RoleType `json:"role"`
+	IsDisabled *bool            `json:"isDisabled"`
 }
 
 type CreateServiceAccountForm struct {
@@ -34,26 +35,26 @@ type CreateServiceAccountForm struct {
 }
 
 type ServiceAccountDTO struct {
-	Id            int64           `json:"id"`
-	Name          string          `json:"name"`
-	Login         string          `json:"login"`
-	OrgId         int64           `json:"orgId"`
+	Id            int64           `json:"id" xorm:"user_id"`
+	Name          string          `json:"name" xorm:"name"`
+	Login         string          `json:"login" xorm:"login"`
+	OrgId         int64           `json:"orgId" xorm:"org_id"`
+	Role          string          `json:"role" xorm:"role"`
 	Tokens        int64           `json:"tokens"`
-	Role          string          `json:"role"`
 	AvatarUrl     string          `json:"avatarUrl"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 type ServiceAccountProfileDTO struct {
-	Id            int64           `json:"id"`
-	Name          string          `json:"name"`
-	Login         string          `json:"login"`
-	OrgId         int64           `json:"orgId"`
-	IsDisabled    bool            `json:"isDisabled"`
-	UpdatedAt     time.Time       `json:"updatedAt"`
-	CreatedAt     time.Time       `json:"createdAt"`
-	AvatarUrl     string          `json:"avatarUrl"`
-	Role          string          `json:"role"`
-	Teams         []string        `json:"teams"`
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	Id            int64           `json:"id" xorm:"user_id"`
+	Name          string          `json:"name" xorm:"name"`
+	Login         string          `json:"login" xorm:"login"`
+	OrgId         int64           `json:"orgId" xorm:"org_id"`
+	IsDisabled    bool            `json:"isDisabled" xorm:"is_disabled"`
+	Created       time.Time       `json:"createdAt" xorm:"created"`
+	Updated       time.Time       `json:"updatedAt" xorm:"updated"`
+	AvatarUrl     string          `json:"avatarUrl" xorm:"-"`
+	Role          string          `json:"role" xorm:"role"`
+	Teams         []string        `json:"teams" xorm:"-"`
+	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
