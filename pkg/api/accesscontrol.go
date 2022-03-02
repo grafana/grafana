@@ -282,7 +282,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:dashboards:reader",
 			DisplayName: "Dashboard reader",
-			Description: "Read all dashboards",
+			Description: "Read all dashboards.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeDashboardsAll},
