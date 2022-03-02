@@ -1,15 +1,13 @@
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { notifyApp, updateNavIndex } from 'app/core/actions';
+import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { FolderState, ThunkResult } from 'app/types';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
-import { notifyApp, updateNavIndex } from 'app/core/actions';
-import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { lastValueFrom } from 'rxjs';
 import { buildNavModel } from './navModel';
 import { loadFolder, loadFolderPermissions, setCanViewFolderPermissions } from './reducers';
-import { lastValueFrom } from 'rxjs';
-import { useDispatch } from 'react-redux';
-import { useCallback } from 'react';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -17,19 +15,6 @@ export function getFolderByUid(uid: string): ThunkResult<void> {
     dispatch(loadFolder(folder));
     dispatch(updateNavIndex(buildNavModel(folder)));
   };
-}
-
-export function useGetFolderByUid() {
-  const dispatch = useDispatch();
-
-  return useCallback(
-    async (folderUid: string) => {
-      const folder = await backendSrv.getFolderByUid(folderUid);
-      dispatch(loadFolder(folder));
-      dispatch(updateNavIndex(buildNavModel(folder)));
-    },
-    [dispatch]
-  );
 }
 
 export function saveFolder(folder: FolderState): ThunkResult<void> {
