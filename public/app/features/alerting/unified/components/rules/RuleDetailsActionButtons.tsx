@@ -17,6 +17,7 @@ import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { isFederatedRuleGroup } from '../../utils/rules';
 
 interface Props {
   rule: CombinedRule;
@@ -40,7 +41,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
 
-  const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule);
+  const isFederated = isFederatedRuleGroup(group);
+  const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule, group);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
 
@@ -68,7 +70,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   };
 
   // explore does not support grafana rule queries atm
-  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor) {
+  // neither do "federated rules"
+  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor && !isFederated) {
     leftButtons.push(
       <LinkButton
         className={style.button}

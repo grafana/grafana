@@ -1,5 +1,5 @@
 import { contextSrv } from 'app/core/services/context_srv';
-import { isGrafanaRulerRule } from '../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from '../utils/rules';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { useFolder } from './useFolder';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
@@ -7,13 +7,14 @@ import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { checkIfLotexSupportsEditingRulesAction } from '../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
 interface ResultBag {
   isEditable?: boolean;
   loading: boolean;
 }
 
-export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
+export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO, group?: CombinedRuleGroup): ResultBag {
   const checkEditingRequests = useUnifiedAlertingSelector((state) => state.lotexSupportsRuleEditing);
   const dispatch = useDispatch();
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
@@ -27,6 +28,12 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   }, [rulesSourceName, checkEditingRequests, dispatch]);
 
   if (!rule) {
+    return { isEditable: false, loading: false };
+  }
+
+  // we do not allow editing the rule if it belongs to a "federated" rule group
+  const isFederated = group ? isFederatedRuleGroup(group) : false;
+  if (isFederated) {
     return { isEditable: false, loading: false };
   }
 
