@@ -37,19 +37,8 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
     return this.categories;
   }
 
-  getOperationDef(
-    id: string,
-    undefined1: QueryBuilderOperationDef | undefined = undefined
-  ): QueryBuilderOperationDef | undefined {
-    try {
-      return this.operationsRegisty.get(id);
-    } catch (err) {
-      if (err.message.includes('not found')) {
-        return undefined;
-      } else {
-        throw err;
-      }
-    }
+  getOperationDef(id: string): QueryBuilderOperationDef | undefined {
+    return this.operationsRegisty.getIfExists(id);
   }
 
   renderOperations(queryString: string, operations: QueryBuilderOperation[]) {
