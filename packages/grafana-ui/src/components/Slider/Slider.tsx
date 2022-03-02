@@ -87,7 +87,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
 
           // Skip everything else
           default:
-            console.log('SKIP key', e.key);
+          // console.log('SKIP key', e.key);
         }
         e.preventDefault();
       }
