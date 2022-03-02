@@ -245,11 +245,6 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
-			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
-		})
-		require.Nil(t, err)
-
 		// When the user is deleted
 		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
@@ -265,13 +260,6 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
-
-		prefsQuery := &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = ss.GetPreferences(context.Background(), prefsQuery)
-		require.Nil(t, err)
-
-		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
-		require.EqualValues(t, prefsQuery.Result.UserId, 0)
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
@@ -293,11 +281,6 @@ func TestUserDataAccess(t *testing.T) {
 		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
 			DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
 			Permission: models.PERMISSION_EDIT,
-		})
-		require.Nil(t, err)
-
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
-			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
 		})
 		require.Nil(t, err)
 
@@ -351,13 +334,6 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
-
-		prefsQuery = &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = ss.GetPreferences(context.Background(), prefsQuery)
-		require.Nil(t, err)
-
-		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
-		require.EqualValues(t, prefsQuery.Result.UserId, 0)
 	})
 
 	ss = InitTestDB(t)
