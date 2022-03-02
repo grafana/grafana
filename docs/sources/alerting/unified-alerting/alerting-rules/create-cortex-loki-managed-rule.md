@@ -17,7 +17,7 @@ Grafana allows you to create alerting rules for an external Cortex or Loki insta
 
   - **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.
 
-  - **Cortex** - use the [legacy `/api/prom` prefix](https://cortexmetrics.io/docs/api/#path-prefixes), not `/prometheus`. The Prometheus data source supports both Cortex and Prometheus, and Grafana expects that both the [Query API](https://cortexmetrics.io/docs/api/#querier--query-frontend) and [Ruler API](https://cortexmetrics.io/docs/api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
+  - **Cortex** - use the [legacy `/api/prom` prefix](https://cortexmetrics.io/docs/api/#path-prefixes), not `/prometheus`. The Prometheus data source supports both Cortex and Prometheus, and Grafana by default assumes that both the [Query API](https://cortexmetrics.io/docs/api/#querier--query-frontend) and [Ruler API](https://cortexmetrics.io/docs/api/#ruler) are under the same URL. However, it is possible to use a custom URL for the Ruler API. To do it, toggle **Custom ruler URL** and fill out alternative HTTP options for the ruler service.
 
 > **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 

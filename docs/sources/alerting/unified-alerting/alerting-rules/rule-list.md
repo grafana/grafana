@@ -53,3 +53,7 @@ To edit or delete a rule:
 1. Expand a rule row until you can see the rule controls of **View**, **Edit**, and **Delete**.
 1. Click **Edit** to open the create rule page. Make updates following instructions in [Create a Grafana managed alerting rule]({{< relref "./create-grafana-managed-rule.md" >}}) or [Create a Cortex or Loki managed alerting rule]({{< relref "./create-cortex-loki-managed-rule.md" >}}).
 1. Click **Delete** to delete a rule.
+
+## Configure ruler service HTTP options separately
+
+If Cortex or Loki is running in microservices mode and the ruler service has a different URL or auth settings than the Cortex / Loki data source, go to data source settings, toggle **Custom ruler URL** and fill out alternative HTTP settings for the ruler.
