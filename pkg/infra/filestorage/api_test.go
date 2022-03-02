@@ -7,7 +7,6 @@ import (
 )
 
 func TestFilestorageApi_Join(t *testing.T) {
-
 	var tests = []struct {
 		name     string
 		parts    []string
