@@ -251,7 +251,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   if (pageSize) {
     const itemsRangeStart = state.pageIndex * pageSize + 1;
     let itemsRangeEnd = itemsRangeStart + pageSize - 1;
-    if (itemsRangeEnd > itemCount) {
+    if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
     }
     paginationEl = (

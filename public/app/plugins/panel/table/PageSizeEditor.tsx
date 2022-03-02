@@ -10,5 +10,13 @@ export function PageSizeEditor({ onChange, value, id, context }: StandardEditorP
     onChange(newValue);
   };
 
-  return <NumberValueEditor context={context} id={id} value={value} onChange={changeValue} item={{} as any} />;
+  return (
+    <NumberValueEditor
+      context={context}
+      id={id}
+      value={value}
+      onChange={changeValue}
+      item={{ settings: { min: 1, integer: true } } as any}
+    />
+  );
 }
