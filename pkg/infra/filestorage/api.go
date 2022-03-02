@@ -11,7 +11,7 @@ import (
 type StorageName string
 
 const (
-	StorageNameGrafanaDS StorageName = "grafanads"
+	StorageNamePublic StorageName = "public"
 )
 
 var (

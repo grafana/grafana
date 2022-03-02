@@ -69,7 +69,7 @@ type service struct {
 
 func (b service) Get(ctx context.Context, path string) (*File, error) {
 	var filestorage FileStorage
-	if belongsToStorage(path, StorageNameGrafanaDS) {
+	if belongsToStorage(path, StorageNamePublic) {
 		filestorage = b.grafanaDsStorage
 		path = removeStoragePrefix(path)
 	}
@@ -112,7 +112,7 @@ func (b service) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 
 func (b service) ListFiles(ctx context.Context, path string, cursor *Paging, options *ListOptions) (*ListFilesResponse, error) {
 	var filestorage FileStorage
-	if belongsToStorage(path, StorageNameGrafanaDS) {
+	if belongsToStorage(path, StorageNamePublic) {
 		filestorage = b.grafanaDsStorage
 		path = removeStoragePrefix(path)
 	} else {
@@ -128,7 +128,7 @@ func (b service) ListFiles(ctx context.Context, path string, cursor *Paging, opt
 
 func (b service) ListFolders(ctx context.Context, path string, options *ListOptions) ([]FileMetadata, error) {
 	var filestorage FileStorage
-	if belongsToStorage(path, StorageNameGrafanaDS) {
+	if belongsToStorage(path, StorageNamePublic) {
 		filestorage = b.grafanaDsStorage
 		path = removeStoragePrefix(path)
 	} else {
