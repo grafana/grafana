@@ -153,9 +153,10 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       if (gtGrafana9()) {
         return (
           <Alert title="Deprecated">
-            Insight Analytics has been deprecated. Use the Metrics service instead.{' '}
+            Insight Analytics has been deprecated. Query can be written with Kusto in the Logs query type by selecting
+            your Application Insights resource.{' '}
             <a
-              href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/#application-insights"
+              href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/#insights-analytics"
               target="_blank"
               rel="noreferrer"
             >
