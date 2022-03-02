@@ -23,10 +23,15 @@ export interface CascaderProps {
   allowCustomValue?: boolean;
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
   formatCreateLabel?: (val: string) => string;
+  /** If true all levels are shown in the input by simple concatenating the labels */
   displayAllSelectedLevels?: boolean;
   onBlur?: () => void;
+  /** When mounted focus automatically on the input */
   autoFocus?: boolean;
+  /** Keep the dropdown open all the time, useful in case whole cascader visibility is controlled by the parent */
   alwaysOpen?: boolean;
+  /** Don't show what is selected in the cascader input/search. Useful when input is used just as search and the
+      cascader is hidden after selection. */
   hideActiveLevelLabel?: boolean;
 }
 
