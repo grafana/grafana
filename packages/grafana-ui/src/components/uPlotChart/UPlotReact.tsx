@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { PropsWithChildren, useLayoutEffect, useRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 import { debugLog } from './debug';
 
@@ -18,7 +18,7 @@ export interface UPlotReactProps {
 
 type DedicatedMethodProps = [width: number, height: number, data: AlignedData];
 
-export const UPlotReact = ({ opts, width, height, data, onInit }: UPlotReactProps) => {
+export const UPlotReact = ({ opts, width, height, data, onInit, children }: PropsWithChildren<UPlotReactProps>) => {
   debugLog('UPlotReact()');
 
   const wrap = useRef<HTMLDivElement>(null);
@@ -66,7 +66,7 @@ export const UPlotReact = ({ opts, width, height, data, onInit }: UPlotReactProp
 
   return (
     <div style={{ position: 'relative' }}>
-      <div ref={wrap} />
+      <div ref={wrap}>{children}</div>
     </div>
   );
 };

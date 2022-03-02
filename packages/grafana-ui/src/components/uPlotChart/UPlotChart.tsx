@@ -74,9 +74,10 @@ export const UPlotChart2 = (props: UPlotChartProps) => {
   );
 
   return (
-    <>
-      {children}
-      <UPlotReact width={width} height={height} opts={opts} data={data} onInit={oninit} />
-    </>
+    <div style={{ width, height, position: 'absolute' }}>
+      <UPlotReact width={width} height={height} opts={opts} data={data} onInit={oninit}>
+        {children}
+      </UPlotReact>
+    </div>
   );
 };
