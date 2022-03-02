@@ -76,7 +76,9 @@ func TestServeHTTP(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.urlPath, nil)
 			recorder := httptest.NewRecorder()
 			m.ServeHTTP(recorder, req)
-			require.Equal(t, tc.expectedStatusCode, recorder.Result().StatusCode)
+			resp := recorder.Result()
+			require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			require.NoError(t, resp.Body.Close())
 			require.Equal(t, tc.expectedURLPath, req.URL.Path)
 		})
 	}
