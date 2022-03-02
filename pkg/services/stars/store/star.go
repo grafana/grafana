@@ -80,7 +80,7 @@ func (s *StoreImpl) GetUserStars(ctx context.Context, query *models.GetUserStars
 
 		userStars = make(map[int64]bool)
 		for _, star := range stars {
-			query.Result[star.DashboardId] = true
+			userStars[star.DashboardId] = true
 		}
 		return err
 	})
