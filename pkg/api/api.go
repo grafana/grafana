@@ -165,6 +165,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
+			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
 
 			userRoute.Get("/auth-tokens", routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", routing.Wrap(hs.RevokeUserAuthToken))
@@ -227,6 +228,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// prefs
 			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead)), routing.Wrap(hs.GetOrgPreferences))
 			orgRoute.Put("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.UpdateOrgPreferences))
+			orgRoute.Patch("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.PatchOrgPreferences))
 		})
 
 		// current org without requirement of user to be org admin
@@ -268,7 +270,6 @@ func (hs *HTTPServer) registerRoutes() {
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
 			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
-			prefRoute.Put("/set-json-data", routing.Wrap(hs.SetPreferencesJsonData))
 		})
 
 		// Data sources

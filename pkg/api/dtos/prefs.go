@@ -1,5 +1,7 @@
 package dtos
 
+import "github.com/grafana/grafana/pkg/models"
+
 type Prefs struct {
 	Theme           string `json:"theme"`
 	HomeDashboardID int64  `json:"homeDashboardId"`
@@ -17,4 +19,12 @@ type UpdatePrefsCmd struct {
 	// Enum: utc,browser
 	Timezone  string `json:"timezone"`
 	WeekStart string `json:"weekStart"`
+}
+
+type PatchPrefsCmd struct {
+	Theme           *string                    `json:"theme,omitempty"`
+	HomeDashboardID *int64                     `json:"homeDashboardId,omitempty"`
+	Timezone        *string                    `json:"timezone,omitempty"`
+	WeekStart       *string                    `json:"weekStart,omitempty"`
+	Navbar          *[]models.NavbarPreference `json:"navbar,omitempty"`
 }

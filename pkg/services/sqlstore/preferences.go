@@ -113,15 +113,15 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 				Updated:         time.Now(),
 			}
 
-			if cmd.JsonData != nil {
-				prefs.JsonData = cmd.JsonData
+			if cmd.Navbar != nil {
+				prefs.JsonData.Navbar = cmd.Navbar
 			}
 			_, err = sess.Insert(&prefs)
 			return err
 		}
 		// Wrap this in an if statement to maintain backwards compatibility
-		if cmd.JsonData != nil {
-			prefs.JsonData = cmd.JsonData
+		if cmd.Navbar != nil {
+			prefs.JsonData.Navbar = cmd.Navbar
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
 		prefs.Timezone = cmd.Timezone
@@ -134,7 +134,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 	})
 }
 
-func (ss *SQLStore) UpsertPreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
+func (ss *SQLStore) UpsertPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
@@ -144,31 +144,32 @@ func (ss *SQLStore) UpsertPreferences(ctx context.Context, cmd *models.SavePrefe
 
 		if !exists {
 			prefs = models.Preferences{
-				UserId:  cmd.UserId,
-				OrgId:   cmd.OrgId,
-				TeamId:  cmd.TeamId,
-				Created: time.Now(),
+				UserId:   cmd.UserId,
+				OrgId:    cmd.OrgId,
+				TeamId:   cmd.TeamId,
+				Created:  time.Now(),
+				JsonData: &models.PreferencesJsonData{},
 			}
 		}
 
-		if cmd.JsonData != nil {
-			prefs.JsonData = cmd.JsonData
+		if cmd.Navbar != nil {
+			prefs.JsonData.Navbar = *cmd.Navbar
 		}
 
-		if cmd.HomeDashboardId > 0 {
-			prefs.HomeDashboardId = cmd.HomeDashboardId
+		if cmd.HomeDashboardId != nil {
+			prefs.HomeDashboardId = *cmd.HomeDashboardId
 		}
 
-		if cmd.Timezone != "" {
-			prefs.Timezone = cmd.Timezone
+		if cmd.Timezone != nil {
+			prefs.Timezone = *cmd.Timezone
 		}
 
-		if cmd.WeekStart != "" {
-			prefs.WeekStart = cmd.WeekStart
+		if cmd.WeekStart != nil {
+			prefs.WeekStart = *cmd.WeekStart
 		}
 
-		if cmd.Theme != "" {
-			prefs.Theme = cmd.Theme
+		if cmd.Theme != nil {
+			prefs.Theme = *cmd.Theme
 		}
 
 		prefs.Updated = time.Now()
