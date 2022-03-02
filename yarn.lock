@@ -6013,6 +6013,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lezer/common@npm:^0.15.0, @lezer/common@npm:^0.15.11":
+  version: 0.15.11
+  resolution: "@lezer/common@npm:0.15.11"
+  checksum: 5cabce5493b9392bb54816d6b921dae20d154b175423479b408e990fdf572fd2ed77a6b2df0ed6ef26d779eeb66ec737d10aa2312e1ffecbcec22e14b19f7be3
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:^0.15.8":
+  version: 0.15.8
+  resolution: "@lezer/lr@npm:0.15.8"
+  dependencies:
+    "@lezer/common": ^0.15.0
+  checksum: e741225d6ac9cf08f8016bad49622fbd4a4e0d20c2e8c2b38a0abf0ddca69c58275b0ebdb9d5dde2905cf84f6977bc302f7ed5e5ba42c23afa27e9e65b900f36
+  languageName: node
+  linkType: hard
+
 "@lingui/babel-plugin-extract-messages@npm:^3.13.2":
   version: 3.13.2
   resolution: "@lingui/babel-plugin-extract-messages@npm:3.13.2"
@@ -20686,6 +20702,8 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 4.1.3
+    "@lezer/common": ^0.15.11
+    "@lezer/lr": ^0.15.8
     "@lingui/cli": 3.13.2
     "@lingui/core": 3.13.2
     "@lingui/macro": 3.13.2
@@ -20850,9 +20868,7 @@ __metadata:
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     lerna: ^4.0.0
-    lezer: 0.13.5
-    lezer-promql: 0.20.0
-    lezer-tree: 0.13.2
+    lezer-promql: 0.22.0
     lint-staged: 12.3.3
     lodash: 4.17.21
     logfmt: ^1.3.2
@@ -24990,28 +25006,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lezer-promql@npm:0.20.0":
-  version: 0.20.0
-  resolution: "lezer-promql@npm:0.20.0"
+"lezer-promql@npm:0.22.0":
+  version: 0.22.0
+  resolution: "lezer-promql@npm:0.22.0"
   peerDependencies:
-    lezer: ^0.13.0
-  checksum: 9cf76d60aa84b27a1ed5ff7a3d2e407a2d752fd0282777d740bf5e8bf00764a1c8e9e3a835246d9257447231fa4ce5dc4f85d4acb91c6819089ff16874a75382
-  languageName: node
-  linkType: hard
-
-"lezer-tree@npm:0.13.2, lezer-tree@npm:^0.13.2":
-  version: 0.13.2
-  resolution: "lezer-tree@npm:0.13.2"
-  checksum: b8be213c780191e0669c7f440aa563218ada762d2cf399b94e755a563cc7da8951929fa3ee65df9ef6586a81223c55cd662e1ec5b49060d892acca4198cf3596
-  languageName: node
-  linkType: hard
-
-"lezer@npm:0.13.5":
-  version: 0.13.5
-  resolution: "lezer@npm:0.13.5"
-  dependencies:
-    lezer-tree: ^0.13.2
-  checksum: a5c3aa01c539aba3377a927063bcd63b311737a7abfd71ad2c2229ed4e48b7858f2e8e11e925f8f5286c2629251f77dfabf7505ea6c707499cd9917ca90934c8
+    "@lezer/lr": ^0.15.8
+  checksum: cdce054700874ef95c779899bc8a6a774f83bc613d509011b7d3b8003f07fa853962291c44edf9232e7a927d0753fec77ec55d795abddda9d2efc044f78bb58a
   languageName: node
   linkType: hard
 
