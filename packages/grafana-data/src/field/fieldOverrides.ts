@@ -439,7 +439,7 @@ export const getLinksSupplier =
       }
 
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables);
+      href = replaceVariables(href, variables, encodeURIComponent);
       href = locationUtil.processUrl(href);
 
       const info: LinkModel<Field> = {
