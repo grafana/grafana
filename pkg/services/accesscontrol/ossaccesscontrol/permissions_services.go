@@ -113,7 +113,7 @@ var _ accesscontrol.PermissionsService = new(emptyPermissionsService)
 
 type emptyPermissionsService struct{}
 
-func (e emptyPermissionsService) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (e emptyPermissionsService) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return nil, nil
 }
 

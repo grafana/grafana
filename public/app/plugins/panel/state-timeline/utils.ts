@@ -555,16 +555,18 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
     return null;
   }
 
+  const startValue = field.values.get(datapointIdx);
+
   while (end === undefined) {
     if (rightPointer >= field.values.length) {
       return null;
     }
     const rightValue = field.values.get(rightPointer);
 
-    if (rightValue !== undefined) {
-      end = rightPointer;
-    } else {
+    if (rightValue === undefined || rightValue === startValue) {
       rightPointer++;
+    } else {
+      end = rightPointer;
     }
   }
 

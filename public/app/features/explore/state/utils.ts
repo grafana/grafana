@@ -96,7 +96,7 @@ export async function loadAndInitDatasource(
   }
 
   const historyKey = `grafana.explore.history.${instance.meta?.id}`;
-  const history = store.getObject(historyKey, []);
+  const history = store.getObject<HistoryItem[]>(historyKey, []);
   // Save last-used datasource
 
   store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
