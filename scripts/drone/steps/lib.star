@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.5'
+grabpl_version = 'v2.9.7'
 build_image = 'grafana/build-container:1.5.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -241,6 +241,7 @@ def build_storybook_step(edition, ver_mode):
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'build-frontend',
+            'build-frontend-packages',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
@@ -411,6 +412,36 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
 
     return {
         'name': 'build-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=8192',
+        },
+        'commands': cmds,
+    }
+
+def build_frontend_package_step(edition, ver_mode, is_downstream=False):
+    if not is_downstream:
+        build_no = '${DRONE_BUILD_NUMBER}'
+    else:
+        build_no = '$${SOURCE_BUILD_NUMBER}'
+
+    # TODO: Use percentage for num jobs
+    if ver_mode == 'release':
+        cmds = [
+            './bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
+            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
+            ]
+    else:
+        cmds = [
+            './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
+            '--build-id {} --no-pull-enterprise'.format(build_no),
+            ]
+
+    return {
+        'name': 'build-frontend-packages',
         'image': build_image,
         'depends_on': [
             'initialize',
@@ -607,6 +638,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         'build-plugins',
         'build-backend',
         'build-frontend',
+        'build-frontend-packages',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -682,6 +714,7 @@ def grafana_server_step(edition, port=3001):
             'build-plugins',
             'build-backend',
             'build-frontend',
+            'build-frontend-packages',
         ],
         'environment': environment,
         'commands': [
