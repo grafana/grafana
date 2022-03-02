@@ -21,6 +21,7 @@ package web
 import (
 	"context"
 	"net/http"
+	"path"
 	"reflect"
 	"strings"
 )
@@ -185,6 +186,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 // Useful if you want to control your own HTTP server.
 // Be aware that none of middleware will run without registering any router.
 func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	req.URL.Path = path.Join("/", req.URL.Path)
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
 	m.Router.ServeHTTP(rw, req)
 }
