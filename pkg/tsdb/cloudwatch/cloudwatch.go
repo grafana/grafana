@@ -170,7 +170,6 @@ func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.Call
 }
 
 func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext) error {
-	// use billing metrics for metrics test
 	namespace := "AWS/Billing"
 	metric := "EstimatedCharges"
 	params := &cloudwatch.ListMetricsInput{
