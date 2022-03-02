@@ -29,7 +29,7 @@ function applySpanNullsThresholds(frame: DataFrame) {
   return frame;
 }
 
-export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange: TimeRange | null) {
+export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   let alignedFrame = outerJoinDataFrames({
     frames: frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf())),
     joinBy: dimFields.x,
