@@ -65,7 +65,7 @@ type HTTPServer struct {
 
 // ProvideHTTPServer provides a new HTTP server for Intent API.
 func ProvideHTTPServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, handler Handler) (*HTTPServer, error) {
-	en := features.IsEnabled("intentapi")
+	en := features.IsEnabled(featuremgmt.FlagIntentapi)
 
 	config, err := NewHTTPServerConfig(cfg, en)
 	if err != nil {
