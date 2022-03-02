@@ -186,7 +186,7 @@ type dashboardFakePluginClient struct {
 	req *backend.QueryDataRequest
 }
 
-// `/api/dashboards/:dashboardId/panels/:panelId` endpoints test
+// `/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query` endpoints test
 func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	sc := setupHTTPServer(t, false, false)
 
@@ -219,21 +219,62 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			Data:  dashboardJson,
 		}
 
+		//url := fmt.Sprintf("/api/dashboards/org/%d/uid/%s/panels/%s/query", testOrgID, "1", "2")
+		//fmt.Println("POTATO", url)
+
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			fmt.Sprintf("/api/dashboards/uid/%s/panels/%s/query", "1", "2"),
+			fmt.Sprintf("/api/dashboards/org/%d/uid/%s/panels/%s/query", testOrgID, "1", "2"),
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
+	t.Run("Cannot query without a valid orgid or dashboard or panel ID", func(t *testing.T) {
+		response := callAPI(
+			sc.server,
+			http.MethodPost,
+			"/api/dashboards/orgid//uid//panels//query",
+			strings.NewReader(queryDatasourceInput),
+			t,
+		)
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.JSONEq(
+			t,
+			fmt.Sprintf(
+				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
+				models.ErrDashboardOrPanelIdentifierNotSet,
+			),
+			response.Body.String(),
+		)
+	})
+
+	t.Run("Cannot query without a valid orgid", func(t *testing.T) {
+		response := callAPI(
+			sc.server,
+			http.MethodPost,
+			"/api/dashboards/orgid//uid/%s/panels/%s/query",
+			strings.NewReader(queryDatasourceInput),
+			t,
+		)
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.JSONEq(
+			t,
+			fmt.Sprintf(
+				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
+				models.ErrDashboardOrPanelIdentifierNotSet,
+			),
+			response.Body.String(),
+		)
+	})
+
 	t.Run("Cannot query without a valid dashboard or panel ID", func(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			"/api/dashboards/uid//panels//query",
+			fmt.Sprintf("/api/dashboards/org//uid/%s/panels/%s/query", "1", "2"),
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
@@ -301,26 +342,10 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:                 "Get 404 when dashboardUid not given",
-			orgId:                testOrgID,
-			dashboardUid:         "",
-			panelId:              "1",
-			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
-		},
-		{
-			name:                 "Get 404 when panelId not given",
-			orgId:                testOrgID,
-			dashboardUid:         "1",
-			panelId:              "",
-			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
-		},
-		{
 			name:                 "Cannot query without a valid panel ID",
 			orgId:                testOrgID,
 			dashboardUid:         "1",
-			panelId:              "",
+			panelId:              0,
 			dashboardQueryResult: nil,
 			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
 		},
@@ -328,7 +353,7 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			name:                 "Cannot query without a valid dashboard ID",
 			orgId:                testOrgID,
 			dashboardUid:         "",
-			panelId:              "2",
+			panelId:              2,
 			dashboardQueryResult: nil,
 			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
 		},
@@ -336,7 +361,7 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			name:         "Fails when the dashboard does not exist",
 			orgId:        testOrgID,
 			dashboardUid: "1",
-			panelId:      "2",
+			panelId:      2,
 			dashboardQueryResult: &dashboardQueryResult{
 				result: nil,
 				err:    models.ErrDashboardNotFound,
@@ -347,7 +372,7 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			name:         "Fails when the dashboard does not exist",
 			orgId:        testOrgID,
 			dashboardUid: "1",
-			panelId:      "3",
+			panelId:      3,
 			dashboardQueryResult: &dashboardQueryResult{
 				result: &models.Dashboard{
 					Id:    1,
@@ -361,7 +386,7 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			name:         "Fails when the dashboard contents are nil",
 			orgId:        testOrgID,
 			dashboardUid: "1",
-			panelId:      "3",
+			panelId:      3,
 			dashboardQueryResult: &dashboardQueryResult{
 				result: &models.Dashboard{
 					Uid:   "1",
@@ -370,20 +395,6 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 				},
 			},
 			expectedError: models.ErrDashboardCorrupt,
-		},
-		{
-			name:         "Fails when the panel identifier is invalid",
-			orgId:        testOrgID,
-			dashboardUid: "1",
-			panelId:      "foob",
-			dashboardQueryResult: &dashboardQueryResult{
-				result: &models.Dashboard{
-					Uid:   "1",
-					OrgId: testOrgID,
-					Data:  dashboardJson,
-				},
-			},
-			expectedError: models.ErrDashboardPanelIdentifierInvalid,
 		},
 	}
 
@@ -397,7 +408,12 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 				ss.ExpectedError = test.dashboardQueryResult.err
 			}
 
-			assert.Equal(t, test.expectedError, checkDashboardAndPanel(context.Background(), ss, test.OrgId, test.dashboardUid, test.panelId))
+			query := models.GetDashboardQuery{
+				OrgId: test.orgId,
+				Uid:   test.dashboardUid,
+			}
+
+			assert.Equal(t, test.expectedError, checkDashboardAndPanel(context.Background(), ss, query, test.panelId))
 		})
 	}
 }
