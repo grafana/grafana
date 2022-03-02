@@ -70,6 +70,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           error={errors.type?.message}
           invalid={!!errors.type?.message}
           data-testid="alert-type-picker"
+          className={styles.fullWidthField}
         >
           <InputControl
             render={({ field: { onChange } }) => (
@@ -156,5 +157,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
+  `,
+  fullWidthField: css`
+    flex: 1;
   `,
 });
