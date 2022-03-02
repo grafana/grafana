@@ -264,35 +264,6 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	}, err
 }
 
-// func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-// 	// force that it is service accounts that we query
-// 	query.IsServiceAccount = true
-
-// 	// translate between users and serviceaccountsDTO
-// 	err := s.sqlStore.SearchOrgUsers(ctx, query)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	result := make([]*serviceaccounts.ServiceAccountDTO, 0, len(query.Result.OrgUsers))
-// 	for _, user := range query.Result.OrgUsers {
-// 		sa := &serviceaccounts.ServiceAccountDTO{
-// 			Id:    user.UserId,
-// 			Name:  user.Name,
-// 			Login: user.Login,
-// 			Role:  user.Role,
-// 			OrgId: user.OrgId,
-// 		}
-// 		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		sa.Tokens = int64(len(tokens))
-
-// 		result = append(result, sa)
-// 	}
-// 	return result, nil
-// }
-
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
 	query.IsServiceAccount = true
 
