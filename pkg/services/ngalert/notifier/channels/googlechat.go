@@ -30,14 +30,9 @@ func NewGoogleChatNotifier(model *NotificationChannelConfig, ns notifications.We
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-
-	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
-
 	return &GoogleChatNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -46,11 +41,11 @@ func NewGoogleChatNotifier(model *NotificationChannelConfig, ns notifications.We
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		URL:     url,
+		URL:     model.Settings.Get("url").MustString(),
 		log:     log.New("alerting.notifier.googlechat"),
 		ns:      ns,
 		tmpl:    t,
-		content: content,
+		content: model.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
 	}, nil
 }
 

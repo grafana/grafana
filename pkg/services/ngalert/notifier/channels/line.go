@@ -25,12 +25,9 @@ func NewLineNotifier(model *NotificationChannelConfig, ns notifications.WebhookS
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-
-	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString())
-	if token == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find token in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-
 	return &LineNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -39,7 +36,7 @@ func NewLineNotifier(model *NotificationChannelConfig, ns notifications.WebhookS
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		Token: token,
+		Token: fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString()),
 		log:   log.New("alerting.notifier.line"),
 		ns:    ns,
 		tmpl:  t,

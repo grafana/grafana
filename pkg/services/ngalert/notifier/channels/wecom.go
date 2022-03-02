@@ -15,12 +15,9 @@ import (
 
 // NewWeComNotifier is the constructor for WeCom notifier.
 func NewWeComNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
-	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
-
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook URL in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-
 	return &WeComNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -29,7 +26,7 @@ func NewWeComNotifier(model *NotificationChannelConfig, ns notifications.Webhook
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		URL:     url,
+		URL:     fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString()),
 		log:     log.New("alerting.notifier.wecom"),
 		ns:      ns,
 		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),

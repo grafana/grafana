@@ -51,32 +51,14 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-
-	endpointURL := model.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
-
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
 	slackURL := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 	if slackURL == "" {
-		slackURL = endpointURL
+		slackURL = model.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
 	}
-	apiURL, err := url.Parse(slackURL)
-	if err != nil {
-		return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("invalid URL %q", slackURL), Err: err}
-	}
-
-	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient == "" && apiURL.String() == endpointURL {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: "recipient must be specified when using the Slack chat API",
-		}
-	}
-
-	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: fmt.Sprintf("invalid value for mentionChannel: %q", mentionChannel),
-		}
-	}
-
+	apiURL, _ := url.Parse(slackURL)
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionUsers := []string{}
 	for _, u := range strings.Split(mentionUsersStr, ",") {
@@ -85,7 +67,6 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 			mentionUsers = append(mentionUsers, u)
 		}
 	}
-
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionGroups := []string{}
 	for _, g := range strings.Split(mentionGroupsStr, ",") {
@@ -94,14 +75,6 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 			mentionGroups = append(mentionGroups, g)
 		}
 	}
-
-	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString())
-	if token == "" && apiURL.String() == SlackAPIEndpoint {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: "token must be specified when using the Slack chat API",
-		}
-	}
-
 	return &SlackNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -111,14 +84,14 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 			Settings:              model.Settings,
 		}),
 		URL:            apiURL,
-		Recipient:      recipient,
+		Recipient:      strings.TrimSpace(model.Settings.Get("recipient").MustString()),
 		MentionUsers:   mentionUsers,
 		MentionGroups:  mentionGroups,
-		MentionChannel: mentionChannel,
+		MentionChannel: model.Settings.Get("mentionChannel").MustString(),
 		Username:       model.Settings.Get("username").MustString("Grafana"),
 		IconEmoji:      model.Settings.Get("icon_emoji").MustString(),
 		IconURL:        model.Settings.Get("icon_url").MustString(),
-		Token:          token,
+		Token:          fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString()),
 		Text:           model.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
 		Title:          model.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 		log:            log.New("alerting.notifier.slack"),

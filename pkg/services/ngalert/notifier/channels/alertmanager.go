@@ -25,10 +25,11 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Templ
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-	urlStr := model.Settings.Get("url").MustString()
-	if urlStr == "" {
-		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
+
+	urlStr := model.Settings.Get("url").MustString()
 
 	var urls []*url.URL
 	for _, uS := range strings.Split(urlStr, ",") {
@@ -36,13 +37,8 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Templ
 		if uS == "" {
 			continue
 		}
-
 		uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
-		u, err := url.Parse(uS)
-		if err != nil {
-			return nil, receiverInitError{Reason: "invalid url property in settings", Cfg: *model, Err: err}
-		}
-
+		u, _ := url.Parse(uS)
 		urls = append(urls, u)
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()

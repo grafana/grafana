@@ -49,24 +49,9 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, ns notifications.Webh
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-	autoClose := model.Settings.Get("autoClose").MustBool(true)
-	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString())
-	apiURL := model.Settings.Get("apiUrl").MustString()
-	if apiKey == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find api key property in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-	if apiURL == "" {
-		apiURL = OpsgenieAlertURL
-	}
-
-	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
-	if sendTagsAs != OpsgenieSendTags && sendTagsAs != OpsgenieSendDetails && sendTagsAs != OpsgenieSendBoth {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: fmt.Sprintf("invalid value for sendTagsAs: %q", sendTagsAs),
-		}
-	}
-
 	return &OpsgenieNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -75,11 +60,11 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, ns notifications.Webh
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		APIKey:           apiKey,
-		APIUrl:           apiURL,
-		AutoClose:        autoClose,
-		OverridePriority: overridePriority,
-		SendTagsAs:       sendTagsAs,
+		APIKey:           fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString()),
+		APIUrl:           model.Settings.Get("apiUrl").MustString(OpsgenieAlertURL),
+		AutoClose:        model.Settings.Get("autoClose").MustBool(true),
+		OverridePriority: model.Settings.Get("overridePriority").MustBool(true),
+		SendTagsAs:       model.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags),
 		tmpl:             t,
 		log:              log.New("alerting.notifier." + model.Name),
 		ns:               ns,

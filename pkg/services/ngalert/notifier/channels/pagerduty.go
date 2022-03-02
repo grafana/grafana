@@ -48,12 +48,9 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, ns notifications.Web
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-
-	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString())
-	if key == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-
 	return &PagerdutyNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -62,7 +59,7 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, ns notifications.Web
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		Key: key,
+		Key: fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString()),
 		CustomDetails: map[string]string{
 			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,

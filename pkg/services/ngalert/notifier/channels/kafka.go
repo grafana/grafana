@@ -31,16 +31,9 @@ func NewKafkaNotifier(model *NotificationChannelConfig, ns notifications.Webhook
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
-	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
-	if endpoint == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka rest proxy endpoint property in settings"}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-	topic := model.Settings.Get("kafkaTopic").MustString()
-	if topic == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka topic property in settings"}
-	}
-
 	return &KafkaNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -49,8 +42,8 @@ func NewKafkaNotifier(model *NotificationChannelConfig, ns notifications.Webhook
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		Endpoint: endpoint,
-		Topic:    topic,
+		Endpoint: model.Settings.Get("kafkaRestProxy").MustString(),
+		Topic:    model.Settings.Get("kafkaTopic").MustString(),
 		log:      log.New("alerting.notifier.kafka"),
 		ns:       ns,
 		tmpl:     t,

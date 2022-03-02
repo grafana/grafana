@@ -3,7 +3,6 @@ package channels
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"mime/multipart"
 	"strconv"
 
@@ -47,30 +46,13 @@ func NewPushoverNotifier(model *NotificationChannelConfig, ns notifications.Webh
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-
-	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString())
-	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString())
-	device := model.Settings.Get("device").MustString()
-	alertingPriority, err := strconv.Atoi(model.Settings.Get("priority").MustString("0")) // default Normal
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-	okPriority, err := strconv.Atoi(model.Settings.Get("okPriority").MustString("0")) // default Normal
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert OK priority to integer: %w", err)
-	}
+	alertingPriority, _ := strconv.Atoi(model.Settings.Get("priority").MustString("0")) // default Normal
+	okPriority, _ := strconv.Atoi(model.Settings.Get("okPriority").MustString("0"))     // default Normal
 	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())
 	expire, _ := strconv.Atoi(model.Settings.Get("expire").MustString())
-	alertingSound := model.Settings.Get("sound").MustString()
-	okSound := model.Settings.Get("okSound").MustString()
-	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
-
-	if userKey == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "user key not found"}
-	}
-	if APIToken == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "API token not found"}
-	}
 	return &PushoverNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -80,16 +62,16 @@ func NewPushoverNotifier(model *NotificationChannelConfig, ns notifications.Webh
 			Settings:              model.Settings,
 			SecureSettings:        model.SecureSettings,
 		}),
-		UserKey:          userKey,
-		APIToken:         APIToken,
+		UserKey:          fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString()),
+		APIToken:         fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString()),
 		AlertingPriority: alertingPriority,
 		OKPriority:       okPriority,
 		Retry:            retry,
 		Expire:           expire,
-		Device:           device,
-		AlertingSound:    alertingSound,
-		OKSound:          okSound,
-		Upload:           uploadImage,
+		Device:           model.Settings.Get("device").MustString(),
+		AlertingSound:    model.Settings.Get("sound").MustString(),
+		OKSound:          model.Settings.Get("okSound").MustString(),
+		Upload:           model.Settings.Get("uploadImage").MustBool(true),
 		Message:          model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		tmpl:             t,
 		log:              log.New("alerting.notifier.pushover"),

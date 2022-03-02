@@ -31,12 +31,9 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, ns notifications.Web
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find victorops url property in settings"}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-
 	return &VictoropsNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -45,7 +42,7 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, ns notifications.Web
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		URL:         url,
+		URL:         model.Settings.Get("url").MustString(),
 		MessageType: model.Settings.Get("messageType").MustString(),
 		log:         log.New("alerting.notifier.victorops"),
 		ns:          ns,

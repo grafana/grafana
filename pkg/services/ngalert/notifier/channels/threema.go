@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -39,30 +38,9 @@ func NewThreemaNotifier(model *NotificationChannelConfig, ns notifications.Webho
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-	gatewayID := model.Settings.Get("gateway_id").MustString()
-	recipientID := model.Settings.Get("recipient_id").MustString()
-	apiSecret := fn(context.Background(), model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString())
-
-	// Validation
-	if gatewayID == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Threema Gateway ID in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-	if !strings.HasPrefix(gatewayID, "*") {
-		return nil, receiverInitError{Cfg: *model, Reason: "invalid Threema Gateway ID: Must start with a *"}
-	}
-	if len(gatewayID) != 8 {
-		return nil, receiverInitError{Cfg: *model, Reason: "invalid Threema Gateway ID: Must be 8 characters long"}
-	}
-	if recipientID == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Threema Recipient ID in settings"}
-	}
-	if len(recipientID) != 8 {
-		return nil, receiverInitError{Cfg: *model, Reason: "invalid Threema Recipient ID: Must be 8 characters long"}
-	}
-	if apiSecret == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Threema API secret in settings"}
-	}
-
 	return &ThreemaNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -71,9 +49,9 @@ func NewThreemaNotifier(model *NotificationChannelConfig, ns notifications.Webho
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		GatewayID:   gatewayID,
-		RecipientID: recipientID,
-		APISecret:   apiSecret,
+		GatewayID:   model.Settings.Get("gateway_id").MustString(),
+		RecipientID: model.Settings.Get("recipient_id").MustString(),
+		APISecret:   fn(context.Background(), model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString()),
 		log:         log.New("alerting.notifier.threema"),
 		ns:          ns,
 		tmpl:        t,

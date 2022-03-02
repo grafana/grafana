@@ -37,16 +37,9 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, ns notifications.Webho
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-
-	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString())
-	if apikey == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find the API key property in settings"}
-	}
-
 	return &SensuGoNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
@@ -56,12 +49,12 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, ns notifications.Webho
 			Settings:              model.Settings,
 			SecureSettings:        model.SecureSettings,
 		}),
-		URL:       url,
+		URL:       model.Settings.Get("url").MustString(),
 		Entity:    model.Settings.Get("entity").MustString(),
 		Check:     model.Settings.Get("check").MustString(),
 		Namespace: model.Settings.Get("namespace").MustString(),
 		Handler:   model.Settings.Get("handler").MustString(),
-		APIKey:    apikey,
+		APIKey:    fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString()),
 		Message:   model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		log:       log.New("alerting.notifier.sensugo"),
 		ns:        ns,
