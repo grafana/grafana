@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-// type StorageName string
+type StorageName string
 
-// const (
-// 	StorageNameGrafanaDS StorageName = "grafanads"
-// )
+const (
+	StorageNamePublic StorageName = "public"
+)
 
 var (
 	ErrRelativePath          = errors.New("path cant be relative")
@@ -22,13 +22,13 @@ var (
 	Delimiter                = "/"
 )
 
-// func Path(path string, storageName StorageName) string {
-// 	if strings.HasPrefix(path, Delimiter) {
-// 		return fmt.Sprintf("%s%s", string(storageName), path)
-// 	}
+func Join(parts ...string) string {
+	return Delimiter + strings.Join(parts, Delimiter)
+}
 
-// 	return fmt.Sprintf("%s%s%s", string(storageName), Delimiter, path)
-// }
+func belongsToStorage(path string, storageName StorageName) bool {
+	return strings.HasPrefix(path, string(storageName))
+}
 
 type File struct {
 	Contents []byte

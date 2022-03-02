@@ -158,8 +158,8 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "dbFileStorage",
-			Description:     "Store files in the database",
+			Name:            "fileStoreApi",
+			Description:     "Simple API for managing files",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
