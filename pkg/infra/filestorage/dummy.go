@@ -7,6 +7,10 @@ import (
 	_ "gocloud.dev/blob/memblob"
 )
 
+var (
+	_ FileStorage = (*dummyFileStorage)(nil) // dummyFileStorage implements FileStorage
+)
+
 type dummyFileStorage struct {
 }
 
