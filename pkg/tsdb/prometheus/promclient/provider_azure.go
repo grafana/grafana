@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
-func (p *Provider) configureAzureAuthentication(opts sdkhttpclient.Options) error {
+func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) error {
 	// Azure authentication is experimental (#35857)
 	if !p.features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
 		return nil

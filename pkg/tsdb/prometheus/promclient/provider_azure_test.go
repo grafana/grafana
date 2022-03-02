@@ -28,7 +28,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 			var p = NewProvider(settings, jsonData, nil, features, nil)
 
-			var opts = sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 			var p = NewProvider(settings, jsonData, nil, features, nil)
 
-			var opts = sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 			var p = NewProvider(settings, jsonData, nil, features, nil)
 
-			var opts = sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			assert.Error(t, err)
@@ -79,7 +79,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 			var p = NewProvider(settings, jsonData, nil, features, nil)
 
-			var opts = sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
@@ -101,7 +101,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 			var p = NewProvider(settings, jsonData, nil, features, nil)
 
-			var opts = sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
@@ -120,7 +120,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 			var p = NewProvider(settings, jsonData, nil, features, nil)
 
-			var opts = sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			assert.Error(t, err)
@@ -141,7 +141,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 			var p = NewProvider(settings, jsonData, nil, features, nil)
 
-			var opts = sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)

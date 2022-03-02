@@ -57,7 +57,7 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 	}
 
 	// Azure authentication
-	err = p.configureAzureAuthentication(opts)
+	err = p.configureAzureAuthentication(&opts)
 	if err != nil {
 		return nil, err
 	}
