@@ -68,7 +68,7 @@ export enum AccessControlAction {
   ActionUserRolesList = 'users.roles:list',
 
   DashboardsRead = 'dashboards:read',
-  DashboardsWrite = 'dashboards:read',
+  DashboardsWrite = 'dashboards:write',
   DashboardsDelete = 'dashboards:delete',
   DashboardsCreate = 'dashboards:create',
   DashboardsPermissionsRead = 'dashboards.permissions:read',
