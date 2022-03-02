@@ -39,7 +39,7 @@ const sevenDaysAhead = 7 * 24 * time.Hour
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
@@ -78,7 +78,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	// confirm service account exists
@@ -93,7 +93,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd := models.AddApiKeyCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	// Force affected service account to be the one referenced in the URL

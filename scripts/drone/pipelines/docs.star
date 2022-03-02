@@ -5,7 +5,6 @@ load(
     'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
-    'build_frontend_step',
     'test_frontend_step',
     'build_storybook_step',
     'build_frontend_docs_step',
