@@ -101,9 +101,8 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 		{
 			desc: "success federated lotex",
 			input: PostableRuleGroupConfig{
-				Name:          "foo",
-				Interval:      0,
-				SourceTenants: []string{"tenant-a", "tenant-b"},
+				Name:     "foo",
+				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
 					{
 						ApiRuleNode: &ApiRuleNode{},
@@ -208,9 +207,8 @@ func Test_Rule_Group_Type(t *testing.T) {
 		{
 			desc: "success federated lotex",
 			input: PostableRuleGroupConfig{
-				Name:          "foo",
-				Interval:      0,
-				SourceTenants: []string{"tenant-a", "tenant-b"},
+				Name:     "foo",
+				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
 					{
 						ApiRuleNode: &ApiRuleNode{},
@@ -258,14 +256,6 @@ simple_rules:
       rules:
         - alert: logs_exist
           expr: rate({cluster="us-central1", job="loki-prod/loki-canary"}[1m]) > 0
-          for: 1m
-    - name: federated_alerts
-      source_tenants:
-        - tenant-a
-        - tenant-b
-      rules:
-        - alert: one
-          expr: "1"
           for: 1m
 `
 

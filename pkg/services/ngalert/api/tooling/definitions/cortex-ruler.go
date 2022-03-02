@@ -162,10 +162,9 @@ type NamespaceConfigResponse map[string][]GettableRuleGroupConfig
 
 // swagger:model
 type PostableRuleGroupConfig struct {
-	Name          string                     `yaml:"name" json:"name"`
-	Interval      model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
-	SourceTenants []string                   `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	Rules         []PostableExtendedRuleNode `yaml:"rules" json:"rules"`
+	Name     string                     `yaml:"name" json:"name"`
+	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Rules    []PostableExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
 func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
