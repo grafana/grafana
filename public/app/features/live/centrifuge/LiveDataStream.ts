@@ -260,7 +260,7 @@ export class LiveDataStream<T = unknown> {
         // send empty frame with error
         return {
           key: subKey,
-          state: error ? LoadingState.Error : LoadingState.Streaming,
+          state: LoadingState.Error,
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
@@ -276,7 +276,7 @@ export class LiveDataStream<T = unknown> {
         // send empty frame
         return {
           key: subKey,
-          state: error ? LoadingState.Error : LoadingState.Streaming,
+          state: LoadingState.Streaming,
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
