@@ -135,6 +135,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
     }),
     addButton: css({
+      width: 150,
       paddingBottom: theme.spacing(1),
     }),
   };
