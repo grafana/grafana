@@ -82,6 +82,7 @@ func (b service) Get(ctx context.Context, path string) (*File, error) {
 }
 
 func removeStoragePrefix(path string) string {
+	path = strings.TrimPrefix(path, Delimiter)
 	if path == Delimiter || path == "" {
 		return Delimiter
 	}
