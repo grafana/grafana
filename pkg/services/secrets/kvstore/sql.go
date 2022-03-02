@@ -17,9 +17,13 @@ type secretsKVStoreSQL struct {
 	secretsService secrets.Service
 }
 
+func (kv *secretsKVStoreSQL) formatKey(orgId int64, namespace string, typ string) string {
+	return fmt.Sprintf("org/%d/%s/%s", orgId, namespace, typ)
+}
+
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
-	key := fmt.Sprintf("org/%d/%s/%s", orgId, namespace, typ)
+	key := kv.formatKey(orgId, namespace, typ)
 	item := Item{
 		OrgId:     &orgId,
 		Namespace: &namespace,
@@ -59,7 +63,7 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 		return err
 	}
 	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		key := fmt.Sprintf("org/%d/%s/%s", orgId, namespace, typ)
+		key := kv.formatKey(orgId, namespace, typ)
 		item := Item{
 			OrgId:     &orgId,
 			Namespace: &namespace,
