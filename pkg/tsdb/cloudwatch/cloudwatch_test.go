@@ -93,7 +93,7 @@ func Test_CheckHealth(t *testing.T) {
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var client FakeCheckHealthClient
+	var client fakeCheckHealthClient
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return client
 	}
@@ -102,7 +102,7 @@ func Test_CheckHealth(t *testing.T) {
 	}
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
-		client = FakeCheckHealthClient{}
+		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -120,7 +120,7 @@ func Test_CheckHealth(t *testing.T) {
 	})
 
 	t.Run("successfully queries metrics, fails during logs query", func(t *testing.T) {
-		client = FakeCheckHealthClient{
+		client = fakeCheckHealthClient{
 			describeLogGroupsWithContext: func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput,
 				options ...awsrequest.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 				return nil, fmt.Errorf("some logs query error")
@@ -142,7 +142,7 @@ func Test_CheckHealth(t *testing.T) {
 	})
 
 	t.Run("successfully queries logs, fails during metrics query", func(t *testing.T) {
-		client = FakeCheckHealthClient{
+		client = fakeCheckHealthClient{
 			listMetricsPages: func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 				return fmt.Errorf("some list metrics error")
 			}}
@@ -163,7 +163,7 @@ func Test_CheckHealth(t *testing.T) {
 	})
 
 	t.Run("fail to get clients", func(t *testing.T) {
-		client = FakeCheckHealthClient{}
+		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})

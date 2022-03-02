@@ -172,24 +172,23 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 	return nil
 }
 
-type listMetricsFn func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
-type describeLogGroupsFn func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput, options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
-type FakeCheckHealthClient struct {
+type fakeCheckHealthClient struct {
 	cloudwatchiface.CloudWatchAPI
 	cloudwatchlogsiface.CloudWatchLogsAPI
 
-	listMetricsPages             listMetricsFn
-	describeLogGroupsWithContext describeLogGroupsFn
+	listMetricsPages             func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
+	describeLogGroupsWithContext func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput,
+		options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
 }
 
-func (c FakeCheckHealthClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+func (c fakeCheckHealthClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 	if c.listMetricsPages != nil {
 		return c.listMetricsPages(input, fn)
 	}
 	return nil
 }
 
-func (c FakeCheckHealthClient) DescribeLogGroupsWithContext(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput, options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (c fakeCheckHealthClient) DescribeLogGroupsWithContext(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput, options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	if c.describeLogGroupsWithContext != nil {
 		return c.describeLogGroupsWithContext(ctx, input, options...)
 	}
