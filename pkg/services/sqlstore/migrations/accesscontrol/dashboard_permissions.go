@@ -19,14 +19,12 @@ var dashboardPermissionTranslation = map[models.PermissionType][]string{
 	},
 	models.PERMISSION_EDIT: {
 		ac.ActionDashboardsRead,
-		ac.ActionDashboardsEdit,
 		ac.ActionDashboardsWrite,
 		ac.ActionDashboardsCreate,
 		ac.ActionDashboardsDelete,
 	},
 	models.PERMISSION_ADMIN: {
 		ac.ActionDashboardsRead,
-		ac.ActionDashboardsEdit,
 		ac.ActionDashboardsWrite,
 		ac.ActionDashboardsCreate,
 		ac.ActionDashboardsDelete,
