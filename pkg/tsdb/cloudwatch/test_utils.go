@@ -172,6 +172,29 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 	return nil
 }
 
+type fakeCheckHealthClient struct {
+	cloudwatchiface.CloudWatchAPI
+	cloudwatchlogsiface.CloudWatchLogsAPI
+
+	listMetricsPages             func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
+	describeLogGroupsWithContext func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput,
+		options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
+}
+
+func (c fakeCheckHealthClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+	if c.listMetricsPages != nil {
+		return c.listMetricsPages(input, fn)
+	}
+	return nil
+}
+
+func (c fakeCheckHealthClient) DescribeLogGroupsWithContext(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput, options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	if c.describeLogGroupsWithContext != nil {
+		return c.describeLogGroupsWithContext(ctx, input, options...)
+	}
+	return nil, nil
+}
+
 func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
 	var chunks [][]*cloudwatch.Metric
 	for {
@@ -194,9 +217,13 @@ func newTestConfig() *setting.Cfg {
 }
 
 type fakeSessionCache struct {
+	getSession func(c awsds.SessionConfig) (*session.Session, error)
 }
 
 func (s fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, error) {
+	if s.getSession != nil {
+		return s.getSession(c)
+	}
 	return &session.Session{
 		Config: &aws.Config{},
 	}, nil
