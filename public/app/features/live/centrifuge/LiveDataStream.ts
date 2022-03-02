@@ -84,9 +84,7 @@ type InternalStreamMessageTypeToData = {
   [InternalStreamMessageType.Error]: {
     error: DataQueryError;
   };
-  [InternalStreamMessageType.ChangedSchema]: {
-    values: unknown[][];
-  };
+  [InternalStreamMessageType.ChangedSchema]: {};
   [InternalStreamMessageType.NewValuesSameSchema]: {
     values: unknown[][];
   };
@@ -190,17 +188,15 @@ export class LiveDataStream<T = unknown> {
 
   private process = (msg: DataFrameJSON) => {
     const packetInfo = this.frameBuffer.push(msg);
-    const newValues = this.frameBuffer.getValuesFromLastPacket();
 
     if (packetInfo.schemaChanged) {
       this.stream.next({
         type: InternalStreamMessageType.ChangedSchema,
-        values: newValues,
       });
     } else {
       this.stream.next({
         type: InternalStreamMessageType.NewValuesSameSchema,
-        values: newValues,
+        values: this.frameBuffer.getValuesFromLastPacket(),
       });
     }
   };
