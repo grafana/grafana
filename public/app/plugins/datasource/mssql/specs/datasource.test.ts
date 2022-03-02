@@ -6,7 +6,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { TimeSrvStub } from 'test/specs/helpers';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -17,15 +16,13 @@ describe('MSSQLDatasource', () => {
   const templateSrv: TemplateSrv = new TemplateSrv();
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
-  const ctx: any = {
-    timeSrv: new TimeSrvStub(),
-  };
+  const ctx: any = {};
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     ctx.instanceSettings = { name: 'mssql' };
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv, ctx.timeSrv);
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv);
   });
 
   describe('When performing annotationQuery', () => {
@@ -255,7 +252,6 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.timeSrv.setTime(time);
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
       return ctx.ds.metricFindQuery(query, { range: time });

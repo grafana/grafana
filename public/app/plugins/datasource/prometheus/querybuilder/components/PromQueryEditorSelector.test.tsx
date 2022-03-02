@@ -71,7 +71,6 @@ describe('PromQueryEditorSelector', () => {
 
   it('shows builder when builder mode is set', async () => {
     renderWithMode(QueryEditorMode.Builder);
-    screen.debug(undefined, 20000);
     expectBuilder();
   });
 
@@ -86,6 +85,7 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Builder,
     });
   });
@@ -99,6 +99,7 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Builder,
       editorPreview: true,
     });
@@ -119,6 +120,7 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Code,
     });
   });
@@ -129,6 +131,7 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Explain,
     });
   });

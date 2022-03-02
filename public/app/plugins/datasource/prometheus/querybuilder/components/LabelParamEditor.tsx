@@ -3,10 +3,18 @@ import { Select } from '@grafana/ui';
 import React, { useState } from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { promQueryModeller } from '../PromQueryModeller';
+import { getOperationParamId } from '../shared/operationUtils';
 import { QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
-export function LabelParamEditor({ onChange, index, value, query, datasource }: QueryBuilderOperationParamEditorProps) {
+export function LabelParamEditor({
+  onChange,
+  index,
+  operationIndex,
+  value,
+  query,
+  datasource,
+}: QueryBuilderOperationParamEditorProps) {
   const [state, setState] = useState<{
     options?: Array<SelectableValue<any>>;
     isLoading?: boolean;
@@ -14,6 +22,7 @@ export function LabelParamEditor({ onChange, index, value, query, datasource }: 
 
   return (
     <Select
+      inputId={getOperationParamId(operationIndex, index)}
       menuShouldPortal
       autoFocus={value === '' ? true : undefined}
       openMenuOnFocus

@@ -28,13 +28,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -46,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -117,7 +120,7 @@ type HTTPServer struct {
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
-	DataSourcesService           *datasources.Service
+	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
 	grafanaUpdateChecker         *updatechecker.GrafanaService
@@ -128,9 +131,16 @@ type HTTPServer struct {
 	queryDataService             *query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	TeamPermissionsService       *resourcepermissions.Service
+	teamPermissionsService       accesscontrol.PermissionsService
 	NotificationService          *notifications.NotificationService
-	DatasourcePermissionsService DatasourcePermissionsService
+	dashboardService             dashboards.DashboardService
+	dashboardProvisioningService dashboards.DashboardProvisioningService
+	folderService                dashboards.FolderService
+	DatasourcePermissionsService permissions.DatasourcePermissionsService
+	commentsService              *comments.Service
+	AlertNotificationService     *alerting.AlertNotificationService
+	DashboardsnapshotsService    *dashboardsnapshots.Service
+	PluginSettings               *pluginsettings.ServiceImpl
 }
 
 type ServerOptions struct {
@@ -155,10 +165,14 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
-	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
+	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
-	notificationService *notifications.NotificationService, datasourcePermissionsService DatasourcePermissionsService) (*HTTPServer, error) {
+	authInfoService login.AuthInfoService, permissionsServices accesscontrol.PermissionsServices,
+	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
+	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
+	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginsettings.ServiceImpl,
+) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -217,9 +231,16 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
-		TeamPermissionsService:       resourcePermissionServices.GetTeamService(),
 		NotificationService:          notificationService,
+		dashboardService:             dashboardService,
+		dashboardProvisioningService: dashboardProvisioningService,
+		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
+		commentsService:              commentsService,
+		teamPermissionsService:       permissionsServices.GetTeamService(),
+		AlertNotificationService:     alertNotificationService,
+		DashboardsnapshotsService:    dashboardsnapshotsService,
+		PluginSettings:               pluginSettings,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -446,7 +467,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName))
+	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName, hs.log))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")

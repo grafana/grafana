@@ -17,7 +17,7 @@ import {
   variableStateNotStarted,
 } from './sharedReducer';
 import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
-import { initialVariablesState, toVariablePayload, VariableIdentifier, VariablesState } from './types';
+import { initialVariablesState, KeyedVariableIdentifier, VariablesState } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
@@ -26,6 +26,7 @@ import { changeVariableNameSucceeded } from '../editor/reducer';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { initialConstantVariableModelState } from '../constant/reducer';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [createQueryVariableAdapter(), createConstantVariableAdapter()]);
 
@@ -102,6 +103,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -115,6 +117,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -140,6 +143,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -153,6 +157,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -179,6 +184,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': {
             id: '0',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -192,6 +198,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -205,6 +212,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -219,6 +227,7 @@ describe('sharedReducer', () => {
           '11': {
             ...initialQueryVariableModelState,
             id: '11',
+            rootStateKey: 'key',
             name: 'copy_of_Name-1',
             index: 3,
             label: 'Label-1',
@@ -237,6 +246,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -250,6 +260,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -263,6 +274,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -286,6 +298,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -299,6 +312,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -312,6 +326,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -548,7 +563,7 @@ describe('sharedReducer', () => {
       const constantAdapter = createConstantVariableAdapter();
       const { initialState: constantAdapterState } = getVariableTestContext(constantAdapter);
       const newType = 'constant' as VariableType;
-      const identifier: VariableIdentifier = { id: '0', type: 'query' };
+      const identifier: KeyedVariableIdentifier = { id: '0', type: 'query', rootStateKey: 'key' };
       const payload = toVariablePayload(identifier, { newType });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(queryAdapterState))
@@ -564,6 +579,7 @@ describe('sharedReducer', () => {
           ...constantAdapterState,
           '0': {
             ...constantAdapterState[0],
+            rootStateKey: 'key',
             name: 'test',
             description: 'new description',
             label: 'new label',

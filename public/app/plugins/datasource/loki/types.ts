@@ -27,7 +27,7 @@ export enum LokiResultType {
 export enum LokiQueryType {
   Range = 'range',
   Instant = 'instant',
-  // Stream = 'stream',
+  Stream = 'stream',
 }
 
 export interface LokiQuery extends DataQuery {

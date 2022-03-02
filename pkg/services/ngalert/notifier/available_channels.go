@@ -382,6 +382,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					InputType:    alerting.InputTypeText,
 					Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
 					PropertyName: "recipient",
+					Required:     true,
+					DependsOn:    "secureSettings.url",
 				},
 				// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
 				// However, since the UI doesn't allow to say that a field is required or not depending on another field,
@@ -394,6 +396,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Description:  "Provide a Slack API token (starts with \"xoxb\") - required unless you provide a webhook",
 					PropertyName: "token",
 					Secure:       true,
+					Required:     true,
+					DependsOn:    "secureSettings.url",
 				},
 				{
 					Label:        "Username",
@@ -458,6 +462,16 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "Slack incoming webhook URL",
 					PropertyName: "url",
 					Secure:       true,
+					Required:     true,
+					DependsOn:    "secureSettings.token",
+				},
+				{ // New in 8.4.
+					Label:        "Endpoint URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Optionally provide a custom Slack message API endpoint for non-webhook requests, default is https://slack.com/api/chat.postMessage",
+					Placeholder:  "Slack endpoint url",
+					PropertyName: "endpointUrl",
 				},
 				{ // New in 8.0.
 					Label:        "Title",
@@ -589,7 +603,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 		},
 		{
 			Type:        "webhook",
-			Name:        "webhook",
+			Name:        "Webhook",
 			Description: "Sends HTTP POST request to a URL",
 			Heading:     "Webhook settings",
 			Options: []alerting.NotifierOption{

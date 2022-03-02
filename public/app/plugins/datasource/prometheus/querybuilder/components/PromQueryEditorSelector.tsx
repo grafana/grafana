@@ -1,10 +1,8 @@
+import React, { SyntheticEvent, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
-
-import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
@@ -12,17 +10,20 @@ import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 import { buildVisualQueryFromString } from '../parsing';
+import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
+import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
+import { changeEditorMode, getQueryWithDefaults } from '../state';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
-  const { query, onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
-
   const [parseModalOpen, setParseModalOpen] = useState(false);
+  const query = getQueryWithDefaults(props.query, props.app);
+  const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      const change = { ...query, editorMode: newMetricEditorMode };
       if (newMetricEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
@@ -31,7 +32,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           return;
         }
       }
-      onChange(change);
+      changeEditorMode(query, newMetricEditorMode, onChange);
     },
     [onChange, query]
   );
@@ -42,15 +43,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     onRunQuery();
   };
 
-  // If no expr (ie new query) then default to builder
-  const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
-
-  useEffect(() => {
-    if (query.editorMode === undefined) {
-      onChange({ ...query, editorMode });
-    }
-  }, [editorMode, onChange, query]);
-
   return (
     <>
       <ConfirmModal
@@ -59,7 +51,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         body="There were errors while trying to parse the query. Continuing to visual builder may loose some parts of the query."
         confirmText="Continue"
         onConfirm={() => {
-          onChange({ ...query, editorMode: QueryEditorMode.Builder });
+          changeEditorMode(query, QueryEditorMode.Builder, onChange);
           setParseModalOpen(false);
         }}
         onDismiss={() => setParseModalOpen(false)}
@@ -107,16 +99,20 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} />}
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}
             datasource={props.datasource}
             onChange={onChange}
             onRunQuery={props.onRunQuery}
+            data={data}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}
+        {editorMode !== QueryEditorMode.Explain && (
+          <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
+        )}
       </EditorRows>
     </>
   );

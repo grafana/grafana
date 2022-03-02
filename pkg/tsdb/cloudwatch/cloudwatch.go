@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -83,11 +84,13 @@ type SessionCache interface {
 }
 
 func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
-	return &cloudWatchExecutor{
+	cwe := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
 		sessions: sessions,
 	}
+	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
+	return cwe
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -158,6 +161,55 @@ type cloudWatchExecutor struct {
 	im       instancemgmt.InstanceManager
 	cfg      *setting.Cfg
 	sessions SessionCache
+
+	resourceHandler backend.CallResourceHandler
+}
+
+func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return e.resourceHandler.CallResource(ctx, req, sender)
+}
+
+func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext) error {
+	namespace := "AWS/Billing"
+	metric := "EstimatedCharges"
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  &namespace,
+		MetricName: &metric,
+	}
+	_, err := e.listMetrics(pluginCtx, defaultRegion, params)
+	return err
+}
+
+func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx backend.PluginContext) error {
+	logsClient, err := e.getCWLogsClient(pluginCtx, defaultRegion)
+	if err != nil {
+		return err
+	}
+	_, err = e.handleDescribeLogGroups(ctx, logsClient, simplejson.NewFromAny(map[string]interface{}{"limit": "1"}))
+	return err
+}
+
+func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	status := backend.HealthStatusOk
+	metricsTest := "Successfully queried the CloudWatch metrics API."
+	logsTest := "Successfully queried the CloudWatch logs API."
+
+	err := e.checkHealthMetrics(req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		metricsTest = fmt.Sprintf("CloudWatch metrics query failed: %s", err.Error())
+	}
+
+	err = e.checkHealthLogs(ctx, req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  status,
+		Message: fmt.Sprintf("1. %s\n2. %s", metricsTest, logsTest),
+	}, nil
 }
 
 func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region string) (*session.Session, error) {
@@ -283,8 +335,6 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 
 	var result *backend.QueryDataResponse
 	switch queryType {
-	case "metricFindQuery":
-		result, err = e.executeMetricFindQuery(req.PluginContext, model, q)
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
 	case "logAction":

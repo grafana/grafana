@@ -1,7 +1,7 @@
 import { find, map, reduce, remove } from 'lodash';
 import coreModule from 'app/angular/core_module';
 import { ThresholdMapper } from './state/ThresholdMapper';
-import { QueryPart } from 'app/angular/components/query_part';
+import { QueryPart } from 'app/features/alerting/state/query_part';
 import alertDef from './state/alertDef';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
