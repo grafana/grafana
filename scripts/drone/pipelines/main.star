@@ -156,6 +156,9 @@ def main_pipelines(edition):
     trigger = {
         'event': ['push',],
         'branch': 'main',
+        'repo': [
+          'grafana/grafana',
+        ],
     }
     drone_change_trigger = {
         'event': ['push',],

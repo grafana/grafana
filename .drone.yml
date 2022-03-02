@@ -513,6 +513,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -614,6 +616,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -971,6 +975,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1053,6 +1059,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1116,6 +1124,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1200,6 +1210,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1232,6 +1244,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
   status:
   - failure
 type: docker
@@ -3252,6 +3266,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3352,6 +3368,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3437,6 +3455,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3493,6 +3513,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3824,6 +3846,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3967,6 +3991,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4099,6 +4125,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4179,6 +4207,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4330,6 +4360,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: e3cb92ddbab7597fd0aa6b1df0e603b6870eadca83ccd3ef2ab626588d3f7681
+hmac: e5708b30e32c53c4c51257bc10a2c0ba6c25712378f7454e70b325c34d114317
 
 ...
