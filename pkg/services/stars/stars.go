@@ -11,8 +11,8 @@ import (
 type Manager interface {
 	StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error
 	UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error
-	IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error
-	GetUserStars(ctx context.Context, cmd *models.GetUserStarsQuery) error
+	IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error)
+	GetUserStars(ctx context.Context, cmd *models.GetUserStarsQuery) (map[int64]bool, error)
 }
 
 type ManagerImpl struct {
@@ -31,10 +31,10 @@ func (m *ManagerImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDas
 	return m.starsStore.UnstarDashboard(ctx, cmd)
 }
 
-func (m *ManagerImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
+func (m *ManagerImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
 	return m.starsStore.IsStarredByUserCtx(ctx, query)
 }
 
-func (m *ManagerImpl) GetUserStars(ctx context.Context, cmd *models.GetUserStarsQuery) error {
+func (m *ManagerImpl) GetUserStars(ctx context.Context, cmd *models.GetUserStarsQuery) (map[int64]bool, error) {
 	return m.starsStore.GetUserStars(ctx, cmd)
 }

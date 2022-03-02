@@ -15,8 +15,8 @@ func NewStarsServiceFake() *FakeStarsService {
 	return &FakeStarsService{}
 }
 
-func (f *FakeStarsService) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
-	return f.ExpectedError
+func (f *FakeStarsService) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
+	return true, f.ExpectedError
 }
 
 func (f *FakeStarsService) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {

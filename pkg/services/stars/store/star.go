@@ -8,10 +8,10 @@ import (
 )
 
 type Store interface {
-	IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error
+	IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error)
 	StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error
 	UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error
-	GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error
+	GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error)
 }
 
 type StoreImpl struct {
@@ -72,8 +72,9 @@ func (s *StoreImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashb
 	})
 }
 
-func (s *StoreImpl) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
-	return s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+func (s *StoreImpl) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error) {
+	var userStars map[int64]bool
+	err := s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var stars = make([]models.Star, 0)
 		err := dbSession.Where("user_id=?", query.UserId).Find(&stars)
 
@@ -81,7 +82,7 @@ func (s *StoreImpl) GetUserStars(ctx context.Context, query *models.GetUserStars
 		for _, star := range stars {
 			query.Result[star.DashboardId] = true
 		}
-
 		return err
 	})
+	return userStars, err
 }

@@ -174,7 +174,7 @@ func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int6
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
-func (dr *DashboardServiceImpl) DashboardIsStarredByUserCtx(ctx context.Context, cmd *models.IsStarredByUserQuery) error {
+func (dr *DashboardServiceImpl) DashboardIsStarredByUserCtx(ctx context.Context, cmd *models.IsStarredByUserQuery) (bool, error) {
 	return dr.starsManager.IsStarredByUserCtx(ctx, cmd)
 }
 

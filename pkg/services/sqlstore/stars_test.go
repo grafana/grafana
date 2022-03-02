@@ -26,18 +26,18 @@ func TestUserStarsDataAccess(t *testing.T) {
 
 			t.Run("IsStarredByUser should return true when starred", func(t *testing.T) {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 10}
-				err := sqlStore.IsStarredByUserCtx(context.Background(), &query)
+				isStarred, err := stars.IsStarredByUserCtx(context.Background(), &query)
 				require.NoError(t, err)
 
-				require.True(t, query.Result)
+				require.True(t, isStarred)
 			})
 
 			t.Run("IsStarredByUser should return false when not starred", func(t *testing.T) {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 12}
-				err := sqlStore.IsStarredByUserCtx(context.Background(), &query)
+				isStarred, err := sqlStore.IsStarredByUserCtx(context.Background(), &query)
 				require.NoError(t, err)
 
-				require.False(t, query.Result)
+				require.False(t, isStarred)
 			})
 		})
 	})
