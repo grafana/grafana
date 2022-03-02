@@ -1,4 +1,4 @@
-package azuremonitor
+package loganalytics
 
 import (
 	"encoding/json"
@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 // ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
-func ResponseTableToFrame(table *AzureResponseTable) (*data.Frame, error) {
+func ResponseTableToFrame(table *types.AzureResponseTable) (*data.Frame, error) {
 	converterFrame, err := converterFrameForTable(table)
 	if err != nil {
 		return nil, err
@@ -27,7 +28,7 @@ func ResponseTableToFrame(table *AzureResponseTable) (*data.Frame, error) {
 	return converterFrame.Frame, nil
 }
 
-func converterFrameForTable(t *AzureResponseTable) (*data.FrameInputConverter, error) {
+func converterFrameForTable(t *types.AzureResponseTable) (*data.FrameInputConverter, error) {
 	converters := []data.FieldConverter{}
 	colNames := make([]string, len(t.Columns))
 	colTypes := make([]string, len(t.Columns)) // for metadata

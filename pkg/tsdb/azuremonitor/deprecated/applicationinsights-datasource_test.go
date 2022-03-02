@@ -1,4 +1,4 @@
-package azuremonitor
+package deprecated
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -204,8 +205,8 @@ func TestInsightsDimensionsUnmarshalJSON(t *testing.T) {
 func TestAppInsightsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds"
-	dsInfo := datasourceInfo{
-		Settings: azureMonitorSettings{AppInsightsAppId: "foo"},
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{AppInsightsAppId: "foo"},
 		DecryptedSecureJSONData: map[string]string{
 			"appInsightsApiKey": "key",
 		},

@@ -1,4 +1,4 @@
-package azuremonitor
+package metrics
 
 import (
 	"context"
@@ -16,14 +16,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
 	datasource := &AzureMonitorDatasource{}
-	dsInfo := datasourceInfo{
-		Settings: azureMonitorSettings{
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{
 			SubscriptionId: "default-subscription",
 		},
 	}
@@ -96,7 +98,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with one dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -107,7 +109,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with two dimensions",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}, {"tier", "eq", "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}, {Dimension: "tier", Operator: "eq", Filter: "*"}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -149,7 +151,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
-			azureMonitorQuery := &AzureMonitorQuery{
+			azureMonitorQuery := &types.AzureMonitorQuery{
 				URL: "12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				UrlComponents: map[string]string{
 					"metricDefinition": "Microsoft.Compute/virtualMachines",
@@ -168,7 +170,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 
 			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
 			require.NoError(t, err)
-			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(AzureMonitorQuery{}, "Params")); diff != "" {
+			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
@@ -219,14 +221,14 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	tests := []struct {
 		name            string
 		responseFile    string
-		mockQuery       *AzureMonitorQuery
+		mockQuery       *types.AzureMonitorQuery
 		expectedFrames  data.Frames
 		queryIntervalMS int64
 	}{
 		{
 			name:         "average aggregate time series response",
 			responseFile: "1-azure-monitor-response-avg.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -247,7 +249,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "total aggregate time series response",
 			responseFile: "2-azure-monitor-response-total.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -268,7 +270,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "maximum aggregate time series response",
 			responseFile: "3-azure-monitor-response-maximum.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -289,7 +291,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "minimum aggregate time series response",
 			responseFile: "4-azure-monitor-response-minimum.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -310,7 +312,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "count aggregate time series response",
 			responseFile: "5-azure-monitor-response-count.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -331,7 +333,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "single dimension time series response",
 			responseFile: "6-azure-monitor-response-single-dimension.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
 				},
@@ -365,7 +367,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "with alias patterns in the query",
 			responseFile: "2-azure-monitor-response-total.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
@@ -387,7 +389,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "single dimension with alias",
 			responseFile: "6-azure-monitor-response-single-dimension.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				Alias: "{{dimensionname}}={{DimensionValue}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
@@ -424,7 +426,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "multiple dimension time series response with label alias",
 			responseFile: "7-azure-monitor-response-multi-dimension.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{Tier}}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
@@ -462,7 +464,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		{
 			name:         "unspecified unit with alias should not panic",
 			responseFile: "8-azure-monitor-response-unspecified-unit.json",
-			mockQuery: &AzureMonitorQuery{
+			mockQuery: &types.AzureMonitorQuery{
 				Alias: "custom",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
@@ -540,22 +542,22 @@ func TestFindClosestAllowIntervalMS(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			interval := findClosestAllowedIntervalMS(tt.inputInterval, tt.allowedTimeGrains)
+			interval := azTime.FindClosestAllowedIntervalMS(tt.inputInterval, tt.allowedTimeGrains)
 			require.Equal(t, tt.expectedInterval, interval)
 		})
 	}
 }
 
-func loadTestFile(t *testing.T, name string) AzureMonitorResponse {
+func loadTestFile(t *testing.T, name string) types.AzureMonitorResponse {
 	t.Helper()
 
-	path := filepath.Join("testdata", name)
+	path := filepath.Join("../testdata", name)
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
 	jsonBody, err := ioutil.ReadFile(path)
 	require.NoError(t, err)
 
-	var azData AzureMonitorResponse
+	var azData types.AzureMonitorResponse
 	err = json.Unmarshal(jsonBody, &azData)
 	require.NoError(t, err)
 	return azData
@@ -563,7 +565,7 @@ func loadTestFile(t *testing.T, name string) AzureMonitorResponse {
 
 func TestAzureMonitorCreateRequest(t *testing.T) {
 	ctx := context.Background()
-	dsInfo := datasourceInfo{}
+	dsInfo := types.DatasourceInfo{}
 	url := "http://ds/"
 
 	tests := []struct {

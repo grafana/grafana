@@ -1,18 +1,19 @@
-package azuremonitor
+package deprecated
 
 import (
 	"context"
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInsightsAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds"
-	dsInfo := datasourceInfo{
-		Settings: azureMonitorSettings{AppInsightsAppId: "foo"},
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{AppInsightsAppId: "foo"},
 		DecryptedSecureJSONData: map[string]string{
 			"appInsightsApiKey": "key",
 		},

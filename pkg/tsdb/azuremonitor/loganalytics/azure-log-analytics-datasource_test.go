@@ -1,4 +1,4 @@
-package azuremonitor
+package loganalytics
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +38,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					RefID:     "A",
 					TimeRange: timeRange,
 				},
@@ -45,7 +46,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: timeSeries,
+					ResultFormat: types.TimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -54,7 +55,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					Params:    url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
 					Target:    "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
 					TimeRange: timeRange,
@@ -74,14 +75,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					RefID: "A",
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: timeSeries,
+					ResultFormat: types.TimeSeries,
 					URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -90,7 +91,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					Params: url.Values{"query": {"query=Perf"}},
 					Target: "query=query%3DPerf",
 				},
@@ -109,14 +110,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					RefID: "A",
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: timeSeries,
+					ResultFormat: types.TimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -125,7 +126,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					Params: url.Values{"query": {"query=Perf"}},
 					Target: "query=query%3DPerf",
 				},
@@ -144,14 +145,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					RefID: "A",
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: timeSeries,
+					ResultFormat: types.TimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -160,7 +161,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "query=Perf",
 							"resultFormat": "%s"
 						}
-					}`, timeSeries)),
+					}`, types.TimeSeries)),
 					Params: url.Values{"query": {"query=Perf"}},
 					Target: "query=query%3DPerf",
 				},
@@ -171,7 +172,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel, datasourceInfo{})
+			queries, err := datasource.buildQueries(tt.queryModel, types.DatasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -183,7 +184,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 func TestLogAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds"
-	dsInfo := datasourceInfo{}
+	dsInfo := types.DatasourceInfo{}
 
 	tests := []struct {
 		name            string
@@ -216,9 +217,9 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 
 func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	ds := AzureLogAnalyticsDatasource{}
-	dsInfo := datasourceInfo{
-		Services: map[string]datasourceService{
-			azureLogAnalytics: {URL: "http://ds"},
+	dsInfo := types.DatasourceInfo{
+		Services: map[string]types.DatasourceService{
+			"Azure Log Analytics": {URL: "http://ds"},
 		},
 		JSONData: map[string]interface{}{
 			"azureLogAnalyticsSameAs": false,
@@ -231,7 +232,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	}
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
-	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services[azureLogAnalytics].URL, tracer)
+	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
 	if res.Error == nil {
 		t.Fatal("expecting an error")
 	}

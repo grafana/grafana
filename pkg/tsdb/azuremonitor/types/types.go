@@ -1,14 +1,53 @@
-package azuremonitor
+package types
 
 import (
-	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
+
+const (
+	TimeSeries = "time_series"
+)
+
+var (
+	LegendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+)
+
+type AzRoute struct {
+	URL     string
+	Scopes  []string
+	Headers map[string]string
+}
+
+type AzureMonitorSettings struct {
+	SubscriptionId               string `json:"subscriptionId"`
+	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
+	AppInsightsAppId             string `json:"appInsightsAppId"`
+}
+
+type DatasourceService struct {
+	URL        string
+	HTTPClient *http.Client
+}
+
+type DatasourceInfo struct {
+	Cloud       string
+	Credentials azcredentials.AzureCredentials
+	Settings    AzureMonitorSettings
+	Routes      map[string]AzRoute
+	Services    map[string]DatasourceService
+
+	JSONData                map[string]interface{}
+	DecryptedSecureJSONData map[string]string
+	DatasourceID            int64
+	OrgID                   int64
+}
 
 // AzureMonitorQuery is the query for all the services as they have similar queries
 // with a url, a querystring and an alias field
@@ -57,16 +96,6 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-// AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
-type AzureLogAnalyticsResponse struct {
-	Tables []AzureResponseTable `json:"tables"`
-}
-
-// AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
-type AzureResourceGraphResponse struct {
-	Data AzureResponseTable `json:"data"`
-}
-
 // AzureResponseTable is the table format for Azure responses
 type AzureResponseTable struct {
 	Name    string `json:"name"`
@@ -77,8 +106,8 @@ type AzureResponseTable struct {
 	Rows [][]interface{} `json:"rows"`
 }
 
-// azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
-type azureMonitorJSONQuery struct {
+// AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
+type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
 		Aggregation         string  `json:"aggregation"`
 		Alias               string  `json:"alias"`
@@ -94,20 +123,20 @@ type azureMonitorJSONQuery struct {
 		TimeGrain           string  `json:"timeGrain"`
 		Top                 string  `json:"top"`
 
-		DimensionFilters []azureMonitorDimensionFilter `json:"dimensionFilters"` // new model
+		DimensionFilters []AzureMonitorDimensionFilter `json:"dimensionFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }
 
-// azureMonitorDimensionFilter is the model for the frontend sent for azureMonitor metric
+// AzureMonitorDimensionFilter is the model for the frontend sent for azureMonitor metric
 // queries like "BlobType", "eq", "*"
-type azureMonitorDimensionFilter struct {
+type AzureMonitorDimensionFilter struct {
 	Dimension string `json:"dimension"`
 	Operator  string `json:"operator"`
 	Filter    string `json:"filter"`
 }
 
-func (a azureMonitorDimensionFilter) String() string {
+func (a AzureMonitorDimensionFilter) String() string {
 	filter := "*"
 	if a.Filter != "" {
 		filter = a.Filter
@@ -115,29 +144,8 @@ func (a azureMonitorDimensionFilter) String() string {
 	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
 }
 
-// insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
-type insightsJSONQuery struct {
-	AppInsights struct {
-		Aggregation         string             `json:"aggregation"`
-		Alias               string             `json:"alias"`
-		AllowedTimeGrainsMs []int64            `json:"allowedTimeGrainsMs"`
-		Dimensions          InsightsDimensions `json:"dimension"`
-		DimensionFilter     string             `json:"dimensionFilter"`
-		MetricName          string             `json:"metricName"`
-		TimeGrain           string             `json:"timeGrain"`
-	} `json:"appInsights"`
-	Raw *bool `json:"raw"`
-}
-
-type insightsAnalyticsJSONQuery struct {
-	InsightsAnalytics struct {
-		Query        string `json:"query"`
-		ResultFormat string `json:"resultFormat"`
-	} `json:"insightsAnalytics"`
-}
-
-// logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
-type logJSONQuery struct {
+// LogJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
+type LogJSONQuery struct {
 	AzureLogAnalytics struct {
 		Query        string `json:"query"`
 		ResultFormat string `json:"resultFormat"`
@@ -148,69 +156,22 @@ type logJSONQuery struct {
 	} `json:"azureLogAnalytics"`
 }
 
-type argJSONQuery struct {
-	AzureResourceGraph struct {
-		Query        string `json:"query"`
-		ResultFormat string `json:"resultFormat"`
-	} `json:"azureResourceGraph"`
-}
-
-// metricChartDefinition is the JSON model for a metrics chart definition
-type metricChartDefinition struct {
+// MetricChartDefinition is the JSON model for a metrics chart definition
+type MetricChartDefinition struct {
 	ResourceMetadata    map[string]string   `json:"resourceMetadata"`
 	Name                string              `json:"name"`
 	AggregationType     int                 `json:"aggregationType"`
 	Namespace           string              `json:"namespace"`
-	MetricVisualization metricVisualization `json:"metricVisualization"`
+	MetricVisualization MetricVisualization `json:"metricVisualization"`
 }
 
-// metricVisualization is the JSON model for the visualization field of a
+// MetricVisualization is the JSON model for the visualization field of a
 // metricChartDefinition
-type metricVisualization struct {
+type MetricVisualization struct {
 	DisplayName         string `json:"displayName"`
 	ResourceDisplayName string `json:"resourceDisplayName"`
 }
 
-// InsightsDimensions will unmarshal from a JSON string, or an array of strings,
-// into a string array. This exists to support an older query format which is updated
-// when a user saves the query or it is sent from the front end, but may not be when
-// alerting fetches the model.
-type InsightsDimensions []string
-
-// UnmarshalJSON fulfills the json.Unmarshaler interface type.
-func (s *InsightsDimensions) UnmarshalJSON(data []byte) error {
-	*s = InsightsDimensions{}
-	if string(data) == "null" || string(data) == "" {
-		return nil
-	}
-	if strings.ToLower(string(data)) == `"none"` {
-		return nil
-	}
-	if data[0] == '[' {
-		var sa []string
-		err := json.Unmarshal(data, &sa)
-		if err != nil {
-			return err
-		}
-		dimensions := []string{}
-		for _, v := range sa {
-			if v == "none" || v == "None" {
-				continue
-			}
-			dimensions = append(dimensions, v)
-		}
-		*s = InsightsDimensions(dimensions)
-		return nil
-	}
-
-	var str string
-	err := json.Unmarshal(data, &str)
-	if err != nil {
-		return fmt.Errorf("could not parse %q as string or array: %w", string(data), err)
-	}
-	if str != "" {
-		*s = InsightsDimensions{str}
-		return nil
-	}
-	return nil
+type ServiceProxy interface {
+	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter
 }

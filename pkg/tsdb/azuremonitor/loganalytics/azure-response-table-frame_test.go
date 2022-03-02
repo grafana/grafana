@@ -1,4 +1,4 @@
-package azuremonitor
+package loganalytics
 
 import (
 	"encoding/json"
@@ -156,7 +156,7 @@ func TestLogTableToFrame(t *testing.T) {
 
 func loadLogAnalyticsTestFileWithNumber(t *testing.T, name string) AzureLogAnalyticsResponse {
 	t.Helper()
-	path := filepath.Join("testdata", name)
+	path := filepath.Join("../testdata", name)
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
 	f, err := os.Open(path)

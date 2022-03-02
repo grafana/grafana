@@ -1,4 +1,4 @@
-package azuremonitor
+package macros
 
 import (
 	"fmt"
@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 )
 
@@ -31,7 +33,7 @@ type kqlMacroEngine struct {
 //   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
 // KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
-func KqlInterpolate(query backend.DataQuery, dsInfo datasourceInfo, kql string, defaultTimeField ...string) (string, error) {
+func KqlInterpolate(query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField ...string) (string, error) {
 	engine := kqlMacroEngine{}
 
 	defaultTimeFieldForAllDatasources := "timestamp"
@@ -41,7 +43,7 @@ func KqlInterpolate(query backend.DataQuery, dsInfo datasourceInfo, kql string, 
 	return engine.Interpolate(query, dsInfo, kql, defaultTimeFieldForAllDatasources)
 }
 
-func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, dsInfo datasourceInfo, kql string, defaultTimeField string) (string, error) {
+func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField string) (string, error) {
 	m.timeRange = query.TimeRange
 	m.query = query
 	rExp, _ := regexp.Compile(sExpr)
@@ -86,7 +88,7 @@ func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, dsInfo datasourceI
 	return kql, nil
 }
 
-func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string, dsInfo datasourceInfo) (string, error) {
+func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string, dsInfo types.DatasourceInfo) (string, error) {
 	switch name {
 	case "timeFilter":
 		timeColumn := defaultTimeField
