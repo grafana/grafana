@@ -35,6 +35,4 @@ type GetUserStarsQuery struct {
 type IsStarredByUserQuery struct {
 	UserId      int64
 	DashboardId int64
-
-	Result bool
 }

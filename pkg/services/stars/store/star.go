@@ -3,7 +3,6 @@ package starsstore
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -19,21 +18,14 @@ type StoreImpl struct {
 	SqlStore sqlstore.Store
 }
 
-func (s *StoreImpl) addStarQueryAndCommandHandlers() {
-	bus.AddHandler("sql", s.StarDashboard)
-	bus.AddHandler("sql", s.UnstarDashboard)
-	bus.AddHandler("sql", s.GetUserStars)
-	bus.AddHandler("sql", s.IsStarredByUserCtx)
-}
-
 func NewStarsStore(sqlstore sqlstore.Store) *StoreImpl {
 	s := &StoreImpl{SqlStore: sqlstore}
-	s.addStarQueryAndCommandHandlers()
 	return s
 }
 
-func (s *StoreImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
-	return s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (s *StoreImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
+	var isStarred bool
+	err := s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
 		results, err := sess.Query(rawSQL, query.UserId, query.DashboardId)
 
@@ -45,10 +37,11 @@ func (s *StoreImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStar
 			return nil
 		}
 
-		query.Result = true
+		isStarred = true
 
 		return nil
 	})
+	return isStarred, err
 }
 
 func (s *StoreImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
