@@ -22,6 +22,9 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 
 	// Create Admin Configuration
 	AddAlertAdminConfigMigrations(mg)
+
+	// Create provisioning data table
+	AddProvisioningMigrations(mg)
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -324,6 +327,25 @@ func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("create_ngalert_configuration_table", migrator.NewAddTableMigration(adminConfiguration))
 	mg.AddMigration("add index in ngalert_configuration on org_id column", migrator.NewAddIndexMigration(adminConfiguration, adminConfiguration.Indices[0]))
 	mg.AddMigration("add column send_alerts_to in ngalert_configuration", migrator.NewAddColumnMigration(adminConfiguration, &migrator.Column{
-		Name: "send_alerts_to", Type: migrator.DB_SmallInt, Nullable: false,
+		Name: "send_alerts_to", Type: migrator.DB_SmallInt, Nullable: false, Default: "0",
 	}))
+}
+
+func AddProvisioningMigrations(mg *migrator.Migrator) {
+	provisioningTable := migrator.Table{
+		Name: "provenance_type",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "record_key", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "record_type", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "provenance", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"record_type", "record_key", "org_id"}, Type: migrator.UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create provenance_type table", migrator.NewAddTableMigration(provisioningTable))
+	mg.AddMigration("add index to uniquify (record_key, record_type, org_id) columns", migrator.NewAddIndexMigration(provisioningTable, provisioningTable.Indices[0]))
 }

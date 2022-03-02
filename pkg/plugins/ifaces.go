@@ -17,7 +17,7 @@ type Store interface {
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 	// Add adds a plugin from the repository to the store.
-	Add(ctx context.Context, pluginID, version string, repo repository.Repository, opts CompatabilityOpts) error
+	Add(ctx context.Context, pluginID, version string, repo repository.Service, opts CompatabilityOpts) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }
@@ -38,9 +38,7 @@ type Client interface {
 	backend.CheckHealthHandler
 	backend.StreamHandler
 	backend.CallResourceHandler
-
-	// CollectMetrics collects metrics from a plugin.
-	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
+	backend.CollectMetricsHandler
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.

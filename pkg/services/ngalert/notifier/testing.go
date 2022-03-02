@@ -31,7 +31,7 @@ func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context)
 	return result, nil
 }
 
-func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
+func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
 	var ok bool
 	query.Result, ok = f.configs[query.OrgID]
 	if !ok {
@@ -41,7 +41,7 @@ func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(query *models.GetLa
 	return nil
 }
 
-func (f *FakeConfigStore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (f *FakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
@@ -52,7 +52,7 @@ func (f *FakeConfigStore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertman
 	return nil
 }
 
-func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
+func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,

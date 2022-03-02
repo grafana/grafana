@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 
@@ -80,7 +81,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		appLink := &dtos.NavLink{
 			Text:       plugin.Name,
 			Id:         "plugin-page-" + plugin.ID,
-			Url:        plugin.DefaultNavURL,
+			Url:        path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 			Img:        plugin.Info.Logos.Small,
 			SortWeight: dtos.WeightPlugin,
 		}
@@ -624,7 +625,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 		if err != nil {
 			return nil, err
 		}

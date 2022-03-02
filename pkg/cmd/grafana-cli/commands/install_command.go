@@ -14,6 +14,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/repository/service"
+
 	"github.com/fatih/color"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -63,20 +65,20 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	pluginsPath := c.PluginDirectory()
 	pluginZipURL := c.PluginURL()
 
-	repo := repository.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
+	repo := service.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
 	ctx := context.Background()
-	var archive *repository.PluginArchiveInfo
+	var archive *repository.PluginArchive
 	var err error
 	if pluginZipURL != "" {
-		archive, err = repo.DownloadWithURL(ctx, pluginZipURL,
+		archive, err = repo.GetPluginArchiveByURL(ctx, pluginZipURL,
 			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion},
 		)
 		if err != nil {
 			return err
 		}
 	} else {
-		archive, err = repo.Download(ctx, pluginID, version,
+		archive, err = repo.GetPluginArchive(ctx, pluginID, version,
 			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion},
 		)
 		if err != nil {
@@ -92,7 +94,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Info("Fetching %s dependency...", dep.ID)
-		d, err := repo.Download(ctx, dep.ID, dep.Version,
+		d, err := repo.GetPluginArchive(ctx, dep.ID, dep.Version,
 			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion})
 		if err != nil {
 			return errutil.Wrapf(err, "failed to download plugin %s from repository", dep.ID)

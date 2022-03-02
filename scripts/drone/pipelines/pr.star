@@ -9,6 +9,7 @@ load(
     'shellcheck_step',
     'build_backend_step',
     'build_frontend_step',
+    'build_frontend_package_step',
     'build_plugins_step',
     'test_backend_step',
     'test_backend_integration_step',
@@ -18,8 +19,6 @@ load(
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
-    'build_frontend_docs_step',
-    'build_docs_website_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
     'postgres_integration_tests_step',
@@ -47,6 +46,12 @@ load(
     'drone_change_template',
 )
 
+load(
+    'scripts/drone/pipelines/docs.star',
+    'docs_pipelines',
+    'trigger_docs',
+)
+
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
@@ -67,6 +72,7 @@ def pr_pipelines(edition):
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
@@ -100,8 +106,6 @@ def pr_pipelines(edition):
         e2e_tests_artifacts(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
-        build_frontend_docs_step(edition=edition),
-        build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64',]),
     ])
@@ -116,7 +120,14 @@ def pr_pipelines(edition):
         ])
 
     trigger = {
-        'event': ['pull_request',],
+        'event': [
+            'pull_request',
+        ],
+        'paths': {
+            'exclude': [
+                'docs/**',
+            ],
+        },
     }
 
     return [
@@ -130,5 +141,5 @@ def pr_pipelines(edition):
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + integration_test_steps,
             volumes=volumes,
-        ),
+        ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]

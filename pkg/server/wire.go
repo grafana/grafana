@@ -29,16 +29,21 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repository"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
+	"github.com/grafana/grafana/pkg/plugins/repository/service"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -61,6 +66,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -117,8 +123,8 @@ var wireBasicSet = wire.NewSet(
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
-	repository.ProvideService,
-	wire.Bind(new(repository.Repository), new(*repository.Service)),
+	service.ProvideService,
+	wire.Bind(new(repository.Service), new(*service.Service)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
@@ -153,6 +159,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.Store), new(*authinfodatabase.AuthInfoStore)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
+	searchV2.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
@@ -187,8 +194,10 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
-	datasources.ProvideService,
+	datasourceservice.ProvideService,
+	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	pluginsettings.ProvideService,
+	wire.Bind(new(pluginsettings.Service), new(*pluginsettings.ServiceImpl)),
 	alerting.ProvideService,
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsmanager.ServiceAccountsService)),
@@ -199,10 +208,19 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	resourceservices.ProvideResourceServices,
+	dashboardservice.ProvideDashboardService,
+	dashboardservice.ProvideFolderService,
+	dashboardstore.ProvideDashboardStore,
+	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
+	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
+	wire.Bind(new(dashboards.FolderService), new(*dashboardservice.FolderServiceImpl)),
+	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboards.ProvideService,
+	alerting.ProvideDashAlertExtractorService,
+	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
+	comments.ProvideService,
 	wire.Bind(new(fs.Manager), new(*fs.Service)),
 	fs.ProvideService,
 )

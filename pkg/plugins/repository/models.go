@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type PluginArchiveInfo struct {
+type PluginArchive struct {
 	File *zip.ReadCloser
 }
 

@@ -4,10 +4,9 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
-import { toVariableIdentifier } from '../state/types';
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
-import { containsVariable, isAllVariable } from '../utils';
+import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 import { optionPickerFactory } from '../pickers';
 import { ALL_VARIABLE_TEXT } from '../constants';
 
@@ -27,16 +26,16 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
+      await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
-      await dispatch(updateDataSourceVariableOptions(toVariableIdentifier(variable)));
+      await dispatch(updateDataSourceVariableOptions(toKeyedVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
-      const { index, id, state, global, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, rootStateKey, ...rest } = cloneDeep(variable);
       return { ...rest, options: [] };
     },
     getValueForUrl: (variable) => {

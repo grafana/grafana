@@ -23,7 +23,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   position: { x: positionX, y: positionY },
   offset: { x: offsetX, y: offsetY },
   children,
-  allowPointerEvents,
+  allowPointerEvents = false,
   className,
   ...otherProps
 }) => {

@@ -31,6 +31,7 @@ export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   addOperationHandler: QueryBuilderAddOperationHandler<T>;
   paramChangedHandler?: QueryBuilderOnParamChangedHandler;
   explainHandler?: (op: QueryBuilderOperation, def: QueryBuilderOperationDef<T>) => string;
+  changeTypeHandler?: (op: QueryBuilderOperation, newDef: QueryBuilderOperationDef<T>) => QueryBuilderOperation;
 }
 
 export type QueryBuilderAddOperationHandler<T> = (
@@ -75,8 +76,10 @@ export interface QueryBuilderOperationEditorProps {
 export interface QueryBuilderOperationParamEditorProps {
   value?: QueryBuilderOperationParamValue;
   paramDef: QueryBuilderOperationParamDef;
+  /** Parameter index */
   index: number;
   operation: QueryBuilderOperation;
+  operationIndex: number;
   query: any;
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;

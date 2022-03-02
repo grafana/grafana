@@ -3,14 +3,14 @@ import { MetricSelect } from './MetricSelect';
 import { PromVisualQuery } from '../types';
 import { LabelFilters } from '../shared/LabelFilters';
 import { OperationList } from '../shared/OperationList';
-import { EditorRows, EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/experimental';
 import { PrometheusDatasource } from '../../datasource';
 import { NestedQueryList } from './NestedQueryList';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../shared/types';
-import { QueryPreview } from './QueryPreview';
-import { DataSourceApi, SelectableValue } from '@grafana/data';
+import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
+import { PromQueryBuilderHints } from './PromQueryBuilderHints';
 
 export interface Props {
   query: PromVisualQuery;
@@ -18,9 +18,10 @@ export interface Props {
   onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
   nested?: boolean;
+  data?: PanelData;
 }
 
-export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, nested }) => {
+export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, data }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -78,7 +79,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
   };
 
   return (
-    <EditorRows>
+    <>
       <EditorRow>
         <MetricSelect
           query={query}
@@ -104,16 +105,12 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
         />
-        {query.binaryQueries && query.binaryQueries.length > 0 && (
-          <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
-        )}
+        <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
       </OperationsEditorRow>
-      {!nested && (
-        <EditorRow>
-          <QueryPreview query={query} />
-        </EditorRow>
+      {query.binaryQueries && query.binaryQueries.length > 0 && (
+        <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
       )}
-    </EditorRows>
+    </>
   );
 });
 

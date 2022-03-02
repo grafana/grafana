@@ -42,13 +42,13 @@ func (s *AuthInfoStore) registerBusHandlers() {
 
 func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.bus.Dispatch(ctx, &userQuery)
+	err := s.sqlStore.GetUserByLogin(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
-	if err := s.bus.Dispatch(ctx, authInfoQuery); err != nil {
+	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		return err
 	}
 

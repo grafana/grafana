@@ -45,6 +45,7 @@ type NotifierOption struct {
 	Required       bool           `json:"required"`
 	ValidationRule string         `json:"validationRule"`
 	Secure         bool           `json:"secure"`
+	DependsOn      string         `json:"dependsOn"`
 }
 
 // InputType is the type of input that can be rendered in the frontend.
@@ -214,7 +215,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		Width:           1000,
 		Height:          500,
 		ConcurrentLimit: setting.AlertingRenderLimit,
-		Theme:           rendering.ThemeDark,
+		Theme:           models.ThemeDark,
 	}
 
 	ref, err := evalCtx.GetDashboardUID()

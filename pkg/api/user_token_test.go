@@ -29,7 +29,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When current user gets auth tokens for a non-existing user", func(t *testing.T) {
-		mock := mockstore.SQLStoreMock{
+		mock := &mockstore.SQLStoreMock{
 			ExpectedUser:  &models.User{Id: 200},
 			ExpectedError: models.ErrUserNotFound,
 		}
@@ -40,7 +40,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When logging out an existing user from all devices", func(t *testing.T) {
-		mock := mockstore.SQLStoreMock{
+		mock := &mockstore.SQLStoreMock{
 			ExpectedUser: &models.User{Id: 200},
 		}
 		logoutUserFromAllDevicesInternalScenario(t, "Should be successful", 1, func(sc *scenarioContext) {
@@ -61,7 +61,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	t.Run("When revoke an auth token for a user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 1}
-		mock := mockstore.SQLStoreMock{
+		mock := &mockstore.SQLStoreMock{
 			ExpectedUser: &models.User{Id: 200},
 		}
 

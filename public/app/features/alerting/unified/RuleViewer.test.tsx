@@ -1,12 +1,11 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { DataSourceJsonData, PluginMeta } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { RuleViewer } from './RuleViewer';
 import { configureStore } from 'app/store/configureStore';
-import { typeAsJestMock } from '../../../../test/helpers/typeAsJestMock';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -29,42 +28,44 @@ jest.mock('@grafana/runtime', () => ({
 
 const store = configureStore();
 const renderRuleViewer = () => {
-  return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <RuleViewer {...mockRoute} />
-      </Router>
-    </Provider>
-  );
+  return act(async () => {
+    render(
+      <Provider store={store}>
+        <Router history={locationService.getHistory()}>
+          <RuleViewer {...mockRoute} />
+        </Router>
+      </Provider>
+    );
+  });
 };
 describe('RuleViewer', () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
 
-  it('should render page with grafana alert', () => {
-    typeAsJestMock(useCombinedRule).mockReturnValue({
+  it('should render page with grafana alert', async () => {
+    jest.mocked(useCombinedRule).mockReturnValue({
       result: mockGrafanaRule as CombinedRule,
       loading: false,
       dispatched: true,
       requestId: 'A',
       error: undefined,
     });
+    await renderRuleViewer();
 
-    renderRuleViewer();
     expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
     expect(screen.getByText('Test alert')).toBeInTheDocument();
   });
 
-  it('should render page with cloud alert', () => {
-    typeAsJestMock(useCombinedRule).mockReturnValue({
+  it('should render page with cloud alert', async () => {
+    jest.mocked(useCombinedRule).mockReturnValue({
       result: mockCloudRule as CombinedRule,
       loading: false,
       dispatched: true,
       requestId: 'A',
       error: undefined,
     });
-    renderRuleViewer();
+    await renderRuleViewer();
     expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
     expect(screen.getByText('Cloud test alert')).toBeInTheDocument();
   });
