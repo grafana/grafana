@@ -267,7 +267,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:dashboards:creator",
 			DisplayName: "Dashboard creator",
-			Description: "Create dashboard in general folder",
+			Description: "Create dashboard in general folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionFoldersRead, Scope: "folders:id:0"},
