@@ -1,4 +1,4 @@
-package azuremonitor
+package metrics
 
 import (
 	"fmt"

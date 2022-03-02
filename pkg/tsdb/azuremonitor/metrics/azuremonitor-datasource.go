@@ -1,4 +1,4 @@
-package azuremonitor
+package metrics
 
 import (
 	"context"
@@ -16,6 +16,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
+	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
@@ -23,28 +27,25 @@ import (
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
-	proxy serviceProxy
+	Proxy types.ServiceProxy
 }
 
 var (
-	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
-	defaultAllowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
-
 	// Used to convert the aggregation value to the Azure enum for deep linking
 	aggregationTypeMap = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
 )
 
 const azureMonitorAPIVersion = "2018-01-01"
 
-func (e *AzureMonitorDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
-	e.proxy.Do(rw, req, cli)
+func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.Proxy.Do(rw, req, cli)
 }
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
@@ -60,12 +61,12 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 	return result, nil
 }
 
-func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*AzureMonitorQuery, error) {
-	azureMonitorQueries := []*AzureMonitorQuery{}
+func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*types.AzureMonitorQuery, error) {
+	azureMonitorQueries := []*types.AzureMonitorQuery{}
 
 	for _, query := range queries {
 		var target string
-		queryJSONModel := azureMonitorJSONQuery{}
+		queryJSONModel := types.AzureMonitorJSONQuery{}
 		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
@@ -93,7 +94,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		timeGrain := azJSONModel.TimeGrain
 		timeGrains := azJSONModel.AllowedTimeGrainsMs
 		if timeGrain == "auto" {
-			timeGrain, err = setAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
+			timeGrain, err = azTime.SetAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {
 				return nil, err
 			}
@@ -135,7 +136,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			azlog.Debug("Azuremonitor request", "params", params)
 		}
 
-		azureMonitorQueries = append(azureMonitorQueries, &AzureMonitorQuery{
+		azureMonitorQueries = append(azureMonitorQueries, &types.AzureMonitorQuery{
 			URL:           azureURL,
 			UrlComponents: urlComponents,
 			Target:        target,
@@ -149,7 +150,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 	return azureMonitorQueries, nil
 }
 
-func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, dsInfo datasourceInfo, cli *http.Client,
+func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
 	url string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
@@ -191,7 +192,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 		return dataResponse
 	}
 
-	azurePortalUrl, err := getAzurePortalUrl(dsInfo.Cloud)
+	azurePortalUrl, err := resourcegraph.GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -206,7 +207,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 	return dataResponse
 }
 
-func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
+func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
@@ -218,28 +219,28 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo datas
 	return req, nil
 }
 
-func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
+func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.AzureMonitorResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return AzureMonitorResponse{}, err
+		return types.AzureMonitorResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
+		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
-	var data AzureMonitorResponse
+	var data types.AzureMonitorResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		azlog.Debug("Failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
-		return AzureMonitorResponse{}, err
+		return types.AzureMonitorResponse{}, err
 	}
 
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery, azurePortalUrl string) (data.Frames, error) {
+func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, query *types.AzureMonitorQuery, azurePortalUrl string) (data.Frames, error) {
 	if len(amr.Value) == 0 {
 		return nil, nil
 	}
@@ -303,7 +304,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		frameWithLink := addConfigLinks(*frame, queryUrl)
+		frameWithLink := resourcegraph.AddConfigLinks(*frame, queryUrl)
 		frames = append(frames, &frameWithLink)
 	}
 
@@ -311,7 +312,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 }
 
 // Gets the deep link for the given query
-func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) (string, error) {
+func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl string) (string, error) {
 	aggregationType := aggregationTypeMap["Average"]
 	aggregation := query.Params.Get("aggregation")
 	if aggregation != "" {
@@ -343,7 +344,7 @@ func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) (string, error
 	chartDef, err := json.Marshal(map[string]interface{}{
 		"v2charts": []interface{}{
 			map[string]interface{}{
-				"metrics": []metricChartDefinition{
+				"metrics": []types.MetricChartDefinition{
 					{
 						ResourceMetadata: map[string]string{
 							"id": id,
@@ -351,7 +352,7 @@ func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) (string, error
 						Name:            query.Params.Get("metricnames"),
 						AggregationType: aggregationType,
 						Namespace:       query.Params.Get("metricnamespace"),
-						MetricVisualization: metricVisualization{
+						MetricVisualization: types.MetricVisualization{
 							DisplayName:         query.Params.Get("metricnames"),
 							ResourceDisplayName: query.UrlComponents["resourceName"],
 						},
@@ -387,7 +388,7 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 	}
 	keys = sort.StringSlice(keys)
 
-	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
+	result := types.LegendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
 		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))

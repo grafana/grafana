@@ -1,4 +1,4 @@
-package azuremonitor
+package deprecated
 
 import (
 	"encoding/json"

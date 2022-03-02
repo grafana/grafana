@@ -1,4 +1,4 @@
-package azuremonitor
+package deprecated
 
 import (
 	"bytes"
@@ -13,13 +13,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
 )
 
 type InsightsAnalyticsDatasource struct {
-	proxy serviceProxy
+	Proxy types.ServiceProxy
 }
 
 type InsightsAnalyticsQuery struct {
@@ -34,12 +38,12 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
-func (e *InsightsAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
-	e.proxy.Do(rw, req, cli)
+func (e *InsightsAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.Proxy.Do(rw, req, cli)
 }
 
-func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+func (e *InsightsAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context,
+	originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
@@ -55,7 +59,7 @@ func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*InsightsAnalyticsQuery, error) {
+func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*InsightsAnalyticsQuery, error) {
 	iaQueries := []*InsightsAnalyticsQuery{}
 
 	for _, query := range queries {
@@ -74,7 +78,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 			return nil, fmt.Errorf("query is missing query string property")
 		}
 
-		qm.InterpolatedQuery, err = KqlInterpolate(query, dsInfo, qm.RawQuery)
+		qm.InterpolatedQuery, err = macros.KqlInterpolate(query, dsInfo, qm.RawQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -88,7 +92,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 	return iaQueries, nil
 }
 
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo, client *http.Client,
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	url string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
@@ -136,7 +140,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
 		return dataResponseError(fmt.Errorf("request failed, status: %s, body: %s", res.Status, body))
 	}
-	var logResponse AzureLogAnalyticsResponse
+	var logResponse loganalytics.AzureLogAnalyticsResponse
 	d := json.NewDecoder(bytes.NewReader(body))
 	d.UseNumber()
 	err = d.Decode(&logResponse)
@@ -149,12 +153,12 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 		return dataResponseError(err)
 	}
 
-	frame, err := ResponseTableToFrame(t)
+	frame, err := loganalytics.ResponseTableToFrame(t)
 	if err != nil {
 		return dataResponseError(err)
 	}
 
-	if query.ResultFormat == timeSeries {
+	if query.ResultFormat == types.TimeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
@@ -173,7 +177,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	return dataResponse
 }
 
-func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
+func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string) (*http.Request, error) {
 	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

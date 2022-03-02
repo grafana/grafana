@@ -1,4 +1,4 @@
-package azuremonitor
+package resourcegraph
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,7 +69,7 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel, datasourceInfo{})
+			queries, err := datasource.buildQueries(tt.queryModel, types.DatasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureResourceGraphQueries, queries, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -80,7 +81,7 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 func TestAzureResourceGraphCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds"
-	dsInfo := datasourceInfo{}
+	dsInfo := types.DatasourceInfo{}
 
 	tests := []struct {
 		name            string
@@ -120,7 +121,7 @@ func TestAddConfigData(t *testing.T) {
 	frame := data.Frame{
 		Fields: []*data.Field{&field},
 	}
-	frameWithLink := addConfigLinks(frame, "http://ds")
+	frameWithLink := AddConfigLinks(frame, "http://ds")
 	expectedFrameWithLink := data.Frame{
 		Fields: []*data.Field{
 			{
@@ -145,7 +146,7 @@ func TestGetAzurePortalUrl(t *testing.T) {
 	}
 
 	for _, cloud := range clouds {
-		azurePortalUrl, err := getAzurePortalUrl(cloud)
+		azurePortalUrl, err := GetAzurePortalUrl(cloud)
 		if err != nil {
 			t.Errorf("The cloud not supported")
 		}

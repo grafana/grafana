@@ -1,4 +1,4 @@
-package azuremonitor
+package time
 
 import (
 	"testing"
