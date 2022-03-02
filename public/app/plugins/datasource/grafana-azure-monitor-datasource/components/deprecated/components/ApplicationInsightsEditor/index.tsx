@@ -1,7 +1,8 @@
-import React from 'react';
-import { AzureMonitorQuery } from '../../types';
 import { Alert, Input } from '@grafana/ui';
-import { Field } from '../Field';
+import React from 'react';
+
+import { Field } from '../../../Field';
+import { AzureMonitorQuery } from '../../types';
 
 const ReadOnlyTimeGrain = ({
   timeGrainCount,
