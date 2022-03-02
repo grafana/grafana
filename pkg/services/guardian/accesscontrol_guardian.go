@@ -71,8 +71,8 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 	}
 
 	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsEdit, dashboardScope(a.dashboard.Id)),
-		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsEdit, folderScope(a.dashboard.FolderId)),
+		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsWrite, dashboardScope(a.dashboard.Id)),
+		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsWrite, folderScope(a.dashboard.FolderId)),
 	))
 }
 

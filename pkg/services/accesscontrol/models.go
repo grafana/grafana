@@ -332,7 +332,6 @@ const (
 	// Dashboard actions
 	ActionDashboardsCreate           = "dashboards:create"
 	ActionDashboardsRead             = "dashboards:read"
-	ActionDashboardsEdit             = "dashboards:edit"
 	ActionDashboardsWrite            = "dashboards:write"
 	ActionDashboardsDelete           = "dashboards:delete"
 	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"

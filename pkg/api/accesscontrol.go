@@ -270,8 +270,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create dashboard in general folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionFoldersRead, Scope: ac.Scope("folders","id","0")},
-				{Action: ac.ActionDashboardsCreate, Scope: ac.Scope("folders","id","0")},
+				{Action: ac.ActionFoldersRead, Scope: ac.Scope("folders", "id", "0")},
+				{Action: ac.ActionDashboardsCreate, Scope: ac.Scope("folders", "id", "0")},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -299,7 +299,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Dashboards",
 			Description: "Create, read, write or delete all dashboards and their permissions.",
 			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
-				{Action: ac.ActionDashboardsEdit, Scope: ac.ScopeDashboardsAll},
 				{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeDashboardsAll},
 				{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeDashboardsAll},
 				{Action: ac.ActionDashboardsCreate, Scope: ac.ScopeFoldersAll},
@@ -352,7 +351,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					{Action: ac.ActionFoldersCreate},
 					{Action: ac.ActionFoldersWrite, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionFoldersDelete, Scope: ac.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsEdit, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeFoldersAll},
 					{Action: ac.ActionDashboardsCreate, Scope: ac.ScopeFoldersAll},

@@ -130,7 +130,7 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 }
 
 var DashboardViewActions = []string{accesscontrol.ActionDashboardsRead}
-var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete, accesscontrol.ActionDashboardsEdit}...)
+var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
 var FolderViewActions = []string{accesscontrol.ActionFoldersRead}
 var FolderEditActions = append(FolderViewActions, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionDashboardsCreate}...)
