@@ -52,7 +52,7 @@ const getStyles = stylesFactory(() => {
     row: css`
       width: 100%;
     `,
-    floatingButton: css`
+    scrollToTopButton: css`
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -531,7 +531,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
         />
 
         <ToolbarButton
-          className={styles.floatingButton}
+          className={styles.scrollToTopButton}
           onClick={this.scrollToTopTraceView}
           title="Scroll to top"
           icon="arrow-up"
