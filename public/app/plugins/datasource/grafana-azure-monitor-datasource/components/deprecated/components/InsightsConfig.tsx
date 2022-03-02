@@ -1,25 +1,38 @@
+import {
+  updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginResetOption,
+  updateDatasourcePluginSecureJsonDataOption,
+} from '@grafana/data';
+import { Alert, Button, InlineFormLabel, LegacyForms } from '@grafana/ui';
 import React, { PureComponent } from 'react';
-import { InlineFormLabel, Button, LegacyForms, Alert } from '@grafana/ui';
-const { Input } = LegacyForms;
-import { AzureDataSourceSettings, AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../types';
 
-export interface Props {
-  options: AzureDataSourceSettings;
-  onUpdateJsonDataOption: (
-    key: keyof AzureDataSourceJsonData
-  ) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onUpdateSecureJsonDataOption: (
-    key: keyof AzureDataSourceSecureJsonData
-  ) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onResetOptionKey: (key: keyof AzureDataSourceSecureJsonData) => void;
-}
+import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../../../types';
+import { Props } from '../../ConfigEditor';
+
+const { Input } = LegacyForms;
+
 export class InsightsConfig extends PureComponent<Props> {
-  onAppInsightsResetApiKey = () => {
-    this.props.onResetOptionKey('appInsightsApiKey');
+  private onAppInsightsResetApiKey = () => {
+    this.resetSecureKey('appInsightsApiKey');
+  };
+
+  private onUpdateJsonDataOption =
+    (key: keyof AzureDataSourceJsonData) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+      updateDatasourcePluginJsonDataOption(this.props, key, event.currentTarget.value);
+    };
+
+  private onUpdateSecureJsonDataOption =
+    (key: keyof AzureDataSourceSecureJsonData) =>
+    (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+      updateDatasourcePluginSecureJsonDataOption(this.props, key, event.currentTarget.value);
+    };
+
+  private resetSecureKey = (key: keyof AzureDataSourceSecureJsonData) => {
+    updateDatasourcePluginResetOption(this.props, key);
   };
 
   render() {
-    const { options, onUpdateJsonDataOption, onUpdateSecureJsonDataOption } = this.props;
+    const { options } = this.props;
     return (
       <>
         <h3 className="page-heading">Azure Application Insights</h3>
@@ -55,7 +68,7 @@ export class InsightsConfig extends PureComponent<Props> {
                     className="width-30"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                     value={options.secureJsonData!.appInsightsApiKey || ''}
-                    onChange={onUpdateSecureJsonDataOption('appInsightsApiKey')}
+                    onChange={this.onUpdateSecureJsonDataOption('appInsightsApiKey')}
                     disabled={this.props.options.readOnly}
                   />
                 </div>
@@ -69,7 +82,7 @@ export class InsightsConfig extends PureComponent<Props> {
                 <Input
                   className="width-30"
                   value={options.jsonData.appInsightsAppId || ''}
-                  onChange={onUpdateJsonDataOption('appInsightsAppId')}
+                  onChange={this.onUpdateJsonDataOption('appInsightsAppId')}
                   disabled={this.props.options.readOnly}
                 />
               </div>
