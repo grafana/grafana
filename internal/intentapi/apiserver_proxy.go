@@ -1,10 +1,15 @@
 package intentapi
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -21,6 +26,16 @@ type ApiserverProxyConfig struct {
 func NewApiserverProxyConfig(cfg *setting.Cfg) (ApiserverProxyConfig, error) {
 	sec := cfg.Raw.Section("intentapi.proxy")
 	configPath := sec.Key("kubeconfig_path").MustString("")
+
+	if configPath == "" {
+		return ApiserverProxyConfig{}, errors.New("kubeconfig path cannot be empty when using Intent API")
+	}
+
+	configPath = filepath.Clean(configPath)
+
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return ApiserverProxyConfig{}, fmt.Errorf("cannot find kubeconfig file at '%s'", configPath)
+	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", configPath)
 	if err != nil {
@@ -41,7 +56,14 @@ type ApiserverProxy struct {
 }
 
 // ProvideApiserverProxy provides a new ApiserverProxy with given configuration.
-func ProvideApiserverProxy(cfg *setting.Cfg) (*ApiserverProxy, error) {
+func ProvideApiserverProxy(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*ApiserverProxy, error) {
+	enabled := features.IsEnabled(featuremgmt.FlagIntentapi)
+	if !enabled {
+		return &ApiserverProxy{
+			logger: log.New("intentapi.proxy"),
+		}, nil
+	}
+
 	conf, err := NewApiserverProxyConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -61,6 +83,16 @@ func ProvideApiserverProxy(cfg *setting.Cfg) (*ApiserverProxy, error) {
 
 // ServeHTTP serves HTTP requests to the proxy by forwarding them to kube-apiserver.
 func (p *ApiserverProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// handler will be nil if IntentAPI feature is disabled,
+	// in that case we can't serve anything.
+	//
+	// NB that this should not happen normally, because the HTTP server will be disabled as well,
+	// but as a matter of precaution it's a good idea to handle it here as well.
+	if p.handler == nil {
+		w.WriteHeader(http.StatusNotImplemented)
+		return
+	}
+
 	// TODO: add instrumentation (metrics, traces).
 	p.handler.ServeHTTP(w, req)
 }
