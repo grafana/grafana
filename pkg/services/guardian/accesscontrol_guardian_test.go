@@ -41,7 +41,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:        "should be able to save with dashboard with folder wildcard scope",
+			desc:        "should be able to save with folder wildcard scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
