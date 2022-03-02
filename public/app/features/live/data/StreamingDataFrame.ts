@@ -13,10 +13,10 @@ import {
   QueryResultMeta,
   toFilteredDataFrameDTO,
 } from '@grafana/data';
-import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
-import { renderLegendFormat } from 'app/plugins/datasource/prometheus/legend';
-import { AlignedData } from 'uplot';
+import {join} from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import {StreamingFrameAction, StreamingFrameOptions} from '@grafana/runtime/src/services/live';
+import {renderLegendFormat} from 'app/plugins/datasource/prometheus/legend';
+import {AlignedData} from 'uplot';
 
 /**
  * Stream packet info is attached to StreamingDataFrames and indicate how many
@@ -100,7 +100,7 @@ export class StreamingDataFrame implements DataFrame {
 
     const numberOfItemsToRemove = getNumberOfItemsToRemove(
       dataFrameDTO.fields.map((f) => f.values) as unknown[][],
-      typeof trimValues?.maxLength === 'number' ? trimValues.maxLength : options.maxLength,
+      typeof trimValues?.maxLength === 'number' ? Math.min(trimValues.maxLength, options.maxLength) : options.maxLength,
       this.timeFieldIndex,
       options.maxDelta
     );
