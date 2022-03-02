@@ -4393,7 +4393,7 @@ __metadata:
     "@types/prismjs": 1.26.0
     "@types/react": 17.0.39
     "@types/react-beautiful-dnd": 13.1.2
-    "@types/react-calendar": 3.4.5
+    "@types/react-calendar": 3.5.0
     "@types/react-color": 3.0.6
     "@types/react-dom": 17.0.11
     "@types/react-router-dom": 5.3.3
@@ -10732,12 +10732,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-calendar@npm:3.4.5":
-  version: 3.4.5
-  resolution: "@types/react-calendar@npm:3.4.5"
+"@types/react-calendar@npm:3.5.0":
+  version: 3.5.0
+  resolution: "@types/react-calendar@npm:3.5.0"
   dependencies:
     "@types/react": "*"
-  checksum: 710a0b9d4a7517da2d501cd413f7988d391d0f40ae8dd5e67675c38c79f0410fe11e8fffc57a4a566900f9f4c17fae02ec071378645afd71f966595487e0731e
+  checksum: 0dc7eadd0b27c91f0e90372e7aa9392e86dd80f137d13af10cf3692983a8391d85c2287c383ed5281cce10f646f2162ebd49002378a2e525bcd90ea2722b2923
   languageName: node
   linkType: hard
 
