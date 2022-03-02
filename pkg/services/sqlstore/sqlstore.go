@@ -465,7 +465,6 @@ type InitTestDBOpt struct {
 var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
-	featuremgmt.FlagDbFileStorage,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.

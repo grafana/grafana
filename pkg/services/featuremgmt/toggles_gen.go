@@ -119,7 +119,7 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagDbFileStorage
-	// Store files in the database
-	FlagDbFileStorage = "dbFileStorage"
+	// FlagFileStoreApi
+	// Simple API for managing files
+	FlagFileStoreApi = "fileStoreApi"
 )
