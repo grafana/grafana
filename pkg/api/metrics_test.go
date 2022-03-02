@@ -315,16 +315,12 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 		t.Fatalf("Failed to unmarshal dashboard json: %v", err)
 	}
 
-	type dashboardQueryResult struct {
-		result *models.Dashboard
-		err    error
-	}
 	tests := []struct {
 		name                 string
 		orgId                int64
 		dashboardUid         string
 		panelId              int64
-		dashboardQueryResult *dashboardQueryResult
+		dashboardQueryResult *models.Dashboard
 		expectedError        error
 	}{
 		{
@@ -332,53 +328,54 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			orgId:        testOrgID,
 			dashboardUid: "1",
 			panelId:      2,
-			dashboardQueryResult: &dashboardQueryResult{
-				result: &models.Dashboard{
-					Uid:   "1",
-					OrgId: testOrgID,
-					Data:  dashboardJson,
-				},
+			dashboardQueryResult: &models.Dashboard{
+				Uid:   "1",
+				OrgId: testOrgID,
+				Data:  dashboardJson,
 			},
 			expectedError: nil,
 		},
 		{
-			name:                 "Cannot query without a valid panel ID",
-			orgId:                testOrgID,
+			name:                 "404 on invalid orgId",
+			orgId:                7,
 			dashboardUid:         "1",
-			panelId:              0,
+			panelId:              2,
 			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
+			expectedError:        models.ErrDashboardNotFound,
 		},
 		{
-			name:                 "Cannot query without a valid dashboard ID",
+			name:                 "404 on invalid dashboardId",
 			orgId:                testOrgID,
 			dashboardUid:         "",
 			panelId:              2,
 			dashboardQueryResult: nil,
-			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
+			expectedError:        models.ErrDashboardNotFound,
 		},
 		{
-			name:         "Fails when the dashboard does not exist",
-			orgId:        testOrgID,
-			dashboardUid: "1",
-			panelId:      2,
-			dashboardQueryResult: &dashboardQueryResult{
-				result: nil,
-				err:    models.ErrDashboardNotFound,
-			},
-			expectedError: models.ErrDashboardNotFound,
+			name:                 "404 on invalid panelId",
+			orgId:                testOrgID,
+			dashboardUid:         "1",
+			panelId:              0,
+			dashboardQueryResult: nil,
+			expectedError:        models.ErrDashboardNotFound,
 		},
 		{
-			name:         "Fails when the dashboard does not exist",
+			name:                 "Fails when the dashboard does not exist",
+			orgId:                testOrgID,
+			dashboardUid:         "1",
+			panelId:              2,
+			dashboardQueryResult: nil,
+			expectedError:        models.ErrDashboardNotFound,
+		},
+		{
+			name:         "Fails when the panel does not exist",
 			orgId:        testOrgID,
 			dashboardUid: "1",
 			panelId:      3,
-			dashboardQueryResult: &dashboardQueryResult{
-				result: &models.Dashboard{
-					Id:    1,
-					OrgId: testOrgID,
-					Data:  dashboardJson,
-				},
+			dashboardQueryResult: &models.Dashboard{
+				Id:    1,
+				OrgId: testOrgID,
+				Data:  dashboardJson,
 			},
 			expectedError: models.ErrDashboardPanelNotFound,
 		},
@@ -387,26 +384,21 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			orgId:        testOrgID,
 			dashboardUid: "1",
 			panelId:      3,
-			dashboardQueryResult: &dashboardQueryResult{
-				result: &models.Dashboard{
-					Uid:   "1",
-					OrgId: testOrgID,
-					Data:  nil,
-				},
+			dashboardQueryResult: &models.Dashboard{
+				Uid:   "1",
+				OrgId: testOrgID,
+				Data:  nil,
 			},
 			expectedError: models.ErrDashboardCorrupt,
 		},
 	}
 
-	//sqlStore := sqlstore.InitTestDB(t)
 	ss := mockstore.NewSQLStoreMock()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			if test.dashboardQueryResult != nil {
-				ss.ExpectedDashboard = test.dashboardQueryResult.result
-				ss.ExpectedError = test.dashboardQueryResult.err
-			}
+			ss.ExpectedDashboard = test.dashboardQueryResult
+			ss.ExpectedError = test.expectedError
 
 			query := models.GetDashboardQuery{
 				OrgId: test.orgId,
