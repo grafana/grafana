@@ -23,40 +23,41 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service) Sec
 
 // SecretsKVStore is an interface for k/v store.
 type SecretsKVStore interface {
-	Get(ctx context.Context, orgId int64, typ string, key string) (string, bool, error)
-	Set(ctx context.Context, orgId int64, typ string, key string, value string) error
-	Del(ctx context.Context, orgId int64, typ string, key string) error
-	Keys(ctx context.Context, orgId int64, typ string, keyPrefix string) ([]Key, error)
+	Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error)
+	Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error
+	Del(ctx context.Context, orgId int64, namespace string, typ string) error
+	Keys(ctx context.Context, orgId int64, namespace string) ([]Key, error)
 }
 
 // WithType returns a kvstore wrapper with fixed orgId and type.
-func WithType(kv SecretsKVStore, orgId int64, typ string) *TypedKVStore {
-	return &TypedKVStore{
+func With(kv SecretsKVStore, orgId int64, namespace string, typ string) *FixedKVStore {
+	return &FixedKVStore{
 		kvStore: kv,
 		OrgId:   orgId,
 		Type:    typ,
 	}
 }
 
-// TypedKVStore is a SecretsKVStore wrapper with fixed orgId and type.
-type TypedKVStore struct {
-	kvStore SecretsKVStore
-	OrgId   int64
-	Type    string
+// FixedKVStore is a SecretsKVStore wrapper with fixed orgId, namespace and type.
+type FixedKVStore struct {
+	kvStore   SecretsKVStore
+	OrgId     int64
+	Namespace string
+	Type      string
 }
 
-func (kv *TypedKVStore) Get(ctx context.Context, key string) (string, bool, error) {
-	return kv.kvStore.Get(ctx, kv.OrgId, kv.Type, key)
+func (kv *FixedKVStore) Get(ctx context.Context) (string, bool, error) {
+	return kv.kvStore.Get(ctx, kv.OrgId, kv.Namespace, kv.Type)
 }
 
-func (kv *TypedKVStore) Set(ctx context.Context, key string, value string) error {
-	return kv.kvStore.Set(ctx, kv.OrgId, kv.Type, key, value)
+func (kv *FixedKVStore) Set(ctx context.Context, value string) error {
+	return kv.kvStore.Set(ctx, kv.OrgId, kv.Namespace, kv.Type, value)
 }
 
-func (kv *TypedKVStore) Del(ctx context.Context, key string) error {
-	return kv.kvStore.Del(ctx, kv.OrgId, kv.Type, key)
+func (kv *FixedKVStore) Del(ctx context.Context) error {
+	return kv.kvStore.Del(ctx, kv.OrgId, kv.Namespace, kv.Type)
 }
 
-func (kv *TypedKVStore) Keys(ctx context.Context, keyPrefix string) ([]Key, error) {
-	return kv.kvStore.Keys(ctx, kv.OrgId, kv.Type, keyPrefix)
+func (kv *FixedKVStore) Keys(ctx context.Context, keyPrefix string) ([]Key, error) {
+	return kv.kvStore.Keys(ctx, kv.OrgId, kv.Namespace)
 }

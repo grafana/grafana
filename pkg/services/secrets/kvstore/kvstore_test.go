@@ -26,14 +26,18 @@ func createTestableKVStore(t *testing.T) SecretsKVStore {
 }
 
 type TestCase struct {
-	OrgId    int64
-	Type     string
-	Key      string
-	Revision int64
+	OrgId     int64
+	Namespace string
+	Type      string
+	Revision  int64
 }
 
 func (t *TestCase) Value() string {
-	return fmt.Sprintf("%d:%s:%s:%d", t.OrgId, t.Type, t.Key, t.Revision)
+	return fmt.Sprintf("%d:%s:%s:%d", t.OrgId, t.Namespace, t.Type, t.Revision)
+}
+
+func (t *TestCase) Key() string {
+	return fmt.Sprintf("org/%d/%s/%s", t.OrgId, t.Namespace, t.Type)
 }
 
 func TestKVStore(t *testing.T) {
@@ -43,35 +47,35 @@ func TestKVStore(t *testing.T) {
 
 	testCases := []*TestCase{
 		{
-			OrgId: 0,
-			Type:  "testing1",
-			Key:   "key1",
+			OrgId:     0,
+			Namespace: "namespace1",
+			Type:      "testing1",
 		},
 		{
-			OrgId: 0,
-			Type:  "testing2",
-			Key:   "key1",
+			OrgId:     0,
+			Namespace: "namespace2",
+			Type:      "testing2",
 		},
 		{
-			OrgId: 1,
-			Type:  "testing1",
-			Key:   "key1",
+			OrgId:     1,
+			Namespace: "namespace1",
+			Type:      "testing1",
 		},
 		{
-			OrgId: 1,
-			Type:  "testing3",
-			Key:   "key1",
+			OrgId:     1,
+			Namespace: "namespace3",
+			Type:      "testing3",
 		},
 	}
 
 	for _, tc := range testCases {
-		err := kv.Set(ctx, tc.OrgId, tc.Type, tc.Key, tc.Value())
+		err := kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Type, tc.Value())
 		require.NoError(t, err)
 	}
 
 	t.Run("get existing keys", func(t *testing.T) {
 		for _, tc := range testCases {
-			value, ok, err := kv.Get(ctx, tc.OrgId, tc.Type, tc.Key)
+			value, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Type)
 			require.NoError(t, err)
 			require.True(t, ok)
 			require.Equal(t, tc.Value(), value)
@@ -81,24 +85,24 @@ func TestKVStore(t *testing.T) {
 	t.Run("get nonexistent keys", func(t *testing.T) {
 		tcs := []*TestCase{
 			{
-				OrgId: 0,
-				Type:  "testing1",
-				Key:   "key2",
+				OrgId:     0,
+				Namespace: "namespace1",
+				Type:      "testing1",
 			},
 			{
-				OrgId: 1,
-				Type:  "testing2",
-				Key:   "key1",
+				OrgId:     1,
+				Namespace: "namespace2",
+				Type:      "testing2",
 			},
 			{
-				OrgId: 1,
-				Type:  "testing3",
-				Key:   "key2",
+				OrgId:     1,
+				Namespace: "namespace3",
+				Type:      "testing3",
 			},
 		}
 
 		for _, tc := range tcs {
-			value, ok, err := kv.Get(ctx, tc.OrgId, tc.Type, tc.Key)
+			value, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Type)
 			require.Nil(t, err)
 			require.False(t, ok)
 			require.Equal(t, "", value)
@@ -108,17 +112,17 @@ func TestKVStore(t *testing.T) {
 	t.Run("modify existing key", func(t *testing.T) {
 		tc := testCases[0]
 
-		value, ok, err := kv.Get(ctx, tc.OrgId, tc.Type, tc.Key)
+		value, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Type)
 		require.NoError(t, err)
 		require.True(t, ok)
 		assert.Equal(t, tc.Value(), value)
 
 		tc.Revision += 1
 
-		err = kv.Set(ctx, tc.OrgId, tc.Type, tc.Key, tc.Value())
+		err = kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Type, tc.Value())
 		require.NoError(t, err)
 
-		value, ok, err = kv.Get(ctx, tc.OrgId, tc.Type, tc.Key)
+		value, ok, err = kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Type)
 		require.NoError(t, err)
 		require.True(t, ok)
 		assert.Equal(t, tc.Value(), value)
@@ -127,19 +131,19 @@ func TestKVStore(t *testing.T) {
 	t.Run("use typed client", func(t *testing.T) {
 		tc := testCases[0]
 
-		client := WithType(kv, tc.OrgId, tc.Type)
+		client := With(kv, tc.OrgId, tc.Namespace, tc.Type)
 
-		value, ok, err := client.Get(ctx, tc.Key)
+		value, ok, err := client.Get(ctx)
 		require.NoError(t, err)
 		require.True(t, ok)
 		require.Equal(t, tc.Value(), value)
 
 		tc.Revision += 1
 
-		err = client.Set(ctx, tc.Key, tc.Value())
+		err = client.Set(ctx, tc.Value())
 		require.NoError(t, err)
 
-		value, ok, err = client.Get(ctx, tc.Key)
+		value, ok, err = client.Get(ctx)
 		require.NoError(t, err)
 		require.True(t, ok)
 		assert.Equal(t, tc.Value(), value)
@@ -148,7 +152,7 @@ func TestKVStore(t *testing.T) {
 	t.Run("deleting keys", func(t *testing.T) {
 		var stillHasKeys bool
 		for _, tc := range testCases {
-			if _, ok, err := kv.Get(ctx, tc.OrgId, tc.Type, tc.Key); err == nil && ok {
+			if _, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Type); err == nil && ok {
 				stillHasKeys = true
 				break
 			}
@@ -156,11 +160,11 @@ func TestKVStore(t *testing.T) {
 		require.True(t, stillHasKeys,
 			"we are going to test key deletion, but there are no keys to delete in the database")
 		for _, tc := range testCases {
-			err := kv.Del(ctx, tc.OrgId, tc.Type, tc.Key)
+			err := kv.Del(ctx, tc.OrgId, tc.Namespace, tc.Type)
 			require.NoError(t, err)
 		}
 		for _, tc := range testCases {
-			_, ok, err := kv.Get(ctx, tc.OrgId, tc.Type, tc.Key)
+			_, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Type)
 			require.NoError(t, err)
 			require.False(t, ok, "all keys should be deleted at this point")
 		}
@@ -171,47 +175,47 @@ func TestKVStore(t *testing.T) {
 
 		ctx := context.Background()
 
-		typ, key := "listtest", "listtest"
+		namespace, typ := "listtest", "listtest"
 
 		testCases := []*TestCase{
 			{
-				OrgId: 1,
-				Type:  typ,
-				Key:   key + "_1",
+				OrgId:     1,
+				Type:      typ,
+				Namespace: namespace + "_1",
 			},
 			{
-				OrgId: 2,
-				Type:  typ,
-				Key:   key + "_2",
+				OrgId:     2,
+				Type:      typ,
+				Namespace: namespace + "_2",
 			},
 			{
-				OrgId: 3,
-				Type:  typ,
-				Key:   key + "_3",
+				OrgId:     3,
+				Type:      typ,
+				Namespace: namespace + "_3",
 			},
 			{
-				OrgId: 4,
-				Type:  typ,
-				Key:   key + "_4",
+				OrgId:     4,
+				Type:      typ,
+				Namespace: namespace + "_4",
 			},
 			{
-				OrgId: 1,
-				Type:  typ,
-				Key:   "other_key",
+				OrgId:     1,
+				Type:      typ,
+				Namespace: "other_key",
 			},
 			{
-				OrgId: 4,
-				Type:  typ,
-				Key:   "another_one",
+				OrgId:     4,
+				Type:      typ,
+				Namespace: "another_one",
 			},
 		}
 
 		for _, tc := range testCases {
-			err := kv.Set(ctx, tc.OrgId, tc.Type, tc.Key, tc.Value())
+			err := kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Type, tc.Value())
 			require.NoError(t, err)
 		}
 
-		keys, err := kv.Keys(ctx, AllOrganizations, typ, key[0:6])
+		keys, err := kv.Keys(ctx, AllOrganizations, namespace)
 
 		require.NoError(t, err)
 		require.Len(t, keys, 4)
@@ -220,7 +224,7 @@ func TestKVStore(t *testing.T) {
 
 		for _, key := range keys {
 			for _, tc := range testCases {
-				if key.Key == tc.Key {
+				if key.Key == tc.Key() {
 					found++
 					break
 				}
@@ -229,13 +233,13 @@ func TestKVStore(t *testing.T) {
 
 		require.Equal(t, 4, found, "querying with the wildcard should return 4 records")
 
-		keys, err = kv.Keys(ctx, 1, typ, key[0:6])
+		keys, err = kv.Keys(ctx, 1, namespace[0:6])
 
 		require.NoError(t, err)
 		require.Len(t, keys, 1, "querying for a specific org should return 1 record")
 
-		keys, err = kv.Keys(ctx, AllOrganizations, "not_existing_type", "not_existing_key")
-		require.NoError(t, err, "querying a not existing type and key should not throw an error")
-		require.Len(t, keys, 0, "querying a not existing type and key should return an empty slice")
+		keys, err = kv.Keys(ctx, AllOrganizations, "not_existing_namespace")
+		require.NoError(t, err, "querying a not existing namespace should not throw an error")
+		require.Len(t, keys, 0, "querying a not existing namespace should return an empty slice")
 	})
 }
