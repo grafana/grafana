@@ -27,7 +27,7 @@ func Join(parts ...string) string {
 }
 
 func belongsToStorage(path string, storageName StorageName) bool {
-	return strings.HasPrefix(path, string(storageName))
+	return strings.HasPrefix(path, Delimiter+string(storageName))
 }
 
 type File struct {
