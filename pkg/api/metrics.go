@@ -44,33 +44,41 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
-func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, dashboardUid, panelId string) error {
-	if dashboardUid == "" || panelId == "" {
-		return models.ErrDashboardOrPanelIdentifierNotSet
+func parseDashboardQueryParams(params map[string]string) (models.GetDashboardQuery, int64, error) {
+	query := models.GetDashboardQuery{}
+	query.Uid = params[":dashboardUid"]
+
+	if params[":orgId"] == "" || params[":dashboardUid"] == "" || params[":panelId"] == "" {
+		return query, 0, models.ErrDashboardOrPanelIdentifierNotSet
 	}
 
-	query := models.GetDashboardQuery{
-		Uid: dashboardUid,
+	orgId, err := strconv.ParseInt(params[":orgId"], 10, 64)
+	if err != nil {
+		return query, 0, models.ErrDashboardPanelIdentifierInvalid
+	}
+	query.OrgId = orgId
+
+	panelId, err := strconv.ParseInt(params[":panelId"], 10, 64)
+	if err != nil {
+		return query, 0, models.ErrDashboardPanelIdentifierInvalid
 	}
 
+	return query, panelId, nil
+}
+
+func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, query models.GetDashboardQuery, panelId int64) error {
+	// Query the dashboard
 	if err := ss.GetDashboard(ctx, &query); err != nil {
-		return models.ErrDashboardIdentifierInvalid
+		return err
 	}
-
 	if query.Result == nil {
 		return models.ErrDashboardCorrupt
 	}
 
-	dashboard := query.Result
-
 	// dashboard saved but no panels
+	dashboard := query.Result
 	if dashboard.Data == nil {
 		return models.ErrDashboardCorrupt
-	}
-
-	pId, err := strconv.ParseInt(panelId, 10, 64)
-	if err != nil {
-		return models.ErrDashboardPanelIdentifierInvalid
 	}
 
 	// FIXME: parse the dashboard JSON in a more performant/structured way.
@@ -81,7 +89,7 @@ func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, dashboardUid
 			break
 		}
 
-		if panel.Get("id").MustInt64(-1) == pId {
+		if panel.Get("id").MustInt64(-1) == panelId {
 			return nil
 		}
 	}
@@ -93,22 +101,27 @@ func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, dashboardUid
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
+	// check feature flag
 	if !hs.Features.IsEnabled(featuremgmt.FlagValidatedQueries) {
 		return response.Respond(http.StatusNotFound, "404 page not found\n")
 	}
 
+	// build query
 	reqDTO := dtos.MetricRequest{}
-
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
 	params := web.Params(c.Req)
-	dashboardUid := params[":dashboardUid"]
-	panelId := params[":panelId"]
+	getDashboardQuery, panelId, err := parseDashboardQueryParams(params)
+
+	// check dashboard: inside the statement is the happy path. we should maybe
+	// refactor this as it's not super obvious
+	if err == nil {
+		err = checkDashboardAndPanel(c.Req.Context(), hs.SQLStore, getDashboardQuery, panelId)
+	}
 
 	// 404 if dashboard or panel not found
-	if err := checkDashboardAndPanel(c.Req.Context(), hs.SQLStore, dashboardUid, panelId); err != nil {
+	if err != nil {
 		c.Logger.Warn("Failed to find dashboard or panel for validated query", "err", err)
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -117,6 +130,7 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 		return response.Error(http.StatusNotFound, "Dashboard or panel not found", err)
 	}
 
+	// return panel data
 	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
