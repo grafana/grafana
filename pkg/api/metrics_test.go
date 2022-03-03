@@ -213,7 +213,6 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	mockDb := sc.hs.SQLStore.(*mockstore.SQLStoreMock)
 
 	t.Run("Can query a valid dashboard", func(t *testing.T) {
-
 		mockDb.ExpectedDashboard = &models.Dashboard{
 			Uid:   "1",
 			OrgId: testOrgID,
@@ -232,7 +231,6 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	})
 
 	t.Run("Cannot query without a valid orgid or dashboard or panel ID", func(t *testing.T) {
-
 		mockDb.ExpectedDashboard = nil
 		mockDb.ExpectedError = models.ErrDashboardOrPanelIdentifierNotSet
 

@@ -357,7 +357,6 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 }
 
 func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store) accessControlScenarioContext {
-
 	t.Helper()
 
 	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
