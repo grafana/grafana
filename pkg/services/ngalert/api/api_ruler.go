@@ -400,7 +400,7 @@ type changes struct {
 }
 
 func (c *changes) isEmpty() bool {
-	return len(c.Update) == 0 && len(c.New) == 0 && len(c.Delete) == 0
+	return len(c.Update) + len(c.New) + len(c.Delete) == 0
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
