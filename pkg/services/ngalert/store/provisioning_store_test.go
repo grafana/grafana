@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -79,5 +80,36 @@ func TestProvisioningStore(t *testing.T) {
 		p, err = dbstore.GetProvenance(context.Background(), &ruleOrg3)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
+	})
+
+	t.Run("Store saves provenance type when transaction is applied", func(t *testing.T) {
+		rule := models.AlertRule{
+			UID: "456",
+		}
+
+		err := dbstore.InTransaction(context.Background(), func(ctx context.Context) error {
+			return dbstore.SetProvenance(ctx, &rule, models.ProvenanceFile)
+		})
+		require.NoError(t, err)
+
+		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceFile, provenance)
+	})
+
+	t.Run("Transactional store which errors before saving rolls back type update", func(t *testing.T) {
+		rule := models.AlertRule{
+			UID: "789",
+		}
+
+		_ = dbstore.InTransaction(context.Background(), func(ctx context.Context) error {
+			err := dbstore.SetProvenance(ctx, &rule, models.ProvenanceFile)
+			require.NoError(t, err)
+			return fmt.Errorf("something happened!")
+		})
+
+		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceNone, provenance)
 	})
 }
