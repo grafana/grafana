@@ -1,35 +1,31 @@
-import { ThunkResult } from 'app/types';
-import { useAsync } from 'react-use';
+import { DataFrameView } from '@grafana/data';
 
-import { getDashboardData, filterDataFrame, buildStatsTable } from '../data';
+import { ThunkResult } from 'app/types';
+import { getDashboardData, filterDataFrame } from '../data';
+import { DashboardResult } from '../types';
 import { fetchResults } from './reducers';
 
 export const loadResults = (query: string): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const data = await useAsync(getDashboardData, []);
+  return async (dispatch) => {
+    const data = await getDashboardData();
 
-    if (!data.value?.dashboards || !data.value?.panels) {
+    if (!data.dashboards || !data.panels) {
       return;
     }
 
-    if (!data.value?.dashboards.length || !query.length) {
+    if (!data.dashboards.length || !query.length) {
       return dispatch(
         fetchResults({
-          dashboards: data.value!.dashboards,
-          panels: data.value!.panels,
+          dashboards: new DataFrameView<DashboardResult>(data.dashboards),
         })
       );
     }
 
-    const dashboards = filterDataFrame(query, data.value!.dashboards, 'Name', 'Description', 'Tags');
-    const panels = filterDataFrame(query, data.value!.panels, 'Name', 'Description', 'Type');
+    const dashboards = filterDataFrame(query, data.dashboards, 'Name', 'Description', 'Tags');
 
     return dispatch(
       fetchResults({
-        dashboards,
-        panels,
-        panelTypes: buildStatsTable(panels.fields.find((f) => f.name === 'Type')),
-        schemaVersions: buildStatsTable(dashboards.fields.find((f) => f.name === 'SchemaVersion')),
+        dashboards: new DataFrameView<DashboardResult>(dashboards),
       })
     );
   };
