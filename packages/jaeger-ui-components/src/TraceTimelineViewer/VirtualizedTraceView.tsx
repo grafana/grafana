@@ -519,7 +519,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const styles = getStyles();
     const { scrollElement } = this.props;
     return (
-      <div ref={this.topTraceViewRef}>
+      <>
         <ListView
           ref={this.setListView}
           dataLength={this.getRowStates().length}
@@ -540,7 +540,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           title="Scroll to top"
           icon="arrow-up"
         ></ToolbarButton>
-      </div>
+      </>
     );
   }
 }
