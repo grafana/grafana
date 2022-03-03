@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Button, Field, HorizontalGroup, InlineField, InlineFieldRow } from '@grafana/ui';
+import { Button, Field, HorizontalGroup, InlineField, InlineFieldRow, NumberInput } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 
 import { PanelOptions } from '../models.gen';
@@ -7,7 +7,6 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 import { CanvasEditorOptions } from './elementEditor';
 import { Anchor, Placement } from 'app/features/canvas';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
 const anchors: Array<keyof Anchor> = ['top', 'left', 'bottom', 'right'];
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];

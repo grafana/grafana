@@ -1,9 +1,8 @@
 import React, { FC, useCallback } from 'react';
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ScalarDimensionConfig, ScalarDimensionMode, ScalarDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2, NumberInput } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
-import { NumberInput } from './NumberInput';
 import { css } from '@emotion/css';
 
 const fixedValueOption: SelectableValue<string> = {
