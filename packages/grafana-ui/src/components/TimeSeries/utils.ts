@@ -429,6 +429,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          console.log('pub');
           if (sync && sync() === DashboardCursorSync.Off) {
             return false;
           }

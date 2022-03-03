@@ -298,6 +298,7 @@ export interface UPlotChartEvent {
   x: number;
   y: number;
   dataIdxs: Array<number | null>;
+  seriesIdx?: number;
   // rects?
 }
 /** @alpha */

@@ -1,5 +1,17 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { DataFrame, EventBus, Field, PanelProps, TimeRange } from '@grafana/data';
+import {
+  arrayUtils,
+  DataFrame,
+  EventBus,
+  FALLBACK_COLOR,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
+  getFieldDisplayName,
+  PanelProps,
+  TimeRange,
+} from '@grafana/data';
 import {
   UPlotChart2,
   useTheme2,
@@ -7,8 +19,12 @@ import {
   PlotLegend,
   LegendDisplayMode,
   ZoomPlugin,
-  TooltipPlugin,
   usePanelContext,
+  UPlotCursorPlugin,
+  VizTooltipContainer,
+  TooltipDisplayMode,
+  SeriesTable,
+  SeriesTableRowProps,
 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { TimeSeriesOptions } from './types';
@@ -23,8 +39,9 @@ import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { preparePlotData } from '@grafana/ui/src/components/uPlot/utils';
-import { PrepDataFnResult } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
+import { PrepDataFnResult, UPlotChartEvent } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 import { AlignedData } from 'uplot';
+import { SortOrder } from '@grafana/schema';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -83,6 +100,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       eventBus: eventBus.current!,
       theme,
       getTimeRange: () => timeRange.current!,
+      sync,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.structureRev, timeZone, theme]);
@@ -109,6 +127,101 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return null;
   }
 
+  const renderTooltip = (e: UPlotChartEvent) => {
+    if (!alignedFrame.current) {
+      return null;
+    }
+
+    let xField = alignedFrame.current.fields[0];
+    if (!xField) {
+      return null;
+    }
+
+    const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
+
+    let tooltip;
+    if (options.tooltip.mode === TooltipDisplayMode.Single && e.seriesIdx != null) {
+      const field = alignedFrame.current?.fields[e.seriesIdx];
+      const dataIdx = e.dataIdxs[e.seriesIdx];
+
+      if (!field || dataIdx == null) {
+        return null;
+      }
+
+      const xVal = xFieldFmt(xField!.values.get(dataIdx)).text;
+      const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
+      const display = fieldFmt(field.values.get(dataIdx));
+
+      tooltip = (
+        <SeriesTable
+          series={[
+            {
+              color: display.color || FALLBACK_COLOR,
+              label: getFieldDisplayName(field, alignedFrame.current),
+              value: display ? formattedValueToString(display) : null,
+            },
+          ]}
+          timestamp={xVal}
+        />
+      );
+    } else if (options.tooltip.mode === TooltipDisplayMode.Multi) {
+      let series: SeriesTableRowProps[] = [];
+      const frame = alignedFrame.current;
+      const fields = frame.fields;
+      const sortIdx: Array<[number, number]> = [];
+      const dataIdx = e.dataIdxs[0];
+      if (!dataIdx) {
+        return null;
+      }
+      const xVal = xFieldFmt(xField!.values.get(dataIdx)).text;
+
+      for (let i = 1; i < fields.length; i++) {
+        const dataIdx = e.dataIdxs[0];
+        const field = frame.fields[i];
+
+        if (
+          !field ||
+          field.type !== FieldType.number ||
+          field.config.custom?.hideFrom?.tooltip ||
+          field.config.custom?.hideFrom?.viz
+        ) {
+          continue;
+        }
+
+        const v = alignedFrame.current.fields[i].values.get(dataIdx!);
+        const display = field.display!(v);
+
+        sortIdx.push([series.length, v]);
+        series.push({
+          color: display.color || FALLBACK_COLOR,
+          label: getFieldDisplayName(field, frame),
+          value: display ? formattedValueToString(display) : null,
+          isActive: e.seriesIdx === i,
+        });
+      }
+
+      if (options.tooltip.sort !== SortOrder.None) {
+        series.sort((a, b) => arrayUtils.sortValues(options.tooltip.sort as any)(a.value, b.value));
+      }
+
+      tooltip = <SeriesTable series={[...series]} timestamp={xVal} />;
+    }
+
+    if (!tooltip) {
+      return null;
+    }
+
+    return (
+      <VizTooltipContainer
+        position={{ x: e.x, y: e.y }}
+        offset={{ x: 10, y: 10 }}
+        // allowPointerEvents={isToolTipOpen.current}
+      >
+        {tooltip}
+      </VizTooltipContainer>
+    );
+  };
+
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
@@ -117,15 +230,17 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             {(plotConfig) => {
               return (
                 <>
+                  <UPlotCursorPlugin config={plotConfig}>
+                    {(e) => {
+                      if (!e || e.x == null || e.y == null) {
+                        return null;
+                      }
+
+                      return renderTooltip(e);
+                    }}
+                  </UPlotCursorPlugin>
+
                   <ZoomPlugin config={plotConfig.builder} onZoom={onChangeTimeRange} />
-                  <TooltipPlugin
-                    data={plotData.alignedFrame!}
-                    config={plotConfig.builder}
-                    mode={options.tooltip.mode}
-                    sortOrder={options.tooltip.sort}
-                    sync={sync}
-                    timeZone={timeZone}
-                  />
 
                   {data.annotations && (
                     <AnnotationsPlugin annotations={data.annotations} config={plotConfig.builder} timeZone={timeZone} />

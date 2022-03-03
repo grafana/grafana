@@ -93,6 +93,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const structureRef = useRef(10000);
+
   useMemo(() => {
     structureRef.current++;
     // eslint-disable-next-line react-hooks/exhaustive-deps
