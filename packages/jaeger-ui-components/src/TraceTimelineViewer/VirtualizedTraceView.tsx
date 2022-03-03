@@ -38,7 +38,7 @@ import { SpanLinkFunc, TNil } from '../types';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { createRef } from 'react';
+import { createRef, RefObject } from 'react';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
@@ -102,6 +102,7 @@ type TVirtualizedTraceViewOwnProps = {
   scrollElement?: Element;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -509,7 +510,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     );
   }
 
-  scrollToTopTraceView = () => this.topTraceViewRef.current?.scrollIntoView();
+  scrollToTop = () => {
+    const { topOfExploreViewRef } = this.props;
+    topOfExploreViewRef?.current?.scrollIntoView();
+  };
 
   render() {
     const styles = getStyles();
@@ -532,7 +536,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
         <ToolbarButton
           className={styles.scrollToTopButton}
-          onClick={this.scrollToTopTraceView}
+          onClick={this.scrollToTop}
           title="Scroll to top"
           icon="arrow-up"
         ></ToolbarButton>
