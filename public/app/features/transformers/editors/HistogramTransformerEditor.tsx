@@ -17,7 +17,7 @@ export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTr
     (val?: number) => {
       onChange({
         ...options,
-        bucketSize: Number.isNaN(val) ? undefined : val,
+        bucketSize: val,
       });
     },
     [onChange, options]
@@ -27,7 +27,7 @@ export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTr
     (val?: number) => {
       onChange({
         ...options,
-        bucketOffset: Number.isNaN(val) ? undefined : val,
+        bucketOffset: val,
       });
     },
     [onChange, options]
