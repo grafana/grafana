@@ -27,12 +27,6 @@ type ProvisioningStore interface {
 	SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error
 }
 
-type TransactionalProvisioningStore interface {
-	GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error)
-	// TODO: API to query all provenances for a specific type?
-	SetProvenanceTransactional(o models.Provisionable, p models.Provenance, uow UnitOfWork) UnitOfWork
-}
-
 func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
@@ -57,18 +51,13 @@ func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (mo
 	return provenance, nil
 }
 
+// SetProvenance changes the provenance status for a provisionable object.
 func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
-	xact := NewTransaction(st.SQLStore)
-	xact = st.SetProvenanceTransactional(o, p, xact)
-	return xact.Execute(ctx)
-}
-
-func (st DBstore) SetProvenanceTransactional(o models.Provisionable, p models.Provenance, uow UnitOfWork) UnitOfWork {
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 	orgID := o.ResourceOrgID()
 
-	uow = uow.Do(func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: Need to make sure that writing a record where our concurrency key fails will also fail the whole transaction. That way, this gets rolled back too. can't just check that 0 updates happened inmemory. Check with jp. If not possible, we need our own concurrency key.
 		// TODO: Clean up stale provenance records periodically.
 		filter := "record_key = ? AND record_type = ? AND org_id = ?"
@@ -91,5 +80,4 @@ func (st DBstore) SetProvenanceTransactional(o models.Provisionable, p models.Pr
 
 		return nil
 	})
-	return uow
 }
