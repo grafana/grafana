@@ -551,11 +551,13 @@ describe('Streaming JSON', () => {
           maxDelta: 300,
         }).serialize()
       );
+      expect(frame.length).toEqual(3);
       frame.pushNewValues([
         [601, 602],
         ['x', 'y'],
         [10, 11],
       ]);
+      expect(frame.length).toEqual(3);
       expect(frame.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
         Array [
           Object {
@@ -594,11 +596,13 @@ describe('Streaming JSON', () => {
           action: StreamingFrameAction.Replace,
         }).serialize()
       );
+      expect(frame.length).toEqual(3);
       frame.pushNewValues([
         [601, 602],
         ['x', 'y'],
         [10, 11],
       ]);
+      expect(frame.length).toEqual(2);
       expect(frame.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
         Array [
           Object {

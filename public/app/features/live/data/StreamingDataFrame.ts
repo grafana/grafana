@@ -387,6 +387,10 @@ export class StreamingDataFrame implements DataFrame {
         this.options.maxDelta
       );
     }
+    const newLength = this.fields?.[0]?.values?.buffer?.length;
+    if (newLength !== undefined) {
+      this.length = newLength;
+    }
   };
 
   resetStateCalculations = () => {
