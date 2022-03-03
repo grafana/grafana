@@ -8,6 +8,11 @@ exports[`Explore should render component 1`] = `
   <Connect(UnConnectedExploreToolbar)
     exploreId="left"
     onChangeTime={[Function]}
+    topOfExploreViewRef={
+      Object {
+        "current": null,
+      }
+    }
   />
   <div
     className="explore-container"

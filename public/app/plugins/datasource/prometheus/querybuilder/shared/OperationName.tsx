@@ -60,7 +60,8 @@ export const OperationName = React.memo<Props>(({ operation, def, index, onChang
           onCloseMenu={onToggleSwitcher}
           onChange={(value) => {
             if (value.value) {
-              const newDef = queryModeller.getOperationDef(value.value.id);
+              // Operation should exist if it is selectable
+              const newDef = queryModeller.getOperationDef(value.value.id)!;
               let changedOp = { ...operation, id: value.value.id };
               onChange(index, def.changeTypeHandler ? def.changeTypeHandler(changedOp, newDef) : changedOp);
             }

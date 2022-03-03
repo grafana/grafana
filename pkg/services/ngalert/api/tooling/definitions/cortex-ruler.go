@@ -354,6 +354,7 @@ const (
 type ExecutionErrorState string
 
 const (
+	OkErrState       ExecutionErrorState = "OK"
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
 )

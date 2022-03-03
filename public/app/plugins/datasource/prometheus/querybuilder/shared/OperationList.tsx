@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { ButtonCascader, CascaderOption, useStyles2 } from '@grafana/ui';
-import React from 'react';
+import { Button, Cascader, CascaderOption, useStyles2 } from '@grafana/ui';
+import React, { useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
 import { OperationEditor } from './OperationEditor';
@@ -26,6 +26,8 @@ export function OperationList<T extends QueryWithOperations>({
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
+  const [cascaderOpen, setCascaderOpen] = useState(false);
+
   const onOperationChange = (index: number, update: QueryBuilderOperation) => {
     const updatedList = [...operations];
     updatedList.splice(index, 1, update);
@@ -41,7 +43,7 @@ export function OperationList<T extends QueryWithOperations>({
     return {
       value: category,
       label: category,
-      children: queryModeller.getOperationsForCategory(category).map((operation) => ({
+      items: queryModeller.getOperationsForCategory(category).map((operation) => ({
         value: operation.id,
         label: operation.name,
         isLeaf: true,
@@ -49,9 +51,13 @@ export function OperationList<T extends QueryWithOperations>({
     };
   });
 
-  const onAddOperation = (value: string[]) => {
-    const operationDef = queryModeller.getOperationDef(value[1]);
+  const onAddOperation = (value: string) => {
+    const operationDef = queryModeller.getOperationDef(value);
+    if (!operationDef) {
+      return;
+    }
     onChange(operationDef.addOperationHandler(operationDef, query, queryModeller));
+    setCascaderOpen(false);
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -64,6 +70,10 @@ export function OperationList<T extends QueryWithOperations>({
     updatedList.splice(result.source.index, 1);
     updatedList.splice(result.destination.index, 0, element);
     onChange({ ...query, operations: updatedList });
+  };
+
+  const onCascaderBlur = () => {
+    setCascaderOpen(false);
   };
 
   return (
@@ -94,15 +104,19 @@ export function OperationList<T extends QueryWithOperations>({
           </DragDropContext>
         )}
         <div className={styles.addButton}>
-          <ButtonCascader
-            key="cascader"
-            icon="plus"
-            options={addOptions}
-            onChange={onAddOperation}
-            variant="secondary"
-            hideDownIcon={true}
-            buttonProps={{ 'aria-label': 'Add operation', title: 'Add operation' }}
-          />
+          {cascaderOpen ? (
+            <Cascader
+              options={addOptions}
+              onSelect={onAddOperation}
+              onBlur={onCascaderBlur}
+              autoFocus={true}
+              alwaysOpen={true}
+              hideActiveLevelLabel={true}
+              placeholder={'Search'}
+            />
+          ) : (
+            <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} title={'Add operation'} />
+          )}
         </div>
       </Stack>
     </Stack>
@@ -122,6 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
     }),
     addButton: css({
+      width: 150,
       paddingBottom: theme.spacing(1),
     }),
   };

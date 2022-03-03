@@ -197,7 +197,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 export interface AddResultsToCachePayload {
   exploreId: ExploreId;
   cacheKey: string;
-  queryResponse: PanelData;
+  queryResponse: ExplorePanelData;
 }
 export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
 

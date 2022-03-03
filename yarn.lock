@@ -3386,10 +3386,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@braintree/sanitize-url@npm:*, @braintree/sanitize-url@npm:5.0.2":
+"@braintree/sanitize-url@npm:*":
   version: 5.0.2
   resolution: "@braintree/sanitize-url@npm:5.0.2"
   checksum: c033f9a0e6dd6fbd4022df2d3916a278510f759971b1e8ab278b3ce1123a3816d5fdd9d84c5c9fbcd6c94c05f8421c4c669f110c8db67eaf58f3018825af514e
+  languageName: node
+  linkType: hard
+
+"@braintree/sanitize-url@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@braintree/sanitize-url@npm:6.0.0"
+  checksum: 409ce7709dc1a0c67bc887d20af1becd4145d5c62cc5124b1c4c1f3ea2a8d69b0ee9f582d446469c6f5294b56442b99048cbbba6861dd5c834d4e019b95e1f40
   languageName: node
   linkType: hard
 
@@ -4002,7 +4009,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
-    "@braintree/sanitize-url": 5.0.2
+    "@braintree/sanitize-url": 6.0.0
     "@grafana/schema": 8.5.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
@@ -4035,7 +4042,7 @@ __metadata:
     marked: 4.0.12
     moment: 2.29.1
     moment-timezone: 0.5.34
-    ol: 6.12.0
+    ol: 6.13.0
     papaparse: 5.3.1
     react: 17.0.2
     react-dom: 17.0.2
@@ -4109,7 +4116,7 @@ __metadata:
     tslib: 2.3.1
     typescript: 4.4.4
     uuid: 8.3.2
-    webpack: 5.69.1
+    webpack: 5.70.0
     yaml: ^1.8.3
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -4430,7 +4437,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: ^0.31.1
-    ol: 6.12.0
+    ol: 6.13.0
     postcss: 8.4.6
     postcss-loader: 6.2.1
     prismjs: 1.27.0
@@ -4478,7 +4485,7 @@ __metadata:
     typescript: 4.4.4
     uplot: 1.6.19
     uuid: 8.3.2
-    webpack: 5.69.1
+    webpack: 5.70.0
     webpack-filter-warnings-plugin: 1.2.1
   languageName: unknown
   linkType: soft
@@ -14634,7 +14641,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"callsites@npm:^3.0.0, callsites@npm:^3.1.0":
+"callsites@npm:^3.0.0":
   version: 3.1.0
   resolution: "callsites@npm:3.1.0"
   checksum: 072d17b6abb459c2ba96598918b55868af677154bec7e73d222ef95a8fdb9bbf7dae96a8421085cdad8cd190d86653b5b6dc55a4484f2e5b2e27d5e0c3fc15b3
@@ -17225,7 +17232,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.2.0, debug@npm:^4.3.1, debug@npm:^4.3.2":
+"debug@npm:4, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2":
   version: 4.3.2
   resolution: "debug@npm:4.3.2"
   dependencies:
@@ -18169,6 +18176,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"enhanced-resolve@npm:^5.9.2":
+  version: 5.9.2
+  resolution: "enhanced-resolve@npm:5.9.2"
+  dependencies:
+    graceful-fs: ^4.2.4
+    tapable: ^2.2.0
+  checksum: 792b7a01abb4ee4433b658c71f92d5948675938e0c03cad1732abe843b87395f15cb880ace4f819f78ead94163278283afc79b8be63c0eddca8ab45f7d8c515d
+  languageName: node
+  linkType: hard
+
 "enquirer@npm:^2.3.5, enquirer@npm:^2.3.6":
   version: 2.3.6
   resolution: "enquirer@npm:2.3.6"
@@ -18513,14 +18530,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-prettier@npm:8.4.0":
-  version: 8.4.0
-  resolution: "eslint-config-prettier@npm:8.4.0"
+"eslint-config-prettier@npm:8.5.0":
+  version: 8.5.0
+  resolution: "eslint-config-prettier@npm:8.5.0"
   peerDependencies:
     eslint: ">=7.0.0"
   bin:
     eslint-config-prettier: bin/cli.js
-  checksum: ee8dc343f1fed15dc0658e190a966cc23644477f2331a7f56ae2bb79dd74892e3cde8ea5c142e7a3329a8291a1de041e13ca96e54d0c85ff4a2aba13390c5f10
+  checksum: 0d0f5c32e7a0ad91249467ce71ca92394ccd343178277d318baf32063b79ea90216f4c81d1065d60f96366fdc60f151d4d68ae7811a58bd37228b84c2083f893
   languageName: node
   linkType: hard
 
@@ -18845,13 +18862,6 @@ __metadata:
   bin:
     eslint: bin/eslint.js
   checksum: 8b31ab3de5b48b6828bf13c09c9e62ee0045fa0afa017efaa73eedcf4dc33bc204ee4c467d4677e37967d1645f73816ddef4271422e691fded352040f8f83093
-  languageName: node
-  linkType: hard
-
-"esm@npm:^3.2.25":
-  version: 3.2.25
-  resolution: "esm@npm:3.2.25"
-  checksum: 978aabe2de83541c105605a6d60a26ed8e627ef6bb0a7605fe15a95bbdea6b8348bd045255cb22219c054dd09a81a94823df00843d9e97f42419c92015ce3a64
   languageName: node
   linkType: hard
 
@@ -20150,18 +20160,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geotiff@npm:^1.0.8":
-  version: 1.0.9
-  resolution: "geotiff@npm:1.0.9"
+"geotiff@npm:^2.0.2":
+  version: 2.0.4
+  resolution: "geotiff@npm:2.0.4"
   dependencies:
     "@petamoriken/float16": ^3.4.7
     lerc: ^3.0.0
     lru-cache: ^6.0.0
     pako: ^2.0.4
     parse-headers: ^2.0.2
-    threads: ^1.7.0
+    web-worker: ^1.2.0
     xml-utils: ^1.0.2
-  checksum: 27eabb360cfd67ef19bed1bfe6562842c64f93fa0d446dfddcd3191b41379a1ff7d4609b9bb792fb257e31a14c5a272a2b7c3033af1a140b6c8eeda466f3255b
+  checksum: 68d54ea7b9a8965287b20a7c30b5eb9552bd21ed341edfd65dfd424309b7d91fffb2dc474298f23bc2274ed8b34d1792812fa444385bd6000173d706de675169
   languageName: node
   linkType: hard
 
@@ -20832,7 +20842,7 @@ __metadata:
     enzyme: 3.11.0
     enzyme-to-json: 3.6.2
     eslint: 8.10.0
-    eslint-config-prettier: 8.4.0
+    eslint-config-prettier: 8.5.0
     eslint-plugin-jest: ^26.1.0
     eslint-plugin-jsdoc: 37.9.1
     eslint-plugin-lodash: 7.4.0
@@ -20886,7 +20896,7 @@ __metadata:
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
     nodemon: 2.0.15
-    ol: 6.12.0
+    ol: 6.13.0
     papaparse: 5.3.1
     pluralize: ^8.0.0
     postcss: 8.4.6
@@ -20964,7 +20974,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.0
-    webpack: 5.69.1
+    webpack: 5.70.0
     webpack-bundle-analyzer: 4.5.0
     webpack-cli: 4.9.2
     webpack-dev-server: 4.7.4
@@ -22705,13 +22715,6 @@ __metadata:
   version: 1.0.2
   resolution: "is-object@npm:1.0.2"
   checksum: 971219c4b1985b9751f65e4c8296d3104f0457b0e8a70849e848a4a2208bc47317d73b3b85d4a369619cb2df8284dc22584cb2695a7d99aca5e8d0aa64fc075a
-  languageName: node
-  linkType: hard
-
-"is-observable@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "is-observable@npm:2.1.0"
-  checksum: 93b0e0f9b115ef4b5f0523f4930667a7809a42e9cf1b23a444f8a9c15f72b9c1729b2a4691d55a5c479a05eafd5dda9b51ed1b65336d56027b7989ecb8ef51bf
   languageName: node
   linkType: hard
 
@@ -25693,10 +25696,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mapbox-to-css-font@npm:^2.4.0":
-  version: 2.4.0
-  resolution: "mapbox-to-css-font@npm:2.4.0"
-  checksum: 155786e940aa4fa6706ff5393b4cb86856ecb7f119fd4b51d77ff736c7e9a81cb4f7d2833cf1ee727ebc211dd9e7e980aa4edf470dde8972bcc8ed8f62a74b8d
+"mapbox-to-css-font@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "mapbox-to-css-font@npm:2.4.1"
+  checksum: db9e9003d8514286f58793a746bb2477d4f29547ccce17a7bdef34d3ed73f1d670cbb2956cb899e5bcda90564b508de485f7bcbbded908a22ab70482dfe49ed0
   languageName: node
   linkType: hard
 
@@ -27412,13 +27415,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"observable-fns@npm:^0.6.1":
-  version: 0.6.1
-  resolution: "observable-fns@npm:0.6.1"
-  checksum: b575f23f90c6129a8bead1d5001dbae2d83c6d01724a4790ec8f1c7f2db352440c87eae2ffb562117cb58b4a68b4503ab3a7017a77025916993ad710cd0efdd9
-  languageName: node
-  linkType: hard
-
 "obuf@npm:^1.0.0, obuf@npm:^1.1.2":
   version: 1.1.2
   resolution: "obuf@npm:1.1.2"
@@ -27426,26 +27422,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^6.8.2":
-  version: 6.8.2
-  resolution: "ol-mapbox-style@npm:6.8.2"
+"ol-mapbox-style@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "ol-mapbox-style@npm:7.0.0"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.20.1
-    mapbox-to-css-font: ^2.4.0
+    mapbox-to-css-font: ^2.4.1
     webfont-matcher: ^1.1.0
-  checksum: b7b6f631870dd0e78d217edda52eecb6b8b15cb1120ea8ed14376fa17f231ac39412346c4f9b417badc772161a70d06a6b65deaf00a7db4adcab466c1df8d081
+  checksum: a18b0049850845fb35b69fee6ec95c45c7d7b78a212174f819a88aacf2012666f33d98fd9cb1a21e41eb085309b2b94fa8801bd99ed56e52d2d53dc2dfa59009
   languageName: node
   linkType: hard
 
-"ol@npm:6.12.0":
-  version: 6.12.0
-  resolution: "ol@npm:6.12.0"
+"ol@npm:6.13.0":
+  version: 6.13.0
+  resolution: "ol@npm:6.13.0"
   dependencies:
-    geotiff: ^1.0.8
-    ol-mapbox-style: ^6.8.2
+    geotiff: ^2.0.2
+    ol-mapbox-style: ^7.0.0
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: a0eb5766bda485acd59c95e835e87d214c501310474e22003f4ef9ea600bf005abb43f0f33aa3d4939d2c84748bd40a5c4168c31551e5266c208aeff8eb576dc
+  checksum: 1655d87a47338bcc42ff011b516804759d9c8be0c1bc0d732092792bf53c64f8f5f2998004016771f085b44fef238f3508e95364b7a3ef3ba8d8cae8b6207953
   languageName: node
   linkType: hard
 
@@ -34863,22 +34859,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"threads@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "threads@npm:1.7.0"
-  dependencies:
-    callsites: ^3.1.0
-    debug: ^4.2.0
-    is-observable: ^2.1.0
-    observable-fns: ^0.6.1
-    tiny-worker: ">= 2"
-  dependenciesMeta:
-    tiny-worker:
-      optional: true
-  checksum: 253574bc5c70d0663756d74c7a438ced64f9c6746ff550abea18b11919a24cc6b1be3322b4d0bdb8c6077e52774eb65f49549bb9deec24e693f149470c316ee1
-  languageName: node
-  linkType: hard
-
 "throat@npm:^5.0.0":
   version: 5.0.0
   resolution: "throat@npm:5.0.0"
@@ -34974,15 +34954,6 @@ __metadata:
   version: 1.0.3
   resolution: "tiny-warning@npm:1.0.3"
   checksum: da62c4acac565902f0624b123eed6dd3509bc9a8d30c06e017104bedcf5d35810da8ff72864400ad19c5c7806fc0a8323c68baf3e326af7cb7d969f846100d71
-  languageName: node
-  linkType: hard
-
-"tiny-worker@npm:>= 2":
-  version: 2.3.0
-  resolution: "tiny-worker@npm:2.3.0"
-  dependencies:
-    esm: ^3.2.25
-  checksum: 33492c9b0623e064dd39bc64d61e7031a3ba146ed1d6de179c3f8c2e3b965061e204e602c0b019fa363ccca1e6939fc2e8d03c4ad070450cc491d47cd5382409
   languageName: node
   linkType: hard
 
@@ -36683,6 +36654,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"web-worker@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "web-worker@npm:1.2.0"
+  checksum: 1bb28348ddcf9b2e7c62c5fd02e49a84098795856cd905456de957271bba288e9618941cf69d8960f0a7ae81f5dfb74b427c0634be47ec69e3e955c4ec5213be
+  languageName: node
+  linkType: hard
+
 "webfont-matcher@npm:^1.1.0":
   version: 1.1.0
   resolution: "webfont-matcher@npm:1.1.0"
@@ -37062,9 +37040,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.69.1":
-  version: 5.69.1
-  resolution: "webpack@npm:5.69.1"
+"webpack@npm:5.70.0":
+  version: 5.70.0
+  resolution: "webpack@npm:5.70.0"
   dependencies:
     "@types/eslint-scope": ^3.7.3
     "@types/estree": ^0.0.51
@@ -37075,7 +37053,7 @@ __metadata:
     acorn-import-assertions: ^1.7.6
     browserslist: ^4.14.5
     chrome-trace-event: ^1.0.2
-    enhanced-resolve: ^5.8.3
+    enhanced-resolve: ^5.9.2
     es-module-lexer: ^0.9.0
     eslint-scope: 5.1.1
     events: ^3.2.0
@@ -37095,7 +37073,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 490a6e9e4cd9d0ed3b6c7ca08015da2628919fda8fcf9c36f0f6c0e3ad71eaaaf4b0d12753109f22a4faf79fe9a9063552d9708e0ee2352cf8568433b8e296a7
+  checksum: 00439884a9cdd5305aed3ce93735635785a15c5464a6d2cfce87e17727a07585de02420913e82aa85ddd2ae7322175d2cfda6ac0878a17f061cb605e6a7db57a
   languageName: node
   linkType: hard
 
