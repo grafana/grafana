@@ -37,7 +37,7 @@
     "@types/lodash": "4.14.178",
     "@types/node": "16.11.22",
     "@types/uuid": "8.3.4",
-    "rollup": "2.68.0",
+    "rollup": "2.69.0",
     "rollup-plugin-copy": "3.4.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
