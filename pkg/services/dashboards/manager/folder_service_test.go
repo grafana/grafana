@@ -25,7 +25,7 @@ func TestFolderService(t *testing.T) {
 		store := &database.FakeDashboardStore{}
 		defer store.AssertExpectations(t)
 		service := ProvideFolderService(
-			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store)},
+			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store, nil)},
 			store,
 			nil,
 		)
