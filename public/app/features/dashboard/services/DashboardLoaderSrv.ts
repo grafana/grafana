@@ -43,10 +43,6 @@ export class DashboardLoaderSrv {
       promise = backendSrv
         .getDashboardByUid(uid)
         .then((result: any) => {
-          if (result.meta.isFolder) {
-            appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
-            throw new Error('Dashboard not found');
-          }
           return result;
         })
         .catch(() => {

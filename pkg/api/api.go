@@ -331,7 +331,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
+			dashboardRoute.Get("/uid/*", routing.Wrap(hs.GetDashboard)) // :( will collide with the ThumbService!!!
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
 			if hs.ThumbService != nil {

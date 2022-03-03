@@ -53,6 +53,14 @@ async function fetchDashboard(
         dashDTO.meta.canStar = false;
         return dashDTO;
       }
+
+      // sends UID as path slug, supports git and file system endpoints
+      case DashboardRoutes.Path: {
+        // Not sure we need a new type, but for now this one will not deal with redirects
+        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard('', args.urlSlug, args.urlSlug);
+        return dashDTO;
+      }
+
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 

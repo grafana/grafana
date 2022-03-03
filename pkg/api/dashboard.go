@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -74,12 +75,61 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(200, dto)
 }
 
+func (hs *HTTPServer) getPathBasedDashboard(c *models.ReqContext, uid string) *dtos.DashboardFullWithMeta {
+	idx := strings.Index(uid, "/")
+	if idx <= 0 {
+		return nil // not found
+	}
+
+	if strings.Contains(uid, "..") {
+		return nil // cheap path cleanup for now
+	}
+
+	root := uid[:idx]
+	if root == "devdash" {
+		fpath := filepath.Join("devenv", "dev-dashboards", uid[idx+1:])
+		raw, err := os.ReadFile(fpath + ".json")
+		if err == nil {
+			js, err := simplejson.NewJson(raw)
+			if err == nil {
+				return &dtos.DashboardFullWithMeta{
+					Dashboard: js,
+					Meta: dtos.DashboardMeta{
+						CanSave: false,
+						CanEdit: false,
+						CanStar: false,
+					},
+				}
+			}
+		} else {
+			// if it is a directory....
+			fmt.Printf("directory????\n")
+		}
+		fmt.Printf("--------------------------------")
+		fmt.Printf("LOAD!!! %s\n", fpath)
+		fmt.Printf("--------------------------------")
+	}
+
+	return nil
+}
+
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	uid := web.Params(c.Req)[":uid"]
+	uid := web.Params(c.Req)["*"] // :uid
+
+	// Check for path based UIDs (from file systems)
+	if strings.Contains(uid, "/") {
+		dto := hs.getPathBasedDashboard(c, uid)
+		if dto != nil {
+			c.TimeRequest(metrics.MApiDashboardGet)
+			return response.JSON(200, dto)
+		}
+	}
+
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
+
 	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
 	if dash.Data != nil {
 		isEmptyData := true
