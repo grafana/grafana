@@ -90,7 +90,7 @@ func TestEmailNotifier(t *testing.T) {
 						Labels:       template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
 						Annotations:  template.KV{"runbook_url": "http://fix.me"},
 						Fingerprint:  "15a37193dce72bab",
-						SilenceURL:   "http://localhost/base/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DAlwaysFiring%2Cseverity%3Dwarning",
+						SilenceURL:   "http://localhost/base/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DAlwaysFiring&matcher=severity%3Dwarning",
 						DashboardURL: "http://localhost/base/d/abc",
 						PanelURL:     "http://localhost/base/d/abc?viewPanel=5",
 					},

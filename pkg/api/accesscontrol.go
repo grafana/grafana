@@ -262,10 +262,111 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
+	dashboardsCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:creator",
+			DisplayName: "Dashboard creator",
+			Description: "Create dashboard in general folder.",
+			Group:       "Dashboards",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionFoldersRead, Scope: ac.Scope("folders", "id", "0")},
+				{Action: ac.ActionDashboardsCreate, Scope: ac.Scope("folders", "id", "0")},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
+	dashboardsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:reader",
+			DisplayName: "Dashboard reader",
+			Description: "Read all dashboards.",
+			Group:       "Dashboards",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeDashboardsAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	dashboardsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:writer",
+			DisplayName: "Dashboard writer",
+			Group:       "Dashboards",
+			Description: "Create, read, write or delete all dashboards and their permissions.",
+			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
+				{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeDashboardsAll},
+				{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeDashboardsAll},
+				{Action: ac.ActionDashboardsCreate, Scope: ac.ScopeFoldersAll},
+				{Action: ac.ActionDashboardsPermissionsRead, Scope: ac.ScopeDashboardsAll},
+				{Action: ac.ActionDashboardsPermissionsWrite, Scope: ac.ScopeDashboardsAll},
+			}),
+		},
+		Grants: []string{"Admin"},
+	}
+
+	foldersCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:creator",
+			DisplayName: "Folder creator",
+			Description: "Create folders.",
+			Group:       "Folders",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionFoldersCreate},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
+	foldersReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:reader",
+			DisplayName: "Folder reader",
+			Description: "Read all folders and dashboards.",
+			Group:       "Folders",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionFoldersRead, Scope: ac.ScopeFoldersAll},
+				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeFoldersAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	foldersWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:writer",
+			DisplayName: "Folder writer",
+			Description: "Create, read, write or delete all folders and dashboards and their permissions.",
+			Group:       "Folders",
+			Permissions: ac.ConcatPermissions(
+				foldersReaderRole.Role.Permissions,
+				[]ac.Permission{
+					{Action: ac.ActionFoldersCreate},
+					{Action: ac.ActionFoldersWrite, Scope: ac.ScopeFoldersAll},
+					{Action: ac.ActionFoldersDelete, Scope: ac.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsCreate, Scope: ac.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsPermissionsRead, Scope: ac.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsPermissionsWrite, Scope: ac.ScopeFoldersAll},
+				}),
+		},
+		Grants: []string{"Admin"},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
-		teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
+		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole,
 	)
 }
 

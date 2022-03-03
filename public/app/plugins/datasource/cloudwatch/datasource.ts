@@ -17,7 +17,6 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -868,24 +867,6 @@ export class CloudWatchDatasource
       target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
       find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
-  }
-
-  async testDatasource() {
-    // use billing metrics for test
-    const region = this.defaultRegion;
-    const namespace = 'AWS/Billing';
-    const metricName = 'EstimatedCharges';
-    const dimensions = {};
-
-    try {
-      await this.getDimensionValues(region ?? '', namespace, metricName, 'ServiceName', dimensions);
-      return {
-        status: 'success',
-        message: 'Data source is working',
-      };
-    } catch (error) {
-      return toTestingStatus(error);
-    }
   }
 
   awsRequest(url: string, data: MetricRequest, headers: Record<string, any> = {}): Observable<TSDBResponse> {
