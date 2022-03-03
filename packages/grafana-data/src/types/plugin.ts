@@ -1,4 +1,4 @@
-import React from 'react';
+import { ComponentClass, FunctionComponent } from 'react';
 import { KeyValue } from './data';
 
 /** Describes plugins life cycle status */
@@ -159,7 +159,7 @@ export interface PluginConfigPage<T extends PluginMeta> {
   icon?: string;
   id: string; // Unique, in URL
 
-  body: React.FunctionComponent<PluginConfigPageProps<T>> | React.ComponentClass<PluginConfigPageProps<T>>;
+  body: FunctionComponent<PluginConfigPageProps<T>> | ComponentClass<PluginConfigPageProps<T>>;
 }
 
 export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
