@@ -19,10 +19,10 @@ type Store interface {
 func Provision(ctx context.Context, configDirectory string, store Store, pluginStore plugins.Store, pluginSettings pluginsettings.Service) error {
 	logger := log.New("provisioning.plugins")
 	ap := PluginProvisioner{
-		log:         logger,
-		cfgProvider: newConfigReader(logger, pluginStore),
-		store:       store,
-		service:     pluginSettings,
+		log:            logger,
+		cfgProvider:    newConfigReader(logger, pluginStore),
+		store:          store,
+		pluginSettings: pluginSettings,
 	}
 	return ap.applyChanges(ctx, configDirectory)
 }
@@ -30,10 +30,10 @@ func Provision(ctx context.Context, configDirectory string, store Store, pluginS
 // PluginProvisioner is responsible for provisioning apps based on
 // configuration read by the `configReader`
 type PluginProvisioner struct {
-	log         log.Logger
-	cfgProvider configReader
-	store       Store
-	service     pluginsettings.Service
+	log            log.Logger
+	cfgProvider    configReader
+	store          Store
+	pluginSettings pluginsettings.Service
 }
 
 func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) error {
@@ -49,7 +49,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 		}
 
 		query := &models.GetPluginSettingByIdQuery{OrgId: app.OrgID, PluginId: app.PluginID}
-		err := ap.service.GetPluginSettingById(ctx, query)
+		err := ap.pluginSettings.GetPluginSettingById(ctx, query)
 		if err != nil {
 			if !errors.Is(err, models.ErrPluginSettingNotFound) {
 				return err
@@ -68,7 +68,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJsonData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}
-		if err := ap.service.UpdatePluginSetting(ctx, cmd); err != nil {
+		if err := ap.pluginSettings.UpdatePluginSetting(ctx, cmd); err != nil {
 			return err
 		}
 	}
