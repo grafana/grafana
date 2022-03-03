@@ -43,10 +43,17 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
-	dashboardService := dashboardservice.ProvideDashboardService(dashboardStore, nil)
+
+	features := featuremgmt.WithFeatures()
+	permissionsServices := acmock.NewPermissionsServicesMock()
+
+	dashboardService := dashboardservice.ProvideDashboardService(
+		cfg, dashboardStore, nil,
+		features, permissionsServices,
+	)
 	folderService := dashboardservice.ProvideFolderService(
-		setting.NewCfg(), dashboardService, dashboardStore, nil,
-		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		cfg, dashboardService, dashboardStore, nil,
+		features, permissionsServices,
 	)
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore,

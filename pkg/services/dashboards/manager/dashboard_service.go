@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	m "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,16 +30,25 @@ var (
 )
 
 type DashboardServiceImpl struct {
+	cfg                *setting.Cfg
+	log                log.Logger
 	dashboardStore     m.Store
 	dashAlertExtractor alerting.DashAlertExtractor
-	log                log.Logger
+	features           featuremgmt.FeatureToggles
+	permissions        accesscontrol.PermissionsService
 }
 
-func ProvideDashboardService(store m.Store, dashAlertExtractor alerting.DashAlertExtractor) *DashboardServiceImpl {
+func ProvideDashboardService(
+	cfg *setting.Cfg, store m.Store, dashAlertExtractor alerting.DashAlertExtractor,
+	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+) *DashboardServiceImpl {
 	return &DashboardServiceImpl{
+		cfg:                cfg,
+		log:                log.New("dashboard-service"),
 		dashboardStore:     store,
 		dashAlertExtractor: dashAlertExtractor,
-		log:                log.New("dashboard-service"),
+		features:           features,
+		permissions:        permissionsServices.GetDashboardService(),
 	}
 }
 

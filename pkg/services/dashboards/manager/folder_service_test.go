@@ -27,11 +27,13 @@ func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &database.FakeDashboardStore{}
 		defer store.AssertExpectations(t)
+		cfg := setting.NewCfg()
+		features := featuremgmt.WithFeatures()
+		permissionsServices := acmock.NewPermissionsServicesMock()
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
 		service := ProvideFolderService(
-			setting.NewCfg(),
-			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store, nil)},
-			store, nil,
-			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
+			store, nil, features, permissionsServices,
 		)
 
 		t.Run("Given user has no permissions", func(t *testing.T) {

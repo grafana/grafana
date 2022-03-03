@@ -199,7 +199,11 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil)
-	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore, dashAlertExtractor).SaveDashboard(context.Background(), dashItem, true)
+	service := dashboardservice.ProvideDashboardService(
+		setting.NewCfg(), dashboardStore, dashAlertExtractor,
+		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+	)
+	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -209,9 +213,19 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
+	permissionsServices := acmock.NewPermissionsServicesMock()
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	d := dashboardservice.ProvideDashboardService(dashboardStore, nil)
-	s := dashboardservice.ProvideFolderService(setting.NewCfg(), d, dashboardStore, nil, featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock())
+
+	d := dashboardservice.ProvideDashboardService(
+		cfg, dashboardStore, nil,
+		features, permissionsServices,
+	)
+	s := dashboardservice.ProvideFolderService(
+		cfg, d, dashboardStore, nil,
+		features, permissionsServices,
+	)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
 	require.NoError(t, err)
@@ -296,7 +310,10 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
-		dashboardService := dashboardservice.ProvideDashboardService(dashboardStore, &alerting.DashAlertExtractorService{})
+		dashboardService := dashboardservice.ProvideDashboardService(
+			setting.NewCfg(), dashboardStore, nil,
+			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		)
 		service := LibraryElementService{
 			Cfg:      setting.NewCfg(),
 			SQLStore: sqlStore,

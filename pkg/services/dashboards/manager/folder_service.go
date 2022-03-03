@@ -19,13 +19,13 @@ import (
 )
 
 type FolderServiceImpl struct {
-	log                 log.Logger
-	cfg                 *setting.Cfg
-	dashboardService    dashboards.DashboardService
-	dashboardStore      dashboards.Store
-	searchService       *search.SearchService
-	features            featuremgmt.FeatureToggles
-	permissionsServices accesscontrol.PermissionsServices
+	log              log.Logger
+	cfg              *setting.Cfg
+	dashboardService dashboards.DashboardService
+	dashboardStore   dashboards.Store
+	searchService    *search.SearchService
+	features         featuremgmt.FeatureToggles
+	permissions      accesscontrol.PermissionsService
 }
 
 func ProvideFolderService(
@@ -33,13 +33,13 @@ func ProvideFolderService(
 	searchService *search.SearchService, features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
 ) *FolderServiceImpl {
 	return &FolderServiceImpl{
-		cfg:                 cfg,
-		log:                 log.New("folder-service"),
-		dashboardService:    dashboardService,
-		dashboardStore:      dashboardStore,
-		searchService:       searchService,
-		features:            features,
-		permissionsServices: permissionsServices,
+		cfg:              cfg,
+		log:              log.New("folder-service"),
+		dashboardService: dashboardService,
+		dashboardStore:   dashboardStore,
+		searchService:    searchService,
+		features:         features,
+		permissions:      permissionsServices.GetFolderService(),
 	}
 }
 
@@ -167,8 +167,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 	if f.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		resourceID := strconv.FormatInt(dashFolder.Id, 10)
-		svc := f.permissionsServices.GetFolderService()
-		_, permissionErr = svc.SetPermissions(ctx, orgID, resourceID, []accesscontrol.SetResourcePermissionCommand{
+		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, resourceID, []accesscontrol.SetResourcePermissionCommand{
 			{UserID: userID, Permission: models.PERMISSION_ADMIN.String()},
 			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
