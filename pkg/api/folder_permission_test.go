@@ -34,11 +34,16 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	dashboardStore := &database.FakeDashboardStore{}
 	defer dashboardStore.AssertExpectations(t)
 
+	features := featuremgmt.WithFeatures()
+	permissionsServices := accesscontrolmock.NewPermissionsServicesMock()
+
 	hs := &HTTPServer{
-		Cfg:           settings,
-		folderService: folderService,
+		Cfg:                settings,
+		Features:           features,
+		folderService:      folderService,
+		permissionServices: permissionsServices,
 		dashboardService: service.ProvideDashboardService(
-			settings, dashboardStore, nil, featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+			settings, dashboardStore, nil, features, permissionsServices,
 		),
 	}
 
