@@ -1,3 +1,6 @@
+import { Dispatch } from 'react';
+import { Action } from 'redux';
+
 export interface DashboardResult {
   UID: string;
   URL: string;
@@ -14,3 +17,9 @@ export interface PanelResult {
   Description: string;
   Type: string;
 }
+
+export interface SearchPageAction extends Action {
+  payload?: any;
+}
+
+export type SearchPageReducer<S> = [S, Dispatch<SearchPageAction>];

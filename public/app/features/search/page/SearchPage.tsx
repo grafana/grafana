@@ -13,16 +13,24 @@ import { SearchPageDashboards } from './SearchPageDashboards';
 import { SearchPagePanels } from './SearchPagePanels';
 import { SearchPageStats } from './SearchPageStats';
 import { SearchPageDashboardList } from './SearchPageDashboardList';
+import { fetchResults } from './state/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { SearchPageState } from './state/reducers';
+
+const node: NavModelItem = {
+  id: 'search',
+  text: 'Search',
+  icon: 'dashboard',
+  url: 'search',
+};
 
 export default function SearchPage() {
-  const node: NavModelItem = {
-    id: 'search',
-    text: 'Search',
-    icon: 'dashboard',
-    url: 'search',
-  };
-
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+
+  const dashboards = useSelector((state: SearchPageState) => {
+    console.log(state);
+  });
 
   const data = useAsync(getDashboardData, []);
   const [query, setQuery] = useState('');
@@ -39,6 +47,8 @@ export default function SearchPage() {
       schemaVersions: buildStatsTable(dashboards.fields.find((f) => f.name === 'SchemaVersion')),
     };
   }, [query, data]);
+
+  dispatch(fetchResults(query));
 
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
