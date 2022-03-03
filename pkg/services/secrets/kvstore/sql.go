@@ -17,18 +17,12 @@ type secretsKVStoreSQL struct {
 	secretsService secrets.Service
 }
 
-func (kv *secretsKVStoreSQL) formatKey(orgId int64, namespace string, typ string) string {
-	return fmt.Sprintf("org/%d/%s/%s", orgId, namespace, typ)
-}
-
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
-	key := kv.formatKey(orgId, namespace, typ)
 	item := Item{
 		OrgId:     &orgId,
 		Namespace: &namespace,
 		Type:      &typ,
-		Key:       &key,
 	}
 	var itemFound bool
 	var decryptedValue []byte
@@ -63,12 +57,10 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 		return err
 	}
 	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		key := kv.formatKey(orgId, namespace, typ)
 		item := Item{
 			OrgId:     &orgId,
 			Namespace: &namespace,
 			Type:      &typ,
-			Key:       &key,
 		}
 
 		has, err := dbSession.Get(&item)
@@ -118,12 +110,18 @@ func (kv *secretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace str
 
 // Keys get all keys for a given namespace. To query for all
 // organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
-func (kv *secretsKVStoreSQL) Keys(ctx context.Context, orgId int64, namespace string) ([]Key, error) {
+func (kv *secretsKVStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
 	var keys []Key
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query := dbSession.Where("namespace = ?", namespace)
+		query := dbSession
 		if orgId != AllOrganizations {
 			query.And("org_id = ?", orgId)
+		}
+		if namespace != "" {
+			query.And("namespace = ?", namespace)
+		}
+		if typ != "" {
+			query.And("type = ?", typ)
 		}
 		return query.Find(&keys)
 	})

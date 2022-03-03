@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -16,10 +18,13 @@ func createTestableKVStore(t *testing.T) SecretsKVStore {
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := manager.SetupTestService(t, store)
 
 	kv := &secretsKVStoreSQL{
-		sqlStore: sqlStore,
-		log:      log.New("secrets.kvstore"),
+		sqlStore:       sqlStore,
+		log:            log.New("secrets.kvstore"),
+		secretsService: secretsService,
 	}
 
 	return kv
@@ -34,10 +39,6 @@ type TestCase struct {
 
 func (t *TestCase) Value() string {
 	return fmt.Sprintf("%d:%s:%s:%d", t.OrgId, t.Namespace, t.Type, t.Revision)
-}
-
-func (t *TestCase) Key() string {
-	return fmt.Sprintf("org/%d/%s/%s", t.OrgId, t.Namespace, t.Type)
 }
 
 func TestKVStore(t *testing.T) {
@@ -215,7 +216,7 @@ func TestKVStore(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		keys, err := kv.Keys(ctx, AllOrganizations, namespace)
+		keys, err := kv.Keys(ctx, AllOrganizations, namespace, typ)
 
 		require.NoError(t, err)
 		require.Len(t, keys, 4)
@@ -224,7 +225,7 @@ func TestKVStore(t *testing.T) {
 
 		for _, key := range keys {
 			for _, tc := range testCases {
-				if key.Key == tc.Key() {
+				if key.OrgId == tc.OrgId && key.Namespace == tc.Namespace && key.Type == tc.Type {
 					found++
 					break
 				}
@@ -233,12 +234,12 @@ func TestKVStore(t *testing.T) {
 
 		require.Equal(t, 4, found, "querying with the wildcard should return 4 records")
 
-		keys, err = kv.Keys(ctx, 1, namespace[0:6])
+		keys, err = kv.Keys(ctx, 1, namespace[0:6], typ)
 
 		require.NoError(t, err)
 		require.Len(t, keys, 1, "querying for a specific org should return 1 record")
 
-		keys, err = kv.Keys(ctx, AllOrganizations, "not_existing_namespace")
+		keys, err = kv.Keys(ctx, AllOrganizations, "not_existing_namespace", "not_existing_type")
 		require.NoError(t, err, "querying a not existing namespace should not throw an error")
 		require.Len(t, keys, 0, "querying a not existing namespace should return an empty slice")
 	})

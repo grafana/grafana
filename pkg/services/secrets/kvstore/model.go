@@ -10,7 +10,6 @@ type Item struct {
 	OrgId     *int64
 	Namespace *string
 	Type      *string
-	Key       *string
 	Value     string
 
 	Created time.Time
@@ -25,7 +24,6 @@ type Key struct {
 	OrgId     int64
 	Namespace string
 	Type      string
-	Key       string
 }
 
 func (i *Key) TableName() string {
