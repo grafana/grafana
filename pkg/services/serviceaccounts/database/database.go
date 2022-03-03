@@ -350,17 +350,18 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		}
 
 		// get total
-		// serviceaccount := serviceaccounts.ServiceAccountDTO{}
-		// countSess := dbSession.Table("user").Alias("u")
+		serviceaccount := serviceaccounts.ServiceAccountDTO{}
+		countSess := dbSession.Table("org_user")
+		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
 
-		// if len(whereConditions) > 0 {
-		// 	countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-		// }
-		// count, err := countSess.Count(&serviceaccount)
-		// if err != nil {
-		// 	return err
-		// }
-		// query.Result.TotalCount = count
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+		count, err := countSess.Count(&serviceaccount)
+		if err != nil {
+			return err
+		}
+		query.Result.TotalCount = count
 
 		return nil
 	})

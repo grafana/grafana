@@ -83,17 +83,6 @@ export function loadServiceAccountTokens(saID: number): ThunkResult<void> {
   };
 }
 
-export function loadServiceAccounts(): ThunkResult<void> {
-  return async (dispatch) => {
-    try {
-      const response = await getBackendSrv().get(BASE_URL, accessControlQueryParam());
-      dispatch(serviceAccountsFetched(response));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-}
-
 export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
     const response = await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.id}`, { ...serviceAccount });
@@ -104,7 +93,7 @@ export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkRe
 export function removeServiceAccount(serviceAccountId: number): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
-    dispatch(loadServiceAccounts());
+    dispatch(fetchServiceAccounts());
   };
 }
 

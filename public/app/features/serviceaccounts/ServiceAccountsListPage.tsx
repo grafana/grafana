@@ -9,7 +9,7 @@ import {
   changeFilter,
   changeQuery,
   fetchACOptions,
-  loadServiceAccounts,
+  fetchServiceAccounts,
   removeServiceAccount,
   updateServiceAccount,
   setServiceAccountToRemove,
@@ -34,7 +34,7 @@ function mapStateToProps(state: StoreState) {
 }
 
 const mapDispatchToProps = {
-  loadServiceAccounts,
+  fetchServiceAccounts,
   fetchACOptions,
   updateServiceAccount,
   removeServiceAccount,
@@ -46,7 +46,7 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 const ServiceAccountsListPage = ({
-  loadServiceAccounts,
+  fetchServiceAccounts,
   removeServiceAccount,
   fetchACOptions,
   updateServiceAccount,
@@ -65,11 +65,11 @@ const ServiceAccountsListPage = ({
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    loadServiceAccounts();
+    fetchServiceAccounts();
     if (contextSrv.accessControlEnabled()) {
       fetchACOptions();
     }
-  }, [loadServiceAccounts, fetchACOptions]);
+  }, [fetchServiceAccounts, fetchACOptions]);
 
   const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };

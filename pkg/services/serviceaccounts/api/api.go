@@ -60,6 +60,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
+		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ListServiceAccounts))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
