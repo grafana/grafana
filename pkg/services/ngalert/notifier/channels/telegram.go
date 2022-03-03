@@ -3,6 +3,7 @@ package channels
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"mime/multipart"
 
@@ -29,32 +30,55 @@ type TelegramNotifier struct {
 	tmpl     *template.Template
 }
 
+type TelegramConfig struct {
+	*NotificationChannelConfig
+	BotToken string
+	ChatID   string
+	Message  string
+}
+
+func TelegramFactory(fc FactoryConfig) (NotificationChannel, error) {
+	config, err := NewTelegramConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, err
+	}
+	return NewTelegramNotifier(config, fc.NotificationService, fc.Template), nil
+}
+
+func NewTelegramConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn) (*TelegramConfig, error) {
+	botToken := fn(context.Background(), config.SecureSettings, "bottoken", config.Settings.Get("bottoken").MustString())
+	if botToken == "" {
+		return &TelegramConfig{}, errors.New("could not find Bot Token in settings")
+	}
+	chatID := config.Settings.Get("chatid").MustString()
+	if chatID == "" {
+		return &TelegramConfig{}, errors.New("could not find Chat Id in settings")
+	}
+	return &TelegramConfig{
+		NotificationChannelConfig: config,
+		BotToken:                  botToken,
+		ChatID:                    chatID,
+		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+	}, nil
+}
+
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
-	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
-		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
-	}
+func NewTelegramNotifier(config *TelegramConfig, ns notifications.WebhookSender, t *template.Template) *TelegramNotifier {
 	return &TelegramNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		BotToken: fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString()),
-		ChatID:   model.Settings.Get("chatid").MustString(),
-		Message:  model.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		BotToken: config.BotToken,
+		ChatID:   config.ChatID,
+		Message:  config.Message,
 		tmpl:     t,
 		log:      log.New("alerting.notifier.telegram"),
 		ns:       ns,
-	}, nil
+	}
 }
 
 // Notify send an alert notification to Telegram.

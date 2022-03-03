@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -16,29 +17,50 @@ import (
 
 const defaultDingdingMsgType = "link"
 
+type DingDingConfig struct {
+	*NotificationChannelConfig
+	MsgType string
+	Message string
+	URL     string
+}
+
+func NewDingDingConfig(config *NotificationChannelConfig) (*DingDingConfig, error) {
+	url := config.Settings.Get("url").MustString()
+	if url == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
+	return &DingDingConfig{
+		NotificationChannelConfig: config,
+		MsgType:                   config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
+		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		URL:                       config.Settings.Get("url").MustString(),
+	}, nil
+}
+func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewDingDingConfig(fc.Config)
+	if err != nil {
+		return nil, err
+	}
+	return NewDingDingNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
 // NewDingDingNotifier is the constructor for the Dingding notifier
-func NewDingDingNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*DingDingNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
-		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
-	}
+func NewDingDingNotifier(config *DingDingConfig, ns notifications.WebhookSender, t *template.Template) *DingDingNotifier {
 	return &DingDingNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		MsgType: model.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		URL:     model.Settings.Get("url").MustString(),
-		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		MsgType: config.MsgType,
+		Message: config.Message,
+		URL:     config.URL,
 		log:     log.New("alerting.notifier.dingding"),
 		tmpl:    t,
 		ns:      ns,
-	}, nil
+	}
 }
 
 // DingDingNotifier is responsible for sending alert notifications to ding ding.

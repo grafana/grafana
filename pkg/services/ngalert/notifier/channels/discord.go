@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -27,30 +28,54 @@ type DiscordNotifier struct {
 	UseDiscordUsername bool
 }
 
-func NewDiscordNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*DiscordNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+type DiscordConfig struct {
+	*NotificationChannelConfig
+	Content            string
+	AvatarURL          string
+	WebhookURL         string
+	UseDiscordUsername bool
+}
+
+func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error) {
+	discordURL := config.Settings.Get("url").MustString()
+	if discordURL == "" {
+		return nil, errors.New("could not find webhook url property in settings")
 	}
-	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
-		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	return &DiscordConfig{
+		NotificationChannelConfig: config,
+		Content:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		AvatarURL:                 config.Settings.Get("avatar_url").MustString(),
+		WebhookURL:                discordURL,
+		UseDiscordUsername:        config.Settings.Get("use_discord_username").MustBool(false),
+	}, nil
+}
+
+func DiscrodFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewDiscordConfig(fc.Config)
+	if err != nil {
+		return nil, err
 	}
+	return NewDiscordNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewDiscordNotifier(config *DiscordConfig, ns notifications.WebhookSender, t *template.Template) *DiscordNotifier {
 	return &DiscordNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
-			SecureSettings:        model.SecureSettings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
+			SecureSettings:        config.SecureSettings,
 		}),
-		Content:            model.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
-		AvatarURL:          model.Settings.Get("avatar_url").MustString(),
-		WebhookURL:         model.Settings.Get("url").MustString(),
+		Content:            config.Content,
+		AvatarURL:          config.AvatarURL,
+		WebhookURL:         config.WebhookURL,
 		log:                log.New("alerting.notifier.discord"),
 		ns:                 ns,
 		tmpl:               t,
-		UseDiscordUsername: model.Settings.Get("use_discord_username").MustBool(false),
-	}, nil
+		UseDiscordUsername: config.UseDiscordUsername,
+	}
 }
 
 func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {

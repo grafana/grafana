@@ -24,28 +24,48 @@ type TeamsNotifier struct {
 	ns      notifications.WebhookSender
 }
 
+type TeamsConfig struct {
+	*NotificationChannelConfig
+	URL     string
+	Message string
+}
+
+func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewTeamsConfig(fc.Config)
+	if err != nil {
+		return nil, err
+	}
+	return NewTeamsNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
+	URL := config.Settings.Get("url").MustString()
+	if URL == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
+	return &TeamsConfig{
+		NotificationChannelConfig: config,
+		URL:                       URL,
+		Message:                   config.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
+	}, nil
+}
+
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*TeamsNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
-		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
-	}
+func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, t *template.Template) *TeamsNotifier {
 	return &TeamsNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		URL:     model.Settings.Get("url").MustString(),
-		Message: model.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
+		URL:     config.URL,
+		Message: config.Message,
 		log:     log.New("alerting.notifier.teams"),
 		ns:      ns,
 		tmpl:    t,
-	}, nil
+	}
 }
 
 // Notify send an alert notification to Microsoft teams.
