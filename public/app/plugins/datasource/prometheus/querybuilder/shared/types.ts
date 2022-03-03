@@ -87,14 +87,14 @@ export interface QueryBuilderOperationParamEditorProps {
 }
 
 export enum QueryEditorMode {
-  Builder,
-  Code,
-  Explain,
+  Code = 'code',
+  Builder = 'builder',
+  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
   getAlternativeOperations(key: string): QueryBuilderOperationDef[];
   getCategories(): string[];
-  getOperationDef(id: string): QueryBuilderOperationDef;
+  getOperationDef(id: string): QueryBuilderOperationDef | undefined;
 }

@@ -118,6 +118,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Cfg:         setting.NewCfg(),
 			pluginStore: &fakePluginStore{},
 			SQLStore:    mockSQLStore,
+			Features:    featuremgmt.WithFeatures(),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -1026,6 +1027,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			LibraryElementService: &mockLibraryElementService{},
 			dashboardService:      dashboardService,
 			folderService:         folderService,
+			Features:              featuremgmt.WithFeatures(),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1096,6 +1098,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			LibraryElementService: &mockLibraryElementService{},
 			dashboardService:      mock,
 			SQLStore:              sqlStore,
+			Features:              featuremgmt.WithFeatures(),
 		}
 
 		sc := setupScenarioContext(t, url)

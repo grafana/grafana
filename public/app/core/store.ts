@@ -16,7 +16,9 @@ export class Store {
     return window.localStorage[key] === 'true';
   }
 
-  getObject(key: string, def?: any) {
+  getObject<T = unknown>(key: string): T | undefined;
+  getObject<T = unknown>(key: string, def: T): T;
+  getObject<T = unknown>(key: string, def?: T) {
     let ret = def;
     if (this.exists(key)) {
       const json = window.localStorage[key];
