@@ -350,7 +350,8 @@ export function addOperationWithRangeVector(
   };
 
   if (query.operations.length > 0) {
-    const firstOp = modeller.getOperationDef(query.operations[0].id);
+    // If operation exists it has to be in the registry so no point to check if it was found
+    const firstOp = modeller.getOperationDef(query.operations[0].id)!;
 
     if (firstOp.addOperationHandler === addOperationWithRangeVector) {
       return {

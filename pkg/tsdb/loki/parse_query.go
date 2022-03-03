@@ -1,7 +1,6 @@
 package loki
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
@@ -71,8 +70,7 @@ func parseQueryType(jsonValue string) (QueryType, error) {
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		model := &QueryJSONModel{}
-		err := json.Unmarshal(query.JSON, model)
+		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
 		}

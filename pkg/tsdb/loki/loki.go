@@ -2,9 +2,11 @@ package loki
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -22,6 +24,11 @@ type Service struct {
 	tracer tracing.Tracer
 }
 
+var (
+	_ backend.QueryDataHandler = (*Service)(nil)
+	_ backend.StreamHandler    = (*Service)(nil)
+)
+
 func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
@@ -37,6 +44,10 @@ var (
 type datasourceInfo struct {
 	HTTPClient *http.Client
 	URL        string
+
+	// open streams
+	streams   map[string]data.FrameJSONCache
+	streamsMu sync.RWMutex
 }
 
 type QueryJSONModel struct {
@@ -48,6 +59,12 @@ type QueryJSONModel struct {
 	Resolution   int64  `json:"resolution"`
 	MaxLines     int    `json:"maxLines"`
 	VolumeQuery  bool   `json:"volumeQuery"`
+}
+
+func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
+	model := &QueryJSONModel{}
+	err := json.Unmarshal(raw, model)
+	return model, err
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -65,6 +82,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		model := &datasourceInfo{
 			HTTPClient: client,
 			URL:        settings.URL,
+			streams:    make(map[string]data.FrameJSONCache),
 		}
 		return model, nil
 	}

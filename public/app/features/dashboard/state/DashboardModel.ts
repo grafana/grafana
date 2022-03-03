@@ -223,7 +223,9 @@ export class DashboardModel implements TimeModel {
     meta.canSave = meta.canSave !== false;
     meta.canStar = meta.canStar !== false;
     meta.canEdit = meta.canEdit !== false;
-    meta.showSettings = meta.canEdit;
+    meta.canDelete = meta.canDelete !== false;
+
+    meta.showSettings = meta.canSave;
     meta.canMakeEditable = meta.canSave && !this.editable;
     meta.hasUnsavedFolderChange = false;
 
