@@ -164,11 +164,11 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
 		serviceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceAccounts[i].Id, 10)]
-		// tokens, err := api.store.ListTokens(ctx, serviceAccounts[i].OrgId, serviceAccounts[i].Id)
-		// if err != nil {
-		// 	api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccounts[i].Id)
-		// }
-		// serviceAccounts[i].Tokens = int64(len(tokens))
+		tokens, err := api.store.ListTokens(ctx, serviceAccounts[i].OrgId, serviceAccounts[i].Id)
+		if err != nil {
+			api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccounts[i].Id)
+		}
+		serviceAccounts[i].Tokens = int64(len(tokens))
 	}
 
 	type SearchOrgServiceAccountsQueryResult struct {
