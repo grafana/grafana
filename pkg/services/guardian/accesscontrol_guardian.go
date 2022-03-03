@@ -198,10 +198,6 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 	return acl, nil
 }
 
-func (a *AccessControlDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {
-	return false, nil
-}
-
 func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
 	return a.GetAcl()
 }

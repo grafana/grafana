@@ -32,7 +32,7 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 		reader := &testConfigReader{result: cfg}
 		store := &mockStore{}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store, pluginSettings: store}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
@@ -94,5 +94,9 @@ func (m *mockStore) GetPluginSettingById(ctx context.Context, query *models.GetP
 
 func (m *mockStore) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 	m.sentCommands = append(m.sentCommands, cmd)
+	return nil
+}
+
+func (m *mockStore) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
 	return nil
 }

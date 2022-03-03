@@ -99,7 +99,15 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 	sort.Strings(matchers)
 	u.Path = path.Join(externalPath, "/alerting/silence/new")
-	u.RawQuery = "alertmanager=grafana&matchers=" + url.QueryEscape(strings.Join(matchers, ","))
+
+	query := make(url.Values)
+	query.Add("alertmanager", "grafana")
+	for _, matcher := range matchers {
+		query.Add("matcher", matcher)
+	}
+
+	u.RawQuery = query.Encode()
+
 	extended.SilenceURL = u.String()
 
 	return extended

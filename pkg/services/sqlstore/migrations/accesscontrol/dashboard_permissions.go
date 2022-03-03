@@ -102,12 +102,12 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		if d.ID == -1 {
 			continue
 		}
-		permissions := aclMap[d.ID]
+		acls := aclMap[d.ID]
 		if permissionMap[d.OrgID] == nil {
 			permissionMap[d.OrgID] = map[string][]*ac.Permission{}
 		}
 
-		if (d.IsFolder || d.FolderID == 0) && len(permissions) == 0 {
+		if (d.IsFolder || d.FolderID == 0) && len(acls) == 0 {
 			permissionMap[d.OrgID]["managed:builtins:editor:permissions"] = append(
 				permissionMap[d.OrgID]["managed:builtins:editor:permissions"],
 				m.mapPermission(d.ID, models.PERMISSION_EDIT, d.IsFolder)...,
@@ -117,10 +117,10 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 				m.mapPermission(d.ID, models.PERMISSION_VIEW, d.IsFolder)...,
 			)
 		} else {
-			for _, p := range permissions {
-				permissionMap[d.OrgID][getRoleName(p)] = append(
-					permissionMap[d.OrgID][getRoleName(p)],
-					m.mapPermission(d.ID, p.Permission, d.IsFolder)...,
+			for _, a := range acls {
+				permissionMap[d.OrgID][getRoleName(a)] = append(
+					permissionMap[d.OrgID][getRoleName(a)],
+					m.mapPermission(d.ID, a.Permission, d.IsFolder)...,
 				)
 			}
 		}

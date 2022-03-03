@@ -74,7 +74,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:        "should not be able to save with incorrect dashboard scope scope",
+			desc:        "should not be able to save with incorrect dashboard scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -85,7 +85,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:        "should not be able to save with incorrect folder scope scope",
+			desc:        "should not be able to save with incorrect folder scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -155,7 +155,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:        "should not be able to edit with incorrect dashboard scope scope",
+			desc:        "should not be able to edit with incorrect dashboard scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -166,7 +166,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:        "should not be able to edit with incorrect folder scope scope",
+			desc:        "should not be able to edit with incorrect folder scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -253,7 +253,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:        "should not be able to view with incorrect dashboard scope scope",
+			desc:        "should not be able to view with incorrect dashboard scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -264,7 +264,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:        "should not be able to view with incorrect folder scope scope",
+			desc:        "should not be able to view with incorrect folder scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -350,7 +350,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:        "should not be able to admin with incorrect dashboard scope scope",
+			desc:        "should not be able to admin with incorrect dashboard scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -365,7 +365,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:        "should not be able to admin with incorrect folder scope scope",
+			desc:        "should not be able to admin with incorrect folder scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -439,7 +439,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:        "should not be able to delete with incorrect dashboard scope scope",
+			desc:        "should not be able to delete with incorrect dashboard scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -450,7 +450,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:        "should not be able to delete with incorrect folder scope scope",
+			desc:        "should not be able to delete with incorrect folder scope",
 			dashboardID: 1,
 			permissions: []*accesscontrol.Permission{
 				{
@@ -493,7 +493,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:     "should be able to create dashboard in with wildcard scope",
+			desc:     "should be able to create dashboard in any folder",
 			isFolder: false,
 			folderID: 100,
 			permissions: []*accesscontrol.Permission{
@@ -516,6 +516,13 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 				{Action: accesscontrol.ActionFoldersCreate},
 			},
 			expected: true,
+		},
+		{
+			desc:        "should not be able to create folders without permissions",
+			isFolder:    true,
+			folderID:    100,
+			permissions: []*accesscontrol.Permission{},
+			expected:    false,
 		},
 	}
 
