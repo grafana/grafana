@@ -19,6 +19,7 @@ jobs:
           days-before-issue-stale: -1
           exempt-issue-labels: no stalebot
           exempt-pr-labels: no stalebot
+          operations-per-run: 100
           stale-issue-label: stale
           stale-pr-label: stale
           stale-pr-message: >

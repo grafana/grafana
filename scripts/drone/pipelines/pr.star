@@ -9,6 +9,7 @@ load(
     'shellcheck_step',
     'build_backend_step',
     'build_frontend_step',
+    'build_frontend_package_step',
     'build_plugins_step',
     'test_backend_step',
     'test_backend_integration_step',
@@ -56,7 +57,7 @@ ver_mode = 'pr'
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
+    variants = ['linux-x64', 'linux-x64-musl', 'darwin', 'windows', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     test_steps = [
         lint_drone_step(),
@@ -71,6 +72,7 @@ def pr_pipelines(edition):
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
         ensure_cuetsified_step(),

@@ -169,6 +169,49 @@ func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.Call
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
+func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext) error {
+	namespace := "AWS/Billing"
+	metric := "EstimatedCharges"
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  &namespace,
+		MetricName: &metric,
+	}
+	_, err := e.listMetrics(pluginCtx, defaultRegion, params)
+	return err
+}
+
+func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx backend.PluginContext) error {
+	logsClient, err := e.getCWLogsClient(pluginCtx, defaultRegion)
+	if err != nil {
+		return err
+	}
+	_, err = e.handleDescribeLogGroups(ctx, logsClient, simplejson.NewFromAny(map[string]interface{}{"limit": "1"}))
+	return err
+}
+
+func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	status := backend.HealthStatusOk
+	metricsTest := "Successfully queried the CloudWatch metrics API."
+	logsTest := "Successfully queried the CloudWatch logs API."
+
+	err := e.checkHealthMetrics(req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		metricsTest = fmt.Sprintf("CloudWatch metrics query failed: %s", err.Error())
+	}
+
+	err = e.checkHealthLogs(ctx, req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  status,
+		Message: fmt.Sprintf("1. %s\n2. %s", metricsTest, logsTest),
+	}, nil
+}
+
 func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region string) (*session.Session, error) {
 	dsInfo, err := e.getDSInfo(pluginCtx)
 	if err != nil {

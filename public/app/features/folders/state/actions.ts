@@ -1,5 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { FolderState, ThunkResult } from 'app/types';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
@@ -143,6 +144,7 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
 export function createNewFolder(folderName: string): ThunkResult<void> {
   return async (dispatch) => {
     const newFolder = await getBackendSrv().post('/api/folders', { title: folderName });
+    await contextSrv.fetchUserPermissions();
     dispatch(notifyApp(createSuccessNotification('Folder Created', 'OK')));
     locationService.push(locationUtil.stripBaseFromUrl(newFolder.url));
   };
