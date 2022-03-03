@@ -220,7 +220,11 @@ function getIndexOfOrLast(
   condition: (def: QueryBuilderOperationDef) => boolean
 ) {
   const index = operations.findIndex((x) => {
-    return condition(queryModeller.getOperationDef(x.id));
+    const opDef = queryModeller.getOperationDef(x.id);
+    if (!opDef) {
+      return false;
+    }
+    return condition(opDef);
   });
 
   return index === -1 ? operations.length : index;
@@ -242,7 +246,11 @@ export function addLokiOperation(
     case LokiVisualQueryOperationCategory.Aggregations:
     case LokiVisualQueryOperationCategory.Functions: {
       const rangeVectorFunction = operations.find((x) => {
-        return isRangeVectorFunction(modeller.getOperationDef(x.id));
+        const opDef = modeller.getOperationDef(x.id);
+        if (!opDef) {
+          return false;
+        }
+        return isRangeVectorFunction(opDef);
       });
 
       // If we are adding a function but we have not range vector function yet add one
