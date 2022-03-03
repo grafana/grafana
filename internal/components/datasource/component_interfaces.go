@@ -1,4 +1,4 @@
-package sqlstore
+package datasource
 
 import (
 	"context"
@@ -6,10 +6,10 @@ import (
 	"strconv"
 
 	"github.com/google/wire"
-	"github.com/grafana/grafana/internal/components/datasource"
 	"github.com/grafana/grafana/internal/components/store"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -28,7 +28,7 @@ var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
 	wire.Bind(new(store.Store), new(*storeDS)),
 )
 
-func ProvideDataSourceSchemaStore(ss *SQLStore) *storeDS {
+func ProvideDataSourceSchemaStore(ss *sqlstore.SQLStore) *storeDS {
 	return &storeDS{
 		ss: ss,
 	}
@@ -36,7 +36,7 @@ func ProvideDataSourceSchemaStore(ss *SQLStore) *storeDS {
 }
 
 type storeDS struct {
-	ss *SQLStore
+	ss *sqlstore.SQLStore
 }
 
 func (s storeDS) Get(ctx context.Context, uid string) (store.UniqueObject, error) {
@@ -46,14 +46,14 @@ func (s storeDS) Get(ctx context.Context, uid string) (store.UniqueObject, error
 	}
 
 	if err := s.ss.GetDataSource(ctx, cmd); err != nil {
-		return datasource.Datasource{}, err
+		return Datasource{}, err
 	}
 
 	return s.oldToNew(cmd.Result), nil
 }
 
 func (s storeDS) Insert(ctx context.Context, o store.UniqueObject) error {
-	ds, ok := o.(datasource.Datasource)
+	ds, ok := o.(Datasource)
 	if !ok {
 		return fmt.Errorf("unexpected type: %T", o)
 	}
@@ -79,7 +79,7 @@ func (s storeDS) Insert(ctx context.Context, o store.UniqueObject) error {
 }
 
 func (s storeDS) Update(ctx context.Context, o store.UniqueObject) error {
-	ds, ok := o.(datasource.Datasource)
+	ds, ok := o.(Datasource)
 	if !ok {
 		return fmt.Errorf("unexpected type: %T", o)
 	}
@@ -120,10 +120,10 @@ func (s storeDS) Delete(ctx context.Context, uid string) error {
 }
 
 // oldToNew doesn't need to be method, but keeps things bundled
-func (s storeDS) oldToNew(ds *models.DataSource) datasource.Datasource {
+func (s storeDS) oldToNew(ds *models.DataSource) Datasource {
 	jdMap := ds.JsonData.MustMap()
-	cr := datasource.Datasource{
-		Spec: datasource.Model{
+	cr := Datasource{
+		Spec: Model{
 			Type:              ds.Type,
 			Access:            string(ds.Access),
 			Url:               ds.Url,

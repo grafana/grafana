@@ -1,22 +1,22 @@
 //go:build integration
 // +build integration
 
-package sqlstore
+package datasource
 
 import (
 	"context"
 	"strconv"
 	"testing"
 
-	"github.com/grafana/grafana/internal/components/datasource"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 func TestStoreDSStoreCRUD(t *testing.T) {
 	t.Run("Insert / Update / Delete with Gets", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
+		sqlStore := sqlstore.InitTestDB(t)
 		ctx := context.Background()
 		dsStore := ProvideDataSourceSchemaStore(sqlStore)
 
@@ -24,8 +24,8 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		jd := make(map[string]interface{})
 		jd["test"] = "test"
 
-		modelToInsert := datasource.Datasource{
-			Spec: datasource.Model{
+		modelToInsert := Datasource{
+			Spec: Model{
 				JsonData: jd,
 			},
 		}
@@ -40,11 +40,11 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		fetched, err := dsStore.Get(ctx, uid)
 		require.NoError(t, err)
 
-		fetchedDS, ok := fetched.(datasource.Datasource)
+		fetchedDS, ok := fetched.(Datasource)
 		require.True(t, ok)
 
-		modelToInsertWithVersionBumped := datasource.Datasource{
-			Spec: datasource.Model{
+		modelToInsertWithVersionBumped := Datasource{
+			Spec: Model{
 				JsonData: jd,
 			},
 		}
@@ -55,8 +55,8 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		require.Equal(t, modelToInsertWithVersionBumped, fetchedDS)
 
 		// Update
-		modelForUpdate := datasource.Datasource{
-			Spec: datasource.Model{
+		modelForUpdate := Datasource{
+			Spec: Model{
 				JsonData: jd,
 				Type:     "slothFactory",
 			},
@@ -69,8 +69,8 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get updated
-		modelForUpdateWithVersionBump := datasource.Datasource{
-			Spec: datasource.Model{
+		modelForUpdateWithVersionBump := Datasource{
+			Spec: Model{
 				JsonData: jd,
 				Type:     "slothFactory",
 			},
