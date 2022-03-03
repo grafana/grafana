@@ -18,7 +18,7 @@
       }
     ]
   },
-  "description": "This dashboard provides insights of Azure Virtual Machines via different relevant metrics through VM Insights.",
+  "description": "This dashboard shows the performance and health of Azure Virtual Machines via different metrics collected by Azure Monitor VM Insights.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": null,
