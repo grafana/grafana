@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Input, useStyles2 } from '@grafana/ui';
 import { config } from '@grafana/runtime';
@@ -9,7 +10,6 @@ import Page from 'app/core/components/Page/Page';
 import { SearchPageDashboards } from './SearchPageDashboards';
 import { SearchPageDashboardList } from './SearchPageDashboardList';
 import { loadResults } from './state/actions';
-import { useDispatch, useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 
 const node: NavModelItem = {
@@ -52,9 +52,7 @@ export default function SearchPage() {
                 return (
                   <div>
                     {dashboards && <SearchPageDashboardList dashboards={dashboards} />}
-
                     <br />
-
                     {dashboards.dataFrame && dashboards.dataFrame.length > 0 && (
                       <SearchPageDashboards dashboards={dashboards.dataFrame} width={width} />
                     )}

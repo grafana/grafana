@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DataFrameView } from '@grafana/data';
+
 import { DashboardResult } from '../types';
+
 export interface SearchPageState {
   dashboards: DataFrameView<DashboardResult> | null;
 }

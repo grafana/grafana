@@ -10,14 +10,6 @@ export interface DashboardResult {
   Updated: number;
 }
 
-export interface PanelResult {
-  DashboardID: number;
-  ID: number;
-  Name: string;
-  Description: string;
-  Type: string;
-}
-
 export interface SearchPageAction extends Action {
   payload?: any;
 }
