@@ -25,7 +25,6 @@ import (
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -230,16 +229,16 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
-	bus := bus.GetBus()
+	mockStore := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
-		Bus:                bus,
+		Bus:                bus.GetBus(),
 		Live:               newTestLive(t),
 		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService: searchusers.ProvideUsersService(mockStore, filters.ProvideOSSSearchUserFilter()),
 		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
@@ -350,8 +349,6 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	db := sqlstore.InitTestDB(t)
 	db.Cfg = cfg
 
-	bus := bus.GetBus()
-
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
 
 	routeRegister := routing.NewRouteRegister()
@@ -359,13 +356,13 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Features:           features,
-		Bus:                bus,
+		Bus:                bus.GetBus(),
 		Live:               newTestLive(t),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
 		SQLStore:           db,
-		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
-		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore),
+		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
+		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore, nil),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -375,9 +372,9 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 			acmock = acmock.WithDisabled()
 		}
 		hs.AccessControl = acmock
-		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)
-		hs.TeamPermissionsService = teamPermissionService
+		hs.teamPermissionsService = teamPermissionService
 	} else {
 		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
 			database.ProvideService(db), routing.NewRouteRegister())
@@ -387,9 +384,9 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		require.NoError(t, err)
 		err = ac.RegisterFixedRoles()
 		require.NoError(t, err)
-		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)
-		hs.TeamPermissionsService = teamPermissionService
+		hs.teamPermissionsService = teamPermissionService
 	}
 
 	// Instantiate a new Server

@@ -5,7 +5,6 @@ package server
 
 import (
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -75,8 +75,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
-	api.ProvideDatasourcePermissionsService,
-	wire.Bind(new(api.DatasourcePermissionsService), new(*api.OSSDatasourcePermissionsService)),
+	permissions.ProvideDatasourcePermissionsService,
+	wire.Bind(new(permissions.DatasourcePermissionsService), new(*permissions.OSSDatasourcePermissionsService)),
+	ossaccesscontrol.ProvidePermissionsServices,
+	wire.Bind(new(accesscontrol.PermissionsServices), new(*ossaccesscontrol.PermissionsServices)),
 )
 
 var wireExtsSet = wire.NewSet(

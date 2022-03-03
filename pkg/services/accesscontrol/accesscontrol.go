@@ -37,9 +37,16 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type ResourcePermissionsService interface {
+type PermissionsServices interface {
+	GetTeamService() PermissionsService
+	GetFolderService() PermissionsService
+	GetDashboardService() PermissionsService
+	GetDataSourceService() PermissionsService
+}
+
+type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
@@ -48,6 +55,8 @@ type ResourcePermissionsService interface {
 	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*ResourcePermission, error)
 	// SetPermissions sets several permissions on resource for either built-in role, team or user
 	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
+	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
+	MapActions(permission ResourcePermission) string
 }
 
 type User struct {
@@ -96,12 +105,20 @@ func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*model
 	}
 }
 
+var ReqSignedIn = func(c *models.ReqContext) bool {
+	return c.IsSignedIn
+}
+
 var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN
+}
+
+var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
+	return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR
 }
 
 func BuildPermissionsMap(permissions []*Permission) map[string]bool {
@@ -146,7 +163,7 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) map[string]Metadata {
+func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, resource string, ids map[string]bool) map[string]Metadata {
 	allScope := GetResourceAllScope(resource)
 	allIDScope := GetResourceAllIDScope(resource)
 
@@ -157,16 +174,18 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
-	for _, p := range permissions {
-		if p.Scope == "*" || p.Scope == allScope || p.Scope == allIDScope {
-			// Add global action to all resources
-			for id := range resourceIDs {
-				result = addActionToMetadata(result, p.Action, id)
-			}
-		} else {
-			if len(p.Scope) > idIndex && strings.HasPrefix(p.Scope, idPrefix) && resourceIDs[p.Scope[idIndex:]] {
-				// Add action to a specific resource
-				result = addActionToMetadata(result, p.Action, p.Scope[idIndex:])
+	for action, scopes := range permissions {
+		for _, scope := range scopes {
+			if scope == "*" || scope == allScope || scope == allIDScope {
+				// Add global action to all resources
+				for id := range ids {
+					result = addActionToMetadata(result, action, id)
+				}
+			} else {
+				if len(scope) > idIndex && strings.HasPrefix(scope, idPrefix) && ids[scope[idIndex:]] {
+					// Add action to a specific resource
+					result = addActionToMetadata(result, action, scope[idIndex:])
+				}
 			}
 		}
 	}

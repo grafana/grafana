@@ -99,5 +99,33 @@ describe('Card', () => {
       expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
+
+    it('Should allow selectable cards', () => {
+      const { rerender } = render(
+        <Card isSelected={true}>
+          <Card.Heading>My Option</Card.Heading>
+        </Card>
+      );
+
+      expect(screen.getByRole('radio')).toBeInTheDocument();
+      expect(screen.getByRole('radio')).toBeChecked();
+
+      rerender(
+        <Card isSelected={false}>
+          <Card.Heading>My Option</Card.Heading>
+        </Card>
+      );
+
+      expect(screen.getByRole('radio')).toBeInTheDocument();
+      expect(screen.getByRole('radio')).not.toBeChecked();
+
+      rerender(
+        <Card>
+          <Card.Heading>My Option</Card.Heading>
+        </Card>
+      );
+
+      expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    });
   });
 });

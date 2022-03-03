@@ -1,6 +1,6 @@
 import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
 import { FetchError, FetchResponse } from 'src/services';
-import { BackendDataSourceResponse, toDataQueryResponse, toTestingStatus } from './queryResponse';
+import { BackendDataSourceResponse, cachedResponseNotice, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
 const resp = {
   data: {
@@ -275,6 +275,55 @@ describe('Query Response parser', () => {
 
     const ids = (toDataQueryResponse(resp, queries).data as DataFrame[]).map((f) => f.refId);
     expect(ids).toEqual(['A', 'B']);
+  });
+
+  describe('Cache notice', () => {
+    let resp: any;
+
+    beforeEach(() => {
+      resp = {
+        url: '',
+        type: 'basic',
+        config: { url: '' },
+        status: 200,
+        statusText: 'OK',
+        ok: true,
+        redirected: false,
+        headers: new Headers(),
+        data: {
+          results: {
+            A: { frames: [{ schema: { fields: [] } }] },
+          },
+        },
+      };
+    });
+
+    test('adds notice for responses with X-Cache: HIT header', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      resp.headers.set('X-Cache', 'HIT');
+      expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([cachedResponseNotice]);
+    });
+
+    test('does not remove existing notices', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      resp.headers.set('X-Cache', 'HIT');
+      resp.data.results.A.frames[0].schema.meta = { notices: [{ severity: 'info', text: 'Example' }] };
+      expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([
+        { severity: 'info', text: 'Example' },
+        cachedResponseNotice,
+      ]);
+    });
+
+    test('does not add notice for responses with X-Cache: MISS header', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      resp.headers.set('X-Cache', 'MISS');
+      expect(toDataQueryResponse(resp, queries).data[0].meta?.notices).toBeUndefined();
+    });
+
+    test('does not add notice for responses without X-Cache header', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      expect(toDataQueryResponse(resp, queries).data[0].meta?.notices).toBeUndefined();
+    });
   });
 
   test('resultWithError', () => {

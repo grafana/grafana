@@ -22,6 +22,8 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
       PromVisualQueryOperationCategory.RangeFunctions,
       PromVisualQueryOperationCategory.Functions,
       PromVisualQueryOperationCategory.BinaryOps,
+      PromVisualQueryOperationCategory.Trigonometric,
+      PromVisualQueryOperationCategory.Time,
     ]);
   }
 
@@ -46,7 +48,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
     return (
       query.operations.find((op) => {
         const def = this.getOperationDef(op.id);
-        return def.category === PromVisualQueryOperationCategory.BinaryOps;
+        return def?.category === PromVisualQueryOperationCategory.BinaryOps;
       }) !== undefined
     );
   }

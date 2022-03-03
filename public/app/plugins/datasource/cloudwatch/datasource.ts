@@ -1,9 +1,3 @@
-import React from 'react';
-import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
-import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
-import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
-import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
   DataQueryError,
@@ -22,44 +16,49 @@ import {
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
-
+import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { AppNotificationTimeout } from 'app/types';
-import { store } from 'app/store/store';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { VariableWithMultiSupport } from 'app/features/variables/types';
+import { store } from 'app/store/store';
+import { AppNotificationTimeout } from 'app/types';
+import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
+import React from 'react';
+import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
+
+import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
+import { CloudWatchLanguageProvider } from './language_provider';
 import memoizedDebounce from './memoizedDebounce';
+import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
 import {
-  MetricEditorMode,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
+  CloudWatchLogsRequest,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   DescribeLogGroupsRequest,
+  Dimensions,
   GetLogEventsRequest,
   GetLogGroupFieldsRequest,
   GetLogGroupFieldsResponse,
   isCloudWatchLogsQuery,
   LogAction,
-  MetricQueryType,
+  MetricEditorMode,
   MetricQuery,
+  MetricQueryType,
   MetricRequest,
   StartQueryRequest,
   TSDBResponse,
-  Dimensions,
-  CloudWatchLogsRequest,
 } from './types';
-import { CloudWatchLanguageProvider } from './language_provider';
-import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { increasingInterval } from './utils/rxjs/increasingInterval';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
 import { runWithRetry } from './utils/logsRetry';
-import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
-import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
+import { increasingInterval } from './utils/rxjs/increasingInterval';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -268,7 +267,7 @@ export class CloudWatchDatasource
     const validMetricsQueries = metricQueries
       .filter(this.filterMetricQuery)
       .map((item: CloudWatchMetricsQuery): MetricQuery => {
-        item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
+        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
         item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
         item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
         item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);
@@ -670,7 +669,7 @@ export class CloudWatchDatasource
       region: this.templateSrv.replace(this.getActualRegion(region)),
     });
 
-    return values.map((v) => ({ metricName: v.label, namespace: v.text }));
+    return values.map((v) => ({ metricName: v.value, namespace: v.text }));
   }
 
   async getDimensionKeys(
@@ -736,6 +735,83 @@ export class CloudWatchDatasource
     });
   }
 
+  async metricFindQuery(query: string) {
+    let region;
+    let namespace;
+    let metricName;
+    let filterJson;
+
+    const regionQuery = query.match(/^regions\(\)/);
+    if (regionQuery) {
+      return this.getRegions();
+    }
+
+    const namespaceQuery = query.match(/^namespaces\(\)/);
+    if (namespaceQuery) {
+      return this.getNamespaces();
+    }
+
+    const metricNameQuery = query.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
+    if (metricNameQuery) {
+      namespace = metricNameQuery[1];
+      region = metricNameQuery[3];
+      return this.getMetrics(namespace, region);
+    }
+
+    const dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
+    if (dimensionKeysQuery) {
+      namespace = dimensionKeysQuery[1];
+      region = dimensionKeysQuery[3];
+      return this.getDimensionKeys(namespace, region);
+    }
+
+    const dimensionValuesQuery = query.match(
+      /^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?(.+))?\)/
+    );
+    if (dimensionValuesQuery) {
+      region = dimensionValuesQuery[1];
+      namespace = dimensionValuesQuery[2];
+      metricName = dimensionValuesQuery[3];
+      const dimensionKey = dimensionValuesQuery[4];
+      filterJson = {};
+      if (dimensionValuesQuery[6]) {
+        filterJson = JSON.parse(this.templateSrv.replace(dimensionValuesQuery[6]));
+      }
+
+      return this.getDimensionValues(region, namespace, metricName, dimensionKey, filterJson);
+    }
+
+    const ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
+    if (ebsVolumeIdsQuery) {
+      region = ebsVolumeIdsQuery[1];
+      const instanceId = ebsVolumeIdsQuery[2];
+      return this.getEbsVolumeIds(region, instanceId);
+    }
+
+    const ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+    if (ec2InstanceAttributeQuery) {
+      region = ec2InstanceAttributeQuery[1];
+      const targetAttributeName = ec2InstanceAttributeQuery[2];
+      filterJson = JSON.parse(this.templateSrv.replace(ec2InstanceAttributeQuery[3]));
+      return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
+    }
+
+    const resourceARNsQuery = query.match(/^resource_arns\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+    if (resourceARNsQuery) {
+      region = resourceARNsQuery[1];
+      const resourceType = resourceARNsQuery[2];
+      const tagsJSON = JSON.parse(this.templateSrv.replace(resourceARNsQuery[3]));
+      return this.getResourceARNs(region, resourceType, tagsJSON);
+    }
+
+    const statsQuery = query.match(/^statistics\(\)/);
+    if (statsQuery) {
+      return this.standardStatistics.map((s: string) => ({ value: s, label: s, text: s }));
+    }
+
+    return Promise.resolve([]);
+  }
+
   annotationQuery(options: any) {
     const annotation = options.annotation;
     const statistic = this.templateSrv.replace(annotation.statistic);
@@ -791,24 +867,6 @@ export class CloudWatchDatasource
       target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
       find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
-  }
-
-  async testDatasource() {
-    // use billing metrics for test
-    const region = this.defaultRegion;
-    const namespace = 'AWS/Billing';
-    const metricName = 'EstimatedCharges';
-    const dimensions = {};
-
-    try {
-      await this.getDimensionValues(region ?? '', namespace, metricName, 'ServiceName', dimensions);
-      return {
-        status: 'success',
-        message: 'Data source is working',
-      };
-    } catch (error) {
-      return toTestingStatus(error);
-    }
   }
 
   awsRequest(url: string, data: MetricRequest, headers: Record<string, any> = {}): Observable<TSDBResponse> {
