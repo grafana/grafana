@@ -125,12 +125,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
-  let hovered: Rect | undefined = undefined;
-
-  let barMark = document.createElement('div');
-  barMark.classList.add('bar-mark');
-  barMark.style.position = 'absolute';
-  barMark.style.background = 'rgba(255,255,255,0.4)';
+  let hRect: Rect | null;
 
   const xSplits: Axis.Splits = (u: uPlot) => {
     const dim = isXHorizontal ? u.bbox.width : u.bbox.height;
@@ -408,7 +403,47 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const init = (u: uPlot) => {
     let over = u.over;
     over.style.overflow = 'hidden';
-    over.appendChild(barMark);
+    u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
+      (el as HTMLElement).style.borderRadius = '0';
+    });
+  };
+
+  const cursor: uPlot.Cursor = {
+    x: false,
+    y: false,
+    drag: {
+      x: false,
+      y: false,
+    },
+    dataIdx: (u, seriesIdx) => {
+      if (seriesIdx === 1) {
+        hRect = null;
+
+        let cx = u.cursor.left! * devicePixelRatio;
+        let cy = u.cursor.top! * devicePixelRatio;
+
+        qt.get(cx, cy, 1, 1, (o) => {
+          if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+            hRect = o;
+          }
+        });
+      }
+
+      return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
+    },
+    points: {
+      fill: 'rgba(255,255,255,0.4)',
+      bbox: (u, seriesIdx) => {
+        let isHovered = hRect && seriesIdx === hRect.sidx;
+
+        return {
+          left: isHovered ? hRect!.x / devicePixelRatio : -10,
+          top: isHovered ? hRect!.y / devicePixelRatio : -10,
+          width: isHovered ? hRect!.w / devicePixelRatio : 0,
+          height: isHovered ? hRect!.h / devicePixelRatio : 0,
+        };
+      },
+    },
   };
 
   // Build bars
@@ -518,35 +553,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     updateTooltipPosition,
     u
   ) => {
-    let found: Rect | undefined;
-    let cx = u.cursor.left! * devicePixelRatio;
-    let cy = u.cursor.top! * devicePixelRatio;
-
-    qt.get(cx, cy, 1, 1, (o) => {
-      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-        found = o;
-      }
-    });
-
-    if (found) {
-      // prettier-ignore
-      if (found !== hovered) {
-          barMark.style.display = '';
-          barMark.style.left   = found.x / devicePixelRatio + 'px';
-          barMark.style.top    = found.y / devicePixelRatio + 'px';
-          barMark.style.width  = found.w / devicePixelRatio + 'px';
-          barMark.style.height = found.h / devicePixelRatio + 'px';
-          hovered = found;
-          updateActiveSeriesIdx(hovered.sidx);
-          updateActiveDatapointIdx(hovered.didx);
-          updateTooltipPosition();
-        }
-    } else if (hovered !== undefined) {
-      updateActiveSeriesIdx(hovered!.sidx);
-      updateActiveDatapointIdx(hovered!.didx);
+    if (hRect) {
+      updateActiveSeriesIdx(hRect.sidx);
+      updateActiveDatapointIdx(hRect.didx);
       updateTooltipPosition();
-      hovered = undefined;
-      barMark.style.display = 'none';
     } else {
       updateTooltipPosition(true);
     }
@@ -567,11 +577,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   return {
-    cursor: {
-      x: false,
-      y: false,
-      points: { show: false },
-    },
+    cursor,
     // scale & axis opts
     xRange,
     xValues,
