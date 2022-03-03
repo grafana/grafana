@@ -396,7 +396,6 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 
 	ss := mockstore.NewSQLStoreMock()
 	for _, test := range tests {
-
 		t.Run(test.name, func(t *testing.T) {
 			ss.ExpectedDashboard = test.dashboardQueryResult
 			ss.ExpectedError = test.expectedError
