@@ -10,15 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
+	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestAlertRulePermissions(t *testing.T) {
@@ -34,6 +36,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
 
@@ -180,7 +183,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		require.NoError(t, store.UpdateDashboardACL(context.Background(), 2, nil))
+		require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -253,7 +256,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	}
 
 	// Remove permissions from ALL folders.
-	require.NoError(t, store.UpdateDashboardACL(context.Background(), 1, nil))
+	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 1, nil))
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -430,7 +433,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: failed to add or update rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {

@@ -52,7 +52,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     }
 
     if (target.queryType !== 'search' && target.query) {
-      return this._request(`/api/traces/${encodeURIComponent(target.query)}`).pipe(
+      return this._request(
+        `/api/traces/${encodeURIComponent(getTemplateSrv().replace(target.query, options.scopedVars))}`
+      ).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
           if (!traceData) {

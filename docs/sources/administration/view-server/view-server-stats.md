@@ -11,7 +11,7 @@ weight = 400
 
 If you are a Grafana server admin, then you can view useful statistics about your Grafana server in the Stats & Licensing tab.
 
-> **Note:** Only Grafana server administrators can access the **Server Admin** menu. For more information about about administrative permissions, refer to [Grafana server admin]({{< relref "../../permissions/_index.md" >}}).
+> **Note:** Only Grafana server administrators can access the **Server Admin** menu. For more information about about administrative permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md" >}}).
 
 ## View server stats
 

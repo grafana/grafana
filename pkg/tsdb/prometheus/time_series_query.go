@@ -39,6 +39,8 @@ const (
 	varRateIntervalAlt = "${__rate_interval}"
 )
 
+const legendFormatAuto = "__auto"
+
 type TimeSeriesQueryType string
 
 const (
@@ -106,6 +108,11 @@ func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*P
 			return &result, err
 		}
 
+		// The ExecutedQueryString can be viewed in QueryInspector in UI
+		for _, frame := range frames {
+			frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+		}
+
 		result.Responses[query.RefId] = backend.DataResponse{
 			Frames: frames,
 		}
@@ -132,11 +139,14 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
-	var legend string
+	var legend = metric.String()
 
-	if query.LegendFormat == "" {
-		legend = metric.String()
-	} else {
+	if query.LegendFormat == legendFormatAuto {
+		// If we have labels set legend to empty string to utilize the auto naming system
+		if len(metric) > 0 {
+			legend = ""
+		}
+	} else if query.LegendFormat != "" {
 		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
 			labelName := strings.Replace(string(in), "{{", "", 1)
 			labelName = strings.Replace(labelName, "}}", "", 1)
@@ -330,8 +340,12 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		timeField.Name = data.TimeSeriesTimeFieldName
 		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
 		valueField.Labels = tags
+
+		if name != "" {
+			valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		}
+
 		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
 	}
 

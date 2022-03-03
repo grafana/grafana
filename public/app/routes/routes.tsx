@@ -237,7 +237,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsRead]
+          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
@@ -323,7 +323,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/invite/:code',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/users/SignupInvited')
+        () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),
       pageClass: 'sidemenu-hidden',
     },

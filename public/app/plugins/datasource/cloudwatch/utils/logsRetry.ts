@@ -106,7 +106,6 @@ export function runWithRetry(
           timerID = setTimeout(
             () => {
               retries++;
-              console.log(`Attempt ${retries}`);
               run(errorData!.errors);
             },
             // We want to know how long to wait for the next retry. First time this will be 0.

@@ -22,5 +22,5 @@ export enum AppNotificationTimeout {
 }
 
 export interface AppNotificationsState {
-  appNotifications: AppNotification[];
+  byId: Record<string, AppNotification>;
 }

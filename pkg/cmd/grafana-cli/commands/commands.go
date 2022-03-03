@@ -55,6 +55,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		if err != nil {
 			return errutil.Wrap("failed to initialize tracer service", err)
 		}
+
 		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, tracer)
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
@@ -255,6 +256,11 @@ so must be recompiled to validate newly-added CUE files.`,
 			&cli.StringFlag{
 				Name:  "grafana-root",
 				Usage: "path to the root of a Grafana repository in which to generate TypeScript from CUE files",
+			},
+			&cli.BoolFlag{
+				Name:  "diff",
+				Usage: "diff results of codegen against files already on disk. Exits 1 if diff is non-empty",
+				Value: false,
 			},
 		},
 	},

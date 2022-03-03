@@ -76,9 +76,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   const analytics = {
     active: false,
     icon: 'info-circle',
-    id: `datasource-insights-${dataSource.id}`,
+    id: `datasource-insights-${dataSource.uid}`,
     text: 'Insights',
-    url: `datasources/edit/${dataSource.id}/insights`,
+    url: `datasources/edit/${dataSource.uid}/insights`,
   };
 
   if (featureEnabled('analytics')) {
@@ -106,7 +106,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...caching,
       url: caching.url + '/upgrade',
-      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-data-source-caching-badge' }),
+      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-query-caching-badge' }),
     });
   }
 

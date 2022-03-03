@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,11 +19,12 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
-	shortURLService shorturls.Service) *CleanUpService {
+	shortURLService shorturls.Service, store sqlstore.Store) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:               cfg,
 		ServerLockService: serverLockService,
 		ShortURLService:   shortURLService,
+		store:             store,
 		log:               log.New("cleanup"),
 	}
 	return s
@@ -31,6 +32,7 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 
 type CleanUpService struct {
 	log               log.Logger
+	store             sqlstore.Store
 	Cfg               *setting.Cfg
 	ServerLockService *serverlock.ServerLockService
 	ShortURLService   shorturls.Service
@@ -127,7 +129,7 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	cmd := models.DeleteExpiredSnapshotsCommand{}
-	if err := bus.Dispatch(ctx, &cmd); err != nil {
+	if err := srv.store.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
@@ -136,7 +138,7 @@ func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
 	cmd := models.DeleteExpiredVersionsCommand{}
-	if err := bus.Dispatch(ctx, &cmd); err != nil {
+	if err := srv.store.DeleteExpiredVersions(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
@@ -151,7 +153,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context) {
 	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
-	if err := bus.Dispatch(ctx, &cmd); err != nil {
+	if err := srv.store.DeleteOldLoginAttempts(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
@@ -164,7 +166,7 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	cmd := models.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
-	if err := bus.Dispatch(ctx, &cmd); err != nil {
+	if err := srv.store.ExpireOldUserInvites(ctx, &cmd); err != nil {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)

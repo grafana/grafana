@@ -274,7 +274,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[2], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
-				err = testHelperUpdateDashboardAcl(t, sqlStore, 1, models.DashboardAcl{
+				err = updateDashboardAcl(t, sqlStore, 1, &models.DashboardAcl{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupId,
 				})
 				require.NoError(t, err)

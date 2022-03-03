@@ -43,13 +43,13 @@ func ProvideServiceAccountsService(
 		}
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, store)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store)
 	serviceaccountsAPI.RegisterAPIEndpoints(features)
 
 	return s, nil
 }
 
-func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil, nil
