@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr"
+	legacymodels "github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/util"
@@ -241,29 +242,29 @@ func ruleAdjustInterval(freq int64) int64 {
 }
 
 func transNoData(s string) (string, error) {
-	switch s {
-	case "ok":
-		return "OK", nil // values from ngalert/models/rule
-	case "", "no_data":
-		return "NoData", nil
-	case "alerting":
-		return "Alerting", nil
-	case "keep_state":
-		return "NoData", nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+	switch legacymodels.NoDataOption(s) {
+	case legacymodels.NoDataSetOK:
+		return string(ngmodels.OK), nil // values from ngalert/models/rule
+	case "", legacymodels.NoDataSetNoData:
+		return string(ngmodels.NoData), nil
+	case legacymodels.NoDataSetAlerting:
+		return string(ngmodels.Alerting), nil
+	case legacymodels.NoDataKeepState:
+		return string(ngmodels.NoData), nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
 
 func transExecErr(s string) (string, error) {
-	switch s {
-	case "", "alerting":
-		return "Alerting", nil
-	case "keep_state":
+	switch legacymodels.ExecutionErrorOption(s) {
+	case "", legacymodels.ExecutionErrorSetAlerting:
+		return string(ngmodels.AlertingErrState), nil
+	case legacymodels.ExecutionErrorKeepState:
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
-		return "Error", nil
-	case "ok":
-		return "OK", nil
+		return string(ngmodels.ErrorErrState), nil
+	case legacymodels.ExecutionErrorSetOk:
+		return string(ngmodels.OkErrState), nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }
