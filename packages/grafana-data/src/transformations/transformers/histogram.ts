@@ -152,7 +152,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   let bucketOffset = options?.bucketOffset ?? 0;
 
   // if bucket size is auto, try to calc from all numeric fields
-  if (!bucketSize || bucketSize < 0) {
+  if (!bucketSize) {
     let allValues: number[] = [];
 
     // TODO: include field configs!
