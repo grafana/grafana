@@ -126,9 +126,9 @@ export function RuleViewer({ match }: RuleViewerProps) {
   return (
     <RuleViewerLayout wrapInContent={false} title={pageTitle}>
       {isFederatedRule && (
-        <Alert severity="info" title="This is a federated rule group.">
+        <Alert severity="info" title="This rule is part of a federated rule group.">
           <VerticalGroup>
-            Federated rules are currently an experimental feature.
+            Federated rule groups are currently an experimental feature.
             <Button fill="text" icon="book">
               <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
                 Read documentation
