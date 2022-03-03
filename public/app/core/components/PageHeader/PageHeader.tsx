@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { Tab, TabsBar, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
@@ -76,18 +76,27 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
 export const PageHeader: FC<Props> = ({ model }) => {
   const styles = useStyles2(getStyles);
 
+  const main = model.main;
+  const [children, setChildren] = useState(main.children);
+
+  useEffect(() => {
+    const updatedChildren = main.children?.map((child) => {
+      // Add suffix component for the items that come from backend and are highlighted
+      if (child.highlightText && !child.tabSuffix) {
+        return {
+          ...child,
+          tabSuffix: () =>
+            ProBadge({ experimentId: child.highlightId ? `feature-highlights-${child.highlightId}-badge` : '' }),
+        };
+      }
+      return child;
+    });
+    setChildren(updatedChildren);
+  }, [main.children]);
+
   if (!model) {
     return null;
   }
-
-  const main = model.main;
-  const children = main.children?.map((child) => {
-    // Add suffix component for the items that come from backend and are highlighted
-    if (child.highlightText && !child.tabSuffix) {
-      return { ...child, tabSuffix: ProBadge };
-    }
-    return child;
-  });
 
   return (
     <div className={styles.headerCanvas}>
