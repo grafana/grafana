@@ -3,10 +3,11 @@ package dtos
 import "github.com/grafana/grafana/pkg/models"
 
 type Prefs struct {
-	Theme           string `json:"theme"`
-	HomeDashboardID int64  `json:"homeDashboardId"`
-	Timezone        string `json:"timezone"`
-	WeekStart       string `json:"weekStart"`
+	Theme           string                    `json:"theme"`
+	HomeDashboardID int64                     `json:"homeDashboardId"`
+	Timezone        string                    `json:"timezone"`
+	WeekStart       string                    `json:"weekStart"`
+	Navbar          []models.NavbarPreference `json:"navbar,omitempty"`
 }
 
 // swagger:model
@@ -17,8 +18,9 @@ type UpdatePrefsCmd struct {
 	// Default:0
 	HomeDashboardID int64 `json:"homeDashboardId"`
 	// Enum: utc,browser
-	Timezone  string `json:"timezone"`
-	WeekStart string `json:"weekStart"`
+	Timezone  string                     `json:"timezone"`
+	WeekStart string                     `json:"weekStart"`
+	Navbar    *[]models.NavbarPreference `json:"navbar,omitempty"`
 }
 
 type PatchPrefsCmd struct {

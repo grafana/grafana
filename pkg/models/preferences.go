@@ -72,11 +72,11 @@ type SavePreferencesCommand struct {
 	OrgId  int64
 	TeamId int64
 
-	HomeDashboardId int64              `json:"homeDashboardId,omitempty"`
-	Timezone        string             `json:"timezone,omitempty"`
-	WeekStart       string             `json:"weekStart,omitempty"`
-	Theme           string             `json:"theme,omitempty"`
-	Navbar          []NavbarPreference `json:"navbar,omitempty"`
+	HomeDashboardId int64               `json:"homeDashboardId,omitempty"`
+	Timezone        string              `json:"timezone,omitempty"`
+	WeekStart       string              `json:"weekStart,omitempty"`
+	Theme           string              `json:"theme,omitempty"`
+	Navbar          *[]NavbarPreference `json:"navbar,omitempty"`
 }
 
 type PatchPreferencesCommand struct {

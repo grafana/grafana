@@ -51,6 +51,10 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 		WeekStart:       prefsQuery.Result.WeekStart,
 	}
 
+	if prefsQuery.Result.JsonData != nil {
+		dto.Navbar = (*prefsQuery.Result.JsonData).Navbar
+	}
+
 	return response.JSON(200, &dto)
 }
 

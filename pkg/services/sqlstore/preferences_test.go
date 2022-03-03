@@ -150,9 +150,9 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("GetPreferencesWithDefaults with saved org and user json data should return user json data", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: orgNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: userNavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: &userNavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 1}}
@@ -162,9 +162,9 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("GetPreferencesWithDefaults with saved org and other user json data should return org json data", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: orgNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: userNavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: &userNavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 2}}
@@ -174,11 +174,11 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("GetPreferencesWithDefaults with saved org and teams json data should return last team json data", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: orgNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: team1NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: &team1NavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: team2NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: &team2NavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{
@@ -190,11 +190,11 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("GetPreferencesWithDefaults with saved org and other teams json data should return org json data", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: orgNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: team1NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: &team1NavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: team2NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: &team2NavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1}}
@@ -204,13 +204,13 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("GetPreferencesWithDefaults with saved org, teams and user json data should return user json data", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: orgNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: team1NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: &team1NavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: team2NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: &team2NavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: userNavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: &userNavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{
@@ -222,13 +222,13 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("GetPreferencesWithDefaults with saved org, other teams and user json data should return org json data", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: orgNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: team1NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 2, Navbar: &team1NavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: team2NavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, TeamId: 3, Navbar: &team2NavbarPreferences})
 		require.NoError(t, err)
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: userNavbarPreferences})
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{OrgId: 1, UserId: 1, Navbar: &userNavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{
@@ -240,7 +240,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("SavePreferences for a user should store correct values", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{UserId: models.SignedInUser{}.UserId, Theme: "dark", Timezone: "browser", HomeDashboardId: 5, WeekStart: "1", Navbar: userNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{UserId: models.SignedInUser{}.UserId, Theme: "dark", Timezone: "browser", HomeDashboardId: 5, WeekStart: "1", Navbar: &userNavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}
@@ -263,7 +263,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("UpsertPreferences for a user should only modify a single value", func(t *testing.T) {
-		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{UserId: models.SignedInUser{}.UserId, Theme: "dark", Timezone: "browser", HomeDashboardId: 5, WeekStart: "1", Navbar: orgNavbarPreferences})
+		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{UserId: models.SignedInUser{}.UserId, Theme: "dark", Timezone: "browser", HomeDashboardId: 5, WeekStart: "1", Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
 
 		err = ss.UpsertPreferences(context.Background(), &models.PatchPreferencesCommand{UserId: models.SignedInUser{}.UserId, Navbar: &userNavbarPreferences})

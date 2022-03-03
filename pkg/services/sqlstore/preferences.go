@@ -114,14 +114,14 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 			}
 
 			if cmd.Navbar != nil {
-				prefs.JsonData.Navbar = cmd.Navbar
+				prefs.JsonData.Navbar = *cmd.Navbar
 			}
 			_, err = sess.Insert(&prefs)
 			return err
 		}
 		// Wrap this in an if statement to maintain backwards compatibility
 		if cmd.Navbar != nil {
-			prefs.JsonData.Navbar = cmd.Navbar
+			prefs.JsonData.Navbar = *cmd.Navbar
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
 		prefs.Timezone = cmd.Timezone
