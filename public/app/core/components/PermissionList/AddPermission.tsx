@@ -41,8 +41,8 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     };
   }
 
-  onTypeChanged = (item: any) => {
-    const type = item.value as AclTarget;
+  onTypeChanged = (item: SelectableValue<AclTarget>) => {
+    const type = item.value;
 
     switch (type) {
       case AclTarget.User:

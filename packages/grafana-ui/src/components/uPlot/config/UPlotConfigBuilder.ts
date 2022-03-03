@@ -284,6 +284,7 @@ export type PrepDataOpts<T extends {} = {}> = {
 
 export type PrepDataFnResult<T extends {}> = {
   frames: DataFrame[]; // original data.series
+  error?: any;
 } & T;
 
 export type PrepDataFn<T, O> = (opts: PrepDataOpts<O>) => PrepDataFnResult<T>;
@@ -310,13 +311,10 @@ export interface UPlotChartConfig {
   builder: UPlotOptsBuilder;
   on(type: EventType, handler: Handler): void;
 }
-export interface UPlotChartConfigWithPrep<PrepData> extends UPlotChartConfig {
-  prepData: PrepDataFn<PrepData, any>;
-}
 
 /** @alpha */
 export type UPlotConfigPrepFn2<T extends {}, K extends { frames: DataFrame[] }> = (
   opts: UPlotConfigPrepOpts<T>
-) => UPlotChartConfigWithPrep<K> | null;
+) => UPlotChartConfig | null;
 
 export type UPlotOptsBuilder = UPlotConfigBuilder;
