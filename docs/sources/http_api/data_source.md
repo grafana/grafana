@@ -625,13 +625,12 @@ Content-Type: application/json
          "refId":"A",
          "scenarioId":"csv_metric_values",
          "datasource":{
-            "uid":"PD8C576611E62080A",
-            "type":"testdata"
+            "uid":"PD8C576611E62080A"
          },
-         "stringInput":"1,20,90,30,5,0",
-         "datasourceId":6,
+         "format": "table"
          "maxDataPoints":1848,
          "intervalMs":200,
+         "stringInput":"1,20,90,30,5,0",
       }
    ],
    "from":"now-5m",
@@ -646,12 +645,12 @@ JSON Body schema:
 - **queries** – Specifies one or more queries. Must contain at least 1.
 - **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
 - **queries.datasource.uid** – Specifies the UID of data source to be queried. Each `query` in the request must have an unique `datasource`.
-- **queries.datasource.type** – Specifies the data source plugin identifier to be queried.
+- **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
 - **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and defaults to 100.
 - **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
 - **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
 
-In addition, each data source has its own specific properties that should be added in a request. In order to understand how to form a query for a certain datasource, please use the Developer Tools in your browser of choice and inspect the HTTP requests being made to /api/ds/query.
+In addition, each data source has its own specific properties that should be added in a request (for example **queries.stringInput** as shown in the request above). In order to understand how to form a query for a certain datasource, please use the Developer Tools in your browser of choice and inspect the HTTP requests being made to /api/ds/query.
 
 **Example Test data source time series query response:**
 
