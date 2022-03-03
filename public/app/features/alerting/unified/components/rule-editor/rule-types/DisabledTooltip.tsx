@@ -17,4 +17,4 @@ const DisabledTooltip: FC<Props> = ({ children, visible = false }) => {
   );
 };
 
-export default DisabledTooltip;
+export { DisabledTooltip };

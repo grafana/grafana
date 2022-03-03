@@ -22,4 +22,4 @@ const GrafanaManagedRuleType: FC<SharedProps> = ({ selected = false, disabled, o
   );
 };
 
-export default GrafanaManagedRuleType;
+export { GrafanaManagedRuleType };

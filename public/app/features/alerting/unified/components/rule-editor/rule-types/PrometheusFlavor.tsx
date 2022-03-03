@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { RuleType, SharedProps } from './RuleType';
+import { DisabledTooltip } from './DisabledTooltip';
 import { RuleFormType } from '../../../types/rule-form';
-import DisabledTooltip from './DisabledTooltip';
 
 interface Props extends SharedProps {
   onClick: (value: RuleFormType) => void;
@@ -29,4 +29,4 @@ const PrometheusFlavoredType: FC<Props> = ({ selected = false, disabled = false,
   );
 };
 
-export default PrometheusFlavoredType;
+export { PrometheusFlavoredType };

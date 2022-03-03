@@ -3,9 +3,9 @@ import { isEmpty } from 'lodash';
 import React, { FC } from 'react';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType } from '../../../types/rule-form';
-import GrafanaManagedRuleType from './GrafanaManaged';
-import PrometheusFlavoredType from './PrometheusFlavor';
-import RecordingRuleType from './RecordingRule';
+import { GrafanaManagedRuleType } from './GrafanaManaged';
+import { PrometheusFlavoredType } from './PrometheusFlavor';
+import { RecordingRuleType } from './RecordingRule';
 
 interface RuleTypePickerProps {
   onChange: (value: RuleFormType) => void;
