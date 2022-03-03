@@ -1,8 +1,9 @@
 import React, { FC } from 'react';
-import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
+import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax, LinkModel } from '@grafana/data';
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { TableCellProps, TableCellDisplayMode } from './types';
-import { getCellLinks } from '../../utils';
+import { DataLinksContextMenu } from '../../../src/components/DataLinks/DataLinksContextMenu';
+import { DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -38,19 +39,20 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
     barGaugeMode = BarGaugeDisplayMode.Basic;
   }
 
-  const getCellLinkFn = () => {
-    const { link, onClick } = getCellLinks(field, row);
-    const cellLinkStyle = tableStyles.cellLink;
+  const getLinks = () => {
+    if (field.getLinks === undefined) {
+      return [] as LinkModel[];
+    }
 
-    return {
-      link,
-      onClick,
-      cellLinkStyle,
-    };
+    return field.getLinks({ valueRowIndex: row.index });
   };
 
-  return (
-    <div {...cellProps} className={tableStyles.cellContainer}>
+  const hasLinks = !!getLinks().length;
+
+  const renderComponent = (menuProps: DataLinksContextMenuApi) => {
+    const { openMenu, targetClassName } = menuProps;
+
+    return (
       <BarGauge
         width={innerWidth}
         height={tableStyles.cellHeightInner}
@@ -60,11 +62,37 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
         value={displayValue}
         orientation={VizOrientation.Horizontal}
         theme={tableStyles.theme}
+        onClick={openMenu}
+        className={targetClassName}
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
-        cellLinkFn={getCellLinkFn}
       />
+    );
+  };
+
+  return (
+    <div {...cellProps} className={tableStyles.cellContainer}>
+      {hasLinks && (
+        <DataLinksContextMenu links={getLinks} config={config}>
+          {(api) => renderComponent(api)}
+        </DataLinksContextMenu>
+      )}
+      {!hasLinks && (
+        <BarGauge
+          width={innerWidth}
+          height={tableStyles.cellHeightInner}
+          field={config}
+          display={field.display}
+          text={{ valueSize: 14 }}
+          value={displayValue}
+          orientation={VizOrientation.Horizontal}
+          theme={tableStyles.theme}
+          itemSpacing={1}
+          lcdCellWidth={8}
+          displayMode={barGaugeMode}
+        />
+      )}
     </div>
   );
 };
