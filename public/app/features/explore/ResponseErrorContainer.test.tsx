@@ -50,6 +50,14 @@ function setup(error: DataQueryError) {
     series: [],
     state: LoadingState.Error,
     error,
+    graphFrames: [],
+    logsFrames: [],
+    tableFrames: [],
+    traceFrames: [],
+    nodeGraphFrames: [],
+    graphResult: null,
+    logsResult: null,
+    tableResult: null,
   };
   render(
     <Provider store={store}>
