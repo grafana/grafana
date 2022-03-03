@@ -1,4 +1,4 @@
-import { Stack } from '@grafana/experimental';
+import { HorizontalGroup } from '@grafana/ui';
 import React, { FC } from 'react';
 import { RuleFormType } from '../../../types/rule-form';
 import GrafanaManagedRuleType from './GrafanaManaged';
@@ -12,11 +12,11 @@ interface RuleTypePickerProps {
 
 const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
   return (
-    <Stack direction="row">
+    <HorizontalGroup spacing="md">
       <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={onChange} />
       <PrometheusFlavoredType selected={selected === RuleFormType.cloudAlerting} onClick={onChange} />
       <RecordingRuleType selected={selected === RuleFormType.cloudRecording} onClick={onChange} />
-    </Stack>
+    </HorizontalGroup>
   );
 };
 
