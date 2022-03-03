@@ -9,11 +9,12 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
@@ -577,7 +578,7 @@ func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, us
 	query.Result = datasources
 
 	if err := hs.DatasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &query); err != nil {
-		if !errors.Is(err, bus.ErrHandlerNotFound) {
+		if !errors.Is(err, permissions.ErrNotImplemented) {
 			return nil, err
 		}
 		return datasources, nil
