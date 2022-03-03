@@ -16,16 +16,23 @@ export const loadResults = (query: string): ThunkResult<void> => {
     if (!data.dashboards.length || !query.length) {
       return dispatch(
         fetchResults({
-          dashboards: new DataFrameView<DashboardResult>(data.dashboards),
+          data: {
+            dashboards: new DataFrameView<DashboardResult>(data.dashboards),
+            panels: data.panels,
+          },
         })
       );
     }
 
     const dashboards = filterDataFrame(query, data.dashboards, 'Name', 'Description', 'Tags');
+    const panels = filterDataFrame(query, data.panels, 'Name', 'Description', 'Type');
 
     return dispatch(
       fetchResults({
-        dashboards: new DataFrameView<DashboardResult>(dashboards),
+        data: {
+          dashboards: new DataFrameView<DashboardResult>(dashboards),
+          panels: panels,
+        },
       })
     );
   };

@@ -11,6 +11,8 @@ import { SearchPageDashboards } from './SearchPageDashboards';
 import { SearchPageDashboardList } from './SearchPageDashboardList';
 import { loadResults } from './state/actions';
 import { StoreState } from 'app/types';
+import { SearchPageStats } from './SearchPageStats';
+import { buildStatsTable } from './data';
 
 const node: NavModelItem = {
   id: 'search',
@@ -23,7 +25,8 @@ export default function SearchPage() {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
-  const dashboards = useSelector((state: StoreState) => state.searchPage.dashboards);
+  const dashboards = useSelector((state: StoreState) => state.searchPage.data.dashboards);
+  const panels = useSelector((state: StoreState) => state.searchPage.data.panels);
 
   const [query, setQuery] = useState('');
 
@@ -47,7 +50,7 @@ export default function SearchPage() {
         {!dashboards && <div>Loading....</div>}
         {dashboards && (
           <div>
-            <AutoSizer style={{ width: '100%', height: '700px' }}>
+            <AutoSizer style={{ width: '100%', height: '1000px' }}>
               {({ width }) => {
                 return (
                   <div>
@@ -55,6 +58,13 @@ export default function SearchPage() {
                     <br />
                     {dashboards.dataFrame && dashboards.dataFrame.length > 0 && (
                       <SearchPageDashboards dashboards={dashboards.dataFrame} width={width} />
+                    )}
+
+                    {panels && (
+                      <SearchPageStats
+                        panelTypes={buildStatsTable(panels.fields.find((f) => f.name === 'Type'))}
+                        width={width}
+                      />
                     )}
                   </div>
                 );
