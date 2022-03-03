@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/stretchr/testify/require"
 )
@@ -55,6 +56,7 @@ func TestImportDashboardService(t *testing.T) {
 			pluginDashboardManager: pluginDashboardManager,
 			dashboardService:       dashboardService,
 			libraryPanelService:    libraryPanelService,
+			features:               featuremgmt.WithFeatures(),
 		}
 
 		req := &dashboardimport.ImportDashboardRequest{
@@ -104,6 +106,7 @@ func TestImportDashboardService(t *testing.T) {
 		}
 		libraryPanelService := &libraryPanelServiceMock{}
 		s := &ImportDashboardService{
+			features:            featuremgmt.WithFeatures(),
 			dashboardService:    dashboardService,
 			libraryPanelService: libraryPanelService,
 		}

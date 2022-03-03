@@ -159,6 +159,32 @@ describe('JaegerDatasource', () => {
     });
   });
 
+  it('should resolve templates in traceID', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+
+    await lastValueFrom(
+      ds.query({
+        ...defaultQuery,
+        scopedVars: {
+          $traceid: {
+            text: 'traceid',
+            value: '5311b0dd0ca8df3463df93c99cb805a6',
+          },
+        },
+        targets: [
+          {
+            query: '$traceid',
+            refId: '1',
+          },
+        ],
+      })
+    );
+    expect(mock).toBeCalledWith({
+      url: `${defaultSettings.url}/api/traces/5311b0dd0ca8df3463df93c99cb805a6`,
+    });
+  });
+
   it('should resolve templates in tags', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings, timeSrvStub);

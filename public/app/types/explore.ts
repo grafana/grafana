@@ -145,7 +145,7 @@ export interface ExploreItemState {
 
   querySubscription?: Unsubscribable;
 
-  queryResponse: PanelData;
+  queryResponse: ExplorePanelData;
 
   showLogs?: boolean;
   showMetrics?: boolean;
@@ -158,7 +158,7 @@ export interface ExploreItemState {
    * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
    * We are currently caching last 5 query responses.
    */
-  cache: Array<{ key: string; value: PanelData }>;
+  cache: Array<{ key: string; value: ExplorePanelData }>;
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
