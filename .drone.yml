@@ -130,7 +130,7 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --no-pull-enterprise
+    --variants linux-x64,linux-x64-musl,darwin,windows,armv6 --no-pull-enterprise
   depends_on:
   - initialize
   environment: {}
@@ -182,7 +182,7 @@ steps:
   name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
+    --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,darwin,windows,armv6
   depends_on:
   - build-plugins
   - build-backend
@@ -4330,6 +4330,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a7362f20a1553c069b4b10220e847d1bf7d4ca1e25e5e1f458d1d7723b6c0871
+hmac: d90c4d9e1d1b2e3e8f313ceaf9ec8a24480e8fd42611a17a34bd51bfcb1456c6
 
 ...
