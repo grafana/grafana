@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { FieldConfigEditorProps, NumberFieldConfigSettings } from '@grafana/data';
 import { NumberInput } from '../NumberInput/NumberInput';
 
@@ -9,6 +9,13 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
 }) => {
   const { settings } = item;
 
+  const onValueChange = useCallback(
+    (value: number | undefined) => {
+      onChange(settings?.integer && value !== undefined ? Math.floor(value) : value);
+    },
+    [onChange, settings?.integer]
+  );
+
   return (
     <NumberInput
       value={value}
@@ -16,7 +23,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
       max={settings?.max}
       step={settings?.step}
       placeholder={settings?.placeholder}
-      onChange={onChange}
+      onChange={onValueChange}
     />
   );
 };
