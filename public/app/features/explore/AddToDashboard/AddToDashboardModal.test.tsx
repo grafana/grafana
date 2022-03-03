@@ -110,7 +110,7 @@ describe('Add to Dashboard Modal', () => {
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('empty name');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Dashboard name is required.');
     });
 
     it('Correctly handles name match API Error', async () => {
