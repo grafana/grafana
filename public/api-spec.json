@@ -8334,7 +8334,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "BrandingOptions": {
+    "BrandingOptionsDTO": {
       "type": "object",
       "properties": {
         "emailFooterLink": {
@@ -8437,7 +8437,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "orgId": {
           "type": "integer",
@@ -8453,10 +8453,11 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "$ref": "#/definitions/State"
+          "type": "string",
+          "x-go-name": "State"
         },
         "templateVars": {
           "type": "object",
@@ -8637,7 +8638,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "recipients": {
           "type": "string",
@@ -8648,7 +8649,7 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
           "type": "string",
@@ -10350,7 +10351,9 @@
           "x-go-name": "Queries",
           "example": [
             {
-              "datasourceId": 86,
+              "datasource": {
+                "uid": "PD8C576611E62080A"
+              },
               "format": "table",
               "intervalMs": 86400000,
               "maxDataPoints": 1092,
@@ -10840,7 +10843,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
-    "ReportOptions": {
+    "ReportOptionsDTO": {
       "type": "object",
       "properties": {
         "layout": {
@@ -10972,7 +10975,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "Schedule": {
+    "ScheduleDTO": {
       "type": "object",
       "properties": {
         "day": {
@@ -11114,7 +11117,7 @@
       "type": "object",
       "properties": {
         "branding": {
-          "$ref": "#/definitions/BrandingOptions"
+          "$ref": "#/definitions/BrandingOptionsDTO"
         },
         "id": {
           "type": "integer",
@@ -11132,10 +11135,6 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
-    },
-    "State": {
-      "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
     "Status": {
