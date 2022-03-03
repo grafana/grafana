@@ -33,7 +33,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { addLabelToQuery } from './add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -63,7 +63,7 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
-import config from 'app/core/config';
+import { doLokiChannelStream } from './streaming';
 import { renderLegendFormat } from '../prometheus/legend';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -178,6 +178,12 @@ export class LokiDatasource
     for (const target of filteredTargets) {
       if (target.instant || target.queryType === LokiQueryType.Instant) {
         subQueries.push(this.runInstantQuery(target, request, filteredTargets.length));
+      } else if (
+        config.featureToggles.lokiLive &&
+        target.queryType === LokiQueryType.Stream &&
+        request.rangeRaw?.to === 'now'
+      ) {
+        subQueries.push(doLokiChannelStream(target, this, request));
       } else {
         subQueries.push(this.runRangeQuery(target, request, filteredTargets.length));
       }

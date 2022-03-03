@@ -30,6 +30,7 @@ type SQLStoreMock struct {
 	ExpectedDashboardSnapshot      *models.DashboardSnapshot
 	ExpectedTeamsByUser            []*models.TeamDTO
 	ExpectedSearchOrgList          []*models.OrgDTO
+	ExpectedSearchUsers            models.SearchUserQueryResult
 	ExpectedDatasources            []*models.DataSource
 	ExpectedOrg                    *models.Org
 	ExpectedSystemStats            *models.SystemStats
@@ -190,6 +191,11 @@ func (m *SQLStoreMock) GetSignedInUserWithCacheCtx(ctx context.Context, query *m
 }
 
 func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	query.Result = m.ExpectedSearchUsers
 	return m.ExpectedError
 }
 

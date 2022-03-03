@@ -1,5 +1,4 @@
 import React from 'react';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
   DataFrame,
@@ -19,7 +18,6 @@ import {
   getActiveThreshold,
   Threshold,
   getFieldConfigWithMinMax,
-  outerJoinDataFrames,
   ThresholdsMode,
 } from '@grafana/data';
 import {
@@ -46,15 +44,6 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
     return SeriesVisibilityChangeMode.AppendToSelection;
   }
   return SeriesVisibilityChangeMode.ToggleSelection;
-}
-
-export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
-  return outerJoinDataFrames({
-    frames: data,
-    joinBy: dimFields.x,
-    keep: dimFields.y,
-    keepOriginIndices: true,
-  });
 }
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({

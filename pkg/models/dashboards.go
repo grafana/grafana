@@ -56,6 +56,7 @@ var (
 	ErrDashboardTitleEmpty = DashboardErr{
 		Reason:     "Dashboard title cannot be empty",
 		StatusCode: 400,
+		Status:     "empty-name",
 	}
 	ErrDashboardFolderCannotHaveParent = DashboardErr{
 		Reason:     "A Dashboard Folder cannot be added to another folder",
@@ -80,6 +81,7 @@ var (
 	ErrDashboardWithSameNameAsFolder = DashboardErr{
 		Reason:     "Dashboard name cannot be the same as folder",
 		StatusCode: 400,
+		Status:     "name-match",
 	}
 	ErrDashboardFolderNameExists = DashboardErr{
 		Reason:     "A folder with that name already exists",

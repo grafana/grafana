@@ -25,14 +25,14 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli FakeCWLogsClient
+	var cli fakeCWLogsClient
 
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return &cli
 	}
 
 	t.Run("Empty log group name prefix", func(t *testing.T) {
-		cli = FakeCWLogsClient{
+		cli = fakeCWLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -88,7 +88,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 	})
 
 	t.Run("Non-empty log group name prefix", func(t *testing.T) {
-		cli = FakeCWLogsClient{
+		cli = fakeCWLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -152,13 +152,13 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli FakeCWLogsClient
+	var cli fakeCWLogsClient
 
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return &cli
 	}
 
-	cli = FakeCWLogsClient{
+	cli = fakeCWLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -229,14 +229,14 @@ func TestQuery_StartQuery(t *testing.T) {
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli FakeCWLogsClient
+	var cli fakeCWLogsClient
 
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return &cli
 	}
 
 	t.Run("invalid time range", func(t *testing.T) {
-		cli = FakeCWLogsClient{
+		cli = fakeCWLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -289,7 +289,7 @@ func TestQuery_StartQuery(t *testing.T) {
 
 	t.Run("valid time range", func(t *testing.T) {
 		const refID = "A"
-		cli = FakeCWLogsClient{
+		cli = fakeCWLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -363,14 +363,14 @@ func Test_executeStartQuery(t *testing.T) {
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli FakeCWLogsClient
+	var cli fakeCWLogsClient
 
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return &cli
 	}
 
 	t.Run("successfully parses information from JSON to StartQueryWithContext", func(t *testing.T) {
-		cli = FakeCWLogsClient{}
+		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -396,17 +396,17 @@ func Test_executeStartQuery(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
 			{
-				StartTime:     pointerInt64(0),
-				EndTime:       pointerInt64(1),
-				Limit:         pointerInt64(12),
-				QueryString:   pointerString("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
-				LogGroupNames: []*string{pointerString("some name"), pointerString("another name")},
+				StartTime:     aws.Int64(0),
+				EndTime:       aws.Int64(1),
+				Limit:         aws.Int64(12),
+				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				LogGroupNames: []*string{aws.String("some name"), aws.String("another name")},
 			},
 		}, cli.calls.startQueryWithContext)
 	})
 
 	t.Run("cannot parse limit as float", func(t *testing.T) {
-		cli = FakeCWLogsClient{}
+		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -433,7 +433,7 @@ func Test_executeStartQuery(t *testing.T) {
 	})
 
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
-		cli = FakeCWLogsClient{}
+		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -465,13 +465,13 @@ func TestQuery_StopQuery(t *testing.T) {
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli FakeCWLogsClient
+	var cli fakeCWLogsClient
 
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return &cli
 	}
 
-	cli = FakeCWLogsClient{
+	cli = fakeCWLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -537,14 +537,14 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli FakeCWLogsClient
+	var cli fakeCWLogsClient
 
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return &cli
 	}
 
 	const refID = "A"
-	cli = FakeCWLogsClient{
+	cli = fakeCWLogsClient{
 		queryResults: cloudwatchlogs.GetQueryResultsOutput{
 			Results: [][]*cloudwatchlogs.ResultField{
 				{

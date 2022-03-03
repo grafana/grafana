@@ -89,7 +89,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission := a.service.mapActions(p); permission != "" {
+		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)

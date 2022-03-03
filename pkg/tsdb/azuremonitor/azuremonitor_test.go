@@ -12,14 +12,45 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestProvideService(t *testing.T) {
+	t.Run("it should skip insight analytics and app insights with Grafana 9", func(t *testing.T) {
+		currentV := setting.BuildVersion
+		t.Cleanup(func() {
+			setting.BuildVersion = currentV
+		})
+		versions := []struct {
+			version               string
+			shouldIncludeInsights bool
+		}{
+			{"8.5.0", true},
+			{"9.0.0-beta1", false},
+			{"9.0.0", false},
+		}
+		for _, v := range versions {
+			setting.BuildVersion = v.version
+			s := ProvideService(setting.NewCfg(), httpclient.NewProvider(), nil)
+			if v.shouldIncludeInsights {
+				assert.NotNil(t, s.executors[deprecated.InsightsAnalytics])
+				assert.NotNil(t, s.executors[deprecated.AppInsights])
+			} else {
+				assert.Nil(t, s.executors[deprecated.InsightsAnalytics])
+				assert.Nil(t, s.executors[deprecated.AppInsights])
+			}
+		}
+	})
+}
 
 func TestNewInstanceSettings(t *testing.T) {
 	tests := []struct {
 		name          string
 		settings      backend.DataSourceInstanceSettings
-		expectedModel datasourceInfo
+		expectedModel types.DatasourceInfo
 		Err           require.ErrorAssertionFunc
 	}{
 		{
@@ -29,15 +60,15 @@ func TestNewInstanceSettings(t *testing.T) {
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				ID:                      40,
 			},
-			expectedModel: datasourceInfo{
+			expectedModel: types.DatasourceInfo{
 				Cloud:                   setting.AzurePublic,
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
-				Settings:                azureMonitorSettings{},
+				Settings:                types.AzureMonitorSettings{},
 				Routes:                  routes[setting.AzurePublic],
 				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
-				Services:                map[string]datasourceService{},
+				Services:                map[string]types.DatasourceService{},
 			},
 			Err: require.NoError,
 		},
@@ -62,12 +93,12 @@ func TestNewInstanceSettings(t *testing.T) {
 }
 
 type fakeInstance struct {
-	routes   map[string]azRoute
-	services map[string]datasourceService
+	routes   map[string]types.AzRoute
+	services map[string]types.DatasourceService
 }
 
 func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
-	return datasourceInfo{
+	return types.DatasourceInfo{
 		Routes:   f.routes,
 		Services: f.services,
 	}, nil
@@ -83,10 +114,10 @@ type fakeExecutor struct {
 	expectedURL string
 }
 
-func (f *fakeExecutor) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 }
 
-func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
@@ -124,7 +155,7 @@ func Test_newMux(t *testing.T) {
 			s := &Service{
 				im: &fakeInstance{
 					routes: routes[azureMonitorPublic],
-					services: map[string]datasourceService{
+					services: map[string]types.DatasourceService{
 						tt.queryType: {
 							URL:        routes[azureMonitorPublic][tt.queryType].URL,
 							HTTPClient: &http.Client{},
