@@ -31,6 +31,7 @@ export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   addOperationHandler: QueryBuilderAddOperationHandler<T>;
   paramChangedHandler?: QueryBuilderOnParamChangedHandler;
   explainHandler?: (op: QueryBuilderOperation, def: QueryBuilderOperationDef<T>) => string;
+  changeTypeHandler?: (op: QueryBuilderOperation, newDef: QueryBuilderOperationDef<T>) => QueryBuilderOperation;
 }
 
 export type QueryBuilderAddOperationHandler<T> = (
@@ -86,9 +87,9 @@ export interface QueryBuilderOperationParamEditorProps {
 }
 
 export enum QueryEditorMode {
-  Builder,
-  Code,
-  Explain,
+  Code = 'code',
+  Builder = 'builder',
+  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {

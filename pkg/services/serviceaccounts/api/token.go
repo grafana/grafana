@@ -39,7 +39,7 @@ const sevenDaysAhead = 7 * 24 * time.Hour
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
@@ -78,7 +78,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	// confirm service account exists
@@ -93,11 +93,10 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd := models.AddApiKeyCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	// Force affected service account to be the one referenced in the URL
-	cmd.ServiceAccountId = &saID
 	cmd.OrgId = c.OrgId
 
 	if !cmd.Role.IsValid() {
@@ -120,7 +119,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := api.apiKeyStore.AddAPIKey(c.Req.Context(), &cmd); err != nil {
+	if err := api.store.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
@@ -143,7 +142,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	// confirm service account exists
@@ -158,29 +157,10 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 
 	tokenID, err := strconv.ParseInt(web.Params(c.Req)[":tokenId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Token ID is invalid", err)
 	}
 
-	// confirm API key belongs to service account. TODO: refactor get & delete to single call
-	cmdGet := &models.GetApiKeyByIdQuery{ApiKeyId: tokenID}
-	if err = api.apiKeyStore.GetApiKeyById(c.Req.Context(), cmdGet); err != nil {
-		status := http.StatusNotFound
-		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
-			status = http.StatusInternalServerError
-		} else {
-			err = models.ErrApiKeyNotFound
-		}
-
-		return response.Error(status, failedToDeleteMsg, err)
-	}
-
-	// verify service account ID matches the URL
-	if *cmdGet.Result.ServiceAccountId != saID {
-		return response.Error(http.StatusNotFound, failedToDeleteMsg, err)
-	}
-
-	cmdDel := &models.DeleteApiKeyCommand{Id: tokenID, OrgId: c.OrgId}
-	if err = api.apiKeyStore.DeleteApiKey(c.Req.Context(), cmdDel); err != nil {
+	if err = api.store.DeleteServiceAccountToken(c.Req.Context(), c.OrgId, saID, tokenID); err != nil {
 		status := http.StatusNotFound
 		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
 			status = http.StatusInternalServerError

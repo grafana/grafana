@@ -1,5 +1,5 @@
 import { XYFieldMatchers } from './types';
-import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames } from '@grafana/data';
+import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
@@ -29,9 +29,9 @@ function applySpanNullsThresholds(frame: DataFrame) {
   return frame;
 }
 
-export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers) {
+export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   let alignedFrame = outerJoinDataFrames({
-    frames: frames.map((frame) => applyNullInsertThreshold(frame)),
+    frames: frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf())),
     joinBy: dimFields.x,
     keep: dimFields.y,
     keepOriginIndices: true,

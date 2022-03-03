@@ -22,17 +22,27 @@ import (
 // but i wanted to test for all of them, to be sure.
 
 func TestSuccessResponse(t *testing.T) {
+	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange}
+	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant}
+	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange}
+
 	tt := []struct {
 		name     string
 		filepath string
+		query    lokiQuery
 	}{
-		{name: "parse a simple matrix response", filepath: "matrix_simple"},
-		{name: "parse a matrix response with a time-gap in the middle", filepath: "matrix_gap"},
+		{name: "parse a simple matrix response", filepath: "matrix_simple", query: matrixQuery},
+		{name: "parse a matrix response with a time-gap in the middle", filepath: "matrix_gap", query: matrixQuery},
 		// you can produce NaN by having a metric query and add ` / 0` to the end
-		{name: "parse a matrix response with NaN", filepath: "matrix_nan"},
+		{name: "parse a matrix response with NaN", filepath: "matrix_nan", query: matrixQuery},
 		// you can produce Infinity by using `quantile_over_time(42,` (value larger than 1)
-		{name: "parse a matrix response with Infinity", filepath: "matrix_inf"},
-		{name: "parse a matrix response with very small step value", filepath: "matrix_small_step"},
+		{name: "parse a matrix response with Infinity", filepath: "matrix_inf", query: matrixQuery},
+		{name: "parse a matrix response with very small step value", filepath: "matrix_small_step", query: matrixQuery},
+
+		{name: "parse a simple vector response", filepath: "vector_simple", query: vectorQuery},
+		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
+
+		{name: "parse a simple streams response", filepath: "streams_simple", query: streamsQuery},
 	}
 
 	for _, test := range tt {
@@ -43,7 +53,7 @@ func TestSuccessResponse(t *testing.T) {
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(context.Background(), makeMockedAPI(200, "application/json", bytes), &lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42})
+			frames, err := runQuery(context.Background(), makeMockedAPI(200, "application/json", bytes), &test.query)
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{
@@ -103,7 +113,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)
