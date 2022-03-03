@@ -2,8 +2,7 @@ import React, { FC } from 'react';
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax, LinkModel } from '@grafana/data';
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { TableCellProps, TableCellDisplayMode } from './types';
-import { DataLinksContextMenu } from '../../../src/components/DataLinks/DataLinksContextMenu';
-import { DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
+import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
