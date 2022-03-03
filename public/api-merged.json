@@ -4494,15 +4494,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -7847,14 +7847,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -7862,6 +7854,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7895,16 +7895,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -10143,7 +10143,7 @@
       },
       "x-go-package": "github.com/prometheus/common/config"
     },
-    "BrandingOptions": {
+    "BrandingOptionsDTO": {
       "type": "object",
       "properties": {
         "emailFooterLink": {
@@ -10280,7 +10280,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "orgId": {
           "type": "integer",
@@ -10296,10 +10296,11 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "$ref": "#/definitions/State"
+          "type": "string",
+          "x-go-name": "State"
         },
         "templateVars": {
           "type": "object",
@@ -10480,7 +10481,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "recipients": {
           "type": "string",
@@ -10491,7 +10492,7 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
           "type": "string",
@@ -10761,6 +10762,10 @@
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
         },
         "canEdit": {
           "type": "boolean",
@@ -11723,6 +11728,10 @@
           "type": "boolean",
           "x-go-name": "CanAdmin"
         },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
         "canEdit": {
           "type": "boolean",
           "x-go-name": "CanEdit"
@@ -12068,8 +12077,8 @@
         },
         "exec_err_state": {
           "type": "string",
-          "enum": ["Alerting", "Error"],
-          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
+          "enum": ["OK", "Alerting", "Error"],
+          "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
           "x-go-name": "ExecErrState"
         },
         "id": {
@@ -12162,6 +12171,13 @@
             "$ref": "#/definitions/GettableExtendedRuleNode"
           },
           "x-go-name": "Rules"
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "SourceTenants"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -13906,8 +13922,8 @@
         },
         "exec_err_state": {
           "type": "string",
-          "enum": ["Alerting", "Error"],
-          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
+          "enum": ["OK", "Alerting", "Error"],
+          "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
           "x-go-name": "ExecErrState"
         },
         "no_data_state": {
@@ -14266,7 +14282,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
-    "ReportOptions": {
+    "ReportOptionsDTO": {
       "type": "object",
       "properties": {
         "layout": {
@@ -14539,6 +14555,13 @@
             "$ref": "#/definitions/GettableExtendedRuleNode"
           },
           "x-go-name": "Rules"
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "SourceTenants"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -14673,7 +14696,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "Schedule": {
+    "ScheduleDTO": {
       "type": "object",
       "properties": {
         "day": {
@@ -14824,7 +14847,7 @@
       "type": "object",
       "properties": {
         "branding": {
-          "$ref": "#/definitions/BrandingOptions"
+          "$ref": "#/definitions/BrandingOptionsDTO"
         },
         "id": {
           "type": "integer",
@@ -15053,10 +15076,6 @@
     },
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
-    },
-    "State": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
     "Status": {
       "type": "object",
@@ -16772,12 +16791,11 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
-      },
-      "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilence": {
       "description": "GettableSilence gettable silence",
@@ -16951,7 +16969,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -16985,10 +17002,11 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -16997,7 +17015,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",
