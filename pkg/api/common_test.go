@@ -314,6 +314,11 @@ func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
 }
 
+// NOTE VQ TEAM START HERE:
+// can we use this instead of super complicated setupHTTPServerWithCfgDb
+// Do we need to deal with access control stuff right now? And if we do, are
+// there sain defaults we can assume to remove the logic of
+// setupHTTPServerWithCfgDb?
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	if features == nil {
 		features = featuremgmt.WithFeatures()
@@ -338,7 +343,25 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, cfg)
 }
 
-func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, options ...func(*HTTPServer) error) accessControlScenarioContext {
+func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
+	// Use a new conf
+	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+
+	db := sqlstore.InitTestDB(t)
+	db.Cfg = cfg
+
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock())
+}
+
+func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
+	db := sqlstore.InitTestDB(t)
+	db.Cfg = cfg
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db)
+}
+
+func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store) accessControlScenarioContext {
 
 	t.Helper()
 
@@ -346,12 +369,6 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	var acmock *accesscontrolmock.Mock
-
-	// Use a test DB
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = cfg
-
-	mdb := mockstore.NewSQLStoreMock()
 
 	bus := bus.GetBus()
 
@@ -367,7 +384,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		Live:               newTestLive(t),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
-		SQLStore:           mdb,
+		SQLStore:           store,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore, nil),
 	}
