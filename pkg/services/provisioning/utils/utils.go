@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func CheckOrgExists(ctx context.Context, orgID int64) error {
+type OrgStore interface {
+	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
+}
+
+func CheckOrgExists(ctx context.Context, store OrgStore, orgID int64) error {
 	query := models.GetOrgByIdQuery{Id: orgID}
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := store.GetOrgById(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}

@@ -133,6 +133,11 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "lokiLive",
+			Description: "support websocket streaming for loki (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -141,6 +146,16 @@ var (
 			Name:        "featureHighlights",
 			Description: "Highlight Enterprise features",
 			State:       FeatureStateStable,
+		},
+		{
+			Name:        "dashboardComments",
+			Description: "Enable dashboard-wide comments",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "annotationComments",
+			Description: "Enable annotation comments",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "migrationLocking",

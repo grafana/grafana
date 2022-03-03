@@ -39,4 +39,5 @@ export const defaultPanelOptions: PanelOptions = {
 export const defaultPanelFieldConfig: TableFieldOptions = {
   displayMode: TableCellDisplayMode.Auto,
   align: 'auto',
+  inspect: false,
 };

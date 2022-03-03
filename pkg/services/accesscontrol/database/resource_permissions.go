@@ -359,16 +359,28 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 		args = append(args, a)
 	}
 
-	// Need args x3 due to union
 	initialLength := len(args)
-	args = append(args, args[:initialLength]...)
-	args = append(args, args[:initialLength]...)
 
-	user := userSelect + userFrom + where
-	team := teamSelect + teamFrom + where
+	userFilter, err := accesscontrol.Filter(context.Background(), "u.id", "users", accesscontrol.ActionOrgUsersRead, query.User)
+	if err != nil {
+		return nil, err
+	}
+	user := userSelect + userFrom + where + " AND " + userFilter.Where
+	args = append(args, userFilter.Args...)
+
+	teamFilter, err := accesscontrol.Filter(context.Background(), "t.id", "teams", accesscontrol.ActionTeamsRead, query.User)
+	if err != nil {
+		return nil, err
+	}
+
+	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
+	args = append(args, args[:initialLength]...)
+	args = append(args, teamFilter.Args...)
+
 	builtin := builtinSelect + builtinFrom + where
-	sql := user + "UNION" + team + "UNION" + builtin
+	args = append(args, args[:initialLength]...)
 
+	sql := user + " UNION " + team + " UNION " + builtin
 	queryResults := make([]flatResourcePermission, 0)
 	if err := sess.SQL(sql, args...).Find(&queryResults); err != nil {
 		return nil, err

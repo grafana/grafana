@@ -99,6 +99,10 @@ const (
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
 
+	// FlagLokiLive
+	// support websocket streaming for loki (early prototype)
+	FlagLokiLive = "lokiLive"
+
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"
@@ -106,6 +110,14 @@ const (
 	// FlagFeatureHighlights
 	// Highlight Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
+
+	// FlagDashboardComments
+	// Enable dashboard-wide comments
+	FlagDashboardComments = "dashboardComments"
+
+	// FlagAnnotationComments
+	// Enable annotation comments
+	FlagAnnotationComments = "annotationComments"
 
 	// FlagMigrationLocking
 	// Lock database during migrations
