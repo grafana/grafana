@@ -1,13 +1,8 @@
 import React, { FC } from 'react';
-import { RuleType } from './RuleType';
+import { RuleType, SharedProps } from './RuleType';
 import { RuleFormType } from '../../../types/rule-form';
 
-interface Props {
-  selected?: boolean;
-  onClick: (value: RuleFormType) => void;
-}
-
-const GrafanaManagedRuleType: FC<Props> = ({ selected = false, onClick }) => {
+const GrafanaManagedRuleType: FC<SharedProps> = ({ selected = false, disabled, onClick }) => {
   return (
     <RuleType
       name="Grafana managed"
@@ -20,7 +15,9 @@ const GrafanaManagedRuleType: FC<Props> = ({ selected = false, onClick }) => {
       }
       image="/public/img/grafana_icon.svg"
       selected={selected}
-      onClick={() => onClick(RuleFormType.grafana)}
+      disabled={disabled}
+      value={RuleFormType.grafana}
+      onClick={onClick}
     />
   );
 };

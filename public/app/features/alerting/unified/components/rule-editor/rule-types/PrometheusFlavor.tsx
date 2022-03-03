@@ -1,13 +1,12 @@
 import React, { FC } from 'react';
-import { RuleType } from './RuleType';
+import { RuleType, SharedProps } from './RuleType';
 import { RuleFormType } from '../../../types/rule-form';
 
-interface Props {
-  selected?: boolean;
+interface Props extends SharedProps {
   onClick: (value: RuleFormType) => void;
 }
 
-const PrometheusFlavoredType: FC<Props> = ({ selected = false, onClick }) => {
+const PrometheusFlavoredType: FC<Props> = ({ selected = false, disabled, onClick }) => {
   return (
     <RuleType
       name="Prometheus-style alert"
@@ -20,7 +19,9 @@ const PrometheusFlavoredType: FC<Props> = ({ selected = false, onClick }) => {
       }
       image="/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
       selected={selected}
-      onClick={() => onClick(RuleFormType.cloudAlerting)}
+      disabled={disabled}
+      value={RuleFormType.cloudAlerting}
+      onClick={onClick}
     />
   );
 };
