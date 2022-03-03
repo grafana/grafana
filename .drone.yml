@@ -11,7 +11,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -114,7 +114,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -358,7 +358,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -422,7 +422,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -478,7 +478,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -531,7 +531,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -632,7 +632,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1015,7 +1015,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1083,7 +1083,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1166,7 +1166,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1248,7 +1248,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1556,7 +1556,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1677,7 +1677,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1761,7 +1761,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1820,7 +1820,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2163,7 +2163,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2336,7 +2336,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2464,7 +2464,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2539,7 +2539,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2617,7 +2617,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2678,7 +2678,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2757,7 +2757,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2819,7 +2819,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2855,7 +2855,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2902,7 +2902,7 @@ steps:
   name: initialize
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2950,7 +2950,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3013,7 +3013,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3276,7 +3276,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3390,7 +3390,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3467,7 +3467,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -3515,7 +3515,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3852,7 +3852,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4015,7 +4015,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4133,7 +4133,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.10/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4330,6 +4330,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: c2da781acf9dc4a0178c13a5d9029d9ef3af96a6171ceaafc3c35c59dcfd1ac3
+hmac: e3cb92ddbab7597fd0aa6b1df0e603b6870eadca83ccd3ef2ab626588d3f7681
 
 ...

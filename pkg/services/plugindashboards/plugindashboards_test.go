@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,8 +19,8 @@ func TestService(t *testing.T) {
 			scenarioInput{}, func(ctx *scenarioContext) {
 				ctx.s.updateAppDashboards()
 
-				require.Len(t, ctx.getPluginSettingsArgs, 1)
-				require.Equal(t, int64(0), ctx.getPluginSettingsArgs[0])
+				require.Len(t, ctx.pluginSettingsService.getPluginSettingsArgs, 1)
+				require.Equal(t, int64(0), ctx.pluginSettingsService.getPluginSettingsArgs[0])
 				require.Empty(t, ctx.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
@@ -41,7 +42,7 @@ func TestService(t *testing.T) {
 			}, func(ctx *scenarioContext) {
 				ctx.s.updateAppDashboards()
 
-				require.NotEmpty(t, ctx.getPluginSettingsArgs)
+				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
@@ -63,7 +64,7 @@ func TestService(t *testing.T) {
 			}, func(ctx *scenarioContext) {
 				ctx.s.updateAppDashboards()
 
-				require.NotEmpty(t, ctx.getPluginSettingsArgs)
+				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
@@ -95,7 +96,7 @@ func TestService(t *testing.T) {
 			}, func(ctx *scenarioContext) {
 				ctx.s.updateAppDashboards()
 
-				require.NotEmpty(t, ctx.getPluginSettingsArgs)
+				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
@@ -130,7 +131,7 @@ func TestService(t *testing.T) {
 			}, func(ctx *scenarioContext) {
 				ctx.s.updateAppDashboards()
 
-				require.NotEmpty(t, ctx.getPluginSettingsArgs)
+				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
@@ -178,7 +179,7 @@ func TestService(t *testing.T) {
 			}, func(ctx *scenarioContext) {
 				ctx.s.updateAppDashboards()
 
-				require.NotEmpty(t, ctx.getPluginSettingsArgs)
+				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Len(t, ctx.deleteDashboardArgs, 1)
 				require.Equal(t, int64(2), ctx.deleteDashboardArgs[0].OrgId)
 				require.Equal(t, int64(3), ctx.deleteDashboardArgs[0].Id)
@@ -334,18 +335,6 @@ func TestService(t *testing.T) {
 		})
 }
 
-type pluginSettingsStoreMock struct {
-	getPluginSettingsFunc func(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error)
-}
-
-func (m *pluginSettingsStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
-	if m.getPluginSettingsFunc != nil {
-		return m.getPluginSettingsFunc(ctx, orgID)
-	}
-
-	return nil, nil
-}
-
 type pluginStoreMock struct {
 	plugins.Store
 	pluginFunc func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool)
@@ -394,6 +383,41 @@ func (m *importDashboardServiceMock) ImportDashboard(ctx context.Context, req *d
 	return nil, nil
 }
 
+type pluginsSettingsServiceMock struct {
+	service.Service
+
+	storedPluginSettings  []*models.PluginSettingInfoDTO
+	getPluginSettingsArgs []int64
+	err                   error
+}
+
+func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+	s.getPluginSettingsArgs = append(s.getPluginSettingsArgs, orgID)
+	return s.storedPluginSettings, s.err
+}
+
+func (s *pluginsSettingsServiceMock) GetPluginSettingById(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
+	for _, setting := range s.storedPluginSettings {
+		if setting.PluginId == query.PluginId {
+			query.Result = &models.PluginSetting{
+				PluginId: query.PluginId,
+				OrgId:    query.OrgId,
+			}
+			break
+		}
+	}
+
+	return s.err
+}
+
+func (s *pluginsSettingsServiceMock) UpdatePluginSettingVersion(_ context.Context, _ *models.UpdatePluginSettingVersionCmd) error {
+	return s.err
+}
+
+func (s *pluginsSettingsServiceMock) UpdatePluginSetting(_ context.Context, _ *models.UpdatePluginSettingCmd) error {
+	return s.err
+}
+
 type scenarioInput struct {
 	storedPluginSettings []*models.PluginSettingInfoDTO
 	installedPlugins     []plugins.PluginDTO
@@ -403,8 +427,7 @@ type scenarioInput struct {
 type scenarioContext struct {
 	t                                *testing.T
 	bus                              bus.Bus
-	pluginSettingsStore              pluginSettingsStore
-	getPluginSettingsArgs            []int64
+	pluginSettingsService            *pluginsSettingsServiceMock
 	pluginStore                      plugins.Store
 	pluginDashboardManager           plugins.PluginDashboardManager
 	importDashboardService           dashboardimport.Service
@@ -422,21 +445,11 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 	sCtx := &scenarioContext{
 		t:                                t,
 		bus:                              bus.New(),
-		getPluginSettingsArgs:            []int64{},
 		importDashboardArgs:              []*dashboardimport.ImportDashboardRequest{},
 		deleteDashboardArgs:              []*models.DeleteDashboardCommand{},
 		getPluginSettingsByIdArgs:        []*models.GetPluginSettingByIdQuery{},
 		updatePluginSettingVersionArgs:   []*models.UpdatePluginSettingVersionCmd{},
 		getDashboardsByPluginIdQueryArgs: []*models.GetDashboardsByPluginIdQuery{},
-	}
-
-	getPluginSettings := func(_ context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
-		sCtx.getPluginSettingsArgs = append(sCtx.getPluginSettingsArgs, orgID)
-		return input.storedPluginSettings, nil
-	}
-
-	sCtx.pluginSettingsStore = &pluginSettingsStoreMock{
-		getPluginSettingsFunc: getPluginSettings,
 	}
 
 	getPlugin := func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -447,6 +460,10 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		}
 
 		return plugins.PluginDTO{}, false
+	}
+
+	sCtx.pluginSettingsService = &pluginsSettingsServiceMock{
+		storedPluginSettings: input.storedPluginSettings,
 	}
 
 	sCtx.pluginStore = &pluginStoreMock{
@@ -498,14 +515,6 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		return nil
 	})
 
-	mock := &mockPluginsSettingsService{}
-	for _, p := range input.storedPluginSettings {
-		mock.pluginSetting = &models.PluginSetting{
-			PluginId: p.PluginId,
-			OrgId:    p.OrgId,
-		}
-	}
-
 	sCtx.bus.AddHandler(func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 		sCtx.getDashboardsByPluginIdQueryArgs = append(sCtx.getDashboardsByPluginIdQueryArgs, query)
 		dashboards := []*models.Dashboard{}
@@ -536,29 +545,11 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		return nil
 	})
 
-	sCtx.s = new(sCtx.pluginSettingsStore, sCtx.bus, sCtx.pluginStore, sCtx.pluginDashboardManager, sCtx.importDashboardService, mock)
+	sCtx.s = newService(sCtx.bus, sCtx.pluginStore, sCtx.pluginDashboardManager, sCtx.importDashboardService, sCtx.pluginSettingsService)
 
 	t.Cleanup(bus.ClearBusHandlers)
 
 	t.Run(desc, func(t *testing.T) {
 		f(sCtx)
 	})
-}
-
-type mockPluginsSettingsService struct {
-	pluginSetting *models.PluginSetting
-	err           error
-}
-
-func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-	query.Result = s.pluginSetting
-	return s.err
-}
-
-func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
-	return s.err
-}
-
-func (s *mockPluginsSettingsService) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
-	return s.err
 }

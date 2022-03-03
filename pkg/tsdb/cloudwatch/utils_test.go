@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type FakeCWLogsClient struct {
+type fakeCWLogsClient struct {
 	cloudwatchlogsiface.CloudWatchLogsAPI
 
 	calls logsQueryCalls
@@ -32,11 +32,11 @@ type logsQueryCalls struct {
 	startQueryWithContext []*cloudwatchlogs.StartQueryInput
 }
 
-func (m *FakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	return &m.queryResults, nil
 }
 
-func (m *FakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
+func (m *fakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
 	m.calls.startQueryWithContext = append(m.calls.startQueryWithContext, input)
 
 	return &cloudwatchlogs.StartQueryOutput{
@@ -44,21 +44,21 @@ func (m *FakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *clo
 	}, nil
 }
 
-func (m *FakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
+func (m *fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
 	return &cloudwatchlogs.StopQueryOutput{
 		Success: aws.Bool(true),
 	}, nil
 }
 
-func (m *FakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (m *fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	return &m.logGroups, nil
 }
 
-func (m *FakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (m *fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return &m.logGroupFields, nil
 }
 
-type FakeCWClient struct {
+type fakeCWClient struct {
 	cloudwatchiface.CloudWatchAPI
 	cloudwatch.GetMetricDataOutput
 
@@ -67,11 +67,11 @@ type FakeCWClient struct {
 	MetricsPerPage int
 }
 
-func (c FakeCWClient) GetMetricDataWithContext(aws.Context, *cloudwatch.GetMetricDataInput, ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+func (c fakeCWClient) GetMetricDataWithContext(aws.Context, *cloudwatch.GetMetricDataInput, ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
 	return &c.GetMetricDataOutput, nil
 }
 
-func (c FakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+func (c fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 	if c.MetricsPerPage == 0 {
 		c.MetricsPerPage = 1000
 	}
@@ -88,7 +88,7 @@ func (c FakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn fu
 	return nil
 }
 
-type FakeCWAnnotationsClient struct {
+type fakeCWAnnotationsClient struct {
 	cloudwatchiface.CloudWatchAPI
 	calls annontationsQueryCalls
 
@@ -101,13 +101,13 @@ type annontationsQueryCalls struct {
 	describeAlarms          []*cloudwatch.DescribeAlarmsInput
 }
 
-func (c *FakeCWAnnotationsClient) DescribeAlarmsForMetric(params *cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error) {
+func (c *fakeCWAnnotationsClient) DescribeAlarmsForMetric(params *cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error) {
 	c.calls.describeAlarmsForMetric = append(c.calls.describeAlarmsForMetric, params)
 
 	return c.describeAlarmsForMetricOutput, nil
 }
 
-func (c *FakeCWAnnotationsClient) DescribeAlarms(params *cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error) {
+func (c *fakeCWAnnotationsClient) DescribeAlarms(params *cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error) {
 	c.calls.describeAlarms = append(c.calls.describeAlarms, params)
 
 	return c.describeAlarmsOutput, nil
@@ -227,11 +227,4 @@ func (s fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, e
 	return &session.Session{
 		Config: &aws.Config{},
 	}, nil
-}
-
-func pointerString(s string) *string {
-	return &s
-}
-func pointerInt64(i int64) *int64 {
-	return &i
 }
