@@ -39,11 +39,13 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
 
     if (error) {
       switch (error.status) {
-        case 'name-exists':
         case 'empty-name':
         case 'name-match':
           // error.message should always be defined here
-          setError('dashboardName', { message: error.message ?? 'This field is invalid' });
+          setError('dashboardName', { message: error.message ?? 'This field is invalid.' });
+          break;
+        case 'name-exists':
+          setError('dashboardName', { message: 'A dashboard with the same name already exists in this folder.' });
           break;
         default:
           setSubmissionError(
@@ -59,11 +61,11 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
         <input type="hidden" {...register('queries')} />
         <input type="hidden" {...register('visualization')} />
 
-        <p>Create a new dashboard and add a panel with explored queries.</p>
+        <p>Create a new dashboard and add a panel with the explored queries.</p>
 
         <Field
           label="Dashboard name"
-          description="Choose the name of the new dashboard"
+          description="Choose a name for the new dashboard."
           error={errors.dashboardName?.message}
           invalid={!!errors.dashboardName}
         >
@@ -71,7 +73,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             id="dashboard_name"
             {...register('dashboardName', {
               shouldUnregister: true,
-              required: { value: true, message: 'This field is required' },
+              required: { value: true, message: 'This field is required.' },
             })}
             // we set default value here instead of in useForm because this input will be unregistered when switching
             // to "Existing Dashboard" and default values are not populated with manually registered
@@ -82,7 +84,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
 
         <Field
           label="Folder"
-          description="Select where the dashboard will be created"
+          description="Select where the dashboard will be created."
           error={errors.folderId?.message}
           invalid={!!errors.folderId}
         >
@@ -93,7 +95,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             control={control}
             name="folderId"
             shouldUnregister
-            rules={{ required: { value: true, message: 'Select a valid folder to save your dashboard in' } }}
+            rules={{ required: { value: true, message: 'Select a valid folder to save your dashboard in.' } }}
           />
         </Field>
 
@@ -120,7 +122,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             type="submit"
             onClick={handleSubmit(withRedirect(onSubmit, true))}
             variant="primary"
-            icon="plus"
+            icon="apps"
             disabled={isSubmitting}
           >
             Save and go to dashboard
