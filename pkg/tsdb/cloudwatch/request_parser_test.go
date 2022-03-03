@@ -293,6 +293,15 @@ func TestRequestParser(t *testing.T) {
 			assert.Equal(t, GMDApiModeMathExpression, res.getGMDAPIMode())
 		})
 	})
+
+	t.Run("Valid id is generated if ID is not provided and refId is not a valid MetricData ID", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		query.Set("refId", "$$")
+		res, err := parseRequestQuery(query, "$$", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		require.NoError(t, err)
+		assert.Equal(t, "$$", res.RefId)
+		assert.Regexp(t, validMetricDataID, res.Id)
+	})
 }
 
 func getBaseJsonQuery() *simplejson.Json {
