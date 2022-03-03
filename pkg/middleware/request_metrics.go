@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	cw "github.com/weaveworks/common/tracing"
@@ -45,50 +45,60 @@ func init() {
 }
 
 // RequestMetrics is a middleware handler that instruments the request.
-func RequestMetrics(cfg *setting.Cfg) func(handler string) web.Handler {
-	return func(handler string) web.Handler {
-		return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-			rw := res.(web.ResponseWriter)
-			now := time.Now()
-			httpRequestsInFlight.Inc()
-			defer httpRequestsInFlight.Dec()
+func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
+		if strings.HasPrefix(c.Req.URL.Path, "/public/") || c.Req.URL.Path == "robots.txt" || c.Req.URL.Path == "/metrics" {
 			c.Next()
+			return
+		}
 
-			status := rw.Status()
+		rw := res.(web.ResponseWriter)
+		now := time.Now()
+		httpRequestsInFlight.Inc()
+		defer httpRequestsInFlight.Dec()
+		c.Map(c.Req)
+		c.Next()
 
-			code := sanitizeCode(status)
-			method := sanitizeMethod(req.Method)
+		handler := "unknown"
 
-			// enable histogram and disable summaries + counters for http requests.
-			if cfg.IsHTTPRequestHistogramDisabled() {
-				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
-				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
-			} else {
-				// avoiding the sanitize functions for in the new instrumentation
-				// since they dont make much sense. We should remove them later.
-				histogram := httpRequestDurationHistogram.
-					WithLabelValues(handler, strconv.Itoa(rw.Status()), req.Method)
-				if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
-					// Need to type-convert the Observer to an
-					// ExemplarObserver. This will always work for a
-					// HistogramVec.
-					histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
-						time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
-					)
-					return
-				}
-				histogram.Observe(time.Since(now).Seconds())
+		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
+			handler = routeOperation
+		}
+
+		status := rw.Status()
+
+		code := sanitizeCode(status)
+		method := sanitizeMethod(req.Method)
+
+		// enable histogram and disable summaries + counters for http requests.
+		if features.IsEnabled(featuremgmt.FlagDisableHttpRequestHistogram) {
+			duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
+			metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
+			metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
+		} else {
+			// avoiding the sanitize functions for in the new instrumentation
+			// since they dont make much sense. We should remove them later.
+			histogram := httpRequestDurationHistogram.
+				WithLabelValues(handler, code, req.Method)
+			if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
+				// Need to type-convert the Observer to an
+				// ExemplarObserver. This will always work for a
+				// HistogramVec.
+				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+					time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
+				)
+				return
 			}
+			histogram.Observe(time.Since(now).Seconds())
+		}
 
-			switch {
-			case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
-				countProxyRequests(status)
-			case strings.HasPrefix(req.RequestURI, "/api/"):
-				countApiRequests(status)
-			default:
-				countPageRequests(status)
-			}
+		switch {
+		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
+			countProxyRequests(status)
+		case strings.HasPrefix(req.RequestURI, "/api/"):
+			countApiRequests(status)
+		default:
+			countPageRequests(status)
 		}
 	}
 }

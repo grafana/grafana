@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -55,8 +56,7 @@ type SQLStore struct {
 	tracer                      tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator, tracer tracing.Tracer,
-) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator, tracer tracing.Tracer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -66,7 +66,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 		return nil, err
 	}
 
-	if err := s.Migrate(); err != nil {
+	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
 
@@ -81,11 +81,11 @@ func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, er
 	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
-func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
+func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.Bus, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
-		Bus:                         bus,
+		Bus:                         b,
 		CacheService:                cacheService,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
@@ -114,6 +114,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
+	ss.addStatsQueryAndCommandHandlers()
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
@@ -129,8 +130,9 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addPlaylistQueryAndCommandHandlers()
 	ss.addLoginAttemptQueryAndCommandHandlers()
 	ss.addTeamQueryAndCommandHandlers()
-	ss.addDashboardProvisioningQueryAndCommandHandlers()
 	ss.addOrgQueryAndCommandHandlers()
+
+	bus.AddHandler("sql", ss.GetDBHealthQuery)
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -149,7 +151,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 // Migrate performs database migrations.
 // Has to be done in a second phase (after initialization), since other services can register migrations during
 // the initialization phase.
-func (ss *SQLStore) Migrate() error {
+func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 	if ss.dbCfg.SkipMigrations {
 		return nil
 	}
@@ -157,7 +159,7 @@ func (ss *SQLStore) Migrate() error {
 	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
 	ss.migrations.AddMigration(migrator)
 
-	return migrator.Start()
+	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
 }
 
 // Sync syncs changes to the database.
@@ -330,7 +332,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsDatabaseMetricsEnabled() {
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -439,6 +441,7 @@ func (ss *SQLStore) readConfig() error {
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 	return nil
 }
 
@@ -457,6 +460,11 @@ var testSQLStoreMutex sync.Mutex
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
+}
+
+var featuresEnabledDuringTests = []string{
+	featuremgmt.FlagDashboardPreviews,
+	featuremgmt.FlagDashboardComments,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -496,6 +504,15 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = func(requestedFeature string) bool {
+			for _, enabledFeature := range featuresEnabledDuringTests {
+				if enabledFeature == requestedFeature {
+					return true
+				}
+			}
+
+			return false
+		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
@@ -545,7 +562,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			return nil, err
 		}
 
-		if err := testSQLStore.Migrate(); err != nil {
+		if err := testSQLStore.Migrate(false); err != nil {
 			return nil, err
 		}
 
@@ -605,23 +622,24 @@ func IsTestDBMSSQL() bool {
 }
 
 type DatabaseConfig struct {
-	Type             string
-	Host             string
-	Name             string
-	User             string
-	Pwd              string
-	Path             string
-	SslMode          string
-	CaCertPath       string
-	ClientKeyPath    string
-	ClientCertPath   string
-	ServerCertName   string
-	ConnectionString string
-	IsolationLevel   string
-	MaxOpenConn      int
-	MaxIdleConn      int
-	ConnMaxLifetime  int
-	CacheMode        string
-	UrlQueryParams   map[string][]string
-	SkipMigrations   bool
+	Type                        string
+	Host                        string
+	Name                        string
+	User                        string
+	Pwd                         string
+	Path                        string
+	SslMode                     string
+	CaCertPath                  string
+	ClientKeyPath               string
+	ClientCertPath              string
+	ServerCertName              string
+	ConnectionString            string
+	IsolationLevel              string
+	MaxOpenConn                 int
+	MaxIdleConn                 int
+	ConnMaxLifetime             int
+	CacheMode                   string
+	UrlQueryParams              map[string][]string
+	SkipMigrations              bool
+	MigrationLockAttemptTimeout int
 }

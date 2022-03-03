@@ -18,7 +18,6 @@ export interface DashboardMeta {
   url?: string;
   folderId?: number;
   folderUid?: string;
-  fromExplore?: boolean;
   canMakeEditable?: boolean;
   submenuEnabled?: boolean;
   provisioned?: boolean;
@@ -78,8 +77,6 @@ export interface QueriesToUpdateOnDashboardLoad {
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
-  isInitSlow: boolean;
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
-  modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
 }

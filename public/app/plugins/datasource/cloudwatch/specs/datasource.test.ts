@@ -8,15 +8,15 @@ import {
 } from '@grafana/data';
 
 import * as redux from 'app/store/store';
-import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
+import { CloudWatchDatasource } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import {
-  MetricEditorMode,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
   LogAction,
+  MetricEditorMode,
   MetricQueryType,
 } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -29,7 +29,7 @@ import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -177,7 +177,7 @@ describe('CloudWatchDatasource', () => {
       jest.spyOn(rxjsUtils, 'increasingInterval').mockImplementation(() => interval(100));
     });
 
-    it('should stop querying when no more data received a number of times in a row', async () => {
+    it('should stop querying when timed out', async () => {
       const { ds } = getTestContext();
       const fakeFrames = genMockFrames(20);
       const initialRecordsMatched = fakeFrames[0].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
@@ -213,8 +213,13 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
+      const iterations = 15;
+      // Times out after 15 passes for consistent testing
+      const timeoutFunc = () => {
+        return i >= iterations;
+      };
       const myResponse = await lastValueFrom(
-        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
       );
 
       const expectedData = [
@@ -235,10 +240,10 @@ describe('CloudWatchDatasource', () => {
         state: 'Done',
         error: {
           type: DataQueryErrorType.Timeout,
-          message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
+          message: `error: query timed out after 5 attempts`,
         },
       });
-      expect(i).toBe(15);
+      expect(i).toBe(iterations);
     });
 
     it('should continue querying as long as new data is being received', async () => {
@@ -256,8 +261,12 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
+      const startTime = new Date();
+      const timeoutFunc = () => {
+        return Date.now() >= startTime.valueOf() + 6000;
+      };
       const myResponse = await lastValueFrom(
-        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
       );
       expect(myResponse).toEqual({
         data: [fakeFrames[fakeFrames.length - 1]],
@@ -281,8 +290,12 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
+      const startTime = new Date();
+      const timeoutFunc = () => {
+        return Date.now() >= startTime.valueOf() + 6000;
+      };
       const myResponse = await lastValueFrom(
-        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
       );
 
       expect(myResponse).toEqual({
@@ -493,16 +506,15 @@ describe('CloudWatchDatasource', () => {
         });
       });
     });
-
     describe('when regions query is used', () => {
       describe('and region param is left out', () => {
         it('should use the default region', async () => {
           const { ds, instanceSettings } = getTestContext();
-          ds.doMetricQueryRequest = jest.fn().mockResolvedValue([]);
+          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
 
           await ds.metricFindQuery('metrics(testNamespace)');
 
-          expect(ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
             namespace: 'testNamespace',
             region: instanceSettings.jsonData.defaultRegion,
           });
@@ -512,11 +524,11 @@ describe('CloudWatchDatasource', () => {
       describe('and region param is defined by user', () => {
         it('should use the user defined region', async () => {
           const { ds } = getTestContext();
-          ds.doMetricQueryRequest = jest.fn().mockResolvedValue([]);
+          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
 
           await ds.metricFindQuery('metrics(testNamespace2, custom-region)');
 
-          expect(ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
             namespace: 'testNamespace2',
             region: 'custom-region',
           });
@@ -693,9 +705,11 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let templateSrv: TemplateSrv;
     beforeEach(() => {
+      const key = 'key';
       const var1: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var1',
+        rootStateKey: key,
         name: 'var1',
         index: 0,
         current: { value: 'var1-foo', text: 'var1-foo', selected: true },
@@ -709,6 +723,7 @@ describe('CloudWatchDatasource', () => {
       const var2: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var2',
+        rootStateKey: key,
         name: 'var2',
         index: 1,
         current: { value: 'var2-foo', text: 'var2-foo', selected: true },
@@ -722,6 +737,7 @@ describe('CloudWatchDatasource', () => {
       const var3: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var3',
+        rootStateKey: key,
         name: 'var3',
         index: 2,
         current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
@@ -739,6 +755,7 @@ describe('CloudWatchDatasource', () => {
       const var4: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var4',
+        rootStateKey: key,
         name: 'var4',
         index: 3,
         options: [
@@ -754,7 +771,7 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
       };
       const variables = [var1, var2, var3, var4];
-      const state = convertToStoreState(variables);
+      const state = convertToStoreState(key, variables);
       templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
       templateSrv.init(variables);
     });

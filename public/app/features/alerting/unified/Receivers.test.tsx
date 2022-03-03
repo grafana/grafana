@@ -6,7 +6,6 @@ import React from 'react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { act, render, waitFor } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import {
   mockDataSource,
@@ -25,20 +24,21 @@ import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { selectOptionInTest } from '@grafana/ui';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
 jest.mock('./utils/config');
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
 
   api: {
-    fetchConfig: typeAsJestMock(fetchAlertManagerConfig),
-    fetchStatus: typeAsJestMock(fetchStatus),
-    updateConfig: typeAsJestMock(updateAlertManagerConfig),
-    fetchNotifiers: typeAsJestMock(fetchNotifiers),
-    testReceivers: typeAsJestMock(testReceivers),
+    fetchConfig: jest.mocked(fetchAlertManagerConfig),
+    fetchStatus: jest.mocked(fetchStatus),
+    updateConfig: jest.mocked(updateAlertManagerConfig),
+    fetchNotifiers: jest.mocked(fetchNotifiers),
+    testReceivers: jest.mocked(testReceivers),
   },
 };
 
@@ -117,6 +117,8 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
   await selectOptionInTest(selectElement, optionText);
 };
 
+document.addEventListener('click', interceptLinkClicks);
+
 describe('Receivers', () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -174,23 +176,28 @@ describe('Receivers', () => {
     await renderReceivers();
 
     // go to new contact point page
-    userEvent.click(await ui.newContactPointButton.find());
+    await act(async () => {
+      userEvent.click(await ui.newContactPointButton.find());
+    });
 
     await byRole('heading', { name: /create contact point/i }).find();
+
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
-    // type in a name for the new receiver
-    userEvent.type(ui.inputs.name.get(), 'my new receiver');
+    await act(async () => {
+      // type in a name for the new receiver
+      userEvent.type(ui.inputs.name.get(), 'my new receiver');
 
-    // enter some email
-    const email = ui.inputs.email.addresses.get();
-    userEvent.clear(email);
-    userEvent.type(email, 'tester@grafana.com');
+      // enter some email
+      const email = ui.inputs.email.addresses.get();
+      userEvent.clear(email);
+      userEvent.type(email, 'tester@grafana.com');
 
-    // try to test the contact point
-    userEvent.click(ui.testContactPointButton.get());
+      // try to test the contact point
+      userEvent.click(await ui.testContactPointButton.find());
+    });
 
-    await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument());
+    await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument(), { timeout: 1000 });
     userEvent.click(ui.customContactPointOption.get());
     await waitFor(() => expect(ui.contactPointAnnotationSelect(0).get()).toBeInTheDocument());
 
@@ -254,7 +261,7 @@ describe('Receivers', () => {
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
-      await userEvent.click(ui.saveContactButton.get());
+      userEvent.click(await ui.saveContactButton.find());
     });
 
     // see that we're back to main page and proper api calls have been made
@@ -400,11 +407,12 @@ describe('Receivers', () => {
     const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     expect(byTestId('edit').query(receiverRows[0])).not.toBeInTheDocument();
-    await userEvent.click(byTestId('view').get(receiverRows[0]));
+    userEvent.click(byTestId('view').get(receiverRows[0]));
 
     // check that form is open
     await byRole('heading', { name: /contact point/i }).find();
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/cloud-receiver/edit');
+
     const channelForms = ui.channelFormContainer.queryAll();
     expect(channelForms).toHaveLength(2);
 

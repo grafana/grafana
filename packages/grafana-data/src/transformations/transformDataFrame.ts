@@ -4,22 +4,24 @@ import { map, mergeMap } from 'rxjs/operators';
 import { DataFrame, DataTransformerConfig } from '../types';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
 
-const getOperator = (config: DataTransformerConfig): MonoTypeOperatorFunction<DataFrame[]> => (source) => {
-  const info = standardTransformersRegistry.get(config.id);
+const getOperator =
+  (config: DataTransformerConfig): MonoTypeOperatorFunction<DataFrame[]> =>
+  (source) => {
+    const info = standardTransformersRegistry.get(config.id);
 
-  if (!info) {
-    return source;
-  }
+    if (!info) {
+      return source;
+    }
 
-  const defaultOptions = info.transformation.defaultOptions ?? {};
-  const options = { ...defaultOptions, ...config.options };
+    const defaultOptions = info.transformation.defaultOptions ?? {};
+    const options = { ...defaultOptions, ...config.options };
 
-  return source.pipe(
-    mergeMap((before) =>
-      of(before).pipe(info.transformation.operator(options, config.replace), postProcessTransform(before, info))
-    )
-  );
-};
+    return source.pipe(
+      mergeMap((before) => 
+        of(before).pipe(info.transformation.operator(options, config.replace), postProcessTransform(before, info))
+      )
+    );
+  };
 
 const postProcessTransform = (
   before: DataFrame[],

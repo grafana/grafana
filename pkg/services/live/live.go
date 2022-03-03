@@ -13,18 +13,10 @@ import (
 	"sync"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/grafana/grafana/pkg/services/query"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
-	"github.com/gobwas/glob"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -32,7 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -43,11 +37,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
+	"github.com/gobwas/glob"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -67,9 +69,11 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service) (*GrafanaLive, error) {
+	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
+	bus bus.Bus) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
+		Features:              toggles,
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		pluginStore:           pluginStore,
@@ -78,6 +82,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
 		queryDataService:      queryDataService,
+		bus:                   bus,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -174,7 +179,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	if enabled := g.Cfg.FeatureToggles["live-pipeline"]; enabled {
+	if g.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{
@@ -204,7 +209,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// This can be unreasonable to have in production scenario with many
 		// organizations.
 		orgQuery := &models.SearchOrgsQuery{}
-		err := sqlstore.SearchOrgs(context.Background(), orgQuery)
+
+		err := sqlStore.SearchOrgs(context.Background(), orgQuery)
 		if err != nil {
 			return nil, fmt.Errorf("can't get org list: %w", err)
 		}
@@ -235,6 +241,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
+	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -391,6 +398,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 type GrafanaLive struct {
 	PluginContextProvider *plugincontext.Provider
 	Cfg                   *setting.Cfg
+	Features              featuremgmt.FeatureToggles
 	RouteRegister         routing.RouteRegister
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
@@ -398,6 +406,7 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	queryDataService      *query.Service
+	bus                   bus.Bus
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -929,6 +938,7 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *models.Si
 
 // Publish sends the data to the channel without checking permissions etc.
 func (g *GrafanaLive) Publish(orgID int64, channel string, data []byte) error {
+	logger.Debug("publish into channel", "channel", channel, "orgId", orgID, "data", string(data))
 	_, err := g.node.Publish(orgchannel.PrependOrgID(orgID, channel), data)
 	return err
 }

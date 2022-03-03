@@ -1,6 +1,7 @@
 import { XYFieldMatchers } from './types';
-import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames } from '@grafana/data';
+import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
+import { applyNullInsertThreshold } from './nullInsertThreshold';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 import { FIXED_UNIT } from './GraphNG';
 
@@ -16,13 +17,11 @@ function applySpanNullsThresholds(frame: DataFrame) {
       continue;
     }
 
-    if (field.type === FieldType.number) {
-      let spanNulls = field.config.custom?.spanNulls;
+    let spanNulls = field.config.custom?.spanNulls;
 
-      if (typeof spanNulls === 'number') {
-        if (spanNulls !== -1) {
-          field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
-        }
+    if (typeof spanNulls === 'number') {
+      if (spanNulls !== -1) {
+        field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
       }
     }
   }
@@ -30,9 +29,9 @@ function applySpanNullsThresholds(frame: DataFrame) {
   return frame;
 }
 
-export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers) {
+export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   let alignedFrame = outerJoinDataFrames({
-    frames: frames,
+    frames: frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf())),
     joinBy: dimFields.x,
     keep: dimFields.y,
     keepOriginIndices: true,

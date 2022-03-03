@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreId } from 'app/types/explore';
 import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -16,9 +16,9 @@ import { LiveTailButton } from './LiveTailButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, runQueries } from './state/query';
-import ReturnToDashboardButton from './ReturnToDashboardButton';
 import { isSplit } from './state/selectors';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+import { AddToDashboard } from './AddToDashboard';
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -102,8 +102,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         ].filter(Boolean)}
       >
         <ToolbarButtonRow>
-          <ReturnToDashboardButton exploreId={exploreId} />
-
           {!splitted ? (
             <ToolbarButton title="Split" onClick={() => split()} icon="columns" disabled={isLive}>
               Split
@@ -129,6 +127,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
             />
           )}
+
+          <AddToDashboard exploreId={exploreId} />
 
           <RunButton
             refreshInterval={refreshInterval}
@@ -165,17 +165,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   const { syncedTimes } = state.explore;
-  const exploreItem: ExploreItemState = state.explore[exploreId]!;
-  const {
-    datasourceInstance,
-    datasourceMissing,
-    range,
-    refreshInterval,
-    loading,
-    isLive,
-    isPaused,
-    containerWidth,
-  } = exploreItem;
+  const exploreItem = state.explore[exploreId]!;
+  const { datasourceInstance, datasourceMissing, range, refreshInterval, loading, isLive, isPaused, containerWidth } =
+    exploreItem;
 
   const hasLiveOption = !!datasourceInstance?.meta?.streaming;
 

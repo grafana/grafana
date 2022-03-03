@@ -130,7 +130,7 @@ describe('ThresholdsEditor', () => {
       };
       const { instance } = setup({ thresholds });
 
-      const mockEvent = ({ target: { value: '12' } } as any) as ChangeEvent<HTMLInputElement>;
+      const mockEvent = { target: { value: '12' } } as any as ChangeEvent<HTMLInputElement>;
 
       instance.onChangeThresholdValue(mockEvent, instance.state.steps[0]);
 
@@ -152,7 +152,7 @@ describe('ThresholdsEditor', () => {
         steps: thresholds.steps,
       };
 
-      const mockEvent = ({ target: { value: '78' } } as any) as ChangeEvent<HTMLInputElement>;
+      const mockEvent = { target: { value: '78' } } as any as ChangeEvent<HTMLInputElement>;
 
       instance.onChangeThresholdValue(mockEvent, thresholds.steps[1]);
 

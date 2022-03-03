@@ -12,7 +12,7 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import React from 'react';
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiQuery } from '../../loki/types';
@@ -86,6 +86,16 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     this.props.onRunQuery();
   };
 
+  onClearResults = () => {
+    // Run clear query to clear results
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({
+      ...query,
+      queryType: 'clear',
+    });
+    onRunQuery();
+  };
+
   render() {
     const { query, onChange, datasource } = this.props;
     // Find query field from linked datasource
@@ -123,12 +133,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             <RadioButtonGroup<TempoQueryType>
               options={queryTypeOptions}
               value={query.queryType}
-              onChange={(v) =>
+              onChange={(v) => {
+                this.onClearResults();
+
                 onChange({
                   ...query,
                   queryType: v,
-                })
-              }
+                });
+              }}
               size="md"
             />
           </InlineField>

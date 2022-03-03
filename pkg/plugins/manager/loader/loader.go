@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -62,7 +63,7 @@ func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLo
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
-		l.log.Error("plugin finder encountered an error", "err", err)
+		return nil, err
 	}
 
 	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
@@ -75,18 +76,18 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as it's plugin.json is invalid", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
 			continue
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as full plugin.json path could not be calculated", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginID", plugin.ID, "err", err)
 			continue
 		}
 
 		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
 			continue
 		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
@@ -161,7 +162,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 
 		if plugin.IsApp() {
-			setDefaultNavURL(plugin, l.cfg.AppSubURL)
+			setDefaultNavURL(plugin)
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
@@ -240,7 +241,7 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 		Class:     class,
 	}
 
-	plugin.SetLogger(logger.New("pluginID", plugin.ID))
+	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 	setImages(plugin)
 
 	return plugin
@@ -255,17 +256,22 @@ func setImages(p *plugins.Plugin) {
 	}
 }
 
-func setDefaultNavURL(p *plugins.Plugin, appSubURL string) {
+func setDefaultNavURL(p *plugins.Plugin) {
 	// slugify pages
 	for _, include := range p.Includes {
 		if include.Slug == "" {
 			include.Slug = slug.Make(include.Name)
 		}
-		if include.Type == "page" && include.DefaultNav {
-			p.DefaultNavURL = appSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
+
+		if !include.DefaultNav {
+			continue
 		}
-		if include.Type == "dashboard" && include.DefaultNav {
-			p.DefaultNavURL = appSubURL + "/dashboard/db/" + include.Slug
+
+		if include.Type == "page" {
+			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
+		}
+		if include.Type == "dashboard" {
+			p.DefaultNavURL = path.Join("/dashboard/db/", include.Slug)
 		}
 	}
 }

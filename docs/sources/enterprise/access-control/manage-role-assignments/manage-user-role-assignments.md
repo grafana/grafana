@@ -15,7 +15,7 @@ In order to assign roles to a user within a specific Organization using the role
 
 - The Admin built-in role.
 - The Server Admin role.
-- The fixed role `fixed:permissions:writer`, [assigned for the given Organization]({{< relref "../roles/#scope-of-assignments" >}}).
+- The fixed role `fixed:roles:writer`, [assigned for the given Organization]({{< relref "../roles/#scope-of-assignments" >}}).
 - A custom role with `users.roles:add` and `users.roles:remove` permissions.
 
 You must also have the permissions granted by the roles that you want to assign or revoke.
@@ -26,7 +26,7 @@ Steps:
 1. Click on the **Role** column in the row for the user whose role you would like to edit.
 1. Deselect one or more selected roles that you would like to remove from that user.
 1. Select one or more roles that you would like to assign to that user.
-1. Click the **Apply** button to apply the selected roles to that user.
+1. Click the **Update** button to apply the selected roles to that user.
 
 ![User role picker in Organization](/static/img/docs/enterprise/user_role_picker_global.png)
 

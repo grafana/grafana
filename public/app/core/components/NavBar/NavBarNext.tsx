@@ -5,8 +5,8 @@ import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
-import config from 'app/core/config';
-import { KioskMode } from 'app/types';
+import { getKioskMode } from 'app/core/navigation/kiosk';
+import { KioskMode, StoreState } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { NavBarSection } from './NavBarSection';
@@ -14,6 +14,7 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { Branding } from '../Branding/Branding';
+import { useSelector } from 'react-redux';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -27,27 +28,31 @@ const searchItem: NavModelItem = {
 };
 
 export const NavBarNext = React.memo(() => {
+  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
+
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const kiosk = query.get('kiosk') as KioskMode;
+  const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
-  const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
+  const navTree = cloneDeep(navBarTree);
   const coreItems = navTree.filter((item) => item.section === NavSection.Core);
+  const pinnedCoreItems = coreItems.filter((item) => !item.hideFromNavbar);
   const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
+  const pinnedPluginItems = pluginItems.filter((item) => !item.hideFromNavbar);
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
   );
+  const pinnedConfigItems = configItems.filter((item) => !item.hideFromNavbar);
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  if (kiosk !== null) {
+  if (kiosk !== KioskMode.Off) {
     return null;
   }
 
@@ -67,7 +72,7 @@ export const NavBarNext = React.memo(() => {
       </NavBarSection>
 
       <NavBarSection>
-        {coreItems.map((link, index) => (
+        {pinnedCoreItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
@@ -79,9 +84,9 @@ export const NavBarNext = React.memo(() => {
         ))}
       </NavBarSection>
 
-      {pluginItems.length > 0 && (
+      {pinnedPluginItems.length > 0 && (
         <NavBarSection>
-          {pluginItems.map((link, index) => (
+          {pinnedPluginItems.map((link, index) => (
             <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
               {link.icon && <Icon name={link.icon as IconName} size="xl" />}
               {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -93,7 +98,7 @@ export const NavBarNext = React.memo(() => {
       <div className={styles.spacer} />
 
       <NavBarSection>
-        {configItems.map((link, index) => (
+        {pinnedConfigItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
@@ -118,7 +123,7 @@ export const NavBarNext = React.memo(() => {
   );
 });
 
-NavBarNext.displayName = 'NavBar';
+NavBarNext.displayName = 'NavBarNext';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`

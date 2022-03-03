@@ -176,35 +176,37 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-    "result": {
-      "id": 25,
-      "orgId": 1,
-      "folderId": 0,
-      "uid": "V--OrYHnz",
-      "name": "API docs Example",
-      "kind": 1,
-      "type": "text",
-      "description": "",
-      "model": {...},
-      "version": 1,
-      "meta": {
-          "folderName": "General",
-          "folderUid": "",
-          "connectedDashboards": 1,
-          "created": "2021-09-27T09:56:17+02:00",
-          "updated": "2021-09-27T09:56:17+02:00",
-          "createdBy": {
-              "id": 1,
-              "name": "admin",
-              "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
-          },
-          "updatedBy": {
-              "id": 1,
-              "name": "admin",
-              "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
-          }
-      }
-   }
+    "result": [
+        {
+            "id": 25,
+            "orgId": 1,
+            "folderId": 0,
+            "uid": "V--OrYHnz",
+            "name": "API docs Example",
+            "kind": 1,
+            "type": "text",
+            "description": "",
+            "model": {...},
+            "version": 1,
+            "meta": {
+                "folderName": "General",
+                "folderUid": "",
+                "connectedDashboards": 1,
+                "created": "2021-09-27T09:56:17+02:00",
+                "updated": "2021-09-27T09:56:17+02:00",
+                "createdBy": {
+                    "id": 1,
+                    "name": "admin",
+                    "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
+                },
+                "updatedBy": {
+                    "id": 1,
+                    "name": "admin",
+                    "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
+                }
+            }
+        }
+    ]
 }
 ```
 
@@ -267,8 +269,8 @@ Creates a new library element.
 
 JSON Body schema:
 
-- **folderId** – ID of the folder where the library element is stored.
-- **name** – Name of the library element.
+- **folderId** – Optional, the ID of the folder where the library element is stored.
+- **name** – Optional, the name of the library element.
 - **model** – The JSON model for the library element.
 - **kind** – Kind of element to create, Use `1` for library panels or `2` for library variables.
 - **uid** – Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).

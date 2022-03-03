@@ -8,12 +8,12 @@ import Prism from 'prismjs';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
+  CoreApp,
   DataFrame,
   DataFrameView,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithLogsVolumeSupport,
@@ -33,7 +33,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { addLabelToQuery } from './add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -44,7 +44,8 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
+import { transformBackendResult } from './backendResultTransformer';
+import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
@@ -62,19 +63,13 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
-import config from 'app/core/config';
+import { doLokiChannelStream } from './streaming';
 import { renderLegendFormat } from '../prometheus/legend';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 const NS_IN_MS = 1000000;
-
-/**
- * Loki's logs volume query may be expensive as it requires counting all logs in the selected range. If such query
- * takes too much time it may need be made more specific to limit number of logs processed under the hood.
- */
-const LOGS_VOLUME_TIMEOUT = 10000;
 
 const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
@@ -86,12 +81,13 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
 };
 
 export class LokiDatasource
-  extends DataSourceApi<LokiQuery, LokiOptions>
+  extends DataSourceWithBackend<LokiQuery, LokiOptions>
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithLogsVolumeSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
-    DataSourceWithQueryExportSupport<LokiQuery> {
+    DataSourceWithQueryExportSupport<LokiQuery>
+{
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -127,10 +123,6 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
-    if (!config.featureToggles.fullRangeLogsVolume) {
-      return undefined;
-    }
-
     const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
     if (!isLogsVolumeAvailable) {
       return undefined;
@@ -149,20 +141,31 @@ export class LokiDatasource
       });
 
     return queryLogsVolume(this, logsVolumeRequest, {
-      timeout: LOGS_VOLUME_TIMEOUT,
       extractLevel,
       range: request.range,
       targets: request.targets,
     });
   }
 
-  query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const scopedVars = {
-      ...options.scopedVars,
-      ...this.getRangeScopedVars(options.range),
+      ...request.scopedVars,
+      ...this.getRangeScopedVars(request.range),
     };
-    const filteredTargets = options.targets
+
+    const shouldRunBackendQuery = config.featureToggles.lokiBackendMode && request.app === CoreApp.Explore;
+
+    if (shouldRunBackendQuery) {
+      // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
+      const fixedRequest = {
+        ...request,
+        targets: request.targets.map(getNormalizedLokiQuery),
+      };
+      return super.query(fixedRequest).pipe(map((response) => transformBackendResult(response, fixedRequest)));
+    }
+
+    const filteredTargets = request.targets
       .filter((target) => target.expr && !target.hide)
       .map((target) => {
         const expr = this.addAdHocFilters(target.expr);
@@ -174,9 +177,15 @@ export class LokiDatasource
 
     for (const target of filteredTargets) {
       if (target.instant || target.queryType === LokiQueryType.Instant) {
-        subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+        subQueries.push(this.runInstantQuery(target, request, filteredTargets.length));
+      } else if (
+        config.featureToggles.lokiLive &&
+        target.queryType === LokiQueryType.Stream &&
+        request.rangeRaw?.to === 'now'
+      ) {
+        subQueries.push(doLokiChannelStream(target, this, request));
       } else {
-        subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
+        subQueries.push(this.runRangeQuery(target, request, filteredTargets.length));
       }
     }
 
@@ -752,6 +761,34 @@ export class LokiDatasource
     } else {
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
+  }
+
+  // Used when running queries through backend
+  filterQuery(query: LokiQuery): boolean {
+    if (query.hide || query.expr === '') {
+      return false;
+    }
+    return true;
+  }
+
+  // Used when running queries through backend
+  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): Record<string, any> {
+    // We want to interpolate these variables on backend
+    const { __interval, __interval_ms, ...rest } = scopedVars;
+
+    return {
+      ...target,
+      legendFormat: this.templateSrv.replace(target.legendFormat, rest),
+      expr: this.templateSrv.replace(target.expr, rest, this.interpolateQueryExpr),
+    };
+  }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 }
 

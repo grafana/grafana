@@ -26,7 +26,7 @@ import {
   VizLegendOptions,
   StackingMode,
 } from '@grafana/schema';
-import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
+import { collectStackingGroups, INTERNAL_NEGATIVE_Y_PREFIX, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
 import { buildScaleKey } from '../GraphNG/utils';
 
@@ -272,9 +272,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             series: [t, b],
             fill: undefined, // using null will have the band use fill options from `t`
           });
-        }
-        if (!fillOpacity) {
-          fillOpacity = 35; // default from flot
+
+          if (!fillOpacity) {
+            fillOpacity = 35; // default from flot
+          }
+        } else {
+          fillOpacity = 0;
         }
       }
     }
@@ -329,11 +332,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   }
 
   if (stackingGroups.size !== 0) {
-    for (const [_, seriesIds] of stackingGroups.entries()) {
+    for (const [group, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {
         builder.addBand({
           series: [seriesIdxs[j], seriesIdxs[j - 1]],
+          dir: group.startsWith(INTERNAL_NEGATIVE_Y_PREFIX) ? 1 : -1,
         });
       }
     }

@@ -6,9 +6,11 @@ interface WithContextMenuProps {
   children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
   /** A function that returns an array of menu items */
   renderMenuItems: () => React.ReactNode;
+  /** On menu open focus the first element */
+  focusOnOpen?: boolean;
 }
 
-export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, renderMenuItems }) => {
+export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, renderMenuItems, focusOnOpen = true }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   return (
@@ -29,6 +31,7 @@ export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, rend
           x={menuPosition.x}
           y={menuPosition.y}
           renderMenuItems={renderMenuItems}
+          focusOnOpen={focusOnOpen}
         />
       )}
     </>

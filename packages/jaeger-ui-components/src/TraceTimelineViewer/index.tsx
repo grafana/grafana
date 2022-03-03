@@ -23,7 +23,7 @@ import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 import { SpanLinkFunc, TNil } from '../types';
-import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink } from '../types/trace';
+import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { autoColor } from '../Theme';
 import ExternalLinkContext from '../url/externalLinkContext';
@@ -93,6 +93,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   detailWarningsToggle: (spanID: string) => void;
   detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
+  detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;

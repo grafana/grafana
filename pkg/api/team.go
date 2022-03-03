@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -19,12 +19,12 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	accessControlEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
+	accessControlEnabled := hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol)
 	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
-	team, err := createTeam(hs.SQLStore, cmd.Name, cmd.Email, c.OrgId)
+	team, err := hs.SQLStore.CreateTeam(cmd.Name, cmd.Email, c.OrgId)
 	if err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(409, "Team name taken", err)
@@ -37,14 +37,13 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			if err := addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, c.SignedInUser.UserId, c.OrgId, team.Id, models.PERMISSION_ADMIN.String()); err != nil {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserId, c.OrgId, team.Id, models.PERMISSION_ADMIN.String()); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {
 			c.Logger.Warn("Could not add creator to team because is not a real user")
 		}
 	}
-
 	return response.JSON(200, &util.DynMap{
 		"teamId":  team.Id,
 		"message": "Team created",
@@ -64,8 +63,10 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to update team", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to update team", err)
+		}
 	}
 
 	if err := hs.SQLStore.UpdateTeam(c.Req.Context(), &cmd); err != nil {
@@ -87,8 +88,10 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	}
 	user := c.SignedInUser
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, user); err != nil {
-		return response.Error(403, "Not allowed to delete team", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, user); err != nil {
+			return response.Error(403, "Not allowed to delete team", err)
+		}
 	}
 
 	if err := hs.SQLStore.DeleteTeam(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
@@ -111,9 +114,10 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		page = 1
 	}
 
-	var userIdFilter int64
-	if hs.Cfg.EditorsCanAdmin && c.OrgRole != models.ROLE_ADMIN {
-		userIdFilter = c.SignedInUser.UserId
+	// Using accesscontrol the filtering is done based on user permissions
+	userIdFilter := models.FilterIgnoreUser
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		userIdFilter = userFilter(c)
 	}
 
 	query := models.SearchTeamsQuery{
@@ -131,8 +135,17 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to search Teams", err)
 	}
 
+	teamIDs := map[string]bool{}
 	for _, team := range query.Result.Teams {
 		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+		teamIDs[strconv.FormatInt(team.Id, 10)] = true
+	}
+
+	metadata := hs.getMultiAccessControlMetadata(c, "teams", teamIDs)
+	if len(metadata) > 0 {
+		for _, team := range query.Result.Teams {
+			team.AccessControl = metadata[strconv.FormatInt(team.Id, 10)]
+		}
 	}
 
 	query.Result.Page = page
@@ -141,17 +154,36 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	return response.JSON(200, query.Result)
 }
 
+// UserFilter returns the user ID used in a filter when querying a team
+// 1. If the user is a viewer or editor, this will return the user's ID.
+// 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
+func userFilter(c *models.ReqContext) int64 {
+	userIdFilter := c.SignedInUser.UserId
+	if c.OrgRole == models.ROLE_ADMIN {
+		userIdFilter = models.FilterIgnoreUser
+	}
+	return userIdFilter
+}
+
 // GET /api/teams/:teamId
 func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
+
+	// Using accesscontrol the filtering has already been performed at middleware layer
+	userIdFilter := models.FilterIgnoreUser
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		userIdFilter = userFilter(c)
+	}
+
 	query := models.GetTeamByIdQuery{
 		OrgId:        c.OrgId,
 		Id:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
+		UserIdFilter: userIdFilter,
 	}
 
 	if err := hs.SQLStore.GetTeamById(c.Req.Context(), &query); err != nil {
@@ -161,6 +193,9 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 
 		return response.Error(500, "Failed to get Team", err)
 	}
+
+	// Add accesscontrol metadata
+	query.Result.AccessControl = hs.getAccessControlMetadata(c, "teams", query.Result.Id)
 
 	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
 	return response.JSON(200, &query.Result)
@@ -172,10 +207,13 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
+
 	orgId := c.OrgId
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to view team preferences.", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to view team preferences.", err)
+		}
 	}
 
 	return hs.getPreferencesFor(c.Req.Context(), orgId, 0, teamId)
@@ -187,22 +225,19 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Respo
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
+
 	orgId := c.OrgId
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to update team preferences.", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to update team preferences.", err)
+		}
 	}
 
 	return hs.updatePreferencesFor(c.Req.Context(), orgId, 0, teamId, &dtoCmd)
-}
-
-// createTeam creates a team.
-//
-// Stubbable by tests.
-var createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
-	return sqlStore.CreateTeam(name, email, orgID)
 }

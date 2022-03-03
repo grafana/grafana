@@ -49,7 +49,7 @@ func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 			"Access denied",
 			"userID", c.UserId,
 			"accessErrorID", id,
-			"permissions", evaluator.String(),
+			"permissions", evaluator.GoString(),
 		)
 	}
 
@@ -65,7 +65,7 @@ func Deny(c *models.ReqContext, evaluator accesscontrol.Evaluator, err error) {
 	// internal server error or access denied.
 	c.JSON(http.StatusForbidden, map[string]string{
 		"title":         "Access denied", // the component needs to pick this up
-		"message":       fmt.Sprintf("You'll need additional permissions to perform this action. Refer your administrator to a Grafana log with the reference %s to identify which permissions to add.", id),
+		"message":       fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", evaluator.String()),
 		"accessErrorId": id,
 	})
 }
@@ -91,7 +91,7 @@ func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
 
 type OrgIDGetter func(c *models.ReqContext) (int64, error)
 
-func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db *sqlstore.SQLStore) func(web.Handler, OrgIDGetter, accesscontrol.Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db sqlstore.Store) func(web.Handler, OrgIDGetter, accesscontrol.Evaluator) web.Handler {
 	return func(fallback web.Handler, getTargetOrg OrgIDGetter, evaluator accesscontrol.Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
@@ -156,7 +156,8 @@ func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
 			return
 		}
 
-		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser,
+			accesscontrol.Options{ReloadCache: false})
 		if err != nil {
 			c.JsonApiErr(http.StatusForbidden, "", err)
 			return

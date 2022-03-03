@@ -13,6 +13,22 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type AlertNotificationStore interface {
+	DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error
+	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
+	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error
+	GetAlertNotificationUidWithId(ctx context.Context, query *models.GetAlertNotificationUidQuery) error
+	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error
+	GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error
+	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
+	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
+	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error
+	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
+	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
+	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
+}
+
 func (ss *SQLStore) DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
@@ -52,7 +68,7 @@ func (ss *SQLStore) DeleteAlertNotificationWithUid(ctx context.Context, cmd *mod
 		Id:    existingNotification.Result.Id,
 		OrgId: existingNotification.Result.OrgId,
 	}
-	if err := bus.Dispatch(ctx, deleteCommand); err != nil {
+	if err := ss.DeleteAlertNotification(ctx, deleteCommand); err != nil {
 		return err
 	}
 
@@ -458,7 +474,7 @@ func (ss *SQLStore) UpdateAlertNotificationWithUid(ctx context.Context, cmd *mod
 		OrgId: cmd.OrgId,
 	}
 
-	if err := bus.Dispatch(ctx, updateNotification); err != nil {
+	if err := ss.UpdateAlertNotification(ctx, updateNotification); err != nil {
 		return err
 	}
 
@@ -497,7 +513,7 @@ func (ss *SQLStore) SetAlertNotificationStateToCompleteCommand(ctx context.Conte
 }
 
 func (ss *SQLStore) SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
-	return withDbSession(ctx, x, func(sess *DBSession) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		newVersion := cmd.Version + 1
 		sql := `UPDATE alert_notification_state SET
 			state = ?,

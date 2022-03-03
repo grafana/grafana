@@ -12,6 +12,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { Point } from 'ol/geom';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
@@ -36,7 +37,7 @@ const defaultOptions: HeatmapConfig = {
 export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
   id: 'heatmap',
   name: 'Heatmap',
-  description: 'visualizes a heatmap of the data',
+  description: 'Visualizes a heatmap of the data',
   isBaseMap: false,
   showLocation: true,
 
@@ -48,7 +49,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
     const config = { ...defaultOptions, ...options.config };
     
     const location = await getLocationMatchers(options.location);
-    const source = new FrameVectorSource(location);
+    const source = new FrameVectorSource<Point>(location);
     const WEIGHT_KEY = "_weight";
 
     // Create a new Heatmap layer
@@ -117,7 +118,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
           })
           .addSliderInput({
             path: 'config.radius',
-            description: 'configures the size of clusters',
+            description: 'Configures the size of clusters',
             name: 'Radius',
             defaultValue: defaultOptions.radius,
             settings: {
@@ -128,7 +129,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
           })
           .addSliderInput({
             path: 'config.blur',
-            description: 'configures the amount of blur of clusters',
+            description: 'Configures the amount of blur of clusters',
             name: 'Blur',
             defaultValue: defaultOptions.blur,
             settings: {

@@ -55,7 +55,7 @@ type ContextHandler struct {
 	JWTAuthService   models.JWTService
 	RemoteCache      *remotecache.RemoteCache
 	RenderService    rendering.Service
-	SQLStore         *sqlstore.SQLStore
+	SQLStore         sqlstore.Store
 	tracer           tracing.Tracer
 	// GetTime returns the current time.
 	// Stubbable by tests.
@@ -235,7 +235,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
-	if apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		//Use the old APIkey method.  This provides backwards compatibility.
 		reqContext.SignedInUser = &models.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
@@ -248,7 +248,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	query := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
 	if err := bus.Dispatch(reqContext.Req.Context(), &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
