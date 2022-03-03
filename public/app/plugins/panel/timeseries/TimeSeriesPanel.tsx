@@ -1,8 +1,7 @@
-import React, { useCallback, useMemo, useRef } from 'react';
-import { DataFrame, EventBus, Field, FieldMatcherID, fieldMatchers, PanelProps, TimeRange } from '@grafana/data';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { DataFrame, EventBus, Field, PanelProps, TimeRange } from '@grafana/data';
 import {
   UPlotChart2,
-  preparePlotFrame,
   useTheme2,
   VizLayout,
   PlotLegend,
@@ -23,6 +22,9 @@ import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
+import { preparePlotData } from '@grafana/ui/src/components/uPlot/utils';
+import { PrepDataFnResult } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
+import { AlignedData } from 'uplot';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -43,63 +45,67 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   const timeRange = useRef<TimeRange>();
   const eventBus = useRef<EventBus>();
   const series = useRef<DataFrame[]>();
+  const alignedFrame = useRef<DataFrame | null>(null);
+  const [dataErrors, setDataErrors] = useState<any>();
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   timeRange.current = otherProps.timeRange;
   eventBus.current = otherProps.eventBus;
   series.current = data.series;
 
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange.current! });
-  };
+  // Responsible for data validation and preparation
+  const plotData = useMemo(() => {
+    debugLog('TimeSeriesPanel.plotData memo');
+    const result = prepareTimeSeriesPlotData(data.series);
 
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
+    if (result.error) {
+      setDataErrors(result.error);
+    }
+    // Storing aligned frame via ref to avoid unnecessary config invalidation
+    alignedFrame.current = result.alignedFrame;
 
-  const cfg = useMemo(() => {
-    debugLog('TimeSeriesPanel.preparePlotConfigBuilder memo');
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.structureRev, timeZone, data, setDataErrors]);
 
-    const alignedFrame = preparePlotFrame(series.current!, {
-      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-      y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-    });
+  const plotConfig = useMemo(() => {
+    debugLog('TimeSeriesPanel.plotConfig memo');
+
+    if (!series.current || !alignedFrame.current) {
+      return null;
+    }
 
     return preparePlotConfigBuilder({
-      allFrames: series.current!,
-      frame: alignedFrame!,
+      allFrames: series.current,
+      frame: alignedFrame.current,
       timeZone: timeZone,
       eventBus: eventBus.current!,
       theme,
       getTimeRange: () => timeRange.current!,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.structureRev, timeZone, theme]); //, options.legend, options.tooltip
-
-  const plotData = useMemo(() => {
-    if (!cfg) {
-      return null;
-    }
-
-    return cfg.prepData({
-      frames: data.series,
-    });
-  }, [cfg, data]);
+  }, [data.structureRev, timeZone, theme]);
 
   const renderLegend = useCallback(() => {
     const { legend } = options;
 
-    if (!frames || !cfg || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
+    if (!frames || !plotConfig || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
       return null;
     }
 
-    return <PlotLegend data={frames} config={cfg?.builder} {...legend} />;
-  }, [options, frames, cfg]);
+    return <PlotLegend data={plotData!.frames} config={plotConfig?.builder} {...legend} />;
+  }, [options, plotData, plotConfig]);
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange.current! });
+  };
 
-  if (!frames) {
+  if (dataErrors) {
     return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
   }
 
-  if (!plotData || !cfg) {
+  if (!plotData || !plotConfig) {
     return null;
   }
 
@@ -107,14 +113,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart2 config={cfg} data={plotData.aligned} width={vizWidth} height={vizHeight}>
-            {(cfg, u) => {
+          <UPlotChart2 config={plotConfig} data={plotData.aligned!} width={vizWidth} height={vizHeight}>
+            {(plotConfig) => {
               return (
                 <>
-                  <ZoomPlugin config={cfg.builder} onZoom={onChangeTimeRange} />
+                  <ZoomPlugin config={plotConfig.builder} onZoom={onChangeTimeRange} />
                   <TooltipPlugin
-                    data={plotData.alignedFrame}
-                    config={cfg.builder}
+                    data={plotData.alignedFrame!}
+                    config={plotConfig.builder}
                     mode={options.tooltip.mode}
                     sortOrder={options.tooltip.sort}
                     sync={sync}
@@ -122,17 +128,21 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                   />
 
                   {data.annotations && (
-                    <AnnotationsPlugin annotations={data.annotations} config={cfg.builder} timeZone={timeZone} />
+                    <AnnotationsPlugin annotations={data.annotations} config={plotConfig.builder} timeZone={timeZone} />
                   )}
 
                   {/* Enables annotations creation*/}
                   {enableAnnotationCreation ? (
-                    <AnnotationEditorPlugin data={plotData.alignedFrame} timeZone={timeZone} config={cfg.builder}>
+                    <AnnotationEditorPlugin
+                      data={plotData.alignedFrame!}
+                      timeZone={timeZone}
+                      config={plotConfig.builder}
+                    >
                       {({ startAnnotating }) => {
                         return (
                           <ContextMenuPlugin
-                            data={plotData.alignedFrame}
-                            config={cfg.builder}
+                            data={plotData.alignedFrame!}
+                            config={plotConfig.builder}
                             timeZone={timeZone}
                             replaceVariables={replaceVariables}
                             defaultItems={[
@@ -158,8 +168,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                     </AnnotationEditorPlugin>
                   ) : (
                     <ContextMenuPlugin
-                      data={plotData.alignedFrame}
-                      config={cfg.builder}
+                      data={plotData.alignedFrame!}
+                      config={plotConfig.builder}
                       timeZone={timeZone}
                       replaceVariables={replaceVariables}
                       defaultItems={[]}
@@ -167,7 +177,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                   )}
                   {data.annotations && (
                     <ExemplarsPlugin
-                      config={cfg.builder}
+                      config={plotConfig.builder}
                       exemplars={data.annotations}
                       timeZone={timeZone}
                       getFieldLinks={getFieldLinks}
@@ -176,7 +186,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
 
                   {canEditThresholds && onThresholdsChange && (
                     <ThresholdControlsPlugin
-                      config={cfg.builder}
+                      config={plotConfig.builder}
                       fieldConfig={fieldConfig}
                       onThresholdsChange={onThresholdsChange}
                     />
@@ -189,4 +199,23 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       </VizLayout>
     </>
   );
+};
+
+const prepareTimeSeriesPlotData = (
+  data: DataFrame[]
+): PrepDataFnResult<{ alignedFrame: DataFrame | null; aligned: AlignedData | null }> => {
+  const frames = prepareGraphableFields(data, config.theme2);
+
+  if (!frames) {
+    return {
+      error: 'No time field found',
+      frames: data,
+      alignedFrame: null,
+      aligned: null,
+    };
+  }
+
+  return preparePlotData({
+    frames,
+  });
 };

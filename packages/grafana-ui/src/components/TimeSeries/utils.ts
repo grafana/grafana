@@ -26,7 +26,7 @@ import {
   VizLegendOptions,
   StackingMode,
 } from '@grafana/schema';
-import { collectStackingGroups, INTERNAL_NEGATIVE_Y_PREFIX, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
+import { collectStackingGroups, INTERNAL_NEGATIVE_Y_PREFIX, orderIdsByCalcs } from '../uPlot/utils';
 import uPlot, { AlignedData } from 'uplot';
 import { buildScaleKey } from '../GraphNG/utils';
 
@@ -67,8 +67,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
     // TODO: handle null return
     return null;
   }
-
-  builder.setPrepData((prepData) => preparePlotData({ frames: prepData.frames, legend }));
 
   let seriesIndex = 0;
 
