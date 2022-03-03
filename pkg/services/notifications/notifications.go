@@ -118,6 +118,10 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 	}
 }
 
+func (ns *NotificationService) GetMailer() Mailer {
+	return ns.mailer
+}
+
 func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *models.SendWebhookSync) error {
 	return ns.sendWebRequestSync(ctx, &Webhook{
 		Url:         cmd.Url,
