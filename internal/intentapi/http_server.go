@@ -75,10 +75,11 @@ func ProvideHTTPServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ha
 	return &HTTPServer{
 		config:  config,
 		handler: handler,
-		logger:  log.New("intentapi.server"),
+		logger:  log.New("intentapi.http_server"),
 	}, nil
 }
 
+// IsDisabled returns true if the server should be disabled.
 func (s *HTTPServer) IsDisabled() bool {
 	return !s.config.Enabled
 }

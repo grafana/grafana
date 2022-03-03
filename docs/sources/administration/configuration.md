@@ -1881,13 +1881,17 @@ The maximum duration before timing out writes of the response. It is reset whene
 
 The maximum duration before timing out graceful server shutdown. Default value is `1m`.
 
-## [intentapi.proxy]
+## [intentapi.kubebridge]
 
-Settings related to the Intent API apiserver proxy.
+Settings related to the Intent API kubernetes bridge.
 
 ### kubeconfig_path
 
 The kubeconfig file which contains contexts, namespaces and auth. The file must contain all necessary information to connect and authenticate to remote `kube-apiserver`. Unset by default, make sure to set it if using the Intent API.
+
+## [intentapi.proxy]
+
+Settings related to the Intent API apiserver proxy.
 
 ### keepalive_timeout
 

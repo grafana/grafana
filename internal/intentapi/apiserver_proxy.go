@@ -1,81 +1,39 @@
 package intentapi
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/proxy"
+
+	"github.com/grafana/grafana/internal/k8sbridge"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
-
-// ApiserverProxyConfig is the config for ApiserverProxy.
-type ApiserverProxyConfig struct {
-	RestCfg          *rest.Config
-	KeepaliveTimeout time.Duration
-}
-
-// NewApiserverProxyConfig parses and returns a new ApiserverProxyConfig.
-func NewApiserverProxyConfig(cfg *setting.Cfg) (ApiserverProxyConfig, error) {
-	sec := cfg.Raw.Section("intentapi.proxy")
-	configPath := sec.Key("kubeconfig_path").MustString("")
-
-	if configPath == "" {
-		return ApiserverProxyConfig{}, errors.New("kubeconfig path cannot be empty when using Intent API")
-	}
-
-	configPath = filepath.Clean(configPath)
-
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return ApiserverProxyConfig{}, fmt.Errorf("cannot find kubeconfig file at '%s'", configPath)
-	}
-
-	config, err := clientcmd.BuildConfigFromFlags("", configPath)
-	if err != nil {
-		return ApiserverProxyConfig{}, err
-	}
-
-	return ApiserverProxyConfig{
-		RestCfg:          config,
-		KeepaliveTimeout: sec.Key("keepalive_timeout").MustDuration(1 * time.Minute),
-	}, nil
-}
 
 // ApiserverProxy is a proxy for kube-apiserver.
 type ApiserverProxy struct {
-	config  ApiserverProxyConfig
 	handler http.Handler
 	logger  log.Logger
 }
 
 // ProvideApiserverProxy provides a new ApiserverProxy with given configuration.
-func ProvideApiserverProxy(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*ApiserverProxy, error) {
-	enabled := features.IsEnabled(featuremgmt.FlagIntentapi)
-	if !enabled {
+func ProvideApiserverProxy(cfg *setting.Cfg, bridge *k8sbridge.Service) (*ApiserverProxy, error) {
+	if bridge.IsDisabled() {
 		return &ApiserverProxy{
-			logger: log.New("intentapi.proxy"),
+			logger: log.New("intentapi.apiserver_proxy"),
 		}, nil
 	}
 
-	conf, err := NewApiserverProxyConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	proxy, err := proxy.NewProxyHandler("/", nil, conf.RestCfg, conf.KeepaliveTimeout, false)
+	sec := cfg.Raw.Section("intentapi.proxy")
+	proxy, err := proxy.NewProxyHandler(
+		"/", nil, bridge.RestConfig(), sec.Key("keepalive_timeout").MustDuration(1*time.Minute), false,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ApiserverProxy{
-		config:  conf,
 		handler: proxy,
 		logger:  log.New("intentapi.proxy"),
 	}, nil

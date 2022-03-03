@@ -33,7 +33,7 @@ $ make build-go
 $ GF_FEATURE_TOGGLES_ENABLE=intentapi \
 GF_INTENTAPI_SERVER_CERT_FILE_PATH=devenv/docker/blocks/intentapi/certs/intentapi.pem \
 GF_INTENTAPI_SERVER_KEY_FILE_PATH=devenv/docker/blocks/intentapi/certs/intentapi-key.pem \
-GF_INTENTAPI_PROXY_KUBECONFIG_PATH=devenv/docker/blocks/intentapi/apiserver.kubeconfig \
+GF_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH=devenv/docker/blocks/intentapi/apiserver.kubeconfig \
 GF_LOG_LEVEL=debug \
 make run
 
