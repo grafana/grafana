@@ -8,32 +8,32 @@ var _ accesscontrol.PermissionsServices = new(PermissionsServicesMock)
 
 func NewPermissionsServicesMock() *PermissionsServicesMock {
 	return &PermissionsServicesMock{
-		teams:       &MockPermissionsService{},
-		folders:     &MockPermissionsService{},
-		dashboards:  &MockPermissionsService{},
-		datasources: &MockPermissionsService{},
+		Teams:       &MockPermissionsService{},
+		Folders:     &MockPermissionsService{},
+		Dashboards:  &MockPermissionsService{},
+		Datasources: &MockPermissionsService{},
 	}
 }
 
 type PermissionsServicesMock struct {
-	teams       *MockPermissionsService
-	folders     *MockPermissionsService
-	dashboards  *MockPermissionsService
-	datasources *MockPermissionsService
+	Teams       *MockPermissionsService
+	Folders     *MockPermissionsService
+	Dashboards  *MockPermissionsService
+	Datasources *MockPermissionsService
 }
 
 func (p PermissionsServicesMock) GetTeamService() accesscontrol.PermissionsService {
-	return p.teams
+	return p.Teams
 }
 
 func (p PermissionsServicesMock) GetFolderService() accesscontrol.PermissionsService {
-	return p.folders
+	return p.Folders
 }
 
 func (p PermissionsServicesMock) GetDashboardService() accesscontrol.PermissionsService {
-	return p.dashboards
+	return p.Dashboards
 }
 
 func (p PermissionsServicesMock) GetDataSourceService() accesscontrol.PermissionsService {
-	return p.datasources
+	return p.Datasources
 }
