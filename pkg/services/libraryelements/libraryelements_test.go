@@ -13,10 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -209,7 +211,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	d := dashboardservice.ProvideDashboardService(dashboardStore, nil)
-	s := dashboardservice.ProvideFolderService(d, dashboardStore, nil)
+	s := dashboardservice.ProvideFolderService(setting.NewCfg(), d, dashboardStore, nil, featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock())
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
 	require.NoError(t, err)
@@ -296,9 +298,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
 		dashboardService := dashboardservice.ProvideDashboardService(dashboardStore, &alerting.DashAlertExtractorService{})
 		service := LibraryElementService{
-			Cfg:           setting.NewCfg(),
-			SQLStore:      sqlStore,
-			folderService: dashboardservice.ProvideFolderService(dashboardService, dashboardStore, nil),
+			Cfg:      setting.NewCfg(),
+			SQLStore: sqlStore,
+			folderService: dashboardservice.ProvideFolderService(
+				setting.NewCfg(), dashboardService, dashboardStore, nil,
+				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+			),
 		}
 
 		user := models.SignedInUser{

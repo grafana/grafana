@@ -9,9 +9,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,9 +28,10 @@ func TestFolderService(t *testing.T) {
 		store := &database.FakeDashboardStore{}
 		defer store.AssertExpectations(t)
 		service := ProvideFolderService(
+			setting.NewCfg(),
 			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store, nil)},
-			store,
-			nil,
+			store, nil,
+			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
 		)
 
 		t.Run("Given user has no permissions", func(t *testing.T) {

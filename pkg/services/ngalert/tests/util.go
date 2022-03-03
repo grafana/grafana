@@ -9,8 +9,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -41,7 +43,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
-	folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore, nil), dashboardStore, nil)
+	dashboardService := dashboardservice.ProvideDashboardService(dashboardStore, nil)
+	folderService := dashboardservice.ProvideFolderService(
+		setting.NewCfg(), dashboardService, dashboardStore, nil,
+		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+	)
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore,
 		nil, nil, nil, nil, secretsService, nil, m, folderService,
