@@ -57,7 +57,7 @@ ver_mode = 'pr'
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-x64', 'linux-x64-musl', 'darwin', 'windows', 'armv6',]
+    variants = ['linux-x64', 'linux-x64-musl', 'darwin-amd64', 'windows-amd64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     test_steps = [
         lint_drone_step(),
