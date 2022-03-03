@@ -27,7 +27,7 @@ func (m *ManagerImpl) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComm
 	}
 	cmd.UserId = user.Id
 
-	orgUser, err := m.store.Get(ctx, cmd)
+	orgUser, err := m.store.Get(ctx, cmd.OrgId, cmd.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +40,10 @@ func (m *ManagerImpl) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComm
 }
 
 func (m *ManagerImpl) UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUserCommand) (*models.OrgUser, error) {
+	_, err := m.store.Get(ctx, cmd.OrgId, cmd.UserId)
+	if err != nil {
+		return nil, err
+	}
 	return m.store.Update(ctx, cmd)
 }
 

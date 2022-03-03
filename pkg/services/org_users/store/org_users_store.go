@@ -26,7 +26,7 @@ type Store interface {
 	GetUser(ctx context.Context, cmd *models.AddOrgUserCommand) (*models.User, error)
 	OrgExists(ctx context.Context, cmd *models.AddOrgUserCommand) error
 
-	Get(ctx context.Context, cmd *models.AddOrgUserCommand) (*models.OrgUser, error)
+	Get(ctx context.Context, orgID int64, userID int64) (*models.OrgUser, error)
 	Add(ctx context.Context, cmd *models.OrgUser) (*models.OrgUser, error)
 	Update(ctx context.Context, cmd *models.UpdateOrgUserCommand) (*models.OrgUser, error)
 
@@ -64,7 +64,7 @@ func (ss *StoreImpl) GetUser(ctx context.Context, cmd *models.AddOrgUserCommand)
 	return user, nil
 }
 
-func (ss *StoreImpl) Get(ctx context.Context, cmd *models.AddOrgUserCommand) (*models.OrgUser, error) {
+func (ss *StoreImpl) Get(ctx context.Context, orgID int64, userID int64) (*models.OrgUser, error) {
 	var orgUser *models.OrgUser
 	err := ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, cmd.UserId); err != nil {
@@ -72,7 +72,7 @@ func (ss *StoreImpl) Get(ctx context.Context, cmd *models.AddOrgUserCommand) (*m
 		// } else if len(res) == 1 {
 		// 	return models.ErrOrgUserAlreadyAdded
 		// }
-		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&orgUser)
+		exists, err := sess.Where("org_id=? AND user_id=?", orgID, userID).Get(&orgUser)
 		if err != nil {
 			return err
 		}
@@ -140,18 +140,9 @@ func (ss *StoreImpl) Add(ctx context.Context, cmd *models.OrgUser) (*models.OrgU
 func (ss *StoreImpl) Update(ctx context.Context, cmd *models.UpdateOrgUserCommand) (*models.OrgUser, error) {
 	var orgUser *models.OrgUser
 	err := ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&orgUser)
-		if err != nil {
-			return err
-		}
-
-		if !exists {
-			return models.ErrOrgUserNotFound
-		}
-
 		orgUser.Role = cmd.Role
 		orgUser.Updated = time.Now()
-		_, err = sess.ID(orgUser.Id).Update(&orgUser)
+		_, err := sess.ID(orgUser.Id).Update(&orgUser)
 		if err != nil {
 			return err
 		}
