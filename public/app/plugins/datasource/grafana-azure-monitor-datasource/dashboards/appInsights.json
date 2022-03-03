@@ -444,7 +444,7 @@
       "id": 36,
       "links": [],
       "options": {
-        "content": "<a style=\"color: #ffffff;\"href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures\" target=\"_blank\">\n<div>\n  <img src=\"https://images.vexels.com/media/users/3/153978/isolated/preview/483ef8b10a46e28d02293a31570c8c56-warning-sign-colored-stroke-icon-by-vexels.png\" width=\"40px\"/>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures\" target=\"_blank\">\n<div>\n  <img src=\"https://webstockreview.net/images/caution-clipart-red-alert-15.png\" width=\"30px\"/>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "8.2.7",
@@ -519,7 +519,7 @@
       "id": 38,
       "links": [],
       "options": {
-        "content": "<a style=\"color: #ffffff;\"href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance\" target=\"_blank\">\n<div>\n  <img src=\"https://44s3b94691sl3smgmb1y936e-wpengine.netdna-ssl.com/wp-content/uploads/2016/12/performance-icon-png-6.png\" width=\"40px\" style=\"margin-bottom:10px\"/>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance\" target=\"_blank\">\n<div>\n  <img src=\"https://44s3b94691sl3smgmb1y936e-wpengine.netdna-ssl.com/wp-content/uploads/2016/12/performance-icon-png-6.png\" width=\"40px\" style=\"margin-bottom:10px\"/>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "8.2.7",
