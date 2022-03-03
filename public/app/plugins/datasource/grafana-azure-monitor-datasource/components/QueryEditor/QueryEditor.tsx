@@ -10,12 +10,12 @@ import {
   AzureMonitorOption,
   AzureMonitorQuery,
   AzureQueryType,
+  DeprecatedAzureQueryType,
 } from '../../types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import ApplicationInsightsEditor from '../deprecated/components/ApplicationInsightsEditor';
 import InsightsAnalyticsEditor from '../deprecated/components/InsightsAnalyticsEditor';
-import { DeprecatedAzureQueryType } from '../deprecated/types';
 import { gtGrafana9 } from '../deprecated/utils';
 import LogsQueryEditor from '../LogsQueryEditor';
 import MetricsQueryEditor from '../MetricsQueryEditor';
@@ -135,13 +135,13 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       if (gtGrafana9()) {
         return (
           <Alert title="Deprecated">
-            Application Insights has been deprecated. Use the Metrics service instead.{' '}
+            Application Insights has been deprecated.{' '}
             <a
               href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/#application-insights"
               target="_blank"
               rel="noreferrer"
             >
-              More info
+              Use the Metrics service instead
             </a>
             .
           </Alert>
@@ -153,14 +153,13 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       if (gtGrafana9()) {
         return (
           <Alert title="Deprecated">
-            Insight Analytics has been deprecated. Query can be written with Kusto in the Logs query type by selecting
-            your Application Insights resource.{' '}
+            Insight Analytics has been deprecated.{' '}
             <a
               href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/#insights-analytics"
               target="_blank"
               rel="noreferrer"
             >
-              More info
+              Queries can be written with Kusto in the Logs query type by selecting your Application Insights resource
             </a>
             .
           </Alert>

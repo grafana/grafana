@@ -2,8 +2,7 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 import React, { useCallback, useState } from 'react';
 
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
-import { DeprecatedAzureQueryType } from '../deprecated/types';
+import { AzureMonitorQuery, AzureQueryType, DeprecatedAzureQueryType } from '../../types';
 import { gtGrafana9 } from '../deprecated/utils';
 import { Field } from '../Field';
 

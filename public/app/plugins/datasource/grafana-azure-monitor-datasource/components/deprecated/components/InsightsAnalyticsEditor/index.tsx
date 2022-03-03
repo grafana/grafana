@@ -4,10 +4,10 @@ import React from 'react';
 import { AzureMonitorOption } from '../../../../types';
 import { Field } from '../../../Field';
 import { Space } from '../../../Space';
-import { AzureMonitorQuery } from '../../types';
+import { DeprecatedAzureMonitorQuery } from '../../types';
 
 interface InsightsAnalyticsEditorProps {
-  query: AzureMonitorQuery;
+  query: DeprecatedAzureMonitorQuery;
 }
 
 const FORMAT_OPTIONS: Array<AzureMonitorOption<string>> = [

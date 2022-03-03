@@ -1,11 +1,10 @@
-import { DeprecatedAzureQueryType } from '../components/deprecated/types';
 import { setKustoQuery } from '../components/LogsQueryEditor/setQueryValue';
 import {
   appendDimensionFilter,
   setTimeGrain as setMetricsTimeGrain,
 } from '../components/MetricsQueryEditor/setQueryValue';
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureMonitorQuery, AzureQueryType, DeprecatedAzureQueryType } from '../types';
 
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 

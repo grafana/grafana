@@ -17,10 +17,15 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import AppInsightsDatasource from './components/deprecated/app_insights/app_insights_datasource';
 import InsightsAnalyticsDatasource from './components/deprecated/insights_analytics/insights_analytics_datasource';
-import { DeprecatedAzureQueryType } from './components/deprecated/types';
 import { getAzureCloud } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  AzureQueryType,
+  DatasourceValidationResult,
+  DeprecatedAzureQueryType,
+} from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import { datasourceMigrations } from './utils/migrateQuery';
 import { VariableSupport } from './variables';

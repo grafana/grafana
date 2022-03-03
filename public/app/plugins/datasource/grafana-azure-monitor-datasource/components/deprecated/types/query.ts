@@ -1,14 +1,15 @@
 import { DataQuery } from '@grafana/data';
 
-import { AzureLogsQuery, AzureMetricQuery, AzureQueryType, AzureResourceGraphQuery } from '../../../types';
+import {
+  AzureLogsQuery,
+  AzureMetricQuery,
+  AzureQueryType,
+  AzureResourceGraphQuery,
+  DeprecatedAzureQueryType,
+} from '../../../types';
 import { GrafanaTemplateVariableQuery } from '../../../types/templateVariables';
 
-export enum DeprecatedAzureQueryType {
-  ApplicationInsights = 'Application Insights',
-  InsightsAnalytics = 'Insights Analytics',
-}
-
-export interface AzureMonitorQuery extends DataQuery {
+export interface DeprecatedAzureMonitorQuery extends DataQuery {
   queryType?: AzureQueryType | DeprecatedAzureQueryType;
 
   subscription?: string;

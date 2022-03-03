@@ -6,8 +6,7 @@ import selectEvent from 'react-select-event';
 import createMockDatasource from '../../__mocks__/datasource';
 import { invalidNamespaceError } from '../../__mocks__/errors';
 import createMockQuery from '../../__mocks__/query';
-import { AzureQueryType } from '../../types';
-import { DeprecatedAzureQueryType } from '../deprecated/types';
+import { AzureQueryType, DeprecatedAzureQueryType } from '../../types';
 import QueryEditor from './QueryEditor';
 
 // Have to mock CodeEditor because it doesnt seem to work in tests???

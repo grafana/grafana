@@ -3,9 +3,13 @@ import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { isString } from 'lodash';
 
 import TimegrainConverter from '../../../time_grain_converter';
-import { AzureDataSourceJsonData, DatasourceValidationResult } from '../../../types';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  DatasourceValidationResult,
+  DeprecatedAzureQueryType,
+} from '../../../types';
 import { routeNames } from '../../../utils/common';
-import { AzureMonitorQuery, DeprecatedAzureQueryType as AzureQueryType } from '../types';
 import ResponseParser from './response_parser';
 
 export interface LogAnalyticsColumn {
@@ -95,12 +99,12 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
 
     return {
       refId: target.refId,
-      queryType: AzureQueryType.ApplicationInsights,
+      queryType: DeprecatedAzureQueryType.ApplicationInsights,
       appInsights: {
         timeGrain: templateSrv.replace((item.timeGrain || '').toString(), scopedVars),
         metricName: templateSrv.replace(item.metricName, scopedVars),
         aggregation: templateSrv.replace(item.aggregation, scopedVars),
-        dimension: item.dimension.map((d: any) => templateSrv.replace(d, scopedVars)),
+        dimension: item.dimension.map((d) => templateSrv.replace(d, scopedVars)),
         dimensionFilter: templateSrv.replace(item.dimensionFilter, scopedVars),
         alias: item.alias,
       },

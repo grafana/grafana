@@ -2,7 +2,7 @@ import { Alert, Input } from '@grafana/ui';
 import React from 'react';
 
 import { Field } from '../../../Field';
-import { AzureMonitorQuery } from '../../types';
+import { DeprecatedAzureMonitorQuery } from '../../types';
 
 const ReadOnlyTimeGrain = ({
   timeGrainCount,
@@ -26,7 +26,7 @@ const ReadOnlyTimeGrain = ({
   );
 };
 
-const ApplicationInsightsEditor = ({ query }: { query: AzureMonitorQuery }) => {
+const ApplicationInsightsEditor = ({ query }: { query: DeprecatedAzureMonitorQuery }) => {
   const groupBy = query.appInsights?.dimension || [];
 
   return (
