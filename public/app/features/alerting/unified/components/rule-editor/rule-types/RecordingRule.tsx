@@ -15,7 +15,7 @@ const RecordingRuleType: FC<SharedProps> = ({ selected = false, disabled = false
             Must be combined with an alert rule.
           </p>
         }
-        image="/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+        image="/public/app/plugins/datasource/prometheus/img/prometheus_logo_recording.svg"
         selected={selected}
         disabled={disabled}
         value={RuleFormType.cloudRecording}
