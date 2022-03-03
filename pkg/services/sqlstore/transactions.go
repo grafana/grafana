@@ -16,8 +16,8 @@ import (
 
 var tsclogger = log.New("sqlstore.transactions")
 
-// TransactionManager represents the ability to issue and close transactions.
-type TransactionManager interface {
+// TransactionManager represents the ability to issue and close transactions through contexts.
+type TransactionManagerCtx interface {
 	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
 }
 
