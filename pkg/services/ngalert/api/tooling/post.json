@@ -980,13 +980,6 @@
      },
      "type": "array",
      "x-go-name": "Rules"
-    },
-    "source_tenants": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "x-go-name": "SourceTenants"
     }
    },
    "type": "object",
@@ -2271,13 +2264,6 @@
      },
      "type": "array",
      "x-go-name": "Rules"
-    },
-    "source_tenants": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "x-go-name": "SourceTenants"
     }
    },
    "type": "object",
@@ -3247,11 +3233,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
@@ -3443,6 +3430,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3482,11 +3470,10 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3497,9 +3484,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
