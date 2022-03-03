@@ -72,16 +72,22 @@ export class DashboardMigrator {
    * data source uid & type set that is different from the now new default
    */
   syncQueryDataSources() {
+    const dataSourceSrv = getDataSourceSrv();
+    // This only happens in some unit tests that does not set a DataSourceSrv
+    if (!dataSourceSrv) {
+      return;
+    }
+
+    const defaultDS = getDataSourceSrv().getInstanceSettings(null);
+    // if default ds is mixed then skip this
+    if (!defaultDS || defaultDS.meta.mixed) {
+      return;
+    }
+
     for (const panel of this.dashboard.panels) {
       // only interested in panels that use default (null) data source
       if (panel.datasource) {
         continue;
-      }
-
-      const defaultDS = getDataSourceSrv().getInstanceSettings(null);
-      // if default ds is mixed then skip this
-      if (!defaultDS || defaultDS.meta.mixed) {
-        return;
       }
 
       for (const target of panel.targets) {
