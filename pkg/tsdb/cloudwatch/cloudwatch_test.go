@@ -1,12 +1,24 @@
 package cloudwatch
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	awsrequest "github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,4 +83,102 @@ func TestNewInstanceSettings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_CheckHealth(t *testing.T) {
+	origNewCWClient := NewCWClient
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var client fakeCheckHealthClient
+	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return client
+	}
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return client
+	}
+
+	t.Run("successfully query metrics and logs", func(t *testing.T) {
+		client = fakeCheckHealthClient{}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, &backend.CheckHealthResult{
+			Status:  backend.HealthStatusOk,
+			Message: "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
+		}, resp)
+	})
+
+	t.Run("successfully queries metrics, fails during logs query", func(t *testing.T) {
+		client = fakeCheckHealthClient{
+			describeLogGroupsWithContext: func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput,
+				options ...awsrequest.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+				return nil, fmt.Errorf("some logs query error")
+			}}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: "1. Successfully queried the CloudWatch metrics API.\n2. CloudWatch logs query failed: some logs query error",
+		}, resp)
+	})
+
+	t.Run("successfully queries logs, fails during metrics query", func(t *testing.T) {
+		client = fakeCheckHealthClient{
+			listMetricsPages: func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+				return fmt.Errorf("some list metrics error")
+			}}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: "1. CloudWatch metrics query failed: some list metrics error\n2. Successfully queried the CloudWatch logs API.",
+		}, resp)
+	})
+
+	t.Run("fail to get clients", func(t *testing.T) {
+		client = fakeCheckHealthClient{}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+			return nil, fmt.Errorf("some sessions error")
+		}})
+
+		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: "1. CloudWatch metrics query failed: some sessions error\n2. CloudWatch logs query failed: some sessions error",
+		}, resp)
+	})
 }

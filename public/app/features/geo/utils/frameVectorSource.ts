@@ -6,7 +6,7 @@ import { getGeometryField, LocationFieldMatchers } from './location';
 
 export interface FrameVectorSourceOptions {}
 
-export class FrameVectorSource extends VectorSource<Geometry> {
+export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<T> {
   constructor(private location: LocationFieldMatchers) {
     super({});
   }
@@ -24,7 +24,7 @@ export class FrameVectorSource extends VectorSource<Geometry> {
         new Feature({
           frame,
           rowIndex: i,
-          geometry: info.field.values.get(i),
+          geometry: info.field.values.get(i) as T,
         })
       );
     }

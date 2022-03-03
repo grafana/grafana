@@ -13,14 +13,16 @@ type OrgListResponse []struct {
 	Response error
 }
 type SQLStoreMock struct {
-	LastGetAlertsQuery             *models.GetAlertsQuery
-	LatestUserId                   int64
+	LastGetAlertsQuery *models.GetAlertsQuery
+	LatestUserId       int64
+
 	ExpectedUser                   *models.User
 	ExpectedDatasource             *models.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
 	ExpectedDashboard              *models.Dashboard
 	ExpectedDashboards             []*models.Dashboard
+	ExpectedDashboardVersion       *models.DashboardVersion
 	ExpectedDashboardVersions      []*models.DashboardVersion
 	ExpectedDashboardAclInfoList   []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList            []*models.UserOrgDTO
@@ -28,6 +30,7 @@ type SQLStoreMock struct {
 	ExpectedDashboardSnapshot      *models.DashboardSnapshot
 	ExpectedTeamsByUser            []*models.TeamDTO
 	ExpectedSearchOrgList          []*models.OrgDTO
+	ExpectedSearchUsers            models.SearchUserQueryResult
 	ExpectedDatasources            []*models.DataSource
 	ExpectedOrg                    *models.Org
 	ExpectedSystemStats            *models.SystemStats
@@ -92,8 +95,17 @@ func (m *SQLStoreMock) SearchDashboardSnapshots(query *models.GetDashboardSnapsh
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) GetOrgById(ctx context.Context, cmd *models.GetOrgByIdQuery) error {
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) GetOrgByName(name string) (*models.Org, error) {
 	return m.ExpectedOrg, m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
+	query.Result = m.ExpectedOrg
+	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
@@ -179,6 +191,11 @@ func (m *SQLStoreMock) GetSignedInUserWithCacheCtx(ctx context.Context, query *m
 }
 
 func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	query.Result = m.ExpectedSearchUsers
 	return m.ExpectedError
 }
 
@@ -492,6 +509,7 @@ func (m *SQLStoreMock) GetDataSourcesByType(ctx context.Context, query *models.G
 }
 
 func (m *SQLStoreMock) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	query.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 

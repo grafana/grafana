@@ -16,6 +16,7 @@ load(
     'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
+    'build_frontend_package_step',
     'build_plugins_step',
     'package_step',
     'grafana_server_step',
@@ -179,6 +180,7 @@ def get_steps(edition, ver_mode):
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
         ensure_cuetsified_step(),

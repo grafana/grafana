@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
@@ -195,7 +196,8 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), dashItem, true)
+	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil)
+	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore, dashAlertExtractor).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -206,7 +208,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	t.Helper()
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	d := dashboardservice.ProvideDashboardService(dashboardStore)
+	d := dashboardservice.ProvideDashboardService(dashboardStore, nil)
 	s := dashboardservice.ProvideFolderService(d, dashboardStore, nil)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
@@ -292,7 +294,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
-		dashboardService := dashboardservice.ProvideDashboardService(dashboardStore)
+		dashboardService := dashboardservice.ProvideDashboardService(dashboardStore, &alerting.DashAlertExtractorService{})
 		service := LibraryElementService{
 			Cfg:           setting.NewCfg(),
 			SQLStore:      sqlStore,

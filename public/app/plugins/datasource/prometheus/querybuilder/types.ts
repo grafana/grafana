@@ -1,7 +1,5 @@
-import { CoreApp } from '@grafana/data';
-import { LegendFormatMode, PromQuery } from '../types';
 import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryEditorMode } from './shared/types';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 
 /**
  * Visual query model
@@ -113,33 +111,4 @@ export enum PromOperationId {
 export interface PromQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
-}
-
-/**
- * Returns query with defaults, and boolean true/false depending on change was required
- */
-export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): PromQuery {
-  // If no expr (ie new query) then default to builder
-  let result = query;
-  const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
-
-  if (result.editorMode !== editorMode) {
-    result = { ...result, editorMode };
-  }
-
-  if (query.expr == null) {
-    result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto };
-  }
-
-  // Default to range query
-  if (query.range == null) {
-    result = { ...result, range: true };
-  }
-
-  // In explore we default to both instant & range
-  if (query.instant == null && app === CoreApp.Explore) {
-    result = { ...result, instant: true };
-  }
-
-  return result;
 }
