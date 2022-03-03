@@ -95,7 +95,9 @@ describe('Add to Dashboard Modal', () => {
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('name exists');
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'A dashboard with the same name already exists in this folder.'
+      );
     });
 
     it('Correctly handles empty name API Error', async () => {
@@ -108,7 +110,7 @@ describe('Add to Dashboard Modal', () => {
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('empty name');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Dashboard name is required.');
     });
 
     it('Correctly handles name match API Error', async () => {
