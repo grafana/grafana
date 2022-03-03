@@ -111,6 +111,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
+				JsonData:        &models.PreferencesJsonData{},
 			}
 
 			if cmd.Navbar != nil {
