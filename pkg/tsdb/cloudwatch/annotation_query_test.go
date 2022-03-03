@@ -22,13 +22,13 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var client FakeCWAnnotationsClient
+	var client fakeCWAnnotationsClient
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &client
 	}
 
 	t.Run("DescribeAlarmsForMetric is called with minimum parameters", func(t *testing.T) {
-		client = FakeCWAnnotationsClient{describeAlarmsForMetricOutput: &cloudwatch.DescribeAlarmsForMetricOutput{}}
+		client = fakeCWAnnotationsClient{describeAlarmsForMetricOutput: &cloudwatch.DescribeAlarmsForMetricOutput{}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -62,7 +62,7 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 	})
 
 	t.Run("DescribeAlarms is called when prefixMatching is true", func(t *testing.T) {
-		client = FakeCWAnnotationsClient{describeAlarmsOutput: &cloudwatch.DescribeAlarmsOutput{}}
+		client = fakeCWAnnotationsClient{describeAlarmsOutput: &cloudwatch.DescribeAlarmsOutput{}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -91,9 +91,9 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 
 		require.Len(t, client.calls.describeAlarms, 1)
 		assert.Equal(t, &cloudwatch.DescribeAlarmsInput{
-			MaxRecords:      pointerInt64(100),
-			ActionPrefix:    pointerString("some_action_prefix"),
-			AlarmNamePrefix: pointerString("some_alarm_name_prefix"),
+			MaxRecords:      aws.Int64(100),
+			ActionPrefix:    aws.String("some_action_prefix"),
+			AlarmNamePrefix: aws.String("some_alarm_name_prefix"),
 		}, client.calls.describeAlarms[0])
 	})
 }
