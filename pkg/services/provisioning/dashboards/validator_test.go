@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,8 @@ func TestDuplicatesValidator(t *testing.T) {
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
-		r, err := NewDashboardFileReader(cfg, logger, nil)
+
+		r, err := NewDashboardFileReader(cfg, logger, nil, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(6)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*models.DashboardProvisioning{}, nil).Times(4)
@@ -54,11 +56,11 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), nil)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), nil)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
@@ -89,7 +91,8 @@ func TestDuplicatesValidator(t *testing.T) {
 
 	t.Run("Duplicates validator should not collect info about duplicate UIDs and titles within folders for different orgs", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
-		r, err := NewDashboardFileReader(cfg, logger, nil)
+
+		r, err := NewDashboardFileReader(cfg, logger, nil, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
@@ -105,11 +108,11 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), nil)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), nil)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
@@ -165,16 +168,15 @@ func TestDuplicatesValidator(t *testing.T) {
 			Name: "third", Type: "file", OrgID: 2, Folder: "duplicates-validator-folder",
 			Options: map[string]interface{}{"path": twoDashboardsWithUID},
 		}
-
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), nil)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), nil)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader3, err := NewDashboardFileReader(cfg3, logger, nil)
+		reader3, err := NewDashboardFileReader(cfg3, logger, nil, featuremgmt.WithFeatures(), nil)
 		reader3.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
@@ -191,7 +193,7 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicates := duplicateValidator.getDuplicates()
 
-		r, err := NewDashboardFileReader(cfg, logger, nil)
+		r, err := NewDashboardFileReader(cfg, logger, nil, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg1.Folder)
 		require.NoError(t, err)
@@ -208,7 +210,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		sort.Strings(titleUsageReaders)
 		require.Equal(t, []string{"first"}, titleUsageReaders)
 
-		r, err = NewDashboardFileReader(cfg3, logger, nil)
+		r, err = NewDashboardFileReader(cfg3, logger, nil, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		folderID, err = r.getOrCreateFolderID(context.Background(), cfg3, fakeService, cfg3.Folder)
 		require.NoError(t, err)

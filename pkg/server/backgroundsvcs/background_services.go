@@ -12,12 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -35,8 +35,8 @@ func ProvideBackgroundServiceRegistry(
 	metrics *metrics.InternalMetricsService, secretsService *secretsManager.SecretsService,
 	remoteCache *remotecache.RemoteCache, thumbnailsService thumbs.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
-	_ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ *pluginsettings.ServiceImpl,
-	_ *alerting.AlertNotificationService, _ serviceaccounts.Service,
+	_ *plugindashboards.Service, _ *dashboardsnapshots.Service,
+	_ *alerting.AlertNotificationService, _ serviceaccounts.Service, _ *guardian.Provider,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

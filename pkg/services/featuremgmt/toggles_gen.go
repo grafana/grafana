@@ -122,4 +122,12 @@ const (
 	// FlagMigrationLocking
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
+
+	// FlagGitops
+	// Exploring more direct git integrations
+	FlagGitops = "gitops"
+
+	// FlagFileStoreApi
+	// Simple API for managing files
+	FlagFileStoreApi = "fileStoreApi"
 )

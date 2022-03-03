@@ -39,6 +39,9 @@ export function OperationEditor({
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
+  if (!def) {
+    return <span>Operation {operation.id} not found</span>;
+  }
 
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
     const update: QueryBuilderOperation = { ...operation, params: [...operation.params] };

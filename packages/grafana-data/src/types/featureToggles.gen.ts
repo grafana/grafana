@@ -46,4 +46,6 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
+  gitops?: boolean;
+  fileStoreApi?: boolean;
 }

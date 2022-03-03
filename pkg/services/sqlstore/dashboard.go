@@ -3,15 +3,18 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var shadowSearchCounter = prometheus.NewCounterVec(
@@ -87,6 +90,12 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 			UserId:          query.SignedInUser.UserId,
 			PermissionLevel: query.Permission,
 		},
+	}
+
+	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+		filters = []interface{}{
+			permissions.AccessControlDashboardPermissionFilter{User: query.SignedInUser},
+		}
 	}
 
 	for _, filter := range query.Sort.Filter {
@@ -270,6 +279,20 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 			}
 		}
 
+		// remove all access control permission with folder scope
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("folders", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
+		}
+
+		for _, dash := range dashIds {
+			// remove all access control permission with child dashboard scopes
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dash.Id, 10)))
+			if err != nil {
+				return err
+			}
+		}
+
 		if len(dashIds) > 0 {
 			childrenDeletes := []string{
 				"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
@@ -309,6 +332,11 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 					return err
 				}
 			}
+		}
+	} else {
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
 		}
 	}
 

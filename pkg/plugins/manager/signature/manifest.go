@@ -15,7 +15,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
+	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp"
+	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp/clearsign"
 
 	"github.com/grafana/grafana/pkg/infra/log"
