@@ -141,13 +141,17 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Viewer",
-			Permission:  "Query",
-		}, accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Editor",
-			Permission:  "Query",
-		}); err != nil {
+		// TODO: Move away from data source service.
+		// This belongs in Data source permissions and we probably want
+		// to do this with a hook in the store and rollback on fail.
+		// We can't use events, because there's no way to communicate
+		// failure, and we want "not being able to set default perms"
+		// to fail the creation.
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10),
+			accesscontrol.SetResourcePermissionCommand{BuiltinRole: "Viewer", Permission: "Query"},
+			accesscontrol.SetResourcePermissionCommand{BuiltinRole: "Editor", Permission: "Query"},
+			accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Write"},
+		); err != nil {
 			return err
 		}
 	}
