@@ -512,7 +512,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   scrollToTop = () => {
     const { topOfExploreViewRef } = this.props;
-    topOfExploreViewRef?.current?.scrollIntoView();
+    topOfExploreViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   render() {
