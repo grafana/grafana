@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Field, Input } from '@grafana/ui';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 
 interface Props {
   value?: number;
@@ -19,6 +20,7 @@ interface State {
 /**
  * This is an Input field that will call `onChange` for blur and enter
  */
+
 export class NumberInput extends PureComponent<Props, State> {
   state: State = { text: '', inputCorrected: false };
 
