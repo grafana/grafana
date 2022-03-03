@@ -100,3 +100,7 @@ func (m *mockStore) UpdatePluginSetting(ctx context.Context, cmd *models.UpdateP
 func (m *mockStore) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
 	return nil
 }
+
+func (m *mockStore) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+	return nil, nil
+}
