@@ -10,13 +10,15 @@ import (
 )
 
 var sqlIDAcceptList = map[string]struct{}{
-	"org_user.user_id": {},
-	"role.id":          {},
-	"t.id":             {},
-	"team.id":          {},
-	"u.id":             {},
-	"\"user\".\"id\"":  {}, // For Postgres
-	"`user`.`id`":      {}, // For MySQL and SQLite
+	"org_user.user_id":    {},
+	"role.id":             {},
+	"t.id":                {},
+	"team.id":             {},
+	"u.id":                {},
+	"\"user\".\"id\"":     {}, // For Postgres
+	"`user`.`id`":         {}, // For MySQL and SQLite
+	"dashboard.id":        {},
+	"dashboard.folder_id": {},
 }
 
 var (
