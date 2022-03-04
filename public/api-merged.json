@@ -4494,15 +4494,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -10763,6 +10763,10 @@
           "type": "boolean",
           "x-go-name": "CanAdmin"
         },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
         "canEdit": {
           "type": "boolean",
           "x-go-name": "CanEdit"
@@ -11724,6 +11728,10 @@
           "type": "boolean",
           "x-go-name": "CanAdmin"
         },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
         "canEdit": {
           "type": "boolean",
           "x-go-name": "CanEdit"
@@ -12163,6 +12171,13 @@
             "$ref": "#/definitions/GettableExtendedRuleNode"
           },
           "x-go-name": "Rules"
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "SourceTenants"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -14540,6 +14555,13 @@
             "$ref": "#/definitions/GettableExtendedRuleNode"
           },
           "x-go-name": "Rules"
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "SourceTenants"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -16769,12 +16791,11 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
-      },
-      "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilence": {
       "description": "GettableSilence gettable silence",
@@ -16948,7 +16969,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -16982,10 +17002,11 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -16994,7 +17015,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",

@@ -3544,15 +3544,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -8919,6 +8919,10 @@
           "type": "boolean",
           "x-go-name": "CanAdmin"
         },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
         "canEdit": {
           "type": "boolean",
           "x-go-name": "CanEdit"
@@ -9695,6 +9699,10 @@
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
         },
         "canEdit": {
           "type": "boolean",

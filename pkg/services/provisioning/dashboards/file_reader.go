@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -15,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -37,10 +40,15 @@ type FileReader struct {
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
 	dbWriteAccessRestricted bool
+	permissionsServices     accesscontrol.PermissionsServices
+	features                featuremgmt.FeatureToggles
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService) (*FileReader, error) {
+func NewDashboardFileReader(
+	cfg *config, log log.Logger, service dashboards.DashboardProvisioningService,
+	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -64,6 +72,8 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		dashboardProvisioningService: service,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
+		features:                     features,
+		permissionsServices:          permissionsServices,
 	}, nil
 }
 
@@ -264,8 +274,23 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
 		}
-		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp); err != nil {
+		savedDash, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp)
+		if err != nil {
 			return provisioningMetadata, err
+		}
+
+		if !alreadyProvisioned && fr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			svc := fr.permissionsServices.GetDashboardService()
+			_, err := svc.SetPermissions(ctx, savedDash.OrgId, strconv.FormatInt(savedDash.Id, 10), accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Viewer",
+				Permission:  "View",
+			}, accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Editor",
+				Permission:  "Edit",
+			})
+			if err != nil {
+				fr.log.Warn("failed to set permissions for provisioned dashboard", "dashboardId", savedDash.Id, "err", err)
+			}
 		}
 	} else {
 		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name,
@@ -314,6 +339,19 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
 			return 0, err
+		}
+
+		if fr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			_, err = fr.permissionsServices.GetFolderService().SetPermissions(ctx, dbDash.OrgId, strconv.FormatInt(dbDash.Id, 10), accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Viewer",
+				Permission:  "View",
+			}, accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Editor",
+				Permission:  "Edit",
+			})
+			if err != nil {
+				return 0, err
+			}
 		}
 
 		return dbDash.Id, nil

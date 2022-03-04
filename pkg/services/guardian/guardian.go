@@ -21,7 +21,8 @@ type DashboardGuardian interface {
 	CanEdit() (bool, error)
 	CanView() (bool, error)
 	CanAdmin() (bool, error)
-	HasPermission(permission models.PermissionType) (bool, error)
+	CanDelete() (bool, error)
+	CanCreate(folderID int64, isFolder bool) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
 
 	// GetAcl returns ACL.
@@ -45,6 +46,7 @@ type dashboardGuardianImpl struct {
 }
 
 // New factory for creating a new dashboard guardian instance
+// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
 var New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 	return &dashboardGuardianImpl{
 		user:   user,
@@ -73,6 +75,16 @@ func (g *dashboardGuardianImpl) CanView() (bool, error) {
 
 func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
 	return g.HasPermission(models.PERMISSION_ADMIN)
+}
+
+func (g *dashboardGuardianImpl) CanDelete() (bool, error) {
+	// when using dashboard guardian without access control a user can delete a dashboard if they can save it
+	return g.CanSave()
+}
+
+func (g *dashboardGuardianImpl) CanCreate(_ int64, _ bool) (bool, error) {
+	// when using dashboard guardian without access control a user can create a dashboard if they can save it
+	return g.CanSave()
 }
 
 func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) (bool, error) {
@@ -323,6 +335,14 @@ func (g *FakeDashboardGuardian) CanView() (bool, error) {
 
 func (g *FakeDashboardGuardian) CanAdmin() (bool, error) {
 	return g.CanAdminValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanDelete() (bool, error) {
+	return g.CanSaveValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanCreate(_ int64, _ bool) (bool, error) {
+	return g.CanSaveValue, nil
 }
 
 func (g *FakeDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {

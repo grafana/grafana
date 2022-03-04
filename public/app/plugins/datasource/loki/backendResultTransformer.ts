@@ -18,14 +18,34 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   };
 }
 
+function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): DataFrame {
+  const meta: QueryResultMeta = {
+    preferredVisualisationType: 'logs',
+    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
+  };
+  const newFrame = setFrameMeta(frame, meta);
+  const newFields = frame.fields.map((field) => {
+    // the nanosecond-timestamp field must have a type-time
+    if (field.name === 'tsNs') {
+      return {
+        ...field,
+        type: FieldType.time,
+      };
+    } else {
+      return field;
+    }
+  });
+
+  return {
+    ...newFrame,
+    fields: newFields,
+  };
+}
+
 function processStreamsFrames(frames: DataFrame[], queryMap: Map<string, LokiQuery>): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    const meta: QueryResultMeta = {
-      preferredVisualisationType: 'logs',
-      searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
-    };
-    return setFrameMeta(frame, meta);
+    return processStreamFrame(frame, query);
   });
 }
 

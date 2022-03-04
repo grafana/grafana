@@ -77,7 +77,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
         aria-label="Add to dashboard"
         disabled={queries.length === 0}
       >
-        Add to Dashboard
+        Add to dashboard
       </ToolbarButton>
 
       {isOpen && (
