@@ -40,6 +40,7 @@ const (
 	WeightHome = (iota - 20) * 100
 	WeightCreate
 	WeightDashboard
+	WeightStoryboard
 	WeightExplore
 	WeightAlerting
 	WeightPlugin

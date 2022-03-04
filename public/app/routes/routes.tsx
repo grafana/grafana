@@ -163,6 +163,22 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
     },
     {
+      path: '/storyboards',
+      pageClass: 'page-storyboard',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "StoryboardListView" */ 'app/features/storyboards/views/StoryboardListView')
+      ),
+    },
+    {
+      path: '/storyboards/:uid',
+      pageClass: 'page-storyboard',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "StoryboardView" */ 'app/features/storyboards/views/StoryboardView')
+      ),
+    },
+    {
       path: '/a/:pluginId/',
       exact: false,
       // Someday * and will get a ReactRouter under that path!

@@ -199,6 +199,17 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Children:   dashboardChildLinks,
 	})
 
+	if hs.Features.IsEnabled(featuremgmt.FlagStoryboards) {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Storyboards",
+			Id:         "storyboards",
+			SubTitle:   "Tell stories with your data",
+			Icon:       "book-open",
+			SortWeight: dtos.WeightStoryboard,
+			Url:        hs.Cfg.AppSubURL + "/storyboards",
+		})
+	}
+
 	canExplore := func(context *models.ReqContext) bool {
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
 	}

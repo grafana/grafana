@@ -46,4 +46,5 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
+  storyboards?: boolean;
 }

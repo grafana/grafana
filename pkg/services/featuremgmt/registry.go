@@ -162,5 +162,10 @@ var (
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
 		},
+		{
+			Name:        "storyboards",
+			Description: "Tell stories with your data",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

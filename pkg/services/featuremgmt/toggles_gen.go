@@ -122,4 +122,8 @@ const (
 	// FlagMigrationLocking
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
+
+	// FlagStoryboards
+	// Tell stories with your data
+	FlagStoryboards = "storyboards"
 )
