@@ -392,7 +392,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	pluginSettings := make(map[string]*models.PluginSettingInfoDTO)
 
 	// fill settings from database
-	if pss, err := hs.SQLStore.GetPluginSettings(ctx, orgID); err != nil {
+	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, orgID); err != nil {
 		return nil, err
 	} else {
 		for _, ps := range pss {

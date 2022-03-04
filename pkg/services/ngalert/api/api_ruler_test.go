@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	models2 "github.com/grafana/grafana/pkg/models"
@@ -29,23 +28,14 @@ func TestCalculateChanges(t *testing.T) {
 		changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, submitted)
 		require.NoError(t, err)
 
-		require.Equal(t, changes.newRules, len(submitted))
+		require.Len(t, changes.New, len(submitted))
 		require.Empty(t, changes.Delete)
-		require.Len(t, changes.Upsert, len(submitted))
-		for _, rule := range changes.Upsert {
-			require.Nil(t, rule.Existing)
-		}
-
-		opts := []cmp.Option{
-			cmp.FilterPath(func(path cmp.Path) bool {
-				return path.String() == "Data.modelProps"
-			}, cmp.Ignore()),
-		}
+		require.Empty(t, changes.Update)
 
 	outerloop:
 		for _, expected := range submitted {
-			for _, rule := range changes.Upsert {
-				if cmp.Equal(*expected, rule.New, opts...) {
+			for _, rule := range changes.New {
+				if len(expected.Diff(rule)) == 0 {
 					continue outerloop
 				}
 			}
@@ -64,8 +54,8 @@ func TestCalculateChanges(t *testing.T) {
 		changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, make([]*models.AlertRule, 0))
 		require.NoError(t, err)
 
-		require.Equal(t, 0, changes.newRules)
-		require.Len(t, changes.Upsert, 0)
+		require.Empty(t, changes.New)
+		require.Empty(t, changes.Update)
 		require.Len(t, changes.Delete, len(inDatabaseMap))
 		for _, toDelete := range changes.Delete {
 			require.Contains(t, inDatabaseMap, toDelete.UID)
@@ -86,15 +76,44 @@ func TestCalculateChanges(t *testing.T) {
 		changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, submitted)
 		require.NoError(t, err)
 
-		require.Len(t, changes.Upsert, len(inDatabase))
-		for _, upsert := range changes.Upsert {
+		require.Len(t, changes.Update, len(inDatabase))
+		for _, upsert := range changes.Update {
 			require.NotNil(t, upsert.Existing)
 			require.Equal(t, upsert.Existing.UID, upsert.New.UID)
 			require.Equal(t, inDatabaseMap[upsert.Existing.UID], upsert.Existing)
-			require.Equal(t, *submittedMap[upsert.Existing.UID], upsert.New)
+			require.Equal(t, submittedMap[upsert.Existing.UID], upsert.New)
+			require.NotEmpty(t, upsert.Diff)
 		}
-		require.Len(t, changes.Delete, 0)
-		require.Equal(t, 0, changes.newRules)
+		require.Empty(t, changes.Delete)
+		require.Empty(t, changes.New)
+	})
+
+	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
+		namespace := randFolder()
+		groupName := util.GenerateShortUID()
+		_, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace)))
+
+		submitted := make([]*models.AlertRule, 0, len(inDatabase))
+		for _, rule := range inDatabase {
+			r := models.CopyRule(rule)
+
+			// Ignore difference in the following fields as submitted models do not have them set
+			r.ID = rand.Int63()
+			r.Version = rand.Int63()
+			r.Updated = r.Updated.Add(1 * time.Minute)
+
+			submitted = append(submitted, r)
+		}
+
+		fakeStore := store.NewFakeRuleStore(t)
+		fakeStore.PutRule(context.Background(), inDatabase...)
+
+		changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, submitted)
+		require.NoError(t, err)
+
+		require.Empty(t, changes.Update)
+		require.Empty(t, changes.Delete)
+		require.Empty(t, changes.New)
 	})
 
 	t.Run("should patch rule with UID specified by existing rule", func(t *testing.T) {
@@ -150,12 +169,12 @@ func TestCalculateChanges(t *testing.T) {
 				submitted := *expected
 				changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, []*models.AlertRule{&submitted})
 				require.NoError(t, err)
-				require.Len(t, changes.Upsert, 1)
-				ch := changes.Upsert[0]
+				require.Len(t, changes.Update, 1)
+				ch := changes.Update[0]
 				require.Equal(t, ch.Existing, dbRule)
 				fixed := *expected
 				models.PatchPartialAlertRule(dbRule, &fixed)
-				require.Equal(t, fixed, ch.New)
+				require.Equal(t, fixed, *ch.New)
 			})
 		}
 	})
@@ -173,14 +192,15 @@ func TestCalculateChanges(t *testing.T) {
 		changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, submitted)
 		require.NoError(t, err)
 
-		require.Len(t, changes.Delete, 0)
-		require.Equal(t, 0, changes.newRules)
-		require.Len(t, changes.Upsert, len(submitted))
-		for _, upsert := range changes.Upsert {
-			require.NotNil(t, upsert.Existing)
-			require.Equal(t, upsert.Existing.UID, upsert.New.UID)
-			require.Equal(t, inDatabaseMap[upsert.Existing.UID], upsert.Existing)
-			require.Equal(t, *submittedMap[upsert.Existing.UID], upsert.New)
+		require.Empty(t, changes.Delete)
+		require.Empty(t, changes.New)
+		require.Len(t, changes.Update, len(submitted))
+		for _, update := range changes.Update {
+			require.NotNil(t, update.Existing)
+			require.Equal(t, update.Existing.UID, update.New.UID)
+			require.Equal(t, inDatabaseMap[update.Existing.UID], update.Existing)
+			require.Equal(t, submittedMap[update.Existing.UID], update.New)
+			require.NotEmpty(t, update.Diff)
 		}
 	})
 

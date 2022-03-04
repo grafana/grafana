@@ -45,16 +45,17 @@ type AlertEngine struct {
 	DataService      legacydata.RequestHandler
 	Cfg              *setting.Cfg
 
-	execQueue         chan *Job
-	ticker            *Ticker
-	scheduler         scheduler
-	evalHandler       evalHandler
-	ruleReader        ruleReader
-	log               log.Logger
-	resultHandler     resultHandler
-	usageStatsService usagestats.Service
-	tracer            tracing.Tracer
-	sqlStore          AlertStore
+	execQueue          chan *Job
+	ticker             *Ticker
+	scheduler          scheduler
+	evalHandler        evalHandler
+	ruleReader         ruleReader
+	log                log.Logger
+	resultHandler      resultHandler
+	usageStatsService  usagestats.Service
+	tracer             tracing.Tracer
+	sqlStore           AlertStore
+	dashAlertExtractor DashAlertExtractor
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -65,16 +66,18 @@ func (e *AlertEngine) IsDisabled() bool {
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
-	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg) *AlertEngine {
+	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg,
+	dashAlertExtractor DashAlertExtractor) *AlertEngine {
 	e := &AlertEngine{
-		Cfg:               cfg,
-		RenderService:     renderer,
-		Bus:               bus,
-		RequestValidator:  requestValidator,
-		DataService:       dataService,
-		usageStatsService: usageStatsService,
-		tracer:            tracer,
-		sqlStore:          sqlStore,
+		Cfg:                cfg,
+		RenderService:      renderer,
+		Bus:                bus,
+		RequestValidator:   requestValidator,
+		DataService:        dataService,
+		usageStatsService:  usageStatsService,
+		tracer:             tracer,
+		sqlStore:           sqlStore,
+		dashAlertExtractor: dashAlertExtractor,
 	}
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)

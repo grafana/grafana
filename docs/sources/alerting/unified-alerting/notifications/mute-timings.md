@@ -11,7 +11,7 @@ A mute timing is a recurring interval of time when no new notifications for a po
 
 Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./fundamentals/alertmanager.md" >}}).
+You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source]({{< relref "../../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "../fundamentals/alertmanager.md" >}}).
 
 ## Mute timings vs silences
 

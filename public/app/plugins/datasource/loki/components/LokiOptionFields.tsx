@@ -6,6 +6,7 @@ import { map } from 'lodash';
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { LokiQuery, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
@@ -24,12 +25,15 @@ const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
     label: 'Instant',
     description: 'Run query against a single point in time. For this query, the "To" time is used.',
   },
-  // {
-  //   value: LokiQueryType.Stream,
-  //   label: 'Stream',
-  //   description: 'Run a query and keep sending results on an interval',
-  // },
 ];
+
+if (config.featureToggles.lokiLive) {
+  queryTypeOptions.push({
+    value: LokiQueryType.Stream,
+    label: 'Stream',
+    description: 'Run a query and keep sending results on an interval',
+  });
+}
 
 export const DEFAULT_RESOLUTION: SelectableValue<number> = {
   value: 1,

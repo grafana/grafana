@@ -50,7 +50,7 @@ describe('PromQueryBuilder', () => {
     setup();
     // Add label
     expect(screen.getByLabelText('Add')).toBeInTheDocument();
-    expect(screen.getByLabelText('Add operation')).toBeInTheDocument();
+    expect(screen.getByTitle('Add operation')).toBeInTheDocument();
   });
 
   it('renders all the query sections', async () => {

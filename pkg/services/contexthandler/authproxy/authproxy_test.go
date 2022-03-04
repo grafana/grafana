@@ -21,18 +21,19 @@ import (
 
 const hdrName = "markelog"
 
-func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, cb func(*http.Request, *setting.Cfg)) *AuthProxy {
+func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, configureReq func(*http.Request, *setting.Cfg)) *AuthProxy {
 	t.Helper()
-
-	cfg := setting.NewCfg()
-	cfg.AuthProxyHeaderName = "X-Killa"
 
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
-	req.Header.Set(cfg.AuthProxyHeaderName, hdrName)
 
-	if cb != nil {
-		cb(req, cfg)
+	cfg := setting.NewCfg()
+
+	if configureReq != nil {
+		configureReq(req, cfg)
+	} else {
+		cfg.AuthProxyHeaderName = "X-Killa"
+		req.Header.Set(cfg.AuthProxyHeaderName, hdrName)
 	}
 
 	ctx := &models.ReqContext{
@@ -84,9 +85,11 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 
 		auth := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
+			cfg.AuthProxyHeaderName = "X-Killa"
+			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Role": "X-WEBAUTH-ROLE"}
+			req.Header.Set(cfg.AuthProxyHeaderName, hdrName)
 			req.Header.Set("X-WEBAUTH-GROUPS", group)
 			req.Header.Set("X-WEBAUTH-ROLE", role)
-			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Role": "X-WEBAUTH-ROLE"}
 		})
 		assert.Equal(t, "auth-proxy-sync-ttl:f5acfffd56daac98d502ef8c8b8c5d56", key)
 
@@ -189,5 +192,28 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 
 		assert.NotEqual(t, id, gotID)
 		assert.False(t, stub.LoginCalled)
+	})
+}
+
+func TestDecodeHeader(t *testing.T) {
+	cache := remotecache.NewFakeStore(t)
+	t.Run("should not decode header if not enabled in settings", func(t *testing.T) {
+		auth := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
+			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			cfg.AuthProxyHeadersEncoded = false
+			req.Header.Set(cfg.AuthProxyHeaderName, "M=C3=BCnchen")
+		})
+
+		assert.Equal(t, "M=C3=BCnchen", auth.header)
+	})
+
+	t.Run("should decode header if enabled in settings", func(t *testing.T) {
+		auth := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
+			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			cfg.AuthProxyHeadersEncoded = true
+			req.Header.Set(cfg.AuthProxyHeaderName, "M=C3=BCnchen")
+		})
+
+		assert.Equal(t, "München", auth.header)
 	})
 }

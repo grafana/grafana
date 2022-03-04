@@ -3,19 +3,23 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { locationUtil } from '@grafana/data';
 import { SaveDashboardOptions } from './types';
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { DashboardSavedEvent } from 'app/types/events';
 
-const saveDashboard = (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
   let folderId = options.folderId;
   if (folderId === undefined) {
     folderId = dashboard.meta.folderId ?? saveModel.folderId;
   }
 
-  return saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
+  const result = await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
+  // fetch updated access control permissions
+  await contextSrv.fetchUserPermissions();
+  return result;
 };
 
 export const useDashboardSave = (dashboard: DashboardModel) => {
