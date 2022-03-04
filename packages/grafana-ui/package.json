@@ -153,7 +153,7 @@
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.6",
     "babel-loader": "8.2.3",
     "common-tags": "1.8.2",
-    "css-loader": "6.6.0",
+    "css-loader": "6.7.0",
     "css-minimizer-webpack-plugin": "3.4.1",
     "csstype": "3.0.10",
     "enzyme": "3.11.0",

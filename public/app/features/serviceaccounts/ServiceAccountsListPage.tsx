@@ -1,52 +1,52 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Button, ConfirmModal, Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState, ServiceAccountDTO, AccessControlAction, Role } from 'app/types';
 import {
+  changeFilter,
+  changeQuery,
   fetchACOptions,
-  loadServiceAccounts,
+  fetchServiceAccounts,
   removeServiceAccount,
   updateServiceAccount,
   setServiceAccountToRemove,
 } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSearchQuery } from './state/selectors';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 import pluralize from 'pluralize';
-export type Props = ConnectedProps<typeof connector>;
+
+interface OwnProps {}
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-    serviceAccounts: getServiceAccounts(state.serviceAccounts),
-    searchQuery: getServiceAccountsSearchQuery(state.serviceAccounts),
-    searchPage: getServiceAccountsSearchPage(state.serviceAccounts),
-    isLoading: state.serviceAccounts.isLoading,
-    roleOptions: state.serviceAccounts.roleOptions,
-    builtInRoles: state.serviceAccounts.builtInRoles,
-    toRemove: state.serviceAccounts.serviceAccountToRemove,
+    ...state.serviceAccounts,
   };
 }
 
 const mapDispatchToProps = {
-  loadServiceAccounts,
+  fetchServiceAccounts,
   fetchACOptions,
   updateServiceAccount,
   removeServiceAccount,
   setServiceAccountToRemove,
+  changeFilter,
+  changeQuery,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 const ServiceAccountsListPage = ({
-  loadServiceAccounts,
+  fetchServiceAccounts,
   removeServiceAccount,
   fetchACOptions,
   updateServiceAccount,
@@ -56,34 +56,51 @@ const ServiceAccountsListPage = ({
   isLoading,
   roleOptions,
   builtInRoles,
-  toRemove,
+  changeFilter,
+  changeQuery,
+  query,
+  filters,
+  serviceAccountToRemove,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    loadServiceAccounts();
+    fetchServiceAccounts();
     if (contextSrv.accessControlEnabled()) {
       fetchACOptions();
     }
-  }, [loadServiceAccounts, fetchACOptions]);
+  }, [fetchServiceAccounts, fetchACOptions]);
 
   const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
-
     updateServiceAccount(updatedServiceAccount);
   };
-
   return (
     <Page navModel={navModel}>
       <Page.Contents>
         <h2>Service accounts</h2>
         <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
-          {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton href="org/serviceaccounts/create" variant="primary">
-              New service account
-            </LinkButton>
-          )}
+          <FilterInput
+            placeholder="Search service account by name."
+            autoFocus={true}
+            value={query}
+            onChange={changeQuery}
+          />
+          <RadioButtonGroup
+            options={[
+              { label: 'All service accounts', value: false },
+              { label: 'Expired tokens', value: true },
+            ]}
+            onChange={(value) => changeFilter({ name: 'Expired', value })}
+            value={filters.find((f) => f.name === 'Expired')?.value}
+            className={styles.filter}
+          />
         </div>
+        {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+          <LinkButton href="org/serviceaccounts/create" variant="primary">
+            New service account
+          </LinkButton>
+        )}
         {isLoading ? (
           <PageLoader />
         ) : (
@@ -116,13 +133,16 @@ const ServiceAccountsListPage = ({
             </div>
           </>
         )}
-        {toRemove && (
+        {serviceAccountToRemove && (
           <ConfirmModal
             body={
               <div>
-                Are you sure you want to delete &apos;{toRemove.name}&apos;
-                {Boolean(toRemove.tokens) &&
-                  ` and ${toRemove.tokens} accompanying ${pluralize('token', toRemove.tokens)}`}
+                Are you sure you want to delete &apos;{serviceAccountToRemove.name}&apos;
+                {Boolean(serviceAccountToRemove.tokens) &&
+                  ` and ${serviceAccountToRemove.tokens} accompanying ${pluralize(
+                    'token',
+                    serviceAccountToRemove.tokens
+                  )}`}
                 ?
               </div>
             }
@@ -133,7 +153,7 @@ const ServiceAccountsListPage = ({
             }}
             isOpen={true}
             onConfirm={() => {
-              removeServiceAccount(toRemove.id);
+              removeServiceAccount(serviceAccountToRemove.id);
               setServiceAccountToRemove(null);
             }}
           />

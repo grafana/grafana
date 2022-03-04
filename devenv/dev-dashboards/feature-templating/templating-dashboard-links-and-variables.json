@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1601526910610,
+  "iteration": 1646409057541,
   "links": [
     {
       "icon": "external link",
@@ -73,6 +73,61 @@
       "timeShift": null,
       "title": "${custom.text}",
       "type": "text"
+    },
+    {
+      "id": 4,
+      "gridPos": {
+        "h": 9,
+        "w": 9,
+        "x": 12,
+        "y": 0
+      },
+      "type": "stat",
+      "title": "Panel Title",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "title": "Var Link",
+              "url": "/d/vmie2cmWz/bar-gauge-demo?var-custom=$custom"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "pluginVersion": "8.5.0-pre",
+      "datasource": null
     }
   ],
   "schemaVersion": 26,
@@ -112,6 +167,11 @@
             "selected": false,
             "text": "p3",
             "value": "p3"
+          },
+          {
+            "selected": false,
+            "text": "p4",
+            "value": "test%25value"
           }
         ],
         "query": "p1,p2,p3",

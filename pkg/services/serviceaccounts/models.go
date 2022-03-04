@@ -35,12 +35,12 @@ type CreateServiceAccountForm struct {
 }
 
 type ServiceAccountDTO struct {
-	Id            int64           `json:"id"`
-	Name          string          `json:"name"`
-	Login         string          `json:"login"`
-	OrgId         int64           `json:"orgId"`
+	Id            int64           `json:"id" xorm:"user_id"`
+	Name          string          `json:"name" xorm:"name"`
+	Login         string          `json:"login" xorm:"login"`
+	OrgId         int64           `json:"orgId" xorm:"org_id"`
+	Role          string          `json:"role" xorm:"role"`
 	Tokens        int64           `json:"tokens"`
-	Role          string          `json:"role"`
 	AvatarUrl     string          `json:"avatarUrl"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }

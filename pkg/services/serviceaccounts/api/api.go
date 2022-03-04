@@ -60,6 +60,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
+		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
@@ -150,7 +151,6 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 			serviceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceAccounts[i].Id, 10)]
 		}
 	}
-
 	return response.JSON(http.StatusOK, serviceAccounts)
 }
 
@@ -220,4 +220,59 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	}
 
 	return response.JSON(http.StatusOK, resp)
+}
+
+// SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
+// GET /api/serviceaccounts/search
+func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+	if page < 1 {
+		page = 1
+	}
+	query := &models.SearchOrgUsersQuery{
+		OrgID:            c.OrgId,
+		Query:            c.Query("query"),
+		Page:             page,
+		Limit:            perPage,
+		User:             c.SignedInUser,
+		IsServiceAccount: true,
+	}
+	serviceAccounts, err := api.store.SearchOrgServiceAccounts(ctx, query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
+	}
+
+	saIDs := map[string]bool{}
+	for i := range serviceAccounts {
+		serviceAccounts[i].AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccounts[i].Name)
+
+		saIDString := strconv.FormatInt(serviceAccounts[i].Id, 10)
+		saIDs[saIDString] = true
+		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
+		serviceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceAccounts[i].Id, 10)]
+		tokens, err := api.store.ListTokens(ctx, serviceAccounts[i].OrgId, serviceAccounts[i].Id)
+		if err != nil {
+			api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccounts[i].Id)
+		}
+		serviceAccounts[i].Tokens = int64(len(tokens))
+	}
+
+	type searchOrgServiceAccountsQueryResult struct {
+		TotalCount      int64                                `json:"totalCount"`
+		ServiceAccounts []*serviceaccounts.ServiceAccountDTO `json:"serviceAccounts"`
+		Page            int                                  `json:"page"`
+		PerPage         int                                  `json:"perPage"`
+	}
+	result := searchOrgServiceAccountsQueryResult{
+		TotalCount:      query.Result.TotalCount,
+		ServiceAccounts: serviceAccounts,
+		Page:            query.Result.Page,
+		PerPage:         query.Result.PerPage,
+	}
+	return response.JSON(http.StatusOK, result)
 }
