@@ -3,6 +3,7 @@ package grafanads
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,8 +11,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -31,6 +32,8 @@ const DatasourceID = -1
 // Grafana DS command.
 const DatasourceUID = "grafana"
 
+const publicFilestorageBackend = "public"
+
 // Make sure Service implements required interfaces.
 // This is important to do since otherwise we will only get a
 // not implemented error response from plugin at runtime.
@@ -40,12 +43,14 @@ var (
 	logger                            = log.New("tsdb.grafana")
 )
 
-func ProvideService(cfg *setting.Cfg, search searchV2.SearchService) *Service {
-	return newService(cfg, search)
+func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, fs filestorage.FileStorage) *Service {
+	return newService(cfg, search, fs)
 }
 
-func newService(cfg *setting.Cfg, search searchV2.SearchService) *Service {
+func newService(cfg *setting.Cfg, search searchV2.SearchService, fs filestorage.FileStorage) *Service {
 	s := &Service{
+		fs:             fs,
+		search:         search,
 		staticRootPath: cfg.StaticRootPath,
 		roots: []string{
 			"testdata",
@@ -55,7 +60,7 @@ func newService(cfg *setting.Cfg, search searchV2.SearchService) *Service {
 			"maps",
 			"upload", // does not exist yet
 		},
-		search: search,
+		log: log.New("grafanads"),
 	}
 
 	return s
@@ -67,6 +72,8 @@ type Service struct {
 	staticRootPath string
 	roots          []string
 	search         searchV2.SearchService
+	fs             filestorage.FileStorage
+	log            log.Logger
 }
 
 func DataSourceModel(orgId int64) *models.DataSource {
@@ -111,6 +118,110 @@ func (s *Service) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) 
 	}, nil
 }
 
+func (s *Service) getDirectoryFrame(path string, details bool) (*data.Frame, error) {
+	// Name() string       // base name of the file
+	// Size() int64        // length in bytes for regular files; system-dependent for others
+	// Mode() FileMode     // file mode bits
+	// ModTime() time.Time // modification time
+	// IsDir() bool        // abbreviation for Mode().IsDir()
+	ctx := context.Background()
+	folders, err := s.fs.ListFolders(ctx, path, &filestorage.ListOptions{Recursive: false})
+	if err != nil {
+		s.log.Error("failed when listing folders", "path", path, "err", err)
+		return nil, errors.New("unknown error")
+	}
+
+	filesResp, err := s.fs.ListFiles(ctx, path, nil, &filestorage.ListOptions{Recursive: false})
+	if err != nil {
+		s.log.Error("failed when listing files", "path", path, "err", err)
+		return nil, errors.New("unknown error")
+	}
+
+	count := len(filesResp.Files) + len(folders)
+	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	size := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
+	modified := data.NewFieldFromFieldType(data.FieldTypeTime, count)
+
+	names.Name = "name"
+	mtype.Name = "media-type"
+	size.Name = "size"
+	size.Config = &data.FieldConfig{
+		Unit: "bytes",
+	}
+	modified.Name = "modified"
+
+	for i, f := range filesResp.Files {
+		names.Set(i, f.Name)
+		mtype.Set(i, f.MimeType)
+		if details {
+			size.Set(i, f.Size)
+			modified.Set(i, f.Modified)
+		}
+	}
+
+	for i, f := range folders {
+		names.Set(i, f.FullPath)
+		mtype.Set(i, "directory")
+	}
+
+	frame := data.NewFrame("", names, mtype)
+	frame.SetMeta(&data.FrameMeta{
+		PathSeparator: filestorage.Delimiter,
+		Type:          data.FrameTypeDirectoryListing,
+	})
+	if details {
+		frame.Fields = append(frame.Fields, size)
+		frame.Fields = append(frame.Fields, modified)
+	}
+	return frame, nil
+}
+
+func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
+	q := &listQueryModel{}
+	response := backend.DataResponse{}
+	err := json.Unmarshal(query.JSON, &q)
+	if err != nil {
+		response.Error = err
+		return response
+	}
+
+	path := q.Path
+	if path == "" {
+		folders, err := s.fs.ListFolders(context.Background(), publicFilestorageBackend, nil)
+		if err != nil {
+			s.log.Error("failed when listing folders", "path", publicFilestorageBackend, "err", err)
+			response.Error = errors.New("unknown error")
+			return response
+		}
+
+		count := len(folders)
+		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		names.Name = "name"
+		mtype.Name = "mediaType"
+		for i, f := range folders {
+			names.Set(i, f.FullPath)
+			s.log.Info("setting full path", "name", f.Name, "path", f.FullPath)
+			mtype.Set(i, "directory")
+		}
+		frame := data.NewFrame("", names, mtype)
+		frame.SetMeta(&data.FrameMeta{
+			Type: data.FrameTypeDirectoryListing,
+		})
+		response.Frames = data.Frames{frame}
+	} else {
+		frame, err := s.getDirectoryFrame(path, false)
+		if err != nil {
+			response.Error = err
+			return response
+		}
+		response.Frames = data.Frames{frame}
+	}
+
+	return response
+}
+
 func (s *Service) publicPath(path string) (string, error) {
 	if strings.Contains(path, "..") {
 		return "", fmt.Errorf("invalid string")
@@ -127,47 +238,6 @@ func (s *Service) publicPath(path string) (string, error) {
 		return "", fmt.Errorf("bad root path")
 	}
 	return filepath.Join(s.staticRootPath, path), nil
-}
-
-func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
-	q := &listQueryModel{}
-	response := backend.DataResponse{}
-	err := json.Unmarshal(query.JSON, &q)
-	if err != nil {
-		response.Error = err
-		return response
-	}
-
-	if q.Path == "" {
-		count := len(s.roots)
-		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		names.Name = "name"
-		mtype.Name = "mediaType"
-		for i, f := range s.roots {
-			names.Set(i, f)
-			mtype.Set(i, "directory")
-		}
-		frame := data.NewFrame("", names, mtype)
-		frame.SetMeta(&data.FrameMeta{
-			Type: data.FrameTypeDirectoryListing,
-		})
-		response.Frames = data.Frames{frame}
-	} else {
-		path, err := s.publicPath(q.Path)
-		if err != nil {
-			response.Error = err
-			return response
-		}
-		frame, err := experimental.GetDirectoryFrame(path, false)
-		if err != nil {
-			response.Error = err
-			return response
-		}
-		response.Frames = data.Frames{frame}
-	}
-
-	return response
 }
 
 func (s *Service) doReadQuery(query backend.DataQuery) backend.DataResponse {
@@ -194,6 +264,7 @@ func (s *Service) doReadQuery(query backend.DataQuery) backend.DataResponse {
 	// nolint:gosec
 	fileReader, err := os.Open(path)
 	if err != nil {
+		s.log.Error("Failed to read file", "err", err, "path", path)
 		response.Error = fmt.Errorf("failed to read file")
 		return response
 	}

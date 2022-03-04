@@ -73,7 +73,7 @@ export const FolderPickerTab = (props: Props) => {
       getDatasourceSrv()
         .get('-- Grafana --')
         .then((ds) => {
-          (ds as GrafanaDatasource).listFiles(folder).subscribe({
+          (ds as GrafanaDatasource).listFiles(`/public/${folder}`).subscribe({
             next: (frame) => {
               const cards: ResourceItem[] = [];
               frame.forEach((item) => {
