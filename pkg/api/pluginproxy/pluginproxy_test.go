@@ -324,3 +324,7 @@ func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(_ context.Contex
 func (s *mockPluginsSettingsService) UpdatePluginSetting(_ context.Context, _ *models.UpdatePluginSettingCmd) error {
 	return s.err
 }
+
+func (s *mockPluginsSettingsService) DecryptedValues(_ *models.PluginSetting) map[string]string {
+	return nil
+}
