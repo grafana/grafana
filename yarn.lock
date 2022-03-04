@@ -4141,6 +4141,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/eslint-config@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@grafana/eslint-config@npm:3.0.0"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": 5.10.0
+    "@typescript-eslint/parser": 5.10.0
+    eslint: 7.28.0
+    eslint-config-prettier: 8.3.0
+    eslint-plugin-jsdoc: 37.7.0
+    eslint-plugin-react: 7.28.0
+    eslint-plugin-react-hooks: 4.3.0
+    typescript: 4.4.4
+  checksum: 27320a7ff7241bba132cccb62cd5d229300b0e9867d3e214ad8606c6d10a2015845bbf9d008d708f7e4f884d004c4c4c8db5694b3f2e006dcc6c5b411a3d350e
+  languageName: node
+  linkType: hard
+
 "@grafana/experimental@npm:0.0.2-canary.18":
   version: 0.0.2-canary.18
   resolution: "@grafana/experimental@npm:0.0.2-canary.18"
@@ -20701,7 +20717,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 2.5.2
+    "@grafana/eslint-config": 3.0.0
     "@grafana/experimental": 0.0.2-canary.18
     "@grafana/google-sdk": 0.0.2
     "@grafana/runtime": "workspace:*"
@@ -20846,7 +20862,6 @@ __metadata:
     eslint-plugin-jest: ^26.1.0
     eslint-plugin-jsdoc: 37.9.1
     eslint-plugin-lodash: 7.4.0
-    eslint-plugin-prettier: 4.0.0
     eslint-plugin-react: 7.29.2
     eslint-plugin-react-hooks: 4.3.0
     eslint-webpack-plugin: 3.1.1
