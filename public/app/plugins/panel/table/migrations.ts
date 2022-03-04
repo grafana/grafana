@@ -235,9 +235,6 @@ export const tablePanelChangedHandler = (
       defaults,
       overrides,
     };
-    panel.options = {
-      pageSize: oldOpts.pageSize === null ? undefined : oldOpts.pageSize,
-    };
   }
 
   return {};

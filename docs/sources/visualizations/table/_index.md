@@ -106,6 +106,6 @@ Enables value inspection from table cell. The raw value is presented in a modal 
 
 You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "./filter-table-columns.md" >}}).
 
-## Page size
+## Pagination
 
-The page size determines the number of rows to display on each page for a table visualization. Specify a number that is greater than 0.
+Change the enable pagination option to enable or disable pagination. This is a front-end option and does not affect the backend data. The page size is automatically adjusted to the height of table.

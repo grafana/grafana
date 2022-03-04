@@ -12,7 +12,7 @@ import { TableFieldOptions } from '@grafana/schema';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { TableSuggestionsSupplier } from './suggestions';
-import { PageSizeEditor } from './PageSizeEditor';
+import { PaginationEditor } from './PaginationEditor';
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -155,11 +155,10 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         showIf: (cfg) => cfg.footer?.show,
       })
       .addCustomEditor({
-        id: 'pageSize',
-        path: 'pageSize',
-        name: 'Page size',
-        description: 'Number of rows to display per page',
-        editor: PageSizeEditor,
+        id: 'footer.enablePagination',
+        path: 'footer.enablePagination',
+        name: 'Enable pagination',
+        editor: PaginationEditor,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

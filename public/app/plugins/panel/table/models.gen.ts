@@ -18,13 +18,13 @@ export interface PanelOptions {
   showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
   footer?: TableFooterCalc; // TODO: should be array (options builder is limited)
-  pageSize?: number;
 }
 
 export interface TableFooterCalc {
   show: boolean;
   reducer: string[]; // actually 1 value
   fields?: string[];
+  enablePagination?: boolean;
 }
 
 export const defaultPanelOptions: PanelOptions = {
