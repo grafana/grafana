@@ -119,7 +119,7 @@ describe('LokiQueryModeller', () => {
         operations: [],
       };
 
-      const def = modeller.getOperationDef('sum');
+      const def = modeller.getOperationDef('sum')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe('rate');
       expect(result.operations[1].id).toBe('sum');
@@ -131,7 +131,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: 'json', params: [] }],
       };
 
-      const def = modeller.getOperationDef('sum');
+      const def = modeller.getOperationDef('sum')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe('json');
       expect(result.operations[1].id).toBe('rate');
@@ -144,7 +144,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: 'rate', params: [] }],
       };
 
-      const def = modeller.getOperationDef('json');
+      const def = modeller.getOperationDef('json')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe('json');
       expect(result.operations[1].id).toBe('rate');
@@ -156,7 +156,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: '__line_contains', params: ['error'] }],
       };
 
-      const def = modeller.getOperationDef('json');
+      const def = modeller.getOperationDef('json')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe('__line_contains');
       expect(result.operations[1].id).toBe('json');
@@ -168,7 +168,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: 'json', params: [] }],
       };
 
-      const def = modeller.getOperationDef('__line_contains');
+      const def = modeller.getOperationDef('__line_contains')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe('__line_contains');
       expect(result.operations[1].id).toBe('json');
@@ -180,7 +180,7 @@ describe('LokiQueryModeller', () => {
         operations: [],
       };
 
-      const def = modeller.getOperationDef('rate');
+      const def = modeller.getOperationDef('rate')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations.length).toBe(1);
     });
