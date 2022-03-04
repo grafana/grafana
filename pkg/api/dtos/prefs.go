@@ -24,9 +24,13 @@ type UpdatePrefsCmd struct {
 }
 
 type PatchPrefsCmd struct {
-	Theme           *string                    `json:"theme,omitempty"`
-	HomeDashboardID *int64                     `json:"homeDashboardId,omitempty"`
-	Timezone        *string                    `json:"timezone,omitempty"`
-	WeekStart       *string                    `json:"weekStart,omitempty"`
-	Navbar          *[]models.NavbarPreference `json:"navbar,omitempty"`
+	// Enum: light,dark
+	Theme *string `json:"theme,omitempty"`
+	// The numerical :id of a favorited dashboard
+	// Default:0
+	HomeDashboardID *int64 `json:"homeDashboardId,omitempty"`
+	// Enum: utc,browser
+	Timezone  *string                    `json:"timezone,omitempty"`
+	WeekStart *string                    `json:"weekStart,omitempty"`
+	Navbar    *[]models.NavbarPreference `json:"navbar,omitempty"`
 }

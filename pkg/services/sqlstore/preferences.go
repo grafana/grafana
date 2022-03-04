@@ -13,7 +13,7 @@ func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetPreferences)
 	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", ss.SavePreferences)
-	bus.AddHandler("sql", ss.UpsertPreferences)
+	bus.AddHandler("sql", ss.PatchPreferences)
 }
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
@@ -135,7 +135,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 	})
 }
 
-func (ss *SQLStore) UpsertPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
+func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)

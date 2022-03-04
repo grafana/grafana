@@ -52,7 +52,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	}
 
 	if prefsQuery.Result.JsonData != nil {
-		dto.Navbar = (*prefsQuery.Result.JsonData).Navbar
+		dto.Navbar = prefsQuery.Result.JsonData.Navbar
 	}
 
 	return response.JSON(200, &dto)
@@ -112,7 +112,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Navbar:          dtoCmd.Navbar,
 	}
 
-	if err := hs.SQLStore.UpsertPreferences(ctx, &patchCmd); err != nil {
+	if err := hs.SQLStore.PatchPreferences(ctx, &patchCmd); err != nil {
 		return response.Error(500, "Failed to save preferences", err)
 	}
 

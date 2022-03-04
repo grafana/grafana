@@ -262,11 +262,11 @@ func TestPreferencesDataAccess(t *testing.T) {
 		}
 	})
 
-	t.Run("UpsertPreferences for a user should only modify a single value", func(t *testing.T) {
+	t.Run("PatchPreferences for a user should only modify a single value", func(t *testing.T) {
 		err := ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{UserId: models.SignedInUser{}.UserId, Theme: "dark", Timezone: "browser", HomeDashboardId: 5, WeekStart: "1", Navbar: &orgNavbarPreferences})
 		require.NoError(t, err)
 
-		err = ss.UpsertPreferences(context.Background(), &models.PatchPreferencesCommand{UserId: models.SignedInUser{}.UserId, Navbar: &userNavbarPreferences})
+		err = ss.PatchPreferences(context.Background(), &models.PatchPreferencesCommand{UserId: models.SignedInUser{}.UserId, Navbar: &userNavbarPreferences})
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}

@@ -295,7 +295,7 @@ func (m *SQLStoreMock) SavePreferences(ctx context.Context, cmd *models.SavePref
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) UpsertPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
+func (m *SQLStoreMock) PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
 	return m.ExpectedError
 }
 

@@ -78,7 +78,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 }
 
 func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true, Features: featuremgmt.WithFeatures()})
+	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.Bus, engine *xorm.Engine,
@@ -460,10 +460,9 @@ var testSQLStoreMutex sync.Mutex
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
-	Features                *featuremgmt.FeatureManager
 }
 
-var featuresEnabledDuringTests = []interface{}{
+var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
 }
@@ -495,7 +494,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		dbType := migrator.SQLite
 
 		if len(opts) == 0 {
-			opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, Features: featuremgmt.WithFeatures(featuresEnabledDuringTests...)}}
+			opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false}}
 		}
 
 		// environment variable present for test db?
@@ -505,8 +504,14 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		if opts[0].Features != nil {
-			cfg.IsFeatureToggleEnabled = opts[0].Features.IsEnabled
+		cfg.IsFeatureToggleEnabled = func(requestedFeature string) bool {
+			for _, enabledFeature := range featuresEnabledDuringTests {
+				if enabledFeature == requestedFeature {
+					return true
+				}
+			}
+
+			return false
 		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
