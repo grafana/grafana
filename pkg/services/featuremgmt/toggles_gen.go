@@ -134,4 +134,8 @@ const (
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
+
+	// FlagIntentapi
+	// Enable experimental Intent API
+	FlagIntentapi = "intentapi"
 )
