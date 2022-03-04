@@ -13,7 +13,7 @@ import (
 
 func ProvideService(store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
 	s := &Service{
-		store: store,
+		sqlStore: store,
 		decryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
@@ -25,7 +25,7 @@ func ProvideService(store *sqlstore.SQLStore, secretsService secrets.Service) *S
 }
 
 type Service struct {
-	store           *sqlstore.SQLStore
+	sqlStore        *sqlstore.SQLStore
 	decryptionCache secureJSONDecryptionCache
 
 	secretsService secrets.Service
@@ -43,11 +43,11 @@ type secureJSONDecryptionCache struct {
 }
 
 func (s *Service) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
-	return s.store.GetPluginSettings(ctx, orgID)
+	return s.sqlStore.GetPluginSettings(ctx, orgID)
 }
 
 func (s *Service) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-	return s.store.GetPluginSettingById(ctx, query)
+	return s.sqlStore.GetPluginSettingById(ctx, query)
 }
 
 func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
@@ -57,11 +57,11 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePlu
 		return err
 	}
 
-	return s.store.UpdatePluginSetting(ctx, cmd)
+	return s.sqlStore.UpdatePluginSetting(ctx, cmd)
 }
 
 func (s *Service) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
-	return s.store.UpdatePluginSettingVersion(ctx, cmd)
+	return s.sqlStore.UpdatePluginSettingVersion(ctx, cmd)
 }
 
 func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
