@@ -6,6 +6,9 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/internal/components/datasource"
+	"github.com/grafana/grafana/internal/intentapi"
+	"github.com/grafana/grafana/internal/k8sbridge"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -27,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -199,8 +203,18 @@ var wireBasicSet = wire.NewSet(
 	plugindashboards.ProvideService,
 )
 
+var wireIntentAPISet = wire.NewSet(
+	schema.ProvideReadOnlyCoreRegistry,
+	intentapi.ProvideHTTPServer,
+	intentapi.ProvideApiserverProxy,
+	k8sbridge.ProvideService,
+	datasource.ProvideDatasourceReconciler,
+	wire.Bind(new(intentapi.Handler), new(*intentapi.ApiserverProxy)),
+)
+
 var wireSet = wire.NewSet(
 	wireBasicSet,
+	wireIntentAPISet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -210,6 +224,7 @@ var wireSet = wire.NewSet(
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
+	wireIntentAPISet,
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,

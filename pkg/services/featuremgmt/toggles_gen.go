@@ -82,4 +82,8 @@ const (
 	// FlagValidatedQueries
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
+
+	// FlagIntentapi
+	// Enable experimental Intent API
+	FlagIntentapi = "intentapi"
 )
