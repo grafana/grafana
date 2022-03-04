@@ -36,6 +36,12 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
     nameStyle: css`
       margin-right: 3px;
     `,
+
+    buttonStyles: css`
+      border: none;
+      background: none;
+      padding: 0;
+    `,
   };
 });
 
@@ -50,7 +56,9 @@ export const TagItem: FC<Props> = ({ name, onRemove }) => {
   return (
     <div className={styles.itemStyle}>
       <span className={styles.nameStyle}>{name}</span>
-      <Icon className="pointer" name="times" onClick={() => onRemove(name)} />
+      <button aria-label="Remove" onClick={() => onRemove(name)} className={styles.buttonStyles} type="button">
+        <Icon className="pointer" name="times" />
+      </button>
     </div>
   );
 };
