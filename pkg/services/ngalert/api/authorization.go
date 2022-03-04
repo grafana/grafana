@@ -18,15 +18,15 @@ var (
 	ScopeDatasourceID   = ac.Scope(ScopeDatasource, "id", ac.Parameter(":Recipient"))
 
 	// Alerting rules actions
-	ActionAlertingRuleCreate = "alert.rule:create"
-	ActionAlertingRuleRead   = "alert.rule:read"
-	ActionAlertingRuleUpdate = "alert.rule:update"
-	ActionAlertingRuleDelete = "alert.rule:delete"
+	ActionAlertingRuleCreate = "alert.rules:create"
+	ActionAlertingRuleRead   = "alert.rules:read"
+	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleDelete = "alert.rules:delete"
 
 	// Alerting instances (+silences) actions
-	ActionAlertingInstanceCreate = "alert.instance:create"
-	ActionAlertingInstanceUpdate = "alert.instance:update"
-	ActionAlertingInstanceRead   = "alert.instance:read"
+	ActionAlertingInstanceCreate = "alert.instances:create"
+	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceRead   = "alert.instances:read"
 
 	// Alerting Notification policies actions
 	ActionAlertingNotificationsCreate = "alert.notifications:create"
