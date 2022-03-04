@@ -26,7 +26,7 @@ deps: deps-js ## Install all dependencies.
 
 node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
-	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+	YARN_CHECKSUM_BEHAVIOR=update YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
 ##@ Building
 

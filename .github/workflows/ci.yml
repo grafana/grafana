@@ -12,19 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [16.x]
 
     steps:
       - name: Checkout code
         uses: percona-platform/checkout@v2
-      - name: Run with Node 14
+      - name: Run with Node 16
         uses: percona-platform/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
 
       - name: Get Yarn cache directory
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
       - name: Use Yarn cache
         uses: percona-platform/cache@v2
@@ -36,7 +36,7 @@ jobs:
         run: yarn cache clean
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: YARN_CHECKSUM_BEHAVIOR=update yarn install --immutable
 
       - name: Run tests 
         run: yarn run ci:test-percona-frontend

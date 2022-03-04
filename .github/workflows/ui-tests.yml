@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [16.x]
     timeout-minutes: 50
 
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Get Yarn cache directory
         id: yarn-cache-dir-path
         working-directory: ./grafana
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
       - name: Use Yarn cache
         uses: percona-platform/cache@v2
@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependencies for Grafana
         working-directory: ./grafana
-        run: yarn install --immutable
+        run: YARN_CHECKSUM_BEHAVIOR=update yarn install --immutable
 
       - name: Start Environment
         working-directory: ./grafana
