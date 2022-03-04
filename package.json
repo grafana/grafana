@@ -199,7 +199,7 @@
     "jest-mock-console": "1.2.3",
     "lerna": "^4.0.0",
     "lint-staged": "12.3.3",
-    "mini-css-extract-plugin": "2.5.3",
+    "mini-css-extract-plugin": "2.6.0",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
