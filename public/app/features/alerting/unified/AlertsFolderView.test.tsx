@@ -37,6 +37,7 @@ const mockFolder = (folderOverride: Partial<FolderState> = {}): FolderState => {
     version: 1,
     permissions: [],
     canViewFolderPermissions: false,
+    canDelete: false,
     ...folderOverride,
   };
 };
