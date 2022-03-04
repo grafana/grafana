@@ -59,12 +59,20 @@ type ServiceAccountProfileDTO struct {
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
 
+type ServiceAccountFilter string // used for filtering
+
+const (
+	OnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	IncludeAll        ServiceAccountFilter = "all"
+)
+
 type SearchOrgServiceAccountsQuery struct {
 	OrgID            int64
 	Query            string
 	Page             int
 	Limit            int
 	IsServiceAccount bool
+	Filter           ServiceAccountFilter
 
 	User   *models.SignedInUser
 	Result SearchOrgServiceAccountsQueryResult

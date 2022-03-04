@@ -334,6 +334,16 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			sess.Limit(query.Limit, offset)
 		}
 
+		// TODO: add filtering options here for expired tokens
+		switch query.Filter {
+		case serviceaccounts.IncludeAll:
+			// pass
+		case serviceaccounts.OnlyExpiredTokens:
+			// TODO: addddd code
+		default:
+			return fmt.Errorf("invalid filter: %s", query.Filter)
+		}
+
 		sess.Cols(
 			"org_user.user_id",
 			"org_user.org_id",

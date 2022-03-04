@@ -235,12 +235,20 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if page < 1 {
 		page = 1
 	}
+
+	// include all if no filter
+	var filter serviceaccounts.ServiceAccountFilter = serviceaccounts.IncludeAll
+	onlyExpiredTokens := c.QueryBool("expiredTokens")
+	if onlyExpiredTokens {
+		filter = serviceaccounts.OnlyExpiredTokens
+	}
 	query := &serviceaccounts.SearchOrgServiceAccountsQuery{
 		OrgID:            c.OrgId,
 		Query:            c.Query("query"),
 		Page:             page,
 		Limit:            perPage,
 		User:             c.SignedInUser,
+		Filter:           filter,
 		IsServiceAccount: true,
 	}
 	err := api.store.SearchOrgServiceAccounts(ctx, query)

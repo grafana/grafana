@@ -91,8 +91,8 @@ const ServiceAccountsListPage = ({
               { label: 'All service accounts', value: false },
               { label: 'Expired tokens', value: true },
             ]}
-            onChange={(value) => changeFilter({ name: 'Expired', value })}
-            value={filters.find((f) => f.name === 'Expired')?.value}
+            onChange={(value) => changeFilter({ name: 'expiredTokens', value })}
+            value={filters.find((f) => f.name === 'expiredTokens')?.value}
             className={styles.filter}
           />
         </div>
