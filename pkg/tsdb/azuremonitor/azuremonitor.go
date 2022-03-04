@@ -38,7 +38,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, t
 		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
 		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
 	}
-	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
+	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, httpClientProvider, executors))
 
 	s := &Service{
 		im:        im,
@@ -97,9 +97,9 @@ type datasourceService struct {
 	HTTPClient *http.Client
 }
 
-func getDatasourceService(clientProvider httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
+func getDatasourceService(cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
 	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(route, dsInfo, &clientProvider)
+	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
 	if err != nil {
 		return datasourceService{}, err
 	}
@@ -109,7 +109,7 @@ func getDatasourceService(clientProvider httpclient.Provider, dsInfo datasourceI
 	}, nil
 }
 
-func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {
@@ -150,7 +150,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, e
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(clientProvider, model, routeName)
+			service, err := getDatasourceService(cfg, clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}

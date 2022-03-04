@@ -5,6 +5,8 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azhttpclient"
 )
 
 func getMiddlewares(route azRoute, model datasourceInfo) ([]sdkhttpclient.Middleware, error) {
@@ -24,7 +26,7 @@ func getMiddlewares(route azRoute, model datasourceInfo) ([]sdkhttpclient.Middle
 	return middlewares, nil
 }
 
-func newHTTPClient(route azRoute, model datasourceInfo, clientProvider httpclient.Provider) (*http.Client, error) {
+func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
 	m, err := getMiddlewares(route, model)
 	if err != nil {
 		return nil, err
@@ -37,10 +39,7 @@ func newHTTPClient(route azRoute, model datasourceInfo, clientProvider httpclien
 
 	// Use Azure credentials if the route has OAuth scopes configured
 	if len(route.Scopes) > 0 {
-		opts.CustomOptions = map[string]interface{}{
-			"_azureCredentials": model.Credentials,
-			"_azureScopes":      route.Scopes,
-		}
+		azhttpclient.AddAzureAuthentication(&opts, cfg, model.Credentials, route.Scopes)
 	}
 
 	return clientProvider.New(opts)

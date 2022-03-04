@@ -23,12 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azhttpclient"
 )
 
 type Service struct {
 	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
+	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
 
@@ -57,7 +59,7 @@ type cachedDecryptedJSON struct {
 }
 
 func ProvideService(
-	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
+	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
@@ -70,6 +72,7 @@ func ProvideService(
 		dsDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
+		cfg:                cfg,
 		features:           features,
 		permissionsService: permissionsServices.GetDataSourceService(),
 	}
@@ -201,7 +204,7 @@ func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Pr
 		return nil, err
 	}
 
-	opts.Middlewares = customMiddlewares
+	opts.Middlewares = append(opts.Middlewares, customMiddlewares...)
 
 	rt, err := provider.GetTransport(*opts)
 	if err != nil {
@@ -314,20 +317,22 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		}
 
 		if credentials != nil {
-			opts.CustomOptions["_azureCredentials"] = credentials
-
 			resourceIdStr := ds.JsonData.Get("azureEndpointResourceId").MustString()
-			if resourceIdStr != "" {
-				resourceId, err := url.Parse(resourceIdStr)
-				if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-					err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", resourceIdStr)
-					return nil, err
-				}
-
-				resourceId.Path = path.Join(resourceId.Path, ".default")
-				scopes := []string{resourceId.String()}
-				opts.CustomOptions["_azureScopes"] = scopes
+			if resourceIdStr == "" {
+				err := fmt.Errorf("endpoint resource ID (audience) not provided")
+				return nil, err
 			}
+
+			resourceId, err := url.Parse(resourceIdStr)
+			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+				err := fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
+				return nil, err
+			}
+
+			resourceId.Path = path.Join(resourceId.Path, ".default")
+			scopes := []string{resourceId.String()}
+
+			azhttpclient.AddAzureAuthentication(opts, s.cfg, credentials, scopes)
 		}
 	}
 

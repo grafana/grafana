@@ -26,7 +26,6 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer) *sdkhttpclient.Provider {
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
-		AzureMiddleware(cfg),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
 	}
 

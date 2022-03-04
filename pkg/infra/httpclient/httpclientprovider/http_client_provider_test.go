@@ -25,14 +25,13 @@ func TestHTTPClientProvider(t *testing.T) {
 		_ = New(&setting.Cfg{SigV4AuthEnabled: false}, tracer)
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
-		require.Len(t, o.Middlewares, 7)
+		require.Len(t, o.Middlewares, 6)
 		require.Equal(t, TracingMiddlewareName, o.Middlewares[0].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, DataSourceMetricsMiddlewareName, o.Middlewares[1].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, SetUserAgentMiddlewareName, o.Middlewares[2].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, sdkhttpclient.BasicAuthenticationMiddlewareName, o.Middlewares[3].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, sdkhttpclient.CustomHeadersMiddlewareName, o.Middlewares[4].(sdkhttpclient.MiddlewareName).MiddlewareName())
-		require.Equal(t, azureMiddlewareName, o.Middlewares[5].(sdkhttpclient.MiddlewareName).MiddlewareName())
-		require.Equal(t, ResponseLimitMiddlewareName, o.Middlewares[6].(sdkhttpclient.MiddlewareName).MiddlewareName())
+		require.Equal(t, ResponseLimitMiddlewareName, o.Middlewares[5].(sdkhttpclient.MiddlewareName).MiddlewareName())
 	})
 
 	t.Run("When creating new provider and SigV4 is enabled should apply expected middleware", func(t *testing.T) {
@@ -50,14 +49,13 @@ func TestHTTPClientProvider(t *testing.T) {
 		_ = New(&setting.Cfg{SigV4AuthEnabled: true}, tracer)
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
-		require.Len(t, o.Middlewares, 8)
+		require.Len(t, o.Middlewares, 7)
 		require.Equal(t, TracingMiddlewareName, o.Middlewares[0].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, DataSourceMetricsMiddlewareName, o.Middlewares[1].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, SetUserAgentMiddlewareName, o.Middlewares[2].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, sdkhttpclient.BasicAuthenticationMiddlewareName, o.Middlewares[3].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, sdkhttpclient.CustomHeadersMiddlewareName, o.Middlewares[4].(sdkhttpclient.MiddlewareName).MiddlewareName())
-		require.Equal(t, azureMiddlewareName, o.Middlewares[5].(sdkhttpclient.MiddlewareName).MiddlewareName())
-		require.Equal(t, ResponseLimitMiddlewareName, o.Middlewares[6].(sdkhttpclient.MiddlewareName).MiddlewareName())
-		require.Equal(t, SigV4MiddlewareName, o.Middlewares[7].(sdkhttpclient.MiddlewareName).MiddlewareName())
+		require.Equal(t, ResponseLimitMiddlewareName, o.Middlewares[5].(sdkhttpclient.MiddlewareName).MiddlewareName())
+		require.Equal(t, SigV4MiddlewareName, o.Middlewares[6].(sdkhttpclient.MiddlewareName).MiddlewareName())
 	})
 }

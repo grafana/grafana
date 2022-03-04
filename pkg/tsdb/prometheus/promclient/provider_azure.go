@@ -8,6 +8,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azhttpclient"
 	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
@@ -24,24 +25,24 @@ func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) err
 	}
 
 	if credentials != nil {
-		opts.CustomOptions["_azureCredentials"] = credentials
-
 		resourceIdStr, err := maputil.GetStringOptional(p.jsonData, "azureEndpointResourceId")
 		if err != nil {
 			return err
+		} else if resourceIdStr == "" {
+			err := fmt.Errorf("endpoint resource ID (audience) not provided")
+			return err
 		}
 
-		if resourceIdStr != "" {
-			resourceId, err := url.Parse(resourceIdStr)
-			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-				err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", resourceIdStr)
-				return err
-			}
-
-			resourceId.Path = path.Join(resourceId.Path, ".default")
-			scopes := []string{resourceId.String()}
-			opts.CustomOptions["_azureScopes"] = scopes
+		resourceId, err := url.Parse(resourceIdStr)
+		if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+			err := fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
+			return err
 		}
+
+		resourceId.Path = path.Join(resourceId.Path, ".default")
+		scopes := []string{resourceId.String()}
+
+		azhttpclient.AddAzureAuthentication(opts, p.cfg, credentials, scopes)
 	}
 
 	return nil
