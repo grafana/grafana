@@ -6,4 +6,5 @@ export { CloudWatchLogsQueryEditor } from './LogsQueryEditor';
 export { MetricStatEditor } from './MetricStatEditor';
 export { SQLBuilderEditor } from './SQLBuilderEditor';
 export { MathExpressionQueryField } from './MathExpressionQueryField';
+export { VariableQueryField, VariableTextField } from './Fields';
 export { SQLCodeEditor } from './SQLCodeEditor';
