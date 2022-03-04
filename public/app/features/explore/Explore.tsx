@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
@@ -101,6 +101,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
 export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   absoluteTimeUnsubsciber: Unsubscribable | undefined;
+  topOfExploreViewRef = createRef<HTMLDivElement>();
 
   constructor(props: Props) {
     super(props);
@@ -305,6 +306,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           dataFrames={dataFrames}
           splitOpenFn={splitOpen}
           scrollElement={this.scrollElement}
+          topOfExploreViewRef={this.topOfExploreViewRef}
         />
       )
     );
@@ -337,7 +339,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         autoHeightMin={'100%'}
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
-        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
+        <ExploreToolbar
+          exploreId={exploreId}
+          onChangeTime={this.onChangeTime}
+          topOfExploreViewRef={this.topOfExploreViewRef}
+        />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">

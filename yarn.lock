@@ -4116,7 +4116,7 @@ __metadata:
     tslib: 2.3.1
     typescript: 4.4.4
     uuid: 8.3.2
-    webpack: 5.69.1
+    webpack: 5.70.0
     yaml: ^1.8.3
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -4485,7 +4485,7 @@ __metadata:
     typescript: 4.4.4
     uplot: 1.6.19
     uuid: 8.3.2
-    webpack: 5.69.1
+    webpack: 5.70.0
     webpack-filter-warnings-plugin: 1.2.1
   languageName: unknown
   linkType: soft
@@ -18176,6 +18176,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"enhanced-resolve@npm:^5.9.2":
+  version: 5.9.2
+  resolution: "enhanced-resolve@npm:5.9.2"
+  dependencies:
+    graceful-fs: ^4.2.4
+    tapable: ^2.2.0
+  checksum: 792b7a01abb4ee4433b658c71f92d5948675938e0c03cad1732abe843b87395f15cb880ace4f819f78ead94163278283afc79b8be63c0eddca8ab45f7d8c515d
+  languageName: node
+  linkType: hard
+
 "enquirer@npm:^2.3.5, enquirer@npm:^2.3.6":
   version: 2.3.6
   resolution: "enquirer@npm:2.3.6"
@@ -20964,7 +20974,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.0
-    webpack: 5.69.1
+    webpack: 5.70.0
     webpack-bundle-analyzer: 4.5.0
     webpack-cli: 4.9.2
     webpack-dev-server: 4.7.4
@@ -37030,9 +37040,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.69.1":
-  version: 5.69.1
-  resolution: "webpack@npm:5.69.1"
+"webpack@npm:5.70.0":
+  version: 5.70.0
+  resolution: "webpack@npm:5.70.0"
   dependencies:
     "@types/eslint-scope": ^3.7.3
     "@types/estree": ^0.0.51
@@ -37043,7 +37053,7 @@ __metadata:
     acorn-import-assertions: ^1.7.6
     browserslist: ^4.14.5
     chrome-trace-event: ^1.0.2
-    enhanced-resolve: ^5.8.3
+    enhanced-resolve: ^5.9.2
     es-module-lexer: ^0.9.0
     eslint-scope: 5.1.1
     events: ^3.2.0
@@ -37063,7 +37073,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 490a6e9e4cd9d0ed3b6c7ca08015da2628919fda8fcf9c36f0f6c0e3ad71eaaaf4b0d12753109f22a4faf79fe9a9063552d9708e0ee2352cf8568433b8e296a7
+  checksum: 00439884a9cdd5305aed3ce93735635785a15c5464a6d2cfce87e17727a07585de02420913e82aa85ddd2ae7322175d2cfda6ac0878a17f061cb605e6a7db57a
   languageName: node
   linkType: hard
 

@@ -24,7 +24,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -43,6 +43,7 @@ type Props = {
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
   scrollElement?: Element;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 export function TraceView(props: Props) {
@@ -176,6 +177,7 @@ export function TraceView(props: Props) {
         scrollElement={props.scrollElement}
         focusedSpanId={focusedSpanId}
         createFocusSpanLink={createFocusSpanLink}
+        topOfExploreViewRef={props.topOfExploreViewRef}
       />
     </>
   );
