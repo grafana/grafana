@@ -328,7 +328,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
 
 		for i, k := range v.Values {
-			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			timeField.Set(i, k.Timestamp.Time().UTC())
 			value := float64(k.Value)
 
 			if !math.IsNaN(value) {
@@ -353,7 +353,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 }
 
 func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames data.Frames) data.Frames {
-	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
+	timeVector := []time.Time{scalar.Timestamp.Time().UTC()}
 	values := []float64{float64(scalar.Value)}
 	name := fmt.Sprintf("%g", values[0])
 
@@ -372,7 +372,7 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
 		tags := make(map[string]string, len(v.Metric))
-		timeVector := []time.Time{time.Unix(v.Timestamp.Unix(), 0).UTC()}
+		timeVector := []time.Time{v.Timestamp.Time().UTC()}
 		values := []float64{float64(v.Value)}
 
 		for k, v := range v.Metric {
@@ -401,7 +401,7 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
 			event := ExemplarEvent{}
-			exemplarTime := time.Unix(exemplar.Timestamp.Unix(), 0).UTC()
+			exemplarTime := exemplar.Timestamp.Time().UTC()
 			event.Time = exemplarTime
 			event.Value = float64(exemplar.Value)
 			event.Labels = make(map[string]string)
