@@ -39,8 +39,8 @@ func (j *PreferencesJsonData) ToDB() ([]byte, error) {
 }
 
 type NavbarPreference struct {
-	Id             string `json:"id"`
-	HideFromNavbar bool   `json:"hideFromNavbar"`
+	Id   string `json:"id"`
+	Hide bool   `json:"hide"`
 }
 
 type PreferencesJsonData struct {

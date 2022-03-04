@@ -403,7 +403,7 @@ func (hs *HTTPServer) setNavPreferences(c *models.ReqContext, navTree []*dtos.Na
 			// Set any that exist in the navbar preferences to hide=false
 			for _, pref := range jsonDataPref.Navbar {
 				if navItem.Id == pref.Id {
-					navItem.HideFromNavbar = pref.HideFromNavbar
+					navItem.HideFromNavbar = pref.Hide
 					break
 				}
 			}

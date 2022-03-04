@@ -17,20 +17,20 @@ func TestPreferencesDataAccess(t *testing.T) {
 	ss := InitTestDB(t)
 	emptyNavbarPreferences := []models.NavbarPreference(nil)
 	userNavbarPreferences := []models.NavbarPreference{{
-		Id:             "explore",
-		HideFromNavbar: true,
+		Id:   "explore",
+		Hide: true,
 	}}
 	orgNavbarPreferences := []models.NavbarPreference{{
-		Id:             "alerting",
-		HideFromNavbar: true,
+		Id:   "alerting",
+		Hide: true,
 	}}
 	team1NavbarPreferences := []models.NavbarPreference{{
-		Id:             "dashboards",
-		HideFromNavbar: true,
+		Id:   "dashboards",
+		Hide: true,
 	}}
 	team2NavbarPreferences := []models.NavbarPreference{{
-		Id:             "home",
-		HideFromNavbar: true,
+		Id:   "home",
+		Hide: true,
 	}}
 
 	emptyPreferencesJsonData := models.PreferencesJsonData{
