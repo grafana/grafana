@@ -1881,3 +1881,51 @@ default_baselayer_config = `{
 ### enable_custom_baselayers
 
 Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.
+
+## [intentapi]
+
+Settings related to the Intent API.
+
+## [intentapi.server]
+
+Settings related to the Intent API HTTP server.
+
+### listen_address
+
+Which address the Intent API will be listening on, must be in `host:port` format. Default value is `127.0.0.1:8443`.
+
+### cert_file_path
+
+Path to TLS certificate that would be used by the Intent API. Since k8s effectively enforces TLS, this is required. Unset by default, it must be set to enable Intent API.
+
+### key_file_path
+
+Path to TLS key file that would be used by the Intent API. Since k8s effectively enforces TLS, this is required. Unset by default, make sure to set it if using the Intent API.
+
+### read_timeout
+
+The maximum duration for reading the entire request, including the body. A zero or negative value means there will be no timeout. Default value is `1m`.
+
+### write_timeout
+
+The maximum duration before timing out writes of the response. It is reset whenever a new request's header is read. A zero or negative value means there will be no timeout. Default value is `1m`.
+
+### shutdown_timeout
+
+The maximum duration before timing out graceful server shutdown. Default value is `1m`.
+
+## [intentapi.kubebridge]
+
+Settings related to the Intent API kubernetes bridge.
+
+### kubeconfig_path
+
+The kubeconfig file which contains contexts, namespaces and auth. The file must contain all necessary information to connect and authenticate to remote `kube-apiserver`. Unset by default, make sure to set it if using the Intent API.
+
+## [intentapi.proxy]
+
+Settings related to the Intent API apiserver proxy.
+
+### keepalive_timeout
+
+The maximum duration after which a TCP connection to the remote `kube-apiserver` is no longer considered alive and will be terminated.

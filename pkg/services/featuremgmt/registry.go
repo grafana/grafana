@@ -169,5 +169,11 @@ var (
 			RequiresDevMode: true,
 			FrontendOnly:    true,
 		},
+		{
+			Name:            "intentapi",
+			Description:     "Enable experimental Intent API",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
 	}
 )

@@ -4,75 +4,137 @@
 package k8sbridge
 
 import (
-	"github.com/grafana/grafana/pkg/schema"
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/schema"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	groupName    = "grafana.core.group"
+const (
+	groupName = "grafana.core.group"
 	// TODO come up with rule governing when and why this is incremented
 	groupVersion = "v1alpha1"
 )
 
-// Should we write some simple watcher / interface consumer so that we can test if our interface works?
-
-// TODO figure out whether we take a *rest.Config in this provider, which implies
-// that something else will turn grafana.ini config into a *rest.Config, OR if we take
-// raw config in this provider and make the *rest.Config ourselves
-// ALso depends on outcome of deciding what our config will be https://github.com/grafana/grafana/issues/44291
-func ProvideAPIServerClient(cfg *rest.Config) (*rest.RESTClient, error) {
-	return rest.RESTClientFor(cfg)
+// Service
+type Service struct {
+	config  *rest.Config
+	client  *Clientset
+	schemas schema.CoreSchemaList
+	manager ctrl.Manager
+	enabled bool
+	logger  log.Logger
 }
 
-// TODO: May rename to just ProvideService if we are sure the package will only have one service.
-func ProvideBridgeService(cfg *rest.Config, list schema.CoreSchemaList) (*Bridge, error) {
-	c, err := rest.RESTClientFor(cfg)
+// ProvideService
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, list schema.CoreSchemaList) (*Service, error) {
+	enabled := features.IsEnabled(featuremgmt.FlagIntentapi)
+	if !enabled {
+		return &Service{
+			enabled: false,
+		}, nil
+	}
+
+	sec := cfg.Raw.Section("intentapi.kubebridge")
+	configPath := sec.Key("kubeconfig_path").MustString("")
+
+	if configPath == "" {
+		return nil, errors.New("kubeconfig path cannot be empty when using Intent API")
+	}
+
+	configPath = filepath.Clean(configPath)
+
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("cannot find kubeconfig file at '%s'", configPath)
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	cset, err := NewClientset(config)
 	if err != nil {
 		return nil, err
 	}
 
 	schm := runtime.NewScheme()
-	schemaGroupVersion := k8schema.GroupVersion{Group: groupName, Version: groupVersion}
-	schemaBuilder := &scheme.Builder{GroupVersion: schemaGroupVersion}
+	schemaGroupVersion := k8schema.GroupVersion{
+		Group:   groupName,
+		Version: groupVersion,
+	}
+	schemaBuilder := &scheme.Builder{
+		GroupVersion: schemaGroupVersion,
+	}
 
-	utilruntime.Must(schemaBuilder.AddToScheme(schm))
+	if err := schemaBuilder.AddToScheme(schm); err != nil {
+		return nil, err
+	}
+
 	for _, cr := range list {
 		schemaBuilder.Register(cr.GetRuntimeObjects()...)
 	}
 
-	mgropts := ctrl.Options{
+	mgr, err := ctrl.NewManager(config, ctrl.Options{
 		Scheme: schm,
-	}
-
-	mgr, err := ctrl.NewManager(cfg, mgropts)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	b := &Bridge{
-		Client:  c,
-		Schemas: list,
-		Manager: mgr,
-	}
-
-	/*
-		go func() {
-			if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-				panic(err)
-			}
-		}()
-	*/
-
-	return b, nil
+	return &Service{
+		config:  config,
+		client:  cset,
+		schemas: list,
+		manager: mgr,
+		enabled: enabled,
+		logger:  log.New("k8sbridge.service"),
+	}, nil
 }
 
-type Bridge struct {
-	Client  *rest.RESTClient
-	Schemas schema.CoreSchemaList
-	Manager ctrl.Manager
+// IsDisabled
+func (s *Service) IsDisabled() bool {
+	return !s.enabled
+}
+
+// Run
+func (s *Service) Run(ctx context.Context) error {
+	if err := s.manager.Start(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Schemas
+func (s *Service) Schemas() schema.CoreSchemaList {
+	return s.schemas
+}
+
+// RestConfig
+func (s *Service) RestConfig() *rest.Config {
+	return s.config
+}
+
+// Client
+func (s *Service) Client() *Clientset {
+	return s.client
+}
+
+// ControllerManager
+func (s *Service) ControllerManager() ctrl.Manager {
+	return s.manager
 }
