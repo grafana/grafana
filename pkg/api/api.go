@@ -209,6 +209,13 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
+		if hs.Features.IsEnabled(featuremgmt.FlagGitops) {
+			apiRoute.Group("/gitops", func(orgRoute routing.RouteRegister) {
+				orgRoute.Post("/export", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.GitopsService.HandleExportSystem)
+				orgRoute.Post("/import", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.GitopsService.HandleImportSystem)
+			})
+		}
+
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))

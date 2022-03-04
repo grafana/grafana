@@ -2,6 +2,7 @@ import React from 'react';
 import Page from 'app/core/components/Page/Page';
 import { NavModelItem } from '@grafana/data';
 import { Button, Card, HorizontalGroup, Icon } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 
 // TODO: get from the server nav model!
 const node: NavModelItem = {
@@ -36,6 +37,12 @@ export default function StoragePage() {
               <Icon name="code-branch" size="xxxl" />
             </Card.Figure>
           </Card>
+          <Card heading="git" description="Dashboards in git">
+            <Card.Meta>devenv/dev-dashboards</Card.Meta>
+            <Card.Figure>
+              <Icon name="code-branch" size="xxxl" />
+            </Card.Figure>
+          </Card>
 
           <h1>Data sources</h1>
           <Card heading="SQL (standard)" description="Data source stored in SQL database">
@@ -61,13 +68,32 @@ export default function StoragePage() {
         </div>
 
         <div>
+          <h1>Actions</h1>
           <HorizontalGroup>
             <Button
+              variant="secondary"
               onClick={() => {
-                console.log('TODO!');
+                getBackendSrv()
+                  .post('api/gitops/export')
+                  .then((v) => {
+                    alert(JSON.stringify(v));
+                  });
               }}
             >
-              Dump SQL to git
+              Write system to git
+            </Button>
+
+            <Button
+              variant="secondary"
+              onClick={() => {
+                getBackendSrv()
+                  .post('api/gitops/import')
+                  .then((v) => {
+                    alert(JSON.stringify(v));
+                  });
+              }}
+            >
+              Load system from git
             </Button>
           </HorizontalGroup>
         </div>
