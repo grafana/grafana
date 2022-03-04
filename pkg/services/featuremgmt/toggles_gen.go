@@ -158,4 +158,8 @@ const (
 	// FlagExplore2Dashboard
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
+
+	// FlagIntentapi
+	// Enable experimental Intent API
+	FlagIntentapi = "intentapi"
 )
