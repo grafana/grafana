@@ -46,7 +46,7 @@ type Service struct {
 func (s *Service) updateAppDashboards() {
 	s.logger.Debug("Looking for app dashboard updates")
 
-	pluginSettings, err := s.pluginSettingsService.GetPluginSettings(context.Background(), 0)
+	pluginSettings, err := s.pluginSettingsService.GetPluginSettings(context.Background(), &pluginsettings.GetArgs{OrgID: 0})
 	if err != nil {
 		s.logger.Error("Failed to get all plugin settings", "error", err)
 		return
@@ -58,9 +58,9 @@ func (s *Service) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exists := s.pluginStore.Plugin(context.Background(), pluginSetting.PluginId); exists {
+		if pluginDef, exists := s.pluginStore.Plugin(context.Background(), pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				s.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgId)
+				s.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}
@@ -101,20 +101,19 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 	}
 
 	// update version in plugin_setting table to mark that we have processed the update
-	query := models.GetPluginSettingByIdQuery{PluginId: plugin.ID, OrgId: orgID}
-	if err := s.pluginSettingsService.GetPluginSettingById(ctx, &query); err != nil {
+	ps, err := s.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+		PluginID: plugin.ID,
+		OrgID:    orgID})
+	if err != nil {
 		s.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
 
-	appSetting := query.Result
-	cmd := models.UpdatePluginSettingVersionCmd{
-		OrgId:         appSetting.OrgId,
-		PluginId:      appSetting.PluginId,
+	if err := s.pluginSettingsService.UpdatePluginSettingPluginVersion(ctx, &pluginsettings.UpdatePluginVersionArgs{
+		OrgID:         ps.OrgID,
+		PluginID:      ps.PluginID,
 		PluginVersion: plugin.Info.Version,
-	}
-
-	if err := s.pluginSettingsService.UpdatePluginSettingVersion(ctx, &cmd); err != nil {
+	}); err != nil {
 		s.logger.Error("Failed to update plugin setting version", "error", err)
 	}
 }

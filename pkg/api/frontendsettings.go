@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
@@ -388,15 +389,15 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	return ep, nil
 }
 
-func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	pluginSettings := make(map[string]*models.PluginSettingInfoDTO)
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.DTO, error) {
+	pluginSettings := make(map[string]*pluginsettings.DTO)
 
 	// fill settings from database
-	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, orgID); err != nil {
+	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{OrgID: orgID}); err != nil {
 		return nil, err
 	} else {
 		for _, ps := range pss {
-			pluginSettings[ps.PluginId] = ps
+			pluginSettings[ps.PluginID] = ps
 		}
 	}
 
@@ -408,9 +409,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled depending on if AutoEnabled: true
-		pluginSetting := &models.PluginSettingInfoDTO{
-			PluginId: plugin.ID,
-			OrgId:    orgID,
+		pluginSetting := &pluginsettings.DTO{
+			PluginID: plugin.ID,
+			OrgID:    orgID,
 			Enabled:  plugin.AutoEnabled,
 			Pinned:   plugin.AutoEnabled,
 		}
@@ -426,9 +427,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled by default
-		pluginSetting := &models.PluginSettingInfoDTO{
-			PluginId: plugin.ID,
-			OrgId:    orgID,
+		pluginSetting := &pluginsettings.DTO{
+			PluginID: plugin.ID,
+			OrgID:    orgID,
 			Enabled:  true,
 		}
 
