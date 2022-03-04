@@ -73,6 +73,7 @@ export const binaryScalarOperations = binaryScalarDefs.map((opDef) => {
     name: opDef.name,
     params: [{ name: 'Factor', type: 'number' }],
     defaultParams: [2],
+    alternativesKey: 'binary scalar operations',
     category: PromVisualQueryOperationCategory.BinaryOps,
     renderer: getSimpleBinaryRenderer(opDef.sign),
     addOperationHandler: defaultAddOperationHandler,
