@@ -249,7 +249,7 @@ export class UPlotConfigBuilder {
   private tzDate = (ts: number) => {
     let date = new Date(ts);
 
-    return this.tz ? uPlot.tzDate(date, this.tz) : date;
+    return this.tz ? (require('uplot').default as typeof uPlot).tzDate(date, this.tz) : date;
   };
 
   private ensureNonOverlappingAxes(axes: UPlotAxisBuilder[]): UPlotAxisBuilder[] {

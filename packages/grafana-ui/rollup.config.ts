@@ -35,12 +35,13 @@ const buildCjsPackage = ({ env }) => {
       'moment',
       'jquery', // required to use jquery.plot, which is assigned externally
       'react-inlinesvg', // required to mock Icon svg loading in tests
+      'uplot', // load uplot library dynamically
     ],
     plugins: [
+      resolve(),
       commonjs({
         include: /node_modules/,
       }),
-      resolve(),
       svg({ stringify: true }),
       env === 'production' && terser(),
     ],

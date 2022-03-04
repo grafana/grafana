@@ -215,7 +215,7 @@ function mapDrawStyleToPathBuilder(
   barWidthFactor = 0.6,
   barMaxWidth = Infinity
 ): Series.PathBuilder {
-  const pathBuilders = uPlot.paths;
+  const pathBuilders = (require('uplot').default as typeof uPlot).paths;
 
   if (!builders) {
     // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue

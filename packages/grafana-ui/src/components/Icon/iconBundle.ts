@@ -171,7 +171,7 @@ export function initIconCache() {
 
   // This function needs to be called after index.js loads to give the
   // application time to modify __webpack_public_path__ with a CDN path
-  const grafanaPublicPath = (window as any).__grafana_public_path__;
+  const grafanaPublicPath = typeof window !== 'undefined' && (window as any).__grafana_public_path__;
   if (grafanaPublicPath) {
     iconRoot = grafanaPublicPath + 'img/icons/';
   }

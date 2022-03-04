@@ -17,7 +17,7 @@
   "scripts": {
     "build": "grafana-toolkit package:build --scope=schema",
     "bundle": "rollup -c rollup.config.ts",
-    "clean": "rimraf ./dist ./compiled",
+    "clean": "rimraf ./dist ./compiled tsconfig.tsbuildinfo",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "typecheck": "tsc --noEmit"
   },
