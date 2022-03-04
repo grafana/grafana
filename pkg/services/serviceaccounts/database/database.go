@@ -3,6 +3,7 @@ package database
 //nolint:goimports
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -39,7 +40,10 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %v", err)
+		if errors.Is(err, models.ErrUserAlreadyExists) {
+			return nil, &ErrSAInvalidName{}
+		}
+		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
