@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -245,5 +246,59 @@ func Test_executeLogAlertQuery(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"instance manager's region"}, sess.calledRegions)
+	})
+
+	t.Run("succeeds in returning data frames from minimal query results and stat group", func(t *testing.T) {
+		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{
+			Results: [][]*cloudwatchlogs.ResultField{
+				{
+					{
+						Field: aws.String("some field"),
+						Value: aws.String("some value"),
+					},
+				},
+			},
+			Status: aws.String("Complete"),
+		}}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{"FromAlert": "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs",
+						"region": "some region",
+						"statGroups": ["some stat group"]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: data.Frames{
+						&data.Frame{
+							Name: "CloudWatchLogsResponse",
+							Fields: []*data.Field{
+								data.NewField("some field", nil, []*string{
+									aws.String("some value"),
+								}),
+							},
+							Meta: &data.FrameMeta{
+								Custom: map[string]interface{}{"Status": "Complete"},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
 	})
 }
