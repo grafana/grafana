@@ -38,6 +38,7 @@ const buildCjsPackage = ({ env }) => {
       'uplot', // load uplot library dynamically
     ],
     plugins: [
+      resolve(),
       commonjs({
         include: /node_modules/,
         ignoreTryCatch: false,
