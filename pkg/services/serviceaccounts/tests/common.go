@@ -77,6 +77,7 @@ type Calls struct {
 	DeleteServiceAccountToken []interface{}
 	UpdateServiceAccount      []interface{}
 	AddServiceAccountToken    []interface{}
+	SearchOrgServiceAccounts  []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -124,6 +125,11 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	s.Calls.UpdateServiceAccount = append(s.Calls.UpdateServiceAccount, []interface{}{ctx, orgID, serviceAccountID, saForm})
 
+	return nil, nil
+}
+
+func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
+	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, query})
 	return nil, nil
 }
 

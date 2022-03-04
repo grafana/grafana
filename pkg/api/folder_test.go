@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -143,6 +144,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 			Bus:           bus.GetBus(),
 			Cfg:           setting.NewCfg(),
 			folderService: folderService,
+			Features:      featuremgmt.WithFeatures(),
 		}
 
 		sc := setupScenarioContext(t, url)

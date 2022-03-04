@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -19,21 +21,28 @@ type ImportDashboardAPI struct {
 	quotaService           QuotaService
 	schemaLoaderService    SchemaLoaderService
 	pluginStore            plugins.Store
+	ac                     accesscontrol.AccessControl
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	schemaLoaderService SchemaLoaderService, pluginStore plugins.Store) *ImportDashboardAPI {
+	schemaLoaderService SchemaLoaderService, pluginStore plugins.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
 		schemaLoaderService:    schemaLoaderService,
 		pluginStore:            pluginStore,
+		ac:                     ac,
 	}
 }
 
 func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteRegister) {
+	authorize := acmiddleware.Middleware(api.ac)
 	routeRegister.Group("/api/dashboards", func(route routing.RouteRegister) {
-		route.Post("/import", routing.Wrap(api.ImportDashboard))
+		route.Post(
+			"/import",
+			authorize(middleware.ReqSignedIn, accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate)),
+			routing.Wrap(api.ImportDashboard),
+		)
 	}, middleware.ReqSignedIn)
 }
 
