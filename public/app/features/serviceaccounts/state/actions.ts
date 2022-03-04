@@ -114,7 +114,10 @@ export function fetchServiceAccounts(): ThunkResult<void> {
     try {
       const { perPage, page, query, filters } = getState().serviceAccounts;
       const result = await getBackendSrv().get(
-        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`,         accessControlQueryParam());
+        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(
+          filters
+        )}&accesscontrol=true`
+      );
       dispatch(serviceAccountsFetched(result));
     } catch (error) {
       serviceAccountsFetchEnd();
