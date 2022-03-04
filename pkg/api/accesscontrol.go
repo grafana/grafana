@@ -161,6 +161,30 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
+	apikeyWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:apikeys:writer",
+			DisplayName: "APIKeys writer",
+			Description: "Gives access to add and delete api keys.",
+			Group:       "API Keys",
+			Permissions: []ac.Permission{
+				{
+					Action: ac.ActionAPIKeyCreate,
+				},
+				{
+					Action: ac.ActionAPIKeyRead,
+					Scope:  ac.ScopeAPIKeysAll,
+				},
+				{
+					Action: ac.ActionAPIKeyDelete,
+					Scope:  ac.ScopeAPIKeysAll,
+				},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
 	orgReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     5,
@@ -366,7 +390,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
 	)
 }
 
