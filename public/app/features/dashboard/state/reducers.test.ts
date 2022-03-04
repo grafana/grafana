@@ -2,7 +2,6 @@ import {
   dashboardInitCompleted,
   dashboardInitFailed,
   dashboardInitFetching,
-  dashboardInitSlow,
   loadDashboardPermissions,
   dashboardReducer,
   initialState,
@@ -32,7 +31,6 @@ describe('dashboard reducer', () => {
 
     beforeEach(() => {
       state = dashboardReducer(initialState, dashboardInitFetching());
-      state = dashboardReducer(state, dashboardInitSlow());
       state = dashboardReducer(
         state,
         dashboardInitCompleted(
@@ -47,10 +45,6 @@ describe('dashboard reducer', () => {
     it('should set model', async () => {
       expect(state.getModel()!.title).toBe('My dashboard');
     });
-
-    it('should set reset isInitSlow', async () => {
-      expect(state.isInitSlow).toBe(false);
-    });
   });
 
   describe('dashboardInitFailed', () => {
@@ -63,10 +57,6 @@ describe('dashboard reducer', () => {
 
     it('should set model', async () => {
       expect(state.getModel()?.title).toBe('Dashboard init failed');
-    });
-
-    it('should set reset isInitSlow', async () => {
-      expect(state.isInitSlow).toBe(false);
     });
 
     it('should set initError', async () => {

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -30,38 +29,35 @@ var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg              *plugins.Cfg
-	store            map[string]*plugins.Plugin
-	pluginInstaller  plugins.Installer
-	pluginLoader     plugins.Loader
-	pluginsMu        sync.RWMutex
-	pluginPaths      map[plugins.Class][]string
-	dashboardService dashboards.DashboardService
-	log              log.Logger
+	cfg             *plugins.Cfg
+	store           map[string]*plugins.Plugin
+	pluginInstaller plugins.Installer
+	pluginLoader    plugins.Loader
+	pluginsMu       sync.RWMutex
+	pluginPaths     map[plugins.Class][]string
+	log             log.Logger
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader, dashboardService dashboards.DashboardService) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), map[plugins.Class][]string{
 		plugins.Core:     corePluginPaths(grafanaCfg),
 		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
 		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
-	}, pluginLoader, dashboardService)
+	}, pluginLoader)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader,
-	dashboardService dashboards.DashboardService) *PluginManager {
+func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader) *PluginManager {
 	return &PluginManager{
-		cfg:              cfg,
-		pluginLoader:     pluginLoader,
-		pluginPaths:      pluginPaths,
-		store:            make(map[string]*plugins.Plugin),
-		log:              log.New("plugin.manager"),
-		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		dashboardService: dashboardService,
+		cfg:             cfg,
+		pluginLoader:    pluginLoader,
+		pluginPaths:     pluginPaths,
+		store:           make(map[string]*plugins.Plugin),
+		log:             log.New("plugin.manager"),
+		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 

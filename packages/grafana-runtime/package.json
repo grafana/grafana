@@ -25,7 +25,7 @@
     "@grafana/data": "8.5.0-pre",
     "@grafana/e2e-selectors": "8.5.0-pre",
     "@grafana/ui": "8.5.0-pre",
-    "@sentry/browser": "6.17.4",
+    "@sentry/browser": "6.18.1",
     "history": "4.10.1",
     "lodash": "4.17.21",
     "react": "17.0.2",
@@ -50,7 +50,7 @@
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.21",
     "rimraf": "3.0.2",
-    "rollup": "2.67.1",
+    "rollup": "2.69.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
     "typescript": "4.4.4"

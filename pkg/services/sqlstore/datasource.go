@@ -88,7 +88,7 @@ func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *models.GetD
 }
 
 // DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
-// and is added to the bus. It also removes permissions related to the team.
+// and is added to the bus. It also removes permissions related to the datasource.
 func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		dsQuery := &models.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}

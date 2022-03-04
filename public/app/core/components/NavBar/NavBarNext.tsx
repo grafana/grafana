@@ -14,7 +14,7 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { Branding } from '../Branding/Branding';
-import { connect, ConnectedProps } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -27,17 +27,9 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  navBarTree: state.navBarTree,
-});
+export const NavBarNext = React.memo(() => {
+  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
 
-const mapDispatchToProps = {};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export interface Props extends ConnectedProps<typeof connector> {}
-
-export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -48,12 +40,15 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   };
   const navTree = cloneDeep(navBarTree);
   const coreItems = navTree.filter((item) => item.section === NavSection.Core);
+  const pinnedCoreItems = coreItems.filter((item) => !item.hideFromNavbar);
   const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
+  const pinnedPluginItems = pluginItems.filter((item) => !item.hideFromNavbar);
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
   );
+  const pinnedConfigItems = configItems.filter((item) => !item.hideFromNavbar);
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -77,7 +72,7 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
       </NavBarSection>
 
       <NavBarSection>
-        {coreItems.map((link, index) => (
+        {pinnedCoreItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
@@ -89,9 +84,9 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
         ))}
       </NavBarSection>
 
-      {pluginItems.length > 0 && (
+      {pinnedPluginItems.length > 0 && (
         <NavBarSection>
-          {pluginItems.map((link, index) => (
+          {pinnedPluginItems.map((link, index) => (
             <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
               {link.icon && <Icon name={link.icon as IconName} size="xl" />}
               {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -103,7 +98,7 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
       <div className={styles.spacer} />
 
       <NavBarSection>
-        {configItems.map((link, index) => (
+        {pinnedConfigItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
@@ -128,9 +123,7 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   );
 });
 
-NavBarNextUnconnected.displayName = 'NavBarNext';
-
-export const NavBarNext = connector(NavBarNextUnconnected);
+NavBarNext.displayName = 'NavBarNext';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`

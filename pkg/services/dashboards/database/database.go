@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -192,6 +193,31 @@ func (d *DashboardStore) UnprovisionDashboard(ctx context.Context, id int64) err
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Where("dashboard_id = ?", id).Delete(&models.DashboardProvisioning{})
 		return err
+	})
+}
+
+func (d *DashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var result []*models.DashboardProvisioning
+
+		convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
+		for index, readerName := range cmd.ReaderNames {
+			convertedReaderNames[index] = readerName
+		}
+
+		err := sess.NotIn("name", convertedReaderNames...).Find(&result)
+		if err != nil {
+			return err
+		}
+
+		for _, deleteDashCommand := range result {
+			err := d.sqlStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+			if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
+				return err
+			}
+		}
+
+		return nil
 	})
 }
 

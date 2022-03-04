@@ -204,7 +204,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// org information available to all users.
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(GetCurrentOrg))
+			orgRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetCurrentOrg))
 			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
@@ -243,7 +243,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
-			orgsRoute.Get("/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(GetOrgByID))
+			orgsRoute.Get("/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByID))
 			orgsRoute.Put("/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrg))
 			orgsRoute.Put("/address", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrgAddress))
 			orgsRoute.Delete("/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsDelete)), routing.Wrap(hs.DeleteOrgByID))
@@ -313,26 +313,26 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-			folderRoute.Get("/", routing.Wrap(hs.GetFolders))
-			folderRoute.Get("/id/:id", routing.Wrap(hs.GetFolderByID))
-			folderRoute.Post("/", routing.Wrap(hs.CreateFolder))
+			folderRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+			folderRoute.Get("/id/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead, ac.ScopeFolderID)), routing.Wrap(hs.GetFolderByID))
+			folderRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", routing.Wrap(hs.GetFolderByUID))
-				folderUidRoute.Put("/", routing.Wrap(hs.UpdateFolder))
-				folderUidRoute.Delete("/", routing.Wrap(hs.DeleteFolder))
+				folderUidRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead)), routing.Wrap(hs.GetFolderByUID))
+				folderUidRoute.Put("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersWrite)), routing.Wrap(hs.UpdateFolder))
+				folderUidRoute.Delete("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersDelete)), routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", routing.Wrap(hs.GetFolderPermissionList))
-					folderPermissionRoute.Post("/", routing.Wrap(hs.UpdateFolderPermissions))
+					folderPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersPermissionsRead)), routing.Wrap(hs.GetFolderPermissionList))
+					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersPermissionsWrite)), routing.Wrap(hs.UpdateFolderPermissions))
 				})
 			})
 		})
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
-			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
+			dashboardRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
+			dashboardRoute.Delete("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
 
 			if hs.ThumbService != nil {
 				dashboardRoute.Get("/uid/:uid/img/:kind/:theme", hs.ThumbService.GetImage)
@@ -343,21 +343,21 @@ func (hs *HTTPServer) registerRoutes() {
 				}
 			}
 
-			dashboardRoute.Post("/calculate-diff", routing.Wrap(hs.CalculateDashboardDiff))
+			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
-			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))
+			dashboardRoute.Post("/db", authorize(reqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(ac.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIdRoute.Get("/versions", routing.Wrap(hs.GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", routing.Wrap(hs.GetDashboardVersion))
-				dashIdRoute.Post("/restore", routing.Wrap(hs.RestoreDashboardVersion))
+				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
+				dashIdRoute.Post("/restore", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", routing.Wrap(hs.GetDashboardPermissionList))
-					dashboardPermissionRoute.Post("/", routing.Wrap(hs.UpdateDashboardPermissions))
+					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
 			})
 		})
@@ -462,6 +462,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
+
+		apiRoute.Group("/comments", func(commentRoute routing.RouteRegister) {
+			commentRoute.Post("/get", routing.Wrap(hs.commentsGet))
+			commentRoute.Post("/create", routing.Wrap(hs.commentsCreate))
+		})
 	}, reqSignedIn)
 
 	// admin api

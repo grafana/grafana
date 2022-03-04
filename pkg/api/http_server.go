@@ -30,11 +30,13 @@ import (
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -46,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -129,13 +132,16 @@ type HTTPServer struct {
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
 	teamPermissionsService       accesscontrol.PermissionsService
+	permissionServices           accesscontrol.PermissionsServices
 	NotificationService          *notifications.NotificationService
 	dashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
-	DatasourcePermissionsService DatasourcePermissionsService
+	DatasourcePermissionsService permissions.DatasourcePermissionsService
+	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
 	DashboardsnapshotsService    *dashboardsnapshots.Service
+	PluginSettings               *pluginSettings.Service
 }
 
 type ServerOptions struct {
@@ -165,8 +171,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	authInfoService login.AuthInfoService, permissionsServices accesscontrol.PermissionsServices,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
-	datasourcePermissionsService DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service,
+	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
+	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -231,9 +237,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
+		commentsService:              commentsService,
 		teamPermissionsService:       permissionsServices.GetTeamService(),
 		AlertNotificationService:     alertNotificationService,
 		DashboardsnapshotsService:    dashboardsnapshotsService,
+		PluginSettings:               pluginSettings,
+		permissionServices:           permissionsServices,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -374,8 +383,7 @@ func (hs *HTTPServer) configureHttps() error {
 	}
 
 	tlsCfg := &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
+		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -415,8 +423,7 @@ func (hs *HTTPServer) configureHttp2() error {
 	}
 
 	tlsCfg := &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
+		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 			tls.TLS_AES_128_GCM_SHA256,
@@ -460,7 +467,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName))
+	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName, hs.log))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")

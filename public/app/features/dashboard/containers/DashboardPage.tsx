@@ -52,7 +52,6 @@ type DashboardPageRouteSearchParams = {
 
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
-  isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel(),
 });
@@ -168,7 +167,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       const templateVarChanges = findTemplateVarChanges(this.props.queryParams, prevProps.queryParams);
 
       if (templateVarChanges) {
-        templateVarsChangedInUrl(templateVarChanges);
+        templateVarsChangedInUrl(dashboard.uid, templateVarChanges);
       }
     }
 
@@ -311,17 +310,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, isInitSlow, initError, queryParams, theme } = this.props;
+    const { dashboard, initError, queryParams, theme } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
     const kioskMode = getKioskMode();
     const styles = getStyles(theme, kioskMode);
 
     if (!dashboard) {
-      if (isInitSlow) {
-        return <DashboardLoading initPhase={this.props.initPhase} />;
-      }
-
-      return null;
+      return <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
     const inspectPanel = this.getInspectPanel();

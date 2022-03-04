@@ -103,7 +103,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
                 <Button type="submit" disabled={!folder.canSave || !folder.hasChanged}>
                   Save
                 </Button>
-                <Button variant="destructive" onClick={this.onDelete} disabled={!folder.canSave}>
+                <Button variant="destructive" onClick={this.onDelete} disabled={!folder.canDelete}>
                   Delete
                 </Button>
               </div>

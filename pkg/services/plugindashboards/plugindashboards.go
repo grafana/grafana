@@ -9,28 +9,24 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-type pluginSettingsStore interface {
-	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error)
-}
-
-func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, pluginStore plugins.Store,
-	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service) *Service {
-	s := new(sqlStore, bus, pluginStore, pluginDashboardManager, dashboardImportService)
+func ProvideService(bus bus.Bus, pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
+	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service) *Service {
+	s := newService(bus, pluginStore, pluginDashboardManager, dashboardImportService, pluginSettingsService)
 	s.updateAppDashboards()
 	return s
 }
 
-func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugins.Store,
-	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service) *Service {
+func newService(bus bus.Bus, pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
+	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service) *Service {
 	s := &Service{
-		pluginSettingsStore:    pluginSettingsStore,
 		bus:                    bus,
 		pluginStore:            pluginStore,
 		pluginDashboardManager: pluginDashboardManager,
 		dashboardImportService: dashboardImportService,
+		pluginSettingsService:  pluginSettingsService,
 		logger:                 log.New("plugindashboards"),
 	}
 	bus.AddEventListener(s.handlePluginStateChanged)
@@ -39,18 +35,18 @@ func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugi
 }
 
 type Service struct {
-	pluginSettingsStore    pluginSettingsStore
 	bus                    bus.Bus
 	pluginStore            plugins.Store
 	pluginDashboardManager plugins.PluginDashboardManager
 	dashboardImportService dashboardimport.Service
+	pluginSettingsService  pluginsettings.Service
 	logger                 log.Logger
 }
 
 func (s *Service) updateAppDashboards() {
 	s.logger.Debug("Looking for app dashboard updates")
 
-	pluginSettings, err := s.pluginSettingsStore.GetPluginSettings(context.Background(), 0)
+	pluginSettings, err := s.pluginSettingsService.GetPluginSettings(context.Background(), 0)
 	if err != nil {
 		s.logger.Error("Failed to get all plugin settings", "error", err)
 		return
@@ -106,7 +102,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 
 	// update version in plugin_setting table to mark that we have processed the update
 	query := models.GetPluginSettingByIdQuery{PluginId: plugin.ID, OrgId: orgID}
-	if err := s.bus.Dispatch(ctx, &query); err != nil {
+	if err := s.pluginSettingsService.GetPluginSettingById(ctx, &query); err != nil {
 		s.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
@@ -118,7 +114,7 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 		PluginVersion: plugin.Info.Version,
 	}
 
-	if err := s.bus.Dispatch(ctx, &cmd); err != nil {
+	if err := s.pluginSettingsService.UpdatePluginSettingVersion(ctx, &cmd); err != nil {
 		s.logger.Error("Failed to update plugin setting version", "error", err)
 	}
 }
