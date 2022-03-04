@@ -214,10 +214,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
-      getTimeRange,
       theme,
       timeZone,
-      eventBus,
       orientation,
       barWidth,
       barRadius,
@@ -234,6 +232,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       getColor,
       fillOpacity,
       allFrames: info.viz,
+      // @ts-ignore
+      getTimeRange,
+      // @ts-ignore
+      eventBus,
     });
   };
 

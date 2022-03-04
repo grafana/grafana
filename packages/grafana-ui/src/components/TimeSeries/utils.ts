@@ -14,7 +14,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 
-import { UPlotConfigBuilder, UPlotConfigPrepFn2 } from '../uPlot/config/UPlotConfigBuilder';
+import { UPlotConfigBuilder, UPlotConfigContext, UPlotConfigPrepFn2 } from '../uPlot/config/UPlotConfigBuilder';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -27,7 +27,7 @@ import {
   StackingMode,
 } from '@grafana/schema';
 import { collectStackingGroups, INTERNAL_NEGATIVE_Y_PREFIX, orderIdsByCalcs } from '../uPlot/utils';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot from 'uplot';
 import { buildScaleKey } from '../GraphNG/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -38,27 +38,30 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
+// TODO: remove Omit after we remove getTimeRange from UPlotConfigPrepFn2
+export const preparePlotConfigBuilder: UPlotConfigPrepFn2<{
+  sync?: () => DashboardCursorSync;
+  legend?: VizLegendOptions;
+}> = (
   {
-    sync?: () => DashboardCursorSync;
-    legend?: VizLegendOptions;
+    frame,
+    theme,
+    timeZone,
+    sync,
+    allFrames,
+    renderers,
+    legend,
+    tweakScale = (opts) => opts,
+    tweakAxis = (opts) => opts,
   },
-  { frames: DataFrame[]; aligned: AlignedData; alignedFrame: DataFrame }
-> = ({
-  frame,
-  theme,
-  timeZone,
-  getTimeRange,
-  eventBus,
-  sync,
-  allFrames,
-  renderers,
-  legend,
-  tweakScale = (opts) => opts,
-  tweakAxis = (opts) => opts,
-}) => {
+  _ctx
+) => {
   const builder = new UPlotConfigBuilder(timeZone);
+  let ctx: UPlotConfigContext = _ctx;
 
+  function setCtx(newCtx: UPlotConfigContext) {
+    ctx = newCtx;
+  }
   function on(type: any, handler: any) {}
 
   // X is the first field in the aligned frame
@@ -86,7 +89,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
       direction: ScaleDirection.Right,
       isTime: true,
       range: () => {
-        const r = getTimeRange();
+        const r = ctx.timeRange;
         return [r.from.valueOf(), r.to.valueOf()];
       },
     });
@@ -437,13 +440,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
             payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            ctx.eventBus.publish(new DataHoverClearEvent());
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
             payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
-            eventBus.publish(hoverEvent);
+            ctx.eventBus.publish(hoverEvent);
             hoverEvent.payload.down = undefined;
           }
           return true;
@@ -459,7 +462,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
   builder.setSync();
   builder.setCursor(cursor);
 
-  return { builder, prepData: builder.prepData!, on };
+  return { builder, on, setCtx };
 };
 
 export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {

@@ -108,7 +108,9 @@ describe('BarChart utils', () => {
         frame: frame!,
         theme: createTheme(),
         timeZone: DefaultTimeZone,
+        // @ts-ignore
         getTimeRange: getDefaultTimeRange,
+        // @ts-ignore
         eventBus: new EventBusSrv(),
         allFrames: [frame],
       }).getConfig();
@@ -123,7 +125,9 @@ describe('BarChart utils', () => {
           frame: frame!,
           theme: createTheme(),
           timeZone: DefaultTimeZone,
+          // @ts-ignore
           getTimeRange: getDefaultTimeRange,
+          // @ts-ignore
           eventBus: new EventBusSrv(),
           allFrames: [frame],
         }).getConfig()
@@ -138,7 +142,9 @@ describe('BarChart utils', () => {
           frame: frame!,
           theme: createTheme(),
           timeZone: DefaultTimeZone,
+          // @ts-ignore
           getTimeRange: getDefaultTimeRange,
+          // @ts-ignore
           eventBus: new EventBusSrv(),
           allFrames: [frame],
         }).getConfig()

@@ -270,12 +270,14 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
   timeZone: TimeZone;
-  eventBus: EventBus;
   allFrames: DataFrame[];
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
-  getTimeRange: () => TimeRange;
+
+  // TODO: remove in favor of context
+  // eventBus: EventBus;
+  // getTimeRange: () => TimeRange;
 } & T;
 
 export type PrepDataOpts<T extends {} = {}> = {
@@ -306,15 +308,23 @@ export type Handler = (event: UPlotChartEvent) => void;
 /** @alpha */
 export type EventType = 'hover' | 'move';
 
+export type UPlotConfigContext<T extends {} = {}> = {
+  data: PrepDataFnResult<T>;
+  timeRange: TimeRange;
+  eventBus: EventBus;
+};
+
 /** @alpha */
 export interface UPlotChartConfig {
   builder: UPlotOptsBuilder;
   on(type: EventType, handler: Handler): void;
+  setCtx(ctx: UPlotConfigContext): void;
 }
 
 /** @alpha */
-export type UPlotConfigPrepFn2<T extends {}, K extends { frames: DataFrame[] }> = (
-  opts: UPlotConfigPrepOpts<T>
+export type UPlotConfigPrepFn2<T extends {} = {}> = (
+  opts: UPlotConfigPrepOpts<T>,
+  ctx: UPlotConfigContext
 ) => UPlotChartConfig | null;
 
 export type UPlotOptsBuilder = UPlotConfigBuilder;

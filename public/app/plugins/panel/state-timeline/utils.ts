@@ -50,9 +50,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
   timeZone,
-  getTimeRange,
   mode,
-  eventBus,
   sync,
   rowHeight,
   colWidth,
@@ -60,6 +58,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   alignValue,
   mergeValues,
   getValueColor,
+  // @ts-ignore
+  getTimeRange,
+  // @ts-ignore
+  eventBus,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 

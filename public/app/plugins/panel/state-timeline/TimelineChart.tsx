@@ -53,8 +53,6 @@ export class TimelineChart extends React.Component<TimelineProps> {
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
-      getTimeRange,
-      eventBus,
       sync,
       allFrames: this.props.frames,
       ...this.props,
@@ -62,6 +60,9 @@ export class TimelineChart extends React.Component<TimelineProps> {
       // When there is only one row, use the full space
       rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
       getValueColor: this.getValueColor,
+      // @ts-ignore
+      getTimeRange,
+      eventBus,
     });
   };
 

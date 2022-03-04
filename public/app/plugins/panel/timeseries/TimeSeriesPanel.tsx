@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { DataFrame, EventBus, Field, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, Field, PanelProps } from '@grafana/data';
 import {
   UPlotChart2,
   useTheme2,
@@ -23,7 +23,7 @@ import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { preparePlotData } from '@grafana/ui/src/components/uPlot/utils';
-import { PrepDataFnResult } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
+import { PrepDataFnResult, UPlotConfigContext } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 import { AlignedData } from 'uplot';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
@@ -42,17 +42,15 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
 }) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
   const theme = useTheme2();
-  const timeRange = useRef<TimeRange>();
-  const eventBus = useRef<EventBus>();
-  const series = useRef<DataFrame[]>();
-  const alignedFrame = useRef<DataFrame | null>(null);
+
+  const configContext = useRef<
+    UPlotConfigContext<{
+      alignedFrame: DataFrame | null;
+      aligned: AlignedData | null;
+    }>
+  >();
+
   const [dataErrors, setDataErrors] = useState<any>();
-
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-
-  timeRange.current = otherProps.timeRange;
-  eventBus.current = otherProps.eventBus;
-  series.current = data.series;
 
   // Responsible for data validation and preparation
   const plotData = useMemo(() => {
@@ -62,28 +60,33 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     if (result.error) {
       setDataErrors(result.error);
     }
-    // Storing aligned frame via ref to avoid unnecessary config invalidation
-    alignedFrame.current = result.alignedFrame;
 
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.structureRev, timeZone, data, setDataErrors]);
 
+  configContext.current = {
+    timeRange: otherProps.timeRange,
+    data: plotData,
+    eventBus: otherProps.eventBus,
+  };
+
   const plotConfig = useMemo(() => {
     debugLog('TimeSeriesPanel.plotConfig memo');
 
-    if (!series.current || !alignedFrame.current) {
+    if (!configContext.current?.data.frames || !configContext.current?.data.alignedFrame) {
       return null;
     }
 
-    return preparePlotConfigBuilder({
-      allFrames: series.current,
-      frame: alignedFrame.current,
-      timeZone: timeZone,
-      eventBus: eventBus.current!,
-      theme,
-      getTimeRange: () => timeRange.current!,
-    });
+    return preparePlotConfigBuilder(
+      {
+        allFrames: configContext.current.data.frames,
+        frame: configContext.current.data.alignedFrame,
+        timeZone: timeZone,
+        theme,
+      },
+      configContext.current
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.structureRev, timeZone, theme]);
 
@@ -97,10 +100,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return <PlotLegend data={plotData!.frames} config={plotConfig?.builder} {...legend} />;
   }, [options, plotData, plotConfig]);
 
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange.current! });
-  };
-
   if (dataErrors) {
     return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
   }
@@ -108,6 +107,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   if (!plotData || !plotConfig) {
     return null;
   }
+
+  plotConfig.setCtx({ timeRange: otherProps.timeRange, data: plotData, eventBus: otherProps.eventBus });
+
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: otherProps.timeRange });
+  };
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   return (
     <>
