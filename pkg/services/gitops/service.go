@@ -43,7 +43,7 @@ func (s *standardGitopsService) HandleExportSystem(ctx *models.ReqContext) {
 		return
 	}
 
-	err = exportDashboards(ctx.Req.Context(), ctx.OrgId, s.sql, dir)
+	err = exportToRepo(ctx.Req.Context(), ctx.OrgId, s.sql, dir)
 	if err != nil {
 		ctx.JsonApiErr(500, "export error", err)
 		return
