@@ -1,7 +1,6 @@
 package dtos
 
 import (
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -13,9 +12,9 @@ type PluginSetting struct {
 	Pinned        bool                   `json:"pinned"`
 	Module        string                 `json:"module"`
 	BaseUrl       string                 `json:"baseUrl"`
-	Info          *plugins.Info          `json:"info"`
+	Info          plugins.Info           `json:"info"`
 	Includes      []*plugins.Includes    `json:"includes"`
-	Dependencies  *plugins.Dependencies  `json:"dependencies"`
+	Dependencies  plugins.Dependencies   `json:"dependencies"`
 	JsonData      map[string]interface{} `json:"jsonData"`
 	DefaultNavUrl string                 `json:"defaultNavUrl"`
 
@@ -33,7 +32,8 @@ type PluginListItem struct {
 	Id            string                  `json:"id"`
 	Enabled       bool                    `json:"enabled"`
 	Pinned        bool                    `json:"pinned"`
-	Info          *plugins.Info           `json:"info"`
+	Info          plugins.Info            `json:"info"`
+	Dependencies  plugins.Dependencies    `json:"dependencies"`
 	LatestVersion string                  `json:"latestVersion"`
 	HasUpdate     bool                    `json:"hasUpdate"`
 	DefaultNavUrl string                  `json:"defaultNavUrl"`
@@ -56,16 +56,6 @@ func (slice PluginList) Less(i, j int) bool {
 
 func (slice PluginList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
-}
-
-type ImportDashboardCommand struct {
-	PluginId  string                         `json:"pluginId"`
-	Path      string                         `json:"path"`
-	Overwrite bool                           `json:"overwrite"`
-	Dashboard *simplejson.Json               `json:"dashboard"`
-	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
-	FolderId  int64                          `json:"folderId"`
-	FolderUid string                         `json:"folderUid"`
 }
 
 type InstallPluginCommand struct {

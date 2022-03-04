@@ -49,8 +49,6 @@ type Provider interface {
 	// RegisterReloadHandler registers a handler for validation and reload
 	// of configuration updates tied to a specific section
 	RegisterReloadHandler(section string, handler ReloadHandler)
-	// IsFeatureToggleEnabled checks if the feature's toggle is enabled
-	IsFeatureToggleEnabled(name string) bool
 }
 
 // Section is a settings section copy
@@ -110,7 +108,7 @@ func (o OSSImpl) Current() SettingsBag {
 	for _, section := range o.Cfg.Raw.Sections() {
 		settingsCopy[section.Name()] = make(map[string]string)
 		for _, key := range section.Keys() {
-			settingsCopy[section.Name()][key.Name()] = RedactedValue(key.Name(), key.Value())
+			settingsCopy[section.Name()][key.Name()] = RedactedValue(EnvKey(section.Name(), key.Name()), key.Value())
 		}
 	}
 
@@ -132,7 +130,7 @@ func (o *OSSImpl) Section(section string) Section {
 func (OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
 
 func (o OSSImpl) IsFeatureToggleEnabled(name string) bool {
-	return o.Cfg.FeatureToggles[name]
+	return o.Cfg.IsFeatureToggleEnabled(name)
 }
 
 type keyValImpl struct {

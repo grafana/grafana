@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
 import { isEqual } from 'lodash';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { LogsNavigationPages } from './LogsNavigationPages';
@@ -46,8 +46,8 @@ function LogsNavigation({
   const rangeSpanRef = useRef(0);
 
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
-  const onFirstPage = currentPageIndex === 0;
-  const onLastPage = currentPageIndex === pages.length - 1;
+  const onFirstPage = oldestLogsFirst ? currentPageIndex === pages.length - 1 : currentPageIndex === 0;
+  const onLastPage = oldestLogsFirst ? currentPageIndex === 0 : currentPageIndex === pages.length - 1;
   const theme = useTheme2();
   const styles = getStyles(theme, oldestLogsFirst, loading);
 
@@ -81,8 +81,8 @@ function LogsNavigation({
   }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
 
   useEffect(() => {
-    return () => clearCache();
-    // We can't enforce the eslint rule here because we only want to run when component unmounts.
+    clearCache();
+    // We can't enforce the eslint rule here because we only want to run when component is mounted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -106,9 +106,10 @@ function LogsNavigation({
       onClick={() => {
         //If we are not on the last page, use next page's range
         if (!onLastPage) {
+          const indexChange = oldestLogsFirst ? -1 : 1;
           changeTime({
-            from: pages[currentPageIndex + 1].queryRange.from,
-            to: pages[currentPageIndex + 1].queryRange.to,
+            from: pages[currentPageIndex + indexChange].queryRange.from,
+            to: pages[currentPageIndex + indexChange].queryRange.to,
           });
         } else {
           //If we are on the last page, create new range
@@ -132,9 +133,10 @@ function LogsNavigation({
       onClick={() => {
         //If we are not on the first page, use previous page's range
         if (!onFirstPage) {
+          const indexChange = oldestLogsFirst ? 1 : -1;
           changeTime({
-            from: pages[currentPageIndex - 1].queryRange.from,
-            to: pages[currentPageIndex - 1].queryRange.to,
+            from: pages[currentPageIndex + indexChange].queryRange.from,
+            to: pages[currentPageIndex + indexChange].queryRange.to,
           });
         }
         //If we are on the first page, button is disabled and we do nothing

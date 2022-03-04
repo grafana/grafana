@@ -27,21 +27,19 @@ InfluxDB data source options differ depending on which [query language](#query-l
 
 These options apply if you are using the InfluxQL query language. If you are using Flux, refer to [Flux support in Grafana]({{< relref "influxdb-flux.md" >}}).
 
-| Name      | Description                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`    | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`. |
-| `Default` | Default data source means that it will be pre-selected for new panels.                                                                 |
-| `URL`     | The HTTP protocol, IP address and port of your InfluxDB API. InfluxDB API port is by default 8086.                                     |
-| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.  |
-
-**Note**: Browser access is deprecated and will be removed in a future release.
-`Allowed cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
-`Database` | The ID of the bucket you want to query from, copied from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.
-`User` | The username you use to sign into InfluxDB.
-`Password` | The token you use to query the bucket above, copied from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.
-`HTTP mode` | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
-`Min time interval` | (Optional) Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
-`Max series`| (Optional) Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
+| Name                | Description                                                                                                                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Name`              | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`.                                                                                         |
+| `Default`           | Default data source means that it will be pre-selected for new panels.                                                                                                                                                         |
+| `URL`               | The HTTP protocol, IP address and port of your InfluxDB API. InfluxDB API port is by default 8086.                                                                                                                             |
+| `Access`            | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release. |
+| `Allowed cookies`   | Cookies that will be forwarded to the data source. All other cookies will be deleted.                                                                                                                                          |
+| `Database`          | The ID of the bucket you want to query from, copied from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.                                                 |
+| `User`              | The username you use to sign into InfluxDB.                                                                                                                                                                                    |
+| `Password`          | The token you use to query the bucket above, copied from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.                                                         |
+| `HTTP mode`         | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.                                                                 |
+| `Min time interval` | (Optional) Refer to [Min time interval]({{< relref "#min-time-interval" >}}).                                                                                                                                                  |
+| `Max series`        | (Optional) Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.                       |
 
 ### Flux
 
@@ -120,6 +118,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
+- $1 - $9 = replaced with part of measurement name (if you separate your measurement name with dots)
 - $col = replaced with column name
 - $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag*yourTagName`(must start with`$tag*`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
 - You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.

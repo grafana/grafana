@@ -1,6 +1,13 @@
 import kbn from './kbn';
 import { DecimalCount, TimeZone } from '@grafana/data';
 
+// Most of the methods in this file are deprecated
+// Stub the deprecation warning here to prevent polluting the test output
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  deprecationWarning: () => {},
+}));
+
 interface ValueFormatTest {
   id: string;
   decimals?: DecimalCount;
@@ -71,5 +78,13 @@ describe('describe_interval', () => {
   it('fails if input is invalid', () => {
     expect(() => kbn.describeInterval('123xyz')).toThrow();
     expect(() => kbn.describeInterval('xyz')).toThrow();
+  });
+});
+
+describe('addSlashes', () => {
+  it('properly escapes backslashes, single-quotes, double-quotes and the number zero', () => {
+    expect(kbn.addSlashes('this is a \'test\' with "quotes" backslashes (\\) and zero (0)')).toEqual(
+      'this is a \\\'test\\\' with \\"quotes\\" backslashes (\\\\) and zero (\\0)'
+    );
   });
 });

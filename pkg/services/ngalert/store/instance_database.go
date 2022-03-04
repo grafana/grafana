@@ -10,17 +10,17 @@ import (
 )
 
 type InstanceStore interface {
-	GetAlertInstance(cmd *models.GetAlertInstanceQuery) error
-	ListAlertInstances(cmd *models.ListAlertInstancesQuery) error
-	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
-	FetchOrgIds() ([]int64, error)
-	DeleteAlertInstance(orgID int64, ruleUID, labelsHash string) error
+	GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error
+	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error
+	SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertInstanceCommand) error
+	FetchOrgIds(ctx context.Context) ([]int64, error)
+	DeleteAlertInstance(ctx context.Context, orgID int64, ruleUID, labelsHash string) error
 }
 
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
-func (st DBstore) GetAlertInstance(cmd *models.GetAlertInstanceQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		instance := models.AlertInstance{}
 		s := strings.Builder{}
 		s.WriteString(`SELECT * FROM alert_instance
@@ -52,8 +52,8 @@ func (st DBstore) GetAlertInstance(cmd *models.GetAlertInstanceQuery) error {
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
-func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		alertInstances := make([]*models.ListAlertInstancesQueryResult, 0)
 
 		s := strings.Builder{}
@@ -84,8 +84,8 @@ func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error 
 }
 
 // SaveAlertInstance is a handler for saving a new alert instance.
-func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertInstanceCommand) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()
 		if err != nil {
 			return err
@@ -121,10 +121,10 @@ func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error 
 	})
 }
 
-func (st DBstore) FetchOrgIds() ([]int64, error) {
+func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 	orgIds := []int64{}
 
-	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
 
@@ -144,8 +144,8 @@ func (st DBstore) FetchOrgIds() ([]int64, error) {
 	return orgIds, err
 }
 
-func (st DBstore) DeleteAlertInstance(orgID int64, ruleUID, labelsHash string) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) DeleteAlertInstance(ctx context.Context, orgID int64, ruleUID, labelsHash string) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash = ?", orgID, ruleUID, labelsHash)
 		if err != nil {
 			return err

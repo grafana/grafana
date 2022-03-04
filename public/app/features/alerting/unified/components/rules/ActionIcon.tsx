@@ -1,19 +1,15 @@
-import { Icon, IconName, useStyles, Tooltip } from '@grafana/ui';
-import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
-import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip/PopoverController';
+import { IconName, Tooltip, LinkButton, Button } from '@grafana/ui';
+import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 import React, { FC } from 'react';
-import { css, cx } from '@emotion/css';
-import { Link } from 'react-router-dom';
 
 interface Props {
   tooltip: PopoverContent;
   icon: IconName;
-
   className?: string;
   tooltipPlacement?: TooltipPlacement;
   to?: string;
   target?: string;
-  onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  onClick?: () => void;
   'data-testid'?: string;
 }
 
@@ -27,25 +23,34 @@ export const ActionIcon: FC<Props> = ({
   tooltipPlacement = 'top',
   ...rest
 }) => {
-  const iconEl = <Icon className={cx(useStyles(getStyle), className)} onClick={onClick} name={icon} {...rest} />;
-
   const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
+
   return (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
-      {(() => {
-        if (to) {
-          return (
-            <Link aria-label={ariaLabel} to={to} target={target}>
-              {iconEl}
-            </Link>
-          );
-        }
-        return iconEl;
-      })()}
+      {to ? (
+        <LinkButton
+          variant="secondary"
+          fill="text"
+          icon={icon}
+          href={to}
+          size="sm"
+          target={target}
+          {...rest}
+          aria-label={ariaLabel}
+        />
+      ) : (
+        <Button
+          className={className}
+          variant="secondary"
+          fill="text"
+          size="sm"
+          icon={icon}
+          type="button"
+          onClick={onClick}
+          {...rest}
+          aria-label={ariaLabel}
+        />
+      )}
     </Tooltip>
   );
 };
-
-export const getStyle = () => css`
-  cursor: pointer;
-`;

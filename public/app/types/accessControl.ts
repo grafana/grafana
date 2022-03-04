@@ -25,6 +25,16 @@ export enum AccessControlAction {
   UsersQuotasList = 'users.quotas:list',
   UsersQuotasUpdate = 'users.quotas:update',
 
+  ServiceAccountsCreate = 'serviceaccounts:create',
+  ServiceAccountsWrite = 'serviceaccounts:write',
+  ServiceAccountsDelete = 'serviceaccounts:delete',
+
+  OrgsRead = 'orgs:read',
+  OrgsPreferencesRead = 'orgs.preferences:read',
+  OrgsWrite = 'orgs:write',
+  OrgsPreferencesWrite = 'orgs.preferences:write',
+  OrgsCreate = 'orgs:create',
+  OrgsDelete = 'orgs:delete',
   OrgUsersRead = 'org.users:read',
   OrgUsersAdd = 'org.users:add',
   OrgUsersRemove = 'org.users:remove',
@@ -42,4 +52,45 @@ export enum AccessControlAction {
   DataSourcesPermissionsRead = 'datasources.permissions:read',
 
   ActionServerStatsRead = 'server.stats:read',
+
+  ActionTeamsCreate = 'teams:create',
+  ActionTeamsDelete = 'teams:delete',
+  ActionTeamsRead = 'teams:read',
+  ActionTeamsWrite = 'teams:write',
+  ActionTeamsPermissionsRead = 'teams.permissions:read',
+  ActionTeamsPermissionsWrite = 'teams.permissions:write',
+
+  ActionRolesList = 'roles:list',
+  ActionBuiltinRolesList = 'roles.builtin:list',
+  ActionTeamsRolesList = 'teams.roles:list',
+  ActionTeamsRolesAdd = 'teams.roles:add',
+  ActionTeamsRolesRemove = 'teams.roles:remove',
+  ActionUserRolesList = 'users.roles:list',
+
+  DashboardsRead = 'dashboards:read',
+  DashboardsWrite = 'dashboards:write',
+  DashboardsDelete = 'dashboards:delete',
+  DashboardsCreate = 'dashboards:create',
+  DashboardsPermissionsRead = 'dashboards.permissions:read',
+  DashboardsPermissionsWrite = 'dashboards.permissions:read',
+
+  FoldersRead = 'folders:read',
+  FoldersWrite = 'folders:read',
+  FoldersDelete = 'folders:delete',
+  FoldersCreate = 'folders:create',
+  FoldersPermissionsRead = 'folders.permissions:read',
+  FoldersPermissionsWrite = 'folders.permissions:read',
+}
+
+export interface Role {
+  uid: string;
+  name: string;
+  displayName: string;
+  description: string;
+  group: string;
+  global: boolean;
+  delegatable?: boolean;
+  version: number;
+  created: string;
+  updated: string;
 }

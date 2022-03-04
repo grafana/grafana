@@ -4,23 +4,24 @@ import (
 	"context"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"xorm.io/xorm"
 )
 
-func init() {
-	bus.AddHandlerCtx("sql", GetAPIKeys)
-	bus.AddHandler("sql", GetApiKeyById)
-	bus.AddHandler("sql", GetApiKeyByName)
-	bus.AddHandlerCtx("sql", DeleteApiKeyCtx)
-	bus.AddHandlerCtx("sql", AddAPIKey)
+func (ss *SQLStore) addAPIKeysQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.GetAPIKeys)
+	bus.AddHandler("sql", ss.GetApiKeyById)
+	bus.AddHandler("sql", ss.GetApiKeyByName)
+	bus.AddHandler("sql", ss.DeleteApiKey)
+	bus.AddHandler("sql", ss.AddAPIKey)
 }
 
 // GetAPIKeys queries the database based
 // on input on GetApiKeysQuery
-func GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		var sess *xorm.Session
 
 		if query.IncludeExpired {
@@ -33,19 +34,36 @@ func GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error {
 				Asc("name")
 		}
 
+		sess = sess.Where("service_account_id IS NULL")
+
 		query.Result = make([]*models.ApiKey, 0)
 		return sess.Find(&query.Result)
 	})
 }
 
-func DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
-	return withDbSession(ctx, x, func(sess *DBSession) error {
+// GetAPIKeys queries the database based
+// on input on GetApiKeysQuery
+func (ss *SQLStore) GetNonServiceAccountAPIKeys(ctx context.Context) []*models.ApiKey {
+	result := make([]*models.ApiKey, 0)
+	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sess := dbSession. //CHECK how many API keys do our clients have?  Can we load them all?
+					Where("(expires IS NULL OR expires >= ?) AND service_account_id < 1 ", timeNow().Unix()).Asc("name")
+		return sess.Find(&result)
+	})
+	if err != nil {
+		ss.log.Warn("API key not loaded", "err", err)
+	}
+	return result
+}
+
+func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		return deleteAPIKey(sess, cmd.Id, cmd.OrgId)
 	})
 }
 
 func deleteAPIKey(sess *DBSession, id, orgID int64) error {
-	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=?"
+	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
 	result, err := sess.Exec(rawSQL, id, orgID)
 	if err != nil {
 		return err
@@ -60,8 +78,8 @@ func deleteAPIKey(sess *DBSession, id, orgID int64) error {
 }
 
 // AddAPIKey adds the API key to the database.
-func AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
+func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
@@ -85,7 +103,7 @@ func AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: cmd.ServiceAccountId,
+			ServiceAccountId: nil,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
@@ -96,30 +114,58 @@ func AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
 	})
 }
 
-func GetApiKeyById(query *models.GetApiKeyByIdQuery) error {
-	var apikey models.ApiKey
-	has, err := x.Id(query.ApiKeyId).Get(&apikey)
+// UpdateApikeyServiceAccount sets a service account for an existing API key
+func (ss *SQLStore) UpdateApikeyServiceAccount(ctx context.Context, apikeyId int64, saccountId int64) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		key := models.ApiKey{Id: apikeyId}
+		exists, err := sess.Get(&key)
+		if err != nil {
+			ss.log.Warn("API key not loaded", "err", err)
+			return err
+		}
+		if !exists {
+			ss.log.Warn("API key not found", "err", err)
+			return models.ErrApiKeyNotFound
+		}
+		key.ServiceAccountId = &saccountId
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrInvalidApiKey
-	}
+		if _, err := sess.ID(key.Id).Update(&key); err != nil {
+			ss.log.Warn("Could not update api key", "err", err)
+			return err
+		}
 
-	query.Result = &apikey
-	return nil
+		return nil
+	})
 }
 
-func GetApiKeyByName(query *models.GetApiKeyByNameQuery) error {
-	var apikey models.ApiKey
-	has, err := x.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&apikey)
+func (ss *SQLStore) GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var apikey models.ApiKey
+		has, err := sess.ID(query.ApiKeyId).Get(&apikey)
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrInvalidApiKey
-	}
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrInvalidApiKey
+		}
 
-	query.Result = &apikey
-	return nil
+		query.Result = &apikey
+		return nil
+	})
+}
+
+func (ss *SQLStore) GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var apikey models.ApiKey
+		has, err := sess.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&apikey)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrInvalidApiKey
+		}
+
+		query.Result = &apikey
+		return nil
+	})
 }

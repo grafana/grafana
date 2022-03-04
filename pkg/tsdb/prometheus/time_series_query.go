@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/opentracing/opentracing-go"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-// Internal interval and range variables
+//Internal interval and range variables
 const (
 	varInterval     = "$__interval"
 	varIntervalMs   = "$__interval_ms"
@@ -28,6 +28,19 @@ const (
 	varRateInterval = "$__rate_interval"
 )
 
+//Internal interval and range variables with {} syntax
+//Repetitive code, we should have functionality to unify these
+const (
+	varIntervalAlt     = "${__interval}"
+	varIntervalMsAlt   = "${__interval_ms}"
+	varRangeAlt        = "${__range}"
+	varRangeSAlt       = "${__range_s}"
+	varRangeMsAlt      = "${__range_ms}"
+	varRateIntervalAlt = "${__rate_interval}"
+)
+
+const legendFormatAuto = "__auto"
+
 type TimeSeriesQueryType string
 
 const (
@@ -36,34 +49,27 @@ const (
 	ExemplarQueryType TimeSeriesQueryType = "exemplar"
 )
 
-func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *DatasourceInfo) (*backend.QueryDataResponse, error) {
-	client := dsInfo.promClient
-
+func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
-	}
-
-	queries, err := s.parseTimeSeriesQuery(req, dsInfo)
-	if err != nil {
-		return &result, err
 	}
 
 	for _, query := range queries {
 		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
-		span, ctx := opentracing.StartSpanFromContext(ctx, "datasource.prometheus")
-		span.SetTag("expr", query.Expr)
-		span.SetTag("start_unixnano", query.Start.UnixNano())
-		span.SetTag("stop_unixnano", query.End.UnixNano())
-		defer span.Finish()
+		ctx, span := s.tracer.Start(ctx, "datasource.prometheus")
+		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		defer span.End()
 
 		response := make(map[TimeSeriesQueryType]interface{})
 
 		timeRange := apiv1.Range{
 			Step: query.Step,
 			// Align query range to step. It rounds start and end down to a multiple of step.
-			Start: time.Unix(int64(math.Floor((float64(query.Start.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
-			End:   time.Unix(int64(math.Floor((float64(query.End.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
+			Start: alignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
+			End:   alignTimeRange(query.End, query.Step, query.UtcOffsetSec),
 		}
 
 		if query.RangeQuery {
@@ -71,9 +77,9 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[RangeQueryType] = rangeResponse
+				continue
 			}
+			response[RangeQueryType] = rangeResponse
 		}
 
 		if query.InstantQuery {
@@ -81,16 +87,17 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			if err != nil {
 				plog.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
-			} else {
-				response[InstantQueryType] = instantResponse
+				continue
 			}
+			response[InstantQueryType] = instantResponse
 		}
 
+		// This is a special case
+		// If exemplar query returns error, we want to only log it and continue with other results processing
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
 				plog.Error("Exemplar query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 			} else {
 				response[ExemplarQueryType] = exemplarResponse
 			}
@@ -101,6 +108,11 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 			return &result, err
 		}
 
+		// The ExecutedQueryString can be viewed in QueryInspector in UI
+		for _, frame := range frames {
+			frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+		}
+
 		result.Responses[query.RefId] = backend.DataResponse{
 			Frames: frames,
 		}
@@ -109,12 +121,32 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	return &result, nil
 }
 
-func formatLegend(metric model.Metric, query *PrometheusQuery) string {
-	var legend string
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *DatasourceInfo) (*backend.QueryDataResponse, error) {
+	client, err := dsInfo.getClient(req.Headers)
+	if err != nil {
+		return nil, err
+	}
 
-	if query.LegendFormat == "" {
-		legend = metric.String()
-	} else {
+	queries, err := s.parseTimeSeriesQuery(req, dsInfo)
+	if err != nil {
+		result := backend.QueryDataResponse{
+			Responses: backend.Responses{},
+		}
+		return &result, err
+	}
+
+	return s.runQueries(ctx, client, queries)
+}
+
+func formatLegend(metric model.Metric, query *PrometheusQuery) string {
+	var legend = metric.String()
+
+	if query.LegendFormat == legendFormatAuto {
+		// If we have labels set legend to empty string to utilize the auto naming system
+		if len(metric) > 0 {
+			legend = ""
+		}
+	} else if query.LegendFormat != "" {
 		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
 			labelName := strings.Replace(string(in), "{{", "", 1)
 			labelName = strings.Replace(labelName, "}}", "", 1)
@@ -144,54 +176,24 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			return nil, err
 		}
 		//Final interval value
-		var interval time.Duration
-
-		//Calculate interval
-		queryInterval := model.Interval
-		//If we are using variable or interval/step, we will replace it with calculated interval
-		if queryInterval == varInterval || queryInterval == varIntervalMs || queryInterval == varRateInterval {
-			queryInterval = ""
-		}
-		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
+		interval, err := calculatePrometheusInterval(model, dsInfo, query, s.intervalCalculator)
 		if err != nil {
 			return nil, err
 		}
 
-		calculatedInterval := s.intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
-		safeInterval := s.intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
-		adjustedInterval := safeInterval.Value
-
-		if calculatedInterval.Value > safeInterval.Value {
-			adjustedInterval = calculatedInterval.Value
-		}
-
-		if queryInterval == varRateInterval {
-			// Rate interval is final and is not affected by resolution
-			interval = calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, s.intervalCalculator)
-		} else {
-			intervalFactor := model.IntervalFactor
-			if intervalFactor == 0 {
-				intervalFactor = 1
-			}
-			interval = time.Duration(int64(adjustedInterval) * intervalFactor)
-		}
-
-		intervalMs := int64(interval / time.Millisecond)
-		rangeS := query.TimeRange.To.Unix() - query.TimeRange.From.Unix()
-
 		// Interpolate variables in expr
-		expr := model.Expr
-		expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(intervalMs, 10))
-		expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
-		expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeS*1000, 10))
-		expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeS, 10))
-		expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeS, 10)+"s")
-		expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
-
+		timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
+		expr := interpolateVariables(model, interval, timeRange, s.intervalCalculator, dsInfo.TimeInterval)
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {
 			// In older dashboards, we were not setting range query param and !range && !instant was run as range query
 			rangeQuery = true
+		}
+
+		// We never want to run exemplar query for alerting
+		exemplarQuery := model.ExemplarQuery
+		if queryContext.Headers["FromAlert"] == "true" {
+			exemplarQuery = false
 		}
 
 		qs = append(qs, &PrometheusQuery{
@@ -203,7 +205,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 			RefId:         query.RefID,
 			InstantQuery:  model.InstantQuery,
 			RangeQuery:    rangeQuery,
-			ExemplarQuery: model.ExemplarQuery,
+			ExemplarQuery: exemplarQuery,
 			UtcOffsetSec:  model.UtcOffsetSec,
 		})
 	}
@@ -240,6 +242,38 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 	return frames, nil
 }
 
+func calculatePrometheusInterval(model *QueryModel, dsInfo *DatasourceInfo, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
+	queryInterval := model.Interval
+
+	//If we are using variable for interval/step, we will replace it with calculated interval
+	if isVariableInterval(queryInterval) {
+		queryInterval = ""
+	}
+
+	minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
+	if err != nil {
+		return time.Duration(0), err
+	}
+	calculatedInterval := intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
+	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
+
+	adjustedInterval := safeInterval.Value
+	if calculatedInterval.Value > safeInterval.Value {
+		adjustedInterval = calculatedInterval.Value
+	}
+
+	if model.Interval == varRateInterval || model.Interval == varRateIntervalAlt {
+		// Rate interval is final and is not affected by resolution
+		return calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, intervalCalculator), nil
+	} else {
+		intervalFactor := model.IntervalFactor
+		if intervalFactor == 0 {
+			intervalFactor = 1
+		}
+		return time.Duration(int64(adjustedInterval) * intervalFactor), nil
+	}
+}
+
 func calculateRateInterval(interval time.Duration, scrapeInterval string, intervalCalculator intervalv2.Calculator) time.Duration {
 	scrape := scrapeInterval
 	if scrape == "" {
@@ -255,19 +289,48 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
+func interpolateVariables(model *QueryModel, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
+	expr := model.Expr
+	rangeMs := timeRange.Milliseconds()
+	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
+
+	var rateInterval time.Duration
+	if model.Interval == varRateInterval || model.Interval == varRateIntervalAlt {
+		rateInterval = interval
+	} else {
+		rateInterval = calculateRateInterval(interval, timeInterval, intervalCalculator)
+	}
+
+	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
+	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
+	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
+	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
+	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
+
+	// Repetitive code, we should have functionality to unify these
+	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(interval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(interval))
+	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
+	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
+	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
+	expr = strings.ReplaceAll(expr, varRateIntervalAlt, rateInterval.String())
+	return expr
+}
+
 func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
 
 		for i, k := range v.Values {
 			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
 			value := float64(k.Value)
+
 			if !math.IsNaN(value) {
 				valueField.Set(i, &value)
 			}
@@ -275,9 +338,13 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 
 		name := formatLegend(v.Metric, query)
 		timeField.Name = data.TimeSeriesTimeFieldName
+		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
 		valueField.Labels = tags
+
+		if name != "" {
+			valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		}
 
 		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
 	}
@@ -465,4 +532,19 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	}
 
 	return frame
+}
+
+func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
+	return time.Unix(int64(math.Floor((float64(t.Unix()+offset)/step.Seconds()))*step.Seconds()-float64(offset)), 0)
+}
+
+func isVariableInterval(interval string) bool {
+	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
+		return true
+	}
+	//Repetitive code, we should have functionality to unify these
+	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
+		return true
+	}
+	return false
 }

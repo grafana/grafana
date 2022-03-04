@@ -1,5 +1,12 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
-import { DataQueryRequest, DataSourceInstanceSettings, dateTime, FieldType, PluginType } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  dateTime,
+  FieldType,
+  PluginType,
+  ScopedVars,
+} from '@grafana/data';
 
 import { backendSrv } from 'app/core/services/backend_srv';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
@@ -15,8 +22,13 @@ import {
 import { JaegerQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as any),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => ({
+    replace: (val: string, subs: ScopedVars): string => {
+      return subs[val]?.value ?? val;
+    },
+  }),
 }));
 
 const timeSrvStub: any = {
@@ -140,6 +152,52 @@ describe('JaegerDatasource', () => {
       ds.query({
         ...defaultQuery,
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', tags: 'error=true' }],
+      })
+    );
+    expect(mock).toBeCalledWith({
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1531468681000&end=1531489712000&lookback=custom`,
+    });
+  });
+
+  it('should resolve templates in traceID', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+
+    await lastValueFrom(
+      ds.query({
+        ...defaultQuery,
+        scopedVars: {
+          $traceid: {
+            text: 'traceid',
+            value: '5311b0dd0ca8df3463df93c99cb805a6',
+          },
+        },
+        targets: [
+          {
+            query: '$traceid',
+            refId: '1',
+          },
+        ],
+      })
+    );
+    expect(mock).toBeCalledWith({
+      url: `${defaultSettings.url}/api/traces/5311b0dd0ca8df3463df93c99cb805a6`,
+    });
+  });
+
+  it('should resolve templates in tags', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    await lastValueFrom(
+      ds.query({
+        ...defaultQuery,
+        scopedVars: {
+          'error=$error': {
+            text: 'error',
+            value: 'error=true',
+          },
+        },
+        targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', tags: 'error=$error' }],
       })
     );
     expect(mock).toBeCalledWith({

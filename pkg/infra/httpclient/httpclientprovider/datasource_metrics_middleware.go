@@ -96,7 +96,7 @@ func executeMiddleware(next http.RoundTripper, datasourceLabel prometheus.Labels
 			return nil, err
 		}
 
-		if res != nil {
+		if res != nil && res.StatusCode != http.StatusSwitchingProtocols {
 			res.Body = httpclient.CountBytesReader(res.Body, func(bytesRead int64) {
 				responseSizeSummary.Observe(float64(bytesRead))
 			})

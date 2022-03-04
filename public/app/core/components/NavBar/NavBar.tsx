@@ -1,114 +1,128 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
-import appEvents from '../../app_events';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
-import { CoreEvents, KioskMode } from 'app/types';
-import { enrichConfigItems, isLinkActive, isSearchActive } from './utils';
+import { getKioskMode } from 'app/core/navigation/kiosk';
+import { KioskMode, StoreState } from 'app/types';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
+import { NavBarSection } from './NavBarSection';
+import { NavBarMenu } from './NavBarMenu';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 
 const homeUrl = config.appSubUrl || '/';
 
-export const NavBar: FC = React.memo(() => {
+const onOpenSearch = () => {
+  locationService.partial({ search: 'open' });
+};
+
+const searchItem: NavModelItem = {
+  id: SEARCH_ITEM_ID,
+  onClick: onOpenSearch,
+  text: 'Search dashboards',
+  icon: 'search',
+};
+
+const mapStateToProps = (state: StoreState) => ({
+  navBarTree: state.navBarTree,
+});
+
+const mapDispatchToProps = {};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export interface Props extends ConnectedProps<typeof connector> {}
+
+export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const kiosk = query.get('kiosk') as KioskMode;
+  const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
-  const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
+  const navTree = cloneDeep(navBarTree);
   const topItems = navTree.filter((item) => item.section === NavSection.Core);
   const bottomItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
   );
-  const activeItemId = isSearchActive(location)
-    ? 'search'
-    : navTree.find((item) => isLinkActive(location.pathname, item))?.id;
+  const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
 
-  const toggleNavBarSmallBreakpoint = useCallback(() => {
-    appEvents.emit(CoreEvents.toggleSidemenuMobile);
-  }, []);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (kiosk !== null) {
+  if (kiosk !== KioskMode.Off) {
     return null;
   }
 
-  const onOpenSearch = () => {
-    locationService.partial({ search: 'open' });
-  };
-
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
-      <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
+      <div className={styles.mobileSidemenuLogo} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} key="hamburger">
         <Icon name="bars" size="xl" />
-        <span className={styles.closeButton}>
-          <Icon name="times" />
-          Close
-        </span>
       </div>
 
-      <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
-        <Branding.MenuLogo />
-      </NavBarItem>
-      <NavBarItem
-        className={styles.search}
-        isActive={activeItemId === 'search'}
-        label="Search dashboards"
-        onClick={onOpenSearch}
-      >
-        <Icon name="search" size="xl" />
-      </NavBarItem>
-
-      {topItems.map((link, index) => (
-        <NavBarItem
-          key={`${link.id}-${index}`}
-          isActive={activeItemId === link.id}
-          label={link.text}
-          menuItems={link.children}
-          target={link.target}
-          url={link.url}
-        >
-          {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-          {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+      <NavBarSection>
+        <NavBarItemWithoutMenu label="Home" className={styles.grafanaLogo} url={homeUrl}>
+          <Branding.MenuLogo />
+        </NavBarItemWithoutMenu>
+        <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
+          <Icon name="search" size="xl" />
         </NavBarItem>
-      ))}
+      </NavBarSection>
+
+      <NavBarSection>
+        {topItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={isMatchOrChildMatch(link, activeItem)}
+            link={{ ...link, subTitle: undefined, onClick: undefined }}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
 
       <div className={styles.spacer} />
 
-      {bottomItems.map((link, index) => (
-        <NavBarItem
-          key={`${link.id}-${index}`}
-          isActive={activeItemId === link.id}
-          label={link.text}
-          menuItems={link.children}
-          menuSubTitle={link.subTitle}
-          onClick={link.onClick}
-          reverseMenuDirection
-          target={link.target}
-          url={link.url}
-        >
-          {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-          {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-        </NavBarItem>
-      ))}
+      <NavBarSection>
+        {bottomItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={isMatchOrChildMatch(link, activeItem)}
+            reverseMenuDirection
+            link={link}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
 
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
+      {mobileMenuOpen && (
+        <NavBarMenu
+          activeItem={activeItem}
+          navItems={[searchItem, ...topItems, ...bottomItems]}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+      )}
     </nav>
   );
 });
 
-NavBar.displayName = 'NavBar';
+NavBarUnconnected.displayName = 'NavBar';
+
+export const NavBar = connector(NavBarUnconnected);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`
@@ -117,11 +131,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     ${theme.breakpoints.up('md')} {
       display: block;
-    }
-
-    .sidemenu-open--xs & {
-      display: block;
-      margin-top: 0;
     }
   `,
   sidemenu: css`
@@ -141,16 +150,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     .sidemenu-hidden & {
       display: none;
     }
-
-    .sidemenu-open--xs & {
-      background-color: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z1};
-      gap: ${theme.spacing(1)};
-      height: auto;
-      margin-left: 0;
-      position: absolute;
-      width: 100%;
-    }
   `,
   grafanaLogo: css`
     display: none;
@@ -163,14 +162,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       align-items: center;
       display: flex;
       justify-content: center;
-    }
-  `,
-  closeButton: css`
-    display: none;
-
-    .sidemenu-open--xs & {
-      display: block;
-      font-size: ${theme.typography.fontSize}px;
     }
   `,
   mobileSidemenuLogo: css`
@@ -187,9 +178,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   spacer: css`
     flex: 1;
-
-    .sidemenu-open--xs & {
-      display: none;
-    }
   `,
 });

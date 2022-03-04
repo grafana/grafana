@@ -3,6 +3,8 @@ import { cx, css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { getTagColor, getTagColorsFromName } from '../../utils';
+import { IconName } from '../../types/icon';
+import { Icon } from '../Icon/Icon';
 
 /**
  * @public
@@ -12,29 +14,33 @@ export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) =>
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */
   name: string;
+  icon?: IconName;
   /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling. */
   colorIndex?: number;
   onClick?: OnTagClick;
 }
 
-export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, colorIndex, ...rest }, ref) => {
+export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
   const theme = useTheme();
   const styles = getTagStyles(theme, name, colorIndex);
 
   const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
-    if (onClick) {
-      onClick(name, event);
-    }
+    event.preventDefault();
+    event.stopPropagation();
+
+    onClick?.(name, event);
   };
 
-  return (
-    <span
-      key={name}
-      ref={ref}
-      onClick={onTagClick}
-      className={cx(styles.wrapper, className, onClick && styles.hover)}
-      {...rest}
-    >
+  const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+
+  return onClick ? (
+    <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+      {icon && <Icon name={icon} />}
+      {name}
+    </button>
+  ) : (
+    <span {...rest} className={classes} ref={ref}>
+      {icon && <Icon name={icon} />}
       {name}
     </span>
   );
@@ -51,6 +57,8 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
   }
   return {
     wrapper: css`
+      appearance: none;
+      border-style: none;
       font-weight: ${theme.typography.weight.semibold};
       font-size: ${theme.typography.size.sm};
       line-height: ${theme.typography.lineHeight.xs};

@@ -23,7 +23,7 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
   </video>
 </div>
 
-Before you can use the Plugin catalog, you must enable it in the Grafana [configuration]({{< relref "../administration/configuration.md#plugin_admin_enabled" >}}) file.
+In order to be able to install / uninstall / update plugins using plugin catalog, you must enable it via the `plugin_admin_enabled` flag in the [configuration]({{< relref "../administration/configuration.md#plugin_admin_enabled" >}}) file.
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>

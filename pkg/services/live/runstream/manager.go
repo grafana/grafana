@@ -25,7 +25,7 @@ type ChannelLocalPublisher interface {
 }
 
 type PluginContextGetter interface {
-	GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
+	GetPluginContext(ctx context.Context, user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
 }
 
 type NumLocalSubscribersGetter interface {
@@ -136,7 +136,7 @@ func (s *Manager) handleDatasourceEvent(orgID int64, dsUID string, resubmit bool
 	if resubmit {
 		// Re-submit streams.
 		for _, sr := range resubmitRequests {
-			_, err := s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.PluginContext, sr.StreamRunner, true)
+			_, err := s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.Data, sr.PluginContext, sr.StreamRunner, true)
 			if err != nil {
 				// Log error but do not prevent execution of caller routine.
 				logger.Error("Error re-submitting stream", "path", sr.Path, "error", err)
@@ -182,7 +182,7 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 		case <-datasourceTicker.C:
 			if sr.PluginContext.DataSourceInstanceSettings != nil {
 				dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
-				pCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, sr.PluginContext.PluginID, dsUID, false)
+				pCtx, ok, err := s.pluginContextGetter.GetPluginContext(ctx, sr.user, sr.PluginContext.PluginID, dsUID, false)
 				if err != nil {
 					logger.Error("Error getting datasource context", "channel", sr.Channel, "path", sr.Path, "error", err)
 					continue
@@ -283,7 +283,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			if pluginCtx.DataSourceInstanceSettings != nil {
 				datasourceUID = pluginCtx.DataSourceInstanceSettings.UID
 			}
-			newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, pluginCtx.PluginID, datasourceUID, false)
+			newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(ctx, sr.user, pluginCtx.PluginID, datasourceUID, false)
 			if err != nil {
 				logger.Error("Error getting plugin context", "path", sr.Path, "error", err)
 				isReconnect = true
@@ -301,6 +301,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			&backend.RunStreamRequest{
 				PluginContext: pluginCtx,
 				Path:          sr.Path,
+				Data:          sr.Data,
 			},
 			backend.NewStreamSender(&packetSender{channelLocalPublisher: s.channelSender, channel: sr.Channel}),
 		)
@@ -375,6 +376,7 @@ type streamRequest struct {
 	user          *models.SignedInUser
 	PluginContext backend.PluginContext
 	StreamRunner  StreamRunner
+	Data          []byte
 }
 
 type submitRequest struct {
@@ -398,14 +400,14 @@ var errDatasourceNotFound = errors.New("datasource not found")
 
 // SubmitStream submits stream handler in Manager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
+func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, data []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
 	if isResubmit {
 		// Resolve new plugin context as it could be modified since last call.
 		var datasourceUID string
 		if pCtx.DataSourceInstanceSettings != nil {
 			datasourceUID = pCtx.DataSourceInstanceSettings.UID
 		}
-		newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(user, pCtx.PluginID, datasourceUID, false)
+		newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(ctx, user, pCtx.PluginID, datasourceUID, false)
 		if err != nil {
 			return nil, err
 		}
@@ -423,6 +425,7 @@ func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, c
 			Path:          path,
 			PluginContext: pCtx,
 			StreamRunner:  streamRunner,
+			Data:          data,
 		},
 	}
 

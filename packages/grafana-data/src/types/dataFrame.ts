@@ -15,6 +15,7 @@ export enum FieldType {
   boolean = 'boolean',
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
+  geo = 'geo',
   other = 'other', // Object, Array, etc
 }
 
@@ -65,6 +66,12 @@ export interface FieldConfig<TOptions = any> {
   decimals?: number | null; // Significant digits (for display)
   min?: number | null;
   max?: number | null;
+
+  // Interval indicates the expected regular step between values in the series.
+  // When an interval exists, consumers can identify "missing" values when the expected value is not present.
+  // The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
+  // The interval uses the same units as the values.  For time.Time, this is defined in milliseconds.
+  interval?: number | null;
 
   // Convert input values into a display string
   mappings?: ValueMapping[];
@@ -122,11 +129,6 @@ export interface Field<T = any, V = Vector<T>> {
   state?: FieldState | null;
 
   /**
-   * Convert text to the field value
-   */
-  parse?: (value: any) => T;
-
-  /**
    * Convert a value for display
    */
   display?: DisplayProcessor;
@@ -173,6 +175,12 @@ export interface FieldState {
    * @internal -- we will try to make this unnecessary
    */
   origin?: DataFrameFieldIndex;
+
+  /**
+   * Boolean value is true if field is in a larger data set with multiple frames.
+   * This is only related to the cached displayName property above.
+   */
+  multipleFrames?: boolean;
 }
 
 /** @public */

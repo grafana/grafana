@@ -36,12 +36,16 @@ func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey secrets.DataK
 	return nil
 }
 
-func (f FakeSecretsStore) CreateDataKeyWithDBSession(ctx context.Context, dataKey secrets.DataKey, sess *xorm.Session) error {
+func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey secrets.DataKey, _ *xorm.Session) error {
 	f.store[dataKey.Name] = &dataKey
 	return nil
 }
 
 func (f FakeSecretsStore) DeleteDataKey(_ context.Context, name string) error {
 	delete(f.store, name)
+	return nil
+}
+
+func (f FakeSecretsStore) ReEncryptDataKeys(_ context.Context, _ map[secrets.ProviderID]secrets.Provider, _ secrets.ProviderID) error {
 	return nil
 }

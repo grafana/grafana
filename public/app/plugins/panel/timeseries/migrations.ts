@@ -7,6 +7,7 @@ import {
   FieldConfigSource,
   FieldMatcherID,
   fieldReducers,
+  FieldType,
   NullValueMode,
   PanelTypeChangedHandler,
   Threshold,
@@ -25,6 +26,7 @@ import {
   VisibilityMode,
   ScaleDistribution,
   StackingMode,
+  SortOrder,
 } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
@@ -313,6 +315,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     },
     tooltip: {
       mode: TooltipDisplayMode.Single,
+      sort: SortOrder.None,
     },
   };
 
@@ -332,6 +335,26 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (angular.legend.values) {
       const enabledLegendValues = pickBy(angular.legend);
       options.legend.calcs = getReducersFromLegend(enabledLegendValues);
+    }
+  }
+
+  const tooltipConfig = angular.tooltip;
+  if (tooltipConfig) {
+    if (tooltipConfig.shared !== undefined) {
+      options.tooltip.mode = tooltipConfig.shared ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single;
+    }
+
+    if (tooltipConfig.sort !== undefined && tooltipConfig.shared) {
+      switch (tooltipConfig.sort) {
+        case 1:
+          options.tooltip.sort = SortOrder.Ascending;
+          break;
+        case 2:
+          options.tooltip.sort = SortOrder.Descending;
+          break;
+        default:
+          options.tooltip.sort = SortOrder.None;
+      }
     }
   }
 
@@ -412,6 +435,20 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     };
   }
 
+  if (angular.xaxis && angular.xaxis.show === false && angular.xaxis.mode === 'time') {
+    overrides.push({
+      matcher: {
+        id: FieldMatcherID.byType,
+        options: FieldType.time,
+      },
+      properties: [
+        {
+          id: 'custom.axisPlacement',
+          value: AxisPlacement.Hidden,
+        },
+      ],
+    });
+  }
   return {
     fieldConfig: {
       defaults: omitBy(y1, isNil),

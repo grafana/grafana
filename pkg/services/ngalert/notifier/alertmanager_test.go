@@ -9,22 +9,23 @@ import (
 	"testing"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func setupAMTest(t *testing.T) *Alertmanager {
@@ -46,9 +47,10 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		Logger:          log.New("alertmanager-test"),
 	}
 
-	kvStore := newFakeKVStore(t)
-	decryptFn := ossencryption.ProvideService().GetDecryptedValue
-	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, decryptFn, m)
+	kvStore := NewFakeKVStore(t)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	decryptFn := secretsService.GetDecryptedValue
+	am, err := newAlertmanager(context.Background(), 1, cfg, s, kvStore, &NilPeer{}, decryptFn, nil, m)
 	require.NoError(t, err)
 	return am
 }
@@ -314,7 +316,7 @@ func TestPutAlert(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, am.logger)
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}

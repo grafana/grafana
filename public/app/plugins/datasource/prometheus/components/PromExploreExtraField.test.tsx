@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PromExploreExtraFieldProps, PromExploreExtraField } from './PromExploreExtraField';
+import { PromExploreExtraFieldProps, PromExploreExtraField, testIds } from './PromExploreExtraField';
 
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
   const query = { exemplar: false };
@@ -23,11 +23,11 @@ const setup = (propOverrides?: PromExploreExtraFieldProps) => {
 describe('PromExploreExtraField', () => {
   it('should render step field', () => {
     setup();
-    expect(screen.getByTestId('stepField')).toBeInTheDocument();
+    expect(screen.getByTestId(testIds.stepField)).toBeInTheDocument();
   });
 
   it('should render query type field', () => {
     setup();
-    expect(screen.getByTestId('queryTypeField')).toBeInTheDocument();
+    expect(screen.getByTestId(testIds.queryTypeField)).toBeInTheDocument();
   });
 });

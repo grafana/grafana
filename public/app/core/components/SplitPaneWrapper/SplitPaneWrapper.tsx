@@ -19,7 +19,7 @@ interface Props {
 }
 
 export class SplitPaneWrapper extends PureComponent<Props> {
-  rafToken = createRef<number>();
+  rafToken: MutableRefObject<number | null> = createRef();
   static defaultProps = {
     rightPaneVisible: true,
   };
@@ -36,7 +36,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     if (this.rafToken.current !== undefined) {
       window.cancelAnimationFrame(this.rafToken.current!);
     }
-    (this.rafToken as MutableRefObject<number>).current = window.requestAnimationFrame(() => {
+    this.rafToken.current = window.requestAnimationFrame(() => {
       this.forceUpdate();
     });
   };
@@ -68,8 +68,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   renderHorizontalSplit() {
     const { leftPaneComponents, uiState } = this.props;
     const styles = getStyles(config.theme);
-    const topPaneSize =
-      uiState.topPaneSize >= 1 ? (uiState.topPaneSize as number) : (uiState.topPaneSize as number) * window.innerHeight;
+    const topPaneSize = uiState.topPaneSize >= 1 ? uiState.topPaneSize : uiState.topPaneSize * window.innerHeight;
 
     /*
       Guesstimate the height of the browser window minus
@@ -104,9 +103,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
 
     // Need to handle when width is relative. ie a percentage of the viewport
     const rightPaneSize =
-      uiState.rightPaneSize <= 1
-        ? (uiState.rightPaneSize as number) * window.innerWidth
-        : (uiState.rightPaneSize as number);
+      uiState.rightPaneSize <= 1 ? uiState.rightPaneSize * window.innerWidth : uiState.rightPaneSize;
 
     if (!rightPaneVisible) {
       return this.renderHorizontalSplit();
@@ -134,18 +131,33 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const paneSpacing = theme.spacing.md;
 
   const resizer = css`
-    font-style: italic;
-    background: transparent;
-    border-top: 0;
-    border-right: 0;
-    border-bottom: 0;
-    border-left: 0;
-    border-color: transparent;
-    border-style: solid;
-    transition: 0.2s border-color ease-in-out;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      transition: 0.2s border-color ease-in-out;
+    }
+
+    &::after {
+      background: ${theme.colors.panelBorder};
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transition: 0.2s background ease-in-out;
+      transform: translate(-50%, -50%);
+      border-radius: 4px;
+    }
 
     &:hover {
-      border-color: ${handleColor};
+      &::before {
+        border-color: ${handleColor};
+      }
+
+      &::after {
+        background: ${handleColor};
+      }
     }
   `;
 
@@ -155,8 +167,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       css`
         cursor: col-resize;
         width: ${paneSpacing};
-        border-right-width: 1px;
-        margin-top: 18px;
+
+        &::before {
+          border-right: 1px solid transparent;
+          height: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        &::after {
+          height: 200px;
+          width: 4px;
+        }
       `
     ),
     resizerH: cx(
@@ -164,11 +186,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       css`
         height: ${paneSpacing};
         cursor: row-resize;
-        position: relative;
-        top: 0px;
-        z-index: 1;
-        border-top-width: 1px;
         margin-left: ${paneSpacing};
+
+        &::before {
+          border-top: 1px solid transparent;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 100%;
+        }
+
+        &::after {
+          height: 4px;
+          width: 200px;
+        }
       `
     ),
   };

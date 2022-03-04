@@ -21,7 +21,7 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
           width: '100%',
           padding: '20px',
           display: 'flex',
-          minHeight: '80vh',
+          minHeight: '100%',
           background: `${theme.colors.background.primary}`,
         }}
       >
@@ -48,6 +48,5 @@ export const renderComponentWithTheme = (component: React.ComponentType<any>, pr
 };
 
 // eslint-disable-next-line react/display-name
-export const withTheme = (handleSassThemeChange: SassThemeChangeHandler) => (story: RenderFunction) => (
-  <ThemeableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemeableStory>
-);
+export const withTheme = (handleSassThemeChange: SassThemeChangeHandler) => (story: RenderFunction) =>
+  <ThemeableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemeableStory>;

@@ -6,6 +6,9 @@ export interface ApiKey {
   role: OrgRole;
   secondsToLive: number | null;
   expiration?: string;
+  secondsUntilExpiration?: number;
+  hasExpired?: boolean;
+  created?: string;
 }
 
 export interface NewApiKey {
@@ -15,7 +18,9 @@ export interface NewApiKey {
 }
 
 export interface ApiKeysState {
+  includeExpired: boolean;
   keys: ApiKey[];
+  keysIncludingExpired: ApiKey[];
   searchQuery: string;
   hasFetched: boolean;
 }

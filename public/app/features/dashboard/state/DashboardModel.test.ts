@@ -56,11 +56,13 @@ describe('DashboardModel', () => {
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
+      model.autoUpdate = null;
+
       const saveModel = model.getSaveModelClone();
       const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
-      expect(keys[1]).toBe('autoUpdate');
+      expect(keys[1]).toBe('editable');
     });
 
     it('should remove add panel panels', () => {
@@ -458,6 +460,46 @@ describe('DashboardModel', () => {
 
       it('should only remove row', () => {
         expect(dashboard.panels.length).toBe(4);
+      });
+    });
+  });
+
+  describe('When expanding row with panels that do not contain an x and y pos', () => {
+    let dashboard: DashboardModel;
+
+    beforeEach(() => {
+      dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          {
+            id: 2,
+            type: 'row',
+            gridPos: { x: 0, y: 6, w: 24, h: 1 },
+            collapsed: true,
+            panels: [
+              { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
+              { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
+            ],
+          },
+          { id: 5, type: 'row', gridPos: { x: 0, y: 7, w: 1, h: 1 } },
+        ],
+      });
+      dashboard.toggleRow(dashboard.panels[1]);
+    });
+
+    it('should correctly set the x and y values for the inner panels', () => {
+      expect(dashboard.panels[2].gridPos).toMatchObject({
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 2,
+      });
+
+      expect(dashboard.panels[3].gridPos).toMatchObject({
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 2,
       });
     });
   });
@@ -915,17 +957,6 @@ describe('exitViewPanel', () => {
 
       expect(dashboard.startRefresh).not.toHaveBeenCalled();
     });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is not called', () => {
-        const { dashboard, panel } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitViewPanel(panel);
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
-    });
   });
 });
 
@@ -933,11 +964,11 @@ describe('exitPanelEditor', () => {
   function getTestContext(setPreviousAutoRefresh = false) {
     const panel: any = { destroy: jest.fn() };
     const dashboard = new DashboardModel({});
-    const timeSrvMock = ({
+    const timeSrvMock = {
       pauseAutoRefresh: jest.fn(),
       resumeAutoRefresh: jest.fn(),
       setAutoRefresh: jest.fn(),
-    } as unknown) as TimeSrv;
+    } as unknown as TimeSrv;
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
     if (setPreviousAutoRefresh) {
@@ -977,51 +1008,16 @@ describe('exitPanelEditor', () => {
       dashboard.exitPanelEditor();
       expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
     });
-
-    describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is called', () => {
-        const { dashboard } = getTestContext();
-        dashboard.setChangeAffectsAllPanels();
-
-        dashboard.exitPanelEditor();
-
-        expect(dashboard.startRefresh).toHaveBeenCalled();
-      });
-    });
   });
-});
-
-describe('setChangeAffectsAllPanels', () => {
-  it.each`
-    panelInEdit  | panelInView  | expected
-    ${null}      | ${null}      | ${false}
-    ${undefined} | ${undefined} | ${false}
-    ${null}      | ${{}}        | ${true}
-    ${undefined} | ${{}}        | ${true}
-    ${{}}        | ${null}      | ${true}
-    ${{}}        | ${undefined} | ${true}
-    ${{}}        | ${{}}        | ${true}
-  `(
-    'when called and panelInEdit:{$panelInEdit} and panelInView:{$panelInView}',
-    ({ panelInEdit, panelInView, expected }) => {
-      const dashboard = new DashboardModel({});
-      dashboard.panelInEdit = panelInEdit;
-      dashboard.panelInView = panelInView;
-
-      dashboard.setChangeAffectsAllPanels();
-
-      expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
-    }
-  );
 });
 
 describe('initEditPanel', () => {
   function getTestContext() {
     const dashboard = new DashboardModel({});
-    const timeSrvMock = ({
+    const timeSrvMock = {
       pauseAutoRefresh: jest.fn(),
       resumeAutoRefresh: jest.fn(),
-    } as unknown) as TimeSrv;
+    } as unknown as TimeSrv;
     setTimeSrv(timeSrvMock);
     return { dashboard, timeSrvMock };
   }

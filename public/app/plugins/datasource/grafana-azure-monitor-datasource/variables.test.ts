@@ -1,11 +1,13 @@
 import { DataQueryRequest, DataQueryResponseData, toDataFrame } from '@grafana/data';
 import { from } from 'rxjs';
+
+import createMockDatasource from './__mocks__/datasource';
+import { invalidSubscriptionError } from './__mocks__/errors';
 import { AzureMonitorQuery, AzureQueryType } from './types';
 import { VariableSupport } from './variables';
-import createMockDatasource from './__mocks__/datasource';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getTemplateSrv: () => ({
     replace: (val: string) => {
       return val;
@@ -427,6 +429,30 @@ describe('VariableSupport', () => {
       });
     });
 
+    it('can handle legacy string queries', (done) => {
+      const expectedResults = ['test'];
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          azureMonitorDatasource: {
+            defaultSubscriptionId: 'defaultSubscriptionId',
+          },
+          getMetricDefinitions: jest.fn((sub: string, rg: string) => {
+            if (sub === 'subscriptionId' && rg === 'resourceGroup') {
+              return Promise.resolve(expectedResults);
+            }
+            return Promise.resolve([`getMetricDefinitions unexpected input: ${sub}, ${rg}`]);
+          }),
+        })
+      );
+      const mockRequest = {
+        targets: ['Namespaces(subscriptionId, resourceGroup)' as unknown as AzureMonitorQuery],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data[0].source).toEqual(expectedResults);
+        done();
+      });
+    });
     it('returns an empty array for unknown queries', (done) => {
       const variableSupport = new VariableSupport(createMockDatasource());
       const mockRequest = {
@@ -472,6 +498,35 @@ describe('VariableSupport', () => {
     const observables = variableSupport.query(mockRequest);
     observables.subscribe((result: DataQueryResponseData) => {
       expect(result.data[0].source).toEqual(expectedResults);
+      done();
+    });
+  });
+
+  it('should handle http error', (done) => {
+    const error = invalidSubscriptionError();
+    const variableSupport = new VariableSupport(
+      createMockDatasource({
+        azureLogAnalyticsDatasource: {
+          defaultSubscriptionId: 'defaultSubscriptionId',
+        },
+        getResourceGroups: jest.fn().mockRejectedValue(error),
+      })
+    );
+    const mockRequest = {
+      targets: [
+        {
+          refId: 'A',
+          queryType: AzureQueryType.GrafanaTemplateVariableFn,
+          grafanaTemplateVariableFn: {
+            kind: 'ResourceGroupsQuery',
+            rawQuery: 'ResourceGroups()',
+          },
+        } as AzureMonitorQuery,
+      ],
+    } as DataQueryRequest<AzureMonitorQuery>;
+    const observables = variableSupport.query(mockRequest);
+    observables.subscribe((result: DataQueryResponseData) => {
+      expect(result.error?.message).toBe(error.data.error.message);
       done();
     });
   });

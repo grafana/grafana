@@ -1,17 +1,15 @@
 package initializer
 
 import (
-	"path"
+	"context"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestInitializer_Initialize(t *testing.T) {
@@ -36,20 +34,16 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: setting.NewCfg(),
+			cfg: plugins.NewCfg(),
+			log: &fakeLogger{},
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
 		}
 
-		err := i.Initialize(p)
+		err := i.Initialize(context.Background(), p)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "public/img/icn-datasource.svg", p.Info.Logos.Small)
-		assert.Equal(t, "public/img/icn-datasource.svg", p.Info.Logos.Large)
-		assert.Equal(t, "*", p.Dependencies.GrafanaVersion)
-		assert.Len(t, p.Includes, 1)
-		assert.Equal(t, models.ROLE_VIEWER, p.Includes[0].Role)
-		assert.Equal(t, filepath.Join("app/plugins/datasource", filepath.Base(p.PluginDir), "module"), p.Module)
-		assert.Equal(t, path.Join("public/app/plugins/datasource", filepath.Base(p.PluginDir)), p.BaseURL)
-		assert.NotNil(t, p.Logger())
 		c, exists := p.Client()
 		assert.True(t, exists)
 		assert.NotNil(t, c)
@@ -70,142 +64,38 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: setting.NewCfg(),
+			cfg: plugins.NewCfg(),
+			log: fakeLogger{},
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
 		}
 
-		err := i.Initialize(p)
+		err := i.Initialize(context.Background(), p)
 		assert.NoError(t, err)
 
-		// TODO add default img to project
-		assert.Equal(t, "public/img/icn-renderer.svg", p.Info.Logos.Small)
-		assert.Equal(t, "public/img/icn-renderer.svg", p.Info.Logos.Large)
-		assert.Equal(t, ">=8.x", p.Dependencies.GrafanaVersion)
-		assert.Equal(t, "plugins/test/module", p.Module)
-		assert.Equal(t, "public/plugins/test", p.BaseURL)
-		assert.NotNil(t, p.Logger())
 		c, exists := p.Client()
 		assert.True(t, exists)
 		assert.NotNil(t, c)
 	})
 
-	t.Run("external app", func(t *testing.T) {
+	t.Run("non backend plugin app", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID:   "parent-plugin",
-				Type: plugins.App,
-				Includes: []*plugins.Includes{
-					{
-						Type:       "page",
-						DefaultNav: true,
-						Slug:       "myCustomSlug",
-					},
-				},
-			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
-			Children: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID: "child-plugin",
-					},
-					PluginDir: absCurPath,
-				},
+				Backend: false,
 			},
 		}
 
 		i := &Initializer{
-			cfg: &setting.Cfg{
-				AppSubURL: "appSubURL",
+			cfg: &plugins.Cfg{},
+			log: fakeLogger{},
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
 			},
 		}
 
-		err := i.Initialize(p)
+		err := i.Initialize(context.Background(), p)
 		assert.NoError(t, err)
-
-		assert.Equal(t, "public/img/icn-app.svg", p.Info.Logos.Small)
-		assert.Equal(t, "public/img/icn-app.svg", p.Info.Logos.Large)
-		assert.Equal(t, "*", p.Dependencies.GrafanaVersion)
-		assert.Len(t, p.Includes, 1)
-		assert.Equal(t, models.ROLE_VIEWER, p.Includes[0].Role)
-		assert.Equal(t, filepath.Join("plugins", p.ID, "module"), p.Module)
-		assert.Equal(t, "public/plugins/parent-plugin", p.BaseURL)
-		assert.NotNil(t, p.Logger())
-		c, exists := p.Client()
-		assert.False(t, exists)
-		assert.Nil(t, c)
-
-		assert.Len(t, p.Children, 1)
-		assert.Equal(t, p.ID, p.Children[0].IncludedInAppID)
-		assert.Equal(t, "public/plugins/parent-plugin", p.Children[0].BaseURL)
-		assert.Equal(t, "plugins/parent-plugin/module", p.Children[0].Module)
-		assert.Equal(t, "appSubURL/plugins/parent-plugin/page/myCustomSlug", p.DefaultNavURL)
-	})
-}
-
-func TestInitializer_InitializeWithFactory(t *testing.T) {
-	t.Run("happy path", func(t *testing.T) {
-		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "test-plugin",
-				Type: plugins.App,
-				Includes: []*plugins.Includes{
-					{
-						Type:       "page",
-						DefaultNav: true,
-						Slug:       "myCustomSlug",
-					},
-				},
-			},
-			PluginDir: "test/folder",
-			Class:     plugins.External,
-		}
-		i := &Initializer{
-			cfg: &setting.Cfg{
-				AppSubURL: "appSubURL",
-			},
-		}
-
-		factoryInvoked := false
-
-		factory := backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
-			factoryInvoked = true
-			return testPlugin{}, nil
-		})
-
-		err := i.InitializeWithFactory(p, factory)
-		assert.NoError(t, err)
-
-		assert.True(t, factoryInvoked)
-		assert.NotNil(t, p.Logger())
-		client, exists := p.Client()
-		assert.True(t, exists)
-		assert.NotNil(t, client.(testPlugin))
-	})
-
-	t.Run("invalid factory", func(t *testing.T) {
-		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "test-plugin",
-				Type: plugins.App,
-				Includes: []*plugins.Includes{
-					{
-						Type:       "page",
-						DefaultNav: true,
-						Slug:       "myCustomSlug",
-					},
-				},
-			},
-			PluginDir: "test/folder",
-			Class:     plugins.External,
-		}
-		i := &Initializer{
-			cfg: &setting.Cfg{
-				AppSubURL: "appSubURL",
-			},
-		}
-
-		err := i.InitializeWithFactory(p, nil)
-		assert.Errorf(t, err, "could not initialize plugin test-plugin")
 
 		c, exists := p.Client()
 		assert.False(t, exists)
@@ -222,12 +112,12 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		licensing := &testLicensingService{
-			edition:    "test",
-			hasLicense: true,
+			edition:  "test",
+			tokenRaw: "token",
 		}
 
 		i := &Initializer{
-			cfg: &setting.Cfg{
+			cfg: &plugins.Cfg{
 				EnterpriseLicensePath: "/path/to/ent/license",
 				PluginSettings: map[string]map[string]string{
 					"test": {
@@ -236,6 +126,10 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
+			log:     fakeLogger{},
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
 		}
 
 		envVars := i.envVars(p)
@@ -243,34 +137,8 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
 		assert.Equal(t, "GF_EDITION=test", envVars[2])
-		assert.Equal(t, "GF_ENTERPRISE_license_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=", envVars[4])
-	})
-}
-
-func TestInitializer_setPathsBasedOnApp(t *testing.T) {
-	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
-		i := &Initializer{
-			cfg: setting.NewCfg(),
-		}
-
-		child := &plugins.Plugin{
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata\\datasources\\datasource",
-		}
-		parent := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID: "testdata",
-			},
-			Class:     plugins.Core,
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata",
-			BaseURL:   "public/app/plugins/app/testdata",
-		}
-
-		i.setPathsBasedOnApp(parent, child)
-
-		assert.Equal(t, "app/plugins/app/testdata/datasources/datasource/module", child.Module)
-		assert.Equal(t, "testdata", child.IncludedInAppID)
-		assert.Equal(t, "public/app/plugins/app/testdata", child.BaseURL)
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 	})
 }
 
@@ -307,13 +175,8 @@ func Test_pluginSettings_ToEnv(t *testing.T) {
 }
 
 type testLicensingService struct {
-	edition    string
-	hasLicense bool
-	tokenRaw   string
-}
-
-func (t *testLicensingService) HasLicense() bool {
-	return t.hasLicense
+	edition  string
+	tokenRaw string
 }
 
 func (t *testLicensingService) Expiry() int64 {
@@ -332,18 +195,42 @@ func (t *testLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *testLicensingService) LicenseURL(showAdminLicensingPage bool) string {
+func (t *testLicensingService) LicenseURL(_ bool) string {
 	return ""
-}
-
-func (t *testLicensingService) HasValidLicense() bool {
-	return false
 }
 
 func (t *testLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
 }
 
-type testPlugin struct {
-	backendplugin.Plugin
+func (*testLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*testLicensingService) FeatureEnabled(feature string) bool {
+	return false
+}
+
+type fakeLogger struct {
+	*log.ConcreteLogger
+}
+
+func (f fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
+	return &log.ConcreteLogger{}
+}
+
+func (f fakeLogger) Warn(_ string, _ ...interface{}) {
+
+}
+
+type fakeBackendProvider struct {
+	plugins.BackendFactoryProvider
+
+	plugin *plugins.Plugin
+}
+
+func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		return f.plugin, nil
+	}
 }

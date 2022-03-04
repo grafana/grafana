@@ -28,6 +28,12 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
+var (
+	remoteVersionFetchInterval   time.Duration = time.Second * 15
+	remoteVersionFetchRetries    uint          = 4
+	remoteVersionRefreshInterval               = time.Minute * 15
+)
+
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	filePath, err := rs.getNewFilePath(RenderPNG)
 	if err != nil {
@@ -53,7 +59,7 @@ func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string,
 	rendererURL.RawQuery = queryParams.Encode()
 
 	// gives service some additional time to timeout and return possible errors.
-	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
 	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)
@@ -98,7 +104,7 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	rendererURL.RawQuery = queryParams.Encode()
 
 	// gives service some additional time to timeout and return possible errors.
-	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
 	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)
@@ -194,6 +200,24 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 	return nil
 }
 
+func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string, error)) {
+	go func() {
+		var err error
+		for try := uint(0); try < remoteVersionFetchRetries; try++ {
+			version, err := rs.getRemotePluginVersion()
+			if err == nil {
+				callback(version, err)
+				return
+			}
+			rs.log.Info("Couldn't get remote renderer version, retrying", "err", err, "try", try)
+
+			time.Sleep(remoteVersionFetchInterval)
+		}
+
+		callback("", err)
+	}()
+}
+
 func (rs *RenderingService) getRemotePluginVersion() (string, error) {
 	rendererURL, err := url.Parse(rs.Cfg.RendererUrl + "/version")
 	if err != nil {
@@ -212,7 +236,10 @@ func (rs *RenderingService) getRemotePluginVersion() (string, error) {
 		}
 	}()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusNotFound {
+		// Old versions of the renderer lacked the version endpoint
+		return "1.0.0", nil
+	} else if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("remote rendering request to get version failed, status code: %d, status: %s", resp.StatusCode,
 			resp.Status)
 	}
@@ -224,4 +251,27 @@ func (rs *RenderingService) getRemotePluginVersion() (string, error) {
 		return "", err
 	}
 	return info.Version, nil
+}
+
+func (rs *RenderingService) refreshRemotePluginVersion() {
+	newVersion, err := rs.getRemotePluginVersion()
+	if err != nil {
+		rs.log.Info("Failed to refresh remote plugin version", "err", err)
+		return
+	}
+
+	if newVersion == "" {
+		// the image-renderer could have been temporary unavailable - skip updating the version
+		rs.log.Debug("Received empty version when trying to refresh remote plugin version")
+		return
+	}
+
+	currentVersion := rs.Version()
+	if currentVersion != newVersion {
+		rs.versionMutex.Lock()
+		defer rs.versionMutex.Unlock()
+
+		rs.log.Info("Updating remote plugin version", "currentVersion", currentVersion, "newVersion", newVersion)
+		rs.version = newVersion
+	}
 }

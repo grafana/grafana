@@ -7,27 +7,28 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetPluginDashboards(t *testing.T) {
 	cfg := &setting.Cfg{
-		FeatureToggles: map[string]bool{},
 		PluginSettings: setting.PluginSettings{
 			"test-app": map[string]string{
 				"path": "testdata/test-app",
 			},
 		},
 	}
-	pm := newManager(cfg, nil, loader.New(nil, cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}), &sqlstore.SQLStore{})
-	err := pm.init()
+	pmCfg := plugins.FromGrafanaCfg(cfg)
+	pm, err := ProvideService(cfg, loader.New(pmCfg, nil,
+		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}))
 	require.NoError(t, err)
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 		if query.Slug == "nginx-connections" {
 			dash := models.NewDashboard("Nginx Connections")
 			dash.Data.Set("revision", "1.1")
@@ -38,7 +39,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		return models.ErrDashboardNotFound
 	})
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 		var data = simplejson.New()
 		data.Set("title", "Nginx Connections")
 		data.Set("revision", 22)
@@ -49,7 +50,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		return nil
 	})
 
-	dashboards, err := pm.GetPluginDashboards(1, "test-app")
+	dashboards, err := pm.GetPluginDashboards(context.Background(), 1, "test-app")
 	require.NoError(t, err)
 
 	require.Len(t, dashboards, 2)

@@ -7,12 +7,13 @@ import {
   standardEditorsRegistry,
 } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { TableFieldOptions } from '@grafana/schema';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { TableSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel)
+export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .setNoPadding()
@@ -75,10 +76,31 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
           defaultValue: defaultPanelFieldConfig.displayMode,
         })
         .addBooleanSwitch({
+          path: 'inspect',
+          name: 'Cell value inspect',
+          description: 'Enable cell value inspection in a modal window',
+          defaultValue: false,
+          showIf: (cfg) => {
+            return (
+              cfg.displayMode === TableCellDisplayMode.Auto ||
+              cfg.displayMode === TableCellDisplayMode.JSONView ||
+              cfg.displayMode === TableCellDisplayMode.ColorText ||
+              cfg.displayMode === TableCellDisplayMode.ColorBackground ||
+              cfg.displayMode === TableCellDisplayMode.ColorBackgroundSolid
+            );
+          },
+        })
+        .addBooleanSwitch({
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
           defaultValue: defaultPanelFieldConfig.filterable,
+        })
+        .addBooleanSwitch({
+          path: 'hidden',
+          name: 'Hide in table',
+          defaultValue: undefined,
+          hideFromDefaults: true,
         });
     },
   })

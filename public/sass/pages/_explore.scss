@@ -1,150 +1,14 @@
-.icon-margin-right {
-  margin-right: 0.25em;
-
-  @media only screen and (max-width: 1320px) {
-    margin-right: 0;
-  }
-}
-
-.icon-brand-gradient {
-  color: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
-}
-
-.icon-margin-left {
-  margin-left: 0.25em;
-
-  @media only screen and (max-width: 1320px) {
-    margin-left: 0;
-  }
-}
-
 .explore-active-button {
   box-shadow: $btn-active-box-shadow;
   border: 1px solid $orange-dark !important;
   color: $orange-dark !important;
 }
 
-.explore-ds-picker {
-  min-width: 200px;
-  max-width: 300px;
-}
-
-.explore-ds-picker--small {
-  min-width: 60px;
-  max-width: 60px;
-
-  .ds-picker {
-    min-width: 60px;
-    max-width: 60px;
-  }
-}
-
-.explore-toolbar {
-  background: inherit;
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: flex-start;
-  height: auto;
-  padding: 0 $dashboard-padding;
-  border-bottom: 1px solid #0000;
-  transition-duration: 0.35s;
-  transition-timing-function: ease-in-out;
-  transition-property: box-shadow, border-bottom;
-}
-
-.explore-toolbar-item {
-  position: relative;
-  align-self: center;
-
-  &:first-child {
-    padding-left: 34px;
-
-    @include media-breakpoint-up(md) {
-      padding-left: 0;
-    }
-  }
-}
-
-.explore-toolbar.splitted {
-  .explore-toolbar-item {
-    flex: 1 1 100%;
-  }
-
-  .explore-toolbar-content-item:first-child {
-    padding-left: 0;
-    margin-right: auto;
-  }
-}
-
-.explore-toolbar-item:last-child {
-  flex: auto;
-}
-
-.explore-toolbar-header {
-  display: flex;
-  flex: 1 1 0;
-  flex-flow: row nowrap;
-  font-size: 18px;
-  min-height: $navbarHeight;
-  line-height: $navbarHeight;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.explore-toolbar-header-close {
-  margin-left: auto;
-  color: $text-color-weak;
-}
-
-.explore-toolbar-content {
-  display: flex;
-  flex-flow: row wrap;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.explore-toolbar-content-item {
-  display: flex;
-  padding: 0px 2px;
-  position: relative;
-
-  &:first-child {
-    padding-left: $dashboard-padding;
-    margin-right: auto;
-  }
-}
-
-@media only screen and (max-width: 1070px) {
-  .explore-toolbar-content {
-    justify-content: flex-start;
-  }
-
-  .explore-toolbar.splitted {
-    .explore-toolbar-content-item {
-      padding: 2px 0;
-    }
-  }
-}
-
-@media only screen and (max-width: 810px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      &:first-child {
-        padding-left: 2px;
-        margin: 0 12px 0 16px;
-      }
-    }
-  }
-}
-
+// TODO: check if this is used
 .explore {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-}
-
-.explore.explore-live {
-  flex-direction: column-reverse;
 }
 
 .explore + .explore {
@@ -156,10 +20,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   padding: $dashboard-padding;
-}
-
-.explore-container.explore-live {
-  flex-direction: column-reverse;
+  padding-top: 0;
 }
 
 .explore-wrapper {
@@ -171,10 +32,12 @@
   }
 }
 
+// TODO: this is used in Loki & Prometheus, move it
 .explore-input-margin {
   margin-right: 4px;
 }
 
+// TODO: move to public/app/features/explore/Time.tsx
 .navbar .elapsed-time {
   position: absolute;
   left: 0;
@@ -188,78 +51,12 @@
   flex-wrap: wrap;
 }
 
-.query-row {
-  display: flex;
-  position: relative;
-  align-items: flex-start;
-  @include media-breakpoint-down(sm) {
-    flex-wrap: wrap;
-  }
-
-  & + & {
-    margin-top: $space-sm;
-  }
-}
-
-.query-row-tools {
-  white-space: nowrap;
-}
-
-.query-row-status {
-  position: relative;
-  top: 0;
-  right: 35px;
-  z-index: 1015;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: $input-height;
-  width: 0;
-}
-
-.query-row-field {
-  margin-right: 3px;
-  flex-grow: 1;
-}
-
+// TODO: move to Loki and Prometheus
 .query-row-break {
   flex-basis: 100%;
 }
 
-.query-transactions {
-  display: table;
-}
-
-.query-transaction {
-  display: table-row;
-  color: $text-color-weak;
-  line-height: 1.44;
-}
-
-.query-transaction--loading {
-  animation: query-loading-color-change 1s alternate 100;
-}
-
-@keyframes query-loading-color-change {
-  from {
-    color: $text-color-faint;
-  }
-
-  to {
-    color: $blue;
-  }
-}
-
-.query-transaction__type,
-.query-transaction__duration {
-  display: table-cell;
-  font-size: $font-size-xs;
-  text-align: right;
-  padding-right: 0.25em;
-}
-
-// Prometheus-specifics, to be extracted to datasource soon
-
+// TODO: Prometheus-specifics, to be extracted to datasource soon
 .explore {
   .prom-query-field-info {
     margin: 0.25em 0.5em 0.5em;

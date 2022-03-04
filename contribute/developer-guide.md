@@ -20,7 +20,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@14
+brew install node@16
 npm install -g yarn
 ```
 
@@ -38,6 +38,14 @@ We recommend using the Git command-line interface to download the source code fo
 For alternative ways of cloning the Grafana repository, please refer to [GitHub's cloning a repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) documentation.
 
 **Warning:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+
+### Configure Editors
+
+For some IDEs, additional configuration may be needed for Typescript to work with [Yarn plug'n'play](https://yarnpkg.com/features/pnp).
+For [VSCode](https://yarnpkg.com/getting-started/editor-sdks#vscode) and [Vim](https://yarnpkg.com/getting-started/editor-sdks#vim),
+it's as easy as running `yarn dlx @yarnpkg/sdks vscode` or `yarn dlx @yarnpkg/sdks vim`, respectively.
+
+More information can be found [here](https://yarnpkg.com/getting-started/editor-sdks).
 
 ## Build Grafana
 
@@ -81,7 +89,23 @@ When you log in for the first time, Grafana asks you to change your password.
 
 The Grafana backend includes SQLite which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
-You can simply build the back-end as follows: `go run build.go build`. The Grafana binaries will be in bin\\windows-amd64.
+You can build the back-end as follows:
+
+1. Follow the [instructions](https://github.com/google/wire#installing) to install the Wire tool.
+2. Generate code using Wire:
+
+```
+# Normally Wire tool installed at $GOPATH/bin/wire.exe
+<Wire tool install path> gen -tags oss ./pkg/server ./pkg/cmd/grafana-cli/runner
+```
+
+3. Build the Grafana binaries:
+
+```
+go run build.go build
+```
+
+The Grafana binaries will be in bin\\windows-amd64.
 Alternately, if you wish to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash).
 
 ## Test Grafana
@@ -110,6 +134,20 @@ Running the backend tests on Windows currently needs some tweaking, so use the b
 
 ```
 go run build.go test
+```
+
+### Run PostgreSQL and MySQL integration tests
+
+To run PostgreSQL and MySQL integration tests locally, you need to start the docker blocks for MySQL and/or PostgreSQL test data sources by running `make devenv sources=mysql_tests,postgres_tests`. When your test data sources are running, you can execute integration tests by running:
+
+```
+GRAFANA_TEST_DB=mysql go test -covermode=atomic -tags=integration ./pkg/...
+```
+
+and/or
+
+```
+GRAFANA_TEST_DB=postgres go test -covermode=atomic -tags=integration ./pkg/...
 ```
 
 ### Run end-to-end tests
@@ -187,11 +225,6 @@ make build-docker-full
 ```
 
 The resulting image will be tagged as grafana/grafana:dev.
-
-> **Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
-
-1. Build the frontend: `go run build.go build-frontend`.
-1. Build the Docker image: `make build-docker-dev`.
 
 **Note:** If you are using Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise, `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
 

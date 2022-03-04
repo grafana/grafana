@@ -15,13 +15,16 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { I18nProvider } from './core/localisation';
+import { AngularRoot } from './angular/AngularRoot';
+import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 
 interface AppWrapperProps {
   app: GrafanaApp;
 }
 
 interface AppWrapperState {
-  ngInjector: any;
+  ready?: boolean;
 }
 
 /** Used by enterprise */
@@ -35,28 +38,17 @@ export function addBodyRenderHook(fn: ComponentType) {
 export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
-export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
-  container = React.createRef<HTMLDivElement>();
 
+export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   constructor(props: AppWrapperProps) {
     super(props);
-
-    this.state = {
-      ngInjector: null,
-    };
+    this.state = {};
   }
 
-  componentDidMount() {
-    if (this.container) {
-      this.bootstrapNgApp();
-    } else {
-      throw new Error('Failed to boot angular app, no container to attach to');
-    }
-  }
-
-  bootstrapNgApp() {
-    const injector = this.props.app.angularApp.bootstrap();
-    this.setState({ ngInjector: injector });
+  async componentDidMount() {
+    await loadAndInitAngularIfEnabled();
+    this.setState({ ready: true });
+    $('.preloader').remove();
   }
 
   renderRoute = (route: RouteDescriptor) => {
@@ -87,50 +79,45 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   render() {
+    const { ready } = this.state;
+
     navigationLogger('AppWrapper', false, 'rendering');
 
-    // @ts-ignore
-    const appSeed = `<grafana-app ng-cloak></app-notifications-list></grafana-app>`;
-    const newNavigationEnabled = config.featureToggles.newNavigation;
+    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
 
     return (
       <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
-          <ConfigContext.Provider value={config}>
-            <ThemeProvider>
-              <ModalsProvider>
-                <GlobalStyles />
-                <div className="grafana-app">
-                  <Router history={locationService.getHistory()}>
-                    {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
-                    <main className="main-view">
-                      {pageBanners.map((Banner, index) => (
-                        <Banner key={index.toString()} />
-                      ))}
+        <I18nProvider>
+          <ErrorBoundaryAlert style="page">
+            <ConfigContext.Provider value={config}>
+              <ThemeProvider>
+                <ModalsProvider>
+                  <GlobalStyles />
+                  <div className="grafana-app">
+                    <Router history={locationService.getHistory()}>
+                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
+                      <main className="main-view">
+                        {pageBanners.map((Banner, index) => (
+                          <Banner key={index.toString()} />
+                        ))}
 
-                      <div
-                        id="ngRoot"
-                        ref={this.container}
-                        dangerouslySetInnerHTML={{
-                          __html: appSeed,
-                        }}
-                      />
-
-                      <AppNotificationList />
-                      <SearchWrapper />
-                      {this.state.ngInjector && this.container && this.renderRoutes()}
-                      {bodyRenderHooks.map((Hook, index) => (
-                        <Hook key={index.toString()} />
-                      ))}
-                    </main>
-                  </Router>
-                </div>
-                <LiveConnectionWarning />
-                <ModalRoot />
-              </ModalsProvider>
-            </ThemeProvider>
-          </ConfigContext.Provider>
-        </ErrorBoundaryAlert>
+                        <AngularRoot />
+                        <AppNotificationList />
+                        <SearchWrapper />
+                        {ready && this.renderRoutes()}
+                        {bodyRenderHooks.map((Hook, index) => (
+                          <Hook key={index.toString()} />
+                        ))}
+                      </main>
+                    </Router>
+                  </div>
+                  <LiveConnectionWarning />
+                  <ModalRoot />
+                </ModalsProvider>
+              </ThemeProvider>
+            </ConfigContext.Provider>
+          </ErrorBoundaryAlert>
+        </I18nProvider>
       </Provider>
     );
   }

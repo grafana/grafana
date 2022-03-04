@@ -1,3 +1,6 @@
+import { cloneDeep } from 'lodash';
+import { MetricFindValue } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
   metricNamesToVariableValues,
@@ -6,11 +9,10 @@ import {
   updateVariableOptions,
 } from './reducer';
 import { QueryVariableModel, VariableSort } from '../types';
-import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload, VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
-import { MetricFindValue } from '@grafana/data';
+import { toVariablePayload } from '../utils';
 
 describe('queryVariableReducer', () => {
   const adapter = createQueryVariableAdapter();
@@ -27,14 +29,14 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [
               { text: 'All', value: '$__all', selected: false },
               { text: 'A', value: 'A', selected: false },
               { text: 'B', value: 'B', selected: false },
             ],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -51,13 +53,13 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [
               { text: 'A', value: 'A', selected: false },
               { text: 'B', value: 'B', selected: false },
             ],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -73,10 +75,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'All', value: '$__all', selected: false }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -92,10 +94,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'None', value: '', selected: false, isNone: true }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -113,13 +115,13 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [
               { text: 'All', value: '$__all', selected: false },
               { text: 'A', value: 'A', selected: false },
             ],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -137,10 +139,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'A', value: 'A', selected: false }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -158,10 +160,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'atext', value: 'avalue', selected: false }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
 
@@ -177,10 +179,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'atext', value: 'avalue', selected: false }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
 
@@ -196,10 +198,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'avalue', value: 'avalue', selected: false }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
 
@@ -215,10 +217,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'atext', value: 'atext', selected: false }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
 
@@ -234,10 +236,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'counter', value: 'counter', selected: false }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
 
@@ -253,10 +255,10 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [{ text: 'None', value: '', selected: false, isNone: true }],
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });

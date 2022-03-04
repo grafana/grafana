@@ -1,3 +1,4 @@
+import { AlertState } from '@grafana/data';
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
@@ -49,7 +50,7 @@ export function alertInstanceKey(alert: Alert): string {
 }
 
 export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
-  return resp.error && resp.error?.message === RULER_NOT_SUPPORTED_MSG;
+  return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
 export function isGrafanaRuleIdentifier(identifier: RuleIdentifier): identifier is GrafanaRuleIdentifier {
@@ -64,7 +65,7 @@ export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifi
   return 'ruleHash' in identifier;
 }
 
-export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertState): string {
+export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertState | AlertState): string {
   if (state === PromAlertingRuleState.Inactive) {
     return 'Normal';
   }
@@ -84,7 +85,7 @@ export const flattenRules = (rules: RuleNamespace[]) => {
   }, []);
 };
 
-export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState, State> = {
+export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState | AlertState, State> = {
   [PromAlertingRuleState.Inactive]: 'good',
   [PromAlertingRuleState.Firing]: 'bad',
   [PromAlertingRuleState.Pending]: 'warning',
@@ -93,6 +94,12 @@ export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState
   [GrafanaAlertState.NoData]: 'info',
   [GrafanaAlertState.Normal]: 'good',
   [GrafanaAlertState.Pending]: 'warning',
+  [AlertState.NoData]: 'info',
+  [AlertState.Paused]: 'warning',
+  [AlertState.Alerting]: 'bad',
+  [AlertState.OK]: 'good',
+  [AlertState.Pending]: 'warning',
+  [AlertState.Unknown]: 'info',
 };
 
 export function getFirstActiveAt(promRule: AlertingRule) {

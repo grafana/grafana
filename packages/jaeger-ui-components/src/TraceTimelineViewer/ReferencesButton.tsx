@@ -14,18 +14,15 @@
 
 import React from 'react';
 import { css } from '@emotion/css';
-import NewWindowIcon from '../common/NewWindowIcon';
+import { Tooltip, useStyles2 } from '@grafana/ui';
+
 import { TraceSpanReference } from '../types/trace';
-import { UITooltip, UIDropdown, UIMenuItem, UIMenu, TooltipPlacement } from '../uiElementsContext';
-
 import ReferenceLink from '../url/ReferenceLink';
-import { createStyle } from '../Theme';
 
-export const getStyles = createStyle(() => {
+export const getStyles = () => {
   return {
     MultiParent: css`
       padding: 0 5px;
-      color: #000;
       & ~ & {
         margin-left: 5px;
       }
@@ -41,7 +38,7 @@ export const getStyles = createStyle(() => {
       max-width: none;
     `,
   };
-});
+};
 
 type TReferencesButtonProps = {
   references: TraceSpanReference[];
@@ -50,56 +47,19 @@ type TReferencesButtonProps = {
   focusSpan: (spanID: string) => void;
 };
 
-export default class ReferencesButton extends React.PureComponent<TReferencesButtonProps> {
-  referencesList = (references: TraceSpanReference[]) => {
-    const styles = getStyles();
-    return (
-      <UIMenu>
-        {references.map((ref) => {
-          const { span, spanID } = ref;
-          return (
-            <UIMenuItem key={`${spanID}`}>
-              <ReferenceLink reference={ref} focusSpan={this.props.focusSpan} className={styles.TraceRefLink}>
-                {span
-                  ? `${span.process.serviceName}:${span.operationName} - ${ref.spanID}`
-                  : `(another trace) - ${ref.spanID}`}
-                {!span && <NewWindowIcon className={styles.NewWindowIcon} />}
-              </ReferenceLink>
-            </UIMenuItem>
-          );
-        })}
-      </UIMenu>
-    );
-  };
+const ReferencesButton = (props: TReferencesButtonProps) => {
+  const { references, children, tooltipText, focusSpan } = props;
+  const styles = useStyles2(getStyles);
 
-  render() {
-    const { references, children, tooltipText, focusSpan } = this.props;
-    const styles = getStyles();
+  // TODO: handle multiple items with some dropdown
+  const ref = references[0];
+  return (
+    <Tooltip content={tooltipText}>
+      <ReferenceLink reference={ref} focusSpan={focusSpan} className={styles.MultiParent}>
+        {children}
+      </ReferenceLink>
+    </Tooltip>
+  );
+};
 
-    const tooltipProps = {
-      arrowPointAtCenter: true,
-      mouseLeaveDelay: 0.5,
-      placement: 'bottom' as TooltipPlacement,
-      title: tooltipText,
-      overlayClassName: styles.tooltip,
-    };
-
-    if (references.length > 1) {
-      return (
-        <UITooltip {...tooltipProps}>
-          <UIDropdown overlay={this.referencesList(references)} placement="bottomRight" trigger={['click']}>
-            <a className={styles.MultiParent}>{children}</a>
-          </UIDropdown>
-        </UITooltip>
-      );
-    }
-    const ref = references[0];
-    return (
-      <UITooltip {...tooltipProps}>
-        <ReferenceLink reference={ref} focusSpan={focusSpan} className={styles.MultiParent}>
-          {children}
-        </ReferenceLink>
-      </UITooltip>
-    );
-  }
-}
+export default ReferencesButton;

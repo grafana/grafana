@@ -56,7 +56,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 				}
 			}()
 
-			client, err := e.getCWClient(region, req.PluginContext)
+			client, err := e.getCWClient(req.PluginContext, region)
 			if err != nil {
 				return err
 			}
@@ -91,7 +91,6 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		resultChan <- &responseWrapper{
 			DataResponse: &dataResponse,
 		}
-		return nil, err
 	}
 	close(resultChan)
 

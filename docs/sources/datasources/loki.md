@@ -43,7 +43,7 @@ Each derived field consists of:
 
 - **Name -** Shown in the log details as a label.
 - **Regex -** A Regex pattern that runs on the log message and captures part of it as the value of the new field. Can only contain a single capture group.
-- **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
+- **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw}` macro.
 - **URL Label -** (Optional) Set a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
@@ -66,7 +66,7 @@ You can use the Loki query editor to create log and metric queries.
 
 ### Log browser
 
-With Loki log browser you can easily navigate trough your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
+With Loki log browser you can easily navigate through your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
 
 1. Choose the labels you would like to consider for your search.
 2. Pick the values for selected labels. Log browser supports facetting and therefore it shows you only possible label combinations.

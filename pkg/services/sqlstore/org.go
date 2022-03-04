@@ -15,17 +15,17 @@ import (
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
 
-func init() {
-	bus.AddHandlerCtx("sql", GetOrgById)
-	bus.AddHandlerCtx("sql", CreateOrg)
-	bus.AddHandlerCtx("sql", UpdateOrg)
-	bus.AddHandlerCtx("sql", UpdateOrgAddress)
-	bus.AddHandlerCtx("sql", GetOrgByName)
-	bus.AddHandlerCtx("sql", SearchOrgs)
-	bus.AddHandlerCtx("sql", DeleteOrg)
+func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.GetOrgById)
+	bus.AddHandler("sql", CreateOrg)
+	bus.AddHandler("sql", ss.UpdateOrg)
+	bus.AddHandler("sql", ss.UpdateOrgAddress)
+	bus.AddHandler("sql", ss.GetOrgByNameHandler)
+	bus.AddHandler("sql", ss.SearchOrgs)
+	bus.AddHandler("sql", ss.DeleteOrg)
 }
 
-func SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
+func (ss *SQLStore) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
 	query.Result = make([]*models.OrgDTO, 0)
 	sess := x.Table("org")
 	if query.Query != "" {
@@ -48,7 +48,7 @@ func SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
 	return err
 }
 
-func GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
+func (ss *SQLStore) GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
 	var org models.Org
 	exists, err := x.Id(query.Id).Get(&org)
 	if err != nil {
@@ -63,7 +63,7 @@ func GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
 	return nil
 }
 
-func GetOrgByName(ctx context.Context, query *models.GetOrgByNameQuery) error {
+func (ss *SQLStore) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
 	var org models.Org
 	exists, err := x.Where("name=?", query.Name).Get(&org)
 	if err != nil {
@@ -164,8 +164,8 @@ func CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
 	return nil
 }
 
-func UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -197,8 +197,8 @@ func UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
 	})
 }
 
-func UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		org := models.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -224,8 +224,8 @@ func UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) 
 	})
 }
 
-func DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {

@@ -17,7 +17,7 @@ jest.mock('app/core/store', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getDataSourceSrv: () => {
     return {
       get: (v: any) => {
@@ -40,6 +40,148 @@ jest.mock('@grafana/runtime', () => ({
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
+
+it('handles a default datasource in a template variable', async () => {
+  const dashboard: any = {
+    annotations: {
+      list: [
+        {
+          builtIn: 1,
+          datasource: '-- Grafana --',
+          enable: true,
+          hide: true,
+          iconColor: 'rgba(0, 211, 255, 1)',
+          name: 'Annotations & Alerts',
+          target: {
+            limit: 100,
+            matchAny: false,
+            tags: [],
+            type: 'dashboard',
+          },
+          type: 'dashboard',
+        },
+      ],
+    },
+    editable: true,
+    fiscalYearStartMonth: 0,
+    graphTooltip: 0,
+    id: 331,
+    iteration: 1642157860116,
+    links: [],
+    liveNow: false,
+    panels: [
+      {
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: 'palette-classic',
+            },
+            custom: {
+              axisLabel: '',
+              axisPlacement: 'auto',
+              barAlignment: 0,
+              drawStyle: 'line',
+              fillOpacity: 0,
+              gradientMode: 'none',
+              hideFrom: {
+                legend: false,
+                tooltip: false,
+                viz: false,
+              },
+              lineInterpolation: 'linear',
+              lineWidth: 1,
+              pointSize: 5,
+              scaleDistribution: {
+                type: 'linear',
+              },
+              showPoints: 'auto',
+              spanNulls: false,
+              stacking: {
+                group: 'A',
+                mode: 'none',
+              },
+              thresholdsStyle: {
+                mode: 'off',
+              },
+            },
+            mappings: [],
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        gridPos: {
+          h: 9,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        id: 2,
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+          },
+          tooltip: {
+            mode: 'single',
+            sort: 'none',
+          },
+        },
+        targets: [
+          {
+            datasource: {
+              type: 'testdata',
+              uid: 'PD8C576611E62080A',
+            },
+            expr: '{filename="/var/log/system.log"}',
+            refId: 'A',
+          },
+        ],
+        title: 'Panel Title',
+        type: 'timeseries',
+      },
+    ],
+    templating: {
+      list: [
+        {
+          current: {},
+          definition: 'test',
+          error: {},
+          hide: 0,
+          includeAll: false,
+          multi: false,
+          name: 'query0',
+          options: [],
+          query: {
+            query: 'test',
+            refId: 'StandardVariableQuery',
+          },
+          refresh: 1,
+          regex: '',
+          skipUrlSync: false,
+          sort: 0,
+          type: 'query',
+        },
+      ],
+    },
+  };
+  const dashboardModel = new DashboardModel(dashboard, {}, () => dashboard.templating.list);
+  const exporter = new DashboardExporter();
+  const exported: any = await exporter.makeExportable(dashboardModel);
+  expect(exported.templating.list[0].datasource).toBe('${DS_GFDB}');
+});
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
@@ -75,7 +217,7 @@ describe('given dashboard with repeated panels', () => {
         list: [
           {
             name: 'logs',
-            datasource: { uid: 'gfdb', type: 'testdb' },
+            datasource: 'gfdb',
           },
         ],
       },
@@ -167,16 +309,16 @@ describe('given dashboard with repeated panels', () => {
 
   it('should replace datasource refs', () => {
     const panel = exported.panels[0];
-    expect(panel.datasource).toBe('${DS_GFDB}');
+    expect(panel.datasource.uid).toBe('${DS_GFDB}');
   });
 
   it('should replace datasource refs in collapsed row', () => {
     const panel = exported.panels[6].panels[0];
-    expect(panel.datasource).toBe('${DS_GFDB}');
+    expect(panel.datasource.uid).toBe('${DS_GFDB}');
   });
 
   it('should replace datasource in variable query', () => {
-    expect(exported.templating.list[0].datasource).toBe('${DS_GFDB}');
+    expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
     expect(exported.templating.list[0].options.length).toBe(0);
     expect(exported.templating.list[0].current.value).toBe(undefined);
     expect(exported.templating.list[0].current.text).toBe(undefined);
@@ -267,12 +409,8 @@ describe('given dashboard with repeated panels', () => {
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
       id: 17,
-      datasource: '${DS_OTHER2}',
+      datasource: { type: 'other2', uid: '$ds' },
       type: 'graph',
-      fieldConfig: {
-        defaults: {},
-        overrides: [],
-      },
     });
   });
 
@@ -284,8 +422,11 @@ describe('given dashboard with repeated panels', () => {
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
       id: 16,
-      datasource: '${DS_GFDB}',
       type: 'graph',
+      datasource: {
+        type: 'testdb',
+        uid: '${DS_GFDB}',
+      },
     });
   });
 });

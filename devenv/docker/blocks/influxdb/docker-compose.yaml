@@ -5,30 +5,22 @@
       - '8086:8086'
     environment:
       INFLUXD_REPORTING_DISABLED: 'true'
+      DOCKER_INFLUXDB_INIT_MODE: 'setup'
+      DOCKER_INFLUXDB_INIT_USERNAME: 'grafana'
+      DOCKER_INFLUXDB_INIT_PASSWORD: 'grafana12345'
+      DOCKER_INFLUXDB_INIT_ORG: 'myorg'
+      DOCKER_INFLUXDB_INIT_BUCKET: 'mybucket'
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: 'mytoken'
     volumes:
       - ./docker/blocks/influxdb/config.yaml:/etc/influxdb2/config.yaml
-
-  # Use the influx cli to set up an influxdb instance.
-  influxdb_cli:
-    links:
-      - influxdb
-    image: influxdb:latest
-    # The following long command does 2 things:
-    #   1. It initializes the bucket
-    #   2. Maps bucket to database to enable backward-compatible access (influxql queries)
-    # Use these same configurations parameters in your telegraf configuration, mytelegraf.conf.
-    entrypoint: bash -c "influx setup --bucket mybucket -t mytoken -o myorg --username=grafana --password=grafana12345 --host=http://influxdb:8086 -f && influx -t mytoken -o myorg --host=http://influxdb:8086 bucket list -n mybucket --hide-headers | cut -f 1 | xargs influx -t mytoken -o myorg --host=http://influxdb:8086 v1 dbrp create --db mybucket --rp default --default --bucket-id"
-      # Wait for the influxd service in the influxdb container has fully bootstrapped before trying to setup an influxdb instance with the influxdb_cli service.
-    restart: on-failure:10
-    depends_on:
-      - influxdb
+      - ./docker/blocks/influxdb/setup_influxql.sh:/docker-entrypoint-initdb.d/setup_influxql.sh
 
   telegraf:
     image: telegraf:latest
     links:
       - influxdb
     depends_on:
-      - influxdb_cli
+      - influxdb
     volumes:
       - ./docker/blocks/influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - /var/log:/var/log/host

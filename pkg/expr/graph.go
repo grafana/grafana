@@ -126,6 +126,10 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for _, query := range req.Queries {
+		if query.DataSource == nil || query.DataSource.Uid == "" {
+			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
+		}
+
 		rawQueryProp := make(map[string]interface{})
 		queryBytes, err := query.JSON.MarshalJSON()
 
@@ -139,21 +143,16 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		}
 
 		rn := &rawNode{
-			Query:         rawQueryProp,
-			RefID:         query.RefID,
-			TimeRange:     query.TimeRange,
-			QueryType:     query.QueryType,
-			DatasourceUID: query.DatasourceUID,
-		}
-
-		isExpr, err := rn.IsExpressionQuery()
-		if err != nil {
-			return nil, err
+			Query:      rawQueryProp,
+			RefID:      query.RefID,
+			TimeRange:  query.TimeRange,
+			QueryType:  query.QueryType,
+			DataSource: query.DataSource,
 		}
 
 		var node Node
 
-		if isExpr {
+		if IsDataSource(rn.DataSource.Uid) {
 			node, err = buildCMDNode(dp, rn)
 		} else {
 			node, err = s.buildDSNode(dp, rn, req)

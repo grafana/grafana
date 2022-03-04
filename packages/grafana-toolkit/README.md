@@ -15,6 +15,8 @@ yarn install
 yarn dev
 ```
 
+> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
+
 ## Update your plugin to use grafana-toolkit
 
 Follow the steps below to start using grafana-toolkit in your existing plugin.
@@ -299,6 +301,24 @@ There are two issues at play:
 If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses internally to load plugins, interprets your code as an ESM and fails.
 
 To fix this error, remove the ES2016 code from your comments.
+
+### I would like to dynamically import modules in my plugin
+
+Create a webpack.config.js with this content (in the root of _your_ plugin)
+
+```ts
+// webpack.config.js
+const pluginJson = require('./src/plugin.json');
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  output: {
+    ...config.output,
+    publicPath: `public/plugins/${pluginJson.id}/`,
+  },
+});
+```
+
+The plugin id is the id written in the plugin.json file.
 
 ## Contribute to grafana-toolkit
 

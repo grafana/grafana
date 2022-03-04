@@ -51,6 +51,21 @@ export interface ScaleDimensionOptions {
   hideRange?: boolean; // false
 }
 
+export enum ScalarDimensionMode {
+  Mod = 'mod',
+  Clamped = 'clamped',
+}
+export interface ScalarDimensionConfig extends BaseDimensionConfig<number> {
+  mode: ScalarDimensionMode;
+  min: number;
+  max: number;
+}
+
+export interface ScalarDimensionOptions {
+  min: number;
+  max: number;
+}
+
 export interface TextDimensionOptions {
   // anything?
 }
@@ -65,13 +80,22 @@ export interface TextDimensionConfig extends BaseDimensionConfig<string> {
   mode: TextDimensionMode;
 }
 
+export const defaultTextConfig: TextDimensionConfig = Object.freeze({
+  fixed: '',
+  mode: TextDimensionMode.Field,
+  field: '',
+});
+
 /** Use the color value from field configs */
 export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 
 /** Places that use the value */
 export interface ResourceDimensionOptions {
-  resourceType: 'icon' | 'image';
+  resourceType: MediaType;
   folderName?: ResourceFolderName;
+  placeholderText?: string;
+  placeholderValue?: string;
+  // If you want your icon to be driven by value of a field
   showSourceRadio?: boolean;
 }
 
@@ -92,4 +116,14 @@ export enum ResourceFolderName {
   IOT = 'img/icons/iot',
   Marker = 'img/icons/marker',
   BG = 'img/bg',
+}
+
+export enum MediaType {
+  Icon = 'icon',
+  Image = 'image',
+}
+
+export enum PickerTabType {
+  Folder = 'folder',
+  URL = 'url',
 }

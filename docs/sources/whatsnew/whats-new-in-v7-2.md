@@ -73,14 +73,12 @@ You can now dynamically apply value filters to any table column. This option can
 
 You can now add override rules that use a regex matcher to choose which fields to apply rules to.
 
-[Field overrides]({{< relref "../panels/field-overrides.md" >}}) has been updated as a result of these changes.
-
 ## New transformations and enhancements
 
 Grafana 7.2 includes the following transformation enhancements:
 
-- A new [Group By]({{< relref "../panels/transformations/types-options.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
-- The [Labels to fields]({{< relref "../panels/transformations/types-options.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
+- A new [Group By]({{< relref "../panels/reference-transformation-functions.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
+- The [Labels to fields]({{< relref "../panels/reference-transformation-functions.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
 - You can drag transformations to reorder them. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
 {{< figure src="/static/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
@@ -91,7 +89,7 @@ The up and down arrows, which were previously the only way to change query order
 
 {{< figure src="/static/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
 
-The [Queries]({{< relref "../panels/queries.md" >}}) topic has been updated as a result of this change.
+The [Queries]({{< relref "../panels/query-a-data-source/add-a-query.md" >}}) topic has been updated as a result of this change.
 
 ## Inspect queries in Explore
 

@@ -1,4 +1,4 @@
-import { PanelPluginMeta, PluginState } from '@grafana/data';
+import { PanelPluginMeta, PluginState, unEscapeStringFromRegex } from '@grafana/data';
 import { config } from 'app/core/config';
 
 export function getAllPanelPluginMeta(): PanelPluginMeta[] {
@@ -12,7 +12,7 @@ export function getAllPanelPluginMeta(): PanelPluginMeta[] {
 
 export function filterPluginList(
   pluginsList: PanelPluginMeta[],
-  searchQuery: string,
+  searchQuery: string, // Note: this will be an escaped regex string as it comes from `FilterInput`
   current: PanelPluginMeta
 ): PanelPluginMeta[] {
   if (!searchQuery.length) {
@@ -24,9 +24,10 @@ export function filterPluginList(
     });
   }
 
-  const query = searchQuery.toLowerCase();
+  const query = unEscapeStringFromRegex(searchQuery).toLowerCase();
   const first: PanelPluginMeta[] = [];
   const match: PanelPluginMeta[] = [];
+  const isGraphQuery = 'graph'.startsWith(query);
 
   for (const item of pluginsList) {
     if (item.state === PluginState.deprecated && current.id !== item.id) {
@@ -40,6 +41,8 @@ export function filterPluginList(
       first.push(item);
     } else if (idx > 0) {
       match.push(item);
+    } else if (isGraphQuery && item.id === 'timeseries') {
+      first.push(item);
     }
   }
 

@@ -10,6 +10,7 @@ import { PluginLogo } from './PluginLogo';
 import { CatalogPlugin } from '../types';
 import { PluginDisabledBadge } from './Badges';
 import { GetStartedWithPlugin } from './GetStartedWithPlugin';
+import { getLatestCompatibleVersion } from '../helpers';
 
 type Props = {
   currentUrl: string;
@@ -19,6 +20,8 @@ type Props = {
 
 export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
+  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
+  const version = plugin.installedVersion || latestCompatibleVersion?.version;
 
   return (
     <div className={styles.headerContainer}>
@@ -69,8 +72,8 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
             </span>
           )}
 
-          {/* Latest version */}
-          {plugin.version && <span>{plugin.version}</span>}
+          {/* Version */}
+          {Boolean(version) && <span>{version}</span>}
 
           {/* Signature information */}
           <PluginDetailsHeaderSignature plugin={plugin} />
@@ -80,13 +83,14 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
 
         <PluginDetailsHeaderDependencies
           plugin={plugin}
+          latestCompatibleVersion={latestCompatibleVersion}
           className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}
         />
 
         <p>{plugin.description}</p>
 
         <HorizontalGroup height="auto">
-          <InstallControls plugin={plugin} />
+          <InstallControls plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />
           <GetStartedWithPlugin plugin={plugin} />
         </HorizontalGroup>
       </div>

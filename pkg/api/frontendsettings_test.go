@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -19,9 +20,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	sqlstore.InitTestDB(t)
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	{
 		oldVersion := setting.BuildVersion
@@ -37,17 +39,19 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 	sqlStore := sqlstore.InitTestDB(t)
 
 	hs := &HTTPServer{
-		Cfg:     cfg,
-		Bus:     bus.GetBus(),
-		License: &licensing.OSSLicensingService{Cfg: cfg},
+		Cfg:      cfg,
+		Features: features,
+		Bus:      bus.GetBus(),
+		License:  &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererManager{},
 		},
-		SQLStore:      sqlStore,
-		pluginStore:   &fakePluginStore{},
-		updateChecker: &updatechecker.Service{},
-		AccessControl: accesscontrolmock.New().WithDisabled(),
+		SQLStore:             sqlStore,
+		SettingsProvider:     setting.ProvideProvider(cfg),
+		pluginStore:          &fakePluginStore{},
+		grafanaUpdateChecker: &updatechecker.GrafanaService{},
+		AccessControl:        accesscontrolmock.New().WithDisabled(),
 	}
 
 	m := web.New()
@@ -72,7 +76,8 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	cfg.Env = "testing"
 	cfg.BuildVersion = "7.8.9"
 	cfg.BuildCommit = "01234567"
-	m, hs := setupTestEnvironment(t, cfg)
+
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures())
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 

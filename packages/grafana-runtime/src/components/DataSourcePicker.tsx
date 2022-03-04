@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
-import { css, cx } from '@emotion/css';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -39,7 +38,9 @@ export interface DataSourcePickerProps {
   // If set to true and there is no value select will be empty, otherwise it will preselect default data source
   noDefault?: boolean;
   width?: number;
+  inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
+  onClear?: () => void;
 }
 
 /**
@@ -80,7 +81,12 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     }
   }
 
-  onChange = (item: SelectableValue<string>) => {
+  onChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
+    if (actionMeta.action === 'clear' && this.props.onClear) {
+      this.props.onClear();
+      return;
+    }
+
     const dsSettings = this.dataSourceSrv.getInstanceSettings(item.value);
 
     if (dsSettings) {
@@ -142,21 +148,21 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { autoFocus, onBlur, openMenuOnFocus, placeholder, width } = this.props;
+    const { autoFocus, onBlur, onClear, openMenuOnFocus, placeholder, width, inputId } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
-    const styles = getStyles();
+    const isClearable = typeof onClear === 'function';
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
           aria-label={selectors.components.DataSourcePicker.inputV2}
-          inputId="data-source-picker"
+          inputId={inputId || 'data-source-picker'}
           menuShouldPortal
-          className={styles.select}
+          className="ds-picker select-container"
           isMulti={false}
-          isClearable={false}
+          isClearable={isClearable}
           backspaceRemovesValue={false}
           onChange={this.onChange}
           options={options}
@@ -184,13 +190,3 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     );
   }
 }
-
-const getStyles = stylesFactory(() => ({
-  select: cx(
-    css({
-      minWidth: 200,
-    }),
-    'ds-picker',
-    'select-container'
-  ),
-}));

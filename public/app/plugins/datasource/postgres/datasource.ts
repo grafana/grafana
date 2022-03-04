@@ -2,12 +2,11 @@ import { map as _map } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data';
+import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
 
 import ResponseParser from './response_parser';
 import PostgresQueryModel from 'app/plugins/datasource/postgres/postgres_query_model';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { PostgresOptions, PostgresQuery, PostgresQueryForInterpolation } from './types';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
@@ -23,8 +22,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PostgresOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
@@ -82,7 +80,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     const queryModel = new PostgresQueryModel(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: queryModel.render(this.interpolateVariable as any),
       format: target.format,
     };
@@ -97,7 +95,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     const query = {
       refId: options.annotation.name,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
@@ -137,12 +135,12 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     const interpolatedQuery = {
       refId: refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql,
       format: 'table',
     };
 
-    const range = this.timeSrv.timeRange();
+    const range = optionalOptions?.range as TimeRange;
 
     return lastValueFrom(
       getBackendSrv()
@@ -150,8 +148,8 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
           url: '/api/ds/query',
           method: 'POST',
           data: {
-            from: range.from.valueOf().toString(),
-            to: range.to.valueOf().toString(),
+            from: range?.from?.valueOf()?.toString(),
+            to: range?.to?.valueOf()?.toString(),
             queries: [interpolatedQuery],
           },
           requestId: refId,
@@ -167,16 +165,34 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     );
   }
 
+  private _metaRequest(rawSql: string) {
+    const refId = 'meta';
+    const query = {
+      refId: refId,
+      datasource: this.getRef(),
+      rawSql,
+      format: 'table',
+    };
+    return getBackendSrv().fetch<BackendDataSourceResponse>({
+      url: '/api/ds/query',
+      method: 'POST',
+      data: {
+        queries: [query],
+      },
+      requestId: refId,
+    });
+  }
+
   getVersion(): Promise<any> {
-    return this.metricFindQuery("SELECT current_setting('server_version_num')::int/100", {});
+    return lastValueFrom(this._metaRequest("SELECT current_setting('server_version_num')::int/100"));
   }
 
   getTimescaleDBVersion(): Promise<any> {
-    return this.metricFindQuery("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'", {});
+    return lastValueFrom(this._metaRequest("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'"));
   }
 
   testDatasource(): Promise<any> {
-    return this.metricFindQuery('SELECT 1', {})
+    return lastValueFrom(this._metaRequest('SELECT 1'))
       .then(() => {
         return { status: 'success', message: 'Database Connection OK' };
       })
@@ -197,6 +213,6 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     rawSql = rawSql.replace('$__', '');
 
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.containsTemplate(rawSql);
   }
 }

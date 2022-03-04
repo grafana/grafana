@@ -1,9 +1,14 @@
 import { lastValueFrom } from 'rxjs';
-import { getBackendSrv } from '@grafana/runtime';
+import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 
 import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
+
+interface ErrorResponseMessage {
+  message?: string;
+  error?: string;
+}
 
 // upsert a rule group. use this to update rules
 export async function setRulerRuleGroup(
@@ -97,26 +102,46 @@ async function rulerGetRequest<T>(url: string, empty: T, params?: Record<string,
       })
     );
     return response.data;
-  } catch (e) {
-    if (e?.status === 404) {
-      if (e?.data?.message?.includes('group does not exist') || e?.data?.message?.includes('no rule groups found')) {
-        return empty;
-      }
-      throw new Error('404 from rules config endpoint. Perhaps ruler API is not enabled?');
-    } else if (
-      e?.status === 500 &&
-      e?.data?.message?.includes('unexpected content type from upstream. expected YAML, got text/html')
-    ) {
+  } catch (error) {
+    if (!isResponseError(error)) {
+      throw error;
+    }
+
+    if (isCortexErrorResponse(error)) {
+      return empty;
+    } else if (isRulerNotSupported(error)) {
+      // assert if the endoint is not supported at all
       throw {
-        ...e,
+        ...error,
         data: {
-          ...e?.data,
+          ...error.data,
           message: RULER_NOT_SUPPORTED_MSG,
         },
       };
     }
-    throw e;
+    throw error;
   }
+}
+
+function isResponseError(error: unknown): error is FetchResponse<ErrorResponseMessage> {
+  const hasErrorMessage = (error as FetchResponse<ErrorResponseMessage>).data != null;
+  const hasErrorCode = Number.isFinite((error as FetchResponse<ErrorResponseMessage>).status);
+  return hasErrorCode && hasErrorMessage;
+}
+
+function isRulerNotSupported(error: FetchResponse<ErrorResponseMessage>) {
+  return (
+    error.status === 404 ||
+    (error.status === 500 &&
+      error.data.message?.includes('unexpected content type from upstream. expected YAML, got text/html'))
+  );
+}
+
+function isCortexErrorResponse(error: FetchResponse<ErrorResponseMessage>) {
+  return (
+    error.status === 404 &&
+    (error.data.message?.includes('group does not exist') || error.data.message?.includes('no rule groups found'))
+  );
 }
 
 export async function deleteNamespace(dataSourceName: string, namespace: string): Promise<void> {

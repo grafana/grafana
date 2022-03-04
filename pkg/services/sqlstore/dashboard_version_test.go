@@ -7,10 +7,12 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,13 +21,60 @@ func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Das
 
 	data["id"] = dashboard.Id
 
-	saveCmd := models.SaveDashboardCommand{
+	parentVersion := dashboard.Version
+
+	cmd := models.SaveDashboardCommand{
 		OrgId:     dashboard.OrgId,
 		Overwrite: true,
 		Dashboard: simplejson.NewFromAny(data),
 	}
-	_, err := sqlStore.SaveDashboard(saveCmd)
+	var dash *models.Dashboard
+	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		var existing models.Dashboard
+		dash = cmd.GetDashboardModel()
+		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
+		require.NoError(t, err)
+		require.True(t, dashWithIdExists)
+
+		if dash.Version != existing.Version {
+			dash.SetVersion(existing.Version)
+			dash.Version = existing.Version
+		}
+
+		dash.SetVersion(dash.Version + 1)
+		dash.Created = time.Now()
+		dash.Updated = time.Now()
+		dash.Id = dashboard.Id
+		dash.Uid = util.GenerateShortUID()
+
+		_, err = sess.MustCols("folder_id").ID(dash.Id).Update(dash)
+		return err
+	})
+
 	require.Nil(t, err)
+
+	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		dashVersion := &models.DashboardVersion{
+			DashboardId:   dash.Id,
+			ParentVersion: parentVersion,
+			RestoredFrom:  cmd.RestoredFrom,
+			Version:       dash.Version,
+			Created:       time.Now(),
+			CreatedBy:     dash.UpdatedBy,
+			Message:       cmd.Message,
+			Data:          dash.Data,
+		}
+
+		if affectedRows, err := sess.Insert(dashVersion); err != nil {
+			return err
+		} else if affectedRows == 0 {
+			return models.ErrDashboardNotFound
+		}
+
+		return nil
+	})
+
+	require.NoError(t, err)
 }
 
 func TestGetDashboardVersion(t *testing.T) {
@@ -40,7 +89,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			OrgId:       1,
 		}
 
-		err := GetDashboardVersion(&query)
+		err := sqlStore.GetDashboardVersion(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, query.DashboardId, savedDash.Id)
 		require.Equal(t, query.Version, savedDash.Version)
@@ -50,7 +99,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			Uid:   savedDash.Uid,
 		}
 
-		err = GetDashboard(context.Background(), &dashCmd)
+		err = sqlStore.GetDashboard(context.Background(), &dashCmd)
 		require.Nil(t, err)
 		eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 		require.Equal(t, true, eq)
@@ -63,7 +112,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			OrgId:       1,
 		}
 
-		err := GetDashboardVersion(&query)
+		err := sqlStore.GetDashboardVersion(context.Background(), &query)
 		require.Error(t, err)
 		require.Equal(t, models.ErrDashboardVersionNotFound, err)
 	})
@@ -76,7 +125,7 @@ func TestGetDashboardVersions(t *testing.T) {
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
 
-		err := GetDashboardVersions(&query)
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(query.Result))
 	})
@@ -84,7 +133,7 @@ func TestGetDashboardVersions(t *testing.T) {
 	t.Run("Attempt to get the versions for a non-existent Dashboard ID", func(t *testing.T) {
 		query := models.GetDashboardVersionsQuery{DashboardId: int64(999), OrgId: 1}
 
-		err := GetDashboardVersions(&query)
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Error(t, err)
 		require.Equal(t, models.ErrNoVersionsForDashboardId, err)
 		require.Equal(t, 0, len(query.Result))
@@ -94,9 +143,8 @@ func TestGetDashboardVersions(t *testing.T) {
 		updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
 			"tags": "different-tag",
 		})
-
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-		err := GetDashboardVersions(&query)
+		err := sqlStore.GetDashboardVersions(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(query.Result))
@@ -122,11 +170,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 
 	t.Run("Clean up old dashboard versions", func(t *testing.T) {
 		setup(t)
-		err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
+		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
 		require.Nil(t, err)
 
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-		err = GetDashboardVersions(&query)
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, versionsToKeep, len(query.Result))
@@ -139,11 +187,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		setup(t)
 		setting.DashboardVersionsToKeep = versionsToWrite
 
-		err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
+		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
 		require.Nil(t, err)
 
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
-		err = GetDashboardVersions(&query)
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, versionsToWrite, len(query.Result))
@@ -161,11 +209,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 			})
 		}
 
-		err := deleteExpiredVersions(&models.DeleteExpiredVersionsCommand{}, perBatch, maxBatches)
+		err := sqlStore.deleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{}, perBatch, maxBatches)
 		require.Nil(t, err)
 
 		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
-		err = GetDashboardVersions(&query)
+		err = sqlStore.GetDashboardVersions(context.Background(), &query)
 		require.Nil(t, err)
 
 		// Ensure we have at least versionsToKeep versions

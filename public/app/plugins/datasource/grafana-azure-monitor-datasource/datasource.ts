@@ -1,9 +1,3 @@
-import { cloneDeep, upperFirst } from 'lodash';
-import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
-import AppInsightsDatasource from './app_insights/app_insights_datasource';
-import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
 import {
   DataFrame,
   DataQueryRequest,
@@ -13,15 +7,29 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { cloneDeep, upperFirst } from 'lodash';
 import { forkJoin, Observable, of } from 'rxjs';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
-import { datasourceMigrations } from './utils/migrateQuery';
 import { map } from 'rxjs/operators';
+
+import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
+import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
+import AppInsightsDatasource from './components/deprecated/app_insights/app_insights_datasource';
+import InsightsAnalyticsDatasource from './components/deprecated/insights_analytics/insights_analytics_datasource';
 import { getAzureCloud } from './credentials';
+import ResourcePickerData from './resourcePicker/resourcePickerData';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  AzureQueryType,
+  DatasourceValidationResult,
+  DeprecatedAzureQueryType,
+} from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
+import { datasourceMigrations } from './utils/migrateQuery';
 import { VariableSupport } from './variables';
+
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
@@ -37,7 +45,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   insightsAnalyticsDatasource?: InsightsAnalyticsDatasource;
 
   pseudoDatasource: {
-    [key in AzureQueryType]?:
+    [key in AzureQueryType | DeprecatedAzureQueryType]?:
       | AzureMonitorDatasource
       | AzureLogAnalyticsDatasource
       | AzureResourceGraphDatasource
@@ -68,15 +76,23 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       // AppInsights and InsightAnalytics are only supported for Public and Azure China clouds
       this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
       this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
-      this.pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
-      this.pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
+      this.pseudoDatasource[DeprecatedAzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
+      this.pseudoDatasource[DeprecatedAzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     }
 
     this.variables = new VariableSupport(this);
   }
 
+  filterQuery(item: AzureMonitorQuery): boolean {
+    if (!item.queryType) {
+      return true;
+    }
+    const ds = this.pseudoDatasource[item.queryType];
+    return ds?.filterQuery?.(item) ?? true;
+  }
+
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
-    const byType = new Map<AzureQueryType, DataQueryRequest<AzureMonitorQuery>>();
+    const byType = new Map<AzureQueryType | DeprecatedAzureQueryType, DataQueryRequest<AzureMonitorQuery>>();
 
     for (const baseTarget of options.targets) {
       // Migrate old query structures
@@ -129,6 +145,23 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     return of({ state: LoadingState.Done, data: [] });
+  }
+
+  targetContainsTemplate(query: AzureMonitorQuery) {
+    if (query.subscription && this.templateSrv.containsTemplate(query.subscription)) {
+      return true;
+    }
+
+    let subQuery;
+    if (query.queryType === AzureQueryType.AzureMonitor) {
+      subQuery = JSON.stringify(query.azureMonitor);
+    } else if (query.queryType === AzureQueryType.LogAnalytics) {
+      subQuery = JSON.stringify(query.azureLogAnalytics);
+    } else if (query.queryType === AzureQueryType.AzureResourceGraph) {
+      subQuery = JSON.stringify([query.azureResourceGraph, query.subscriptions]);
+    }
+
+    return !!subQuery && this.templateSrv.containsTemplate(subQuery);
   }
 
   async annotationQuery(options: any) {
@@ -289,10 +322,10 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
     case AzureQueryType.GrafanaTemplateVariableFn:
       return !!query.grafanaTemplateVariableFn;
 
-    case AzureQueryType.ApplicationInsights:
+    case DeprecatedAzureQueryType.ApplicationInsights:
       return !!query.appInsights;
 
-    case AzureQueryType.InsightsAnalytics:
+    case DeprecatedAzureQueryType.InsightsAnalytics:
       return !!query.insightsAnalytics;
 
     default:

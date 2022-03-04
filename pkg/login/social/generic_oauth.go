@@ -156,7 +156,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 			}
 		}
 
-		if userInfo.Groups != nil && len(userInfo.Groups) == 0 {
+		if len(userInfo.Groups) == 0 {
 			groups, err := s.extractGroups(data)
 			if err != nil {
 				s.log.Warn("Failed to extract groups", "err", err)
@@ -231,13 +231,19 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 		return nil
 	}
 
-	var header map[string]string
+	var header map[string]interface{}
 	if err := json.Unmarshal(headerBytes, &header); err != nil {
 		s.log.Error("Error deserializing header", "error", err)
 		return nil
 	}
 
-	if compression, ok := header["zip"]; ok {
+	if compressionVal, exists := header["zip"]; exists {
+		compression, ok := compressionVal.(string)
+		if !ok {
+			s.log.Warn("Unknown compression algorithm")
+			return nil
+		}
+
 		if compression != "DEF" {
 			s.log.Warn("Unknown compression algorithm", "algorithm", compression)
 			return nil

@@ -9,7 +9,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
-  dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldCache,
@@ -36,10 +35,11 @@ import {
   textUtil,
   TimeRange,
   toDataFrame,
+  toUtc,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
-import { Observable, throwError, timeout } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -54,7 +54,8 @@ export const LogLevelColor = {
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
-const SECOND = 1000;
+const MILLISECOND = 1;
+const SECOND = 1000 * MILLISECOND;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -366,7 +367,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
-      const time = dateTime(ts);
+      const time = toUtc(ts);
       const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
@@ -616,10 +617,7 @@ function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFram
   return aggregatedDataFrame;
 }
 
-const LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT = 60000;
-
 type LogsVolumeQueryOptions<T extends DataQuery> = {
-  timeout?: number;
   extractLevel: (dataFrame: DataFrame) => LogLevel;
   targets: T[];
   range: TimeRange;
@@ -633,7 +631,8 @@ export function queryLogsVolume<T extends DataQuery>(
   logsVolumeRequest: DataQueryRequest<T>,
   options: LogsVolumeQueryOptions<T>
 ): Observable<DataQueryResponse> {
-  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars);
+  const timespan = options.range.to.valueOf() - options.range.from.valueOf();
+  const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
   logsVolumeRequest.interval = intervalInfo.interval;
   logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
   if (intervalInfo.intervalMs !== undefined) {
@@ -649,54 +648,51 @@ export function queryLogsVolume<T extends DataQuery>(
       data: [],
     });
 
-    const subscription = (datasource.query(logsVolumeRequest) as Observable<DataQueryResponse>)
-      .pipe(
-        timeout({
-          each: options.timeout || LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT,
-          with: () => throwError(new Error('Request timed-out. Please make your query more specific and try again.')),
-        })
-      )
-      .subscribe({
-        complete: () => {
-          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-          if (aggregatedLogsVolume[0]) {
-            aggregatedLogsVolume[0].meta = {
-              custom: {
-                targets: options.targets,
-                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-              },
-            };
-          }
-          observer.next({
-            state: LoadingState.Done,
-            error: undefined,
-            data: aggregatedLogsVolume,
-          });
-          observer.complete();
-        },
-        next: (dataQueryResponse: DataQueryResponse) => {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
-        },
-        error: (error) => {
-          observer.next({
-            state: LoadingState.Error,
-            error: error,
-            data: [],
-          });
-          observer.error(error);
-        },
-      });
+    const subscription = (datasource.query(logsVolumeRequest) as Observable<DataQueryResponse>).subscribe({
+      complete: () => {
+        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
+        if (aggregatedLogsVolume[0]) {
+          aggregatedLogsVolume[0].meta = {
+            custom: {
+              targets: options.targets,
+              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+            },
+          };
+        }
+        observer.next({
+          state: LoadingState.Done,
+          error: undefined,
+          data: aggregatedLogsVolume,
+        });
+        observer.complete();
+      },
+      next: (dataQueryResponse: DataQueryResponse) => {
+        rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+      },
+      error: (error) => {
+        observer.next({
+          state: LoadingState.Error,
+          error: error,
+          data: [],
+        });
+        observer.error(error);
+      },
+    });
     return () => {
       subscription?.unsubscribe();
     };
   });
 }
 
-function getIntervalInfo(scopedVars: ScopedVars): { interval: string; intervalMs?: number } {
+function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval: string; intervalMs?: number } {
   if (scopedVars.__interval) {
     let intervalMs: number = scopedVars.__interval_ms.value;
     let interval = '';
-    if (intervalMs > HOUR) {
+    // below 5 seconds we force the resolution to be per 1ms as interval in scopedVars is not less than 10ms
+    if (timespanMs < SECOND * 5) {
+      intervalMs = MILLISECOND;
+      interval = '1ms';
+    } else if (intervalMs > HOUR) {
       intervalMs = DAY;
       interval = '1d';
     } else if (intervalMs > MINUTE) {

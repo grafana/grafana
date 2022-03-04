@@ -6,9 +6,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func getMiddlewares(route azRoute, model datasourceInfo, cfg *setting.Cfg) ([]httpclient.Middleware, error) {
+func getMiddlewares(route types.AzRoute, model types.DatasourceInfo, cfg *setting.Cfg) ([]httpclient.Middleware, error) {
 	middlewares := []httpclient.Middleware{}
 
 	if len(route.Scopes) > 0 {
@@ -19,21 +21,15 @@ func getMiddlewares(route azRoute, model datasourceInfo, cfg *setting.Cfg) ([]ht
 		middlewares = append(middlewares, aztokenprovider.AuthMiddleware(tokenProvider, route.Scopes))
 	}
 
-	if _, ok := model.DecryptedSecureJSONData["appInsightsApiKey"]; ok && (route.URL == azAppInsights.URL || route.URL == azChinaAppInsights.URL) {
-		// Inject API-Key for AppInsights
-		apiKeyMiddleware := httpclient.MiddlewareFunc(func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
-			return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-				req.Header.Set("X-API-Key", model.DecryptedSecureJSONData["appInsightsApiKey"])
-				return next.RoundTrip(req)
-			})
-		})
+	// Remove with Grafana 9
+	if apiKeyMiddleware := deprecated.GetAppInsightsMiddleware(route.URL, model.DecryptedSecureJSONData["appInsightsApiKey"]); apiKeyMiddleware != nil {
 		middlewares = append(middlewares, apiKeyMiddleware)
 	}
 
 	return middlewares, nil
 }
 
-func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
+func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
 	m, err := getMiddlewares(route, model, cfg)
 	if err != nil {
 		return nil, err

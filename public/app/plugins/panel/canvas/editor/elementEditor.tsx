@@ -68,11 +68,12 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         currentOptions = {
           ...layer.getNewOptions(options),
           type: layer.id,
+          name: `Element ${Date.now()}.${Math.floor(Math.random() * 100)}`,
         };
       }
       const ctx = { ...context, options: currentOptions };
 
-      if (layer.registerOptionsUI) {
+      if (layer?.registerOptionsUI) {
         layer.registerOptionsUI(builder, ctx);
       }
 

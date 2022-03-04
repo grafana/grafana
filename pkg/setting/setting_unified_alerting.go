@@ -2,11 +2,13 @@ package setting
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/prometheus/alertmanager/cluster"
@@ -46,7 +48,12 @@ const (
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
-	schedulerDefaultMinInterval             = 10 * time.Second
+	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
+	// changing this value is discouraged because this could cause existing alert definition
+	// with intervals that are not exactly divided by this number not to be evaluated
+	SchedulerBaseInterval = 10 * time.Second
+	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
+	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
 )
 
 type UnifiedAlertingSettings struct {
@@ -63,26 +70,73 @@ type UnifiedAlertingSettings struct {
 	EvaluationTimeout              time.Duration
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
-	Enabled                        bool
+	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                   map[int64]struct{}
+	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
+	// Only for internal use and not user configuration.
+	BaseInterval time.Duration
+	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
+	DefaultRuleEvaluationInterval time.Duration
+}
+
+// IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
+// It hides the implementation details of the Enabled and simplifies its usage.
+func (u *UnifiedAlertingSettings) IsEnabled() bool {
+	return u.Enabled == nil || *u.Enabled
+}
+
+func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, error) {
+	enabled, err := section.Key("enabled").Bool()
+	// the unified alerting is not enabled by default. First, check the feature flag
+	if err != nil {
+		// TODO: Remove in Grafana v9
+		if cfg.IsFeatureToggleEnabled("ngalert") {
+			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
+			enabled = true
+			// feature flag overrides the legacy alerting setting.
+			legacyAlerting := false
+			AlertingEnabled = &legacyAlerting
+			return &enabled, nil
+		}
+		if IsEnterprise {
+			enabled = false
+			if AlertingEnabled == nil {
+				legacyEnabled := true
+				AlertingEnabled = &legacyEnabled
+			}
+			return &enabled, nil
+		}
+		// next, check whether legacy flag is set
+		if AlertingEnabled != nil && !*AlertingEnabled {
+			enabled = true
+			return &enabled, nil // if legacy alerting is explicitly disabled, enable the unified alerting by default.
+		}
+		// NOTE: If the enabled flag is still not defined, the final decision is made during migration (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault).
+		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during as we run the database migrations")
+		return nil, nil // the flag is not defined
+	}
+
+	// If unified alerting is defined explicitly as well as legacy alerting and both are enabled, return error.
+	if enabled && AlertingEnabled != nil && *AlertingEnabled {
+		return nil, errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
+	}
+	// if legacy alerting is not defined but unified is determined then update the legacy with inverted value
+	if AlertingEnabled == nil {
+		legacyEnabled := !enabled
+		AlertingEnabled = &legacyEnabled
+	}
+	return &enabled, nil
 }
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
 // It first reads the `unified_alerting` section, then looks for non-defaults on the `alerting` section and prefers those.
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
+	var err error
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
-	uaCfg.Enabled = ua.Key("enabled").MustBool(false)
-
-	// TODO: Deprecate this in v8.4, if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
-	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
-		cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-		uaCfg.Enabled = true
-		AlertingEnabled = false
-	}
-
-	if uaCfg.Enabled && AlertingEnabled {
-		return errors.New("both legacy and Grafana 8 Alerts are enabled")
+	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
+	if err != nil {
+		return err
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
@@ -95,7 +149,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfg.DisabledOrgs[orgID] = struct{}{}
 	}
 
-	var err error
 	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (schedulerDefaultAdminConfigPollInterval).String()))
 	if err != nil {
 		return err
@@ -163,16 +216,33 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
-	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", schedulerDefaultMinInterval.String()))
-	if err != nil || uaMinInterval == schedulerDefaultMinInterval { // unified option is invalid duration or equals the default
+	uaCfg.BaseInterval = SchedulerBaseInterval
+
+	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
+	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
-		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(schedulerDefaultMinInterval.Seconds()))) * time.Second
-		if legacyMinInterval != schedulerDefaultLegacyMinInterval {
+		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(uaCfg.BaseInterval.Seconds()))) * time.Second
+		if legacyMinInterval > uaCfg.BaseInterval {
 			cfg.Logger.Warn("falling back to legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+			uaMinInterval = legacyMinInterval
+		} else {
+			// if legacy interval is smaller than the base interval, adjust it to the base interval
+			uaMinInterval = uaCfg.BaseInterval
 		}
-		uaMinInterval = legacyMinInterval
+	}
+
+	if uaMinInterval < uaCfg.BaseInterval {
+		return fmt.Errorf("value of setting 'min_interval' should be greater than the base interval (%v)", uaCfg.BaseInterval)
+	}
+	if uaMinInterval%uaCfg.BaseInterval != 0 {
+		return fmt.Errorf("value of setting 'min_interval' should be times of base interval (%v)", uaCfg.BaseInterval)
 	}
 	uaCfg.MinInterval = uaMinInterval
+
+	uaCfg.DefaultRuleEvaluationInterval = DefaultRuleEvaluationInterval
+	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
+		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
+	}
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

@@ -7,10 +7,9 @@ import (
 	"mime/multipart"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -37,16 +36,20 @@ type PushoverNotifier struct {
 	Message          string
 	tmpl             *template.Template
 	log              log.Logger
+	ns               notifications.WebhookSender
 }
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*PushoverNotifier, error) {
+func NewPushoverNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*PushoverNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
-	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString(), setting.SecretKey)
-	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString(), setting.SecretKey)
+	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString())
+	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
 	alertingPriority, err := strconv.Atoi(model.Settings.Get("priority").MustString("0")) // default Normal
 	if err != nil {
@@ -90,6 +93,7 @@ func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template,
 		Message:          model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		tmpl:             t,
 		log:              log.New("alerting.notifier.pushover"),
+		ns:               ns,
 	}, nil
 }
 
@@ -108,7 +112,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		Body:       uploadBody.String(),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}
@@ -193,7 +197,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	// Add title
-	err = w.WriteField("title", tmpl(`{{ template "default.title" . }}`))
+	err = w.WriteField("title", tmpl(DefaultMessageTitleEmbed))
 	if err != nil {
 		return nil, b, err
 	}
@@ -216,7 +220,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	if tmplErr != nil {
-		pn.log.Debug("failed to template pushover message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template pushover message", "err", tmplErr.Error())
 	}
 
 	// Mark as html message

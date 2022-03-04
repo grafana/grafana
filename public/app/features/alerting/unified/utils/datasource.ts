@@ -4,6 +4,7 @@ import { RulesSource } from 'app/types/unified-alerting';
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
+export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
 
 export enum DataSourceType {
   Alertmanager = 'alertmanager',

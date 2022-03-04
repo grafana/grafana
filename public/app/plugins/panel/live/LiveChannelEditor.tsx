@@ -4,14 +4,12 @@ import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
 import {
   LiveChannelScope,
   LiveChannelAddress,
-  LiveChannelSupport,
   SelectableValue,
   StandardEditorProps,
   GrafanaTheme,
 } from '@grafana/data';
 
 import { LivePanelOptions } from './types';
-import { getGrafanaLiveScopes } from 'app/features/live';
 import { config } from 'app/core/config';
 
 type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
@@ -25,7 +23,6 @@ const scopes: Array<SelectableValue<LiveChannelScope>> = [
 interface State {
   namespaces: Array<SelectableValue<string>>;
   paths: Array<SelectableValue<string>>;
-  support?: LiveChannelSupport;
 }
 
 export class LiveChannelEditor extends PureComponent<Props, State> {
@@ -44,31 +41,9 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
     }
   }
 
-  async getScopeDetails() {
-    const { scope, namespace } = this.props.value;
-    const srv = getGrafanaLiveScopes();
-
-    if (!srv.doesScopeExist(scope)) {
-      return {
-        namespaces: [],
-        support: undefined,
-      };
-    }
-
-    const namespaces = await srv.getNamespaces(scope);
-    const support = namespace ? await srv.getChannelSupport(scope, namespace) : undefined;
-    return {
-      namespaces,
-      support,
-    };
-  }
-
   async updateSelectOptions() {
-    const { namespaces, support } = await this.getScopeDetails();
-
     this.setState({
-      namespaces,
-      support,
+      namespaces: [],
       paths: [],
     });
   }
@@ -77,8 +52,8 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
     if (v.value) {
       this.props.onChange({
         scope: v.value,
-        namespace: (undefined as unknown) as string,
-        path: (undefined as unknown) as string,
+        namespace: undefined as unknown as string,
+        path: undefined as unknown as string,
       } as LiveChannelAddress);
     }
   };
@@ -86,7 +61,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
   onNamespaceChanged = (v: SelectableValue<string>) => {
     const update = {
       scope: this.props.value?.scope,
-      path: (undefined as unknown) as string,
+      path: undefined as unknown as string,
     } as LiveChannelAddress;
 
     if (v.value) {

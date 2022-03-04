@@ -1,6 +1,6 @@
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { loadPanelPlugin } from 'app/features/plugins/state/actions';
+import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { panelModelAndPluginReady } from './reducers';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
@@ -93,7 +93,7 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
       ...libraryPanel.model,
       gridPos: panel.gridPos,
       id: panel.id,
-      libraryPanel: toPanelModelLibraryPanel(libraryPanel.model),
+      libraryPanel: toPanelModelLibraryPanel(libraryPanel),
     });
 
     // a new library panel usually means new queries, clear any current result

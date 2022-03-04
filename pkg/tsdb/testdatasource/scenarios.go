@@ -40,6 +40,7 @@ const (
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
+	rawFrameQuery                     queryType = "raw_frame"
 	csvFileQueryType                  queryType = "csv_file"
 	csvContentQueryType               queryType = "csv_content"
 )
@@ -190,6 +191,11 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:   string(nodeGraphQuery),
 		Name: "Node Graph",
+	})
+
+	s.registerScenario(&Scenario{
+		ID:   string(rawFrameQuery),
+		Name: "Raw Frames",
 	})
 
 	s.registerScenario(&Scenario{
@@ -624,6 +630,7 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := model.Get("spread").MustFloat64(1)
 	noise := model.Get("noise").MustFloat64(0)
+	drop := model.Get("drop").MustFloat64(0) / 100.0 // value is 0-100
 
 	min, err := model.Get("min").Float64()
 	hasMin := err == nil
@@ -648,16 +655,23 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 			walker = max
 		}
 
-		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-		timeVec = append(timeVec, &t)
-		floatVec = append(floatVec, &nextValue)
+		if drop > 0 && rand.Float64() < drop {
+			// skip value
+		} else {
+			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+			timeVec = append(timeVec, &t)
+			floatVec = append(floatVec, &nextValue)
+		}
 
 		walker += (rand.Float64() - 0.5) * spread
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
 
 	return data.NewFrame("",
-		data.NewField("time", nil, timeVec),
+		data.NewField("time", nil, timeVec).
+			SetConfig(&data.FieldConfig{
+				Interval: float64(query.Interval.Milliseconds()),
+			}),
 		data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec),
 	)
 }

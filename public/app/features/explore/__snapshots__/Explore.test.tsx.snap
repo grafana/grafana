@@ -3,10 +3,16 @@
 exports[`Explore should render component 1`] = `
 <CustomScrollbar
   autoHeightMin="100%"
+  scrollRefCallback={[Function]}
 >
   <Connect(UnConnectedExploreToolbar)
     exploreId="left"
     onChangeTime={[Function]}
+    topOfExploreViewRef={
+      Object {
+        "current": null,
+      }
+    }
   />
   <div
     className="explore-container"

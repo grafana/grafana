@@ -5,16 +5,21 @@ import 'angular-bindonce';
 import 'vendor/bootstrap/bootstrap';
 import 'vendor/angular-other/angular-strap';
 import { config } from 'app/core/config';
-import coreModule, { angularModules } from 'app/core/core_module';
+import coreModule, { angularModules } from 'app/angular/core_module';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { registerAngularDirectives } from 'app/core/core';
-import { initAngularRoutingBridge } from 'app/angular/bridgeReactAngularRouting';
-import { monkeyPatchInjectorWithPreAssignedBindings } from 'app/core/injectorMonkeyPatch';
+import { registerAngularDirectives } from './angular_wrappers';
+import { initAngularRoutingBridge } from './bridgeReactAngularRouting';
+import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
 import { extend } from 'lodash';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv } from '@grafana/runtime';
-import './panel/all';
-import './partials';
+import { registerComponents } from './registerComponents';
+import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
+import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+import * as sdk from 'app/plugins/sdk';
+import { promiseToDigest } from './promiseToDigest';
+
 export class AngularApp {
   ngModuleDependencies: any[];
   preBootModules: any[];
@@ -90,7 +95,23 @@ export class AngularApp {
     coreModule.factory('templateSrv', () => getTemplateSrv());
 
     registerAngularDirectives();
+    registerComponents();
     initAngularRoutingBridge();
+
+    // Angular plugins import this
+    exposeToPlugin('angular', angular);
+    exposeToPlugin('app/core/utils/promiseToDigest', { promiseToDigest, __esModule: true });
+    exposeToPlugin('app/plugins/sdk', sdk);
+    exposeToPlugin('app/core/core_module', coreModule);
+    exposeToPlugin('app/core/core', {
+      coreModule: coreModule,
+      appEvents: appEvents,
+      contextSrv: contextSrv,
+      __esModule: true,
+    });
+
+    // disable tool tip animation
+    $.fn.tooltip.defaults.animation = false;
   }
 
   useModule(module: angular.IModule) {

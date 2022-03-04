@@ -11,11 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -60,7 +59,7 @@ func TestPushoverNotifier(t *testing.T) {
 				"title":     "[FIRING:1]  (val1)",
 				"url":       "http://localhost/alerting/list",
 				"url_title": "Show alert rule",
-				"message":   "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"message":   "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				"html":      "1",
 			},
 			expMsgError: nil,
@@ -136,27 +135,25 @@ func TestPushoverNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "pushover_testing",
-				Type:     "pushover",
-				Settings: settingsJSON,
+				Name:           "pushover_testing",
+				Type:           "pushover",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
-			pn, err := NewPushoverNotifier(m, tmpl, decryptFn)
+			webhookSender := mockNotificationService()
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
+			pn, err := NewPushoverNotifier(m, webhookSender, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
@@ -170,7 +167,7 @@ func TestPushoverNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			bodyReader := multipart.NewReader(strings.NewReader(body), boundary)
+			bodyReader := multipart.NewReader(strings.NewReader(webhookSender.Webhook.Body), boundary)
 			for {
 				part, err := bodyReader.NextPart()
 				if part == nil || errors.Is(err, io.EOF) {

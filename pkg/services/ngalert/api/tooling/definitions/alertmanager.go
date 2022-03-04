@@ -10,16 +10,25 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
+//
+// sets an Alerting config
+//
+//     Responses:
+//       201: Ack
+//       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
@@ -27,6 +36,14 @@ import (
 //
 //     Responses:
 //       201: Ack
+//       400: ValidationError
+
+// swagger:route GET /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteGetGrafanaAlertingConfig
+//
+// gets an Alerting config
+//
+//     Responses:
+//       200: GettableUserConfig
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
@@ -37,12 +54,28 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
+// swagger:route DELETE /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteDeleteGrafanaAlertingConfig
+//
+// deletes the Alerting config for a tenant
+//
+//     Responses:
+//       200: Ack
+//       400: ValidationError
+
 // swagger:route DELETE /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
 //
 // deletes the Alerting config for a tenant
 //
 //     Responses:
 //       200: Ack
+//       400: ValidationError
+
+// swagger:route GET /api/alertmanager/grafana/api/v2/status alertmanager RouteGetGrafanaAMStatus
+//
+// get alertmanager status and configuration
+//
+//     Responses:
+//       200: GettableStatus
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/status alertmanager RouteGetAMStatus
@@ -53,12 +86,28 @@ import (
 //       200: GettableStatus
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/alerts alertmanager RouteGetGrafanaAMAlerts
+//
+// get alertmanager alerts
+//
+//     Responses:
+//       200: gettableAlerts
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
 //
 // get alertmanager alerts
 //
 //     Responses:
 //       200: gettableAlerts
+//       400: ValidationError
+
+// swagger:route POST /api/alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
+//
+// create alertmanager alerts
+//
+//     Responses:
+//       200: Ack
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
@@ -69,6 +118,14 @@ import (
 //       200: Ack
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/alerts/groups alertmanager RouteGetGrafanaAMAlertGroups
+//
+// get alertmanager alerts
+//
+//     Responses:
+//       200: alertGroups
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts/groups alertmanager RouteGetAMAlertGroups
 //
 // get alertmanager alerts
@@ -76,6 +133,20 @@ import (
 //     Responses:
 //       200: alertGroups
 //       400: ValidationError
+
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
+//
+// Test Grafana managed receivers without saving them.
+//
+//     Responses:
+//
+//       200: Ack
+//       207: MultiStatus
+//       400: ValidationError
+//       403: PermissionDenied
+//       404: AlertManagerNotFound
+//       408: Failure
+//       409: AlertManagerNotReady
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
 //
@@ -91,12 +162,28 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/silences alertmanager RouteGetGrafanaSilences
+//
+// get silences
+//
+//     Responses:
+//       200: gettableSilences
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
 //
 // get silences
 //
 //     Responses:
 //       200: gettableSilences
+//       400: ValidationError
+
+// swagger:route POST /api/alertmanager/grafana/api/v2/silences alertmanager RouteCreateGrafanaSilence
+//
+// create silence
+//
+//     Responses:
+//       201: gettableSilence
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
@@ -107,12 +194,28 @@ import (
 //       201: gettableSilence
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/silence/{SilenceId} alertmanager RouteGetGrafanaSilence
+//
+// get silence
+//
+//     Responses:
+//       200: gettableSilence
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
 //
 // get silence
 //
 //     Responses:
 //       200: gettableSilence
+//       400: ValidationError
+
+// swagger:route DELETE /api/alertmanager/grafana/api/v2/silence/{SilenceId} alertmanager RouteDeleteGrafanaSilence
+//
+// delete silence
+//
+//     Responses:
+//       200: Ack
 //       400: ValidationError
 
 // swagger:route DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
@@ -135,15 +238,18 @@ type AlertManagerNotReady struct{}
 // swagger:model
 type MultiStatus struct{}
 
-// swagger:parameters RoutePostTestReceivers
+// swagger:parameters RoutePostTestReceivers RoutePostTestGrafanaReceivers
 type TestReceiversConfigParams struct {
 	// in:body
-	Alert *TestReceiversConfigAlertParams `yaml:"alert,omitempty" json:"alert,omitempty"`
-	// in:body
-	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	Body TestReceiversConfigBodyParams
 }
 
-func (c *TestReceiversConfigParams) ProcessConfig(encrypt EncryptFn) error {
+type TestReceiversConfigBodyParams struct {
+	Alert     *TestReceiversConfigAlertParams `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Receivers []*PostableApiReceiver          `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+func (c *TestReceiversConfigBodyParams) ProcessConfig(encrypt EncryptFn) error {
 	return processReceiverConfigs(c.Receivers, encrypt)
 }
 
@@ -173,25 +279,25 @@ type TestReceiverConfigResult struct {
 	Error  string `json:"error,omitempty"`
 }
 
-// swagger:parameters RouteCreateSilence
+// swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
 type CreateSilenceParams struct {
 	// in:body
 	Silence PostableSilence
 }
 
-// swagger:parameters RouteGetSilence RouteDeleteSilence
+// swagger:parameters RouteGetSilence RouteDeleteSilence RouteGetGrafanaSilence RouteDeleteGrafanaSilence
 type GetDeleteSilenceParams struct {
 	// in:path
 	SilenceId string
 }
 
-// swagger:parameters RouteGetSilences
+// swagger:parameters RouteGetSilences RouteGetGrafanaSilences
 type GetSilencesParams struct {
 	// in:query
 	Filter []string `json:"filter"`
 }
 
-// swagger:parameters RouteGetRuleStatuses
+// swagger:parameters RouteGetRuleStatuses RouteGetGrafanaRuleStatuses
 type GetRuleStatusesParams struct {
 	// in: query
 	DashboardUID string
@@ -296,7 +402,7 @@ type AlertGroup = amv2.AlertGroup
 // swagger:model receiver
 type Receiver = amv2.Receiver
 
-// swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
+// swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
 
 	// Show active alerts
@@ -328,13 +434,13 @@ type AlertsParams struct {
 	Receivers string `json:"receiver"`
 }
 
-// swagger:parameters RoutePostAMAlerts
+// swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
 }
 
-// swagger:parameters RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
 	Body PostableUserConfig
@@ -349,10 +455,9 @@ type BodyAlertingConfig struct {
 // testing routes
 // swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceReference struct {
-	// Recipient should be "grafana" for requests to be handled by grafana
-	// and the numeric datasource id for requests to be forwarded to a datasource
+	// Recipient should be the numeric datasource id
 	// in:path
-	Recipient string
+	Recipient int
 }
 
 // swagger:model
@@ -587,10 +692,11 @@ func (c *GettableApiAlertingConfig) validate() error {
 
 // Config is the top-level configuration for Alertmanager's config files.
 type Config struct {
-	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
-	Route        *Route                `yaml:"route,omitempty" json:"route,omitempty"`
-	InhibitRules []*config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
-	Templates    []string              `yaml:"templates" json:"templates"`
+	Global            *config.GlobalConfig      `yaml:"global,omitempty" json:"global,omitempty"`
+	Route             *Route                    `yaml:"route,omitempty" json:"route,omitempty"`
+	InhibitRules      []*config.InhibitRule     `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	MuteTimeIntervals []config.MuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
+	Templates         []string                  `yaml:"templates" json:"templates"`
 }
 
 // A Route is a node that contains definitions of how to handle alerts. This is modified
@@ -745,6 +851,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
 		return fmt.Errorf("root route must not have any matchers")
 	}
+	if len(c.Route.MuteTimeIntervals) > 0 {
+		return fmt.Errorf("root route must not have any mute time intervals")
+	}
 
 	for _, r := range c.InhibitRules {
 		if err := r.UnmarshalYAML(noopUnmarshal); err != nil {
@@ -752,6 +861,33 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		}
 	}
 
+	tiNames := make(map[string]struct{})
+	for _, mt := range c.MuteTimeIntervals {
+		if mt.Name == "" {
+			return fmt.Errorf("missing name in mute time interval")
+		}
+		if _, ok := tiNames[mt.Name]; ok {
+			return fmt.Errorf("mute time interval %q is not unique", mt.Name)
+		}
+		tiNames[mt.Name] = struct{}{}
+	}
+	return checkTimeInterval(c.Route, tiNames)
+}
+
+func checkTimeInterval(r *Route, timeIntervals map[string]struct{}) error {
+	for _, sr := range r.Routes {
+		if err := checkTimeInterval(sr, timeIntervals); err != nil {
+			return err
+		}
+	}
+	if len(r.MuteTimeIntervals) == 0 {
+		return nil
+	}
+	for _, mt := range r.MuteTimeIntervals {
+		if _, ok := timeIntervals[mt]; !ok {
+			return fmt.Errorf("undefined time interval %q used in route", mt)
+		}
+	}
 	return nil
 }
 
@@ -1053,7 +1189,7 @@ type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
 
-type EncryptFn func(ctx context.Context, payload []byte, secret string) ([]byte, error)
+type EncryptFn func(ctx context.Context, payload []byte, scope secrets.EncryptionOptions) ([]byte, error)
 
 func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	seenUIDs := make(map[string]struct{})
@@ -1063,7 +1199,7 @@ func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := encrypt(context.Background(), []byte(v), setting.SecretKey)
+					encryptedData, err := encrypt(context.Background(), []byte(v), secrets.WithoutScope())
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}

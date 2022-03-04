@@ -7,7 +7,7 @@ weight = 7
 
 # Time range controls
 
-Grafana provides several ways to manage the time ranges of the data being visualized, both at the dashboard level and the panel level.
+Grafana provides several ways to manage the time ranges of the data being visualized, for dashboard, panels and also for alerting.
 
 This page describes supported time units and relative ranges, the common time controls, dashboard-wide time settings, and panel-specific time settings.
 
@@ -34,11 +34,18 @@ Here are some examples:
 | This Year              | `now/Y`     | `now/Y`     |
 | Previous fiscal year   | `now-1y/fy` | `now-1y/fy` |
 
+### Note about Grafana alerting
+
+For Grafana alerting, we do not support are the following syntaxes at this time.
+
+- now+n for future timestamps.
+- now-1n/n for "start of n until end of n" since this is an absolute timestamp.
+
 ## Common time range controls
 
 The dashboard and panel time controls have a common user interface (UI).
 
-<img class="no-shadow" src="/static/img/docs/time-range-controls/common-time-controls-8-2.png" max-width="700px">
+<img class="no-shadow" src="/static/img/docs/time-range-controls/common-time-controls-7-0.png" max-width="700px">
 
 The options are defined below.
 
@@ -105,12 +112,14 @@ For more advanced time settings, click the **Dashboard settings** (gear) icon at
   - **Local browser time -** The time zone configured for the viewing user browser is used. This is usually the same time zone as set on the computer.
   - Standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), including UTC.
 - **Auto-refresh -** Customize the options displayed for relative time and the auto-refresh options. Entries are comma separated and accept any valid time unit.
-- **Now delay now- -** Override the `now` value by entering a time delay. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
+- **Now delay -** Override the `now` time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 - **Hide time picker -** Select this option if you do not want Grafana to display the time picker.
 
 ## Panel time overrides and timeshift
 
-In [Query options]({{< relref "../panels/queries.md#query-options" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
+In [Query options]({{< relref "../panels/reference-query-options.md" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
+
+> **Note:** Panel time overrides have no effect when the time range for the dashboard is absolute.
 
 ## Control the time range using a URL
 

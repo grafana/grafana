@@ -12,6 +12,7 @@ export interface Props {
   tags?: string[];
   onChange: (tags: string[]) => void;
   width?: number;
+  id?: string;
   className?: string;
   /** Toggle disabled state */
   disabled?: boolean;
@@ -30,6 +31,7 @@ export const TagsInput: FC<Props> = ({
   disabled,
   addOnBlur,
   invalid,
+  id,
 }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
@@ -77,6 +79,7 @@ export const TagsInput: FC<Props> = ({
       </div>
       <div>
         <Input
+          id={id}
           disabled={disabled}
           placeholder={placeholder}
           onChange={onNameChange}

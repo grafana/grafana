@@ -6,10 +6,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type DropFieldsFrameProcessorConfig struct {
-	FieldNames []string `json:"fieldNames"`
-}
-
 // DropFieldsFrameProcessor can drop specified fields from a data.Frame.
 type DropFieldsFrameProcessor struct {
 	config DropFieldsFrameProcessorConfig

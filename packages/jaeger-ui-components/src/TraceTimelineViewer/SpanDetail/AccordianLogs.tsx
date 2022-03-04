@@ -17,15 +17,17 @@ import { sortBy as _sortBy } from 'lodash';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import { formatDuration } from '../utils';
 import { TNil } from '../../types';
 import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
+import { autoColor } from '../../Theme';
 import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     AccordianLogs: css`
       label: AccordianLogs;
@@ -54,7 +56,7 @@ const getStyles = createStyle((theme: Theme) => {
       color: ${autoColor(theme, '#999')};
     `,
   };
-});
+};
 
 type AccordianLogsProps = {
   interactive?: boolean;
@@ -82,7 +84,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
     };
   }
 
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   return (
     <div className={styles.AccordianLogs}>
       <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>

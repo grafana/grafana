@@ -54,7 +54,7 @@ beforeEach(() => {
 
 describe('PrometheusDatasource', () => {
   let ds: PrometheusDatasource;
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
@@ -62,7 +62,7 @@ describe('PrometheusDatasource', () => {
     jsonData: {
       customQueryParameters: '',
     } as any,
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
     ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
@@ -571,6 +571,13 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('applyTemplateVariables', () => {
+    const originalAdhocFiltersMock = templateSrvStub.getAdhocFilters();
+    const originalReplaceMock = jest.fn((a: string, ...rest: any) => a);
+    afterAll(() => {
+      templateSrvStub.getAdhocFilters.mockReturnValue(originalAdhocFiltersMock);
+      templateSrvStub.replace = originalReplaceMock;
+    });
+
     it('should call replace function for legendFormat', () => {
       const query = {
         expr: 'test{job="bar"}',
@@ -582,6 +589,19 @@ describe('PrometheusDatasource', () => {
 
       const interpolatedQuery = ds.applyTemplateVariables(query, { legend: { text: legend, value: legend } });
       expect(interpolatedQuery.legendFormat).toBe(legend);
+    });
+
+    it('should call replace function for interval', () => {
+      const query = {
+        expr: 'test{job="bar"}',
+        interval: '$step',
+        refId: 'A',
+      };
+      const step = '5s';
+      templateSrvStub.replace.mockReturnValue(step);
+
+      const interpolatedQuery = ds.applyTemplateVariables(query, { step: { text: step, value: step } });
+      expect(interpolatedQuery.interval).toBe(step);
     });
 
     it('should call replace function for expr', () => {
@@ -596,19 +616,31 @@ describe('PrometheusDatasource', () => {
       expect(interpolatedQuery.expr).toBe(job);
     });
 
-    it('should not call replace function for interval', () => {
+    it('should add ad-hoc filters to expr', () => {
+      templateSrvStub.replace = jest.fn((a: string) => a);
+      templateSrvStub.getAdhocFilters.mockReturnValue([
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ]);
+
       const query = {
         expr: 'test{job="bar"}',
-        interval: '$interval',
         refId: 'A',
       };
-      const interval = '10s';
-      templateSrvStub.replace.mockReturnValue(interval);
 
-      const interpolatedQuery = ds.applyTemplateVariables(query, { interval: { text: interval, value: interval } });
-      expect(interpolatedQuery.interval).not.toBe(interval);
+      const result = ds.applyTemplateVariables(query, {});
+      expect(result).toMatchObject({ expr: 'test{job="bar",k1="v1",k2!="v2"}' });
     });
   });
+
   describe('metricFindQuery', () => {
     beforeEach(() => {
       const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
@@ -649,13 +681,13 @@ const HOUR = 60 * MINUTE;
 const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
 describe('PrometheusDatasource', () => {
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET' },
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;
   beforeEach(() => {
@@ -1028,6 +1060,31 @@ describe('PrometheusDatasource', () => {
       it('should handle single active value', async () => {
         const results = await runAnnotationQuery([[2 * 60000], [1]]);
         expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
+      });
+    });
+    describe('with template variables', () => {
+      const originalReplaceMock = jest.fn((a: string, ...rest: any) => a);
+      afterAll(() => {
+        templateSrvStub.replace = originalReplaceMock;
+      });
+
+      it('should interpolate variables in query expr', () => {
+        const query = {
+          ...options,
+          annotation: {
+            ...options.annotation,
+            expr: '$variable',
+          },
+          range: {
+            from: time({ seconds: 1 }),
+            to: time({ seconds: 2 }),
+          },
+        };
+        const interpolated = 'interpolated_expr';
+        templateSrvStub.replace.mockReturnValue(interpolated);
+        ds.annotationQuery(query);
+        const req = fetchMock.mock.calls[0][0];
+        expect(req.data.queries[0].expr).toBe(interpolated);
       });
     });
   });
@@ -1635,16 +1692,45 @@ describe('PrometheusDatasource', () => {
       templateSrvStub.replace = jest.fn((a: string) => a);
     });
   });
+
+  it('should give back 1 exemplar target when multiple queries with exemplar enabled and same metric', () => {
+    const targetA: PromQuery = {
+      refId: 'A',
+      expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+    const targetB: PromQuery = {
+      refId: 'B',
+      expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+      exemplar: true,
+    };
+
+    ds.languageProvider = {
+      histogramMetrics: ['tns_request_duration_seconds_bucket'],
+    } as any;
+
+    const request = {
+      targets: [targetA, targetB],
+      interval: '1s',
+      panelId: '',
+    } as any as DataQueryRequest<PromQuery>;
+
+    const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
+    const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
+
+    expect(Aexemplars).toBe(true);
+    expect(BExpemplars).toBe(false);
+  });
 });
 
 describe('PrometheusDatasource for POST', () => {
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;
   beforeEach(() => {
@@ -1737,23 +1823,23 @@ function getPrepareTargetsContext({
   queryOptions?: Partial<QueryOptions>;
   languageProvider?: any;
 }) {
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
   const start = 0;
   const end = 1;
   const panelId = '2';
-  const options = ({
+  const options = {
     targets,
     interval: '1s',
     panelId,
     app,
     ...queryOptions,
-  } as any) as DataQueryRequest<PromQuery>;
+  } as any as DataQueryRequest<PromQuery>;
 
   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
   if (languageProvider) {
@@ -2066,7 +2152,7 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
         const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);
@@ -2080,7 +2166,7 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
         const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);
@@ -2096,7 +2182,7 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
         const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);
@@ -2110,7 +2196,7 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
         const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);

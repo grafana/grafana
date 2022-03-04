@@ -19,7 +19,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus) *SearchService {
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
 	}
-	s.Bus.AddHandlerCtx(s.searchHandler)
+	s.Bus.AddHandler(s.SearchHandler)
 	return s
 }
 
@@ -59,14 +59,18 @@ type FindPersistedDashboardsQuery struct {
 	Result HitList
 }
 
-type SearchService struct {
-	Bus bus.Bus
-	Cfg *setting.Cfg
+type Service interface {
+	SearchHandler(context.Context, *Query) error
+	SortOptions() []SortOption
+}
 
+type SearchService struct {
+	Bus         bus.Bus
+	Cfg         *setting.Cfg
 	sortOptions map[string]SortOption
 }
 
-func (s *SearchService) searchHandler(ctx context.Context, query *Query) error {
+func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 	dashboardQuery := FindPersistedDashboardsQuery{
 		Title:        query.Title,
 		SignedInUser: query.SignedInUser,
@@ -84,7 +88,7 @@ func (s *SearchService) searchHandler(ctx context.Context, query *Query) error {
 		dashboardQuery.Sort = sortOpt
 	}
 
-	if err := bus.DispatchCtx(ctx, &dashboardQuery); err != nil {
+	if err := bus.Dispatch(ctx, &dashboardQuery); err != nil {
 		return err
 	}
 
@@ -120,7 +124,7 @@ func setStarredDashboards(ctx context.Context, userID int64, hits []*Hit) error 
 		UserId: userID,
 	}
 
-	if err := bus.DispatchCtx(ctx, &query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		return err
 	}
 

@@ -1,4 +1,4 @@
-import React, { ComponentProps, useCallback } from 'react';
+import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -6,8 +6,7 @@ import { default as AsyncCreatable } from 'react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
-import { css, cx } from '@emotion/css';
-import resetSelectStyles from './resetSelectStyles';
+import { useCustomSelectStyles } from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { ValueContainer } from './ValueContainer';
@@ -20,8 +19,7 @@ import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme2 } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
-import { SelectBaseProps, SelectValue } from './types';
-import { deprecationWarning } from '@grafana/data';
+import { ActionMeta, SelectBaseProps, SelectValue } from './types';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -120,6 +118,7 @@ export function SelectBase<T>({
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
+  // TODO change this to default to true for Grafana 9
   menuShouldPortal = false,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -139,18 +138,38 @@ export function SelectBase<T>({
   value,
   width,
   isValidNewOption,
+  formatOptionLabel,
 }: SelectBaseProps<T>) {
-  if (menuShouldPortal === false) {
-    deprecationWarning('SelectBase', 'menuShouldPortal={false}', 'menuShouldPortal={true}');
-  }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+
+  const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
+  const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
+  const selectStyles = useCustomSelectStyles(theme, width);
+
+  // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
+  // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
+  // We can remove this workaround when the bug in react-select is fixed: https://github.com/JedWatson/react-select/issues/4936
+  // Note: we use useEffect instead of hooking into onMenuOpen due to another bug: https://github.com/JedWatson/react-select/issues/3375
+  useEffect(() => {
+    if (
+      loadOptions &&
+      isOpen &&
+      reactSelectRef.current &&
+      reactSelectRef.current.controlRef &&
+      menuPlacement === 'auto'
+    ) {
+      const distance = window.innerHeight - reactSelectRef.current.controlRef.getBoundingClientRect().bottom;
+      setCloseToBottom(distance < maxMenuHeight);
+    }
+  }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
+
   const onChangeWithEmpty = useCallback(
-    (value: SelectValue<T>) => {
+    (value: SelectValue<T>, action: ActionMeta) => {
       if (isMulti && (value === undefined || value === null)) {
-        return onChange([]);
+        return onChange([], action);
       }
-      onChange(value);
+      onChange(value, action);
     },
     [isMulti, onChange]
   );
@@ -205,7 +224,7 @@ export function SelectBase<T>({
     minMenuHeight,
     maxVisibleValues,
     menuIsOpen: isOpen,
-    menuPlacement,
+    menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
     menuPortalTarget: menuShouldPortal ? document.body : undefined,
@@ -216,6 +235,7 @@ export function SelectBase<T>({
     onKeyDown,
     onMenuClose: onCloseMenu,
     onMenuOpen: onOpenMenu,
+    formatOptionLabel,
     openMenuOnFocus,
     options,
     placeholder,
@@ -247,37 +267,11 @@ export function SelectBase<T>({
   return (
     <>
       <ReactSelectComponent
+        ref={reactSelectRef}
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
           ValueContainer,
-          Placeholder(props: any) {
-            return (
-              <div
-                {...props.innerProps}
-                className={cx(
-                  css(props.getStyles('placeholder', props)),
-                  css`
-                    display: inline-block;
-                    color: ${theme.colors.text.disabled};
-
-                    box-sizing: border-box;
-                    line-height: 1;
-                    white-space: nowrap;
-                  `,
-                  // When width: auto, the placeholder must take up space in the Select otherwise the width collapses down
-                  width !== 'auto' &&
-                    css`
-                      position: absolute;
-                      top: 50%;
-                      transform: translateY(-50%);
-                    `
-                )}
-              >
-                {props.children}
-              </div>
-            );
-          },
           IndicatorsContainer(props: any) {
             const { selectProps } = props;
             const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
@@ -345,29 +339,7 @@ export function SelectBase<T>({
           SelectContainer,
           ...components,
         }}
-        styles={{
-          ...resetSelectStyles(),
-          menuPortal: (base: any) => ({
-            ...base,
-            zIndex: theme.zIndex.portal,
-          }),
-          //These are required for the menu positioning to function
-          menu: ({ top, bottom, position }: any) => ({
-            top,
-            bottom,
-            position,
-            minWidth: '100%',
-            zIndex: theme.zIndex.dropdown,
-          }),
-          container: () => ({
-            width: width ? theme.spacing(width) : '100%',
-            display: width === 'auto' ? 'inline-flex' : 'flex',
-          }),
-          option: (provided: any, state: any) => ({
-            ...provided,
-            opacity: state.isDisabled ? 0.5 : 1,
-          }),
-        }}
+        styles={selectStyles}
         className={className}
         {...commonSelectProps}
         {...creatableProps}

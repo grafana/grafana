@@ -11,16 +11,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
 
@@ -55,22 +56,13 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring MQL query")
-	span.SetTag("query", timeSeriesQuery.Query)
-	span.SetTag("from", req.Queries[0].TimeRange.From)
-	span.SetTag("until", req.Queries[0].TimeRange.To)
-	span.SetTag("datasource_id", dsInfo.id)
-	span.SetTag("org_id", req.PluginContext.OrgID)
+	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
+	span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
 
-	defer span.Finish()
-
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(r.Header)); err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
+	defer span.End()
+	tracer.Inject(ctx, r.Header, span)
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
@@ -90,10 +82,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
-	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 
-	customFrameMeta := map[string]interface{}{}
 	for _, series := range response.TimeSeriesData {
 		seriesLabels := make(map[string]string)
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
@@ -101,34 +91,37 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
 		}
+		labels := make(map[string]string)
 
 		for n, d := range response.TimeSeriesDescriptor.LabelDescriptors {
 			key := toSnakeCase(d.Key)
 			key = strings.Replace(key, ".", ".label.", 1)
-			if _, ok := labels[key]; !ok {
-				labels[key] = map[string]bool{}
-			}
 
 			labelValue := series.LabelValues[n]
 			switch d.ValueType {
 			case "BOOL":
 				strVal := strconv.FormatBool(labelValue.BoolValue)
-				labels[key][strVal] = true
+				labels[key] = strVal
 				seriesLabels[key] = strVal
 			case "INT64":
-				labels[key][labelValue.Int64Value] = true
+				labels[key] = labelValue.Int64Value
 				seriesLabels[key] = labelValue.Int64Value
 			default:
-				labels[key][labelValue.StringValue] = true
+				labels[key] = labelValue.StringValue
 				seriesLabels[key] = labelValue.StringValue
 			}
 		}
 
 		for n, d := range response.TimeSeriesDescriptor.PointDescriptors {
-			if _, ok := labels["metric.name"]; !ok {
-				labels["metric.name"] = map[string]bool{}
+			// If more than 1 pointdescriptor was returned, three aggregations are returned per time series - min, mean and max.
+			// This is a because the period for the given table is less than half the duration which is used in the graph_period MQL function.
+			// See https://cloud.google.com/monitoring/mql/reference#graph_period-tabop
+			// When this is the case, we'll just ignore the min and max and use the mean value in the frame
+			if len(response.TimeSeriesDescriptor.PointDescriptors) > 1 && !strings.HasSuffix(d.Key, ".mean") {
+				continue
 			}
-			labels["metric.name"][d.Key] = true
+
+			labels["metric.name"] = d.Key
 			seriesLabels["metric.name"] = d.Key
 			defaultMetricName := d.Key
 
@@ -239,26 +232,18 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 				frames = append(frames, buckets[i])
 			}
 		}
-	}
-	if len(response.TimeSeriesData) > 0 {
-		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit)
-	}
 
-	labelsByKey := make(map[string][]string)
-	for key, values := range labels {
-		for value := range values {
-			labelsByKey[key] = append(labelsByKey[key], value)
-		}
-	}
-	customFrameMeta["labels"] = labelsByKey
-
-	for _, frame := range frames {
+		customFrameMeta := map[string]interface{}{}
+		customFrameMeta["labels"] = labels
 		if frame.Meta != nil {
 			frame.Meta.Custom = customFrameMeta
 		} else {
 			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
 		}
+	}
+	if len(response.TimeSeriesData) > 0 {
+		dl := timeSeriesQuery.buildDeepLink()
+		frames = addConfigData(frames, dl, response.Unit)
 	}
 
 	queryRes.Frames = frames
@@ -267,7 +252,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 }
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
-	data cloudMonitoringResponse, title, text, tags string) error {
+	data cloudMonitoringResponse, title, text string) error {
 	annotations := make([]map[string]string, 0)
 
 	for _, series := range data.TimeSeriesData {
@@ -307,7 +292,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 				annotation := make(map[string]string)
 				annotation["time"] = point.TimeInterval.EndTime.UTC().Format(time.RFC3339)
 				annotation["title"] = formatAnnotationText(title, value, d.MetricKind, metricLabels, resourceLabels)
-				annotation["tags"] = tags
+				annotation["tags"] = ""
 				annotation["text"] = formatAnnotationText(text, value, d.MetricKind, metricLabels, resourceLabels)
 				annotations = append(annotations, annotation)
 			}

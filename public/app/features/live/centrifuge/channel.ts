@@ -1,5 +1,4 @@
 import {
-  LiveChannelConfig,
   LiveChannelStatusEvent,
   LiveChannelEvent,
   LiveChannelEventType,
@@ -7,6 +6,7 @@ import {
   LiveChannelPresenceStatus,
   LiveChannelAddress,
   DataFrameJSON,
+  isValidLiveChannelAddress,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -34,10 +34,9 @@ export class CentrifugeLiveChannel<T = any> {
   // Hold on to the last header with schema
   lastMessageWithSchema?: DataFrameJSON;
 
-  /** Static definition of the channel definition.  This may describe the channel usage */
-  config?: LiveChannelConfig;
   subscription?: Centrifuge.Subscription;
   shutdownCallback?: () => void;
+  initalized?: boolean;
 
   constructor(id: string, addr: LiveChannelAddress) {
     this.id = id;
@@ -48,17 +47,21 @@ export class CentrifugeLiveChannel<T = any> {
       timestamp: this.opened,
       state: LiveChannelConnectionState.Pending,
     };
+    if (!isValidLiveChannelAddress(addr)) {
+      this.currentStatus.state = LiveChannelConnectionState.Invalid;
+      this.currentStatus.error = 'invalid channel address';
+    }
   }
 
   // This should only be called when centrifuge is connected
-  initalize(config: LiveChannelConfig): SubscriptionEvents {
-    if (this.config) {
+  initalize(): SubscriptionEvents {
+    if (this.initalized) {
       throw new Error('Channel already initalized: ' + this.id);
     }
-    this.config = config;
+    this.initalized = true;
 
     const events: SubscriptionEvents = {
-      // Called when a message is recieved from the socket
+      // Called when a message is received from the socket
       publish: (ctx: PublicationContext) => {
         try {
           if (ctx.data) {
@@ -108,14 +111,12 @@ export class CentrifugeLiveChannel<T = any> {
       },
     };
 
-    if (config.hasPresence) {
-      events.join = (ctx: JoinLeaveContext) => {
-        this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
-      };
-      events.leave = (ctx: JoinLeaveContext) => {
-        this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
-      };
-    }
+    events.join = (ctx: JoinLeaveContext) => {
+      this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
+    };
+    events.leave = (ctx: JoinLeaveContext) => {
+      this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
+    };
     return events;
   }
 
@@ -139,7 +140,14 @@ export class CentrifugeLiveChannel<T = any> {
    */
   getStream() {
     return new Observable((subscriber) => {
-      subscriber.next({ ...this.currentStatus });
+      const initialMessage = { ...this.currentStatus };
+      if (this.lastMessageWithSchema?.schema) {
+        // send just schema instead of schema+data to avoid having data gaps
+        initialMessage.message = { schema: this.lastMessageWithSchema?.schema };
+      }
+
+      subscriber.next({ ...this.currentStatus, message: this.lastMessageWithSchema });
+
       const sub = this.stream.subscribe(subscriber);
       return () => {
         sub.unsubscribe();

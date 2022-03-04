@@ -25,7 +25,7 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
 
-  // Sadly plugins can set any propery directly on the main object
+  // Sadly plugins can set any property directly on the main object
   [key: string]: any;
 }
 

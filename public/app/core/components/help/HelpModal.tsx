@@ -40,6 +40,10 @@ const shortcuts = {
       keys: ['t', '→'],
       description: 'Move time range forward',
     },
+    {
+      keys: ['t', 'a'],
+      description: 'Make time range absolute/permanent',
+    },
   ],
 };
 

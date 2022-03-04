@@ -87,7 +87,7 @@ describe('BarGauge', () => {
 
     it('does not show as lit if the value is null (somehow)', () => {
       const props = getProps();
-      expect(getCellColor(1, (null as unknown) as DisplayValue, props.display)).toEqual(
+      expect(getCellColor(1, null as unknown as DisplayValue, props.display)).toEqual(
         expect.objectContaining({
           isLit: false,
         })
@@ -170,6 +170,18 @@ describe('BarGauge', () => {
     });
   });
 
+  describe('Vertical bar', () => {
+    it('should adjust empty region to always have same width as colored bar', () => {
+      const props = getProps({
+        width: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Vertical,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.width).toBe('150px');
+    });
+  });
+
   describe('Vertical bar without title', () => {
     it('should not include title height in height', () => {
       const props = getProps({
@@ -218,9 +230,7 @@ describe('BarGauge', () => {
       const styles = getTitleStyles(props);
       expect(styles.wrapper.flexDirection).toBe('column');
     });
-  });
 
-  describe('Horizontal bar with title', () => {
     it('should place below if height < 40', () => {
       const props = getProps({
         height: 30,
@@ -249,6 +259,19 @@ describe('BarGauge', () => {
       expect(styles2.title.width).toBe('43px');
     });
 
+    it('Should limit text length to 40%', () => {
+      const props = getProps({
+        height: 30,
+        value: getValue(
+          100,
+          'saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        ),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.title.width).toBe('119px');
+    });
+
     it('should use alignmentFactors if provided', () => {
       const props = getProps({
         height: 30,
@@ -261,6 +284,16 @@ describe('BarGauge', () => {
       });
       const styles = getTitleStyles(props);
       expect(styles.title.width).toBe('37px');
+    });
+
+    it('should adjust empty region to always have same height as colored bar', () => {
+      const props = getProps({
+        height: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.height).toBe('150px');
     });
   });
 

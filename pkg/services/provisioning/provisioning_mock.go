@@ -47,7 +47,7 @@ func (mock *ProvisioningServiceMock) ProvisionDatasources(ctx context.Context) e
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionPlugins() error {
+func (mock *ProvisioningServiceMock) ProvisionPlugins(ctx context.Context) error {
 	mock.Calls.ProvisionPlugins = append(mock.Calls.ProvisionPlugins, nil)
 	if mock.ProvisionPluginsFunc != nil {
 		return mock.ProvisionPluginsFunc()

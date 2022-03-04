@@ -10,9 +10,9 @@ import (
 )
 
 func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetPreferences)
-	bus.AddHandlerCtx("sql", ss.GetPreferencesWithDefaults)
-	bus.AddHandlerCtx("sql", ss.SavePreferences)
+	bus.AddHandler("sql", ss.GetPreferences)
+	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
+	bus.AddHandler("sql", ss.SavePreferences)
 }
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
@@ -111,6 +111,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 			return err
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
+		prefs.Timezone = cmd.Timezone
 		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()

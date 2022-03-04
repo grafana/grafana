@@ -75,15 +75,6 @@ const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSo
       return queryDetails;
     }
 
-    if (matchesForQuery.resourceGroups && defaultSubscriptionId) {
-      const queryDetails: ResourceGroupsQuery = {
-        kind: 'ResourceGroupsQuery',
-        rawQuery,
-        subscription: defaultSubscriptionId,
-      };
-      return queryDetails;
-    }
-
     if (matchesForQuery.resourceGroupsWithSub) {
       const queryDetails: ResourceGroupsQuery = {
         kind: 'ResourceGroupsQuery',
@@ -93,12 +84,11 @@ const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSo
       return queryDetails;
     }
 
-    if (matchesForQuery.metricDefinitions && defaultSubscriptionId) {
-      const queryDetails: MetricDefinitionsQuery = {
-        kind: 'MetricDefinitionsQuery',
+    if (matchesForQuery.resourceGroups && defaultSubscriptionId) {
+      const queryDetails: ResourceGroupsQuery = {
+        kind: 'ResourceGroupsQuery',
         rawQuery,
         subscription: defaultSubscriptionId,
-        resourceGroup: matchesForQuery.metricDefinitions[1],
       };
       return queryDetails;
     }
@@ -113,13 +103,12 @@ const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSo
       return queryDetails;
     }
 
-    if (matchesForQuery.resourceNames && defaultSubscriptionId) {
-      const queryDetails: ResourceNamesQuery = {
-        kind: 'ResourceNamesQuery',
+    if (matchesForQuery.metricDefinitions && defaultSubscriptionId) {
+      const queryDetails: MetricDefinitionsQuery = {
+        kind: 'MetricDefinitionsQuery',
         rawQuery,
         subscription: defaultSubscriptionId,
-        resourceGroup: matchesForQuery.resourceNames[1],
-        metricDefinition: matchesForQuery.resourceNames[2],
+        resourceGroup: matchesForQuery.metricDefinitions[1],
       };
       return queryDetails;
     }
@@ -135,14 +124,13 @@ const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSo
       return queryDetails;
     }
 
-    if (matchesForQuery.metricNamespace && defaultSubscriptionId) {
-      const queryDetails: MetricNamespaceQuery = {
-        kind: 'MetricNamespaceQuery',
+    if (matchesForQuery.resourceNames && defaultSubscriptionId) {
+      const queryDetails: ResourceNamesQuery = {
+        kind: 'ResourceNamesQuery',
         rawQuery,
         subscription: defaultSubscriptionId,
-        resourceGroup: matchesForQuery.metricNamespace[1],
-        metricDefinition: matchesForQuery.metricNamespace[2],
-        resourceName: matchesForQuery.metricNamespace[3],
+        resourceGroup: matchesForQuery.resourceNames[1],
+        metricDefinition: matchesForQuery.resourceNames[2],
       };
       return queryDetails;
     }
@@ -155,6 +143,18 @@ const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSo
         resourceGroup: matchesForQuery.metricNamespaceWithSub[2],
         metricDefinition: matchesForQuery.metricNamespaceWithSub[3],
         resourceName: matchesForQuery.metricNamespaceWithSub[4],
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.metricNamespace && defaultSubscriptionId) {
+      const queryDetails: MetricNamespaceQuery = {
+        kind: 'MetricNamespaceQuery',
+        rawQuery,
+        subscription: defaultSubscriptionId,
+        resourceGroup: matchesForQuery.metricNamespace[1],
+        metricDefinition: matchesForQuery.metricNamespace[2],
+        resourceName: matchesForQuery.metricNamespace[3],
       };
       return queryDetails;
     }
@@ -187,20 +187,20 @@ const createGrafanaTemplateVariableQuery = (rawQuery: string, datasource: DataSo
       return queryDetails;
     }
 
-    if (matchesForQuery.workspacesQuery && defaultSubscriptionId) {
-      const queryDetails: WorkspacesQuery = {
-        kind: 'WorkspacesQuery',
-        rawQuery,
-        subscription: defaultSubscriptionId,
-      };
-      return queryDetails;
-    }
-
     if (matchesForQuery.workspacesQueryWithSub) {
       const queryDetails: WorkspacesQuery = {
         kind: 'WorkspacesQuery',
         rawQuery,
         subscription: (matchesForQuery.workspacesQueryWithSub[1] || '').trim(),
+      };
+      return queryDetails;
+    }
+
+    if (matchesForQuery.workspacesQuery && defaultSubscriptionId) {
+      const queryDetails: WorkspacesQuery = {
+        kind: 'WorkspacesQuery',
+        rawQuery,
+        subscription: defaultSubscriptionId,
       };
       return queryDetails;
     }

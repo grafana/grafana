@@ -32,10 +32,6 @@ type Plugin struct {
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
-
 	// SystemJS fields
 	Module  string
 	BaseURL string
@@ -43,6 +39,61 @@ type Plugin struct {
 	Renderer pluginextensionv2.RendererPlugin
 	client   backendplugin.Plugin
 	log      log.Logger
+}
+
+type PluginDTO struct {
+	JSONData
+
+	PluginDir string
+	Class     Class
+
+	// App fields
+	IncludedInAppID string
+	DefaultNavURL   string
+	Pinned          bool
+
+	// Signature fields
+	Signature      SignatureStatus
+	SignatureType  SignatureType
+	SignatureOrg   string
+	SignedFiles    PluginFiles
+	SignatureError *SignatureError
+
+	// SystemJS fields
+	Module  string
+	BaseURL string
+
+	// temporary
+	backend.StreamHandler
+}
+
+func (p PluginDTO) SupportsStreaming() bool {
+	return p.StreamHandler != nil
+}
+
+func (p PluginDTO) IsApp() bool {
+	return p.Type == App
+}
+
+func (p PluginDTO) IsCorePlugin() bool {
+	return p.Class == Core
+}
+
+func (p PluginDTO) IncludedInSignature(file string) bool {
+	// permit Core plugin files
+	if p.IsCorePlugin() {
+		return true
+	}
+
+	// permit when no signed files (no MANIFEST)
+	if p.SignedFiles == nil {
+		return true
+	}
+
+	if _, exists := p.SignedFiles[file]; !exists {
+		return false
+	}
+	return true
 }
 
 // JSONData represents the plugin's plugin.json
@@ -83,6 +134,17 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer)
 	Executable string `json:"executable,omitempty"`
+}
+
+func (d JSONData) DashboardIncludes() []*Includes {
+	result := []*Includes{}
+	for _, include := range d.Includes {
+		if include.Type == TypeDashboard {
+			result = append(result, include)
+		}
+	}
+
+	return result
 }
 
 // Route describes a plugin route that is defined in
@@ -201,12 +263,12 @@ func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthReques
 	return pluginClient.CheckHealth(ctx, req)
 }
 
-func (p *Plugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	return pluginClient.CollectMetrics(ctx)
+	return pluginClient.CollectMetrics(ctx, req)
 }
 
 func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -252,6 +314,27 @@ type PluginClient interface {
 	backend.StreamHandler
 }
 
+func (p *Plugin) ToDTO() PluginDTO {
+	c, _ := p.Client()
+
+	return PluginDTO{
+		JSONData:        p.JSONData,
+		PluginDir:       p.PluginDir,
+		Class:           p.Class,
+		IncludedInAppID: p.IncludedInAppID,
+		DefaultNavURL:   p.DefaultNavURL,
+		Pinned:          p.Pinned,
+		Signature:       p.Signature,
+		SignatureType:   p.SignatureType,
+		SignatureOrg:    p.SignatureOrg,
+		SignedFiles:     p.SignedFiles,
+		SignatureError:  p.SignatureError,
+		Module:          p.Module,
+		BaseURL:         p.BaseURL,
+		StreamHandler:   c,
+	}
+}
+
 func (p *Plugin) StaticRoute() *StaticRoute {
 	if p.IsCorePlugin() {
 		return nil
@@ -286,33 +369,6 @@ func (p *Plugin) IsBundledPlugin() bool {
 
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
-}
-
-func (p *Plugin) SupportsStreaming() bool {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return false
-	}
-
-	_, ok = pluginClient.(backend.StreamHandler)
-	return ok
-}
-
-func (p *Plugin) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
-	}
-
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
-	}
-
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
-	}
-	return true
 }
 
 type Class string

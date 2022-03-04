@@ -13,6 +13,7 @@ import (
 )
 
 var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
+var mlog = log.New("models")
 
 type AnyId struct {
 	Id int64 `json:"id"`
@@ -47,11 +48,25 @@ type CurrentUser struct {
 
 type UserPermissionsMap map[string]bool
 
+// swagger:model
 type MetricRequest struct {
-	From    string             `json:"from"`
-	To      string             `json:"to"`
+	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now-1h
+	From string `json:"from"`
+	// To End time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now
+	To string `json:"to"`
+	// queries.refId – Specifies an identifier of the query. Is optional and default to “A”.
+	// queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.
+	// queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
+	// queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+	// required: true
+	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasourceId": 86, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
 	Queries []*simplejson.Json `json:"queries"`
-	Debug   bool               `json:"debug"`
+	// required: false
+	Debug bool `json:"debug"`
 }
 
 func GetGravatarUrl(text string) string {
@@ -65,7 +80,7 @@ func GetGravatarUrl(text string) string {
 
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
-		log.Warn("Failed to hash text", "err", err)
+		mlog.Warn("Failed to hash text", "err", err)
 	}
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
 }

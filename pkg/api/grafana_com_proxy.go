@@ -22,7 +22,7 @@ var grafanaComProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
-func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
+func ReverseProxyGnetReq(proxyPath string, version string) *httputil.ReverseProxy {
 	url, _ := url.Parse(setting.GrafanaComUrl)
 
 	director := func(req *http.Request) {
@@ -36,14 +36,17 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
 		req.Header.Del("Authorization")
+
+		// send the current Grafana version for each request proxied to GCOM
+		req.Header.Add("grafana-version", version)
 	}
 
 	return &httputil.ReverseProxy{Director: director}
 }
 
-func ProxyGnetRequest(c *models.ReqContext) {
+func (hs *HTTPServer) ProxyGnetRequest(c *models.ReqContext) {
 	proxyPath := web.Params(c.Req)["*"]
-	proxy := ReverseProxyGnetReq(proxyPath)
+	proxy := ReverseProxyGnetReq(proxyPath, hs.Cfg.BuildVersion)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)
 	c.Resp.Header().Del("Set-Cookie")

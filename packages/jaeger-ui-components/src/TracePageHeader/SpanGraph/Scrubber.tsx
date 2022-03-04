@@ -14,11 +14,10 @@
 
 import React from 'react';
 import cx from 'classnames';
-
-import { createStyle } from '../../Theme';
 import { css } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 
-export const getStyles = createStyle(() => {
+export const getStyles = () => {
   return {
     ScrubberHandleExpansion: cx(
       css`
@@ -70,7 +69,7 @@ export const getStyles = createStyle(() => {
       }
     `,
   };
-});
+};
 
 type ScrubberProps = {
   isDragging: boolean;
@@ -82,7 +81,7 @@ type ScrubberProps = {
 
 export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMouseLeave, position }: ScrubberProps) {
   const xPercent = `${position * 100}%`;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   const className = cx({ [styles.ScrubberDragging]: isDragging });
   return (
     <g className={className}>

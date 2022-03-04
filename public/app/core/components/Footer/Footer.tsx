@@ -1,10 +1,11 @@
 import React, { FC } from 'react';
-import config from 'app/core/config';
+import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
 
 export interface FooterLink {
   text: string;
-  icon?: string;
+  id?: string;
+  icon?: IconName;
   url?: string;
   target?: string;
 }
@@ -47,6 +48,7 @@ export let getVersionLinks = (): FooterLink[] => {
 
   if (buildInfo.hasUpdate) {
     links.push({
+      id: 'updateVersion',
       text: `New version available!`,
       icon: 'download-alt',
       url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
@@ -74,8 +76,8 @@ export const Footer: FC = React.memo(() => {
         <ul>
           {links.map((link) => (
             <li key={link.text}>
-              <a href={link.url} target={link.target} rel="noopener">
-                {link.icon && <Icon name={link.icon as IconName} />} {link.text}
+              <a href={link.url} target={link.target} rel="noopener" id={link.id}>
+                {link.icon && <Icon name={link.icon} />} {link.text}
               </a>
             </li>
           ))}

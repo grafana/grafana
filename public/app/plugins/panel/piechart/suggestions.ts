@@ -19,10 +19,11 @@ export class PieChartSuggestionsSupplier {
           values: [],
         } as any,
       },
-      previewModifier: (s) => {
-        // Hide labels in preview
-        s.options!.legend.displayMode = LegendDisplayMode.Hidden;
-        s.options!.displayLabels = [];
+      cardOptions: {
+        previewModifier: (s) => {
+          // Hide labels in preview
+          s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+        },
       },
     });
 

@@ -7,7 +7,9 @@
     "allowJs": true,
     "strict": true,
     "resolveJsonModule": true,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "incremental": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [

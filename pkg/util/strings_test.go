@@ -88,8 +88,20 @@ func TestToCamelCase(t *testing.T) {
 		"snake_case_string": "snakeCaseString",
 		"mixed-case_string": "mixedCaseString",
 		"alreadyCamelCase":  "alreadyCamelCase",
+		"":                  "",
 	}
 	for input, expected := range tests {
 		assert.Equal(t, expected, ToCamelCase(input))
+	}
+}
+
+func TestCapitalize(t *testing.T) {
+	tests := map[string]string{
+		"properly capitalizes": "Properly capitalizes",
+		"Already capitalized":  "Already capitalized",
+		"":                     "",
+	}
+	for input, expected := range tests {
+		assert.Equal(t, expected, Capitalize(input))
 	}
 }

@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-type AutoJsonConverterConfig struct {
-	FieldTips map[string]Field `json:"fieldTips,omitempty"`
-}
-
 type AutoJsonConverter struct {
 	config      AutoJsonConverterConfig
 	nowTimeFunc func() time.Time

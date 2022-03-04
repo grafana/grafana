@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Tab, TabsBar, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
+import { ProBadge } from '../Upgrade/ProBadge';
 
 export interface Props {
   model: NavModel;
@@ -62,6 +63,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
                 key={`${child.url}-${index}`}
                 icon={child.icon as IconName}
                 href={child.url}
+                suffix={child.tabSuffix}
               />
             )
           );
@@ -80,7 +82,6 @@ export const PageHeader: FC<Props> = ({ model }) => {
 
   const main = model.main;
   const children = main.children;
-
   return (
     <div className={styles.headerCanvas}>
       <div className="page-container">
@@ -104,20 +105,32 @@ function renderHeaderTitle(main: NavModelItem) {
       </span>
 
       <div className="page-header__info-block">
-        {renderTitle(main.text, main.breadcrumbs ?? [])}
+        {renderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
         {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
       </div>
     </div>
   );
 }
 
-function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
+function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[], highlightText: NavModelItem['highlightText']) {
   if (!title && (!breadcrumbs || breadcrumbs.length === 0)) {
     return null;
   }
 
   if (!breadcrumbs || breadcrumbs.length === 0) {
-    return <h1 className="page-header__title">{title}</h1>;
+    return (
+      <h1 className="page-header__title">
+        {title}
+        {highlightText && (
+          <ProBadge
+            text={highlightText}
+            className={css`
+              vertical-align: middle;
+            `}
+          />
+        )}
+      </h1>
+    );
   }
 
   const breadcrumbsResult = [];

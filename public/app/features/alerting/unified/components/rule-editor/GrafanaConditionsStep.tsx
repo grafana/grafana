@@ -108,6 +108,7 @@ export const GrafanaConditionsStep: FC = () => {
                   inputId="no-data-state-input"
                   width={42}
                   includeNoData={true}
+                  includeError={false}
                   onChange={(value) => onChange(value?.value)}
                 />
               )}
@@ -122,6 +123,7 @@ export const GrafanaConditionsStep: FC = () => {
                   inputId="exec-err-state-input"
                   width={42}
                   includeNoData={false}
+                  includeError={true}
                   onChange={(value) => onChange(value?.value)}
                 />
               )}

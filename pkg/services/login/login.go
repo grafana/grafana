@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -16,6 +17,6 @@ type TeamSyncFunc func(user *models.User, externalUser *models.ExternalUserInfo)
 
 type Service interface {
 	CreateUser(cmd models.CreateUserCommand) (*models.User, error)
-	UpsertUser(cmd *models.UpsertUserCommand) error
+	UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error
 	SetTeamSyncFunc(TeamSyncFunc)
 }

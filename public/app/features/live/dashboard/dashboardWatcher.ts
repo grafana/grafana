@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
-import { CoreGrafanaLiveFeature } from '../channel-config/types';
 import { sessionId } from 'app/features/live';
 import { ShowModalReactEvent } from '../../../types/events';
 import { Unsubscribable } from 'rxjs';
@@ -159,16 +158,3 @@ class DashboardWatcher {
 }
 
 export const dashboardWatcher = new DashboardWatcher();
-
-export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
-  return {
-    name: 'dashboard',
-    support: {
-      getChannelConfig: (path: string) => ({
-        description: 'Dashboard change events',
-        hasPresence: true,
-      }),
-    },
-    description: 'Dashboard listener',
-  };
-}

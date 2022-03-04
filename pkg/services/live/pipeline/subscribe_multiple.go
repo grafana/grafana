@@ -21,11 +21,11 @@ func (s *MultipleSubscriber) Type() string {
 	return SubscriberTypeMultiple
 }
 
-func (s *MultipleSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *MultipleSubscriber) Subscribe(ctx context.Context, vars Vars, data []byte) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	finalReply := models.SubscribeReply{}
 
 	for _, s := range s.Subscribers {
-		reply, status, err := s.Subscribe(ctx, vars)
+		reply, status, err := s.Subscribe(ctx, vars, data)
 		if err != nil {
 			return models.SubscribeReply{}, 0, err
 		}

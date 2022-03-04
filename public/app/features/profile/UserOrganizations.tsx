@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
 import { UserDTO, UserOrg } from 'app/types';
 import { Button, LoadingPlaceholder } from '@grafana/ui';
+import { Trans } from '@lingui/macro';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   user: UserDTO | null;
@@ -23,13 +25,20 @@ export class UserOrganizations extends PureComponent<Props> {
 
     return (
       <div>
-        <h3 className="page-sub-heading">Organizations</h3>
+        <h3 className="page-sub-heading">
+          <Trans id="user-orgs.title">Organizations</Trans>
+        </h3>
+
         <div className="gf-form-group">
-          <table className="filter-table form-inline" aria-label="User organizations table">
+          <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.orgsTable}>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Role</th>
+                <th>
+                  <Trans id="user-orgs.name-column">Name</Trans>
+                </th>
+                <th>
+                  <Trans id="user-orgs.role-column">Role</Trans>
+                </th>
                 <th />
               </tr>
             </thead>
@@ -42,7 +51,7 @@ export class UserOrganizations extends PureComponent<Props> {
                     <td className="text-right">
                       {org.orgId === user?.orgId ? (
                         <Button variant="secondary" size="sm" disabled>
-                          Current
+                          <Trans id="user-orgs.current-org-button">Current</Trans>
                         </Button>
                       ) : (
                         <Button
@@ -51,9 +60,8 @@ export class UserOrganizations extends PureComponent<Props> {
                           onClick={() => {
                             this.props.setUserOrg(org);
                           }}
-                          aria-label={`Switch to the organization named ${org.name}`}
                         >
-                          Select
+                          <Trans id="user-orgs.select-org-button">Select organisation</Trans>
                         </Button>
                       )}
                     </td>

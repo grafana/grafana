@@ -21,6 +21,7 @@ type Role struct {
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
+	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
 
 	Updated time.Time `json:"updated"`
@@ -61,7 +62,9 @@ type RoleDTO struct {
 	Name        string       `json:"name"`
 	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
+	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
+	Delegatable *bool        `json:"delegatable,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
@@ -77,6 +80,7 @@ func (r RoleDTO) Role() Role {
 		UID:         r.UID,
 		Name:        r.Name,
 		DisplayName: r.DisplayName,
+		Group:       r.Group,
 		Description: r.Description,
 		Updated:     r.Updated,
 		Created:     r.Created,
@@ -125,6 +129,34 @@ func fallbackDisplayName(rName string) string {
 	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
 }
 
+type TeamRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	TeamID int64 `json:"teamId" xorm:"team_id"`
+
+	Created time.Time
+}
+
+type UserRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	UserID int64 `json:"userId" xorm:"user_id"`
+
+	Created time.Time
+}
+
+type BuiltinRole struct {
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	Role   string
+
+	Updated time.Time
+	Created time.Time
+}
+
 // Permission is the model for access control permissions.
 type Permission struct {
 	ID     int64  `json:"-" xorm:"pk autoincr 'id'"`
@@ -143,10 +175,75 @@ func (p Permission) OSSPermission() Permission {
 	}
 }
 
+type GetUserPermissionsQuery struct {
+	OrgID   int64 `json:"-"`
+	UserID  int64 `json:"userId"`
+	Roles   []string
+	Actions []string
+}
+
 // ScopeParams holds the parameters used to fill in scope templates
 type ScopeParams struct {
 	OrgID     int64
 	URLParams map[string]string
+}
+
+// ResourcePermission is structure that holds all actions that either a team / user / builtin-role
+// can perform against specific resource.
+type ResourcePermission struct {
+	ID          int64
+	ResourceID  string
+	RoleName    string
+	Actions     []string
+	Scope       string
+	UserId      int64
+	UserLogin   string
+	UserEmail   string
+	TeamId      int64
+	TeamEmail   string
+	Team        string
+	BuiltInRole string
+	Created     time.Time
+	Updated     time.Time
+}
+
+func (p *ResourcePermission) IsManaged() bool {
+	return strings.HasPrefix(p.RoleName, "managed:")
+}
+
+func (p *ResourcePermission) Contains(targetActions []string) bool {
+	if len(p.Actions) < len(targetActions) {
+		return false
+	}
+
+	var contain = func(arr []string, s string) bool {
+		for _, item := range arr {
+			if item == s {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, a := range targetActions {
+		if !contain(p.Actions, a) {
+			return false
+		}
+	}
+
+	return true
+}
+
+type SetResourcePermissionCommand struct {
+	UserID      int64
+	TeamID      int64
+	BuiltinRole string
+	Permission  string
+}
+
+type SQLFilter struct {
+	Where string
+	Args  []interface{}
 }
 
 const (
@@ -213,6 +310,54 @@ const (
 	ActionLicensingUpdate      = "licensing:update"
 	ActionLicensingDelete      = "licensing:delete"
 	ActionLicensingReportsRead = "licensing.reports:read"
+
+	// Team related actions
+	ActionTeamsCreate           = "teams:create"
+	ActionTeamsDelete           = "teams:delete"
+	ActionTeamsRead             = "teams:read"
+	ActionTeamsWrite            = "teams:write"
+	ActionTeamsPermissionsRead  = "teams.permissions:read"
+	ActionTeamsPermissionsWrite = "teams.permissions:write"
+
+	// Team related scopes
+	ScopeTeamsAll = "teams:*"
+
+	// Annotations related actions
+	ActionAnnotationsRead     = "annotations:read"
+	ActionAnnotationsTagsRead = "annotations.tags:read"
+
+	ScopeAnnotationsAll     = "annotations:*"
+	ScopeAnnotationsTagsAll = "annotations:tags:*"
+
+	// Dashboard actions
+	ActionDashboardsCreate           = "dashboards:create"
+	ActionDashboardsRead             = "dashboards:read"
+	ActionDashboardsWrite            = "dashboards:write"
+	ActionDashboardsDelete           = "dashboards:delete"
+	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
+	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
+
+	// Dashboard scopes
+	ScopeDashboardsAll = "dashboards:*"
+
+	// Folder actions
+	ActionFoldersCreate           = "folders:create"
+	ActionFoldersRead             = "folders:read"
+	ActionFoldersWrite            = "folders:write"
+	ActionFoldersDelete           = "folders:delete"
+	ActionFoldersPermissionsRead  = "folders.permissions:read"
+	ActionFoldersPermissionsWrite = "folders.permissions:write"
+
+	// Folder scopes
+	ScopeFoldersAll = "folders:*"
+)
+
+var (
+	// Team scope
+	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	// Folder scopes
+	ScopeFolderID = Scope("folders", "id", Parameter(":id"))
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

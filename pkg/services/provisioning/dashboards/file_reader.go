@@ -7,16 +7,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,10 +40,15 @@ type FileReader struct {
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
 	dbWriteAccessRestricted bool
+	permissionsServices     accesscontrol.PermissionsServices
+	features                featuremgmt.FeatureToggles
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*FileReader, error) {
+func NewDashboardFileReader(
+	cfg *config, log log.Logger, service dashboards.DashboardProvisioningService,
+	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -62,9 +69,11 @@ func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardProvisioningService: dashboards.NewProvisioningService(store),
+		dashboardProvisioningService: service,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
+		features:                     features,
+		permissionsServices:          permissionsServices,
 	}, nil
 }
 
@@ -103,7 +112,7 @@ func (fr *FileReader) walkDisk(ctx context.Context) error {
 		return err
 	}
 
-	fr.handleMissingDashboardFiles(provisionedDashboardRefs, filesFoundOnDisk)
+	fr.handleMissingDashboardFiles(ctx, provisionedDashboardRefs, filesFoundOnDisk)
 
 	usageTracker := newUsageTracker()
 	if fr.FoldersFromFilesStructure {
@@ -139,7 +148,7 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
-	folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
+	folderID, err := fr.getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
 	}
@@ -169,7 +178,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderName = filepath.Base(dashboardsFolder)
 		}
 
-		folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
+		folderID, err := fr.getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
@@ -184,7 +193,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 }
 
 // handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
-func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning,
+func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provisionedDashboardRefs map[string]*models.DashboardProvisioning,
 	filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
 	var dashboardsToDelete []int64
@@ -200,7 +209,7 @@ func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 		// so afterwards the dashboard is considered unprovisioned.
 		for _, dashboardID := range dashboardsToDelete {
 			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardID)
+			err := fr.dashboardProvisioningService.UnprovisionDashboard(ctx, dashboardID)
 			if err != nil {
 				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
 			}
@@ -209,7 +218,7 @@ func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 		// delete dashboards missing JSON file
 		for _, dashboardID := range dashboardsToDelete {
 			fr.log.Debug("deleting provisioned dashboard, missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgID)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(ctx, dashboardID, fr.Cfg.OrgID)
 			if err != nil {
 				fr.log.Error("failed to delete dashboard", "id", dashboardID, "error", err)
 			}
@@ -265,8 +274,23 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
 		}
-		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp); err != nil {
+		savedDash, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp)
+		if err != nil {
 			return provisioningMetadata, err
+		}
+
+		if !alreadyProvisioned && fr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			svc := fr.permissionsServices.GetDashboardService()
+			_, err := svc.SetPermissions(ctx, savedDash.OrgId, strconv.FormatInt(savedDash.Id, 10), accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Viewer",
+				Permission:  "View",
+			}, accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Editor",
+				Permission:  "Edit",
+			})
+			if err != nil {
+				fr.log.Warn("failed to set permissions for provisioned dashboard", "dashboardId", savedDash.Id, "err", err)
+			}
 		}
 	} else {
 		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name,
@@ -291,13 +315,13 @@ func getProvisionedDashboardsByPath(service dashboards.DashboardProvisioningServ
 	return byPath, nil
 }
 
-func getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, error) {
+func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, error) {
 	if folderName == "" {
 		return 0, ErrFolderNameMissing
 	}
 
 	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
-	err := bus.DispatchCtx(ctx, cmd)
+	err := bus.Dispatch(ctx, cmd)
 
 	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 		return 0, err
@@ -315,6 +339,19 @@ func getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.Da
 		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
 			return 0, err
+		}
+
+		if fr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			_, err = fr.permissionsServices.GetFolderService().SetPermissions(ctx, dbDash.OrgId, strconv.FormatInt(dbDash.Id, 10), accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Viewer",
+				Permission:  "View",
+			}, accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Editor",
+				Permission:  "Edit",
+			})
+			if err != nil {
+				return 0, err
+			}
 		}
 
 		return dbDash.Id, nil

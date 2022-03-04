@@ -7,13 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func Search(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
@@ -62,7 +61,7 @@ func Search(c *models.ReqContext) response.Response {
 		Sort:         sort,
 	}
 
-	err := bus.DispatchCtx(c.Req.Context(), &searchQuery)
+	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}

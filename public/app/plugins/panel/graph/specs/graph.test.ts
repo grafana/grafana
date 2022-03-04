@@ -9,12 +9,10 @@ import { graphDirective, GraphElement } from '../graph';
 import { dateTime, EventBusSrv } from '@grafana/data';
 import { DashboardModel } from '../../../../features/dashboard/state';
 
-jest.mock('app/features/annotations/all', () => ({
-  EventManager: () => {
-    return {
-      on: () => {},
-      addFlotEvents: () => {},
-    };
+jest.mock('../event_manager', () => ({
+  EventManager: class EventManagerMock {
+    on() {}
+    addFlotEvents() {}
   },
 }));
 
@@ -23,6 +21,7 @@ jest.mock('app/core/core', () => ({
     directive: () => {},
   },
   appEvents: {
+    subscribe: () => {},
     on: () => {},
   },
 }));
@@ -46,7 +45,7 @@ describe('grafanaGraph', () => {
         lightTheme: false,
       },
     };
-    GraphCtrl.prototype = {
+    Object.assign(GraphCtrl.prototype, {
       ...MetricsPanelCtrl.prototype,
       ...PanelCtrl.prototype,
       ...GraphCtrl.prototype,
@@ -95,7 +94,7 @@ describe('grafanaGraph', () => {
       annotationsSrv: {
         getAnnotations: () => Promise.resolve({}),
       },
-    } as any;
+    }) as any;
 
     ctx.data = [];
     ctx.data.push(

@@ -1,24 +1,16 @@
-import { BackendSrv, GrafanaLiveSrv, LiveDataStreamOptions } from '@grafana/runtime';
-import { CentrifugeSrv } from './centrifuge/service';
+import { BackendSrv, GrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
+import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
 
-import { mergeMap, from, of, Observable } from 'rxjs';
+import { DataFrame, toLiveChannelId } from '@grafana/data';
+import { StreamingDataFrame } from './data/StreamingDataFrame';
+import { isStreamingResponseData, StreamingResponseDataType } from './data/utils';
+import { from, map, of, switchMap } from 'rxjs';
 import {
-  DataQueryResponse,
-  isValidLiveChannelAddress,
-  LiveChannelAddress,
-  LiveChannelConfig,
-  LiveChannelConnectionState,
-  LiveChannelEvent,
-  LiveChannelEventType,
-  LiveChannelPresenceStatus,
-  LoadingState,
-  toLiveChannelId,
-} from '@grafana/data';
-import { GrafanaLiveChannelConfigSrv } from './channel-config/types';
-import { catchError } from 'rxjs/operators';
+  standardStreamOptionsProvider,
+  toStreamingDataResponse,
+} from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 type GrafanaLiveServiceDeps = {
-  scopes: GrafanaLiveChannelConfigSrv;
   centrifugeSrv: CentrifugeSrv;
   backendSrv: BackendSrv;
 };
@@ -29,100 +21,91 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
   /**
    * Listen for changes to the connection state
    */
-  getConnectionState(): Observable<boolean> {
+  getConnectionState = () => {
     return this.deps.centrifugeSrv.getConnectionState();
-  }
+  };
 
   /**
    * Connect to a channel and return results as DataFrames
    */
-  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
-    const channelConfig = this.getChannelInfo(options.addr);
+  getDataStream: GrafanaLiveSrv['getDataStream'] = (options) => {
+    let buffer: StreamingDataFrame;
 
-    return from(channelConfig).pipe(
-      mergeMap((config) => this.deps.centrifugeSrv.getDataStream(options, config)),
-      catchError((error) => this.getInvalidDataStream(error, options))
+    const updateBuffer = (next: StreamingDataQueryResponse): void => {
+      const data = next.data[0];
+      if (!buffer && !isStreamingResponseData(data, StreamingResponseDataType.FullFrame)) {
+        console.warn(`expected first packet to contain a full frame, received ${data?.type}`);
+        return;
+      }
+
+      switch (data.type) {
+        case StreamingResponseDataType.FullFrame: {
+          buffer = StreamingDataFrame.deserialize(data.frame);
+          return;
+        }
+        case StreamingResponseDataType.NewValuesSameSchema: {
+          buffer.pushNewValues(data.values);
+          return;
+        }
+      }
+    };
+
+    return this.deps.centrifugeSrv.getDataStream(options).pipe(
+      map((next) => {
+        updateBuffer(next);
+        return {
+          ...next,
+          data: [buffer ?? StreamingDataFrame.empty()],
+        };
+      })
     );
-  }
+  };
 
   /**
    * Watch for messages in a channel
    */
-  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>> {
-    const channelConfig = this.getChannelInfo(address);
-    return from(channelConfig).pipe(
-      mergeMap((config) => this.deps.centrifugeSrv.getStream<T>(address, config)),
-      catchError((error) => this.getInvalidChannelStream<T>(error, address))
+  getStream: GrafanaLiveSrv['getStream'] = (address) => {
+    return this.deps.centrifugeSrv.getStream(address);
+  };
+
+  /**
+   * Execute a query over the live websocket and potentially subscribe to a live channel.
+   *
+   * Since the initial request and subscription are on the same socket, this will support HA setups
+   */
+  getQueryData: GrafanaLiveSrv['getQueryData'] = (options) => {
+    return from(this.deps.centrifugeSrv.getQueryData(options)).pipe(
+      switchMap((rawResponse) => {
+        const parsedResponse = toDataQueryResponse(rawResponse, options.request.targets);
+
+        const isSubscribable =
+          parsedResponse.data?.length && parsedResponse.data.find((f: DataFrame) => f.meta?.channel);
+
+        return isSubscribable
+          ? toStreamingDataResponse(parsedResponse, options.request, standardStreamOptionsProvider)
+          : of(parsedResponse);
+      })
     );
-  }
+  };
 
   /**
    * Publish into a channel
    *
    * @alpha -- experimental
    */
-  async publish(address: LiveChannelAddress, data: any): Promise<any> {
+  publish: GrafanaLiveSrv['publish'] = async (address, data) => {
     return this.deps.backendSrv.post(`api/live/publish`, {
       channel: toLiveChannelId(address), // orgId is from user
       data,
     });
-  }
+  };
 
   /**
    * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  async getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
-    const channelConfig = await this.getChannelInfo(address);
-    return this.deps.centrifugeSrv.getPresence(address, channelConfig);
-  }
-
-  /**
-   * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
-   * channel will be returned with an error state indicated in its status.
-   *
-   * This is a singleton instance that stays active until explicitly shutdown.
-   * Multiple requests for this channel will return the same object until
-   * the channel is shutdown
-   */
-  async getChannelInfo(addr: LiveChannelAddress): Promise<LiveChannelConfig> {
-    if (!isValidLiveChannelAddress(addr)) {
-      return Promise.reject('invalid live channel address');
-    }
-
-    if (!this.deps.scopes.doesScopeExist(addr.scope)) {
-      return Promise.reject('invalid scope');
-    }
-
-    const support = await this.deps.scopes.getChannelSupport(addr.scope, addr.namespace);
-    if (!support) {
-      return Promise.reject(addr.namespace + ' does not support streaming');
-    }
-    return support.getChannelConfig(addr.path)!;
-  }
-
-  private getInvalidChannelStream = <T>(error: Error, address: LiveChannelAddress): Observable<LiveChannelEvent<T>> => {
-    return of({
-      type: LiveChannelEventType.Status,
-      id: `${address.scope}/${address.namespace}/${address.path}`,
-      timestamp: Date.now(),
-      state: LiveChannelConnectionState.Invalid,
-      error,
-      message: error.message,
-    });
-  };
-
-  private getInvalidDataStream = (error: Error, options: LiveDataStreamOptions): Observable<DataQueryResponse> => {
-    return of({
-      error: {
-        data: {
-          error: error.stack,
-        },
-        message: error.message,
-      },
-      state: LoadingState.Error,
-      data: options.frame ? [options.frame] : [],
-    });
+  getPresence: GrafanaLiveSrv['getPresence'] = (address) => {
+    return this.deps.centrifugeSrv.getPresence(address);
   };
 }

@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { PanelModel } from '../../state';
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 import { DataQuery } from '@grafana/data';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   /** Current panel */
@@ -18,17 +19,18 @@ export class PanelEditorQueries extends PureComponent<Props> {
   }
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
-    const dataSource: QueryGroupDataSource = panel.datasource?.uid
-      ? {
-          default: false,
-          ...panel.datasource,
-        }
-      : {
-          default: true,
-        };
+    const dataSource: QueryGroupDataSource = panel.datasource ?? {
+      default: true,
+    };
+    const datasourceSettings = getDatasourceSrv().getInstanceSettings(dataSource);
 
     return {
-      dataSource,
+      cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
+      dataSource: {
+        default: datasourceSettings?.isDefault,
+        type: datasourceSettings?.type,
+        uid: datasourceSettings?.uid,
+      },
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,
@@ -45,9 +47,9 @@ export class PanelEditorQueries extends PureComponent<Props> {
   };
 
   onOpenQueryInspector = () => {
-    getLocationSrv().update({
-      query: { inspect: this.props.panel.id, inspectTab: 'query' },
-      partial: true,
+    locationService.partial({
+      inspect: this.props.panel.id,
+      inspectTab: 'query',
     });
   };
 

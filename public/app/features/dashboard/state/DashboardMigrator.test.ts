@@ -7,8 +7,32 @@ import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 jest.mock('app/core/services/context_srv', () => ({}));
+
+const dataSources = {
+  prom: mockDataSource({
+    name: 'prom',
+    type: 'prometheus',
+    isDefault: true,
+  }),
+  notDefault: mockDataSource({
+    name: 'prom-not-default',
+    uid: 'prom-not-default-uid',
+    type: 'prometheus',
+    isDefault: false,
+  }),
+  [MIXED_DATASOURCE_NAME]: mockDataSource({
+    name: MIXED_DATASOURCE_NAME,
+    type: 'mixed',
+    uid: MIXED_DATASOURCE_NAME,
+  }),
+};
+
+setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
 describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
@@ -162,7 +186,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(33);
+      expect(model.schemaVersion).toBe(35);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1747,6 +1771,143 @@ describe('DashboardModel', () => {
         expect(panel2Targets[1].refId).toBe('B');
         expect(panel2Targets[2].refId).toBe('C');
       });
+    });
+  });
+
+  describe('when migrating datasource to refs', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              name: 'var',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 0,
+              datasource: 'prom',
+            },
+          ],
+        },
+        panels: [
+          {
+            id: 1,
+            datasource: 'prom',
+          },
+          {
+            id: 2,
+            datasource: null,
+          },
+          {
+            id: 3,
+            datasource: MIXED_DATASOURCE_NAME,
+            targets: [
+              {
+                datasource: 'prom',
+              },
+            ],
+          },
+          {
+            type: 'row',
+            id: 5,
+            panels: [
+              {
+                id: 6,
+                datasource: 'prom',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should not update variable datasource props to refs', () => {
+      expect(model.templating.list[0].datasource).toEqual('prom');
+    });
+
+    it('should update panel datasource props to refs for named data source', () => {
+      expect(model.panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update panel datasource props to refs for default data source', () => {
+      expect(model.panels[1].datasource).toEqual(null);
+    });
+
+    it('should update panel datasource props to refs for mixed data source', () => {
+      expect(model.panels[2].datasource).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+    });
+
+    it('should update target datasource props to refs', () => {
+      expect(model.panels[2].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update datasources in panels collapsed rows', () => {
+      expect(model.panels[3].panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+  });
+
+  describe('when fixing query and panel data source refs out of sync due to default data source change', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [],
+        },
+        panels: [
+          {
+            id: 2,
+            datasource: null,
+            targets: [
+              {
+                datasource: 'prom-not-default',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should not update panel datasource to that of query level ds', () => {
+      expect(model.panels[0].datasource?.uid).toEqual('prom-not-default-uid');
+    });
+  });
+
+  describe('when migrating time series axis visibility', () => {
+    test('preserves x axis visibility', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'timeseries',
+            fieldConfig: {
+              defaults: {
+                custom: {
+                  axisPlacement: 'hidden',
+                },
+              },
+              overrides: [],
+            },
+          },
+        ],
+      });
+
+      expect(model.panels[0].fieldConfig.overrides).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "matcher": Object {
+              "id": "byType",
+              "options": "time",
+            },
+            "properties": Array [
+              Object {
+                "id": "custom.axisPlacement",
+                "value": "auto",
+              },
+            ],
+          },
+        ]
+      `);
     });
   });
 });

@@ -4,6 +4,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -12,6 +13,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -29,6 +31,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -37,6 +40,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -55,15 +59,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -136,6 +143,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -144,6 +152,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -161,6 +170,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -169,6 +179,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -187,15 +198,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -268,6 +282,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -276,6 +291,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 2,
@@ -293,6 +309,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -301,6 +318,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 3,
@@ -319,15 +337,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -400,6 +421,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -408,6 +430,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -425,6 +448,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -433,6 +457,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -451,15 +476,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -532,6 +560,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -540,6 +569,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -557,6 +587,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -565,6 +596,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -583,15 +615,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -664,6 +699,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -672,6 +708,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -689,6 +726,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -697,6 +735,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -715,15 +754,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -796,6 +838,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -804,6 +847,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -821,6 +865,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -829,6 +874,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -847,15 +893,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -928,6 +977,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
 Object {
   "axes": Array [
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 15,
       "grid": Object {
@@ -936,6 +986,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": -0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -953,6 +1004,7 @@ Object {
       "values": [Function],
     },
     Object {
+      "filter": undefined,
       "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
       "gap": 5,
       "grid": Object {
@@ -961,6 +1013,7 @@ Object {
         "width": 1,
       },
       "labelGap": 0,
+      "rotate": undefined,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -979,15 +1032,18 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
     "focus": Object {
       "prox": 30,
     },
     "points": Object {
-      "fill": [Function],
-      "show": false,
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],

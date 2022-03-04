@@ -1,9 +1,11 @@
 package permissions
 
 import (
+	"context"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -32,17 +34,15 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 			SELECT distinct DashboardId from (
 				SELECT d.id AS DashboardId
 					FROM dashboard AS d
-					LEFT JOIN dashboard AS folder on folder.id = d.folder_id
 					LEFT JOIN dashboard_acl AS da ON
 						da.dashboard_id = d.id OR
 						da.dashboard_id = d.folder_id
-					LEFT JOIN team_member as ugm on ugm.team_id = da.team_id
 					WHERE
 						d.org_id = ? AND
 						da.permission >= ? AND
 						(
 							da.user_id = ? OR
-							ugm.user_id = ? OR
+							da.team_id IN (SELECT team_id from team_member AS tm WHERE tm.user_id = ?) OR
 							da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
 						)
 				UNION
@@ -74,4 +74,30 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 	params = append(params, d.OrgId, d.PermissionLevel, d.UserId)
 	params = append(params, okRoles...)
 	return sql, params
+}
+
+type AccessControlDashboardPermissionFilter struct {
+	User *models.SignedInUser
+}
+
+func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
+	builder := strings.Builder{}
+
+	builder.WriteString("(((")
+
+	dashFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "dashboards", "dashboards:read", f.User)
+	builder.WriteString(dashFilter.Where)
+
+	builder.WriteString(" OR ")
+
+	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", "dashboards:read", f.User)
+	builder.WriteString(dashFolderFilter.Where)
+
+	builder.WriteString(") AND NOT dashboard.is_folder) OR (")
+
+	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", "folders:read", f.User)
+	builder.WriteString(folderFilter.Where)
+	builder.WriteString(" AND dashboard.is_folder))")
+
+	return builder.String(), append(dashFilter.Args, append(dashFolderFilter.Args, folderFilter.Args...)...)
 }

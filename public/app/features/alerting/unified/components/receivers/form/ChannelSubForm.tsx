@@ -37,7 +37,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch, register } = useFormContext();
+  const { control, watch, register, trigger, formState } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
@@ -65,6 +65,15 @@ export function ChannelSubForm<R extends ChannelValues>({
         .sort((a, b) => a.label.localeCompare(b.label)),
     [notifiers]
   );
+
+  const handleTest = async () => {
+    await trigger();
+    const isValid = Object.keys(formState.errors).length === 0;
+
+    if (isValid && onTest) {
+      onTest();
+    }
+  };
 
   const notifier = notifiers.find(({ type }) => type === selectedType);
   // if there are mandatory options defined, optional options will be hidden by a collapse
@@ -105,7 +114,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 size="xs"
                 variant="secondary"
                 type="button"
-                onClick={() => onTest()}
+                onClick={() => handleTest()}
                 icon={testingReceiver ? 'fa fa-spinner' : 'message'}
               >
                 Test

@@ -3,6 +3,7 @@ import {
   DataLink,
   dateTime,
   Field,
+  KeyValue,
   mapInternalLinkToExplore,
   rangeUtil,
   SplitOpen,
@@ -11,7 +12,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SpanLinkDef, SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
@@ -36,7 +37,7 @@ export function createSpanLinkFactory({
     // let's try to use the old legacy path.
     return legacyCreateSpanLinkFactory(splitOpenFn, traceToLogsOptions);
   } else {
-    return function (span: TraceSpan): SpanLinkDef | undefined {
+    return function SpanLink(span: TraceSpan): SpanLinkDef | undefined {
       // We should be here only if there are some links in the dataframe
       const field = dataFrame.fields.find((f) => Boolean(f.config.links?.length))!;
       try {
@@ -74,7 +75,7 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     return undefined;
   }
 
-  return function (span: TraceSpan): SpanLinkDef {
+  return function SpanLink(span: TraceSpan): SpanLinkDef {
     // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
@@ -122,11 +123,22 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
 
 function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): string {
-  const { tags: keys, filterByTraceID, filterBySpanID } = options;
-  const keysToCheck = keys?.length ? keys : defaultKeys;
+  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
+
+  // In order, try to use mapped tags -> tags -> default tags
+  const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
+
+  // Build tag portion of query
   const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
-    if (keysToCheck.includes(tag.key)) {
-      acc.push(`${tag.key}="${tag.value}"`);
+    if (mapTagNamesEnabled) {
+      const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
+      if (keyValue) {
+        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}="${tag.value}"`);
+      }
+    } else {
+      if ((keysToCheck as string[]).includes(tag.key)) {
+        acc.push(`${tag.key}="${tag.value}"`);
+      }
     }
     return acc;
   }, [] as string[]);

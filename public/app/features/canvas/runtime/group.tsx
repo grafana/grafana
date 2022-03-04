@@ -99,10 +99,11 @@ export class GroupState extends ElementState {
 
   // ??? or should this be on the element directly?
   // are actions scoped to layers?
-  doAction = (action: LayerActionID, element: ElementState) => {
+  doAction = (action: LayerActionID, element: ElementState, updateName = true) => {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
+        this.scene.byName.delete(element.options.name);
         this.scene.save();
         this.reinitializeMoveable();
         break;
@@ -128,7 +129,11 @@ export class GroupState extends ElementState {
         const copy = new ElementState(element.item, opts, this);
         copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
+        if (updateName) {
+          copy.options.name = this.scene.getNextElementName();
+        }
         this.elements.push(copy);
+        this.scene.byName.set(copy.options.name, copy);
         this.scene.save();
         this.reinitializeMoveable();
         break;

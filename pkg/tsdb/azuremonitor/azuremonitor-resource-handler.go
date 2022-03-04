@@ -8,6 +8,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 func getTarget(original string) (target string, err error) {
@@ -63,16 +66,16 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 	return rw
 }
 
-func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (datasourceInfo, error) {
+func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceInfo, error) {
 	ctx := req.Context()
 	pluginContext := httpadapter.PluginConfigFromContext(ctx)
 	i, err := s.im.Get(pluginContext)
 	if err != nil {
-		return datasourceInfo{}, nil
+		return types.DatasourceInfo{}, nil
 	}
-	ds, ok := i.(datasourceInfo)
+	ds, ok := i.(types.DatasourceInfo)
 	if !ok {
-		return datasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
+		return types.DatasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
 	}
 	return ds, nil
 }
@@ -85,7 +88,7 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	}
 }
 
-func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
+func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
@@ -111,15 +114,18 @@ func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWri
 		req.URL.Host = serviceURL.Host
 		req.URL.Scheme = serviceURL.Scheme
 
-		s.executors[subDataSource].resourceRequest(rw, req, service.HTTPClient)
+		s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
 	}
 }
 
-// registerRoutes provides route definitions shared with the frontend.
+// newResourceMux provides route definitions shared with the frontend.
 // Check: /public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/common.ts <routeNames>
-func (s *Service) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/azuremonitor/", s.resourceHandler(azureMonitor))
-	mux.HandleFunc("/appinsights/", s.resourceHandler(appInsights))
-	mux.HandleFunc("/loganalytics/", s.resourceHandler(azureLogAnalytics))
-	mux.HandleFunc("/resourcegraph/", s.resourceHandler(azureResourceGraph))
+func (s *Service) newResourceMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))
+	mux.HandleFunc("/loganalytics/", s.handleResourceReq(azureLogAnalytics))
+	mux.HandleFunc("/resourcegraph/", s.handleResourceReq(azureResourceGraph))
+	// Remove with Grafana 9
+	mux.HandleFunc("/appinsights/", s.handleResourceReq(deprecated.AppInsights))
+	return mux
 }

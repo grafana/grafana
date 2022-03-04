@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { Icon, IconName, Tooltip, useForceUpdate } from '@grafana/ui';
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardLinksDashboard } from './DashboardLinksDashboard';
-import { getLinkSrv } from '../../../../angular/panel/panellinks/link_srv';
+import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 import { DashboardModel } from '../../state';
 import { DashboardLink } from '../../state/DashboardModel';

@@ -8,19 +8,21 @@ import Prism from 'prismjs';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
+  CoreApp,
   DataFrame,
   DataFrameView,
-  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithLogsVolumeSupport,
+  DataSourceWithQueryExportSupport,
+  DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
   FieldCache,
+  AbstractQuery,
   FieldType,
   getLogLevelFromKey,
   Labels,
@@ -31,9 +33,9 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import { addLabelToQuery } from './add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import {
@@ -42,11 +44,13 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
+import { transformBackendResult } from './backendResultTransformer';
+import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
   LokiQuery,
+  LokiQueryType,
   LokiRangeQueryRequest,
   LokiResultType,
   LokiStreamResponse,
@@ -59,17 +63,13 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import { queryLogsVolume } from 'app/core/logs_model';
+import { doLokiChannelStream } from './streaming';
+import { renderLegendFormat } from '../prometheus/legend';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 const NS_IN_MS = 1000000;
-
-/**
- * Loki's logs volume query may be expensive as it requires counting all logs in the selected range. If such query
- * takes too much time it may need be made more specific to limit number of logs processed under the hood.
- */
-const LOGS_VOLUME_TIMEOUT = 10000;
 
 const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
@@ -81,8 +81,13 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
 };
 
 export class LokiDatasource
-  extends DataSourceApi<LokiQuery, LokiOptions>
-  implements DataSourceWithLogsContextSupport, DataSourceWithLogsVolumeSupport<LokiQuery> {
+  extends DataSourceWithBackend<LokiQuery, LokiOptions>
+  implements
+    DataSourceWithLogsContextSupport,
+    DataSourceWithLogsVolumeSupport<LokiQuery>,
+    DataSourceWithQueryImportSupport<LokiQuery>,
+    DataSourceWithQueryExportSupport<LokiQuery>
+{
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -130,25 +135,37 @@ export class LokiDatasource
         return {
           ...target,
           instant: false,
+          volumeQuery: true,
           expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
         };
       });
 
     return queryLogsVolume(this, logsVolumeRequest, {
-      timeout: LOGS_VOLUME_TIMEOUT,
       extractLevel,
       range: request.range,
       targets: request.targets,
     });
   }
 
-  query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const scopedVars = {
-      ...options.scopedVars,
-      ...this.getRangeScopedVars(options.range),
+      ...request.scopedVars,
+      ...this.getRangeScopedVars(request.range),
     };
-    const filteredTargets = options.targets
+
+    const shouldRunBackendQuery = config.featureToggles.lokiBackendMode && request.app === CoreApp.Explore;
+
+    if (shouldRunBackendQuery) {
+      // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
+      const fixedRequest = {
+        ...request,
+        targets: request.targets.map(getNormalizedLokiQuery),
+      };
+      return super.query(fixedRequest).pipe(map((response) => transformBackendResult(response, fixedRequest)));
+    }
+
+    const filteredTargets = request.targets
       .filter((target) => target.expr && !target.hide)
       .map((target) => {
         const expr = this.addAdHocFilters(target.expr);
@@ -159,10 +176,16 @@ export class LokiDatasource
       });
 
     for (const target of filteredTargets) {
-      if (target.instant) {
-        subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+      if (target.instant || target.queryType === LokiQueryType.Instant) {
+        subQueries.push(this.runInstantQuery(target, request, filteredTargets.length));
+      } else if (
+        config.featureToggles.lokiLive &&
+        target.queryType === LokiQueryType.Stream &&
+        request.rangeRaw?.to === 'now'
+      ) {
+        subQueries.push(doLokiChannelStream(target, this, request));
       } else {
-        subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
+        subQueries.push(this.runRangeQuery(target, request, filteredTargets.length));
       }
     }
 
@@ -275,7 +298,9 @@ export class LokiDatasource
     }
     const query = this.createRangeQuery(target, options, maxDataPoints);
 
-    return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
+    const headers = target.volumeQuery ? { 'X-Query-Tags': 'Source=logvolhist' } : undefined;
+
+    return this._request(RANGE_QUERY_ENDPOINT, query, { headers }).pipe(
       catchError((err) => throwError(() => this.processError(err, target))),
       switchMap((response) =>
         processRangeQueryResponse(
@@ -358,8 +383,24 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
-    return this.languageProvider.importQueries(queries, originDataSource);
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<LokiQuery[]> {
+    await this.languageProvider.start();
+    const existingKeys = this.languageProvider.labelKeys;
+
+    if (existingKeys && existingKeys.length) {
+      abstractQueries = abstractQueries.map((abstractQuery) => {
+        abstractQuery.labelMatchers = abstractQuery.labelMatchers.filter((labelMatcher) => {
+          return existingKeys.includes(labelMatcher.name);
+        });
+        return abstractQuery;
+      });
+    }
+
+    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+  }
+
+  async exportToAbstractQueries(queries: LokiQuery[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
@@ -616,6 +657,7 @@ export class LokiDatasource
       maxLines,
       instant,
       stepInterval,
+      queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
     const { data } = instant
       ? await lastValueFrom(this.runInstantQuery(query, options as any))
@@ -654,8 +696,8 @@ export class LokiDatasource
       view.forEach((row) => {
         annotations.push({
           time: new Date(row.ts).valueOf(),
-          title: renderTemplate(titleFormat, labels),
-          text: renderTemplate(textFormat, labels) || row.line,
+          title: renderLegendFormat(titleFormat, labels),
+          text: renderLegendFormat(textFormat, labels) || row.line,
           tags,
         });
       });
@@ -699,30 +741,55 @@ export class LokiDatasource
         value = lokiRegularEscape(value);
       }
 
-      return this.addLabelToQuery(acc, key, value, operator);
+      return this.addLabelToQuery(acc, key, value, operator, true);
     }, expr);
 
     return expr;
   }
 
-  addLabelToQuery(queryExpr: string, key: string, value: string | number, operator: string) {
-    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr)) {
+  addLabelToQuery(
+    queryExpr: string,
+    key: string,
+    value: string | number,
+    operator: string,
+    // Override to make sure that we use label as actual label and not parsed label
+    notParsedLabelOverride?: boolean
+  ) {
+    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax
       return addParsedLabelToQuery(queryExpr, key, value, operator);
     } else {
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
   }
-}
 
-export function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_match, g1) => {
-    if (aliasData[g1]) {
-      return aliasData[g1];
+  // Used when running queries through backend
+  filterQuery(query: LokiQuery): boolean {
+    if (query.hide || query.expr === '') {
+      return false;
     }
-    return '';
-  });
+    return true;
+  }
+
+  // Used when running queries through backend
+  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): Record<string, any> {
+    // We want to interpolate these variables on backend
+    const { __interval, __interval_ms, ...rest } = scopedVars;
+
+    return {
+      ...target,
+      legendFormat: this.templateSrv.replace(target.legendFormat, rest),
+      expr: this.templateSrv.replace(target.expr, rest, this.interpolateQueryExpr),
+    };
+  }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
 }
 
 export function lokiRegularEscape(value: any) {

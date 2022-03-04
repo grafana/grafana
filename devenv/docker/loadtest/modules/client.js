@@ -8,7 +8,7 @@ export const UIEndpoint = class UIEndpoint {
 
   login(username, pwd) {
     const payload = { user: username, password: pwd };
-    return this.httpClient.formPost('/login', payload);
+    return this.httpClient.post('/login', JSON.stringify(payload));
   }
 };
 

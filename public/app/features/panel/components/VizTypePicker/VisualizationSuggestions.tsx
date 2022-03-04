@@ -3,7 +3,7 @@ import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, VisualizationSuggestion } from '@grafana/data';
 import { css } from '@emotion/css';
 import { VizTypeChangeDetails } from './types';
-import { VisualizationPreview } from './VisualizationPreview';
+import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 import { getAllSuggestions } from '../../state/getAllSuggestions';
 import { useAsync, useLocalStorage } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -44,7 +44,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery }:
             </div>
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth - 1}px)` }}>
               {filteredSuggestions.map((suggestion, index) => (
-                <VisualizationPreview
+                <VisualizationSuggestionCard
                   key={index}
                   data={data!}
                   suggestion={suggestion}

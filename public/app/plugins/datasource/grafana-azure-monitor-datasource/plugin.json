@@ -12,7 +12,12 @@
     { "type": "dashboard", "name": "Azure Resource Overview", "path": "dashboards/arg.json" },
     { "type": "dashboard", "name": "Azure Alert Consumption", "path": "dashboards/v1Alerts.json" },
     { "type": "dashboard", "name": "Azure Alert Rules", "path": "dashboards/alertRules.json" },
-    { "type": "dashboard", "name": "Azure Alert Consumption Overview", "path": "dashboards/v1AlertsAtScale.json" }
+    { "type": "dashboard", "name": "Azure Alert Consumption Overview", "path": "dashboards/v1AlertsAtScale.json" },
+    {
+      "type": "dashboard",
+      "name": "Azure App Monitoring - Application Insights",
+      "path": "dashboards/appInsights.json"
+    }
   ],
 
   "info": {
@@ -46,5 +51,6 @@
 
   "metrics": true,
   "annotations": true,
-  "alerting": true
+  "alerting": true,
+  "backend": true
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestService(t *testing.T) {
 	nType := "test"
 	registerTestNotifier(nType)
 
-	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
+	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService(), nil)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"
@@ -57,7 +58,7 @@ func TestService(t *testing.T) {
 			Id:    cmd.Result.Id,
 			OrgId: cmd.Result.OrgId,
 		}
-		err = s.DeleteAlertNotification(&delCmd)
+		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
 	})
 
@@ -81,7 +82,7 @@ func TestService(t *testing.T) {
 			Id:    createCmd.Result.Id,
 			OrgId: createCmd.Result.OrgId,
 		}
-		err = s.DeleteAlertNotification(&delCmd)
+		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
 	})
 
@@ -109,14 +110,16 @@ func TestService(t *testing.T) {
 			Id:    createCmd.Result.Id,
 			OrgId: createCmd.Result.OrgId,
 		}
-		err = s.DeleteAlertNotification(&delCmd)
+		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
 	})
 }
 
 func registerTestNotifier(notifierType string) {
 	RegisterNotifier(&NotifierPlugin{
-		Type:    notifierType,
-		Factory: func(*models.AlertNotification, GetDecryptedValueFn) (Notifier, error) { return nil, nil },
+		Type: notifierType,
+		Factory: func(*models.AlertNotification, GetDecryptedValueFn, notifications.Service) (Notifier, error) {
+			return nil, nil
+		},
 	})
 }

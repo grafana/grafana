@@ -1,9 +1,15 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 var (
@@ -27,6 +33,19 @@ func (noDataState NoDataState) String() string {
 	return string(noDataState)
 }
 
+func NoDataStateFromString(state string) (NoDataState, error) {
+	switch state {
+	case string(Alerting):
+		return Alerting, nil
+	case string(NoData):
+		return NoData, nil
+	case string(OK):
+		return OK, nil
+	default:
+		return "", fmt.Errorf("unknown NoData state option %s", state)
+	}
+}
+
 const (
 	Alerting NoDataState = "Alerting"
 	NoData   NoDataState = "NoData"
@@ -39,8 +58,23 @@ func (executionErrorState ExecutionErrorState) String() string {
 	return string(executionErrorState)
 }
 
+func ErrStateFromString(opt string) (ExecutionErrorState, error) {
+	switch opt {
+	case string(Alerting):
+		return AlertingErrState, nil
+	case string(ErrorErrState):
+		return ErrorErrState, nil
+	case string(OkErrState):
+		return OkErrState, nil
+	default:
+		return "", fmt.Errorf("unknown Error state option %s", opt)
+	}
+}
+
 const (
 	AlertingErrState ExecutionErrorState = "Alerting"
+	ErrorErrState    ExecutionErrorState = "Error"
+	OkErrState       ExecutionErrorState = "OK"
 )
 
 const (
@@ -76,6 +110,24 @@ type AlertRule struct {
 	Labels      map[string]string
 }
 
+// Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
+func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
+	var reporter cmputil.DiffReporter
+	ops := make([]cmp.Option, 0, 4)
+
+	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
+	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
+		return string(in)
+	})
+	ops = append(ops, cmp.Reporter(&reporter), cmpopts.IgnoreFields(AlertQuery{}, "modelProps"), jsonCmp)
+
+	if len(ignore) > 0 {
+		ops = append(ops, cmpopts.IgnoreFields(AlertRule{}, ignore...))
+	}
+	cmp.Equal(alertRule, rule, ops...)
+	return reporter.Diffs
+}
+
 // AlertRuleKey is the alert definition identifier
 type AlertRuleKey struct {
 	OrgID int64
@@ -102,6 +154,18 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 	}
 	alertRule.Updated = timeNow()
 	return nil
+}
+
+func (alertRule *AlertRule) ResourceType() string {
+	return "alertRule"
+}
+
+func (alertRule *AlertRule) ResourceID() string {
+	return alertRule.UID
+}
+
+func (alertRule *AlertRule) ResourceOrgID() int64 {
+	return alertRule.OrgID
 }
 
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
@@ -204,4 +268,38 @@ type Condition struct {
 func (c Condition) IsValid() bool {
 	// TODO search for refIDs in QueriesAndExpressions
 	return len(c.Data) != 0
+}
+
+// PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
+// There are several exceptions:
+// 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
+// 2. There are fields that are patched together:
+//    - AlertRule.Condition and AlertRule.Data
+// If either of the pair is specified, neither is patched.
+func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
+	if ruleToPatch.Title == "" {
+		ruleToPatch.Title = existingRule.Title
+	}
+	if ruleToPatch.Condition == "" || len(ruleToPatch.Data) == 0 {
+		ruleToPatch.Condition = existingRule.Condition
+		ruleToPatch.Data = existingRule.Data
+	}
+	if ruleToPatch.IntervalSeconds == 0 {
+		ruleToPatch.IntervalSeconds = existingRule.IntervalSeconds
+	}
+	if ruleToPatch.NamespaceUID == "" {
+		ruleToPatch.NamespaceUID = existingRule.NamespaceUID
+	}
+	if ruleToPatch.RuleGroup == "" {
+		ruleToPatch.RuleGroup = existingRule.RuleGroup
+	}
+	if ruleToPatch.ExecErrState == "" {
+		ruleToPatch.ExecErrState = existingRule.ExecErrState
+	}
+	if ruleToPatch.NoDataState == "" {
+		ruleToPatch.NoDataState = existingRule.NoDataState
+	}
+	if ruleToPatch.For == 0 {
+		ruleToPatch.For = existingRule.For
+	}
 }
