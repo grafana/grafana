@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -26,7 +25,7 @@ func ProvideService(store *sqlstore.SQLStore, secretsService secrets.Service) *S
 }
 
 type Service struct {
-	store           pluginsettings.Service
+	store           *sqlstore.SQLStore
 	decryptionCache secureJSONDecryptionCache
 
 	secretsService secrets.Service
