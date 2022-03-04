@@ -29,11 +29,6 @@ type UpdateServiceAccountForm struct {
 	IsDisabled *bool            `json:"isDisabled"`
 }
 
-type CreateServiceAccountForm struct {
-	OrgID int64  `json:"-"`
-	Name  string `json:"name" binding:"Required"`
-}
-
 type ServiceAccountDTO struct {
 	Id            int64           `json:"id" xorm:"user_id"`
 	Name          string          `json:"name" xorm:"name"`

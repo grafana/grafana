@@ -81,13 +81,15 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 
 // POST /api/serviceaccounts
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
-	cmd := serviceaccounts.CreateServiceAccountForm{}
+	type createServiceAccountForm struct {
+		Name string `json:"name" binding:"Required"`
+	}
+	cmd := createServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
-	cmd.OrgID = c.OrgId
 
-	user, err := api.service.CreateServiceAccount(c.Req.Context(), &cmd)
+	user, err := api.service.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
 	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 		return response.Error(http.StatusBadRequest, "Failed to create role with the provided name", err)

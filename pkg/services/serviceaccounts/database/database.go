@@ -28,13 +28,13 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceAccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
 	// create a new service account - "user" with empty permissions
 	generatedLogin := "Service-Account-" + uuid.New().String()
 	cmd := models.CreateUserCommand{
 		Login:            generatedLogin,
-		Name:             sa.Name,
-		OrgId:            sa.OrgID,
+		OrgId:            orgID,
+		Name:             name,
 		IsServiceAccount: true,
 	}
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
