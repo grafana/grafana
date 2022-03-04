@@ -58,3 +58,21 @@ type ServiceAccountProfileDTO struct {
 	Teams         []string        `json:"teams" xorm:"-"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
+
+type SearchOrgServiceAccountsQuery struct {
+	OrgID            int64
+	Query            string
+	Page             int
+	Limit            int
+	IsServiceAccount bool
+
+	User   *models.SignedInUser
+	Result SearchOrgServiceAccountsQueryResult
+}
+
+type SearchOrgServiceAccountsQueryResult struct {
+	TotalCount      int64                `json:"totalCount"`
+	ServiceAccounts []*ServiceAccountDTO `json:"orgServiceAccounts"`
+	Page            int                  `json:"page"`
+	PerPage         int                  `json:"perPage"`
+}

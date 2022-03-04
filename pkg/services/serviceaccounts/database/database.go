@@ -293,12 +293,11 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	return updatedUser, err
 }
 
-func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	query.IsServiceAccount = true
-
-	serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
-
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) error {
+	// transacting with the db session
+	return s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		query.IsServiceAccount = true
+		serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
 		sess := dbSession.Table("org_user")
 		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
 
@@ -313,7 +312,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", s.sqlStore.Dialect.Quote("user"), query.IsServiceAccount))
 
 		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", "serviceaccounts:read", query.User)
+			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", serviceaccounts.ActionRead, query.User)
 			if err != nil {
 				return err
 			}
@@ -348,6 +347,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err := sess.Find(&serviceAccounts); err != nil {
 			return err
 		}
+		query.Result.ServiceAccounts = serviceAccounts
 
 		// get total
 		serviceaccount := serviceaccounts.ServiceAccountDTO{}
@@ -362,14 +362,8 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			return err
 		}
 		query.Result.TotalCount = count
-
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return serviceAccounts, nil
 }
 
 func contains(s []int64, e int64) bool {

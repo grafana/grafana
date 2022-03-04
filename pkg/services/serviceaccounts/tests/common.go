@@ -128,9 +128,9 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 	return nil, nil
 }
 
-func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
+func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) error {
 	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, query})
-	return nil, nil
+	return nil
 }
 
 func (s *ServiceAccountsStoreMock) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error {
