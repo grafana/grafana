@@ -346,3 +346,14 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 
 	return err
 }
+
+/**
+
+// TODO -- initalize on main!! (currently master)
+git branch -m master main
+
+git remote add origin git@github.com:ryantxu/test-dash-repo.git
+git branch -M main
+git push -u origin main
+
+**/
