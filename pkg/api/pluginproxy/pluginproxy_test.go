@@ -326,5 +326,5 @@ func (s *mockPluginsSettingsService) UpdatePluginSetting(_ context.Context, _ *m
 }
 
 func (s *mockPluginsSettingsService) DecryptedValues(_ *models.PluginSetting) map[string]string {
-	return map[string]string{}
+	return nil
 }
