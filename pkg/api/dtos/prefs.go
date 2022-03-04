@@ -23,6 +23,7 @@ type UpdatePrefsCmd struct {
 	Navbar    *[]models.NavbarPreference `json:"navbar,omitempty"`
 }
 
+// swagger:model
 type PatchPrefsCmd struct {
 	// Enum: light,dark
 	Theme *string `json:"theme,omitempty"`
