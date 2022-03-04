@@ -60,7 +60,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
-		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
+		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
@@ -223,7 +223,7 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 }
 
 // SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
-// GET /api/org/users/search
+// GET /api/serviceaccounts/search
 func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
 	ctx := c.Req.Context()
 	perPage := c.QueryInt("perpage")
@@ -262,13 +262,13 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		serviceAccounts[i].Tokens = int64(len(tokens))
 	}
 
-	type SearchOrgServiceAccountsQueryResult struct {
+	type searchOrgServiceAccountsQueryResult struct {
 		TotalCount      int64                                `json:"totalCount"`
 		ServiceAccounts []*serviceaccounts.ServiceAccountDTO `json:"serviceAccounts"`
 		Page            int                                  `json:"page"`
 		PerPage         int                                  `json:"perPage"`
 	}
-	result := SearchOrgServiceAccountsQueryResult{
+	result := searchOrgServiceAccountsQueryResult{
 		TotalCount:      query.Result.TotalCount,
 		ServiceAccounts: serviceAccounts,
 		Page:            query.Result.Page,

@@ -81,7 +81,7 @@ const ServiceAccountsListPage = ({
         <h2>Service accounts</h2>
         <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
           <FilterInput
-            placeholder="Search user by login, email, or name."
+            placeholder="Search service account by name."
             autoFocus={true}
             value={query}
             onChange={changeQuery}
