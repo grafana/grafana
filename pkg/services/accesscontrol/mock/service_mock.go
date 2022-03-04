@@ -39,3 +39,8 @@ func (m *MockPermissionsService) SetPermissions(ctx context.Context, orgID int64
 	mockedArgs := m.Called(ctx, orgID, resourceID, commands)
 	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }
+
+func (m *MockPermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
+	mockedArgs := m.Called(permission)
+	return mockedArgs.Get(0).(string)
+}

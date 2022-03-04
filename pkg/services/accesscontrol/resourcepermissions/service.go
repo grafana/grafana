@@ -223,7 +223,7 @@ func (s *Service) SetPermissions(
 	})
 }
 
-func (s *Service) mapActions(permission accesscontrol.ResourcePermission) string {
+func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {
 			return p

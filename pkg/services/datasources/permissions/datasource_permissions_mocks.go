@@ -7,12 +7,13 @@ import (
 )
 
 type mockDatasourcePermissionService struct {
-	DsResult []*models.DataSource
+	DsResult  []*models.DataSource
+	ErrResult error
 }
 
 func (m *mockDatasourcePermissionService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error {
 	cmd.Result = m.DsResult
-	return nil
+	return m.ErrResult
 }
 
 func NewMockDatasourcePermissionService() *mockDatasourcePermissionService {

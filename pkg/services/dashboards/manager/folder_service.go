@@ -196,8 +196,8 @@ func (f *FolderServiceImpl) DeleteFolder(ctx context.Context, user *models.Signe
 		return nil, toFolderError(err)
 	}
 
-	guardian := guardian.New(ctx, dashFolder.Id, orgID, user)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+	guard := guardian.New(ctx, dashFolder.Id, orgID, user)
+	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
 		}

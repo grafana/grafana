@@ -3,7 +3,9 @@
     "baseUrl": ".",
     "declarationDir": "dist",
     "outDir": "compiled",
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "incremental": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",

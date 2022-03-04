@@ -1,3 +1,4 @@
+import React from 'react';
 import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
@@ -12,7 +13,9 @@ import {
 import { HeatmapSuggestionsSupplier } from './suggestions';
 import { heatmapChangedHandler } from './migrations';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
-import { colorSchemes } from './palettes';
+import { colorSchemes, quantizeScheme } from './palettes';
+import { config } from '@grafana/runtime';
+import { ColorScale } from './ColorScale';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig()
@@ -39,11 +42,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.source === HeatmapSourceMode.Calculate) {
       addHeatmapCalculationOptions('heatmap.', builder, opts.heatmap, category);
-    } else if (opts.source === HeatmapSourceMode.Data) {
-      // builder.addSliderInput({
-      //   name: 'heatmap from the data...',
-      //   path: 'xxx',
-      // });
     }
 
     category = ['Colors'];
@@ -125,17 +123,32 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       showIf: (opts) => opts.color.mode !== HeatmapColorMode.Opacity,
     });
 
-    builder.addSliderInput({
-      path: 'color.steps',
-      name: 'Max steps',
-      defaultValue: defaultPanelOptions.color.steps,
-      category,
-      settings: {
-        min: 2, // 1 for on/off?
-        max: 128,
-        step: 1,
-      },
-    });
+    builder
+      .addSliderInput({
+        path: 'color.steps',
+        name: 'Steps',
+        defaultValue: defaultPanelOptions.color.steps,
+        category,
+        settings: {
+          min: 2,
+          max: 128,
+          step: 1,
+        },
+      })
+      .addCustomEditor({
+        id: '__scale__',
+        path: `__scale__`,
+        name: 'Scale',
+        category,
+        editor: () => {
+          const palette = quantizeScheme(opts.color, config.theme2);
+          return (
+            <div>
+              <ColorScale colorPalette={palette} min={1} max={100} />
+            </div>
+          );
+        },
+      });
 
     category = ['Display'];
 

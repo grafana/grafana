@@ -1,9 +1,10 @@
 import { DataQueryRequest, DataQueryResponseData, toDataFrame } from '@grafana/data';
 import { from } from 'rxjs';
-import { AzureMonitorQuery, AzureQueryType } from './types';
-import { VariableSupport } from './variables';
+
 import createMockDatasource from './__mocks__/datasource';
 import { invalidSubscriptionError } from './__mocks__/errors';
+import { AzureMonitorQuery, AzureQueryType } from './types';
+import { VariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
