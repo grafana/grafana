@@ -27,9 +27,9 @@ func ProvideService(store *sqlstore.SQLStore, secretsService secrets.Service) *S
 type Service struct {
 	sqlStore        *sqlstore.SQLStore
 	decryptionCache secureJSONDecryptionCache
+	secretsService  secrets.Service
 
-	secretsService secrets.Service
-	logger         log.Logger
+	logger log.Logger
 }
 
 type cachedDecryptedJSON struct {
