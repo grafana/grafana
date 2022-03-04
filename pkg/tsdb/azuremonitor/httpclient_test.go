@@ -7,7 +7,10 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,18 +18,18 @@ import (
 func TestHttpClient_Middlewares(t *testing.T) {
 	tests := []struct {
 		name                string
-		route               azRoute
-		model               datasourceInfo
+		route               types.AzRoute
+		model               types.DatasourceInfo
 		expectedMiddlewares int
 		Err                 require.ErrorAssertionFunc
 	}{
 		{
 			name: "creates an HTTP client with a middleware due to an app key",
-			route: azRoute{
-				URL:    azAppInsights.URL,
+			route: types.AzRoute{
+				URL:    deprecated.AzAppInsights.URL,
 				Scopes: []string{},
 			},
-			model: datasourceInfo{
+			model: types.DatasourceInfo{
 				Credentials: &azcredentials.AzureClientSecretCredentials{},
 				DecryptedSecureJSONData: map[string]string{
 					"appInsightsApiKey": "foo",
@@ -37,11 +40,11 @@ func TestHttpClient_Middlewares(t *testing.T) {
 		},
 		{
 			name: "creates an HTTP client without a middleware",
-			route: azRoute{
+			route: types.AzRoute{
 				URL:    "http://route",
 				Scopes: []string{},
 			},
-			model: datasourceInfo{
+			model: types.DatasourceInfo{
 				Credentials: &azcredentials.AzureClientSecretCredentials{},
 			},
 			expectedMiddlewares: 0,
@@ -63,19 +66,20 @@ func TestHttpClient_Middlewares(t *testing.T) {
 }
 
 func TestHttpClient_AzureCredentials(t *testing.T) {
-	model := datasourceInfo{
+	model := types.DatasourceInfo{
 		Credentials: &azcredentials.AzureManagedIdentityCredentials{},
 	}
 
+	cfg := &setting.Cfg{}
 	provider := &fakeHttpClientProvider{}
 
 	t.Run("should have Azure credentials when scopes provided", func(t *testing.T) {
-		route := azRoute{
-			URL:    azAppInsights.URL,
+		route := types.AzRoute{
+			URL:    deprecated.AzAppInsights.URL,
 			Scopes: []string{"https://management.azure.com/.default"},
 		}
 
-		_, err := newHTTPClient(route, model, provider)
+		_, err := newHTTPClient(route, model, cfg, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
@@ -89,12 +93,12 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 	})
 
 	t.Run("should not have Azure credentials when scopes are not provided", func(t *testing.T) {
-		route := azRoute{
-			URL:    azAppInsights.URL,
+		route := types.AzRoute{
+			URL:    deprecated.AzAppInsights.URL,
 			Scopes: []string{},
 		}
 
-		_, err := newHTTPClient(route, model, provider)
+		_, err := newHTTPClient(route, model, cfg, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)

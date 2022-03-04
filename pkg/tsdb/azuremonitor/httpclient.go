@@ -7,26 +7,22 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azhttpclient"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func getMiddlewares(route azRoute, model datasourceInfo) ([]sdkhttpclient.Middleware, error) {
+func getMiddlewares(route types.AzRoute, model types.DatasourceInfo) ([]sdkhttpclient.Middleware, error) {
 	var middlewares []sdkhttpclient.Middleware
 
-	if _, ok := model.DecryptedSecureJSONData["appInsightsApiKey"]; ok && (route.URL == azAppInsights.URL || route.URL == azChinaAppInsights.URL) {
-		// Inject API-Key for AppInsights
-		apiKeyMiddleware := sdkhttpclient.MiddlewareFunc(func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-			return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-				req.Header.Set("X-API-Key", model.DecryptedSecureJSONData["appInsightsApiKey"])
-				return next.RoundTrip(req)
-			})
-		})
+	// Remove with Grafana 9
+	if apiKeyMiddleware := deprecated.GetAppInsightsMiddleware(route.URL, model.DecryptedSecureJSONData["appInsightsApiKey"]); apiKeyMiddleware != nil {
 		middlewares = append(middlewares, apiKeyMiddleware)
 	}
 
 	return middlewares, nil
 }
 
-func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
+func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
 	m, err := getMiddlewares(route, model)
 	if err != nil {
 		return nil, err
