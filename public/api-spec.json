@@ -3544,15 +3544,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -6425,14 +6425,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -6440,6 +6432,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -6473,16 +6473,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -8333,7 +8333,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "BrandingOptions": {
+    "BrandingOptionsDTO": {
       "type": "object",
       "properties": {
         "emailFooterLink": {
@@ -8436,7 +8436,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "orgId": {
           "type": "integer",
@@ -8452,10 +8452,11 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "$ref": "#/definitions/State"
+          "type": "string",
+          "x-go-name": "State"
         },
         "templateVars": {
           "type": "object",
@@ -8636,7 +8637,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "recipients": {
           "type": "string",
@@ -8647,7 +8648,7 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
           "type": "string",
@@ -8917,6 +8918,10 @@
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
         },
         "canEdit": {
           "type": "boolean",
@@ -9694,6 +9699,10 @@
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
         },
         "canEdit": {
           "type": "boolean",
@@ -10839,7 +10848,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
-    "ReportOptions": {
+    "ReportOptionsDTO": {
       "type": "object",
       "properties": {
         "layout": {
@@ -10971,7 +10980,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "Schedule": {
+    "ScheduleDTO": {
       "type": "object",
       "properties": {
         "day": {
@@ -11113,7 +11122,7 @@
       "type": "object",
       "properties": {
         "branding": {
-          "$ref": "#/definitions/BrandingOptions"
+          "$ref": "#/definitions/BrandingOptionsDTO"
         },
         "id": {
           "type": "integer",
@@ -11131,10 +11140,6 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
-    },
-    "State": {
-      "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
     "Status": {

@@ -63,7 +63,7 @@ func AppPluginRoute(route *plugins.Route, appID string, hs *HTTPServer) web.Hand
 	return func(c *models.ReqContext) {
 		path := web.Params(c.Req)["*"]
 
-		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.SQLStore, hs.SecretsService)
+		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.PluginSettings, hs.SecretsService)
 		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req)
 	}

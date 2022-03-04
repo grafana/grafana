@@ -29,14 +29,14 @@ func TestQuery_Metrics(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var cwClient FakeCWClient
+	var cwClient fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return cwClient
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
-		cwClient = FakeCWClient{
+		cwClient = fakeCWClient{
 			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
@@ -53,7 +53,7 @@ func TestQuery_Metrics(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetMetrics(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -71,7 +71,7 @@ func TestQuery_Metrics(t *testing.T) {
 	})
 
 	t.Run("Dimension keys for custom metrics", func(t *testing.T) {
-		cwClient = FakeCWClient{
+		cwClient = fakeCWClient{
 			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
@@ -88,7 +88,7 @@ func TestQuery_Metrics(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetDimensionKeys(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -128,7 +128,7 @@ func TestQuery_Regions(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetRegions(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -201,7 +201,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		filterJson, err := json.Marshal(filterMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetEc2InstanceAttribute(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -278,7 +278,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetEbsVolumeIds(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -344,7 +344,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		tagJson, err := json.Marshal(tagMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetResourceArns(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -374,7 +374,7 @@ func TestQuery_GetAllMetrics(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetAllMetrics(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -400,7 +400,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var client FakeCWClient
+	var client fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return client
@@ -418,12 +418,12 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 	}
 
 	t.Run("should fetch dimension keys from list metrics api and return unique dimensions when a dimension filter is specified", func(t *testing.T) {
-		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+		client = fakeCWClient{Metrics: metrics, MetricsPerPage: 2}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetDimensionKeys(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -453,7 +453,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.handleGetDimensionKeys(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -524,7 +524,7 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var client FakeCWClient
+	var client fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return client
@@ -544,11 +544,11 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 	}
 
 	t.Run("List Metrics and page limit is reached", func(t *testing.T) {
-		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+		client = fakeCWClient{Metrics: metrics, MetricsPerPage: 2}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, &fakeSessionCache{})
 		response, err := executor.listMetrics(backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		}, "default", &cloudwatch.ListMetricsInput{})
@@ -559,11 +559,11 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 	})
 
 	t.Run("List Metrics and page limit is not reached", func(t *testing.T) {
-		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+		client = fakeCWClient{Metrics: metrics, MetricsPerPage: 2}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, &fakeSessionCache{})
 		response, err := executor.listMetrics(backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		}, "default", &cloudwatch.ListMetricsInput{})

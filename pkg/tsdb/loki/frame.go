@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -51,7 +52,29 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 		field.Config.DisplayNameFromDS = name
 	}
 
+	// for streams-dataframes, we need to send to the browser the nanosecond-precision timestamp too.
+	// usually timestamps become javascript-date-objects in the browser automatically, which only
+	// have millisecond-precision.
+	// so we send a separate timestamp-as-string field too.
+	if !isMetricFrame {
+		stringTimeField := makeStringTimeField(timeFields[0])
+		frame.Fields = append(frame.Fields, stringTimeField)
+	}
+
 	return frame
+}
+
+func makeStringTimeField(field *data.Field) *data.Field {
+	length := field.Len()
+	stringTimestamps := make([]string, length)
+
+	for i := 0; i < length; i++ {
+		if v, ok := field.ConcreteAt(i); ok {
+			nsNumber := v.(time.Time).UnixNano()
+			stringTimestamps[i] = fmt.Sprintf("%d", nsNumber)
+		}
+	}
+	return data.NewField("tsNs", field.Labels.Copy(), stringTimestamps)
 }
 
 func formatNamePrometheusStyle(labels map[string]string) string {
