@@ -203,8 +203,36 @@ func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.Da
 }
 
 func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
-	// not used with access control
-	return nil, nil
+	var hiddenACL []*models.DashboardAcl
+	if a.user.IsGrafanaAdmin {
+		return hiddenACL, nil
+	}
+
+	existingPermissions, err := a.GetAcl()
+	if err != nil {
+		return hiddenACL, err
+	}
+
+	for _, item := range existingPermissions {
+		if item.Inherited || item.UserLogin == a.user.Login {
+			continue
+		}
+
+		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
+			hiddenACL = append(hiddenACL, &models.DashboardAcl{
+				OrgID:       item.OrgId,
+				DashboardID: item.DashboardId,
+				UserID:      item.UserId,
+				TeamID:      item.TeamId,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+
+	return hiddenACL, nil
 }
 
 func (a *AccessControlDashboardGuardian) loadDashboard() error {

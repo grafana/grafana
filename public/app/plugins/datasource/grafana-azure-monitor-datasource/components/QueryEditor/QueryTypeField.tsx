@@ -1,8 +1,10 @@
-import React, { useCallback, useState } from 'react';
-import { Select } from '@grafana/ui';
-import { Field } from '../Field';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+import React, { useCallback, useState } from 'react';
+
+import { AzureMonitorQuery, AzureQueryType, DeprecatedAzureQueryType } from '../../types';
+import { gtGrafana9 } from '../deprecated/utils';
+import { Field } from '../Field';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
@@ -13,24 +15,26 @@ const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange })
   // Use useState to capture the initial value on first mount. We're not interested in when it changes
   // We only show App Insights and Insights Analytics if they were initially selected. Otherwise, hide them.
   const [initialQueryType] = useState(query.queryType);
-  const showAppInsights =
-    initialQueryType === AzureQueryType.ApplicationInsights || initialQueryType === AzureQueryType.InsightsAnalytics;
 
-  const queryTypes = [
+  const queryTypes: Array<{ value: AzureQueryType | DeprecatedAzureQueryType; label: string }> = [
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
 
-  if (showAppInsights) {
+  if (
+    !gtGrafana9() &&
+    (initialQueryType === DeprecatedAzureQueryType.ApplicationInsights ||
+      initialQueryType === DeprecatedAzureQueryType.InsightsAnalytics)
+  ) {
     queryTypes.push(
-      { value: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
-      { value: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' }
+      { value: DeprecatedAzureQueryType.ApplicationInsights, label: 'Application Insights' },
+      { value: DeprecatedAzureQueryType.InsightsAnalytics, label: 'Insights Analytics' }
     );
   }
 
   const handleChange = useCallback(
-    (change: SelectableValue<AzureQueryType>) => {
+    (change: SelectableValue<AzureQueryType | DeprecatedAzureQueryType>) => {
       change.value &&
         onQueryChange({
           ...query,
