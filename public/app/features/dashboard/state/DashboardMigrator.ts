@@ -45,7 +45,7 @@ import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 import {
@@ -55,6 +55,7 @@ import {
 } from 'app/plugins/datasource/cloudwatch/migrations';
 import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -65,6 +66,11 @@ export class DashboardMigrator {
 
   constructor(dashboardModel: DashboardModel) {
     this.dashboard = dashboardModel;
+
+    // for tests to pass
+    if (!getDataSourceSrv()) {
+      setDataSourceSrv(new DatasourceSrv());
+    }
   }
 
   updateSchema(old: any) {
