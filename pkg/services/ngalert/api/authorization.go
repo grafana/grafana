@@ -121,6 +121,10 @@ var (
 
 // DeclareFixedRoles registers the fixed roles provided by the alerting module
 func (api *API) DeclareFixedRoles() error {
+	// TODO temporary
+	if !api.Cfg.IsFeatureToggleEnabled("alerting_fgac") {
+		return nil
+	}
 	return api.AccessControl.DeclareFixedRoles(
 		alertingReaderRole, alertingWriterRole,
 	)
