@@ -4162,6 +4162,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-logql@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@grafana/lezer-logql@npm:0.0.11"
+  dependencies:
+    lezer: ^0.13.5
+  peerDependencies:
+    "@lezer/lr": ^0.15.8
+  checksum: 0427e59528ea5092e53a70b9b6be37b0ed29ca4c0ddf452cc192f8bd14d21a725ba1959b2e33e7567b42e4d0391cff4e4f36c249d7099a157d0f1e9093ba64e4
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -20704,6 +20715,7 @@ __metadata:
     "@grafana/eslint-config": 2.5.2
     "@grafana/experimental": 0.0.2-canary.18
     "@grafana/google-sdk": 0.0.2
+    "@grafana/lezer-logql": 0.0.11
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -25015,6 +25027,22 @@ __metadata:
   peerDependencies:
     "@lezer/lr": ^0.15.8
   checksum: cdce054700874ef95c779899bc8a6a774f83bc613d509011b7d3b8003f07fa853962291c44edf9232e7a927d0753fec77ec55d795abddda9d2efc044f78bb58a
+  languageName: node
+  linkType: hard
+
+"lezer-tree@npm:^0.13.2":
+  version: 0.13.2
+  resolution: "lezer-tree@npm:0.13.2"
+  checksum: b8be213c780191e0669c7f440aa563218ada762d2cf399b94e755a563cc7da8951929fa3ee65df9ef6586a81223c55cd662e1ec5b49060d892acca4198cf3596
+  languageName: node
+  linkType: hard
+
+"lezer@npm:^0.13.5":
+  version: 0.13.5
+  resolution: "lezer@npm:0.13.5"
+  dependencies:
+    lezer-tree: ^0.13.2
+  checksum: a5c3aa01c539aba3377a927063bcd63b311737a7abfd71ad2c2229ed4e48b7858f2e8e11e925f8f5286c2629251f77dfabf7505ea6c707499cd9917ca90934c8
   languageName: node
   linkType: hard
 
