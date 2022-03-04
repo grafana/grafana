@@ -250,6 +250,10 @@ const (
 	GlobalOrgID = 0
 	// Permission actions
 
+	ActionAPIKeyRead   = "apikey:read"
+	ActionAPIKeyCreate = "apikey:create"
+	ActionAPIKeyDelete = "apikey:delete"
+
 	// Users actions
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
@@ -298,6 +302,9 @@ const (
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
+
+	// APIKeys scope
+	ScopeAPIKeysAll = "apikeys:*"
 
 	// Users scope
 	ScopeUsersAll = "users:*"
