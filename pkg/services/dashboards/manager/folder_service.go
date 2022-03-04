@@ -164,7 +164,6 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 	}
 
 	var permissionErr error
-
 	if f.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		resourceID := strconv.FormatInt(dashFolder.Id, 10)
 		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, resourceID, []accesscontrol.SetResourcePermissionCommand{

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -316,6 +317,13 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *m.SaveDa
 		return nil, err
 	}
 
+	// new dashboard created
+	if dto.Dashboard.Id == 0 {
+		if err := dr.setDefaultPermissions(ctx, dto, dash); err != nil {
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserId, "error", err)
+		}
+	}
+
 	return dash, nil
 }
 
@@ -414,4 +422,31 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *m.Save
 // and provisioned dashboards are left behind but not deleted.
 func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
 	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
+}
+
+func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *m.SaveDashboardDTO, dash *models.Dashboard) error {
+	inFolder := dash.FolderId > 0
+	if dr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		resourceID := strconv.FormatInt(dash.Id, 10)
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{UserID: dto.User.UserId, Permission: models.PERMISSION_ADMIN.String()},
+		}
+
+		if !inFolder {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
+			}...)
+		}
+		_, err := dr.permissions.SetPermissions(ctx, dto.OrgId, resourceID, permissions...)
+		if err != nil {
+			return err
+		}
+	} else if dr.cfg.EditorsCanAdmin {
+		if err := dr.MakeUserAdmin(ctx, dto.OrgId, dto.User.UserId, dash.Id, !inFolder); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
