@@ -702,14 +702,14 @@ export class DashboardMigrator {
     // Replace datasource name with reference, uid and type
     if (oldVersion < 33) {
       panelUpgrades.push((panel) => {
-        panel.datasource = migrateDatasourceNameToRef(panel.datasource);
+        panel.datasource = migrateDatasourceNameToRef(panel.datasource, { returnDefaultAsNull: true });
 
         if (!panel.targets) {
           return panel;
         }
 
         for (const target of panel.targets) {
-          const targetRef = migrateDatasourceNameToRef(target.datasource);
+          const targetRef = migrateDatasourceNameToRef(target.datasource, { returnDefaultAsNull: true });
           if (targetRef != null) {
             target.datasource = targetRef;
           }
@@ -735,7 +735,7 @@ export class DashboardMigrator {
     if (oldVersion < 36) {
       // Migrate datasource to refs in annotations
       for (const query of this.dashboard.annotations.list) {
-        query.datasource = migrateDatasourceNameToRef(query.datasource);
+        query.datasource = migrateDatasourceNameToRef(query.datasource, { returnDefaultAsNull: false });
       }
 
       // Migrate datasource: null to current default
@@ -749,11 +749,19 @@ export class DashboardMigrator {
 
         panelUpgrades.push((panel: PanelModel) => {
           if (panel.targets) {
+            let panelDataSourceWasDefault = false;
             if (panel.datasource == null && panel.targets.length > 0) {
               panel.datasource = getDataSourceRef(defaultDs);
+              panelDataSourceWasDefault = true;
             }
 
             for (const target of panel.targets) {
+              if (target.datasource && panelDataSourceWasDefault) {
+                // We can have situations when default ds changed and the panel level data source is different from the queries
+                // In this case we use the query level data source as source for truth
+                panel.datasource = target.datasource as DataSourceRef;
+              }
+
               if (target.datasource === null) {
                 target.datasource = getDataSourceRef(defaultDs);
               }
@@ -1082,7 +1090,18 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
-export function migrateDatasourceNameToRef(nameOrRef?: string | DataSourceRef | null): DataSourceRef | null {
+interface MigrateDatasourceNameOptions {
+  returnDefaultAsNull: boolean;
+}
+
+export function migrateDatasourceNameToRef(
+  nameOrRef: string | DataSourceRef | null | undefined,
+  options: MigrateDatasourceNameOptions
+): DataSourceRef | null {
+  if (options.returnDefaultAsNull && (nameOrRef == null || nameOrRef === 'default')) {
+    return null;
+  }
+
   if (isDataSourceRef(nameOrRef)) {
     return nameOrRef;
   }

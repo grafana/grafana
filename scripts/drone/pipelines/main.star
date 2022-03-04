@@ -100,7 +100,7 @@ def get_steps(edition, is_downstream=False):
             test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64'], is_downstream=is_downstream),
         ])
 
     # Insert remaining steps
@@ -135,7 +135,7 @@ def get_steps(edition, is_downstream=False):
     if include_enterprise2:
         edition2 = 'enterprise2'
         build_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64'], is_downstream=is_downstream),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64'], is_downstream=is_downstream),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode)
         ])
