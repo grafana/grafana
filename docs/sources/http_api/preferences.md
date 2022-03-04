@@ -68,6 +68,8 @@ Content-Type: text/plain; charset=utf-8
 
 ## Patch Current User Prefs
 
+Update one or more preferences without modifying the others.
+
 `PATCH /api/user/preferences`
 
 **Example Request**:
@@ -143,6 +145,8 @@ Content-Type: text/plain; charset=utf-8
 ```
 
 ## Patch Current Org Prefs
+
+Update one or more preferences without modifying the others.
 
 `PATCH /api/org/preferences`
 
