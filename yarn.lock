@@ -10446,6 +10446,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/js-yaml@npm:^4":
+  version: 4.0.5
+  resolution: "@types/js-yaml@npm:4.0.5"
+  checksum: 7dcac8c50fec31643cc9d6444b5503239a861414cdfaa7ae9a38bc22597c4d850c4b8cec3d82d73b3fbca408348ce223b0408d598b32e094470dfffc6d486b4d
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:*, @types/json-schema@npm:^7.0.4, @types/json-schema@npm:^7.0.5, @types/json-schema@npm:^7.0.7, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
   version: 7.0.9
   resolution: "@types/json-schema@npm:7.0.9"
@@ -11287,6 +11294,15 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 308957864b9a5a0378ac82f1b084fa31b1bbe85106fb0d84ed2b392e4829404f21ab6ab2c1eb782d556e59cd33d57c75ad2d0cedc4b9b9d0ca3b2311bc915578
+  languageName: node
+  linkType: hard
+
+"@types/yaml@npm:^1":
+  version: 1.9.6
+  resolution: "@types/yaml@npm:1.9.6"
+  dependencies:
+    yaml: "*"
+  checksum: 3df74c9d4028641e2ed710b627ac533e97707713ac17c665df5cc477602f77925a3ceeaf5db76c7400ea42be114609bba990079907e89219ffd905a539997469
   languageName: node
   linkType: hard
 
@@ -20716,6 +20732,7 @@ __metadata:
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 27.4.0
     "@types/jquery": 3.5.13
+    "@types/js-yaml": ^4
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
     "@types/lodash": 4.14.149
@@ -20747,6 +20764,7 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
+    "@types/yaml": ^1
     "@typescript-eslint/eslint-plugin": 5.12.1
     "@typescript-eslint/parser": 5.12.1
     "@visx/event": 2.6.0
@@ -20823,6 +20841,7 @@ __metadata:
     jest-matcher-utils: 27.5.0
     jest-mock-console: 1.2.3
     jquery: 3.6.0
+    js-yaml: ^4.1.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     lerna: ^4.0.0
@@ -20930,6 +20949,7 @@ __metadata:
     webpack-dev-server: 4.7.4
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
+    yaml: ^1.10.2
   languageName: unknown
   linkType: soft
 
@@ -37539,7 +37559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^1.10.0, yaml@npm:^1.10.2, yaml@npm:^1.7.2, yaml@npm:^1.8.3":
+"yaml@npm:*, yaml@npm:^1.10.0, yaml@npm:^1.10.2, yaml@npm:^1.7.2, yaml@npm:^1.8.3":
   version: 1.10.2
   resolution: "yaml@npm:1.10.2"
   checksum: ce4ada136e8a78a0b08dc10b4b900936912d15de59905b2bf415b4d33c63df1d555d23acb2a41b23cf9fb5da41c256441afca3d6509de7247daa062fd2c5ea5f

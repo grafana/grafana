@@ -124,6 +124,7 @@
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/jest": "27.4.0",
     "@types/jquery": "3.5.13",
+    "@types/js-yaml": "^4",
     "@types/jsurl": "^1.2.28",
     "@types/lingui__macro": "^3",
     "@types/lodash": "4.14.149",
@@ -155,6 +156,7 @@
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "8.3.4",
+    "@types/yaml": "^1",
     "@typescript-eslint/eslint-plugin": "5.12.1",
     "@typescript-eslint/parser": "5.12.1",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.6",
@@ -303,6 +305,7 @@
     "immer": "9.0.12",
     "immutable": "4.0.0",
     "jquery": "3.6.0",
+    "js-yaml": "^4.1.0",
     "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
     "lezer": "0.13.5",
@@ -373,7 +376,8 @@
     "uuid": "8.3.2",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.6.2"
+    "whatwg-fetch": "3.6.2",
+    "yaml": "^1.10.2"
   },
   "resolutions": {
     "underscore": "1.13.2",

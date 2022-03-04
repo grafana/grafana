@@ -6,7 +6,7 @@ import { css } from '@emotion/css';
 import { AlertTypeStep } from './AlertTypeStep';
 import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, UseFormWatch } from 'react-hook-form';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -118,14 +118,16 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               Delete
             </Button>
           ) : null}
-          <Button
-            variant="secondary"
-            type="button"
-            onClick={() => setShowEditYaml(true)}
-            disabled={submitState.loading}
-          >
-            Edit yaml
-          </Button>
+          {isCortexLokiOrRecordingRule(watch) && (
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setShowEditYaml(true)}
+              disabled={submitState.loading}
+            >
+              Edit yaml
+            </Button>
+          )}
           <Button
             variant="primary"
             type="button"
@@ -174,6 +176,12 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
     </FormProvider>
   );
+};
+
+const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
+  const [ruleType, dataSourceName] = watch(['type', 'dataSourceName']);
+
+  return (ruleType === RuleFormType.cloudAlerting || ruleType === RuleFormType.cloudRecording) && dataSourceName !== '';
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
