@@ -250,9 +250,9 @@ const (
 	GlobalOrgID = 0
 	// Permission actions
 
-	ActionAPIKeyRead   = "apikey:read"
-	ActionAPIKeyCreate = "apikey:create"
-	ActionAPIKeyDelete = "apikey:delete"
+	ActionAPIKeyRead   = "apikeys:read"
+	ActionAPIKeyCreate = "apikeys:create"
+	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
 	ActionUsersRead     = "users:read"
