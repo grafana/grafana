@@ -89,7 +89,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	user, err := api.service.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
+	user, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
 	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 		return response.Error(http.StatusBadRequest, "Failed to create role with the provided name", err)

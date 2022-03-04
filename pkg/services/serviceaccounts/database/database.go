@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -29,18 +28,20 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
-	// create a new service account - "user" with empty permissions
-	generatedLogin := "Service-Account-" + uuid.New().String()
+	generatedLogin := "sa-" + strings.ToLower(name)
+	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	cmd := models.CreateUserCommand{
 		Login:            generatedLogin,
 		OrgId:            orgID,
 		Name:             name,
 		IsServiceAccount: true,
 	}
+
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
+
 	return &serviceaccounts.ServiceAccountDTO{
 		Id:     newuser.Id,
 		Name:   newuser.Name,
