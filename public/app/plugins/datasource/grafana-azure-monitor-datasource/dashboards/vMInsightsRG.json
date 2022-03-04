@@ -313,7 +313,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -425,7 +425,7 @@
       "panels": [
         {
           "datasource": "${ds}",
-          "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+          "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -995,7 +995,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1108,7 +1108,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1246,7 +1246,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1333,7 +1333,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1446,7 +1446,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1585,7 +1585,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1672,7 +1672,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save As.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1899,6 +1899,5 @@
   "timepicker": {},
   "timezone": "",
   "title": "Azure VM Monitoring - VM Insights by Resource Group",
-  "uid": "-Nj9uzFnz2",
   "version": 6
 }
