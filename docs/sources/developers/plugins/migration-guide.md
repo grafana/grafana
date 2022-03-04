@@ -321,18 +321,25 @@ import { cx, css } from '@emotion/css';
 
 ### Update needed for app plugins using dashboards
 
-To make side navigation work properly - app plugins targeting Grafana 8.+ and using navigation bar need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
+To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "metadata.md#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
 
 **`plugin.json`**
 
 ```json "linenos=inline,hl_lines=7,linenostart=1"
 {
-  "type": "dashboard",
-  "name": "(Team) Situation Overview",
-  "path": "dashboards/example-dashboard.json",
-  "addToNav": true,
-  "defaultNav": false,
-  "uid": "l3KqBxCMz"
+  "id": "plugin-id",
+  // ...
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "(Team) Situation Overview",
+      "path": "dashboards/example-dashboard.json",
+      "addToNav": true,
+      "defaultNav": false,
+      "uid": "l3KqBxCMz"
+    }
+  ]
+  // ...
 }
 ```
 
