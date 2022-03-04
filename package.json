@@ -15,6 +15,8 @@
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "e2e:benchmark:live": "./e2e/start-and-run-suite benchmark live",
     "test": "jest --notify --watch",
+    "test:coverage": "jest --coverage",
+    "test:coverage:changes": "jest --coverage --changedSince=origin/main",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",
     "lint": "yarn run lint:ts && yarn run lint:sass",
     "lint:ts": "eslint . --ext .js,.tsx,.ts --cache",
