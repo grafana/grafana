@@ -57,7 +57,7 @@ ver_mode = 'pr'
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-x64', 'linux-x64-musl', 'darwin-amd64', 'windows-amd64', 'armv6',]
+    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     test_steps = [
         lint_drone_step(),
@@ -92,7 +92,7 @@ def pr_pipelines(edition):
             test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
         ])
 
     # Insert remaining build_steps
@@ -116,7 +116,7 @@ def pr_pipelines(edition):
             memcached_integration_tests_step(edition=edition, ver_mode=ver_mode),
         ])
         build_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64']),
         ])
 
     trigger = {

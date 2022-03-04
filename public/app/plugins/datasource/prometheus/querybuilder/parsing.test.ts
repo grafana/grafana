@@ -376,6 +376,58 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('handles multiple binary scalar operations', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name + 1 - 1 / 1 * 1 % 1 ^ 1')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__addition',
+            params: [1],
+          },
+          {
+            id: '__subtraction',
+            params: [1],
+          },
+          {
+            id: '__divide_by',
+            params: [1],
+          },
+          {
+            id: '__multiply_by',
+            params: [1],
+          },
+          {
+            id: '__modulo',
+            params: [1],
+          },
+          {
+            id: '__exponent',
+            params: [1],
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles scalar comparison operators', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name <= 2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__less_or_equal',
+            params: [2],
+          },
+        ],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
