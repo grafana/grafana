@@ -332,7 +332,7 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 			resourceId.Path = path.Join(resourceId.Path, ".default")
 			scopes := []string{resourceId.String()}
 
-			azhttpclient.AddAzureAuthentication(opts, s.cfg, credentials, scopes)
+			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
 		}
 	}
 

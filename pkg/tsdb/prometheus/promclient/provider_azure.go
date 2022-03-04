@@ -42,7 +42,7 @@ func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) err
 		resourceId.Path = path.Join(resourceId.Path, ".default")
 		scopes := []string{resourceId.String()}
 
-		azhttpclient.AddAzureAuthentication(opts, p.cfg, credentials, scopes)
+		azhttpclient.AddAzureAuthentication(opts, p.cfg.Azure, credentials, scopes)
 	}
 
 	return nil

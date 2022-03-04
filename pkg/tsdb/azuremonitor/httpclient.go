@@ -35,7 +35,7 @@ func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, cfg *setting
 
 	// Use Azure credentials if the route has OAuth scopes configured
 	if len(route.Scopes) > 0 {
-		azhttpclient.AddAzureAuthentication(&opts, cfg, model.Credentials, route.Scopes)
+		azhttpclient.AddAzureAuthentication(&opts, cfg.Azure, model.Credentials, route.Scopes)
 	}
 
 	return clientProvider.New(opts)
