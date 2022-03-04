@@ -3,14 +3,21 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 )
 
-type StorageName string
+type Operation string
 
 const (
-	StorageNamePublic StorageName = "public"
+	OperationGet          Operation = "get"
+	OperationDelete       Operation = "delete"
+	OperationUpsert       Operation = "upsert"
+	OperationListFiles    Operation = "listFiles"
+	OperationListFolders  Operation = "listFolders"
+	OperationCreateFolder Operation = "createFolder"
+	OperationDeleteFolder Operation = "deleteFolder"
 )
 
 var (
@@ -19,15 +26,16 @@ var (
 	ErrPathTooLong           = errors.New("path is too long")
 	ErrPathInvalid           = errors.New("path is invalid")
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
+	ErrOperationNotSupported = errors.New("operation not supported")
 	Delimiter                = "/"
+	multipleDelimiters       = regexp.MustCompile(`/+`)
 )
 
 func Join(parts ...string) string {
-	return Delimiter + strings.Join(parts, Delimiter)
-}
+	joinedPath := Delimiter + strings.Join(parts, Delimiter)
 
-func belongsToStorage(path string, storageName StorageName) bool {
-	return strings.HasPrefix(path, Delimiter+string(storageName))
+	// makes the API more forgiving for clients without compromising safety
+	return multipleDelimiters.ReplaceAllString(joinedPath, Delimiter)
 }
 
 type File struct {

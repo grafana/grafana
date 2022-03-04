@@ -61,7 +61,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	setupInMemFS := func() {
 		commonSetup()
 		bucket, _ := blob.OpenBucket(context.Background(), "mem://")
-		filestorage = NewCdkBlobStorage(testLogger, bucket, Delimiter, nil)
+		filestorage = NewCdkBlobStorage(testLogger, bucket, Delimiter, nil, nil)
 	}
 
 	//setupSqlFS := func() {
@@ -82,7 +82,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
+		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil, nil)
 	}
 
 	backends := []struct {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,67 +20,49 @@ const (
 )
 
 func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg) (FileStorage, error) {
-	grafanaDsStorageLogger := log.New("grafanaDsStorage")
+	logger := log.New("fileStorageLogger")
 
-	path := fmt.Sprintf("file://%s", cfg.StaticRootPath)
-	grafanaDsStorageLogger.Info("Initializing grafana ds storage", "path", path)
-	bucket, err := blob.OpenBucket(context.Background(), path)
-	if err != nil {
-		currentDir, _ := os.Getwd()
-		grafanaDsStorageLogger.Error("Failed to initialize grafana ds storage", "path", path, "error", err, "cwd", currentDir)
-		return nil, err
+	backendByName := make(map[string]FileStorage)
+	dummyBackend := &wrapper{
+		log:                 logger,
+		wrapped:             &dummyFileStorage{},
+		pathFilters:         &PathFilters{allowedPrefixes: []string{}},
+		supportedOperations: []Operation{},
 	}
 
-	prefixes := []string{
-		"testdata/",
-		"img/icons/",
-		"img/bg/",
-		"gazetteer/",
-		"maps/",
-		"upload/",
+	if !features.IsEnabled(featuremgmt.FlagFileStoreApi) {
+		logger.Info("Filestorage API disabled")
+		return &service{
+			backendByName: backendByName,
+			dummyBackend:  dummyBackend,
+			log:           logger,
+		}, nil
 	}
 
-	var grafanaDsStorage FileStorage
-	if features.IsEnabled(featuremgmt.FlagFileStoreApi) {
-		grafanaDsStorage = &wrapper{
-			log: grafanaDsStorageLogger,
-			wrapped: cdkBlobStorage{
-				log:        grafanaDsStorageLogger,
-				bucket:     bucket,
-				rootFolder: "",
-			},
-			pathFilters: &PathFilters{allowedPrefixes: prefixes},
+	fsConfig := newConfig(cfg.StaticRootPath)
+
+	s := &service{
+		backendByName: backendByName,
+		dummyBackend:  dummyBackend,
+		log:           logger,
+	}
+
+	for _, backend := range fsConfig.Backends {
+		if err := s.addBackend(backend); err != nil {
+			return nil, err
 		}
-	} else {
-		grafanaDsStorage = &dummyFileStorage{}
 	}
 
-	return &service{
-		grafanaDsStorage: grafanaDsStorage,
-		log:              log.New("fileStorageService"),
-	}, nil
+	return s, nil
 }
 
 type service struct {
-	log              log.Logger
-	grafanaDsStorage FileStorage
+	log           log.Logger
+	dummyBackend  FileStorage
+	backendByName map[string]FileStorage
 }
 
-func (b service) Get(ctx context.Context, path string) (*File, error) {
-	var filestorage FileStorage
-	if belongsToStorage(path, StorageNamePublic) {
-		filestorage = b.grafanaDsStorage
-		path = removeStoragePrefix(path)
-	}
-
-	if err := validatePath(path); err != nil {
-		return nil, err
-	}
-
-	return filestorage.Get(ctx, path)
-}
-
-func removeStoragePrefix(path string) string {
+func removeBackendNamePrefix(path string) string {
 	path = strings.TrimPrefix(path, Delimiter)
 	if path == Delimiter || path == "" {
 		return Delimiter
@@ -103,58 +84,143 @@ func removeStoragePrefix(path string) string {
 	return strings.Join(split, Delimiter)
 }
 
+func (b service) addBackend(backend backendConfig) error {
+	if backend.Type != BackendTypeFS {
+		// TODO add support for DB
+		return nil
+	}
+
+	if backend.FSBackendConfig == nil {
+		return errors.New("Invalid backend configuration " + backend.Name)
+	}
+
+	fsBackendLogger := log.New("fileStorage-" + backend.Name)
+	path := fmt.Sprintf("file://%s", backend.FSBackendConfig.RootPath)
+	bucket, err := blob.OpenBucket(context.Background(), path)
+	if err != nil {
+		return err
+	}
+
+	// TODO mutex
+	if _, ok := b.backendByName[backend.Name]; ok {
+		return errors.New("Duplicate backend name " + backend.Name)
+	}
+
+	pathFilters := &PathFilters{allowedPrefixes: backend.AllowedPrefixes}
+	b.backendByName[backend.Name] = NewCdkBlobStorage(fsBackendLogger, bucket, "", pathFilters, backend.SupportedOperations)
+	return nil
+}
+
+func (b service) validatePath(path string) error {
+	if err := validatePath(path); err != nil {
+		b.log.Error("Path failed validation", "path", path, "error", err)
+		return err
+	}
+	return nil
+}
+
+func (b service) getBackend(path string) (FileStorage, string, string, error) {
+	for backendName, backend := range b.backendByName {
+		if strings.HasPrefix(path, Delimiter+backendName) || backendName == path {
+			backendSpecificPath := removeBackendNamePrefix(path)
+			if err := b.validatePath(backendSpecificPath); err != nil {
+				return nil, "", "", err
+			}
+			return backend, backendSpecificPath, backendName, nil
+		}
+	}
+
+	if err := b.validatePath(path); err != nil {
+		return nil, "", "", err
+	}
+	b.log.Warn("Backend not found", "path", path)
+	return b.dummyBackend, path, "", nil
+}
+
+func (b service) Get(ctx context.Context, path string) (*File, error) {
+	backend, backendSpecificPath, backendName, err := b.getBackend(path)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := backend.Get(ctx, backendSpecificPath)
+	if file != nil {
+		file.FullPath = Join(backendName, file.FullPath)
+	}
+	return file, err
+}
+
 func (b service) Delete(ctx context.Context, path string) error {
-	return errors.New("not implemented")
+	backend, backendSpecificPath, _, err := b.getBackend(path)
+	if err != nil {
+		return err
+	}
+
+	return backend.Delete(ctx, backendSpecificPath)
 }
 
 func (b service) Upsert(ctx context.Context, file *UpsertFileCommand) error {
-	return errors.New("not implemented")
+	backend, backendSpecificPath, _, err := b.getBackend(file.Path)
+	if err != nil {
+		return err
+	}
+
+	file.Path = backendSpecificPath
+	return backend.Upsert(ctx, file)
 }
 
 func (b service) ListFiles(ctx context.Context, path string, cursor *Paging, options *ListOptions) (*ListFilesResponse, error) {
-	var filestorage FileStorage
-	if belongsToStorage(path, StorageNamePublic) {
-		filestorage = b.grafanaDsStorage
-		path = removeStoragePrefix(path)
-	} else {
-		return nil, errors.New("not implemented")
-	}
-
-	if err := validatePath(path); err != nil {
+	backend, backendSpecificPath, backendName, err := b.getBackend(path)
+	if err != nil {
 		return nil, err
 	}
 
-	return filestorage.ListFiles(ctx, path, cursor, options)
+	resp, err := backend.ListFiles(ctx, backendSpecificPath, cursor, options)
+	if resp != nil && resp.Files != nil {
+		for i := range resp.Files {
+			resp.Files[i].FullPath = Join(backendName, resp.Files[i].FullPath)
+		}
+	}
+	return resp, err
 }
 
 func (b service) ListFolders(ctx context.Context, path string, options *ListOptions) ([]FileMetadata, error) {
-	var filestorage FileStorage
-	if belongsToStorage(path, StorageNamePublic) {
-		filestorage = b.grafanaDsStorage
-		path = removeStoragePrefix(path)
-	} else {
-		return nil, errors.New("not implemented")
-	}
-
-	if err := validatePath(path); err != nil {
+	backend, backendSpecificPath, backendName, err := b.getBackend(path)
+	if err != nil {
 		return nil, err
 	}
 
-	return filestorage.ListFolders(ctx, path, options)
+	folders, err := backend.ListFolders(ctx, backendSpecificPath, options)
+	for i := range folders {
+		folders[i].FullPath = Join(backendName, folders[i].FullPath)
+	}
+
+	return folders, err
 }
 
 func (b service) CreateFolder(ctx context.Context, path string) error {
-	return errors.New("not implemented")
+	backend, backendSpecificPath, _, err := b.getBackend(path)
+	if err != nil {
+		return err
+	}
+
+	return backend.CreateFolder(ctx, backendSpecificPath)
 }
 
 func (b service) DeleteFolder(ctx context.Context, path string) error {
-	return errors.New("not implemented")
-}
+	backend, backendSpecificPath, _, err := b.getBackend(path)
+	if err != nil {
+		return err
+	}
 
-func (b service) IsFolderEmpty(ctx context.Context, path string) (bool, error) {
-	return true, errors.New("not implemented")
+	return backend.DeleteFolder(ctx, backendSpecificPath)
 }
 
 func (b service) close() error {
-	return b.grafanaDsStorage.close()
+	var lastError error
+	for _, backend := range b.backendByName {
+		lastError = backend.close()
+	}
+
+	return lastError
 }
