@@ -168,7 +168,7 @@
     "babel-plugin-angularjs-annotate": "0.10.0",
     "babel-plugin-macros": "3.1.0",
     "copy-webpack-plugin": "9.0.1",
-    "css-loader": "6.6.0",
+    "css-loader": "6.7.0",
     "css-minimizer-webpack-plugin": "3.4.1",
     "cypress": "9.5.0",
     "enzyme": "3.11.0",
