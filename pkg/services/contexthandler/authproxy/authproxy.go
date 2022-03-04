@@ -90,13 +90,8 @@ func New(cfg *setting.Cfg, options *Options) *AuthProxy {
 		ctx:         options.Ctx,
 		orgID:       options.OrgID,
 	}
-	auth.init()
+	auth.header = auth.getDecodedHeader(cfg.AuthProxyHeaderName)
 	return auth
-}
-
-// init initializes the new instance of the AuthProxy
-func (auth *AuthProxy) init() {
-	auth.header = auth.getDecodedHeader(auth.cfg.AuthProxyHeaderName)
 }
 
 // IsEnabled checks if the auth proxy is enabled.
