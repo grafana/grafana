@@ -1,5 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { FC, useCallback, useState, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { Column } from 'react-table';
 import { Modal, CheckboxField } from '@percona/platform-core';
@@ -17,6 +18,7 @@ import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConf
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
 import { AddKubernetesModal } from './AddKubernetesModal/AddKubernetesModal';
+import { getPerconaSettings } from '../../../shared/core/selectors';
 
 export const KubernetesInventory: FC<KubernetesProps> = ({
   kubernetes,
@@ -34,6 +36,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
   const [manageComponentsModalVisible, setManageComponentsModalVisible] = useState(false);
   const [operatorToUpdate, setOperatorToUpdate] = useState<OperatorToUpdate | null>(null);
   const [updateOperatorModalVisible, setUpdateOperatorModalVisible] = useState(false);
+  const { isLoading, publicAddress } = useSelector(getPerconaSettings);
 
   const deleteKubernetesCluster = useCallback(
     (force?: boolean) => {
@@ -104,6 +107,8 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
     [addModalVisible]
   );
 
+  const showMonitoringWarning = useMemo(() => isLoading || !publicAddress, [publicAddress, isLoading]);
+
   return (
     <div>
       <div className={styles.actionPanel}>
@@ -120,6 +125,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
         isVisible={addModalVisible}
         addKubernetes={addKubernetes}
         setAddModalVisible={setAddModalVisible}
+        showMonitoringWarning={showMonitoringWarning}
       />
       <Modal
         title={Messages.kubernetes.deleteModal.title}

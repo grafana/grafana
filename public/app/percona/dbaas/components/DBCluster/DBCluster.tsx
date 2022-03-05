@@ -1,8 +1,7 @@
 import React, { FC, useCallback, useMemo, useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { useStyles } from '@grafana/ui';
 import { Table } from 'app/percona/shared/components/Elements/Table';
-import { Settings } from 'app/percona/settings/Settings.types';
-import { SettingsService } from 'app/percona/settings/Settings.service';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 import { getStyles } from './DBCluster.styles';
@@ -20,8 +19,8 @@ import {
   clusterActionsRender,
 } from './ColumnRenderers/ColumnRenderers';
 import { DeleteDBClusterModal } from './DeleteDBClusterModal/DeleteDBClusterModal';
-import { logger } from '@percona/platform-core';
 import { UpdateDBClusterModal } from './UpdateDBClusterModal/UpdateDBClusterModal';
+import { getPerconaSettings } from '../../../shared/core/selectors';
 
 export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const styles = useStyles(getStyles);
@@ -32,8 +31,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<Cluster>();
   const [dbClusters, getDBClusters, setLoading, loading] = useDBClusters(kubernetes);
-  const [settings, setSettings] = useState<Settings>();
-  const [settingsLoading, setSettingsLoading] = useState(true);
+  const { isLoading, publicAddress } = useSelector(getPerconaSettings);
 
   const columns = useMemo(
     () => [
@@ -89,26 +87,12 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const getRowKey = useCallback(({ original }) => `${original.kubernetesClusterName}${original.clusterName}`, []);
 
   useEffect(() => {
-    const getSettings = async () => {
-      try {
-        setSettingsLoading(true);
-        const settings = await SettingsService.getSettings();
-        setSettings(settings);
-      } catch (e) {
-        logger.error(e);
-      } finally {
-        setSettingsLoading(false);
-      }
-    };
-
-    getSettings();
-  }, []);
-
-  useEffect(() => {
     if (!deleteModalVisible && !editModalVisible && !logsModalVisible && !updateModalVisible) {
       setSelectedCluster(undefined);
     }
   }, [deleteModalVisible, editModalVisible, logsModalVisible, updateModalVisible]);
+
+  const showMonitoringWarning = useMemo(() => isLoading || !publicAddress, [publicAddress, isLoading]);
 
   return (
     <div>
@@ -120,7 +104,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
         isVisible={addModalVisible}
         setVisible={setAddModalVisible}
         onDBClusterAdded={getDBClusters}
-        showMonitoringWarning={settingsLoading || !settings?.publicAddress}
+        showMonitoringWarning={showMonitoringWarning}
       />
       <DeleteDBClusterModal
         isVisible={deleteModalVisible}

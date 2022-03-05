@@ -2,17 +2,18 @@
 import React, { FC, useMemo } from 'react';
 import { Modal, logger } from '@percona/platform-core';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { Icon, useStyles } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { StepProgress } from 'app/percona/dbaas/components/StepProgress/StepProgress';
 import { AddDBClusterModalProps, AddDBClusterFields } from './AddDBClusterModal.types';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { INITIAL_VALUES } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
 import { DBClusterTopology } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
-import { buildWarningMessage, newDBClusterService } from '../DBCluster.utils';
+import { newDBClusterService } from '../DBCluster.utils';
 import { getStyles } from './AddDBClusterModal.styles';
 import { FormRenderProps } from 'react-final-form';
 import { getActiveOperators, getDatabaseOptionFromOperator } from '../../Kubernetes/Kubernetes.utils';
+import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarning';
 
 export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
   kubernetes,
@@ -95,12 +96,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
     <div className={styles.modalWrapper}>
       <Modal title={Messages.dbcluster.addModal.title} isVisible={isVisible} onClose={() => setVisible(false)}>
         <div className={styles.stepProgressWrapper}>
-          {showMonitoringWarning && (
-            <div className={styles.warningWrapper} data-testid="add-cluster-monitoring-warning">
-              <Icon name="exclamation-triangle" className={styles.warningIcon} />
-              <span className={styles.warningMessage}>{buildWarningMessage(styles.settingsLink)}</span>
-            </div>
-          )}
+          {showMonitoringWarning && <PMMServerUrlWarning />}
           <StepProgress
             steps={steps}
             initialValues={initialValues}

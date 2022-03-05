@@ -9,6 +9,19 @@ describe('AddKubernetesModal::', () => {
     expect(screen.getByTestId('name-text-input')).toBeInTheDocument();
     expect(screen.getByTestId('kubeConfig-textarea-input')).toBeInTheDocument();
     expect(screen.getByTestId('isEKS-checkbox-input')).toBeInTheDocument();
+    expect(screen.queryByTestId('pmm-server-url-warning')).toBeFalsy();
+  });
+
+  it('shows PMM Server Url Warning', async () => {
+    render(
+      <AddKubernetesModal
+        isVisible
+        addKubernetes={() => {}}
+        setAddModalVisible={() => {}}
+        showMonitoringWarning={true}
+      />
+    );
+    expect(await screen.findByTestId('pmm-server-url-warning')).toBeInTheDocument();
   });
 
   it('calls addKubernetes with correct values on registering new cluster', () => {

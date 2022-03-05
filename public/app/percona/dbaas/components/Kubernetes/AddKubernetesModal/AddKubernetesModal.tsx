@@ -15,6 +15,7 @@ import { AddKubernetesModalProps } from './AddKubernetesModal.types';
 import { getStyles } from './AddKubernetesModal.styles';
 import { Messages as ModalMessages } from './AddKubernetesModal.messages';
 import { AWS_CREDENTIALS_DOC_LINK } from './AddKubernetesModal.constants';
+import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarning';
 
 const { required } = validators;
 const {
@@ -26,11 +27,17 @@ const {
   awsSecretAccessKeyTooltip,
 } = ModalMessages;
 
-export const AddKubernetesModal = ({ isVisible, addKubernetes, setAddModalVisible }: AddKubernetesModalProps) => {
+export const AddKubernetesModal = ({
+  isVisible,
+  addKubernetes,
+  setAddModalVisible,
+  showMonitoringWarning,
+}: AddKubernetesModalProps) => {
   const styles = useStyles(getStyles);
 
   return (
     <Modal title={Messages.kubernetes.addModal.title} isVisible={isVisible} onClose={() => setAddModalVisible(false)}>
+      {showMonitoringWarning && <PMMServerUrlWarning className={styles.urlWarningWrapper} />}
       <Form
         onSubmit={(values: NewKubernetesCluster) => {
           addKubernetes(values);
