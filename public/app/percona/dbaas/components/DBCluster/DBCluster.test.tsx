@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 
@@ -22,7 +23,21 @@ jest.mock('@percona/platform-core', () => {
   };
 });
 
+jest.mock('react-redux', () => {
+  const original = jest.requireActual('react-redux');
+  return {
+    ...original,
+    useSelector: jest.fn(),
+  };
+});
+
 describe('DBCluster::', () => {
+  beforeEach(() => {
+    (useSelector as jest.Mock).mockImplementation((callback) => {
+      return callback({ perconaUser: { isAuthorized: true }, perconaSettings: { isLoading: false } });
+    });
+  });
+
   it('renders correctly without clusters', async () => {
     render(<DBCluster kubernetes={[]} />);
     expect(await screen.getAllByTestId('dbcluster-add-cluster-button')).toHaveLength(2);

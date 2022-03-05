@@ -2,6 +2,7 @@
 import { Modal, CheckboxField } from '@percona/platform-core';
 import React, { FC, useCallback, useState, useMemo } from 'react';
 import { Form } from 'react-final-form';
+import { useSelector } from 'react-redux';
 import { Column } from 'react-table';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
@@ -9,6 +10,7 @@ import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Table } from 'app/percona/shared/components/Elements/Table';
 import { Databases } from 'app/percona/shared/core';
 
+import { getPerconaSettings } from '../../../shared/core/selectors';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 
 import { AddKubernetesModal } from './AddKubernetesModal/AddKubernetesModal';
@@ -37,6 +39,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
   const [manageComponentsModalVisible, setManageComponentsModalVisible] = useState(false);
   const [operatorToUpdate, setOperatorToUpdate] = useState<OperatorToUpdate | null>(null);
   const [updateOperatorModalVisible, setUpdateOperatorModalVisible] = useState(false);
+  const { isLoading, publicAddress } = useSelector(getPerconaSettings);
 
   const deleteKubernetesCluster = useCallback(
     (force?: boolean) => {
@@ -107,6 +110,8 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
     [addModalVisible]
   );
 
+  const showMonitoringWarning = useMemo(() => isLoading || !publicAddress, [publicAddress, isLoading]);
+
   return (
     <div>
       <div className={styles.actionPanel}>
@@ -123,6 +128,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
         isVisible={addModalVisible}
         addKubernetes={addKubernetes}
         setAddModalVisible={setAddModalVisible}
+        showMonitoringWarning={showMonitoringWarning}
       />
       <Modal
         title={Messages.kubernetes.deleteModal.title}
