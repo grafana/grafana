@@ -37,7 +37,6 @@ type FileLogWriter struct {
 
 	Rotate    bool
 	startLock sync.Mutex
-	logger    log.Logger
 	sync.Mutex
 	fd *os.File
 }
@@ -79,7 +78,7 @@ func NewFileWriter() *FileLogWriter {
 }
 
 func (w *FileLogWriter) Log(keyvals ...interface{}) error {
-	return w.logger.Log(keyvals...)
+	return w.Format(w).Log(keyvals...)
 }
 
 func (w *FileLogWriter) Init() error {
@@ -89,7 +88,6 @@ func (w *FileLogWriter) Init() error {
 	if err := w.StartLogger(); err != nil {
 		return err
 	}
-	w.logger = log.NewLogfmtLogger(log.NewSyncWriter(w))
 	return nil
 }
 
