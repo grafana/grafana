@@ -372,7 +372,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 			acmock = acmock.WithDisabled()
 		}
 		hs.AccessControl = acmock
-		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
@@ -384,7 +384,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		require.NoError(t, err)
 		err = ac.RegisterFixedRoles()
 		require.NoError(t, err)
-		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	}
