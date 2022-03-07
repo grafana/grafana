@@ -345,5 +345,3 @@ export function variableInterpolation(value: any[]) {
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
-
-export default DatasourceSrv;
