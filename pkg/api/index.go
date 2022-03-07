@@ -433,7 +433,8 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			})
 		}
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "plus",
+			// Fork: Remove reference to Grafana
+			Text: "Import", SubTitle: "Import dashboard from file", Id: "import", Icon: "plus",
 			Url: hs.Cfg.AppSubURL + "/dashboard/import", HideFromTabs: true,
 		})
 	}
@@ -483,7 +484,8 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 		})
 	}
 	children = append(children, &dtos.NavLink{
-		Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
+		// Fork: Remove reference to Grafana
+		Text: "Import", SubTitle: "Import dashboard from file", Id: "import", Icon: "import",
 		Url: hs.Cfg.AppSubURL + "/dashboard/import",
 	})
 
@@ -616,12 +618,13 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppNameBodyClass:        "app-grafana",
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
-		AppTitle:                "Grafana",
-		NavTree:                 navTree,
-		Sentry:                  &hs.Cfg.Sentry,
-		Nonce:                   c.RequestNonce,
-		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
-		LoadingLogo:             "public/img/grafana_icon.svg",
+		// Fork: Remove reference to Grafana
+		AppTitle:           "Dashboards",
+		NavTree:            navTree,
+		Sentry:             &hs.Cfg.Sentry,
+		Nonce:              c.RequestNonce,
+		ContentDeliveryURL: hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
+		LoadingLogo:        "public/img/grafana_icon.svg",
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {

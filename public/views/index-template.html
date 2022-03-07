@@ -175,27 +175,21 @@
     </style>
 
     <div class="preloader">
-      <div class="preloader__enter">
-        <div class="preloader__bounce">
-          <div class="preloader__logo"></div>
-        </div>
-      </div>
-      <div class="preloader__text">Loading Grafana</div>
       <div class="preloader__text preloader__text--fail">
         <p>
-          <strong>If you're seeing this Grafana has failed to load its application files</strong>
+          <strong>If you're seeing this the dashboard application has failed to load its files</strong>
           <br />
           <br />
         </p>
         <p>
           1. This could be caused by your reverse proxy settings.<br /><br />
-          2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not
+          2. If you host the application under subpath make sure your root_url configuration includes subpath. If not
           using a reverse proxy make sure to set serve_from_sub_path to true.<br />
           <br />
           3. If you have a local dev build make sure you build frontend using: yarn start, yarn start:hot, or yarn
           build<br />
           <br />
-          4. Sometimes restarting grafana-server can help<br />
+          4. Sometimes restarting the server can help<br />
           <br />
           5. Check if you are using a non-supported browser. For more information, refer to the list of
           <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
@@ -260,6 +254,8 @@
         var preloader = document.getElementsByClassName("preloader");
         if (preloader.length) {
           preloader[0].className = "preloader preloader--done";
+          // Fork: Tells iframe-host loading indicator when to disappear
+          window.parent.postMessage('iframeLoaded', window.parent.location.origin);
         }
       }
 

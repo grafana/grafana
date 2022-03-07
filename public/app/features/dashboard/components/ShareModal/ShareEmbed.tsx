@@ -1,15 +1,9 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { ClipboardButton, Field, Modal, Switch, TextArea } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/core';
 import { buildIframeHtml } from './utils';
 import { ShareModalTabProps } from './types';
-
-const themeOptions: Array<SelectableValue<string>> = [
-  { label: 'Current', value: 'current' },
-  { label: 'Dark', value: 'dark' },
-  { label: 'Light', value: 'light' },
-];
 
 interface Props extends ShareModalTabProps {}
 
@@ -67,7 +61,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
   };
 
   render() {
-    const { useCurrentTimeRange, selectedTheme, iframeHtml } = this.state;
+    const { useCurrentTimeRange, iframeHtml } = this.state;
     const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
 
     return (
@@ -83,13 +77,10 @@ export class ShareEmbed extends PureComponent<Props, State> {
             onChange={this.onUseCurrentTimeRangeChange}
           />
         </Field>
-        <Field label="Theme">
-          <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-        </Field>
         <Field
           label="Embed HTML"
           description="The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled,
-                the user viewing that page need to be signed into Grafana for the graph to load."
+                the user viewing that page need to be signed in for the graph to load."
         >
           <TextArea
             data-testid="share-embed-html"

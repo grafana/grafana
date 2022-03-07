@@ -118,7 +118,8 @@ export const diffs = {
         list: [
           {
             builtIn: 1,
-            datasource: '-- Grafana --',
+            // Fork: Remove reference to Grafana
+            datasource: '-- Example Data --',
             enable: true,
             hide: true,
             iconColor: 'rgba(0, 211, 255, 1)',

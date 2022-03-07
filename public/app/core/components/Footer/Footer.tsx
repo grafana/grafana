@@ -11,23 +11,12 @@ export interface FooterLink {
 }
 
 export let getFooterLinks = (): FooterLink[] => {
+  // Fork: Replace Grafana links with link to our fork
   return [
     {
-      text: 'Documentation',
+      text: 'Source Code',
       icon: 'document-info',
-      url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
-      target: '_blank',
-    },
-    {
-      text: 'Support',
-      icon: 'question-circle',
-      url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
-      target: '_blank',
-    },
-    {
-      text: 'Community',
-      icon: 'comments-alt',
-      url: 'https://community.grafana.com/?utm_source=grafana_footer',
+      url: 'https://github.com/ni/grafana',
       target: '_blank',
     },
   ];
@@ -68,7 +57,8 @@ export function setVersionLinkFn(fn: typeof getFooterLinks) {
 }
 
 export const Footer: FC = React.memo(() => {
-  const links = getFooterLinks().concat(getVersionLinks());
+  // Fork: Do not include Grafana links in footer
+  const links = getFooterLinks();
 
   return (
     <footer className="footer">

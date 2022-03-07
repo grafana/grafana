@@ -20,7 +20,8 @@ import (
 
 // DatasourceName is the string constant used as the datasource name in requests
 // to identify it as a Grafana DS command.
-const DatasourceName = "-- Grafana --"
+// Fork: Remove reference to Grafana
+const DatasourceName = "-- Example Data --"
 
 // DatasourceID is the fake datasource id used in requests to identify it as a
 // Grafana DS command.

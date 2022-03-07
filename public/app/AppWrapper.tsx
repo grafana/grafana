@@ -61,6 +61,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     const injector = this.props.app.angularApp.bootstrap();
     this.setState({ ngInjector: injector });
     $('.preloader').remove();
+    // Fork: Tells iframe-host loading indicator when to disappear
+    window.parent.postMessage('iframeLoaded', window.parent.location.origin);
   }
 
   renderRoute = (route: RouteDescriptor) => {

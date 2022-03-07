@@ -11,8 +11,6 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
-import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { Branding } from '../Branding/Branding';
 import { connect, ConnectedProps } from 'react-redux';
 
 const onOpenSearch = () => {
@@ -68,9 +66,6 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
       </div>
 
       <NavBarSection>
-        <NavBarItemWithoutMenu label="Main menu" className={styles.grafanaLogo} onClick={() => setMenuOpen(!menuOpen)}>
-          <Branding.MenuLogo />
-        </NavBarItemWithoutMenu>
         <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
           <Icon name="search" size="xl" />
         </NavBarItem>
