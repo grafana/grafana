@@ -163,8 +163,8 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "gitops",
-			Description: "Exploring more direct git integrations",
+			Name:        "storage",
+			Description: "Configurable storage for dashboards, datasources, and resources",
 			State:       FeatureStateAlpha,
 		},
 		{

@@ -209,10 +209,12 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
-		if hs.Features.IsEnabled(featuremgmt.FlagGitops) {
-			apiRoute.Group("/gitops", func(orgRoute routing.RouteRegister) {
-				orgRoute.Post("/export", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.GitopsService.HandleExportSystem)
-				orgRoute.Post("/import", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.GitopsService.HandleImportSystem)
+		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+			apiRoute.Group("/store", func(orgRoute routing.RouteRegister) {
+				orgRoute.Get("/status", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.StorageService.GetStorageStatus))
+				orgRoute.Post("/:kind/:root", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.StorageService.GetStorageStatus))
+				orgRoute.Post("/export", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.StorageService.HandleExportSystem)
+				orgRoute.Post("/import", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.StorageService.HandleImportSystem)
 			})
 		}
 

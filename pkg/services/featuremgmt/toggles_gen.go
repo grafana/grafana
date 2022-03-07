@@ -123,9 +123,9 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagGitops
-	// Exploring more direct git integrations
-	FlagGitops = "gitops"
+	// FlagStorage
+	// Configurable storage for dashboards, datasources, and resources
+	FlagStorage = "storage"
 
 	// FlagFileStoreApi
 	// Simple API for managing files

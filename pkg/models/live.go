@@ -68,16 +68,16 @@ type ChannelHandlerFactory interface {
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
 	// Called when a dashboard is saved -- this includes the error so we can support a
-	// gitops workflow that knows if the value was saved to the local database or not
+	// store workflow that knows if the value was saved to the local database or not
 	// in many cases all direct save requests will fail, but the request should be forwarded
-	// to any gitops observers
+	// to any store observers
 	DashboardSaved(orgID int64, user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
 
 	// Called when a dashboard is deleted
 	DashboardDeleted(orgID int64, user *UserDisplayDTO, uid string) error
 
 	// Experimental! Indicate is GitOps is active.  This really means
-	// someone is subscribed to the `grafana/dashboards/gitops` channel
+	// someone is subscribed to the `grafana/dashboards/store` channel
 	HasGitOpsObserver(orgID int64) bool
 }
 

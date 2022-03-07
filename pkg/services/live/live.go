@@ -1048,7 +1048,7 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 // HandleInfoHTTP special http response for
 func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 	path := web.Params(ctx.Req)["*"]
-	if path == "grafana/dashboards/gitops" {
+	if path == "grafana/dashboards/store" {
 		return response.JSON(200, util.DynMap{
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.OrgId),
 		})
