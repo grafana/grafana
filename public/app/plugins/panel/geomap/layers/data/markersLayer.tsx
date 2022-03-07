@@ -50,7 +50,7 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
 export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   id: MARKERS_LAYER_ID,
   name: 'Markers',
-  description: 'use markers to render each data point',
+  description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
 
@@ -78,18 +78,18 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       source,
     });
 
-    if(!style.fields) {
+    if (!style.fields) {
       // Set a global style
       vectorLayer.setStyle(style.maker(style.base));
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx = feature.get("rowIndex") as number;
+        const idx = feature.get('rowIndex') as number;
         const dims = style.dims;
-        if(!dims || !(isNumber(idx))) {
+        if (!dims || !isNumber(idx)) {
           return style.maker(style.base);
         }
 
-        const values = {...style.base};
+        const values = { ...style.base };
 
         if (dims.color) {
           values.color = dims.color.get(idx);
@@ -103,15 +103,16 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if (dims.rotation) {
           values.rotation = dims.rotation.get(idx);
         }
-        return style.maker(values)
+        return style.maker(values);
       });
     }
-    
+
     return {
       init: () => vectorLayer,
       legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
+          source.clear();
           return; // ignore empty
         }
 
@@ -162,7 +163,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           .addBooleanSwitch({
             path: 'config.showLegend',
             name: 'Show legend',
-            description: 'Show legend',
+            description: 'Show map legend',
             defaultValue: defaultOptions.showLegend,
           });
       },

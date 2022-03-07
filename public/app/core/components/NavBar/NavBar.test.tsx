@@ -39,10 +39,18 @@ describe('Render', () => {
     expect(sidemenu).toBeInTheDocument();
   });
 
-  it('should not render when in kiosk mode', async () => {
+  it('should not render when in kiosk mode is tv', async () => {
     setup();
 
-    locationService.partial({ kiosk: 'full' });
+    locationService.partial({ kiosk: 'tv' });
+    const sidemenu = screen.queryByTestId('sidemenu');
+    expect(sidemenu).not.toBeInTheDocument();
+  });
+
+  it('should not render when in kiosk mode is full', async () => {
+    setup();
+
+    locationService.partial({ kiosk: '1' });
     const sidemenu = screen.queryByTestId('sidemenu');
     expect(sidemenu).not.toBeInTheDocument();
   });

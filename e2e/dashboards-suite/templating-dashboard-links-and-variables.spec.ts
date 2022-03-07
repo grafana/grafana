@@ -7,7 +7,6 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
     e2e()
       .intercept({
         method: 'GET',
@@ -21,7 +20,11 @@ e2e.scenario({
       })
       .as('tagsDemoSearch');
 
-    // waiting for links to render, couldn't find a better way using routes for instance
+    e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
+
+    // waiting for network requests first
+    e2e().wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
+    // and then waiting for links to render
     e2e().wait(1000);
 
     const verifyLinks = (variableValue: string) => {
@@ -31,19 +34,23 @@ e2e.scenario({
           expect(links).to.have.length.greaterThan(13);
 
           for (let index = 0; index < links.length; index++) {
-            expect(Cypress.$(links[index]).attr('href')).contains(`var-custom=${variableValue}`);
+            expect(Cypress.$(links[index]).attr('href')).contains(`var-custom=${encodeURI(variableValue)}`);
           }
         });
     };
 
-    e2e.components.DashboardLinks.dropDown()
-      .should('be.visible')
-      .click()
-      .wait('@tagsTemplatingSearch')
-      .wait('@tagsDemoSearch');
+    e2e.components.DashboardLinks.dropDown().should('be.visible').click().wait('@tagsTemplatingSearch');
 
     // verify all links, should have All value
     verifyLinks('All');
+
+    // Data links should percent encode var values
+    e2e()
+      .get('[aria-label="Data link"]')
+      .should('exist')
+      .and((link) => {
+        expect(link.attr('href')).contains(encodeURI('test%25value'));
+      });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
 

@@ -5,14 +5,19 @@ import (
 	"reflect"
 
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var sessionLogger = log.New("sqlstore.session")
 
 type DBSession struct {
 	*xorm.Session
-	events []interface{}
+	transactionOpen bool
+	events          []interface{}
 }
 
-type dbTransactionFunc func(sess *DBSession) error
+type DBTransactionFunc func(sess *DBSession) error
 
 func (sess *DBSession) publishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
@@ -32,38 +37,42 @@ func newSession(ctx context.Context) *DBSession {
 	return sess
 }
 
-func startSession(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, error) {
+func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, bool, error) {
 	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
 
 	if ok {
+		sessionLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
 		sess.Session = sess.Session.Context(ctx)
-		return sess, nil
+		return sess, false, nil
 	}
 
-	newSess := &DBSession{Session: engine.NewSession()}
+	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
 	if beginTran {
 		err := newSess.Begin()
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
 	newSess.Session = newSess.Session.Context(ctx)
-	return newSess, nil
+	return newSess, true, nil
 }
 
 // WithDbSession calls the callback with a session.
-func (ss *SQLStore) WithDbSession(ctx context.Context, callback dbTransactionFunc) error {
+func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return withDbSession(ctx, ss.engine, callback)
 }
 
-func withDbSession(ctx context.Context, engine *xorm.Engine, callback dbTransactionFunc) error {
-	sess := &DBSession{Session: engine.NewSession()}
-	sess.Session = sess.Session.Context(ctx)
-	defer sess.Close()
-
+func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {
+	sess, isNew, err := startSessionOrUseExisting(ctx, engine, false)
+	if err != nil {
+		return err
+	}
+	if isNew {
+		defer sess.Close()
+	}
 	return callback(sess)
 }
 

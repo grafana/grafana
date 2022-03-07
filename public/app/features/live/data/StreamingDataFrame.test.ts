@@ -1,8 +1,71 @@
-import { reduceField, ReducerID, getFieldDisplayName, DataFrame, FieldType, DataFrameJSON } from '@grafana/data';
+import { DataFrame, DataFrameJSON, FieldType, getFieldDisplayName, reduceField, ReducerID } from '@grafana/data';
 import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime';
-import { getStreamingFrameOptions, StreamingDataFrame } from './StreamingDataFrame';
+import { closestIdx, getStreamingFrameOptions, StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
+  describe('closestIdx', function () {
+    [
+      {
+        num: 10,
+        arr: [2, 3, 4, 5, 6],
+        expected: 4,
+        descr: 'bigger than all in array',
+      },
+      {
+        num: 10,
+        arr: [2, 3, 4, 5, 11, 12, 13],
+        expected: 4,
+        descr: 'bigger than some in array #1 - smaller difference to bigger number',
+      },
+      {
+        num: 10,
+        arr: [2, 3, 4, 5, 16, 17, 18],
+        expected: 3,
+        descr: 'bigger than some in array #2 - smaller difference to smaller number',
+      },
+      {
+        num: 10,
+        arr: [2, 3, 4, 9, 11, 12, 13],
+        expected: 3,
+        descr: 'bigger than some in array #3 - same difference between smaller and bigger number - favors smaller',
+      },
+      {
+        num: 10,
+        arr: [9, 10, 11, 12, 13, 14],
+        expected: 1,
+        descr: 'present in the array',
+      },
+      {
+        num: 10,
+        arr: [10, 11, 12, 13, 14],
+        expected: 0,
+        descr: 'present in the array on first position',
+      },
+      {
+        num: 10,
+        arr: [5, 6, 7, 8, 9, 10],
+        expected: 5,
+        descr: 'present in the array on last position',
+      },
+      {
+        num: 10,
+        arr: [11, 12, 13, 14, 15],
+        expected: 0,
+        descr: 'smaller than all in array',
+      },
+      {
+        num: 10,
+        arr: [],
+        expected: -1,
+        descr: 'empty array',
+      },
+    ].forEach(({ num, arr, expected, descr }) => {
+      it(descr, () => {
+        expect(closestIdx(num, arr)).toEqual(expected);
+      });
+    });
+  });
+
   describe('when called with a DataFrame', () => {
     const json: DataFrameJSON = {
       schema: {
@@ -304,7 +367,8 @@ describe('Streaming JSON', () => {
     });
 
     it('should resize the buffer', function () {
-      const serializedFrame = frame.serialize((f) => ['time', 'name'].includes(f.name), { maxLength: 2 });
+      const options = { maxLength: 2 };
+      const serializedFrame = frame.serialize((f) => ['time', 'name'].includes(f.name), options);
       expect(serializedFrame.fields).toEqual([
         {
           config: {},
@@ -319,6 +383,48 @@ describe('Streaming JSON', () => {
           values: ['b', 'c'],
         },
       ]);
+    });
+
+    it('should trim values and retain option override values', function () {
+      const options = { maxLength: 2 };
+      const trimValues = { maxLength: 1 };
+      const serializedFrame = frame.serialize((f) => ['time', 'name'].includes(f.name), options, trimValues);
+      expect(serializedFrame.fields).toEqual([
+        {
+          config: {},
+          name: 'time',
+          type: 'time',
+          values: [300],
+        },
+        {
+          config: {},
+          name: 'name',
+          type: 'string',
+          values: ['c'],
+        },
+      ]);
+      expect(serializedFrame.options.maxLength).toEqual(options.maxLength);
+    });
+
+    it('should use maxLength from options if its lower than maxLength from trimValues', function () {
+      const options = { maxLength: 1 };
+      const trimValues = { maxLength: 2 };
+      const serializedFrame = frame.serialize((f) => ['time', 'name'].includes(f.name), options, trimValues);
+      expect(serializedFrame.fields).toEqual([
+        {
+          config: {},
+          name: 'time',
+          type: 'time',
+          values: [300],
+        },
+        {
+          config: {},
+          name: 'name',
+          type: 'string',
+          values: ['c'],
+        },
+      ]);
+      expect(serializedFrame.options.maxLength).toEqual(options.maxLength);
     });
   });
 
@@ -438,14 +544,20 @@ describe('Streaming JSON', () => {
       },
     };
 
-    const serializedFrame = StreamingDataFrame.fromDataFrameJSON(json, {
-      maxLength: 5,
-      maxDelta: 300,
-    }).serialize();
-
-    it('should support pushing new values matching the existing schema', function () {
-      const frame = StreamingDataFrame.deserialize(serializedFrame);
-      frame.pushNewValues([[601], ['x'], [10]]);
+    it('should support pushing new values matching the existing schema in `append` mode', function () {
+      const frame = StreamingDataFrame.deserialize(
+        StreamingDataFrame.fromDataFrameJSON(json, {
+          maxLength: 5,
+          maxDelta: 300,
+        }).serialize()
+      );
+      expect(frame.length).toEqual(3);
+      frame.pushNewValues([
+        [601, 602],
+        ['x', 'y'],
+        [10, 11],
+      ]);
+      expect(frame.length).toEqual(3);
       expect(frame.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
         Array [
           Object {
@@ -453,6 +565,7 @@ describe('Streaming JSON', () => {
             "value": Array [
               300,
               601,
+              602,
             ],
           },
           Object {
@@ -460,6 +573,7 @@ describe('Streaming JSON', () => {
             "value": Array [
               "c",
               "x",
+              "y",
             ],
           },
           Object {
@@ -467,6 +581,49 @@ describe('Streaming JSON', () => {
             "value": Array [
               3,
               10,
+              11,
+            ],
+          },
+        ]
+      `);
+    });
+
+    it('should support pushing new values matching the existing schema in `replace` mode', function () {
+      const frame = StreamingDataFrame.deserialize(
+        StreamingDataFrame.fromDataFrameJSON(json, {
+          maxLength: 5,
+          maxDelta: 300,
+          action: StreamingFrameAction.Replace,
+        }).serialize()
+      );
+      expect(frame.length).toEqual(3);
+      frame.pushNewValues([
+        [601, 602],
+        ['x', 'y'],
+        [10, 11],
+      ]);
+      expect(frame.length).toEqual(2);
+      expect(frame.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "name": "time",
+            "value": Array [
+              601,
+              602,
+            ],
+          },
+          Object {
+            "name": "name",
+            "value": Array [
+              "x",
+              "y",
+            ],
+          },
+          Object {
+            "name": "value",
+            "value": Array [
+              10,
+              11,
             ],
           },
         ]
@@ -506,7 +663,7 @@ describe('Streaming JSON', () => {
     expect(val).toEqual(200);
     expect(stream.length).toEqual(2);
 
-    const copy = ({ ...stream } as any) as DataFrame;
+    const copy = { ...stream } as any as DataFrame;
     expect(copy.length).toEqual(2);
   });
 

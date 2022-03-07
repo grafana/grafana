@@ -94,7 +94,7 @@ export const ServerStats = () => {
         <p className={styles.notFound}>No stats found.</p>
       )}
 
-      {config.featureToggles.dashboardPreviews && <CrawlerStatus />}
+      {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && <CrawlerStatus />}
     </>
   );
 };

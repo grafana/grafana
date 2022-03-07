@@ -61,7 +61,8 @@ const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', '
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
-  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery> {
+  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
+{
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
@@ -71,7 +72,7 @@ export class PrometheusDatasource
   access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache = new LRU<string, string[]>(10);
+  metricsNameCache = new LRU<string, string[]>({ max: 10 });
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
@@ -190,9 +191,7 @@ export class PrometheusDatasource
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
-        return await lastValueFrom(
-          this._request<T>(url, params, { method: this.httpMethod, hideFromInspector: true })
-        );
+        return await lastValueFrom(this._request<T>(url, params, { method: this.httpMethod, hideFromInspector: true }));
       } catch (err) {
         // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
         if (this.httpMethod === 'POST' && err.status === 405) {
@@ -203,9 +202,7 @@ export class PrometheusDatasource
       }
     }
 
-    return await lastValueFrom(
-      this._request<T>(url, params, { method: 'GET', hideFromInspector: true })
-    ); // toPromise until we change getTagValues, getTagKeys to Observable
+    return await lastValueFrom(this._request<T>(url, params, { method: 'GET', hideFromInspector: true })); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -228,7 +225,7 @@ export class PrometheusDatasource
   }
 
   targetContainsTemplate(target: PromQuery) {
-    return this.templateSrv.variableExists(target.expr);
+    return this.templateSrv.containsTemplate(target.expr);
   }
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
@@ -907,11 +904,11 @@ export class PrometheusDatasource
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
-        expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
+        expression = `histogram_quantile(0.95, sum(rate(${expression}[$__rate_interval])) by (le))`;
         break;
       }
       case 'ADD_RATE': {
-        expression = `rate(${expression}[5m])`;
+        expression = `rate(${expression}[$__rate_interval])`;
         break;
       }
       case 'ADD_SUM': {
@@ -989,6 +986,14 @@ export class PrometheusDatasource
       expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
       interval: this.templateSrv.replace(target.interval, variables),
     };
+  }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
   }
 }
 

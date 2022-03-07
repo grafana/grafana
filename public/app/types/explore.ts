@@ -48,10 +48,10 @@ export interface ExploreState {
   richHistory: RichHistoryQuery[];
 
   /**
-   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
    * multiple errors when local storage is full.
    */
-  localStorageFull: boolean;
+  richHistoryStorageFull: boolean;
 
   /**
    * True if a warning message of hitting the exceeded number of items has been shown already.
@@ -145,13 +145,7 @@ export interface ExploreItemState {
 
   querySubscription?: Unsubscribable;
 
-  queryResponse: PanelData;
-
-  /**
-   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
-   * query of that panel.
-   */
-  originPanelId?: number | null;
+  queryResponse: ExplorePanelData;
 
   showLogs?: boolean;
   showMetrics?: boolean;
@@ -164,7 +158,7 @@ export interface ExploreItemState {
    * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
    * We are currently caching last 5 query responses.
    */
-  cache: Array<{ key: string; value: PanelData }>;
+  cache: Array<{ key: string; value: ExplorePanelData }>;
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
@@ -201,15 +195,14 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
-export type RichHistoryQuery = {
-  ts: number;
+export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
-  datasourceId: string;
   starred: boolean;
   comment: string;
-  queries: DataQuery[];
-  sessionName: string;
-  timeRange?: string;
+  queries: T[];
 };
 
 export interface ExplorePanelData extends PanelData {

@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FocusScope } from '@react-aria/focus';
+import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 
 import { MediaType, PickerTabType, ResourceFolderName } from '../types';
@@ -25,6 +26,7 @@ export const ResourcePickerPopover = (props: Props) => {
   };
 
   const ref = createRef<HTMLElement>();
+  const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
 
   const [newValue, setNewValue] = useState<string>(value ?? '');
@@ -59,7 +61,7 @@ export const ResourcePickerPopover = (props: Props) => {
 
   return (
     <FocusScope contain autoFocus restoreFocus>
-      <section ref={ref} {...overlayProps}>
+      <section ref={ref} {...overlayProps} {...dialogProps}>
         <div className={styles.resourcePickerPopover}>
           <div className={styles.resourcePickerPopoverTabs}>
             <button

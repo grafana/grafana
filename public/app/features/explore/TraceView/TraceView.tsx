@@ -18,18 +18,16 @@ import {
   TraceTimelineViewer,
   transformTraceData,
   TTraceTimeline,
-  UIElementsContext,
 } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
-import { UIElements } from './uiElements';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
@@ -45,6 +43,7 @@ type Props = {
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
   scrollElement?: Element;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 export function TraceView(props: Props) {
@@ -59,6 +58,7 @@ export function TraceView(props: Props) {
     detailLogsToggle,
     detailProcessToggle,
     detailReferencesToggle,
+    detailReferenceItemToggle,
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
@@ -77,7 +77,7 @@ export function TraceView(props: Props) {
   const [slim, setSlim] = useState(false);
 
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
 
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId]?.datasourceInstance ?? undefined
@@ -88,6 +88,11 @@ export function TraceView(props: Props) {
     exploreId: props.exploreId,
     datasource,
   });
+
+  const createLinkToExternalSpan = (traceId: string, spanId: string) => {
+    const link = createFocusSpanLink(traceId, spanId);
+    return link.href;
+  };
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
@@ -115,10 +120,10 @@ export function TraceView(props: Props) {
   }
 
   return (
-    <UIElementsContext.Provider value={UIElements}>
+    <>
       <TracePageHeader
         canCollapse={false}
-        clearSearch={noop}
+        clearSearch={clearSearch}
         focusUiFindMatches={noop}
         hideMap={false}
         hideSummary={false}
@@ -126,17 +131,14 @@ export function TraceView(props: Props) {
         onSlimViewClicked={onSlimViewClicked}
         onTraceGraphViewClicked={noop}
         prevResult={noop}
-        resultCount={0}
+        resultCount={spanFindMatches?.size ?? 0}
         slimView={slim}
-        textFilter={null}
         trace={traceProp}
-        traceGraphView={false}
         updateNextViewRangeTime={updateNextViewRangeTime}
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
         searchValue={search}
         onSearchValueChange={setSearch}
-        hideSearchButtons={true}
         timeZone={timeZone}
       />
       <TraceTimelineViewer
@@ -149,7 +151,7 @@ export function TraceView(props: Props) {
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
         focusSpan={noop}
-        createLinkToExternalSpan={noop as any}
+        createLinkToExternalSpan={createLinkToExternalSpan}
         setSpanNameColumnWidth={setSpanNameColumnWidth}
         collapseAll={collapseAll}
         collapseOne={collapseOne}
@@ -162,6 +164,7 @@ export function TraceView(props: Props) {
         detailWarningsToggle={detailWarningsToggle}
         detailStackTracesToggle={detailStackTracesToggle}
         detailReferencesToggle={detailReferencesToggle}
+        detailReferenceItemToggle={detailReferenceItemToggle}
         detailProcessToggle={detailProcessToggle}
         detailTagsToggle={detailTagsToggle}
         detailToggle={toggleDetail}
@@ -174,8 +177,9 @@ export function TraceView(props: Props) {
         scrollElement={props.scrollElement}
         focusedSpanId={focusedSpanId}
         createFocusSpanLink={createFocusSpanLink}
+        topOfExploreViewRef={props.topOfExploreViewRef}
       />
-    </UIElementsContext.Provider>
+    </>
   );
 }
 
@@ -208,13 +212,20 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
     traceID: view.get(0).traceID,
     processes,
     spans: view.toArray().map((s, index) => {
+      const references = [];
+      if (s.parentSpanID) {
+        references.push({ refType: 'CHILD_OF' as const, spanID: s.parentSpanID, traceID: s.traceID });
+      }
+      if (s.references) {
+        references.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
+      }
       return {
         ...s,
         duration: s.duration * 1000,
         startTime: s.startTime * 1000,
         processID: s.spanID,
         flags: 0,
-        references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
+        references,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
         dataFrameRowIndex: index,
       };

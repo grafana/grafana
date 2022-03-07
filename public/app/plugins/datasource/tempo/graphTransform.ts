@@ -133,14 +133,13 @@ function findTraceDuration(view: DataFrameView<Row>): number {
 export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
 export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
+export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
 export const serviceMapMetrics = [
   secondsMetric,
   totalsMetric,
   failedMetric,
-  // We don't show histogram in node graph at the moment but we could later add that into a node context menu.
-  // 'traces_service_graph_request_seconds_bucket',
-  // 'traces_service_graph_request_seconds_count',
+  histogramMetric,
   // These are used for debugging the tempo collection so probably not useful for service map right now.
   // 'traces_service_graph_unpaired_spans_total',
   // 'traces_service_graph_untagged_spans_total',
@@ -304,8 +303,8 @@ function convertToDataFrames(
       // any requests itself.
       [Fields.mainStat]: node.total ? (node.seconds! / node.total) * 1000 : Number.NaN, // Average response time
       [Fields.secondaryStat]: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
-      [Fields.arc + 'success']: node.total ? (node.total - (node.failed || 0)) / node.total : 1,
-      [Fields.arc + 'failed']: node.total ? (node.failed || 0) / node.total : 0,
+      [Fields.arc + 'success']: node.total ? (node.total - Math.min(node.failed || 0, node.total)) / node.total : 1,
+      [Fields.arc + 'failed']: node.total ? Math.min(node.failed || 0, node.total) / node.total : 0,
     });
   }
   for (const edgeId of Object.keys(edgesMap)) {

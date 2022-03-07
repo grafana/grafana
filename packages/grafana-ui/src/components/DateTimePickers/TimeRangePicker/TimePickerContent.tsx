@@ -14,120 +14,6 @@ import { getFocusStyles } from '../../../themes/mixins';
 import { selectors } from '@grafana/e2e-selectors';
 import { FilterInput } from '../..';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
-  return {
-    container: css`
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      position: absolute;
-      z-index: ${theme.zIndex.dropdown};
-      width: 546px;
-      top: 116%;
-      border-radius: 2px;
-      border: 1px solid ${theme.colors.border.weak};
-      ${isReversed ? 'left' : 'right'}: 0;
-
-      @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
-        width: 262px;
-      }
-    `,
-    body: css`
-      display: flex;
-      flex-direction: row-reverse;
-      height: ${isContainerTall ? '381px' : '217px'};
-    `,
-    leftSide: css`
-      display: flex;
-      flex-direction: column;
-      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`};
-      width: ${!hideQuickRanges ? '60%' : '100%'};
-      overflow: hidden;
-      order: ${isReversed ? 1 : 0};
-    `,
-    rightSide: css`
-      width: 40% !important;
-      border-right: ${isReversed ? `1px solid ${theme.colors.border.weak}` : 'none'};
-      display: flex;
-      flex-direction: column;
-      @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
-        width: 100% !important;
-      }
-    `,
-    timeRangeFilter: css`
-      padding: ${theme.spacing(1)};
-    `,
-    spacing: css`
-      margin-top: 16px;
-    `,
-  };
-});
-
-const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    header: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      padding: 7px 9px 7px 9px;
-    `,
-    expandButton: css`
-      background-color: transparent;
-      border: none;
-      display: flex;
-      width: 100%;
-
-      &:focus-visible {
-        ${getFocusStyles(theme)}
-      }
-    `,
-    body: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-    `,
-    form: css`
-      padding: 7px 9px 7px 9px;
-    `,
-  };
-});
-
-const getFullScreenStyles = stylesFactory((theme: GrafanaTheme2, hideQuickRanges?: boolean) => {
-  return {
-    container: css`
-      padding-top: 9px;
-      padding-left: 11px;
-      padding-right: ${!hideQuickRanges ? '20%' : '11px'};
-    `,
-    title: css`
-      margin-bottom: 11px;
-    `,
-    recent: css`
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding-top: ${theme.spacing(1)};
-    `,
-  };
-});
-
-const getEmptyListStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    container: css`
-      padding: 12px;
-      margin: 12px;
-
-      a,
-      span {
-        font-size: 13px;
-      }
-    `,
-    link: css`
-      color: ${theme.colors.text.link};
-    `,
-  };
-});
-
 interface Props {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
@@ -363,3 +249,117 @@ const useTimeOption = (raw: RawTimeRange, quickOptions: TimeOption[]): TimeOptio
     });
   }, [raw, quickOptions]);
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
+  return {
+    container: css`
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
+      position: absolute;
+      z-index: ${theme.zIndex.dropdown};
+      width: 546px;
+      top: 116%;
+      border-radius: 2px;
+      border: 1px solid ${theme.colors.border.weak};
+      ${isReversed ? 'left' : 'right'}: 0;
+
+      @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
+        width: 262px;
+      }
+    `,
+    body: css`
+      display: flex;
+      flex-direction: row-reverse;
+      height: ${isContainerTall ? '381px' : '217px'};
+    `,
+    leftSide: css`
+      display: flex;
+      flex-direction: column;
+      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`};
+      width: ${!hideQuickRanges ? '60%' : '100%'};
+      overflow: hidden;
+      order: ${isReversed ? 1 : 0};
+    `,
+    rightSide: css`
+      width: 40% !important;
+      border-right: ${isReversed ? `1px solid ${theme.colors.border.weak}` : 'none'};
+      display: flex;
+      flex-direction: column;
+      @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
+        width: 100% !important;
+      }
+    `,
+    timeRangeFilter: css`
+      padding: ${theme.spacing(1)};
+    `,
+    spacing: css`
+      margin-top: 16px;
+    `,
+  };
+});
+
+const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme2) => {
+  return {
+    header: css`
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid ${theme.colors.border.weak};
+      padding: 7px 9px 7px 9px;
+    `,
+    expandButton: css`
+      background-color: transparent;
+      border: none;
+      display: flex;
+      width: 100%;
+
+      &:focus-visible {
+        ${getFocusStyles(theme)}
+      }
+    `,
+    body: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
+    `,
+    form: css`
+      padding: 7px 9px 7px 9px;
+    `,
+  };
+});
+
+const getFullScreenStyles = stylesFactory((theme: GrafanaTheme2, hideQuickRanges?: boolean) => {
+  return {
+    container: css`
+      padding-top: 9px;
+      padding-left: 11px;
+      padding-right: ${!hideQuickRanges ? '20%' : '11px'};
+    `,
+    title: css`
+      margin-bottom: 11px;
+    `,
+    recent: css`
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-top: ${theme.spacing(1)};
+    `,
+  };
+});
+
+const getEmptyListStyles = stylesFactory((theme: GrafanaTheme2) => {
+  return {
+    container: css`
+      padding: 12px;
+      margin: 12px;
+
+      a,
+      span {
+        font-size: 13px;
+      }
+    `,
+    link: css`
+      color: ${theme.colors.text.link};
+    `,
+  };
+});

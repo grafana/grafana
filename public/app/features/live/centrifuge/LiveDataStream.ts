@@ -1,4 +1,4 @@
-import type { LiveDataStreamOptions, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
+import { LiveDataStreamOptions, StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import {
   DataFrameJSON,
@@ -16,52 +16,54 @@ import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service
 import { getStreamingFrameOptions, StreamingDataFrame } from '../data/StreamingDataFrame';
 import { StreamingResponseDataType } from '../data/utils';
 
-const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[]> => {
-  return new Observable((subscriber: Subscriber<T[]>) => {
-    let buffer: T[] = [];
-    let canEmit = true;
+const bufferIfNot =
+  (canEmitObservable: Observable<boolean>) =>
+  <T>(source: Observable<T>): Observable<T[]> => {
+    return new Observable((subscriber: Subscriber<T[]>) => {
+      let buffer: T[] = [];
+      let canEmit = true;
 
-    const emitBuffer = () => {
-      subscriber.next(buffer);
-      buffer = [];
-    };
+      const emitBuffer = () => {
+        subscriber.next(buffer);
+        buffer = [];
+      };
 
-    const canEmitSub = canEmitObservable.subscribe({
-      next: (val) => {
-        canEmit = val;
+      const canEmitSub = canEmitObservable.subscribe({
+        next: (val) => {
+          canEmit = val;
 
-        if (canEmit && buffer.length) {
-          emitBuffer();
-        }
-      },
-    });
-
-    const sourceSub = source.subscribe({
-      next(value) {
-        if (canEmit) {
-          if (!buffer.length) {
-            subscriber.next([value]);
-          } else {
+          if (canEmit && buffer.length) {
             emitBuffer();
           }
-        } else {
-          buffer.push(value);
-        }
-      },
-      error(error) {
-        subscriber.error(error);
-      },
-      complete() {
-        subscriber.complete();
-      },
-    });
+        },
+      });
 
-    return () => {
-      sourceSub.unsubscribe();
-      canEmitSub.unsubscribe();
-    };
-  });
-};
+      const sourceSub = source.subscribe({
+        next(value) {
+          if (canEmit) {
+            if (!buffer.length) {
+              subscriber.next([value]);
+            } else {
+              emitBuffer();
+            }
+          } else {
+            buffer.push(value);
+          }
+        },
+        error(error) {
+          subscriber.error(error);
+        },
+        complete() {
+          subscriber.complete();
+        },
+      });
+
+      return () => {
+        sourceSub.unsubscribe();
+        canEmitSub.unsubscribe();
+      };
+    });
+  };
 
 export type DataStreamHandlerDeps<T> = {
   channelId: LiveChannelId;
@@ -226,30 +228,89 @@ export class LiveDataStream<T = unknown> {
     this.resizeBuffer(buffer);
     this.prepareInternalStreamForNewSubscription(options);
 
+    const shouldSendLastPacketOnly = options?.buffer?.action === StreamingFrameAction.Replace;
     const fieldsNamesFilter = options.filter?.fields;
     const dataNeedsFiltering = fieldsNamesFilter?.length;
     const fieldFilterPredicate = dataNeedsFiltering ? ({ name }: Field) => fieldsNamesFilter.includes(name) : undefined;
     let matchingFieldIndexes: number[] | undefined = undefined;
 
-    const getFullFrameResponseData = (error?: DataQueryError): StreamingDataQueryResponse => {
+    const getFullFrameResponseData = <T>(
+      messages: InternalStreamMessage[],
+      error?: DataQueryError
+    ): StreamingDataQueryResponse => {
       matchingFieldIndexes = fieldFilterPredicate
         ? this.frameBuffer.getMatchingFieldIndexes(fieldFilterPredicate)
         : undefined;
 
+      if (!shouldSendLastPacketOnly) {
+        return {
+          key: subKey,
+          state: error ? LoadingState.Error : LoadingState.Streaming,
+          data: [
+            {
+              type: StreamingResponseDataType.FullFrame,
+              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer),
+            },
+          ],
+          error,
+        };
+      }
+
+      if (error) {
+        // send empty frame with error
+        return {
+          key: subKey,
+          state: LoadingState.Error,
+          data: [
+            {
+              type: StreamingResponseDataType.FullFrame,
+              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
+            },
+          ],
+          error,
+        };
+      }
+
+      if (!messages.length) {
+        console.warn(`expected to find at least one non error message ${messages.map(({ type }) => type)}`);
+        // send empty frame
+        return {
+          key: subKey,
+          state: LoadingState.Streaming,
+          data: [
+            {
+              type: StreamingResponseDataType.FullFrame,
+              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
+            },
+          ],
+          error,
+        };
+      }
+
       return {
         key: subKey,
-        state: error ? LoadingState.Error : LoadingState.Streaming,
+        state: LoadingState.Streaming,
         data: [
           {
             type: StreamingResponseDataType.FullFrame,
-            frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer),
+            frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, {
+              maxLength: this.frameBuffer.packetInfo.length,
+            }),
           },
         ],
         error,
       };
     };
 
-    const getNewValuesSameSchemaResponseData = (values: unknown[][]): StreamingDataQueryResponse => {
+    const getNewValuesSameSchemaResponseData = (
+      messages: Array<InternalStreamMessage<InternalStreamMessageType.NewValuesSameSchema>>
+    ): StreamingDataQueryResponse => {
+      const lastMessage = messages.length ? messages[messages.length - 1] : undefined;
+      const values =
+        shouldSendLastPacketOnly && lastMessage
+          ? lastMessage.values
+          : reduceNewValuesSameSchemaMessages(messages).values;
+
       const filteredValues = matchingFieldIndexes
         ? values.filter((v, i) => (matchingFieldIndexes as number[]).includes(i))
         : values;
@@ -275,18 +336,18 @@ export class LiveDataStream<T = unknown> {
 
         if (shouldSendFullFrame) {
           shouldSendFullFrame = false;
-          return getFullFrameResponseData(lastError);
+          return getFullFrameResponseData(messages, lastError);
         }
 
         if (errors.length) {
           // send the latest frame with the last error, discard everything else
-          return getFullFrameResponseData(lastError);
+          return getFullFrameResponseData(messages, lastError);
         }
 
         const schemaChanged = messages.some((n) => n.type === InternalStreamMessageType.ChangedSchema);
         if (schemaChanged) {
           // send the latest frame, discard intermediate appends
-          return getFullFrameResponseData();
+          return getFullFrameResponseData(messages, undefined);
         }
 
         const newValueSameSchemaMessages = filterMessages(messages, InternalStreamMessageType.NewValuesSameSchema);
@@ -294,7 +355,7 @@ export class LiveDataStream<T = unknown> {
           console.warn(`unsupported message type ${messages.map(({ type }) => type)}`);
         }
 
-        return getNewValuesSameSchemaResponseData(reduceNewValuesSameSchemaMessages(newValueSameSchemaMessages).values);
+        return getNewValuesSameSchemaResponseData(newValueSameSchemaMessages);
       })
     );
 

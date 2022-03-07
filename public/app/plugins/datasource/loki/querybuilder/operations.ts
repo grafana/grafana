@@ -134,7 +134,7 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
     id: name,
     name: getPromAndLokiOperationDisplayName(name),
     params: [getRangeVectorParamDef()],
-    defaultParams: ['auto'],
+    defaultParams: ['$__interval'],
     alternativesKey: 'range function',
     category: LokiVisualQueryOperationCategory.RangeFunctions,
     renderer: operationWithRangeVectorRenderer,
@@ -142,7 +142,7 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
     explainHandler: (op, def) => {
       let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
 
-      if (op.params[0] === 'auto' || op.params[0] === '$__interval') {
+      if (op.params[0] === '$__interval') {
         return `${opDocs} \`$__interval\` is variable that will be replaced with a calculated interval based on **Max data points**,  **Min interval** and query time range. You find these options you find under **Query options** at the right of the data source select dropdown.`;
       } else {
         return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
@@ -170,9 +170,9 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef {
 
 function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   return {
-    name: 'Range vector',
+    name: 'Range',
     type: 'string',
-    options: ['auto', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
+    options: ['$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
   };
 }
 
@@ -181,12 +181,7 @@ function operationWithRangeVectorRenderer(
   def: QueryBuilderOperationDef,
   innerExpr: string
 ) {
-  let rangeVector = (model.params ?? [])[0] ?? 'auto';
-
-  if (rangeVector === 'auto') {
-    rangeVector = '$__interval';
-  }
-
+  let rangeVector = (model.params ?? [])[0] ?? '$__interval';
   return `${def.id}(${innerExpr} [${rangeVector}])`;
 }
 
@@ -225,7 +220,11 @@ function getIndexOfOrLast(
   condition: (def: QueryBuilderOperationDef) => boolean
 ) {
   const index = operations.findIndex((x) => {
-    return condition(queryModeller.getOperationDef(x.id));
+    const opDef = queryModeller.getOperationDef(x.id);
+    if (!opDef) {
+      return false;
+    }
+    return condition(opDef);
   });
 
   return index === -1 ? operations.length : index;
@@ -247,7 +246,11 @@ export function addLokiOperation(
     case LokiVisualQueryOperationCategory.Aggregations:
     case LokiVisualQueryOperationCategory.Functions: {
       const rangeVectorFunction = operations.find((x) => {
-        return isRangeVectorFunction(modeller.getOperationDef(x.id));
+        const opDef = modeller.getOperationDef(x.id);
+        if (!opDef) {
+          return false;
+        }
+        return isRangeVectorFunction(opDef);
       });
 
       // If we are adding a function but we have not range vector function yet add one

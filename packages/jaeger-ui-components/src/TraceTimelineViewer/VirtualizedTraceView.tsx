@@ -17,7 +17,7 @@ import { css } from '@emotion/css';
 
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 
 import ListView from './ListView';
@@ -35,9 +35,10 @@ import {
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
 import { SpanLinkFunc, TNil } from '../types';
-import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../types/trace';
+import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { PEER_SERVICE } from '../constants/tag-keys';
+import { createRef, RefObject } from 'react';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
@@ -50,6 +51,18 @@ const getStyles = stylesFactory(() => {
     `,
     row: css`
       width: 100%;
+    `,
+    scrollToTopButton: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1;
     `,
   };
 });
@@ -75,6 +88,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailWarningsToggle: (spanID: string) => void;
   detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
+  detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
@@ -88,6 +102,7 @@ type TVirtualizedTraceViewOwnProps = {
   scrollElement?: Element;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -167,6 +182,7 @@ const memoizedGetClipping = memoizeOne(getClipping, isEqual);
 // export from tests
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   listView: ListView | TNil;
+  topTraceViewRef = createRef<HTMLDivElement>();
 
   constructor(props: VirtualizedTraceViewProps) {
     super(props);
@@ -440,6 +456,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailLogsToggle,
       detailProcessToggle,
       detailReferencesToggle,
+      detailReferenceItemToggle,
       detailWarningsToggle,
       detailStackTracesToggle,
       detailStates,
@@ -474,6 +491,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           logItemToggle={detailLogItemToggle}
           logsToggle={detailLogsToggle}
           processToggle={detailProcessToggle}
+          referenceItemToggle={detailReferenceItemToggle}
           referencesToggle={detailReferencesToggle}
           warningsToggle={detailWarningsToggle}
           stackTracesToggle={detailStackTracesToggle}
@@ -492,11 +510,16 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     );
   }
 
+  scrollToTop = () => {
+    const { topOfExploreViewRef } = this.props;
+    topOfExploreViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   render() {
     const styles = getStyles();
     const { scrollElement } = this.props;
     return (
-      <div>
+      <>
         <ListView
           ref={this.setListView}
           dataLength={this.getRowStates().length}
@@ -510,7 +533,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           windowScroller={false}
           scrollElement={scrollElement}
         />
-      </div>
+
+        <ToolbarButton
+          className={styles.scrollToTopButton}
+          onClick={this.scrollToTop}
+          title="Scroll to top"
+          icon="arrow-up"
+        ></ToolbarButton>
+      </>
     );
   }
 }

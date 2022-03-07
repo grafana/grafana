@@ -1,42 +1,40 @@
-import React, { FC, useState } from 'react';
-import { useAsync } from 'react-use';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Role } from 'app/types';
+import React, { FC, useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
+import { Role } from 'app/types';
 import { RolePicker } from './RolePicker';
-import { fetchRoleOptions, fetchTeamRoles, updateTeamRoles } from './api';
+import { fetchTeamRoles, updateTeamRoles } from './api';
 
 export interface Props {
   teamId: number;
   orgId?: number;
-  getRoleOptions?: () => Promise<Role[]>;
+  roleOptions: Role[];
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
 }
 
-export const TeamRolePicker: FC<Props> = ({ teamId, orgId, getRoleOptions, disabled, builtinRolesDisabled }) => {
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
-
-  const { loading } = useAsync(async () => {
+export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled, builtinRolesDisabled }) => {
+  const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
-      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
-        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
-      } else {
-        setRoleOptions([]);
-      }
-
-      const teamRoles = await fetchTeamRoles(teamId, orgId);
-      setAppliedRoles(teamRoles);
+      return await fetchTeamRoles(teamId, orgId);
     } catch (e) {
       // TODO handle error
       console.error('Error loading options');
     }
-  }, [getRoleOptions, orgId, teamId]);
+    return [];
+  }, [orgId, teamId]);
+
+  useEffect(() => {
+    getTeamRoles();
+  }, [orgId, teamId, getTeamRoles]);
+
+  const onRolesChange = async (roles: string[]) => {
+    await updateTeamRoles(roles, teamId, orgId);
+    await getTeamRoles();
+  };
 
   return (
     <RolePicker
-      onRolesChange={(roles) => updateTeamRoles(roles, teamId, orgId)}
+      onRolesChange={onRolesChange}
       roleOptions={roleOptions}
       appliedRoles={appliedRoles}
       isLoading={loading}

@@ -59,7 +59,7 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
     <RCCascader
       onChange={onChangeCascader(onChange)}
       loadData={onLoadDataCascader(loadData)}
-      popupClassName={styles.popup}
+      dropdownClassName={styles.popup}
       {...rest}
       expandIcon={null}
     >

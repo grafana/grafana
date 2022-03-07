@@ -104,7 +104,7 @@ func TestFilter_Datasources(t *testing.T) {
 			}
 
 			baseSql := `SELECT data_source.* FROM data_source WHERE`
-			query, args, err := accesscontrol.Filter(
+			acFilter, err := accesscontrol.Filter(
 				context.Background(),
 				tt.sqlID,
 				"datasources",
@@ -115,7 +115,7 @@ func TestFilter_Datasources(t *testing.T) {
 			if !tt.expectErr {
 				require.NoError(t, err)
 				var datasources []models.DataSource
-				err = sess.SQL(baseSql+query, args...).Find(&datasources)
+				err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 				require.NoError(t, err)
 
 				assert.Len(t, datasources, len(tt.expectedDataSources))
