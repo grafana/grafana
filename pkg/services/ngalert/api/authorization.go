@@ -119,10 +119,15 @@ var (
 	}
 )
 
+// TODO temporary
+func (api *API) isFgacDisabled() bool {
+	return api.Cfg.IsFeatureToggleEnabled == nil || !api.Cfg.IsFeatureToggleEnabled("alerting_fgac")
+}
+
 // DeclareFixedRoles registers the fixed roles provided by the alerting module
 func (api *API) DeclareFixedRoles() error {
 	// TODO temporary
-	if !api.Cfg.IsFeatureToggleEnabled("alerting_fgac") {
+	if api.isFgacDisabled() {
 		return nil
 	}
 	return api.AccessControl.DeclareFixedRoles(
