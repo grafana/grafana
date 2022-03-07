@@ -34,7 +34,14 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
     `,
 
     nameStyle: css`
-      margin-right: 8px;
+      margin-right: 3px;
+    `,
+
+    buttonStyles: css`
+      margin: 0;
+      &:hover::before {
+        display: none;
+      }
     `,
   };
 });
@@ -52,11 +59,12 @@ export const TagItem: FC<Props> = ({ name, disabled, onRemove }) => {
       <span className={styles.nameStyle}>{name}</span>
       <IconButton
         name="times"
-        size="xs"
+        size="lg"
         disabled={disabled}
         ariaLabel={`Remove ${name}`}
         onClick={() => onRemove(name)}
         type="button"
+        className={styles.buttonStyles}
       />
     </div>
   );
