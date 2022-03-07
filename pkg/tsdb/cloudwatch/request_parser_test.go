@@ -294,6 +294,14 @@ func TestRequestParser(t *testing.T) {
 		})
 	})
 
+	t.Run("ID is the string `query` appended with refId if refId is a valid MetricData ID", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		require.NoError(t, err)
+		assert.Equal(t, "ref1", res.RefId)
+		assert.Equal(t, "queryref1", res.Id)
+	})
+
 	t.Run("Valid id is generated if ID is not provided and refId is not a valid MetricData ID", func(t *testing.T) {
 		query := getBaseJsonQuery()
 		query.Set("refId", "$$")
