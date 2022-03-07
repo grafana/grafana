@@ -430,10 +430,9 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
-						"type": fmt.Sprintf("Name: \"%s\", UID: \"%s\"", sc.initialResult.Result.Name, sc.initialResult.Result.UID),
+						"type": fmt.Sprintf("Library panel with UID: \"%s\"", sc.initialResult.Result.UID),
 					},
 				},
 			}
@@ -1117,7 +1116,8 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				},
 				"datasource": "${DS_GDEV-TESTDATA}",
 				"libraryPanel": map[string]interface{}{
-					"uid": outsideUID,
+					"uid":  outsideUID,
+					"name": outsideName,
 				},
 				"title": "Outside row",
 				"type":  "text",
@@ -1134,7 +1134,8 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				},
 				"datasource": "${DS_GDEV-TESTDATA}",
 				"libraryPanel": map[string]interface{}{
-					"uid": insideUID,
+					"uid":  insideUID,
+					"name": insideName,
 				},
 				"title": "Inside row",
 				"type":  "text",
