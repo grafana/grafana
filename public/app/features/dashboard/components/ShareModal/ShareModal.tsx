@@ -112,7 +112,7 @@ export class ShareModal extends React.Component<Props, State> {
     const ActiveTab = activeTabModel.component;
 
     return (
-      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss}>
+      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss} className="share-modal">
         <TabContent>
           <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
         </TabContent>

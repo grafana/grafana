@@ -162,3 +162,11 @@
     text-overflow: ellipsis;
   }
 }
+
+.share-modal {
+  background: $body-bg !important;
+
+  li {
+    list-style-type: none;
+  }
+}
