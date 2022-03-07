@@ -19,6 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+type userInfo struct {
+	ID    int64  `xorm:"id"`
+	Login string `xorm:"login"`
+	Email string `xorm:"email"`
+	Name  string `xorm:"name"`
+}
+
 // replace any unsafe file name characters... TODO, but be a standard way to do this cleanly!!!
 func cleanFileName(name string) string {
 	name = strings.ReplaceAll(name, "/", "-")
@@ -175,6 +182,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 	alias := make(map[string]string, 100)
 	ids := make(map[int64]string, 100)
 	folders := make(map[int64]string, 100)
+	users := readusers(ctx, orgID, sql)
 
 	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		type dashDataQueryResult struct {
@@ -291,7 +299,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 			DashId    int64     `xorm:"dashboard_id"`
 			Version   int64     `xorm:"version"`
 			Created   time.Time `xorm:"created"`
-			CreatedBy string    `xorm:"created_by"`
+			CreatedBy int64     `xorm:"created_by"`
 			Message   string    `xorm:"message"`
 			Data      []byte
 		}
@@ -329,10 +337,16 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 			if msg == "" {
 				msg = fmt.Sprintf("Version: %d", row.Version)
 			}
+
+			user, ok := users[row.CreatedBy]
+			if !ok {
+				user = &userInfo{}
+			}
+
 			_, _ = w.Commit(msg, &git.CommitOptions{
 				Author: &object.Signature{
-					Name:  "John Doe",
-					Email: "john@doe.org",
+					Name:  firstRealString(user.Name, user.Login, user.Email, "?"),
+					Email: firstRealString(user.Email, user.Login, user.Name, "?"),
 					When:  row.Created,
 				},
 			})
@@ -345,6 +359,32 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 	})
 
 	return err
+}
+
+func firstRealString(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return "?"
+}
+
+func readusers(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) map[int64]*userInfo {
+	rows := make([]*userInfo, 0)
+	_ = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		sess.Table("user").
+			Where("org_id = ?", orgID).
+			Cols("id", "login", "email", "name")
+
+		return sess.Find(&rows)
+	})
+
+	lookup := make(map[int64]*userInfo, len(rows))
+	for _, row := range rows {
+		lookup[row.ID] = row
+	}
+	return lookup
 }
 
 /**
