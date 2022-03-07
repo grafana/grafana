@@ -42,6 +42,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   alertingMinInterval = 1;
   authProxyEnabled = false;
   exploreEnabled = false;
+  helpEnabled = false;
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;

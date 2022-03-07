@@ -171,6 +171,9 @@ var (
 	// Explore UI
 	ExploreEnabled bool
 
+	// Help UI
+	HelpEnabled bool
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -947,6 +950,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	help := iniFile.Section("help")
+	HelpEnabled = help.Key("enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)

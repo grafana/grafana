@@ -111,6 +111,7 @@ export interface GrafanaConfig {
   alertingMinInterval: number;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
+  helpEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
   samlEnabled: boolean;
