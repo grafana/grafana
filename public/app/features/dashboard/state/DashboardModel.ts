@@ -206,7 +206,7 @@ export class DashboardModel implements TimeModel {
     }
 
     this.annotations.list.unshift({
-      datasource: '-- Grafana --',
+      datasource: { uid: '-- Grafana --', type: 'grafana' },
       name: 'Annotations & Alerts',
       type: 'dashboard',
       iconColor: DEFAULT_ANNOTATION_COLOR,

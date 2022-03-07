@@ -8,20 +8,15 @@ import StandardAnnotationQueryEditor from 'app/features/annotations/components/S
 import { AngularEditorLoader } from './AngularEditorLoader';
 import { selectors } from '@grafana/e2e-selectors';
 
-export const newAnnotation: AnnotationQuery = {
-  name: 'New annotation',
-  enable: true,
-  datasource: null,
-  iconColor: 'red',
-};
-
 type Props = {
   editIdx: number;
   dashboard: DashboardModel;
 };
 
+export const newAnnotationName = 'New annotation';
+
 export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) => {
-  const [annotation, setAnnotation] = useState(editIdx !== null ? dashboard.annotations.list[editIdx] : newAnnotation);
+  const [annotation, setAnnotation] = useState(dashboard.annotations.list[editIdx]);
 
   const { value: ds } = useAsync(() => {
     return getDataSourceSrv().get(annotation.datasource);
@@ -63,7 +58,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
     });
   };
 
-  const isNewAnnotation = annotation.name === newAnnotation.name;
+  const isNewAnnotation = annotation.name === newAnnotationName;
 
   return (
     <div>
