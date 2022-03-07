@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
+	orgusers "github.com/grafana/grafana/pkg/services/orguser"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -16,12 +17,13 @@ var (
 	logger = log.New("login.ext_user")
 )
 
-func ProvideService(sqlStore sqlstore.Store, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
+func ProvideService(sqlStore sqlstore.Store, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService, orgUserManager orgusers.Manager) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
 		Bus:             bus,
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
+		OrgUsersManager: orgUserManager,
 	}
 	bus.AddHandler(s.UpsertUser)
 	return s
@@ -33,6 +35,7 @@ type Implementation struct {
 	AuthInfoService login.AuthInfoService
 	QuotaService    *quota.QuotaService
 	TeamSync        login.TeamSyncFunc
+	OrgUsersManager orgusers.Manager
 }
 
 // CreateUser creates inserts a new one.
@@ -232,7 +235,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *models.User, e
 
 		// add role
 		cmd := &models.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
-		err := ls.SQLStore.AddOrgUser(ctx, cmd)
+		err := ls.OrgUsersManager.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}
@@ -243,7 +246,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *models.User, e
 		logger.Debug("Removing user's organization membership as part of syncing with OAuth login",
 			"userId", user.Id, "orgId", orgId)
 		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
-		if err := ls.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
+		if err := ls.OrgUsersManager.RemoveOrgUser(ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
 				continue

@@ -108,7 +108,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto *dtos.AddInviteForm) response.Response {
 	// user exists, add org role
 	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
-	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
+	if err := hs.OrgUsersManager.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
@@ -244,7 +244,7 @@ func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, sta
 func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *models.User, invite *models.TempUserDTO, setActive bool) (bool, response.Response) {
 	// add to org
 	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
-	if err := hs.SQLStore.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
+	if err := hs.OrgUsersManager.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
 		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return false, response.Error(500, "Error while trying to create org user", err)
 		}

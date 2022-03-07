@@ -81,7 +81,7 @@ func (ss *SQLStore) GetOrgByNameHandler(ctx context.Context, query *models.GetOr
 // GetOrgByName gets an organization by name.
 func (ss *SQLStore) GetOrgByName(name string) (*models.Org, error) {
 	var org models.Org
-	exists, err := ss.engine.Where("name=?", name).Get(&org)
+	exists, err := ss.Engine.Where("name=?", name).Get(&org)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, erro
 
 // CreateOrgWithMember creates an organization with a certain name and a certain user as member.
 func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return createOrg(name, userID, ss.engine)
+	return createOrg(name, userID, ss.Engine)
 }
 
 func CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {

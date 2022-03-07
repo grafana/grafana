@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	orgusers "github.com/grafana/grafana/pkg/services/orguser"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -30,10 +31,11 @@ func ProvideServiceAccountsService(
 	store *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
+	orgUsersManager orgusers.Manager,
 ) (*ServiceAccountsService, error) {
 	s := &ServiceAccountsService{
 		features: features,
-		store:    database.NewServiceAccountsStore(store),
+		store:    database.NewServiceAccountsStore(store, orgUsersManager),
 		log:      log.New("serviceaccounts"),
 	}
 

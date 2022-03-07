@@ -1,4 +1,4 @@
-package sqlstore
+package orgusers
 
 import (
 	"context"
@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type getOrgUsersTestCase struct {
@@ -61,13 +63,16 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t)
+	store := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	orguserstore := NewStore(store, cfg)
+
 	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			err := store.GetOrgUsers(context.Background(), tt.query)
+			err := orguserstore.getOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
 			require.Len(t, tt.query.Result, tt.expectedNumUsers)
 
@@ -127,7 +132,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t)
+	store := sqlstore.InitTestDB(t)
 	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
 	seedOrgUsers(t, store, 10)
 

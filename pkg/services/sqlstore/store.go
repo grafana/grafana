@@ -99,11 +99,8 @@ type Store interface {
 	PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error
 	PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error
 	GetAlertStatesForDashboard(ctx context.Context, query *models.GetAlertStatesForDashboardQuery) error
-	AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error
 	UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUserCommand) error
-	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
-	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error

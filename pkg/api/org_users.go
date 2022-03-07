@@ -45,6 +45,7 @@ func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUse
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
+
 	err := hs.SQLStore.GetUserByLogin(ctx, &userQuery)
 	if err != nil {
 		return response.Error(404, "User not found", nil)
@@ -54,7 +55,7 @@ func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUse
 
 	cmd.UserId = userToAdd.Id
 
-	if err := hs.SQLStore.AddOrgUser(ctx, &cmd); err != nil {
+	if err := hs.OrgUsersManager.AddOrgUser(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
@@ -134,7 +135,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
-	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
+	if err := hs.OrgUsersManager.GetOrgUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 
@@ -281,7 +282,7 @@ func (hs *HTTPServer) RemoveOrgUser(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.RemoveOrgUserCommand) response.Response {
-	if err := hs.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
+	if err := hs.OrgUsersManager.RemoveOrgUser(ctx, cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot remove last organization admin", nil)
 		}

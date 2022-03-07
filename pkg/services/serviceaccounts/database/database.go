@@ -12,19 +12,22 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	orgusers "github.com/grafana/grafana/pkg/services/orguser"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
 )
 
 type ServiceAccountsStoreImpl struct {
-	sqlStore *sqlstore.SQLStore
-	log      log.Logger
+	sqlStore        *sqlstore.SQLStore
+	log             log.Logger
+	orgUsersManager orgusers.Manager
 }
 
-func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl {
+func NewServiceAccountsStore(store *sqlstore.SQLStore, orgUsersManager orgusers.Manager) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
-		sqlStore: store,
+		sqlStore:        store,
+		orgUsersManager: orgUsersManager,
 	}
 }
 
@@ -147,7 +150,7 @@ func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgI
 		query.UserID = serviceAccountID
 	}
 
-	if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
+	if err := s.orgUsersManager.GetOrgUsers(ctx, &query); err != nil {
 		return nil, err
 	}
 

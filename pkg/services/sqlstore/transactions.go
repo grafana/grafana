@@ -18,7 +18,7 @@ var tsclogger = log.New("sqlstore.transactions")
 
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
+	return inTransactionWithRetryCtx(ctx, ss.Engine, callback, 0)
 }
 
 func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -26,7 +26,7 @@ func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 }
 
 func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	return inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
+	return inTransactionWithRetryCtx(ctx, ss.Engine, func(sess *DBSession) error {
 		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
 	}, retry)

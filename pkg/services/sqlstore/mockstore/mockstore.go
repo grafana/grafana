@@ -441,26 +441,12 @@ func (m *SQLStoreMock) GetAlertStatesForDashboard(ctx context.Context, query *mo
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUserCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error {
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error {
 	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
-	testData := m.ExpectedOrgListResponse[0]
-	m.ExpectedOrgListResponse = m.ExpectedOrgListResponse[1:]
-	return testData.Response
 }
 
 func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {

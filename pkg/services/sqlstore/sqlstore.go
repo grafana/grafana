@@ -48,7 +48,7 @@ type SQLStore struct {
 	CacheService *localcache.CacheService
 
 	dbCfg                       DatabaseConfig
-	engine                      *xorm.Engine
+	Engine                      *xorm.Engine
 	log                         log.Logger
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
@@ -102,10 +102,10 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 		return nil, errutil.Wrap("failed to connect to database", err)
 	}
 
-	ss.Dialect = migrator.NewDialect(ss.engine)
+	ss.Dialect = migrator.NewDialect(ss.Engine)
 
 	// temporarily still set global var
-	x = ss.engine
+	x = ss.Engine
 	dialect = ss.Dialect
 
 	// Init repo instances
@@ -156,7 +156,7 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 		return nil
 	}
 
-	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+	migrator := migrator.NewMigrator(ss.Engine, ss.Cfg)
 	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
@@ -164,7 +164,7 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 
 // Sync syncs changes to the database.
 func (ss *SQLStore) Sync() error {
-	return ss.engine.Sync2()
+	return ss.Engine.Sync2()
 }
 
 // Reset resets database state.
@@ -179,7 +179,7 @@ func (ss *SQLStore) Reset() error {
 
 // Quote quotes the value in the used SQL dialect
 func (ss *SQLStore) Quote(value string) string {
-	return ss.engine.Quote(value)
+	return ss.Engine.Quote(value)
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
@@ -322,7 +322,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 
 // initEngine initializes ss.engine.
 func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
-	if ss.engine != nil {
+	if ss.Engine != nil {
 		sqlog.Debug("Already connected to database")
 		return nil
 	}
@@ -389,7 +389,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		engine.ShowExecTime(true)
 	}
 
-	ss.engine = engine
+	ss.Engine = engine
 	return nil
 }
 
