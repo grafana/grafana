@@ -32,7 +32,6 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, 1, int(retrieved.OrgId))
 		assert.Len(t, retrieved.Salt, 10)
 		assert.Equal(t, true, retrieved.IsServiceAccount)
-
 	})
 }
 
