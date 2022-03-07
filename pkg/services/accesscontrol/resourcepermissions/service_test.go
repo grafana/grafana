@@ -220,7 +220,9 @@ func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission,
 
 	sql := sqlstore.InitTestDB(t)
 	store := database.ProvideService(sql)
-	service, err := New(ops, setting.NewCfg(), routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store, sql)
+	cfg := setting.NewCfg()
+	cfg.IsEnterprise = true
+	service, err := New(ops, cfg, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store, sql)
 	require.NoError(t, err)
 
 	return service, sql
