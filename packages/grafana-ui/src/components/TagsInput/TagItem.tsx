@@ -7,7 +7,7 @@ import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   name: string;
-
+  disabled?: boolean;
   onRemove: (tag: string) => void;
 }
 
@@ -49,14 +49,20 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
  * @internal
  * Only used internally by TagsInput
  * */
-export const TagItem: FC<Props> = ({ name, onRemove }) => {
+export const TagItem: FC<Props> = ({ name, disabled, onRemove }) => {
   const theme = useTheme();
   const styles = getStyles({ theme, name });
 
   return (
     <div className={styles.itemStyle}>
       <span className={styles.nameStyle}>{name}</span>
-      <button aria-label="Remove" onClick={() => onRemove(name)} className={styles.buttonStyles} type="button">
+      <button
+        disabled={disabled}
+        aria-label={`Remove ${name}`}
+        onClick={() => onRemove(name)}
+        className={styles.buttonStyles}
+        type="button"
+      >
         <Icon className="pointer" name="times" />
       </button>
     </div>
