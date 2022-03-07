@@ -41,6 +41,7 @@ const buildCjsPackage = ({ env }) => {
       resolve(),
       commonjs({
         include: /node_modules/,
+        ignoreTryCatch: false,
       }),
       svg({ stringify: true }),
       env === 'production' && terser(),
