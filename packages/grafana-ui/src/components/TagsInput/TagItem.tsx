@@ -2,8 +2,8 @@ import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { getTagColorsFromName } from '../../utils';
 import { stylesFactory, useTheme } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { GrafanaTheme } from '@grafana/data';
+import { IconButton } from '../IconButton/IconButton';
 
 interface Props {
   name: string;
@@ -34,13 +34,7 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
     `,
 
     nameStyle: css`
-      margin-right: 3px;
-    `,
-
-    buttonStyles: css`
-      border: none;
-      background: none;
-      padding: 0;
+      margin-right: 8px;
     `,
   };
 });
@@ -56,15 +50,14 @@ export const TagItem: FC<Props> = ({ name, disabled, onRemove }) => {
   return (
     <div className={styles.itemStyle}>
       <span className={styles.nameStyle}>{name}</span>
-      <button
+      <IconButton
+        name="times"
+        size="xs"
         disabled={disabled}
-        aria-label={`Remove ${name}`}
+        ariaLabel={`Remove ${name}`}
         onClick={() => onRemove(name)}
-        className={styles.buttonStyles}
         type="button"
-      >
-        <Icon className="pointer" name="times" />
-      </button>
+      />
     </div>
   );
 };
