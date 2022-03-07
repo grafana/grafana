@@ -214,7 +214,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.IsSignedIn {
+	if setting.ProfileEnabled && c.IsSignedIn {
 		navTree = append(navTree, hs.getProfileNode(c))
 	}
 

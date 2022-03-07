@@ -1338,6 +1338,14 @@ Configures the help menu.
 
 Enable or disable the Help menu. Default is `enabled`.
 
+## [profile]
+
+Configures the Profile menu.
+
+### enabled
+
+Enable or disable the Profile menu. Default is `enabled`.
+
 ## [metrics]
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "view-server/internal-metrics.md" >}}).

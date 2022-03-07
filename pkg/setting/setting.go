@@ -174,6 +174,9 @@ var (
 	// Help UI
 	HelpEnabled bool
 
+	// Profile menu
+	ProfileEnabled bool
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -953,6 +956,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	help := iniFile.Section("help")
 	HelpEnabled = help.Key("enabled").MustBool(true)
+
+	profile := iniFile.Section("profile")
+	ProfileEnabled = profile.Key("enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
