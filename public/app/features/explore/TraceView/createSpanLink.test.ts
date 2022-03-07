@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, MutableDataFrame } from '@grafana/data';
 import { setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { TraceToLogsOptions } from '../../../core/components/TraceToLogs/TraceToLogsSettings';
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
@@ -30,7 +31,9 @@ describe('createSpanLinkFactory', () => {
     it('with default keys when tags not configured', () => {
       const createLink = setupSpanLinkFactory();
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(createTraceSpan());
+      const links = createLink!(createTraceSpan());
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}],"panelsState":{}}'
@@ -43,7 +46,7 @@ describe('createSpanLinkFactory', () => {
         tags: ['ip', 'newTag'],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -54,6 +57,8 @@ describe('createSpanLinkFactory', () => {
           },
         })
       );
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
@@ -66,7 +71,7 @@ describe('createSpanLinkFactory', () => {
         tags: ['ip', 'host'],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -77,6 +82,8 @@ describe('createSpanLinkFactory', () => {
           },
         })
       );
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}],"panelsState":{}}'
@@ -90,7 +97,7 @@ describe('createSpanLinkFactory', () => {
         spanEndTimeShift: '1m',
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -101,6 +108,8 @@ describe('createSpanLinkFactory', () => {
           },
         })
       );
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:01:00.000Z","to":"2020-10-14T01:01:01.000Z"},"datasource":"loki1","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":""}],"panelsState":{}}'
@@ -114,8 +123,10 @@ describe('createSpanLinkFactory', () => {
         filterByTraceID: true,
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(createTraceSpan());
+      const links = createLink!(createTraceSpan());
 
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"} |=\\"7946b05c2e2e4e5a\\" |=\\"6605c7b08e715d6c\\"","refId":""}],"panelsState":{}}'
@@ -139,8 +150,10 @@ describe('createSpanLinkFactory', () => {
         }),
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(createTraceSpan());
+      const links = createLink!(createTraceSpan());
 
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe('testSpanId');
     });
 
@@ -153,7 +166,7 @@ describe('createSpanLinkFactory', () => {
         ],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -164,6 +177,9 @@ describe('createSpanLinkFactory', () => {
           },
         })
       );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{service=\\"serviceName\\", pod=\\"podName\\"}","refId":""}],"panelsState":{}}'
@@ -180,7 +196,7 @@ describe('createSpanLinkFactory', () => {
         ],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -191,6 +207,9 @@ describe('createSpanLinkFactory', () => {
           },
         })
       );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","refId":""}],"panelsState":{}}'
@@ -203,7 +222,7 @@ describe('createSpanLinkFactory', () => {
         tags: [],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -214,7 +233,7 @@ describe('createSpanLinkFactory', () => {
           },
         })
       );
-      expect(linkDef).toBeUndefined();
+      expect(links?.logLinks).toBeUndefined();
     });
   });
 
@@ -236,7 +255,10 @@ describe('createSpanLinkFactory', () => {
       const createLink = setupSpanLinkFactory({
         datasourceUid: splunkUID,
       });
-      const linkDef = createLink!(createTraceSpan());
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toContain(`${encodeURIComponent('datasource":"Splunk 8","queries":[{"query"')}`);
       expect(linkDef!.href).not.toContain(`${encodeURIComponent('datasource":"Splunk 8","queries":[{"expr"')}`);
     });
@@ -245,7 +267,10 @@ describe('createSpanLinkFactory', () => {
       const createLink = setupSpanLinkFactory({
         datasourceUid: splunkUID,
       });
-      const linkDef = createLink!(createTraceSpan());
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toContain(
         `${encodeURIComponent('{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"}')}`
       );
@@ -262,8 +287,10 @@ describe('createSpanLinkFactory', () => {
       });
 
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(createTraceSpan());
+      const links = createLink!(createTraceSpan());
 
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" \\"7946b05c2e2e4e5a\\" \\"6605c7b08e715d6c\\"","refId":""}],"panelsState":{}}'
@@ -276,7 +303,7 @@ describe('createSpanLinkFactory', () => {
         tags: ['ip'],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -285,6 +312,8 @@ describe('createSpanLinkFactory', () => {
         })
       );
 
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"ip=\\"192.168.0.1\\"","refId":""}],"panelsState":{}}'
@@ -297,7 +326,7 @@ describe('createSpanLinkFactory', () => {
         tags: ['ip', 'hostname'],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -309,6 +338,8 @@ describe('createSpanLinkFactory', () => {
         })
       );
 
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"hostname=\\"hostname1\\" ip=\\"192.168.0.1\\"","refId":""}],"panelsState":{}}'
@@ -325,7 +356,7 @@ describe('createSpanLinkFactory', () => {
         ],
       });
       expect(createLink).toBeDefined();
-      const linkDef = createLink!(
+      const links = createLink!(
         createTraceSpan({
           process: {
             serviceName: 'service',
@@ -336,10 +367,101 @@ describe('createSpanLinkFactory', () => {
           },
         })
       );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"service=\\"serviceName\\" pod=\\"podName\\"","refId":""}],"panelsState":{}}'
         )}`
+      );
+    });
+  });
+
+  describe('should return metric link', () => {
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
+          return { uid: 'prom1', name: 'prom1', type: 'prometheus' } as any;
+        },
+      } as any);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('returns query with span', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        traceToMetricsOptions: {
+          datasourceUid: 'prom1',
+        },
+      });
+      expect(createLink).toBeDefined();
+
+      const links = createLink!(createTraceSpan());
+      const linkDef = links?.metricLinks?.[0];
+
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation=\\"operation\\"}[5m])) by (le))","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+  });
+
+  describe('should return span links', () => {
+    beforeAll(() => {
+      setDataSourceSrv(new DatasourceSrv());
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('ignores parent span link', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({ references: [{ refType: 'CHILD_OF', spanID: 'parent', traceID: 'traceID' }] })
+      );
+
+      const traceLinks = links?.traceLinks;
+      expect(traceLinks).toBeDefined();
+      expect(traceLinks).toHaveLength(0);
+    });
+
+    it('returns links for references and subsidiarilyReferencedBy references', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          references: [
+            {
+              refType: 'FOLLOWS_FROM',
+              spanID: 'span1',
+              traceID: 'traceID',
+              span: { operationName: 'SpanName' } as any,
+            },
+          ],
+          subsidiarilyReferencedBy: [{ refType: 'FOLLOWS_FROM', spanID: 'span3', traceID: 'traceID2' }],
+        })
+      );
+
+      const traceLinks = links?.traceLinks;
+      expect(traceLinks).toBeDefined();
+      expect(traceLinks).toHaveLength(2);
+      expect(traceLinks![0]).toEqual(
+        expect.objectContaining({
+          href: 'traceID-span1',
+          title: 'SpanName',
+        })
+      );
+      expect(traceLinks![1]).toEqual(
+        expect.objectContaining({
+          href: 'traceID2-span3',
+          title: 'View linked span',
+        })
       );
     });
   });
@@ -352,6 +474,11 @@ function setupSpanLinkFactory(options: Partial<TraceToLogsOptions> = {}, datasou
     traceToLogsOptions: {
       datasourceUid,
       ...options,
+    },
+    createFocusSpanLink: (traceId, spanId) => {
+      return {
+        href: `${traceId}-${spanId}`,
+      } as any;
     },
   });
 }
