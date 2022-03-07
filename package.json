@@ -262,7 +262,7 @@
     "@react-aria/focus": "3.5.0",
     "@react-aria/interactions": "3.8.1",
     "@react-aria/menu": "3.4.1",
-    "@react-aria/overlays": "3.7.3",
+    "@react-aria/overlays": "3.8.0",
     "@react-aria/utils": "3.11.0",
     "@react-stately/collections": "3.3.4",
     "@react-stately/menu": "3.2.3",
