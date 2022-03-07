@@ -299,7 +299,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 				Text:        "Storage",
 				Id:          "storage",
 				Description: "Manage storage configuration",
-				Icon:        "database-alt",
+				Icon:        "cube",
 				Url:         hs.Cfg.AppSubURL + "/org/storage",
 			})
 		}

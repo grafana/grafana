@@ -33,7 +33,7 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   isHighlighted?: boolean;
 }
 
-export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
+export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'secondary';
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   (
@@ -122,6 +122,7 @@ function renderIcon(icon: IconName | React.ReactNode) {
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
+  const secondary = getPropertiesForVariant(theme, 'secondary', 'solid');
 
   return {
     button: css`
@@ -189,6 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     primary: css(primaryVariant),
     destructive: css(destructiveVariant),
+    secondary: css(secondary),
     narrow: css`
       padding: 0 ${theme.spacing(0.5)};
     `,

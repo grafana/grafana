@@ -1,126 +1,97 @@
-import React, { useCallback, useState } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { NavModelItem } from '@grafana/data';
-import { Button, Card, HorizontalGroup, Icon, Spinner } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime';
-
-// TODO: get from the server nav model!
-const node: NavModelItem = {
-  id: 'storage',
-  text: 'Storage (SKETCH!)',
-  subTitle: 'Configure storage engines for resources',
-  icon: 'database-alt',
-  url: 'org/storage',
-};
+import { FilterInput, useStyles2 } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState } from 'app/types';
+import React, { useCallback, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Button } from './Button';
+import { DashboardList } from './DashboardList';
+import DataSourceList from './DataSourceList';
+import ResourceList from './ResourceList';
 
 export default function StoragePage() {
-  const [running, setRunning] = useState(false);
+  const styles = useStyles2(getStyles);
+  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'storage'));
+  const [searchQuery, setSearchQuery] = useState('');
 
   const doExport = useCallback(() => {
-    setRunning(true);
     getBackendSrv()
       .post('api/gitops/export')
       .then((v) => {
         alert(JSON.stringify(v));
-        setRunning(false);
       });
-  }, [setRunning]);
+  }, []);
 
   const doImport = useCallback(() => {
-    setRunning(true);
     getBackendSrv()
       .post('api/gitops/import')
       .then((v) => {
         alert(JSON.stringify(v));
-        setRunning(false);
       });
-  }, [setRunning]);
+  }, []);
 
   return (
-    <Page navModel={{ node: node, main: node }}>
+    <Page navModel={navModel}>
       <Page.Contents>
-        <div>
-          <h1>Dashboards</h1>
-          <Card heading="SQL (standard)" description="Dashboards stored in SQL database">
-            <Card.Meta>sqlite? mysql address?</Card.Meta>
-            <Card.Figure>
-              <Icon name="database" size="xxxl" />
-            </Card.Figure>
-          </Card>
-          <Card heading="devdash" description="Dashboards from local dev file system">
-            <Card.Meta>devenv/dev-dashboards</Card.Meta>
-            <Card.Figure>
-              <Icon name="folder-open" size="xxxl" />
-            </Card.Figure>
-          </Card>
-          <Card heading="git1" description="Dashboards in git">
-            <Card.Meta>
-              <a href="https://github.com/grafana/plugin-provisioning">
-                git@github.com:grafana/plugin-provisioning.git
-              </a>
-              <a href="https://github.com/grafana/plugin-provisioning/tree/main/provisioning/dashboards">
-                <Icon name="folder" /> provisioning/dashboards
-              </a>
-            </Card.Meta>
-            <Card.Figure>
-              <Icon name="code-branch" size="xxxl" />
-            </Card.Figure>
-          </Card>
-          <Card heading="git2" description="Dashboards in git">
-            <Card.Meta>
-              <a href="https://github.com/grafana/demo_kit">git@github.com:grafana/demo_kit.git</a>
-              <a href="https://github.com/grafana/demo_kit/tree/main/grafana/dashboards">
-                <Icon name="folder" /> grafana/dashboards
-              </a>
-            </Card.Meta>
-            <Card.Figure>
-              <Icon name="code-branch" size="xxxl" />
-            </Card.Figure>
-          </Card>
-
-          <h1>Data sources</h1>
-          <Card heading="SQL (standard)" description="Data source stored in SQL database">
-            <Card.Meta>...sqlite...</Card.Meta>
-            <Card.Figure>
-              <Icon name="database" size="xxxl" />
-            </Card.Figure>
-          </Card>
-
-          <h1>Resources</h1>
-          <Card heading="public" description="standard static files">
-            <Card.Meta>public/static</Card.Meta>
-            <Card.Figure>
-              <Icon name="folder-open" size="xxxl" />
-            </Card.Figure>
-          </Card>
-          <Card heading="Uploads" description="Save uploads in SQL">
-            <Card.Meta>...sqlite...</Card.Meta>
-            <Card.Figure>
-              <Icon name="database" size="xxxl" />
-            </Card.Figure>
-          </Card>
+        <div className={styles.toolbar}>
+          <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder="Search by name or type" width={50} />
+          <Stack direction="row" gap={2}>
+            <Button
+              buttonProps={{ variant: 'primary', icon: 'plus', children: 'Add storage' }}
+              options={[
+                { value: 'sql', label: 'SQL (Grafana default)' },
+                { value: 'localfs', label: 'Local file system' },
+                { value: 'git', label: 'Git' },
+              ]}
+              onChange={function (value: SelectableValue<string>): void {
+                //TODO: add storage
+                console.log(value);
+              }}
+            />
+            <Button
+              buttonProps={{ variant: 'secondary', children: 'Actions', icon: '' }}
+              options={[
+                { value: 'push', label: 'Push storage to git', icon: 'arrow-up' },
+                { value: 'pull', label: 'Pull storage from git', icon: 'arrow-down' },
+              ]}
+              onChange={function (value: SelectableValue<string>): void {
+                if (value.value === 'push') {
+                  doExport();
+                } else if (value.value === 'pull') {
+                  doImport();
+                }
+              }}
+            />
+          </Stack>
         </div>
 
-        <div>
-          <h1>Actions</h1>
-          {running && (
-            <div>
-              <Spinner />
-            </div>
-          )}
-          {!running && (
-            <HorizontalGroup>
-              <Button variant="secondary" onClick={doExport}>
-                Write system to git
-              </Button>
-
-              <Button variant="secondary" onClick={doImport}>
-                Load system from git
-              </Button>
-            </HorizontalGroup>
-          )}
+        <div className={styles.border}>
+          <DashboardList />
+        </div>
+        <div className={styles.border}>
+          <DataSourceList />
+        </div>
+        <div className={styles.border}>
+          <ResourceList />
         </div>
       </Page.Contents>
     </Page>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  toolbar: css`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: ${theme.spacing(2)};
+  `,
+  border: css`
+    border: 1px solid ${theme.colors.border.medium};
+    padding: ${theme.spacing(2)};
+  `,
+});
