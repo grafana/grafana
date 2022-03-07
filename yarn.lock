@@ -4049,7 +4049,7 @@ __metadata:
     react-test-renderer: 17.0.2
     regenerator-runtime: 0.13.9
     rimraf: 3.0.2
-    rollup: 2.69.0
+    rollup: 2.70.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.2
@@ -4071,7 +4071,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 13.1.3
     "@types/node": 16.11.22
     rimraf: 3.0.2
-    rollup: 2.69.0
+    rollup: 2.70.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     tslib: 2.3.1
@@ -4107,7 +4107,7 @@ __metadata:
     mocha: 9.2.0
     resolve-as-bin: 2.1.0
     rimraf: 3.0.2
-    rollup: 2.69.0
+    rollup: 2.70.0
     rollup-plugin-copy: 3.4.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
@@ -4138,6 +4138,22 @@ __metadata:
     prettier: 2.5.1
     typescript: 4.4.4
   checksum: 47b641ce48175d5f0801174a07dc72bb3adc4e2bb2d85383361372b129a9ade0ead838faf4012e0af51ffaac63b0d24229977f05aeb36df5a172aa42cda519db
+  languageName: node
+  linkType: hard
+
+"@grafana/eslint-config@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@grafana/eslint-config@npm:3.0.0"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": 5.10.0
+    "@typescript-eslint/parser": 5.10.0
+    eslint: 7.28.0
+    eslint-config-prettier: 8.3.0
+    eslint-plugin-jsdoc: 37.7.0
+    eslint-plugin-react: 7.28.0
+    eslint-plugin-react-hooks: 4.3.0
+    typescript: 4.4.4
+  checksum: 27320a7ff7241bba132cccb62cd5d229300b0e9867d3e214ad8606c6d10a2015845bbf9d008d708f7e4f884d004c4c4c8db5694b3f2e006dcc6c5b411a3d350e
   languageName: node
   linkType: hard
 
@@ -4188,7 +4204,7 @@ __metadata:
     react: 17.0.2
     react-dom: 17.0.2
     rimraf: 3.0.2
-    rollup: 2.69.0
+    rollup: 2.70.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.2
@@ -4208,7 +4224,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 13.1.3
     "@swc/helpers": 0.3.2
     rimraf: 3.0.2
-    rollup: 2.69.0
+    rollup: 2.70.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     tslib: 2.3.1
@@ -4421,7 +4437,7 @@ __metadata:
     classnames: 2.3.1
     common-tags: 1.8.2
     core-js: 3.21.0
-    css-loader: 6.6.0
+    css-loader: 6.7.0
     css-minimizer-webpack-plugin: 3.4.1
     csstype: 3.0.10
     d3: 5.15.0
@@ -4469,7 +4485,7 @@ __metadata:
     react-use: 17.3.2
     react-window: 1.8.6
     rimraf: 3.0.2
-    rollup: 2.69.0
+    rollup: 2.70.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.2
@@ -16249,12 +16265,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-loader@npm:6.6.0":
-  version: 6.6.0
-  resolution: "css-loader@npm:6.6.0"
+"css-loader@npm:6.7.0":
+  version: 6.7.0
+  resolution: "css-loader@npm:6.7.0"
   dependencies:
     icss-utils: ^5.1.0
-    postcss: ^8.4.5
+    postcss: ^8.4.7
     postcss-modules-extract-imports: ^3.0.0
     postcss-modules-local-by-default: ^4.0.0
     postcss-modules-scope: ^3.0.0
@@ -16263,7 +16279,7 @@ __metadata:
     semver: ^7.3.5
   peerDependencies:
     webpack: ^5.0.0
-  checksum: cc4117320c2bfbbc3e84cdf811fb29219f1900cf4dcebb7dbf916b7cbdfc193cd9017d19b62be2d57d22baeb791919de52bf2e3086213d184875813817ac290f
+  checksum: 222bbde35315f4cf723fb1dd3a7c5a21e073de2018e8a9475f89631a090f6fd829ef756972a0f15ed6298f6c852d0f45e46ee729625256397ee17638c0b4ae9d
   languageName: node
   linkType: hard
 
@@ -20701,7 +20717,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 2.5.2
+    "@grafana/eslint-config": 3.0.0
     "@grafana/experimental": 0.0.2-canary.18
     "@grafana/google-sdk": 0.0.2
     "@grafana/runtime": "workspace:*"
@@ -20829,7 +20845,7 @@ __metadata:
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
     core-js: 3.21.0
-    css-loader: 6.6.0
+    css-loader: 6.7.0
     css-minimizer-webpack-plugin: 3.4.1
     cypress: 9.5.0
     d3: 5.15.0
@@ -20846,7 +20862,6 @@ __metadata:
     eslint-plugin-jest: ^26.1.0
     eslint-plugin-jsdoc: 37.9.1
     eslint-plugin-lodash: 7.4.0
-    eslint-plugin-prettier: 4.0.0
     eslint-plugin-react: 7.29.2
     eslint-plugin-react-hooks: 4.3.0
     eslint-webpack-plugin: 3.1.1
@@ -20884,7 +20899,7 @@ __metadata:
     logfmt: ^1.3.2
     lru-cache: 7.4.0
     memoize-one: 6.0.0
-    mini-css-extract-plugin: 2.5.3
+    mini-css-extract-plugin: 2.6.0
     moment: 2.29.1
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
@@ -20966,7 +20981,7 @@ __metadata:
     tinycolor2: 1.4.2
     ts-jest: 27.1.3
     ts-loader: 9.2.6
-    ts-node: 10.6.0
+    ts-node: 10.7.0
     tslib: 2.3.1
     typescript: 4.4.4
     uplot: 1.6.19
@@ -26120,14 +26135,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-css-extract-plugin@npm:2.5.3":
-  version: 2.5.3
-  resolution: "mini-css-extract-plugin@npm:2.5.3"
+"mini-css-extract-plugin@npm:2.6.0":
+  version: 2.6.0
+  resolution: "mini-css-extract-plugin@npm:2.6.0"
   dependencies:
     schema-utils: ^4.0.0
   peerDependencies:
     webpack: ^5.0.0
-  checksum: de53fbded09fd2ae81174b11754bc955fcf0e0a85b2c4df7e179fcc8a81533362498824395d43d50960b0bc93550eb2bd9cd1ded113eaa21bd84ab50ef29e65c
+  checksum: ea73bd66558de7a37db094fe68fa130e7a725ab15f880ff8467a75d9c4c2f1576d20720088ea22af9922a94b8600bbfef0c6acaf10d12a32a9bd20a90ba3c35f
   languageName: node
   linkType: hard
 
@@ -26642,6 +26657,15 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 276d0d4b0c41c46aeefec5f09f093e4085a2352d06881c845db22b84f8ef72cc8defae6d76bfb1d8a2a128eb2dec42ab148d16582be4e7754c97905806ef57b6
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "nanoid@npm:3.3.1"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 4ef0969e1bbe866fc223eb32276cbccb0961900bfe79104fa5abe34361979dead8d0e061410a5c03bc3d47455685adf32c09d6f27790f4a6898fb51f7df7ec86
   languageName: node
   linkType: hard
 
@@ -29427,7 +29451,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.4.6, postcss@npm:^8.4.5, postcss@npm:^8.4.6":
+"postcss@npm:8.4.6, postcss@npm:^8.4.6":
   version: 8.4.6
   resolution: "postcss@npm:8.4.6"
   dependencies:
@@ -29456,6 +29480,17 @@ __metadata:
     picocolors: ^1.0.0
     source-map-js: ^0.6.2
   checksum: 1a230553d74c66aa9585c90781ed8ea75f19cefea405d2117b67fbeb24b5b5e0e17be2e0c5a07db31dd085643a13394127ab2222e940771b70498331bf20f35e
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.7":
+  version: 8.4.7
+  resolution: "postcss@npm:8.4.7"
+  dependencies:
+    nanoid: ^3.3.1
+    picocolors: ^1.0.0
+    source-map-js: ^1.0.2
+  checksum: a515ed36622edbee1d3ba153298d3b62ae9826dfa6de19204c2a6f975c8d3ad36808423b5119a9d82b78efd486de3ce35a1faf882a36ac8aa09492be4fbb7fe1
   languageName: node
   linkType: hard
 
@@ -32447,9 +32482,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:2.69.0":
-  version: 2.69.0
-  resolution: "rollup@npm:2.69.0"
+"rollup@npm:2.70.0":
+  version: 2.70.0
+  resolution: "rollup@npm:2.70.0"
   dependencies:
     fsevents: ~2.3.2
   dependenciesMeta:
@@ -32457,7 +32492,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: 65a207c04ae900da58b86a108e5c438a01d2db1fee9cf8811e6c1b3433214739419b5ebd3eba0b8bb6402e38c04d42f7365298f67d7cd6e683b168c7594b7ea8
+  checksum: 95075049f7a2c727a7bdd78c4a6fb4a468561b3de853c010d34fdd693d7c761d5838bcfaf4e49a441b34abbc22cceaa01af47f69f622cbd725678792b5f1acfb
   languageName: node
   linkType: hard
 
@@ -35347,9 +35382,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:10.6.0":
-  version: 10.6.0
-  resolution: "ts-node@npm:10.6.0"
+"ts-node@npm:10.7.0":
+  version: 10.7.0
+  resolution: "ts-node@npm:10.7.0"
   dependencies:
     "@cspotcode/source-map-support": 0.7.0
     "@tsconfig/node10": ^1.0.7
@@ -35377,10 +35412,11 @@ __metadata:
   bin:
     ts-node: dist/bin.js
     ts-node-cwd: dist/bin-cwd.js
+    ts-node-esm: dist/bin-esm.js
     ts-node-script: dist/bin-script.js
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
-  checksum: bc7589d8c38dc75a2a6f832ac43faaac7edd3d0ef4643f46a9deeaabcdd35722e8c89e729fcd39a16069b30d09e297c2fb3eec917a82dd3f1e7da8b352bbd447
+  checksum: 2a379e43f7478d0b79e1e63af91fe222d83857727957df4bd3bdf3c0a884de5097b12feb9bbf530074526b8874c0338b0e6328cf334f3a5e2c49c71e837273f7
   languageName: node
   linkType: hard
 
