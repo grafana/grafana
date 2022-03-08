@@ -59,7 +59,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
-      params: [{ name: 'String', type: 'string', hideName: true, placeholder: 'Text to exclude', minWidth: 22 }],
+      params: [{ name: 'String', type: 'string', hideName: true, placeholder: 'Text to exclude', minWidth: 26 }],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
