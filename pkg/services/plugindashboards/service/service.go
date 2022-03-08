@@ -77,6 +77,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 				res.ImportedUrl = existingDash.GetUrl()
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
 				existingMatches[existingDash.Id] = true
+				break
 			}
 		}
 

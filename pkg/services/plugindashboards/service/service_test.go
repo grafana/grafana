@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -21,10 +21,14 @@ func TestGetPluginDashboards(t *testing.T) {
 	testDashboardOld.Set("revision", 22)
 
 	testDashboardNew := simplejson.New()
-	testDashboardNew.Set("title", "Nginx Connections New")
+	testDashboardNew.Set("title", "Nginx Connections")
 	testDashboardNew.Set("revision", 23)
 	testDashboardNewBytes, err := testDashboardNew.MarshalJSON()
 	require.NoError(t, err)
+
+	testDashboardDeleted := simplejson.New()
+	testDashboardDeleted.Set("title", "test")
+	testDashboardDeleted.Set("id", 4)
 
 	pluginDashboardStore := &pluginDashboardStoreMock{
 		pluginDashboardFiles: map[string]map[string][]byte{
@@ -37,6 +41,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		pluginDashboards: map[string][]*models.Dashboard{
 			"test-app": {
 				models.NewDashboardFromJson(testDashboardOld),
+				models.NewDashboardFromJson(testDashboardDeleted),
 			},
 		},
 	}
@@ -86,7 +91,7 @@ func TestGetPluginDashboards(t *testing.T) {
 				validateFn: func(tt *testing.T, resp *plugindashboards.LoadPluginDashboardResponse) {
 					require.NotNil(tt, resp.Dashboard)
 					require.Equal(tt, testDashboardNew.Get("title").MustString(), resp.Dashboard.Title)
-					require.Equal(tt, testDashboardNew.Get("revision").MustString(), resp.Dashboard.Data.Get("revision").MustString())
+					require.Equal(tt, testDashboardNew.Get("revision").MustInt64(1), resp.Dashboard.Data.Get("revision").MustInt64(1))
 				},
 			},
 		}
@@ -105,53 +110,59 @@ func TestGetPluginDashboards(t *testing.T) {
 	})
 
 	t.Run("ListPluginDashboards", func(t *testing.T) {
+		testCases := []struct {
+			desc        string
+			req         *plugindashboards.ListPluginDashboardsRequest
+			errorFn     require.ErrorAssertionFunc
+			respValueFn require.ValueAssertionFunc
+			validateFn  func(tt *testing.T, resp *plugindashboards.ListPluginDashboardsResponse)
+		}{
+			{
+				desc:        "Should return error for nil req",
+				req:         nil,
+				errorFn:     require.Error,
+				respValueFn: require.Nil,
+			},
+			{
+				desc: "Should return error for non-existing plugin",
+				req: &plugindashboards.ListPluginDashboardsRequest{
+					PluginID: "non-existing",
+				},
+				errorFn:     require.Error,
+				respValueFn: require.Nil,
+			},
+			{
+				desc: "Should return updated nginx dashboard revision and removed title dashboard",
+				req: &plugindashboards.ListPluginDashboardsRequest{
+					PluginID: "test-app",
+				},
+				errorFn:     require.NoError,
+				respValueFn: require.NotNil,
+				validateFn: func(tt *testing.T, resp *plugindashboards.ListPluginDashboardsResponse) {
+					require.Len(tt, resp.Items, 2)
+					nginx := resp.Items[0]
+					require.True(tt, nginx.Imported)
+					require.Equal(t, int64(23), nginx.Revision)
+					require.Equal(t, int64(22), nginx.ImportedRevision)
+					require.Equal(tt, testDashboardOld.Get("title").MustString(), nginx.Title)
+					test := resp.Items[1]
+					require.True(tt, test.Removed)
+				},
+			},
+		}
 
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				resp, err := s.ListPluginDashboards(context.Background(), tc.req)
+				tc.errorFn(t, err)
+				tc.respValueFn(t, resp)
+
+				if resp != nil {
+					tc.validateFn(t, resp)
+				}
+			})
+		}
 	})
-	// 	cfg := &setting.Cfg{
-	// 		PluginSettings: setting.PluginSettings{
-	// 			"test-app": map[string]string{
-	// 				"path": "testdata/test-app",
-	// 			},
-	// 		},
-	// 	}
-	// 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	// 	pm, err := ProvideService(cfg, loader.New(pmCfg, nil,
-	// 		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}))
-	// 	require.NoError(t, err)
-
-	// 	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-	// 		if query.Slug == "nginx-connections" {
-	// 			dash := models.NewDashboard("Nginx Connections")
-	// 			dash.Data.Set("revision", "1.1")
-	// 			query.Result = dash
-	// 			return nil
-	// 		}
-
-	// 		return models.ErrDashboardNotFound
-	// 	})
-
-	// 	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	// 		var data = simplejson.New()
-	// 		data.Set("title", "Nginx Connections")
-	// 		data.Set("revision", 22)
-
-	// 		query.Result = []*models.Dashboard{
-	// 			{Slug: "nginx-connections", Data: data},
-	// 		}
-	// 		return nil
-	// 	})
-
-	// 	dashboards, err := pm.GetPluginDashboards(context.Background(), 1, "test-app")
-	// 	require.NoError(t, err)
-
-	// 	require.Len(t, dashboards, 2)
-	// 	require.Equal(t, "Nginx Connections", dashboards[0].Title)
-	// 	require.Equal(t, int64(25), dashboards[0].Revision)
-	// 	require.Equal(t, int64(22), dashboards[0].ImportedRevision)
-	// 	require.Equal(t, "db/nginx-connections", dashboards[0].ImportedUri)
-
-	// 	require.Equal(t, int64(2), dashboards[1].Revision)
-	// 	require.Equal(t, int64(0), dashboards[1].ImportedRevision)
 }
 
 type pluginDashboardStoreMock struct {
@@ -166,6 +177,8 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 			references = append(references, ref)
 		}
 
+		sort.Strings(references)
+
 		return &plugins.ListPluginDashboardFilesResult{
 			FileReferences: references,
 		}, nil
@@ -175,7 +188,6 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 }
 
 func (m pluginDashboardStoreMock) GetPluginDashboardFileContent(ctx context.Context, args *plugins.GetPluginDashboardFileContentArgs) (*plugins.GetPluginDashboardFileContentResult, error) {
-	spew.Dump(m.pluginDashboardFiles)
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		if content, exists := dashboardFiles[args.FileReference]; exists {
 			r := bytes.NewReader(content)
