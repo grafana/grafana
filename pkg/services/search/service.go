@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore sqlstore.Store, starManager stars.Manager) *SearchService {
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore, starManager stars.Manager) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		Bus: bus,
