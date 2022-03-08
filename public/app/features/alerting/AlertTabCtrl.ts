@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
-import DatasourceSrv from '../plugins/datasource_srv';
+import { DatasourceSrv } from '../plugins/datasource_srv';
 import { DataQuery, DataSourceApi, rangeUtil } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';

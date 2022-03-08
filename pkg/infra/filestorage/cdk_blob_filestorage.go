@@ -313,7 +313,8 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 
 	recursive := options.Recursive
 
-	currentDirPath := ""
+	dirPath := ""
+	dirMarkerPath := ""
 	foundPaths := make([]string, 0)
 	for {
 		obj, err := iterator.Next(ctx)
@@ -326,16 +327,26 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 			return nil, err
 		}
 
-		if currentDirPath == "" && !obj.IsDir && options.isAllowed(obj.Key) {
-			attributes, err := c.bucket.Attributes(ctx, obj.Key)
-			if err != nil {
-				c.log.Error("Failed while retrieving attributes", "path", obj.Key, "err", err)
-				return nil, err
+		if options.isAllowed(obj.Key) {
+			if obj.IsDir && !recursive {
+				foundPaths = append(foundPaths, strings.TrimSuffix(obj.Key, Delimiter))
 			}
 
-			if attributes.Metadata != nil {
-				if path, ok := attributes.Metadata[originalPathAttributeKey]; ok {
-					currentDirPath = getParentFolderPath(path)
+			if dirPath == "" && !obj.IsDir {
+				dirPath = getParentFolderPath(obj.Key)
+			}
+
+			if dirMarkerPath == "" && !obj.IsDir {
+				attributes, err := c.bucket.Attributes(ctx, obj.Key)
+				if err != nil {
+					c.log.Error("Failed while retrieving attributes", "path", obj.Key, "err", err)
+					return nil, err
+				}
+
+				if attributes.Metadata != nil {
+					if path, ok := attributes.Metadata[originalPathAttributeKey]; ok {
+						dirMarkerPath = getParentFolderPath(path)
+					}
 				}
 			}
 		}
@@ -354,8 +365,11 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 		}
 	}
 
-	if currentDirPath != "" {
-		foundPaths = append(foundPaths, fixPath(currentDirPath))
+	if dirMarkerPath != "" {
+		foundPaths = append(foundPaths, fixPath(dirMarkerPath))
+	} else if dirPath != "" {
+		// TODO replicate the changes in `createFolder`
+		foundPaths = append(foundPaths, fixPath(dirPath))
 	}
 	return foundPaths, nil
 }
@@ -372,23 +386,32 @@ func (c cdkBlobStorage) ListFolders(ctx context.Context, prefix string, options 
 		path := foundPaths[i]
 		parts := strings.Split(path, Delimiter)
 		acc := parts[0]
-		j := 1
-		for {
-			acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
 
-			comparison := strings.Compare(acc, prefix)
-			if !mem[acc] && comparison > 0 {
-				folders = append(folders, FileMetadata{
-					Name:     getName(acc),
-					FullPath: acc,
-				})
+		if len(parts) > 1 {
+			j := 1
+			for {
+				acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
+
+				comparison := strings.Compare(acc, prefix)
+				if !mem[acc] && comparison > 0 {
+					folders = append(folders, FileMetadata{
+						Name:     getName(acc),
+						FullPath: acc,
+					})
+				}
+				mem[acc] = true
+
+				j += 1
+				if j >= len(parts) {
+					break
+				}
 			}
+		} else {
 			mem[acc] = true
-
-			j += 1
-			if j >= len(parts) {
-				break
-			}
+			folders = append(folders, FileMetadata{
+				Name:     acc,
+				FullPath: acc,
+			})
 		}
 	}
 

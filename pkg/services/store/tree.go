@@ -40,14 +40,7 @@ func (t *nestedTree) GetFile(ctx context.Context, path string) (*filestorage.Fil
 }
 
 func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, error) {
-	idx := strings.Index(path, "/")
-	rootKey := path
-	if idx > 0 {
-		rootKey = path[:idx]
-		path = path[idx+1:]
-	}
-
-	if rootKey == "" {
+	if path == "" || path == "/" {
 		count := len(t.roots)
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -64,23 +57,34 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return frame, nil
 	}
 
+	rootKey, path := splitFirstSegment(path)
+
 	root, ok := t.lookup[rootKey]
 	if !ok || root == nil {
-		return nil, nil // not found
+		return nil, nil // not found or not ready
 	}
 
-	rsp, err := root.ListFiles(ctx, path[idx+1:], nil, nil)
+	listPath := filestorage.Delimiter + path
+	files, err := root.ListFiles(ctx, listPath, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	count := len(rsp.Files)
+	folders, err := root.ListFolders(ctx, listPath, &filestorage.ListOptions{Recursive: false})
+	if err != nil {
+		return nil, err
+	}
+	for i := range folders {
+		folders[i].MimeType = "directory" // hack for now
+	}
+
+	count := len(files.Files) + len(folders)
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
 	names.Name = "name"
 	mtype.Name = "mediaType"
-	for i, f := range rsp.Files {
+	for i, f := range append(folders, files.Files...) {
 		names.Set(i, f.Name)
 		mtype.Set(i, f.MimeType)
 		fsize.Set(i, f.Size)
@@ -89,7 +93,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 	frame.SetMeta(&data.FrameMeta{
 		Type: data.FrameTypeDirectoryListing,
 		Custom: map[string]interface{}{
-			"HasMore": rsp.HasMore,
+			"HasMore": files.HasMore,
 		},
 	})
 	return frame, nil
