@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -31,15 +32,16 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 
 func (a *api) registerEndpoints() {
 	auth := middleware.Middleware(a.ac)
+	uidSolver := solveUID(a.service.options.UidSolver)
 	disable := middleware.Disable(a.ac.IsDisabled())
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
 		idScope := accesscontrol.Scope(a.service.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
 		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.service.options.Resource), fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
+		r.Get("/:resourceID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID/users/:userID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
+		r.Post("/:resourceID/teams/:teamID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
+		r.Post("/:resourceID/builtInRoles/:builtInRole", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
 	})
 }
 
@@ -80,9 +82,17 @@ type resourcePermissionDTO struct {
 func (a *api) getPermissions(c *models.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
-	permissions, err := a.service.GetPermissions(c.Req.Context(), c.OrgId, resourceID)
+	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
+	}
+
+	if a.service.options.Assignments.BuiltInRoles && !a.service.cfg.IsEnterprise {
+		permissions = append(permissions, accesscontrol.ResourcePermission{
+			Actions:     a.service.actions,
+			Scope:       "*",
+			BuiltInRole: string(models.ROLE_ADMIN),
+		})
 	}
 
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
@@ -119,7 +129,10 @@ type setPermissionCommand struct {
 }
 
 func (a *api) setUserPermission(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":userID")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":userID"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userID is invalid", err)
+	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	var cmd setPermissionCommand
@@ -127,7 +140,7 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
@@ -136,7 +149,10 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 }
 
 func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
-	teamID := c.ParamsInt64(":teamID")
+	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamID"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamID is invalid", err)
+	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	var cmd setPermissionCommand
@@ -144,7 +160,7 @@ func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err = a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
@@ -161,7 +177,7 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}

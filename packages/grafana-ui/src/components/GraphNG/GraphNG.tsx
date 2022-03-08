@@ -116,7 +116,8 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
       fields || {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      }
+      },
+      props.timeRange
     );
     pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 

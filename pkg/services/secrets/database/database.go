@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
@@ -85,5 +86,68 @@ func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) erro
 		_, err := sess.Table(dataKeysTable).Delete(&secrets.DataKey{Name: name})
 
 		return err
+	})
+}
+
+func (ss *SecretsStoreImpl) ReEncryptDataKeys(
+	ctx context.Context,
+	providers map[secrets.ProviderID]secrets.Provider,
+	currProvider secrets.ProviderID,
+) error {
+	return ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		keys := make([]*secrets.DataKey, 0)
+		if err := sess.Table(dataKeysTable).Find(&keys); err != nil {
+			return err
+		}
+
+		for _, k := range keys {
+			provider, ok := providers[kmsproviders.NormalizeProviderID(k.Provider)]
+			if !ok {
+				ss.log.Warn(
+					"Could not find provider to re-encrypt data encryption key",
+					"key_id", k.Name,
+					"provider", k.Provider,
+				)
+				continue
+			}
+
+			decrypted, err := provider.Decrypt(ctx, k.EncryptedData)
+			if err != nil {
+				ss.log.Warn(
+					"Error while decrypting data encryption key to re-encrypt it",
+					"key_id", k.Name,
+					"provider", k.Provider,
+					"err", err,
+				)
+				continue
+			}
+
+			// Updating current data key by re-encrypting it with current provider.
+			// Accessing the current provider within providers map should be safe.
+			k.Provider = currProvider
+			k.Updated = time.Now()
+			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
+			if err != nil {
+				ss.log.Warn(
+					"Error while re-encrypting data encryption key",
+					"key_id", k.Name,
+					"provider", k.Provider,
+					"err", err,
+				)
+				continue
+			}
+
+			if _, err := sess.Table(dataKeysTable).Where("name = ?", k.Name).Update(k); err != nil {
+				ss.log.Warn(
+					"Error while re-encrypting data encryption key",
+					"key_id", k.Name,
+					"provider", k.Provider,
+					"err", err,
+				)
+				continue
+			}
+		}
+
+		return nil
 	})
 }

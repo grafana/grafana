@@ -10,8 +10,7 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { VariableRefresh } from '../types';
 import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getRootReducer, RootReducerType } from './helpers';
-import { toVariableIdentifier, toVariablePayload } from './types';
+import { getPreloadedState, getRootReducer, RootReducerType } from './helpers';
 import {
   setCurrentVariableValue,
   variableStateCompleted,
@@ -22,18 +21,20 @@ import { createIntervalOptions } from '../interval/reducer';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { expect } from '../../../../test/lib/common';
-import { TemplatingState } from './reducers';
 import { appEvents } from '../../../core/core';
+import { variablesInitTransaction } from './transactionReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
-const dashboard = new DashboardModel({});
-
-const getTestContext = () => {
+const getTestContext = (dashboard: DashboardModel) => {
   jest.clearAllMocks();
 
+  const key = 'key';
   const interval = intervalBuilder()
     .withId('interval-0')
+    .withRootStateKey(key)
     .withName('interval-0')
     .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
     .withCurrent('1m')
@@ -42,6 +43,7 @@ const getTestContext = () => {
 
   const constant = constantBuilder()
     .withId('constant-1')
+    .withRootStateKey(key)
     .withName('constant-1')
     .withOptions('a constant')
     .withCurrent('a constant')
@@ -56,29 +58,29 @@ const getTestContext = () => {
     },
   };
   const updateTimeRangeMock = jest.fn();
-  const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
+  const templateSrvMock = { updateTimeRange: updateTimeRangeMock } as unknown as TemplateSrv;
   const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, events: appEvents };
   const templateVariableValueUpdatedMock = jest.fn();
   const startRefreshMock = jest.fn();
-  const dashboardState = ({
-    getModel: () => {
-      dashboard.templateVariableValueUpdated = templateVariableValueUpdatedMock;
-      dashboard.startRefresh = startRefreshMock;
-      return dashboard;
-    },
-  } as unknown) as DashboardState;
+  dashboard.templateVariableValueUpdated = templateVariableValueUpdatedMock;
+  dashboard.startRefresh = startRefreshMock;
+  const dashboardState = {
+    getModel: () => dashboard,
+  } as unknown as DashboardState;
   const adapter = variableAdapters.get('interval');
-  const preloadedState = ({
+  const templatingState = {
+    variables: {
+      'interval-0': { ...interval },
+      'constant-1': { ...constant },
+    },
+  };
+  const preloadedState = {
     dashboard: dashboardState,
-    templating: ({
-      variables: {
-        'interval-0': { ...interval },
-        'constant-1': { ...constant },
-      },
-    } as unknown) as TemplatingState,
-  } as unknown) as RootReducerType;
+    ...getPreloadedState(key, templatingState),
+  } as unknown as RootReducerType;
 
   return {
+    key,
     interval,
     range,
     dependencies,
@@ -94,28 +96,34 @@ describe('when onTimeRangeUpdated is dispatched', () => {
   describe('and options are changed by update', () => {
     it('then correct actions are dispatched and correct dependencies are called', async () => {
       const {
+        key,
         preloadedState,
         range,
         dependencies,
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-      } = getTestContext();
+      } = getTestContext(getDashboardModel());
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies));
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies));
 
       tester.thenDispatchedActionsShouldEqual(
-        variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' })),
-        createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' })),
-        setCurrentVariableValue(
-          toVariablePayload(
-            { type: 'interval', id: 'interval-0' },
-            { option: { text: '1m', value: '1m', selected: false } }
+        toKeyedAction(key, variablesInitTransaction({ uid: key })),
+        toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(key, createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(
+          key,
+          setCurrentVariableValue(
+            toVariablePayload(
+              { type: 'interval', id: 'interval-0' },
+              { option: { text: '1m', value: '1m', selected: false } }
+            )
           )
         ),
-        variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' }))
+        toKeyedAction(key, variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' })))
       );
 
       expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
@@ -128,6 +136,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
   describe('and options are not changed by update', () => {
     it('then correct actions are dispatched and correct dependencies are called', async () => {
       const {
+        key,
         interval,
         preloadedState,
         range,
@@ -135,24 +144,30 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-      } = getTestContext();
+      } = getTestContext(getDashboardModel());
 
       const base = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(setOptionAsCurrent(toVariableIdentifier(interval), interval.options[0], false));
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenAsyncActionIsDispatched(
+          setOptionAsCurrent(toKeyedVariableIdentifier(interval), interval.options[0], false)
+        );
 
-      const tester = await base.whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies), true);
+      const tester = await base.whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' })),
-        createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' })),
-        setCurrentVariableValue(
-          toVariablePayload(
-            { type: 'interval', id: 'interval-0' },
-            { option: { text: '1m', value: '1m', selected: false } }
+        toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(key, createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(
+          key,
+          setCurrentVariableValue(
+            toVariablePayload(
+              { type: 'interval', id: 'interval-0' },
+              { option: { text: '1m', value: '1m', selected: false } }
+            )
           )
         ),
-        variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' }))
+        toKeyedAction(key, variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' })))
       );
 
       expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
@@ -166,6 +181,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
     silenceConsoleOutput();
     it('then correct actions are dispatched and correct dependencies are called', async () => {
       const {
+        key,
         adapter,
         preloadedState,
         range,
@@ -173,21 +189,25 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-      } = getTestContext();
+      } = getTestContext(getDashboardModel());
 
       adapter.updateOptions = jest.fn().mockRejectedValue(new Error('Something broke'));
 
       const tester = await reduxTester<RootReducerType>({ preloadedState, debug: true })
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies), true);
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         expect(dispatchedActions[0]).toEqual(
-          variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))
+          toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' })))
         );
         expect(dispatchedActions[1]).toEqual(
-          variableStateFailed(
-            toVariablePayload({ type: 'interval', id: 'interval-0' }, { error: new Error('Something broke') })
+          toKeyedAction(
+            key,
+            variableStateFailed(
+              toVariablePayload({ type: 'interval', id: 'interval-0' }, { error: new Error('Something broke') })
+            )
           )
         );
         expect(dispatchedActions[2].type).toEqual(notifyApp.type);
@@ -204,3 +224,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
     });
   });
 });
+
+function getDashboardModel(): DashboardModel {
+  return new DashboardModel({ schemaVersion: 9999 }); // ignore any schema migrations
+}

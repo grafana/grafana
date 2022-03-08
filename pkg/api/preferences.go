@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -18,7 +17,7 @@ const (
 )
 
 // POST /api/preferences/set-home-dash
-func SetHomeDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	cmd := models.SavePreferencesCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -26,7 +25,7 @@ func SetHomeDashboard(c *models.ReqContext) response.Response {
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SavePreferences(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to set home dashboard", err)
 	}
 

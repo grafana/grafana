@@ -212,16 +212,16 @@ type MockBackendSrvConfig = {
 };
 
 const mockBackendSrv = ({ fetch }: MockBackendSrvConfig): BackendSrv => {
-  return ({
+  return {
     fetch,
     resolveCancelerIfExists: jest.fn(),
-  } as unknown) as BackendSrv;
+  } as unknown as BackendSrv;
 };
 
 const mockDataSourceSrv = (dsApi?: Partial<DataSourceApi>) => {
-  return ({
+  return {
     get: () => Promise.resolve(dsApi ?? {}),
-  } as unknown) as DataSourceSrv;
+  } as unknown as DataSourceSrv;
 };
 
 const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: number[] }): DataFrame => {

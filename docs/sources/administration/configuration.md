@@ -14,7 +14,7 @@ Grafana has default and custom configuration files. You can customize your Grafa
 
 ## Configuration file location
 
-The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change the location in this file.
+The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change this file.
 
 Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
@@ -314,6 +314,10 @@ The maximum number of open connections to the database.
 
 Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
 
+### locking_attempt_timeout_sec
+
+For "mysql", if `lockingMigration` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+
 ### log_queries
 
 Set to `true` to log the sql calls and execution times.
@@ -546,7 +550,7 @@ mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clic
 
 ### strict_transport_security
 
-Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS.
+Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. Only use this when HTTPS is enabled in your configuration, or when there is another upstream system that ensures your application does HTTPS (like a frontend load balancer). HSTS tells browsers that the site should only be accessed using HTTPS.
 
 ### strict_transport_security_max_age_seconds
 
@@ -578,6 +582,21 @@ Set Content Security Policy template used when adding the Content-Security-Polic
 
 <hr />
 
+### angular_support_enabled
+
+This currently defaults to `true` but will in Grafana v9 default to `false`. When set to false the angular framework and support components will not be loaded. This means that
+all plugins and core features that depend on angular support will stop working.
+
+Current core features that will stop working:
+
+- Heatmap panel
+- Old graph panel
+- Old table panel
+- Postgres, MySQL and MSSQL data source query editors
+- Legacy alerting edit rule UI
+
+Before we disable angular support by default we plan to migrate these remaining areas to React.
+
 ## [snapshots]
 
 ### external_enabled
@@ -586,11 +605,11 @@ Set to `false` to disable external snapshot publish endpoint (default `true`).
 
 ### external_snapshot_url
 
-Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io).
+Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots.raintank.io).
 
 ### external_snapshot_name
 
-Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`.
+Set name for external snapshot button. Defaults to `Publish to snapshots.raintank.io`.
 
 ### public_mode
 
@@ -631,7 +650,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users from the [Grafana Admin Pages](/reference/admin).
+users. For more information about creating a user, refer to [Add a user]({{< relref "../administration/manage-users-and-permissions/manage-server-users/add-user.md" >}}).
 
 ### allow_org_create
 
@@ -747,6 +766,12 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
 
+### oauth_skip_org_role_update_sync
+
+Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
+Use this setting to distribute users with external login to multiple organizations.
+Otherwise, the users' organization would get reset on every new login, for example, via AzureAD.
+
 ### api_key_max_seconds_to_live
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
@@ -756,6 +781,12 @@ Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 > Only available in Grafana 7.3+.
 
 Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. Default is `false`.
+
+### sigv4_verbose_logging
+
+> Only available in Grafana 8.4+.
+
+Set to `true` to enable verbose request signature logging when AWS Signature Version 4 Authentication is enabled. Default is `false`.
 
 <hr />
 
@@ -890,8 +921,6 @@ Email server settings.
 
 Enable this to allow Grafana to send email. Default is `false`.
 
-If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
-
 ### host
 
 Default is `localhost:25`.
@@ -902,7 +931,7 @@ In case of SMTP auth, default is `empty`.
 
 ### password
 
-In case of SMTP auth, default is `empty`.
+In case of SMTP auth, default is `empty`. If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
 
 ### cert_file
 

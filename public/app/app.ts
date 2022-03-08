@@ -38,10 +38,10 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/features/all';
-import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
-import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
+import { getScrollbarWidth } from '@grafana/ui';
+import { variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
-import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 import { configureStore } from './store/configureStore';
@@ -56,15 +56,22 @@ import { contextSrv } from './core/services/context_srv';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
-import { getAllOptionEditors } from './core/components/editors/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/editors/registry';
 import { backendSrv } from './core/services/backend_srv';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { AngularApp } from './angular';
 import { ModalManager } from './core/services/ModalManager';
 import { initWindowRuntime } from './features/runtime/init';
+import { createQueryVariableAdapter } from './features/variables/query/adapter';
+import { createCustomVariableAdapter } from './features/variables/custom/adapter';
+import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { createConstantVariableAdapter } from './features/variables/constant/adapter';
+import { createDataSourceVariableAdapter } from './features/variables/datasource/adapter';
+import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
+import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
+import { createSystemVariableAdapter } from './features/variables/system/adapter';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -81,12 +88,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
-  angularApp: AngularApp;
-
-  constructor() {
-    this.angularApp = new AngularApp();
-  }
-
   async init() {
     try {
       setBackendSrv(backendSrv);
@@ -104,9 +105,18 @@ export class GrafanaApp {
       initExtensions();
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
-      standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+      standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
       standardTransformersRegistry.setInit(getStandardTransformers);
-      variableAdapters.setInit(getDefaultVariableAdapters);
+      variableAdapters.setInit(() => [
+        createQueryVariableAdapter(),
+        createCustomVariableAdapter(),
+        createTextBoxVariableAdapter(),
+        createConstantVariableAdapter(),
+        createDataSourceVariableAdapter(),
+        createIntervalVariableAdapter(),
+        createAdHocVariableAdapter(),
+        createSystemVariableAdapter(),
+      ]);
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
       setQueryRunnerFactory(() => new QueryRunner());
@@ -130,9 +140,6 @@ export class GrafanaApp {
       // init modal manager
       const modalManager = new ModalManager();
       modalManager.init();
-
-      // Init angular
-      this.angularApp.init();
 
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);

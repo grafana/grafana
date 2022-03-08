@@ -16,6 +16,8 @@ on:
           required: true
         metricsWriteAPIKey:
           required: true
+env:
+    YARN_ENABLE_IMMUTABLE_INSTALLS: false
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -78,9 +80,9 @@ jobs:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
-      - uses: actions/setup-node@v2.4.1
+      - uses: actions/setup-node@v2.5.1
         with:
-          node-version: '14'
+          node-version: '16'
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run bump version (manually invoked)

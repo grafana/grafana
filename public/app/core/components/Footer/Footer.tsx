@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
-import config from 'app/core/config';
+import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
 
 export interface FooterLink {
   text: string;
   id?: string;
-  icon?: string;
+  icon?: IconName;
   url?: string;
   target?: string;
 }
@@ -77,7 +77,7 @@ export const Footer: FC = React.memo(() => {
           {links.map((link) => (
             <li key={link.text}>
               <a href={link.url} target={link.target} rel="noopener" id={link.id}>
-                {link.icon && <Icon name={link.icon as IconName} />} {link.text}
+                {link.icon && <Icon name={link.icon} />} {link.text}
               </a>
             </li>
           ))}

@@ -5,6 +5,7 @@ export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export const getAvailableIcons = () =>
   [
+    'anchor',
     'angle-double-down',
     'angle-double-right',
     'angle-double-up',
@@ -50,6 +51,7 @@ export const getAvailableIcons = () =>
     'cog',
     'columns',
     'comment-alt',
+    'comment-alt-message',
     'comment-alt-share',
     'comments-alt',
     'compass',
@@ -114,6 +116,7 @@ export const getAvailableIcons = () =>
     'list-ui-alt',
     'list-ul',
     'lock',
+    'map-marker',
     'message',
     'minus',
     'minus-circle',
@@ -187,6 +190,8 @@ export function getFieldTypeIcon(field?: Field): IconName {
         return 'toggle-on';
       case FieldType.trace:
         return 'info-circle';
+      case FieldType.geo:
+        return 'map-marker';
       case FieldType.other:
         return 'brackets-curly';
     }

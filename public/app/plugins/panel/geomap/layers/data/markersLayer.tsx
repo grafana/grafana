@@ -7,20 +7,18 @@ import {
   FrameGeometrySourceMode,
 } from '@grafana/data';
 import Map from 'ol/Map';
-import Feature, { FeatureLike } from 'ol/Feature';
-import { Point } from 'ol/geom';
-import * as source from 'ol/source';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { FeatureLike } from 'ol/Feature';
+import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReplaySubject } from 'rxjs';
-import { getFeatures } from '../../utils/getFeatures';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
 import { isNumber } from 'lodash';
+import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -52,7 +50,7 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
 export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   id: MARKERS_LAYER_ID,
   name: 'Markers',
-  description: 'use markers to render each data point',
+  description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
 
@@ -61,7 +59,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    */
   create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
-    const matchers = await getLocationMatchers(options.location);
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -75,22 +72,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     const style = await getStyleConfigState(config.style);
+    const location = await getLocationMatchers(options.location);
+    const source = new FrameVectorSource(location);
+    const vectorLayer = new VectorLayer({
+      source,
+    });
 
-    // eventually can also use resolution for dynamic style
-    const vectorLayer = new VectorLayer();
-
-    if(!style.fields) {
+    if (!style.fields) {
       // Set a global style
       vectorLayer.setStyle(style.maker(style.base));
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx = feature.get("rowIndex") as number;
+        const idx = feature.get('rowIndex') as number;
         const dims = style.dims;
-        if(!dims || !(isNumber(idx))) {
+        if (!dims || !isNumber(idx)) {
           return style.maker(style.base);
         }
 
-        const values = {...style.base};
+        const values = { ...style.base };
 
         if (dims.color) {
           values.color = dims.color.get(idx);
@@ -104,28 +103,20 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if (dims.rotation) {
           values.rotation = dims.rotation.get(idx);
         }
-        return style.maker(values)
-      }
-      );
+        return style.maker(values);
+      });
     }
-    
+
     return {
       init: () => vectorLayer,
       legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
+          source.clear();
           return; // ignore empty
         }
 
-        const features: Feature<Point>[] = [];
-
         for (const frame of data.series) {
-          const info = dataFrameToPoints(frame, matchers);
-          if (info.warning) {
-            console.log('Could not find locations', info.warning);
-            continue; // ???
-          }
-
           if (style.fields) {
             const dims: StyleDimensions = {};
             if (style.fields.color) {
@@ -143,12 +134,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             style.dims = dims;
           }
 
-          const frameFeatures = getFeatures(frame, info);
-
-          if (frameFeatures) {
-            features.push(...frameFeatures);
-          }
-
           // Post updates to the legend component
           if (legend) {
             legendProps.next({
@@ -156,12 +141,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               size: style.dims?.size,
             });
           }
+
+          source.update(frame);
           break; // Only the first frame for now!
         }
-
-        // Source reads the data and provides a set of features to visualize
-        const vectorSource = new source.Vector({ features });
-        vectorLayer.setSource(vectorSource);
       },
 
       // Marker overlay options
@@ -180,7 +163,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           .addBooleanSwitch({
             path: 'config.showLegend',
             name: 'Show legend',
-            description: 'Show legend',
+            description: 'Show map legend',
             defaultValue: defaultOptions.showLegend,
           });
       },

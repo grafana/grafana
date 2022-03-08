@@ -11,9 +11,10 @@ import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
 import {
   RemovePanelEvent,
   ShiftTimeEvent,
-  ShiftTimeEventPayload,
+  ShiftTimeEventDirection,
   ShowModalReactEvent,
   ZoomOutEvent,
+  AbsoluteTimeEvent,
 } from '../../types/events';
 import { contextSrv } from '../core';
 import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
@@ -34,6 +35,7 @@ export class KeybindingSrv {
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
       this.bind('s o', this.openSearch);
+      this.bind('t a', this.makeAbsoluteTime);
       this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
       this.bindGlobal('esc', this.globalEsc);
@@ -87,6 +89,10 @@ export class KeybindingSrv {
 
   private goToProfile() {
     locationService.push('/profile');
+  }
+
+  private makeAbsoluteTime() {
+    appEvents.publish(new AbsoluteTimeEvent());
   }
 
   private showHelpModal() {
@@ -165,6 +171,24 @@ export class KeybindingSrv {
     this.bind(keyArg, withFocusedPanel(fn));
   }
 
+  setupTimeRangeBindings(updateUrl = true) {
+    this.bind('t z', () => {
+      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+    });
+
+    this.bind('ctrl+z', () => {
+      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+    });
+
+    this.bind('t left', () => {
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl }));
+    });
+
+    this.bind('t right', () => {
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
+    });
+  }
+
   setupDashboardBindings(dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
@@ -185,21 +209,7 @@ export class KeybindingSrv {
       }
     });
 
-    this.bind('t z', () => {
-      appEvents.publish(new ZoomOutEvent(2));
-    });
-
-    this.bind('ctrl+z', () => {
-      appEvents.publish(new ZoomOutEvent(2));
-    });
-
-    this.bind('t left', () => {
-      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Left));
-    });
-
-    this.bind('t right', () => {
-      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Right));
-    });
+    this.setupTimeRangeBindings();
 
     // edit panel
     this.bindWithPanelId('e', (panelId) => {

@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   LicenseInfo,
   MapLayerOptions,
+  OAuthSettings,
   PanelPluginMeta,
   PreloadPlugin,
   systemDateFormats,
@@ -40,6 +41,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
   alertingMinInterval = 1;
+  angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
@@ -48,7 +50,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
-  oauth: any;
+  oauth: OAuthSettings = {};
   disableUserSignUp = false;
   loginHint: any;
   passwordHint: any;
@@ -61,19 +63,16 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];
-  featureToggles: FeatureToggles = {
-    accesscontrol: false,
-    trimDefaults: false,
-    tempoServiceGraph: false,
-    tempoSearch: false,
-    recordedQueries: false,
-    newNavigation: false,
-    fullRangeLogsVolume: false,
-    queryOverLive: false,
-    dashboardPreviews: false,
-  };
+  featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  dashboardPreviews: {
+    systemRequirements: {
+      met: boolean;
+      requiredImageRendererPluginVersion: string;
+    };
+    thumbnailsExist: boolean;
+  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
@@ -103,6 +102,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
+    enabled: true,
+  };
+  featureHighlights = {
     enabled: false,
   };
 
@@ -124,7 +126,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         version: 'v1.0',
         commit: '1',
         env: 'production',
-        isEnterprise: false,
       },
       viewersCanEdit: false,
       editorsCanAdmin: false,

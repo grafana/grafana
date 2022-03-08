@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -134,9 +136,13 @@ type getPermissionsTestCase struct {
 func TestApi_getPermissions(t *testing.T) {
 	tests := []getPermissionsTestCase{
 		{
-			desc:           "expect permissions for resource with id 1",
-			resourceID:     "1",
-			permissions:    []*accesscontrol.Permission{{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"}},
+			desc:       "expect permissions for resource with id 1",
+			resourceID: "1",
+			permissions: []*accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			},
 			expectedStatus: 200,
 		},
 		{
@@ -150,22 +156,9 @@ func TestApi_getPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
-			// seed team 1 with "Edit" permission on dashboard 1
-			team, err := sql.CreateTeam("test", "test@test.com", 1)
-			require.NoError(t, err)
-			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
-			require.NoError(t, err)
-			// seed user 1 with "View" permission on dashboard 1
-			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
-			require.NoError(t, err)
-			_, err = service.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
-			require.NoError(t, err)
-
-			// seed built in role Admin with "View" permission on dashboard 1
-			_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
-			require.NoError(t, err)
+			seedPermissions(t, tt.resourceID, sql, service)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
@@ -206,6 +199,8 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -217,6 +212,8 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -245,7 +242,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, _ := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
@@ -280,6 +277,8 @@ func TestApi_setTeamPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -291,6 +290,8 @@ func TestApi_setTeamPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -319,7 +320,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
 			_, err := sql.CreateTeam("test", "test@test.com", 1)
@@ -359,6 +360,8 @@ func TestApi_setUserPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -370,6 +373,8 @@ func TestApi_setUserPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -398,7 +403,7 @@ func TestApi_setUserPermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed user
 			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
@@ -416,6 +421,70 @@ func TestApi_setUserPermission(t *testing.T) {
 			}
 		})
 	}
+}
+
+type uidSolverTestCase struct {
+	desc           string
+	uid            string
+	resourceID     string
+	expectedStatus int
+}
+
+func TestApi_UidSolver(t *testing.T) {
+	tests := []uidSolverTestCase{
+		{
+			desc:           "expect uid to be mapped to id",
+			uid:            "resourceUID",
+			resourceID:     "1",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "expect 404 when uid is not mapped to an id",
+			uid:            "notfound",
+			resourceID:     "1",
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			userPermissions := []*accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			}
+
+			service, sql := setupTestEnvironment(t, userPermissions, withSolver(testOptions, testSolver))
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+				1: accesscontrol.GroupScopesByAction(userPermissions),
+			}}, service)
+
+			seedPermissions(t, tt.resourceID, sql, service)
+
+			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.uid)
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+
+			if tt.expectedStatus == http.StatusOK {
+				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
+				for _, p := range permissions {
+					if p.UserID != 0 {
+						assert.Equal(t, "View", p.Permission)
+					} else if p.TeamID != 0 {
+						assert.Equal(t, "Edit", p.Permission)
+					} else {
+						assert.Equal(t, "Edit", p.Permission)
+					}
+				}
+			} else {
+				assert.Equal(t, tt.expectedStatus, recorder.Code)
+			}
+		})
+	}
+}
+
+func withSolver(options Options, solver uidSolver) Options {
+	options.UidSolver = solver
+	return options
 }
 
 func setupTestServer(t *testing.T, user *models.SignedInUser, service *Service) *web.Mux {
@@ -457,6 +526,13 @@ var testOptions = Options{
 	},
 }
 
+var testSolver = func(ctx context.Context, orgID int64, uid string) (int64, error) {
+	if uid == "resourceUID" {
+		return 1, nil
+	}
+	return 0, errors.New("not found")
+}
+
 func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/%s", resource, resourceID), nil)
 	require.NoError(t, err)
@@ -479,4 +555,21 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 	server.ServeHTTP(recorder, req)
 
 	return recorder
+}
+
+func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {
+	t.Helper()
+	// seed team 1 with "Edit" permission on dashboard 1
+	team, err := sql.CreateTeam("test", "test@test.com", 1)
+	require.NoError(t, err)
+	_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, resourceID, "Edit")
+	require.NoError(t, err)
+	// seed user 1 with "View" permission on dashboard 1
+	u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+	require.NoError(t, err)
+	_, err = service.SetUserPermission(context.Background(), u.OrgId, accesscontrol.User{ID: u.Id}, resourceID, "View")
+	require.NoError(t, err)
+	// seed built in role Admin with "Edit" permission on dashboard 1
+	_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", resourceID, "Edit")
+	require.NoError(t, err)
 }

@@ -1,4 +1,5 @@
 const path = require('path');
+const { ProvidePlugin } = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const FilterWarningsPlugin = require('webpack-filter-warnings-plugin');
@@ -47,11 +48,6 @@ module.exports = {
   },
   webpackFinal: async (config: any, { configType }: any) => {
     const isProductionBuild = configType === 'PRODUCTION';
-
-    config.resolve.fallback = {
-      ...(config.resolve.fallback || {}),
-      process: false,
-    };
 
     // remove svg from default storybook webpack 5 config so we can use `raw-loader`
     config.module.rules = config.module.rules.map((rule: any) => {

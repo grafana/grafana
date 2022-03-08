@@ -16,7 +16,7 @@ import (
 
 func TestCache_GetClient(t *testing.T) {
 	t.Run("it caches the client for a set of auth headers", func(t *testing.T) {
-		tc := setupCacheContext(true)
+		tc := setupCacheContext()
 
 		c, err := tc.providerCache.GetClient(headers)
 		require.Nil(t, err)
@@ -28,8 +28,8 @@ func TestCache_GetClient(t *testing.T) {
 		require.Equal(t, 1, tc.clientProvider.numCalls)
 	})
 
-	t.Run("it returns different clients when the auth headers differ", func(t *testing.T) {
-		tc := setupCacheContext(true)
+	t.Run("it returns different clients when the headers differ", func(t *testing.T) {
+		tc := setupCacheContext()
 		h1 := map[string]string{"Authorization": "token", "X-ID-Token": "id-token"}
 		h2 := map[string]string{"Authorization": "token2", "X-ID-Token": "id-token"}
 
@@ -43,10 +43,10 @@ func TestCache_GetClient(t *testing.T) {
 		require.Equal(t, 2, tc.clientProvider.numCalls)
 	})
 
-	t.Run("it always returns from the cache when 'oauthPassThru' not set", func(t *testing.T) {
-		tc := setupCacheContext(false)
+	t.Run("it returns from the cache when headers are the same", func(t *testing.T) {
+		tc := setupCacheContext()
 		h1 := map[string]string{"Authorization": "token", "X-ID-Token": "id-token"}
-		h2 := map[string]string{"Authorization": "token2", "X-ID-Token": "id-token"}
+		h2 := map[string]string{"Authorization": "token", "X-ID-Token": "id-token"}
 
 		c, err := tc.providerCache.GetClient(h1)
 		require.Nil(t, err)
@@ -58,21 +58,8 @@ func TestCache_GetClient(t *testing.T) {
 		require.Equal(t, 1, tc.clientProvider.numCalls)
 	})
 
-	t.Run("it only accounts for auth headers", func(t *testing.T) {
-		tc := setupCacheContext(true)
-
-		c, err := tc.providerCache.GetClient(map[string]string{"X-Not-Auth": "stuff"})
-		require.Nil(t, err)
-
-		c2, err := tc.providerCache.GetClient(map[string]string{"X-Not-Auth": "other-stuff"})
-		require.Nil(t, err)
-
-		require.Equal(t, c, c2)
-		require.Equal(t, 1, tc.clientProvider.numCalls)
-	})
-
 	t.Run("it doesn't cache anything when an error occurs", func(t *testing.T) {
-		tc := setupCacheContext(true)
+		tc := setupCacheContext()
 		tc.clientProvider.errors <- errors.New("something bad")
 
 		_, err := tc.providerCache.GetClient(headers)
@@ -91,9 +78,9 @@ type cacheTestContext struct {
 	clientProvider *fakePromClientProvider
 }
 
-func setupCacheContext(oauthPassTrough bool) *cacheTestContext {
+func setupCacheContext() *cacheTestContext {
 	fp := newFakePromClientProvider()
-	p, err := promclient.NewProviderCache(fp, promclient.JsonData{OauthPassThru: oauthPassTrough})
+	p, err := promclient.NewProviderCache(fp)
 	if err != nil {
 		panic(err)
 	}

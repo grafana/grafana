@@ -1,103 +1,87 @@
 package thumbs
 
-import "encoding/json"
+import (
+	"context"
+	"time"
 
-type PreviewSize string
-
-const (
-	// PreviewSizeThumb is a small 320x240 preview
-	PreviewSizeThumb PreviewSize = "thumb"
-
-	// PreviewSizeLarge is a large image 2000x1500
-	PreviewSizeLarge PreviewSize = "large"
-
-	// PreviewSizeLarge is a large image 512x????
-	PreviewSizeTall PreviewSize = "tall"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-// IsKnownSize checks if the value is a standard size
-func (p PreviewSize) IsKnownSize() bool {
-	switch p {
-	case
-		PreviewSizeThumb,
-		PreviewSizeLarge,
-		PreviewSizeTall:
-		return true
-	}
-	return false
-}
+type CrawlerMode string
 
-func getPreviewSize(str string) (PreviewSize, bool) {
-	switch str {
-	case string(PreviewSizeThumb):
-		return PreviewSizeThumb, true
-	case string(PreviewSizeLarge):
-		return PreviewSizeLarge, true
-	case string(PreviewSizeTall):
-		return PreviewSizeTall, true
-	}
-	return PreviewSizeThumb, false
-}
+const (
 
-func getTheme(str string) (string, bool) {
-	switch str {
-	case "light":
-		return str, true
-	case "dark":
-		return str, true
-	}
-	return "dark", false
-}
+	// CrawlerModeThumbs will create small thumbnails for everything.
+	CrawlerModeThumbs CrawlerMode = "thumbs"
+
+	// CrawlerModeAnalytics will get full page results for everything.
+	CrawlerModeAnalytics CrawlerMode = "analytics"
+
+	// CrawlerModeMigrate will migrate all dashboards with old schema.
+	CrawlerModeMigrate CrawlerMode = "migrate"
+)
+
+type crawlerState string
+
+const (
+	initializing crawlerState = "initializing"
+	running      crawlerState = "running"
+	stopping     crawlerState = "stopping"
+	stopped      crawlerState = "stopped"
+)
 
 type previewRequest struct {
-	Kind  string      `json:"kind"`
-	OrgID int64       `json:"orgId"`
-	UID   string      `json:"uid"`
-	Size  PreviewSize `json:"size"`
-	Theme string      `json:"theme"`
+	OrgID int64                `json:"orgId"`
+	UID   string               `json:"uid"`
+	Kind  models.ThumbnailKind `json:"kind"`
+	Theme models.Theme         `json:"theme"`
 }
-
-type previewResponse struct {
-	Code int    `json:"code"` // 200 | 202
-	Path string `json:"path"` // local file path to serve
-	URL  string `json:"url"`  // redirect to this URL
-}
-
-// export enum CrawlerMode {
-// 	Thumbs = 'thumbs',
-// 	Analytics = 'analytics', // Enterprise only
-// 	Migrate = 'migrate',
-//   }
-
-//   export enum CrawlerAction {
-// 	Run = 'run',
-// 	Stop = 'stop',
-// 	Queue = 'queue', // TODO (later!) move some to the front
-//   }
 
 type crawlCmd struct {
-	Mode        string `json:"mode"`        // thumbs | analytics | migrate
-	Action      string `json:"action"`      // run | stop | queue
-	Theme       string `json:"theme"`       // light | dark
-	User        string `json:"user"`        // :(
-	Password    string `json:"password"`    // :(
-	Concurrency int    `json:"concurrency"` // number of pages to run in parallel
-
-	Path string `json:"path"` // eventually for queue
+	Mode  CrawlerMode  `json:"mode"`  // thumbs | analytics | migrate
+	Theme models.Theme `json:"theme"` // light | dark
 }
 
-type crawConfig struct {
-	crawlCmd
+type crawlStatus struct {
+	State    crawlerState `json:"state"`
+	Started  time.Time    `json:"started,omitempty"`
+	Finished time.Time    `json:"finished,omitempty"`
+	Complete int          `json:"complete"`
+	Errors   int          `json:"errors"`
+	Queue    int          `json:"queue"`
+	Last     time.Time    `json:"last,omitempty"`
+}
 
-	// Sent to the crawler with each command
-	URL               string `json:"url"`
-	ScreenshotsFolder string `json:"screenshotsFolder"`
+type dashboardPreviewsSystemRequirements struct {
+	Met                                bool   `json:"met"`
+	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
+}
+
+type dashboardPreviewsSetupConfig struct {
+	SystemRequirements dashboardPreviewsSystemRequirements `json:"systemRequirements"`
+	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
 }
 
 type dashRenderer interface {
-	// Assumes you have already authenticated as admin
-	GetPreview(req *previewRequest) *previewResponse
 
-	// Assumes you have already authenticated as admin
-	CrawlerCmd(cfg *crawlCmd) (json.RawMessage, error)
+	// Run Assumes you have already authenticated as admin.
+	Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) error
+
+	// Assumes you have already authenticated as admin.
+	Stop() (crawlStatus, error)
+
+	// Assumes you have already authenticated as admin.
+	Status() (crawlStatus, error)
+
+	IsRunning() bool
+}
+
+type thumbnailRepo interface {
+	updateThumbnailState(ctx context.Context, state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
+	doThumbnailsExist(ctx context.Context) (bool, error)
+	saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
+	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
+	getThumbnail(ctx context.Context, meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
+	findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, thumbnailKind models.ThumbnailKind) ([]*models.DashboardWithStaleThumbnail, error)
 }

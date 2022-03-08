@@ -13,6 +13,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,11 +25,10 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
@@ -42,9 +44,6 @@ func toMacaronPath(path string) string {
 
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
 	recipient := web.Params(ctx.Req)[":Recipient"]
-	if recipient == apimodels.GrafanaBackend.String() {
-		return apimodels.GrafanaBackend, nil
-	}
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
 		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
 			switch ds.Type {
@@ -105,7 +104,13 @@ func (p *AlertingProxy) withReq(
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req = req
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64(":Recipient"))
+
+	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "Recipient is invalid")
+	}
+
+	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
 
 	status := resp.Status()
 	if status >= 400 {
@@ -197,6 +202,13 @@ func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.S
 	return nil
 }
 
+// conditionValidator returns a curried validateCondition that accepts only condition
+func conditionValidator(c *models.ReqContext, cache datasources.CacheService) func(ngmodels.Condition) error {
+	return func(condition ngmodels.Condition) error {
+		return validateCondition(c.Req.Context(), condition, c.SignedInUser, c.SkipCache, cache)
+	}
+}
+
 func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
@@ -227,7 +239,7 @@ func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQue
 	return refIDs, nil
 }
 
-func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, expressionService *expr.Service, cfg *setting.Cfg, log log.Logger) response.Response {
+func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, expressionService *expr.Service, secretsService secrets.Service, cfg *setting.Cfg, log log.Logger) response.Response {
 	evalCond := ngmodels.Condition{
 		Condition: cmd.Condition,
 		OrgID:     c.SignedInUser.OrgId,
@@ -242,7 +254,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		now = timeNow()
 	}
 
-	evaluator := eval.Evaluator{Cfg: cfg, Log: log, DataSourceCache: datasourceCache}
+	evaluator := eval.NewEvaluator(cfg, log, datasourceCache, secretsService)
 	evalResults, err := evaluator.ConditionEval(&evalCond, now, expressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
@@ -259,7 +271,7 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 	if msg != "" {
 		err = errors.WithMessagef(err, msg, args...)
 	}
-	return response.Error(status, "API error", err)
+	return response.Error(status, err.Error(), err)
 }
 
 // accessForbiddenResp creates a response of forbidden access.

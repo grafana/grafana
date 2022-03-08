@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { ConfirmModal, stylesFactory, useTheme } from '@grafana/ui';
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { DashboardSection, OnDeleteItems } from '../types';
 import { getCheckedUids } from '../utils';
 import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
@@ -41,7 +41,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
     deleteFoldersAndDashboards(folders, dashboards).then(() => {
       onDismiss();
       // Redirect to /dashboard in case folder was deleted from f/:folder.uid
-      getLocationSrv().update({ path: '/dashboards' });
+      locationService.push('/dashboards');
       onDeleteItems(folders, dashboards);
     });
   };

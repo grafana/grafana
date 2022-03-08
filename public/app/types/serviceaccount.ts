@@ -1,16 +1,16 @@
-import { OrgRole, Unit } from '.';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { ApiKey, OrgRole, Role } from '.';
 
-export interface OrgServiceAccount {
+export interface OrgServiceAccount extends WithAccessControlMetadata {
+  serviceAccountId: number;
   avatarUrl: string;
   email: string;
-  lastSeenAt: string;
-  lastSeenAtAge: string;
   login: string;
   name: string;
+  displayName: string;
   orgId: number;
   role: OrgRole;
-  serviceAccountId: number;
+  tokens: number[];
 }
 
 export interface ServiceAccount {
@@ -20,57 +20,42 @@ export interface ServiceAccount {
   login: string;
   email: string;
   name: string;
+  displayName: string;
   orgId?: number;
 }
 
-export interface ServiceAccountDTO {
+export interface ServiceAccountDTO extends WithAccessControlMetadata {
   id: number;
-  login: string;
-  email: string;
-  name: string;
-  isGrafanaAdmin: boolean;
-  isDisabled: boolean;
-  isAdmin?: boolean;
-  updatedAt?: string;
-  authLabels?: string[];
-  avatarUrl?: string;
-  orgId?: number;
-  lastSeenAtAge?: string;
-  licensedRole?: string;
-  permissions?: string[];
-  teams?: Unit[];
-  orgs?: Unit[];
-}
-
-export interface ServiceAccountsState {
-  serviceAccounts: OrgServiceAccount[];
-  searchQuery: string;
-  searchPage: number;
-  isLoading: boolean;
-}
-
-export interface ServiceAccountSession {
-  id: number;
-  createdAt: string;
-  clientIp: string;
-  isActive: boolean;
-  seenAt: string;
-}
-
-export interface ServiceAccountOrg {
-  name: string;
   orgId: number;
+  tokens: number;
+  name: string;
+  login: string;
+  avatarUrl?: string;
+  createdAt: string;
+  isDisabled: boolean;
+  teams: string[];
   role: OrgRole;
 }
 
+export interface ServiceAccountProfileState {
+  serviceAccount: ServiceAccountDTO;
+  isLoading: boolean;
+  tokens: ApiKey[];
+}
+
 export type ServiceAccountFilter = Record<string, string | boolean | SelectableValue[]>;
-export interface ServiceaccountListAdminState {
-  serviceaccounts: ServiceAccountDTO[];
+export interface ServiceAccountsState {
+  serviceAccounts: ServiceAccountDTO[];
+  isLoading: boolean;
+  roleOptions: Role[];
+  serviceAccountToRemove: ServiceAccountDTO | null;
+  builtInRoles: Record<string, Role[]>;
+
+  // search / filtering
   query: string;
   perPage: number;
   page: number;
   totalPages: number;
   showPaging: boolean;
   filters: ServiceAccountFilter[];
-  isLoading: boolean;
 }

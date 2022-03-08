@@ -3,18 +3,17 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -27,208 +26,27 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandler("sql", GetDashboard)
-	bus.AddHandler("sql", GetDashboards)
-	bus.AddHandler("sql", DeleteDashboard)
-	bus.AddHandler("sql", GetDashboardTags)
-	bus.AddHandler("sql", GetDashboardSlugById)
-	bus.AddHandler("sql", GetDashboardsByPluginId)
-	bus.AddHandler("sql", GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", GetDashboardsBySlug)
-	bus.AddHandler("sql", HasEditPermissionInFolders)
-	bus.AddHandler("sql", HasAdminPermissionInFolders)
-
 	prometheus.MustRegister(shadowSearchCounter)
 }
 
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.GetDashboard)
 	bus.AddHandler("sql", ss.GetDashboardUIDById)
+	bus.AddHandler("sql", ss.GetDashboardTags)
 	bus.AddHandler("sql", ss.SearchDashboards)
+	bus.AddHandler("sql", ss.DeleteDashboard)
+	bus.AddHandler("sql", ss.GetDashboards)
+	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
+	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
+	bus.AddHandler("sql", ss.GetDashboardsByPluginId)
+	bus.AddHandler("sql", ss.GetDashboardSlugById)
+	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func (ss *SQLStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		return saveDashboard(sess, &cmd)
-	})
-	return cmd.Result, err
-}
-
-func saveDashboard(sess *DBSession, cmd *models.SaveDashboardCommand) error {
-	dash := cmd.GetDashboardModel()
-
-	userId := cmd.UserId
-
-	if userId == 0 {
-		userId = -1
-	}
-
-	if dash.Id > 0 {
-		var existing models.Dashboard
-		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
-		if err != nil {
-			return err
-		}
-		if !dashWithIdExists {
-			return models.ErrDashboardNotFound
-		}
-
-		// check for is someone else has written in between
-		if dash.Version != existing.Version {
-			if cmd.Overwrite {
-				dash.SetVersion(existing.Version)
-			} else {
-				return models.ErrDashboardVersionMismatch
-			}
-		}
-
-		// do not allow plugin dashboard updates without overwrite flag
-		if existing.PluginId != "" && !cmd.Overwrite {
-			return models.UpdatePluginDashboardError{PluginId: existing.PluginId}
-		}
-	}
-
-	if dash.Uid == "" {
-		uid, err := generateNewDashboardUid(sess, dash.OrgId)
-		if err != nil {
-			return err
-		}
-		dash.SetUid(uid)
-	}
-
-	parentVersion := dash.Version
-	var affectedRows int64
-	var err error
-
-	if dash.Id == 0 {
-		dash.SetVersion(1)
-		dash.Created = time.Now()
-		dash.CreatedBy = userId
-		dash.Updated = time.Now()
-		dash.UpdatedBy = userId
-		metrics.MApiDashboardInsert.Inc()
-		affectedRows, err = sess.Insert(dash)
-	} else {
-		dash.SetVersion(dash.Version + 1)
-
-		if !cmd.UpdatedAt.IsZero() {
-			dash.Updated = cmd.UpdatedAt
-		} else {
-			dash.Updated = time.Now()
-		}
-
-		dash.UpdatedBy = userId
-
-		affectedRows, err = sess.MustCols("folder_id").ID(dash.Id).Update(dash)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	if affectedRows == 0 {
-		return models.ErrDashboardNotFound
-	}
-
-	dashVersion := &models.DashboardVersion{
-		DashboardId:   dash.Id,
-		ParentVersion: parentVersion,
-		RestoredFrom:  cmd.RestoredFrom,
-		Version:       dash.Version,
-		Created:       time.Now(),
-		CreatedBy:     dash.UpdatedBy,
-		Message:       cmd.Message,
-		Data:          dash.Data,
-	}
-
-	// insert version entry
-	if affectedRows, err = sess.Insert(dashVersion); err != nil {
-		return err
-	} else if affectedRows == 0 {
-		return models.ErrDashboardNotFound
-	}
-
-	// delete existing tags
-	_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
-	if err != nil {
-		return err
-	}
-
-	// insert new tags
-	tags := dash.GetTags()
-	if len(tags) > 0 {
-		for _, tag := range tags {
-			if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
-				return err
-			}
-		}
-	}
-
-	cmd.Result = dash
-
-	return nil
-}
-
-func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := generateNewUid()
-
-		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.Dashboard{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", models.ErrDashboardFailedGenerateUniqueUid
-}
-
-// GetDashboard gets a dashboard.
-func (ss *SQLStore) GetDashboard(id, orgID int64, uid, slug string) (*models.Dashboard, error) {
-	if id == 0 && slug == "" && uid == "" {
-		return nil, models.ErrDashboardIdentifierNotSet
-	}
-
-	dashboard := models.Dashboard{Slug: slug, OrgId: orgID, Id: id, Uid: uid}
-	has, err := ss.engine.Get(&dashboard)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, models.ErrDashboardNotFound
-	}
-
-	dashboard.SetId(dashboard.Id)
-	dashboard.SetUid(dashboard.Uid)
-	return &dashboard, nil
-}
-
-// GetDashboardByTitle gets a dashboard by its title.
-func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
-	if title == "" {
-		return nil, models.ErrDashboardIdentifierNotSet
-	}
-
-	// there is a unique constraint on org_id, folder_id, title
-	// there are no nested folders so the parent folder id is always 0
-	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	has, err := ss.engine.Table(&models.Dashboard{}).Where("is_folder = " + dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
-	if err != nil {
-		return nil, err
-	}
-	if !has {
-		return nil, models.ErrDashboardNotFound
-	}
-	dashboard.SetId(dashboard.Id)
-	dashboard.SetUid(dashboard.Uid)
-	return &dashboard, nil
-}
-
-func GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+func (ss *SQLStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
 		}
@@ -263,7 +81,7 @@ type DashboardSearchProjection struct {
 	SortMeta    int64
 }
 
-func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
@@ -272,6 +90,12 @@ func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersis
 			UserId:          query.SignedInUser.UserId,
 			PermissionLevel: query.Permission,
 		},
+	}
+
+	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+		filters = []interface{}{
+			permissions.AccessControlDashboardPermissionFilter{User: query.SignedInUser, PermissionLevel: query.Permission},
+		}
 	}
 
 	for _, filter := range query.Sort.Filter {
@@ -335,7 +159,7 @@ func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersis
 }
 
 func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
-	res, err := ss.findDashboards(ctx, query)
+	res, err := ss.FindDashboards(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -394,8 +218,9 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 	}
 }
 
-func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
-	sql := `SELECT
+func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sql := `SELECT
 					  COUNT(*) as count,
 						term
 					FROM dashboard
@@ -404,14 +229,15 @@ func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) 
 					GROUP BY term
 					ORDER BY term`
 
-	query.Result = make([]*models.DashboardTagCloudItem, 0)
-	sess := x.SQL(sql, query.OrgId)
-	err := sess.Find(&query.Result)
-	return err
+		query.Result = make([]*models.DashboardTagCloudItem, 0)
+		sess := dbSession.SQL(sql, query.OrgId)
+		err := sess.Find(&query.Result)
+		return err
+	})
 }
 
-func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return deleteDashboard(cmd, sess)
 	})
 }
@@ -449,6 +275,20 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 
 		for _, id := range dashIds {
 			if err := deleteAlertDefinition(id.Id, sess); err != nil {
+				return err
+			}
+		}
+
+		// remove all access control permission with folder scope
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("folders", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
+		}
+
+		for _, dash := range dashIds {
+			// remove all access control permission with child dashboard scopes
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dash.Id, 10)))
+			if err != nil {
 				return err
 			}
 		}
@@ -493,6 +333,11 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 				}
 			}
 		}
+	} else {
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
@@ -509,66 +354,69 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 	return nil
 }
 
-func GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
-	if len(query.DashboardIds) == 0 {
-		return models.ErrCommandValidationFailed
-	}
+func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if len(query.DashboardIds) == 0 {
+			return models.ErrCommandValidationFailed
+		}
 
-	var dashboards = make([]*models.Dashboard, 0)
+		var dashboards = make([]*models.Dashboard, 0)
 
-	err := x.In("id", query.DashboardIds).Find(&dashboards)
-	query.Result = dashboards
-	return err
+		err := dbSession.In("id", query.DashboardIds).Find(&dashboards)
+		query.Result = dashboards
+		return err
+	})
 }
 
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
 // The function takes in a list of dashboard ids and the user id and role
-func GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
-	if len(query.DashboardIds) == 0 {
-		return models.ErrCommandValidationFailed
-	}
-
-	if query.OrgRole == models.ROLE_ADMIN {
-		var permissions = make([]*models.DashboardPermissionForUser, 0)
-		for _, d := range query.DashboardIds {
-			permissions = append(permissions, &models.DashboardPermissionForUser{
-				DashboardId:    d,
-				Permission:     models.PERMISSION_ADMIN,
-				PermissionName: models.PERMISSION_ADMIN.String(),
-			})
+func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if len(query.DashboardIds) == 0 {
+			return models.ErrCommandValidationFailed
 		}
-		query.Result = permissions
 
-		return nil
-	}
+		if query.OrgRole == models.ROLE_ADMIN {
+			var permissions = make([]*models.DashboardPermissionForUser, 0)
+			for _, d := range query.DashboardIds {
+				permissions = append(permissions, &models.DashboardPermissionForUser{
+					DashboardId:    d,
+					Permission:     models.PERMISSION_ADMIN,
+					PermissionName: models.PERMISSION_ADMIN.String(),
+				})
+			}
+			query.Result = permissions
 
-	params := make([]interface{}, 0)
+			return nil
+		}
 
-	// check dashboards that have ACLs via user id, team id or role
-	sql := `SELECT d.id AS dashboard_id, MAX(COALESCE(da.permission, pt.permission)) AS permission
+		params := make([]interface{}, 0)
+
+		// check dashboards that have ACLs via user id, team id or role
+		sql := `SELECT d.id AS dashboard_id, MAX(COALESCE(da.permission, pt.permission)) AS permission
 	FROM dashboard AS d
 		LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
 		LEFT JOIN team_member as ugm on ugm.team_id =  da.team_id
 		LEFT JOIN org_user ou ON ou.role = da.role AND ou.user_id = ?
 	`
-	params = append(params, query.UserId)
+		params = append(params, query.UserId)
 
-	// check the user's role for dashboards that do not have hasAcl set
-	sql += `LEFT JOIN org_user ouRole ON ouRole.user_id = ? AND ouRole.org_id = ?`
-	params = append(params, query.UserId)
-	params = append(params, query.OrgId)
+		// check the user's role for dashboards that do not have hasAcl set
+		sql += `LEFT JOIN org_user ouRole ON ouRole.user_id = ? AND ouRole.org_id = ?`
+		params = append(params, query.UserId)
+		params = append(params, query.OrgId)
 
-	sql += `
+		sql += `
 		LEFT JOIN (SELECT 1 AS permission, 'Viewer' AS role
 			UNION SELECT 2 AS permission, 'Editor' AS role
 			UNION SELECT 4 AS permission, 'Admin' AS role) pt ON ouRole.role = pt.role
 	WHERE
 	d.Id IN (?` + strings.Repeat(",?", len(query.DashboardIds)-1) + `) `
-	for _, id := range query.DashboardIds {
-		params = append(params, id)
-	}
+		for _, id := range query.DashboardIds {
+			params = append(params, id)
+		}
 
-	sql += ` AND
+		sql += ` AND
 	d.org_id = ? AND
 	  (
 		(d.has_acl = ?  AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
@@ -576,59 +424,53 @@ func GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashbo
 	)
 	group by d.id
 	order by d.id asc`
-	params = append(params, query.OrgId)
-	params = append(params, dialect.BooleanStr(true))
-	params = append(params, query.UserId)
-	params = append(params, query.UserId)
-	params = append(params, dialect.BooleanStr(false))
+		params = append(params, query.OrgId)
+		params = append(params, dialect.BooleanStr(true))
+		params = append(params, query.UserId)
+		params = append(params, query.UserId)
+		params = append(params, dialect.BooleanStr(false))
 
-	err := x.SQL(sql, params...).Find(&query.Result)
+		err := dbSession.SQL(sql, params...).Find(&query.Result)
 
-	for _, p := range query.Result {
-		p.PermissionName = p.Permission.String()
-	}
+		for _, p := range query.Result {
+			p.PermissionName = p.Permission.String()
+		}
 
-	return err
+		return err
+	})
 }
 
-func GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	var dashboards = make([]*models.Dashboard, 0)
-	whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
+func (ss *SQLStore) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var dashboards = make([]*models.Dashboard, 0)
+		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
 
-	err := x.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
-	query.Result = dashboards
-	return err
+		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
+		query.Result = dashboards
+		return err
+	})
 }
 
 type DashboardSlugDTO struct {
 	Slug string
 }
 
-func GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
-	var rawSQL = `SELECT slug from dashboard WHERE Id=?`
-	var slug = DashboardSlugDTO{}
+func (ss *SQLStore) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var rawSQL = `SELECT slug from dashboard WHERE Id=?`
+		var slug = DashboardSlugDTO{}
 
-	exists, err := x.SQL(rawSQL, query.Id).Get(&slug)
+		exists, err := dbSession.SQL(rawSQL, query.Id).Get(&slug)
 
-	if err != nil {
-		return err
-	} else if !exists {
-		return models.ErrDashboardNotFound
-	}
+		if err != nil {
+			return err
+		} else if !exists {
+			return models.ErrDashboardNotFound
+		}
 
-	query.Result = slug.Slug
-	return nil
-}
-
-func GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
-	var dashboards []*models.Dashboard
-
-	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {
-		return err
-	}
-
-	query.Result = dashboards
-	return nil
+		query.Result = slug.Slug
+		return nil
+	})
 }
 
 func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
@@ -650,158 +492,9 @@ func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDa
 	})
 }
 
-func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, dash *models.Dashboard, overwrite bool) (bool, error) {
-	dashWithIdExists := false
-	isParentFolderChanged := false
-	var existingById models.Dashboard
-
-	if dash.Id > 0 {
-		var err error
-		dashWithIdExists, err = sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existingById)
-		if err != nil {
-			return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by ID failed: %w", err)
-		}
-
-		if !dashWithIdExists {
-			return isParentFolderChanged, models.ErrDashboardNotFound
-		}
-
-		if dash.Uid == "" {
-			dash.SetUid(existingById.Uid)
-		}
-	}
-
-	dashWithUidExists := false
-	var existingByUid models.Dashboard
-
-	if dash.Uid != "" {
-		var err error
-		dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&existingByUid)
-		if err != nil {
-			return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by UID failed: %w", err)
-		}
-	}
-
-	if dash.FolderId > 0 {
-		var existingFolder models.Dashboard
-		folderExists, err := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgId, dash.FolderId,
-			dialect.BooleanStr(true)).Get(&existingFolder)
-		if err != nil {
-			return isParentFolderChanged, fmt.Errorf("SQL query for folder failed: %w", err)
-		}
-
-		if !folderExists {
-			return isParentFolderChanged, models.ErrDashboardFolderNotFound
-		}
-	}
-
-	if !dashWithIdExists && !dashWithUidExists {
-		return isParentFolderChanged, nil
-	}
-
-	if dashWithIdExists && dashWithUidExists && existingById.Id != existingByUid.Id {
-		return isParentFolderChanged, models.ErrDashboardWithSameUIDExists
-	}
-
-	existing := existingById
-
-	if !dashWithIdExists && dashWithUidExists {
-		dash.SetId(existingByUid.Id)
-		dash.SetUid(existingByUid.Uid)
-		existing = existingByUid
-
-		if !dash.IsFolder {
-			isParentFolderChanged = true
-		}
-	}
-
-	if (existing.IsFolder && !dash.IsFolder) ||
-		(!existing.IsFolder && dash.IsFolder) {
-		return isParentFolderChanged, models.ErrDashboardTypeMismatch
-	}
-
-	if !dash.IsFolder && dash.FolderId != existing.FolderId {
-		isParentFolderChanged = true
-	}
-
-	// check for is someone else has written in between
-	if dash.Version != existing.Version {
-		if overwrite {
-			dash.SetVersion(existing.Version)
-		} else {
-			return isParentFolderChanged, models.ErrDashboardVersionMismatch
-		}
-	}
-
-	// do not allow plugin dashboard updates without overwrite flag
-	if existing.PluginId != "" && !overwrite {
-		return isParentFolderChanged, models.UpdatePluginDashboardError{PluginId: existing.PluginId}
-	}
-
-	return isParentFolderChanged, nil
-}
-
-func getExistingDashboardByTitleAndFolder(sess *DBSession, dash *models.Dashboard, overwrite,
-	isParentFolderChanged bool) (bool, error) {
-	var existing models.Dashboard
-	exists, err := sess.Where("org_id=? AND slug=? AND (is_folder=? OR folder_id=?)", dash.OrgId, dash.Slug,
-		dialect.BooleanStr(true), dash.FolderId).Get(&existing)
-	if err != nil {
-		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
-	}
-
-	if exists && dash.Id != existing.Id {
-		if existing.IsFolder && !dash.IsFolder {
-			return isParentFolderChanged, models.ErrDashboardWithSameNameAsFolder
-		}
-
-		if !existing.IsFolder && dash.IsFolder {
-			return isParentFolderChanged, models.ErrDashboardFolderWithSameNameAsDashboard
-		}
-
-		if !dash.IsFolder && (dash.FolderId != existing.FolderId || dash.Id == 0) {
-			isParentFolderChanged = true
-		}
-
-		if overwrite {
-			dash.SetId(existing.Id)
-			dash.SetUid(existing.Uid)
-			dash.SetVersion(existing.Version)
-		} else {
-			return isParentFolderChanged, models.ErrDashboardWithSameNameInFolderExists
-		}
-	}
-
-	return isParentFolderChanged, nil
-}
-
-func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
-	isParentFolderChanged := false
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		var err error
-		isParentFolderChanged, err = getExistingDashboardByIdOrUidForUpdate(sess, dashboard, overwrite)
-		if err != nil {
-			return err
-		}
-
-		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, overwrite,
-			isParentFolderChanged)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return false, err
-	}
-
-	return isParentFolderChanged, nil
-}
-
 // HasEditPermissionInFolders validates that an user have access to a certain folder
-func HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+func (ss *SQLStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
 			query.Result = true
 			return nil
@@ -827,26 +520,28 @@ func HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermis
 	})
 }
 
-func HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
-	if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
-		query.Result = true
+func (ss *SQLStore) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
+			query.Result = true
+			return nil
+		}
+
+		builder := &SQLBuilder{}
+		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
+		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
+
+		type folderCount struct {
+			Count int64
+		}
+
+		resp := make([]*folderCount, 0)
+		if err := dbSession.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+			return err
+		}
+
+		query.Result = len(resp) > 0 && resp[0].Count > 0
+
 		return nil
-	}
-
-	builder := &SQLBuilder{}
-	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
-	builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
-
-	type folderCount struct {
-		Count int64
-	}
-
-	resp := make([]*folderCount, 0)
-	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
-		return err
-	}
-
-	query.Result = len(resp) > 0 && resp[0].Count > 0
-
-	return nil
+	})
 }

@@ -67,7 +67,8 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithLogsVolumeSupport<ElasticsearchQuery> {
+    DataSourceWithLogsVolumeSupport<ElasticsearchQuery>
+{
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;
@@ -870,19 +871,19 @@ export class ElasticDatasource
   }
 
   targetContainsTemplate(target: any) {
-    if (this.templateSrv.variableExists(target.query) || this.templateSrv.variableExists(target.alias)) {
+    if (this.templateSrv.containsTemplate(target.query) || this.templateSrv.containsTemplate(target.alias)) {
       return true;
     }
 
     for (const bucketAgg of target.bucketAggs) {
-      if (this.templateSrv.variableExists(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
+      if (this.templateSrv.containsTemplate(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
         return true;
       }
     }
 
     for (const metric of target.metrics) {
       if (
-        this.templateSrv.variableExists(metric.field) ||
+        this.templateSrv.containsTemplate(metric.field) ||
         this.objectContainsTemplate(metric.settings) ||
         this.objectContainsTemplate(metric.meta)
       ) {
@@ -911,7 +912,7 @@ export class ElasticDatasource
 
     for (const key of Object.keys(obj)) {
       if (this.isPrimitive(obj[key])) {
-        if (this.templateSrv.variableExists(obj[key])) {
+        if (this.templateSrv.containsTemplate(obj[key])) {
           return true;
         }
       } else if (Array.isArray(obj[key])) {
@@ -936,8 +937,6 @@ export class ElasticDatasource
  * Exported for tests.
  */
 export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[], limit?: number) {
-  const dataSourceSrv = getDataSourceSrv();
-
   if (limit) {
     dataFrame.meta = {
       ...dataFrame.meta,
@@ -950,35 +949,37 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
   }
 
   for (const field of dataFrame.fields) {
-    const dataLinkConfig = dataLinks.find((dataLink) => field.name && field.name.match(dataLink.field));
+    const linksToApply = dataLinks.filter((dataLink) => new RegExp(dataLink.field).test(field.name));
 
-    if (!dataLinkConfig) {
+    if (linksToApply.length === 0) {
       continue;
     }
 
-    let link: DataLink;
-
-    if (dataLinkConfig.datasourceUid) {
-      const dsSettings = dataSourceSrv.getInstanceSettings(dataLinkConfig.datasourceUid);
-
-      link = {
-        title: dataLinkConfig.urlDisplayLabel || '',
-        url: '',
-        internal: {
-          query: { query: dataLinkConfig.url },
-          datasourceUid: dataLinkConfig.datasourceUid,
-          datasourceName: dsSettings?.name ?? 'Data source not found',
-        },
-      };
-    } else {
-      link = {
-        title: dataLinkConfig.urlDisplayLabel || '',
-        url: dataLinkConfig.url,
-      };
-    }
-
     field.config = field.config || {};
-    field.config.links = [...(field.config.links || []), link];
+    field.config.links = [...(field.config.links || [], linksToApply.map(generateDataLink))];
+  }
+}
+
+function generateDataLink(linkConfig: DataLinkConfig): DataLink {
+  const dataSourceSrv = getDataSourceSrv();
+
+  if (linkConfig.datasourceUid) {
+    const dsSettings = dataSourceSrv.getInstanceSettings(linkConfig.datasourceUid);
+
+    return {
+      title: linkConfig.urlDisplayLabel || '',
+      url: '',
+      internal: {
+        query: { query: linkConfig.url },
+        datasourceUid: linkConfig.datasourceUid,
+        datasourceName: dsSettings?.name ?? 'Data source not found',
+      },
+    };
+  } else {
+    return {
+      title: linkConfig.urlDisplayLabel || '',
+      url: linkConfig.url,
+    };
   }
 }
 

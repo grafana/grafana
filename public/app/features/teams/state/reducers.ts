@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 
-export const initialTeamsState: TeamsState = { teams: [], searchQuery: '', hasFetched: false };
+export const initialTeamsState: TeamsState = { teams: [], searchQuery: '', searchPage: 1, hasFetched: false };
 
 const teamsSlice = createSlice({
   name: 'teams',
@@ -12,12 +12,15 @@ const teamsSlice = createSlice({
       return { ...state, hasFetched: true, teams: action.payload };
     },
     setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
-      return { ...state, searchQuery: action.payload };
+      return { ...state, searchQuery: action.payload, searchPage: initialTeamsState.searchPage };
+    },
+    setTeamsSearchPage: (state, action: PayloadAction<number>): TeamsState => {
+      return { ...state, searchPage: action.payload };
     },
   },
 });
 
-export const { teamsLoaded, setSearchQuery } = teamsSlice.actions;
+export const { teamsLoaded, setSearchQuery, setTeamsSearchPage } = teamsSlice.actions;
 
 export const teamsReducer = teamsSlice.reducer;
 

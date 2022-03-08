@@ -102,7 +102,7 @@ export enum GrafanaAlertStateDecision {
   Error = 'Error',
 }
 
-interface AlertDataQuery extends DataQuery {
+export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
 }
@@ -151,6 +151,7 @@ export type PostableRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | Pos
 export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
   name: string;
   interval?: string;
+  source_tenants?: string[];
   rules: R[];
 };
 

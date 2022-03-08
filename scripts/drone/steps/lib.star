@@ -1,16 +1,16 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = '2.7.8'
-build_image = 'grafana/build-container:1.4.8'
+grabpl_version = 'v2.9.22'
+build_image = 'grafana/build-container:1.5.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
-grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
-alpine_image = 'alpine:3.14.3'
+alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
+disable_tests = False
 
 def slack_step(channel, template, secret):
     return {
@@ -45,9 +45,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
-    elif ver_mode == 'test-release':
-        args = test_release_ver
-        common_cmds.append('./bin/grabpl verify-version {}'.format(test_release_ver))
     else:
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
@@ -67,14 +64,20 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
-        elif ver_mode == 'test-release':
-            committish = 'main'
+            environment = {
+                  'GITHUB_TOKEN': from_secret(github_token),
+            }
+            token = "--github-token $${GITHUB_TOKEN}"
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
+            environment = {}
+            token = ""
         else:
+            environment = {}
             if is_downstream:
                 source_commit = ' $${SOURCE_COMMIT}'
             committish = '${DRONE_COMMIT}'
+            token = ""
         steps = [
             identify_runner,
             clone_enterprise(committish),
@@ -84,14 +87,12 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'depends_on': [
                     'clone-enterprise',
                 ],
-                'environment': {
-                  'GITHUB_TOKEN': from_secret(github_token),
-                },
+                'environment': environment,
                 'commands': [
                                 'mv bin/grabpl /tmp/',
                                 'rmdir bin',
                                 'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise --github-token $${{GITHUB_TOKEN}} /tmp/grafana-enterprise{}'.format(source_commit),
+                                '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
                                 'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
@@ -153,7 +154,7 @@ def download_grabpl_step():
         'image': curl_image,
         'commands': [
             'mkdir -p bin',
-            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+            'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/grabpl'.format(
                 grabpl_version
             ),
             'chmod +x bin/grabpl',
@@ -188,7 +189,7 @@ def enterprise_downstream_step(edition):
                 'grafana/grafana-enterprise@main',
             ],
             'params': [
-                'SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}',
+                'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
             ],
         },
@@ -231,7 +232,7 @@ def benchmark_ldap_step():
 
 
 def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2') and ver_mode in ('release', 'test-release'):
+    if edition in ('enterprise', 'enterprise2') and ver_mode == 'release':
         return None
 
     return {
@@ -240,6 +241,7 @@ def build_storybook_step(edition, ver_mode):
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'build-frontend',
+            'build-frontend-packages',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
@@ -255,35 +257,25 @@ def store_storybook_step(edition, ver_mode):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-    if ver_mode == 'test-release':
-        commands = [
-            'echo Testing release',
-        ]
+
+    commands = []
+    if ver_mode == 'release':
+        channels = ['latest', '${DRONE_TAG}', ]
     else:
-        commands = []
-        if ver_mode == 'release':
-            channels = ['latest', '${DRONE_TAG}', ]
-        else:
-            channels = ['canary', ]
-        commands.extend([
-                            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-                            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
-                        ] + [
-                            'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
-                                c)
-                            for c in channels
-                        ])
+        channels = ['canary', ]
+    commands.extend([
+                        'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
+                        'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
+                    ] + [
+                        'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
+                            c)
+                        for c in channels
+                    ])
 
     return {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': [
-            'build-storybook',
-            'end-to-end-tests-dashboards-suite',
-            'end-to-end-tests-panels-suite',
-            'end-to-end-tests-smoke-tests-suite',
-            'end-to-end-tests-various-suite',
-        ],
+        'depends_on': ['build-storybook',] + end_to_end_tests_deps(edition),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -293,7 +285,7 @@ def store_storybook_step(edition, ver_mode):
 
 def e2e_tests_artifacts(edition):
     return {
-        'name': 'e2e_tests_artifacts_upload' + enterprise2_suffix(edition),
+        'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
         'image': 'google/cloud-sdk:367.0.0',
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
@@ -301,6 +293,12 @@ def e2e_tests_artifacts(edition):
             'end-to-end-tests-smoke-tests-suite',
             'end-to-end-tests-various-suite',
         ],
+        'when': {
+            'status': [
+                'success',
+                'failure',
+            ]
+        },
         'environment': {
             'GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY': from_secret('gcp_upload_artifacts_key'),
             'E2E_TEST_ARTIFACTS_BUCKET': 'releng-pipeline-artifacts-dev',
@@ -325,8 +323,10 @@ def e2e_tests_artifacts(edition):
 
 
 def upload_cdn_step(edition, ver_mode):
+    src_dir = ''
     if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+        bucket = "$${PRERELEASE_BUCKET}"
+        src_dir = " --src-dir artifacts/static-assets"
     else:
         bucket = "grafana-static-assets"
 
@@ -337,7 +337,7 @@ def upload_cdn_step(edition, ver_mode):
         ])
     else:
         deps.extend([
-            'end-to-end-tests-server',
+            'grafana-server',
         ])
 
     return {
@@ -345,11 +345,11 @@ def upload_cdn_step(edition, ver_mode):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
+            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
 
@@ -367,15 +367,6 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         cmds = [
             './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
                 edition,
-            ),
-        ]
-    elif ver_mode == 'test-release':
-        env = {
-            'GITHUB_TOKEN': from_secret(github_token),
-        }
-        cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise {}'.format(
-                edition, test_release_ver,
             ),
         ]
     else:
@@ -410,22 +401,47 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
+            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
             '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
-        ]
-    elif ver_mode == 'test-release':
-        cmds = [
-            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-            '--edition {} --no-pull-enterprise {}'.format(edition, test_release_ver),
         ]
     else:
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) + \
+            './bin/grabpl build-frontend --jobs 8 --edition {} '.format(edition) + \
             '--build-id {} --no-pull-enterprise'.format(build_no),
         ]
 
     return {
         'name': 'build-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=8192',
+        },
+        'commands': cmds,
+    }
+
+def build_frontend_package_step(edition, ver_mode, is_downstream=False):
+    if not is_downstream:
+        build_no = '${DRONE_BUILD_NUMBER}'
+    else:
+        build_no = '$${SOURCE_BUILD_NUMBER}'
+
+    # TODO: Use percentage for num jobs
+    if ver_mode == 'release':
+        cmds = [
+            './bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
+            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
+            ]
+    else:
+        cmds = [
+            './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
+            '--build-id {} --no-pull-enterprise'.format(build_no),
+            ]
+
+    return {
+        'name': 'build-frontend-packages',
         'image': build_image,
         'depends_on': [
             'initialize',
@@ -442,9 +458,12 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'build-frontend'
+            'initialize'
         ],
         'commands': [
+            'yarn packages:build',
+            'yarn packages:docsExtract',
+            'yarn packages:docsToMarkdown',
             './scripts/ci-reference-docs-lint.sh ci',
         ]
     }
@@ -468,7 +487,7 @@ def build_plugins_step(edition, sign=False):
         'environment': env,
         'commands': [
             # TODO: Use percentage for num jobs
-            './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps{}'.format(edition, sign_args),
+            './bin/grabpl build-plugins --jobs 8 --edition {}{}'.format(edition, sign_args),
         ],
     }
 
@@ -551,13 +570,13 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'hugohaggmark/docker-puppeteer',
+        'image': 'grafana/docker-puppeteer:1.0.0',
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'grafana-server' + enterprise2_suffix(edition),
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
         'failure': failure,
@@ -619,19 +638,19 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         'build-plugins',
         'build-backend',
         'build-frontend',
+        'build-frontend-packages',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
         deps.extend([
             'build-backend' + sfx,
-            'test-backend' + sfx,
         ])
 
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
 
-    if ver_mode in ('main', 'release', 'test-release', 'release-branch'):
+    if ver_mode in ('main', 'release', 'release-branch'):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
@@ -654,13 +673,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
                 sign_args
             ),
         ]
-    elif ver_mode == 'test-release':
-        cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} {}'.format(
-                sign_args, test_release_ver,
-            ),
-        ]
     else:
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
@@ -680,7 +692,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
     }
 
 
-def e2e_tests_server_step(edition, port=3001):
+def grafana_server_step(edition, port=3001):
     package_file_pfx = ''
     if edition == 'enterprise2':
         package_file_pfx = 'grafana' + enterprise2_suffix(edition)
@@ -689,21 +701,24 @@ def e2e_tests_server_step(edition, port=3001):
 
     environment = {
         'PORT': port,
+        'ARCH': 'linux-amd64'
     }
     if package_file_pfx:
-        environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
-        environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
+        environment['RUNDIR'] = 'scripts/grafana-server/tmp-{}'.format(package_file_pfx)
 
     return {
-        'name': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+        'name': 'grafana-server' + enterprise2_suffix(edition),
         'image': build_image,
         'detach': True,
         'depends_on': [
-            'package' + enterprise2_suffix(edition),
+            'build-plugins',
+            'build-backend',
+            'build-frontend',
+            'build-frontend-packages',
         ],
         'environment': environment,
         'commands': [
-            './e2e/start-server',
+            './scripts/grafana-server/start-server',
         ],
     }
 
@@ -713,12 +728,12 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'cypress/included:9.2.0',
+        'image': 'cypress/included:9.5.0',
         'depends_on': [
-            'package',
+            'grafana-server',
         ],
         'environment': {
-            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
         },
         'commands': [
             'apt-get install -y netcat',
@@ -757,11 +772,11 @@ def copy_packages_for_docker_step():
     }
 
 
-def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    if ver_mode == 'test-release':
-        publish = False
+def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+    cmd = './bin/grabpl build-docker --edition {}'.format(edition)
+    if publish:
+        cmd += ' --shouldSave'
 
-    cmd = './bin/grabpl build-docker --edition {} --shouldSave'.format(edition)
     ubuntu_sfx = ''
     if ubuntu:
         ubuntu_sfx = '-ubuntu'
@@ -771,12 +786,10 @@ def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publ
         cmd += ' -archs {}'.format(','.join(archs))
 
     return {
-        'name': 'package-docker-images' + ubuntu_sfx,
+        'name': 'build-docker-images' + ubuntu_sfx,
         'image': 'google/cloud-sdk',
         'depends_on': ['copy-packages-for-docker'],
         'commands': [
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
             cmd
         ],
         'volumes': [{
@@ -788,30 +801,34 @@ def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publ
         },
     }
 
-def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    if ver_mode == 'test-release':
-        publish = False
+def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
+    if mode == 'security':
+        mode = '--{} '.format(mode)
+    else:
+        mode = ''
 
-    ubuntu_sfx = ''
-    if ubuntu:
-        ubuntu_sfx = '-ubuntu'
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(mode, docker_repo)
 
-    settings = {
-        'dry_run': not publish,
-        'edition': edition,
-        'ubuntu': ubuntu,
-    }
+    if ver_mode == 'release':
+        deps = ['fetch-images-{}'.format(edition)]
+        cmd += ' --version-tag ${TAG}'
+    else:
+        deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
-    if publish:
-        settings['username'] = from_secret('docker_user')
-        settings['password'] = from_secret('docker_password')
-    if archs:
-        settings['archs'] = ','.join(archs)
     return {
-        'name': 'build-docker-images' + ubuntu_sfx,
-        'image': grafana_docker_image,
-        'depends_on': ['copy-packages-for-docker'],
-        'settings': settings,
+        'name': 'publish-images-{}'.format(docker_repo),
+        'image': 'google/cloud-sdk',
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'DOCKER_USER': from_secret('docker_username'),
+            'DOCKER_PASSWORD': from_secret('docker_password'),
+        },
+        'commands': [cmd],
+        'depends_on': deps,
+        'volumes': [{
+            'name': 'docker',
+            'path': '/var/run/docker.sock'
+        }],
     }
 
 
@@ -916,12 +933,7 @@ def release_canary_npm_packages_step(edition):
     return {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': [
-            'end-to-end-tests-dashboards-suite',
-            'end-to-end-tests-panels-suite',
-            'end-to-end-tests-smoke-tests-suite',
-            'end-to-end-tests-various-suite',
-        ],
+        'depends_on': end_to_end_tests_deps(edition),
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -941,11 +953,8 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
-    if ver_mode == 'test-release':
-        cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
-              '--packages-bucket grafana-downloads-test'
-    elif ver_mode == 'release':
-        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}/${{DRONE_TAG}}'.format(enterprise2_suffix(edition))
+    if ver_mode == 'release':
+        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
     elif edition == 'enterprise2':
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(edition)
@@ -953,28 +962,19 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 
     deps = []
-    if edition in 'enterprise2':
+    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
         deps.extend([
             'package' + enterprise2_suffix(edition),
             ])
     else:
-        deps.extend([
-            'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-            'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
-            ])
-
-    if edition in ('enterprise', 'enterprise2'):
-        deps.append('redis-integration-tests')
-        deps.append('memcached-integration-tests')
+        deps.extend(end_to_end_tests_deps(edition))
 
     return {
         'name': 'upload-packages' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
         'commands': [cmd, ],
@@ -982,14 +982,8 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
 
 def store_packages_step(edition, ver_mode, is_downstream=False):
-    if ver_mode == 'test-release':
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
-              '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-              'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
-                  test_release_ver,
-              )
-    elif ver_mode == 'release':
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+    if ver_mode == 'release':
+        cmd = './bin/grabpl store-packages --edition {} --packages-bucket grafana-downloads --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
@@ -1007,7 +1001,7 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
         'name': 'store-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1017,7 +1011,6 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
             'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
         },
         'commands': [
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             cmd,
         ],
     }
@@ -1036,7 +1029,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
                 grabpl_version),
         ])
     steps = [
@@ -1047,18 +1040,13 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         },
     ]
     if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
-        'release', 'test-release', 'release-branch',
+        'release', 'release-branch',
     ):
         bucket_part = ''
         bucket = '%PRERELEASE_BUCKET%/artifacts/downloads'
         if ver_mode == 'release':
             ver_part = '${DRONE_TAG}'
             dir = 'release'
-        elif ver_mode == 'test-release':
-            ver_part = test_release_ver
-            dir = 'release'
-            bucket = 'grafana-downloads-test'
-            bucket_part = ' --packages-bucket {}'.format(bucket)
         else:
             dir = 'main'
             bucket = 'grafana-downloads'
@@ -1078,14 +1066,23 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'cp C:\\App\\nssm-2.24.zip .',
         ]
         if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
-            'release', 'test-release',
+            'release',
         ):
             installer_commands.extend([
+                '.\\grabpl.exe gen-version {}'.format(ver_part),
                 '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-                'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
-                'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
             ])
+            if ver_mode == 'main':
+                installer_commands.extend([
+                    'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
+                ])
+            else:
+                installer_commands.extend([
+                    'gsutil cp $$fname gs://{}/{}/{}/{}/'.format(bucket, ver_part, edition, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/{}/{}/{}/'.format(bucket, ver_part, edition, dir),
+                ])
         steps.append({
             'name': 'build-windows-installer',
             'image': wix_image,
@@ -1103,8 +1100,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     if edition in ('enterprise', 'enterprise2'):
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
-        elif ver_mode == 'test-release':
-            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '$$env:DRONE_BRANCH'
         else:
@@ -1112,7 +1107,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_step_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
                 grabpl_version),
         ]
         clone_cmds = [
@@ -1172,17 +1167,20 @@ def ensure_cuetsified_step():
             'validate-scuemata',
         ],
         'commands': [
-            '# Make sure the git tree is clean.',
-            '# Stashing changes, since packages that were produced in build-backend step are needed.',
-            'git stash',
-            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
-            '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
             '# It is required that the generated Typescript be in sync with the input CUE files.',
-            '# ...Modulo eslint auto-fixes...:',
-            'yarn run eslint . --ext .gen.ts --fix',
-            '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
-            './scripts/clean-git-or-error.sh',
-            '# Un-stash changes.',
-            'git stash pop',
+            '# To enforce this, the following command will attempt to generate Typescript from all',
+            '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file the generated',
+            '# code would have been written to. It exits 1 if any diffs are found.',
+            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
         ],
     }
+
+def end_to_end_tests_deps(edition):
+    if disable_tests:
+        return []
+    return [
+        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+    ]

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type setUserPermissionTest struct {
@@ -46,13 +47,13 @@ func TestService_SetUserPermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetUser = func(ctx context.Context, orgID, userID int64, resourceID, permission string) error {
+				service.options.OnSetUser = func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
 			}
 
-			_, err = service.SetUserPermission(context.Background(), user.OrgId, user.Id, "1", []string{})
+			_, err = service.SetUserPermission(context.Background(), user.OrgId, accesscontrol.User{ID: user.Id}, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
@@ -90,13 +91,13 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetTeam = func(ctx context.Context, orgID, teamID int64, resourceID, permission string) error {
+				service.options.OnSetTeam = func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
 			}
 
-			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, "1", []string{})
+			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
@@ -130,15 +131,86 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetBuiltInRole = func(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) error {
+				service.options.OnSetBuiltInRole = func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
 			}
 
-			_, err := service.SetBuiltInRolePermission(context.Background(), 1, "Viewer", "1", []string{})
+			_, err := service.SetBuiltInRolePermission(context.Background(), 1, "Viewer", "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
+		})
+	}
+}
+
+type setPermissionsTest struct {
+	desc      string
+	options   Options
+	commands  []accesscontrol.SetResourcePermissionCommand
+	expectErr bool
+}
+
+func TestService_SetPermissions(t *testing.T) {
+	tests := []setPermissionsTest{
+		{
+			desc: "should set all permissions",
+			options: Options{
+				Resource: "dashboards",
+				Assignments: Assignments{
+					Users:        true,
+					Teams:        true,
+					BuiltInRoles: true,
+				},
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
+			},
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "View"},
+				{TeamID: 1, Permission: "View"},
+				{BuiltinRole: "Editor", Permission: "View"},
+			},
+		},
+		{
+			desc: "should return error for invalid permission",
+			options: Options{
+				Resource: "dashboards",
+				Assignments: Assignments{
+					Users:        true,
+					Teams:        true,
+					BuiltInRoles: true,
+				},
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
+			},
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "View"},
+				{TeamID: 1, Permission: "View"},
+				{BuiltinRole: "Editor", Permission: "Not real permission"},
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, tt.options)
+
+			// seed user
+			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "user", OrgId: 1})
+			require.NoError(t, err)
+			_, err = sql.CreateTeam("team", "", 1)
+			require.NoError(t, err)
+
+			permissions, err := service.SetPermissions(context.Background(), 1, "1", tt.commands...)
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Len(t, permissions, len(tt.commands))
+			}
 		})
 	}
 }
@@ -148,7 +220,9 @@ func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission,
 
 	sql := sqlstore.InitTestDB(t)
 	store := database.ProvideService(sql)
-	service, err := New(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store)
+	cfg := setting.NewCfg()
+	cfg.IsEnterprise = true
+	service, err := New(ops, cfg, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store, sql)
 	require.NoError(t, err)
 
 	return service, sql

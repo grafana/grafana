@@ -11,6 +11,7 @@ import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
+import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -84,6 +85,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     let prefix: string | undefined;
     let suffix: string | undefined;
     let color: string | undefined;
+    let icon: string | undefined;
     let percent: number | undefined;
 
     if (mappings && mappings.length > 0) {
@@ -96,6 +98,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
         if (mappingResult.color != null) {
           color = options.theme.visualization.getColorByName(mappingResult.color);
+        }
+
+        if (mappingResult.icon != null) {
+          icon = mappingResult.icon;
         }
       }
     }
@@ -137,7 +143,23 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       percent = scaleResult.percent;
     }
 
-    return { text, numeric, prefix, suffix, color, percent };
+    const display: DisplayValue = {
+      text,
+      numeric,
+      prefix,
+      suffix,
+      color,
+    };
+
+    if (icon != null) {
+      display.icon = icon;
+    }
+
+    if (percent != null) {
+      display.percent = percent;
+    }
+
+    return display;
   };
 }
 
@@ -147,7 +169,20 @@ function toStringProcessor(value: any): DisplayValue {
 
 export function getRawDisplayProcessor(): DisplayProcessor {
   return (value: any) => ({
-    text: `${value}`,
-    numeric: (null as unknown) as number,
+    text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value, getCircularReplacer())}` : `${value}`,
+    numeric: null as unknown as number,
   });
 }
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (_key: any, value: object | null) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};

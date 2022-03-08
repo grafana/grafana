@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { locationService } from '@grafana/runtime';
+import { locationService, setEchoSrv } from '@grafana/runtime';
 import { selectOptionInTest } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -9,6 +9,7 @@ import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
+import { Echo } from 'app/core/services/echo/Echo';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -38,6 +39,10 @@ const setup = (testProps?: Partial<Props>) => {
  * calls inside useDebounce hook
  */
 describe('DashboardSearch', () => {
+  beforeAll(() => {
+    setEchoSrv(new Echo());
+  });
+
   it('should call search api with default query when initialised', async () => {
     locationService.push('/');
     setup();

@@ -7,6 +7,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
   getLegacyAngularInjector,
+  getBackendSrv,
 } from '@grafana/runtime';
 // Types
 import {
@@ -26,6 +27,7 @@ import {
 import { DataSourceVariableModel } from '../variables/types';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -242,7 +244,7 @@ export class DatasourceSrv implements DataSourceService {
       for (const variable of this.templateSrv.getVariables().filter((variable) => variable.type === 'datasource')) {
         const dsVar = variable as DataSourceVariableModel;
         const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
-        const dsName = (first as unknown) as string;
+        const dsName = first as unknown as string;
         const dsSettings = this.settingsMapByName[dsName];
 
         if (dsSettings) {
@@ -268,15 +270,24 @@ export class DatasourceSrv implements DataSourceService {
 
     if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
-        base.push(this.getInstanceSettings('-- Mixed --')!);
+        const mixedInstanceSettings = this.getInstanceSettings('-- Mixed --');
+        if (mixedInstanceSettings) {
+          base.push(mixedInstanceSettings);
+        }
       }
 
       if (filters.dashboard) {
-        base.push(this.getInstanceSettings('-- Dashboard --')!);
+        const dashboardInstanceSettings = this.getInstanceSettings('-- Dashboard --');
+        if (dashboardInstanceSettings) {
+          base.push(dashboardInstanceSettings);
+        }
       }
 
       if (!filters.tracing) {
-        base.push(this.getInstanceSettings('-- Grafana --')!);
+        const grafanaInstanceSettings = this.getInstanceSettings('-- Grafana --');
+        if (grafanaInstanceSettings) {
+          base.push(grafanaInstanceSettings);
+        }
       }
     }
 
@@ -297,7 +308,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ annotations: true, variables: true }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
@@ -310,10 +321,17 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
+  }
+
+  async reload() {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    config.datasources = settings.datasources;
+    config.defaultDatasource = settings.defaultDatasource;
+    this.init(settings.datasources, settings.defaultDatasource);
   }
 }
 
@@ -327,5 +345,3 @@ export function variableInterpolation(value: any[]) {
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
-
-export default DatasourceSrv;

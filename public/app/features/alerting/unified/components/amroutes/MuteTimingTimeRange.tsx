@@ -13,7 +13,11 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
   const styles = useStyles2(getStyles);
   const { register, formState } = useFormContext<MuteTimingFields>();
 
-  const { fields: timeRanges, append: addTimeRange, remove: removeTimeRange } = useFieldArray<MuteTimingFields>({
+  const {
+    fields: timeRanges,
+    append: addTimeRange,
+    remove: removeTimeRange,
+  } = useFieldArray<MuteTimingFields>({
     name: `time_intervals.${intervalIndex}.times`,
   });
 
@@ -22,7 +26,7 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
       return true;
     }
     const [hour, minutes] = timeString.split(':').map((x) => parseInt(x, 10));
-    const isHourValid = hour > 0 && hour < 25;
+    const isHourValid = hour >= 0 && hour < 25;
     const isMinuteValid = minutes > -1 && minutes < 60;
     const isTimeValid = hour === 24 ? minutes === 0 : isHourValid && isMinuteValid;
 

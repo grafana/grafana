@@ -5,6 +5,7 @@ import {
   VisibilityMode,
   GraphGradientMode,
   StackingMode,
+  SortOrder,
 } from '@grafana/schema';
 import {
   createTheme,
@@ -92,6 +93,7 @@ describe('BarChart utils', () => {
       stacking: StackingMode.None,
       tooltip: {
         mode: TooltipDisplayMode.None,
+        sort: SortOrder.None,
       },
       text: {
         valueSize: 10,
@@ -183,7 +185,7 @@ describe('BarChart utils', () => {
       });
       const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
 
-      const field = result.viz.fields[1];
+      const field = result.viz[0].fields[1];
       expect(field!.values.toArray()).toMatchInlineSnapshot(`
       Array [
         -10,
@@ -207,19 +209,19 @@ describe('BarChart utils', () => {
 
       const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: false },
-      } as any);
-      expect(resultAsc.viz.fields[0].type).toBe(FieldType.string);
-      expect(resultAsc.viz.fields[1].name).toBe('a');
-      expect(resultAsc.viz.fields[2].name).toBe('c');
-      expect(resultAsc.viz.fields[3].name).toBe('b');
+      } as any).viz[0];
+      expect(resultAsc.fields[0].type).toBe(FieldType.string);
+      expect(resultAsc.fields[1].name).toBe('a');
+      expect(resultAsc.fields[2].name).toBe('c');
+      expect(resultAsc.fields[3].name).toBe('b');
 
       const resultDesc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: true },
-      } as any);
-      expect(resultDesc.viz.fields[0].type).toBe(FieldType.string);
-      expect(resultDesc.viz.fields[1].name).toBe('b');
-      expect(resultDesc.viz.fields[2].name).toBe('c');
-      expect(resultDesc.viz.fields[3].name).toBe('a');
+      } as any).viz[0];
+      expect(resultDesc.fields[0].type).toBe(FieldType.string);
+      expect(resultDesc.fields[1].name).toBe('b');
+      expect(resultDesc.fields[2].name).toBe('c');
+      expect(resultDesc.fields[3].name).toBe('a');
     });
   });
 });

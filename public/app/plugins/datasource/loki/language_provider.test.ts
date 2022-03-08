@@ -6,6 +6,7 @@ import { TypeaheadInput } from '@grafana/ui';
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
 import { AbstractLabelOperator } from '@grafana/data';
+import { LokiQueryType } from './types';
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -98,6 +99,27 @@ describe('Language completion provider', () => {
         end: 1560163909000,
         'match[]': '{job="grafana"}',
         start: 1560153109000,
+      });
+    });
+  });
+
+  describe('fetchSeriesLabels', () => {
+    it('should interpolate variable in series', () => {
+      const datasource: LokiDatasource = {
+        metadataRequest: () => ({ data: { data: [] as any[] } }),
+        getTimeRangeParams: () => ({ start: 0, end: 1 }),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as any as LokiDatasource;
+
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue([]);
+      fetchSeriesLabels('$stream');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/loki/api/v1/series', {
+        end: 1,
+        'match[]': 'interpolated-stream',
+        start: 0,
       });
     });
   });
@@ -248,7 +270,7 @@ describe('Query imports', () => {
   it('returns empty queries', async () => {
     const instance = new LanguageProvider(datasource);
     const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
-    expect(result).toEqual({ refId: 'bar', expr: '', range: true });
+    expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
   });
 
   describe('exporting to abstract query', () => {

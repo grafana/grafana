@@ -77,13 +77,17 @@ func (ctx *Context) run() {
 // RemoteAddr returns more real IP address.
 func (ctx *Context) RemoteAddr() string {
 	addr := ctx.Req.Header.Get("X-Real-IP")
+
 	if len(addr) == 0 {
-		addr = ctx.Req.Header.Get("X-Forwarded-For")
-		if addr == "" {
-			addr = ctx.Req.RemoteAddr
-			if i := strings.LastIndex(addr, ":"); i > -1 {
-				addr = addr[:i]
-			}
+		// X-Forwarded-For may contain multiple IP addresses, separated by
+		// commas.
+		addr = strings.TrimSpace(strings.Split(ctx.Req.Header.Get("X-Forwarded-For"), ",")[0])
+	}
+
+	if len(addr) == 0 {
+		addr = ctx.Req.RemoteAddr
+		if i := strings.LastIndex(addr, ":"); i > -1 {
+			addr = addr[:i]
 		}
 	}
 	return addr
@@ -176,13 +180,6 @@ func (ctx *Context) QueryInt(name string) int {
 // QueryInt64 returns query result in int64 type.
 func (ctx *Context) QueryInt64(name string) int64 {
 	n, _ := strconv.ParseInt(ctx.Query(name), 10, 64)
-	return n
-}
-
-// ParamsInt64 returns params result in int64 type.
-// e.g. ctx.ParamsInt64(":uid")
-func (ctx *Context) ParamsInt64(name string) int64 {
-	n, _ := strconv.ParseInt(Params(ctx.Req)[name], 10, 64)
 	return n
 }
 

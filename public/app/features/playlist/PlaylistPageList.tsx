@@ -1,9 +1,11 @@
 import React from 'react';
 import { PlaylistDTO } from './types';
-import { Button, Card, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, Card, LinkButton, ModalsController, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+import { ShareModal } from './ShareModal';
 
 interface Props {
   setStartPlaylist: (playlistItem: PlaylistDTO) => void;
@@ -18,7 +20,24 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
       {playlists!.map((playlist: PlaylistDTO) => (
         <li className={styles.listItem} key={playlist.id.toString()}>
           <Card>
-            <Card.Heading>{playlist.name}</Card.Heading>
+            <Card.Heading>
+              {playlist.name}
+              <ModalsController key="button-share">
+                {({ showModal, hideModal }) => (
+                  <DashNavButton
+                    tooltip="Share playlist"
+                    icon="share-alt"
+                    iconSize="lg"
+                    onClick={() => {
+                      showModal(ShareModal, {
+                        playlistId: playlist.id,
+                        onDismiss: hideModal,
+                      });
+                    }}
+                  />
+                )}
+              </ModalsController>
+            </Card.Heading>
             <Card.Actions>
               <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
                 Start playlist

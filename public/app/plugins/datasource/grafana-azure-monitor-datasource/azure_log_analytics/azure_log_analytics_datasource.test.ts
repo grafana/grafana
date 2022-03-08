@@ -1,17 +1,18 @@
-import AzureMonitorDatasource from '../datasource';
-import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
-import FakeSchemaData from './__mocks__/schema';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
 import { toUtc } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import createMockQuery from '../__mocks__/query';
 import { singleVariable } from '../__mocks__/variables';
+import AzureMonitorDatasource from '../datasource';
+import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+import FakeSchemaData from './__mocks__/schema';
+import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 
 const templateSrv = new TemplateSrv();
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getTemplateSrv: () => templateSrv,
 }));
 
@@ -273,12 +274,24 @@ describe('AzureLogAnalyticsDatasource', () => {
       laDatasource = new AzureLogAnalyticsDatasource(ctx.instanceSettings);
     });
 
-    it('should run complete queries', () => {
+    it('should run queries with a resource', () => {
       const query: AzureMonitorQuery = {
         refId: 'A',
         azureLogAnalytics: {
           resource: '/sub/124/rg/cloud/vm/server',
           query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeTruthy();
+    });
+
+    it('should run queries with a workspace', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          query: 'perf | take 100',
+          workspace: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
         },
       };
 
@@ -317,7 +330,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(laDatasource.filterQuery(query)).toBeFalsy();
     });
 
-    it('should not run queries missing a resource', () => {
+    it('should not run queries missing a resource and a missing workspace', () => {
       const query: AzureMonitorQuery = {
         refId: 'A',
         azureLogAnalytics: {

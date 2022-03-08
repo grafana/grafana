@@ -10,15 +10,21 @@ import {
   isValidGoDuration,
   LoadingState,
 } from '@grafana/data';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
-import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
-import { failedMetric, mapPromMetricsToServiceMap, serviceMapMetrics, totalsMetric } from './graphTransform';
+import {
+  failedMetric,
+  histogramMetric,
+  mapPromMetricsToServiceMap,
+  serviceMapMetrics,
+  totalsMetric,
+} from './graphTransform';
 import {
   transformTrace,
   transformTraceList,
@@ -28,7 +34,7 @@ import {
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -53,6 +59,15 @@ export interface TempoQuery extends DataQuery {
   maxDuration?: string;
   limit?: number;
   serviceMapQuery?: string;
+}
+
+interface SearchQueryParams {
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
+  tags: string;
+  start?: number;
+  end?: number;
 }
 
 export const DEFAULT_LIMIT = 20;
@@ -80,6 +95,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
     const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceId');
+
+    if (targets.clear) {
+      return of({ data: [], state: LoadingState.Done });
+    }
 
     // Run search queries on linked datasource
     if (this.tracesToLogs?.datasourceUid && targets.search?.length > 0) {
@@ -116,7 +135,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.nativeSearch?.length) {
       try {
-        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+        const timeRange = config.featureToggles.tempoBackendSearch
+          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
+          : undefined;
+        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0], timeRange);
         subQueries.push(
           this._request('/api/search', searchQuery).pipe(
             map((response) => {
@@ -222,7 +244,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return query.query;
   }
 
-  buildSearchQuery(query: TempoQuery) {
+  buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
     let tags = query.search ?? '';
 
     let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
@@ -259,7 +281,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       throw new Error('Please enter a valid limit.');
     }
 
-    return { tags, ...tempoQuery };
+    let searchQuery: SearchQueryParams = { tags, ...tempoQuery };
+
+    if (timeRange) {
+      searchQuery.start = timeRange.startTime;
+      searchQuery.end = timeRange.endTime;
+    }
+
+    return searchQuery;
   }
 
   async getServiceGraphLabels() {
@@ -294,8 +323,21 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
       nodes.fields[0].config = {
         links: [
-          makePromLink('Total requests', totalsMetric, datasourceUid),
-          makePromLink('Failed requests', failedMetric, datasourceUid),
+          makePromLink(
+            'Request rate',
+            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
+            datasourceUid
+          ),
+          makePromLink(
+            'Request histogram',
+            `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${__data.fields.id}"}[$__rate_interval])) by (le, client, server))`,
+            datasourceUid
+          ),
+          makePromLink(
+            'Failed request rate',
+            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
+            datasourceUid
+          ),
         ],
       };
 

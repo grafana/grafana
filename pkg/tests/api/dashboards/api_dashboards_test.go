@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -32,6 +32,7 @@ func TestDashboardQuota(t *testing.T) {
 		EnableQuota:       true,
 		DashboardOrgQuota: &dashboardQuota,
 	})
+
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, models.CreateUserCommand{
@@ -45,7 +46,7 @@ func TestDashboardQuota(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dashboardimport.ImportDashboardRequest{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
@@ -70,7 +71,7 @@ func TestDashboardQuota(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dashboardimport.ImportDashboardRequest{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
@@ -97,7 +98,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCom
 	return u.Id
 }
 
-func TestProvisionioningDashboards(t *testing.T) {
+func TestUpdatingProvisionionedDashboards(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -161,14 +162,31 @@ providers:
 		testCases := []struct {
 			desc          string
 			dashboardData string
+			expStatus     int
+			expErrReason  string
 		}{
 			{
 				desc:          "when updating provisioned dashboard using ID it should fail",
 				dashboardData: fmt.Sprintf(`{"title":"just testing", "id": %d, "version": 1}`, dashboardID),
+				expStatus:     http.StatusBadRequest,
+				expErrReason:  models.ErrDashboardCannotSaveProvisionedDashboard.Reason,
 			},
 			{
-				desc:          "when updating provisioned dashboard using UID is should fail",
+				desc:          "when updating provisioned dashboard using UID it should fail",
 				dashboardData: fmt.Sprintf(`{"title":"just testing", "uid": %q, "version": 1}`, dashboardUID),
+				expStatus:     http.StatusBadRequest,
+				expErrReason:  models.ErrDashboardCannotSaveProvisionedDashboard.Reason,
+			},
+			{
+				desc:          "when updating dashboard using unknown ID, it should fail",
+				dashboardData: `{"title":"just testing", "id": 42, "version": 1}`,
+				expStatus:     http.StatusNotFound,
+				expErrReason:  models.ErrDashboardNotFound.Reason,
+			},
+			{
+				desc:          "when updating dashboard using unknown UID, it should succeed",
+				dashboardData: `{"title":"just testing", "uid": "unknown", "version": 1}`,
+				expStatus:     http.StatusOK,
 			},
 		}
 		for _, tc := range testCases {
@@ -186,17 +204,20 @@ providers:
 				// nolint:gosec
 				resp, err := http.Post(u, "application/json", buf)
 				require.NoError(t, err)
-				assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+				assert.Equal(t, tc.expStatus, resp.StatusCode)
 				t.Cleanup(func() {
 					err := resp.Body.Close()
 					require.NoError(t, err)
 				})
+				if tc.expErrReason == "" {
+					return
+				}
 				b, err := ioutil.ReadAll(resp.Body)
 				require.NoError(t, err)
 				dashboardErr := &errorResponseBody{}
 				err = json.Unmarshal(b, dashboardErr)
 				require.NoError(t, err)
-				assert.Equal(t, models.ErrDashboardCannotSaveProvisionedDashboard.Reason, dashboardErr.Message)
+				assert.Equal(t, tc.expErrReason, dashboardErr.Message)
 			})
 		}
 

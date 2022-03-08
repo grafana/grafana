@@ -33,7 +33,11 @@ export const Components = {
         seriesCount: 'TestData series count',
         spread: 'TestData spread',
         startValue: 'TestData start value',
+        drop: 'TestData drop values',
       },
+    },
+    DataSourceHttpSettings: {
+      urlInput: 'Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
@@ -318,5 +322,14 @@ export const Components = {
   },
   ColorSwatch: {
     name: `data-testid-colorswatch`,
+  },
+  DashboardRow: {
+    title: (title: string) => `data-testid dashboard-row-title-${title}`,
+  },
+  UserProfile: {
+    profileSaveButton: 'data-testid-user-profile-save',
+    preferencesSaveButton: 'data-testid-shared-prefs-save',
+    orgsTable: 'data-testid-user-orgs-table',
+    sessionsTable: 'data-testid-user-sessions-table',
   },
 };

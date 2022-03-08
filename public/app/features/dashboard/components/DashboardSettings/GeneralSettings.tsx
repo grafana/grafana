@@ -122,7 +122,9 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         </Field>
       </div>
 
-      {config.featureToggles.dashboardPreviews && <PreviewSettings uid={dashboard.uid} />}
+      {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
+        <PreviewSettings uid={dashboard.uid} />
+      )}
 
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}
@@ -149,7 +151,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
       </CollapsableSection>
 
       <div className="gf-form-button-row">
-        {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}
+        {dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}
       </div>
     </div>
   );

@@ -7,15 +7,16 @@ awsconfig
 /.awcache
 /dist
 /public/build
-public/dist/tsconfig.tsbuildinfo
 /public/views/index.html
 /public/views/error.html
 /emails/dist
 /reports
 /e2e/tmp
+/scripts/grafana-server/tmp
 vendor/
 /docs/menu.yaml
 /requests
+tsconfig.tsbuildinfo
 
 # Yarn
 .yarn/*
@@ -38,6 +39,7 @@ vendor/
 
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
+/devenv/docker/blocks/saml-enterprise
 
 /tmp
 tools/phantomjs/phantomjs
@@ -136,6 +138,12 @@ compilation-stats.json
 /e2e/**/screenshots
 !/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
+/e2e/benchmarks/**/results/*
+/e2e/benchmarks/**/results
+/e2e/build_results.zip
+
+# grafana server
+/scripts/grafana-server/server.log
 
 # a11y tests
 /pa11y-ci-results.json
@@ -149,6 +157,7 @@ compilation-stats.json
 
 # auto generated Go files
 *_gen.go
+!pkg/services/featuremgmt/toggles_gen.go
 
 # Auto-generated localisation files
 public/locales/_build/

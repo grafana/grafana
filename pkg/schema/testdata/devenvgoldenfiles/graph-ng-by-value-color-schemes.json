@@ -98,7 +98,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -193,7 +194,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -287,7 +289,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -308,7 +311,10 @@
 			"transformations": []
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -382,7 +388,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -476,7 +483,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -501,7 +509,10 @@
 			"transformations": []
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -579,7 +590,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -599,7 +611,10 @@
 			"transformations": []
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -677,7 +692,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -697,7 +713,10 @@
 			"transformations": []
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -775,7 +794,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -872,7 +892,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -907,7 +928,7 @@
 		}
 	],
 	"refresh": false,
-	"schemaVersion": 30,
+	"schemaVersion": 33,
 	"style": "dark",
 	"tags": [
 		"gdev",

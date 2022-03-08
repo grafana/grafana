@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
+	"github.com/grafana/grafana/pkg/util/maputil"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -14,36 +14,28 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-const (
-	authHeader    = "Authorization"
-	idTokenHeader = "X-ID-Token"
-)
-
 type Provider struct {
 	settings       backend.DataSourceInstanceSettings
-	jsonData       JsonData
+	jsonData       map[string]interface{}
+	httpMethod     string
 	clientProvider httpclient.Provider
 	log            log.Logger
 }
 
 func NewProvider(
 	settings backend.DataSourceInstanceSettings,
-	jsonData JsonData,
+	jsonData map[string]interface{},
 	clientProvider httpclient.Provider,
 	log log.Logger,
 ) *Provider {
+	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
 	return &Provider{
 		settings:       settings,
 		jsonData:       jsonData,
+		httpMethod:     httpMethod,
 		clientProvider: clientProvider,
 		log:            log,
 	}
-}
-
-type JsonData struct {
-	Method        string `json:"httpMethod"`
-	OauthPassThru bool   `json:"oauthPassThru"`
-	TimeInterval  string `json:"timeInterval"`
 }
 
 func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
@@ -53,13 +45,17 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 	}
 
 	opts.Middlewares = p.middlewares()
-	if p.jsonData.OauthPassThru {
-		opts.Headers = authHeaders(headers)
-	}
+	opts.Headers = reqHeaders(headers)
 
 	// Set SigV4 service namespace
 	if opts.SigV4 != nil {
 		opts.SigV4.Service = "aps"
+	}
+
+	// Azure authentication
+	err = p.configureAzureAuthentication(opts)
+	if err != nil {
+		return nil, err
 	}
 
 	roundTripper, err := p.clientProvider.GetTransport(opts)
@@ -85,22 +81,18 @@ func (p *Provider) middlewares() []sdkhttpclient.Middleware {
 		middleware.CustomQueryParameters(p.log),
 		sdkhttpclient.CustomHeadersMiddleware(),
 	}
-	if strings.ToLower(p.jsonData.Method) == "get" {
+	if strings.ToLower(p.httpMethod) == "get" {
 		middlewares = append(middlewares, middleware.ForceHttpGet(p.log))
 	}
 
 	return middlewares
 }
 
-func authHeaders(headers map[string]string) map[string]string {
-	authHeaders := make(map[string]string)
-	if v, ok := headers[authHeader]; ok {
-		authHeaders[authHeader] = v
+func reqHeaders(headers map[string]string) map[string]string {
+	// copy to avoid changing the original map
+	h := make(map[string]string, len(headers))
+	for k, v := range headers {
+		h[k] = v
 	}
-
-	if v, ok := headers[idTokenHeader]; ok {
-		authHeaders[idTokenHeader] = v
-	}
-
-	return authHeaders
+	return h
 }

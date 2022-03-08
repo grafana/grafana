@@ -1,17 +1,17 @@
-import { lastValueFrom, of } from 'rxjs';
-import { setDataSourceSrv } from '@grafana/runtime';
 import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
-
+import { setDataSourceSrv } from '@grafana/runtime';
+import { lastValueFrom, of } from 'rxjs';
 import { toArray } from 'rxjs/operators';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, CloudWatchLogsQueryStatus } from './types';
+
 import {
-  setupMockedDataSource,
-  namespaceVariable,
-  metricVariable,
   labelsVariable,
   limitVariable,
+  metricVariable,
+  namespaceVariable,
+  setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
 import { CloudWatchDatasource } from './datasource';
+import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './types';
 
 describe('datasource', () => {
   describe('query', () => {
@@ -87,10 +87,60 @@ describe('datasource', () => {
       expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
-          url:
-            "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
+          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
         },
       ]);
+    });
+
+    describe('debouncedCustomAlert', () => {
+      const debouncedAlert = jest.fn();
+      beforeEach(() => {
+        const { datasource } = setupMockedDataSource({
+          variables: [
+            { ...namespaceVariable, multi: true },
+            { ...metricVariable, multi: true },
+          ],
+        });
+        datasource.debouncedCustomAlert = debouncedAlert;
+        datasource.performTimeSeriesQuery = jest.fn().mockResolvedValue([]);
+        datasource.query({
+          targets: [
+            {
+              queryMode: 'Metrics',
+              id: '',
+              region: 'us-east-2',
+              namespace: namespaceVariable.id,
+              metricName: metricVariable.id,
+              period: '',
+              alias: '',
+              dimensions: {},
+              matchExact: true,
+              statistic: '',
+              refId: '',
+              expression: 'x * 2',
+              metricQueryType: MetricQueryType.Search,
+              metricEditorMode: MetricEditorMode.Code,
+            },
+          ],
+        } as any);
+      });
+      it('should show debounced alert for namespace and metric name', async () => {
+        expect(debouncedAlert).toHaveBeenCalledWith(
+          'CloudWatch templating error',
+          'Multi template variables are not supported for namespace'
+        );
+        expect(debouncedAlert).toHaveBeenCalledWith(
+          'CloudWatch templating error',
+          'Multi template variables are not supported for metric name'
+        );
+      });
+
+      it('should not show debounced alert for region', async () => {
+        expect(debouncedAlert).not.toHaveBeenCalledWith(
+          'CloudWatch templating error',
+          'Multi template variables are not supported for region'
+        );
+      });
     });
   });
 
@@ -199,6 +249,26 @@ describe('datasource', () => {
       });
     });
   });
+  describe('resource requests', () => {
+    it('should map resource response to metric response', async () => {
+      const datasource = setupMockedDataSource().datasource;
+      datasource.doMetricResourceRequest = jest.fn().mockResolvedValue([
+        {
+          text: 'AWS/EC2',
+          value: 'CPUUtilization',
+        },
+        {
+          text: 'AWS/Redshift',
+          value: 'CPUPercentage',
+        },
+      ]);
+      const allMetrics = await datasource.getAllMetrics('us-east-2');
+      expect(allMetrics[0].metricName).toEqual('CPUUtilization');
+      expect(allMetrics[0].namespace).toEqual('AWS/EC2');
+      expect(allMetrics[1].metricName).toEqual('CPUPercentage');
+      expect(allMetrics[1].namespace).toEqual('AWS/Redshift');
+    });
+  });
 
   describe('performTimeSeriesQuery', () => {
     it('should return the same length of data as result', async () => {
@@ -224,6 +294,36 @@ describe('datasource', () => {
       await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data.length).toEqual(2);
+      });
+    });
+
+    it('sets fields.config.interval based on period', async () => {
+      const { datasource } = setupMockedDataSource({
+        data: {
+          results: {
+            a: {
+              refId: 'a',
+              series: [{ name: 'cpu', points: [1, 2], meta: { custom: { period: 60 } } }],
+            },
+            b: {
+              refId: 'b',
+              series: [{ name: 'cpu', points: [1, 2], meta: { custom: { period: 120 } } }],
+            },
+          },
+        },
+      });
+
+      const observable = datasource.performTimeSeriesQuery(
+        {
+          queries: [{ datasourceId: 1, refId: 'a' }],
+        } as any,
+        { from: dateTime(), to: dateTime() } as any
+      );
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const response = received[0];
+        expect(response.data[0].fields[0].config.interval).toEqual(60000);
+        expect(response.data[1].fields[0].config.interval).toEqual(120000);
       });
     });
   });

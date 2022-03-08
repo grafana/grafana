@@ -181,6 +181,24 @@ func (j *Json) GetIndex(index int) *Json {
 	return &Json{nil}
 }
 
+// CheckGetIndex returns a pointer to a new `Json` object
+// for `index` in its `array` representation, and a `bool`
+// indicating success or failure
+//
+// useful for chained operations when success is important:
+//    if data, ok := js.Get("top_level").CheckGetIndex(0); ok {
+//        log.Println(data)
+//    }
+func (j *Json) CheckGetIndex(index int) (*Json, bool) {
+	a, err := j.Array()
+	if err == nil {
+		if len(a) > index {
+			return &Json{a[index]}, true
+		}
+	}
+	return nil, false
+}
+
 // SetIndex modifies `Json` array by `index` and `value`
 // for `index` in its `array` representation
 func (j *Json) SetIndex(index int, val interface{}) {
