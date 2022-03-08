@@ -77,25 +77,33 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 }
 
 type AccessControlDashboardPermissionFilter struct {
-	User *models.SignedInUser
+	User            *models.SignedInUser
+	PermissionLevel models.PermissionType
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
+	folderAction := accesscontrol.ActionFoldersRead
+	dashboardAction := accesscontrol.ActionDashboardsRead
+	if f.PermissionLevel == models.PERMISSION_EDIT {
+		folderAction = accesscontrol.ActionDashboardsCreate
+		dashboardAction = accesscontrol.ActionDashboardsWrite
+	}
+
 	builder := strings.Builder{}
 
 	builder.WriteString("(((")
 
-	dashFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "dashboards", "dashboards:read", f.User)
+	dashFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "dashboards", dashboardAction, f.User)
 	builder.WriteString(dashFilter.Where)
 
 	builder.WriteString(" OR ")
 
-	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", "dashboards:read", f.User)
+	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", dashboardAction, f.User)
 	builder.WriteString(dashFolderFilter.Where)
 
 	builder.WriteString(") AND NOT dashboard.is_folder) OR (")
 
-	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", "folders:read", f.User)
+	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", folderAction, f.User)
 	builder.WriteString(folderFilter.Where)
 	builder.WriteString(" AND dashboard.is_folder))")
 
