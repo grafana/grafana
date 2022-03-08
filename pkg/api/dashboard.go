@@ -82,7 +82,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	uid := params["uid"]
 
 	// Check for path based UIDs (from file systems)
-	if ok {
+	if ok || uid == "" {
 		dto, err := hs.StorageService.GetDashboard(c.Req.Context(), c.SignedInUser, path)
 		if err != nil {
 			return response.Error(500, "error getting path dashboard", err)

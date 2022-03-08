@@ -262,6 +262,7 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 			CanSave: false,
 			CanEdit: false,
 			CanStar: false,
+			Slug:    path,
 		},
 	}, nil
 }
@@ -270,8 +271,11 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 	dash := models.NewDashboard(path)
 
 	fname := frame.Fields[0]
-
 	count := fname.Len()
+	if count < 1 {
+		return nil, nil
+	}
+
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	paths := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	names.Name = "name"
@@ -281,7 +285,7 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 		name := fmt.Sprintf("%v", fname.At(i))
 		name = strings.TrimSuffix(name, ".json")
 		names.Set(i, name)
-		paths.Set(i, fmt.Sprintf("%s/%s", path, name))
+		paths.Set(i, filestorage.Join(path, name))
 	}
 	f2 := data.NewFrame("", names, paths, frame.Fields[1])
 	frame.SetMeta(&data.FrameMeta{

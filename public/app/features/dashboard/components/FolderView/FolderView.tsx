@@ -25,15 +25,14 @@ export const FolderView = ({ dashboard }: Props) => {
 
   return (
     <div>
-      <header>FOLDER: {dashboard.title}</header>
       <div>
-        <pre>{JSON.stringify(parts)}</pre>
+        <pre>NAVIGATE: {JSON.stringify(parts)}</pre>
       </div>
       <div>
         <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true} updateAfterMountMs={500}>
           <div>
             {view.map((item) => {
-              const url = `/g/${item.path}`;
+              const url = `/g${item.path}`;
               return (
                 <Card
                   key={item.name}
