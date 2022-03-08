@@ -15,6 +15,7 @@ import (
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -26,11 +27,6 @@ type ServiceAccountsAPI struct {
 	RouterRegister routing.RouteRegister
 	store          serviceaccounts.Store
 	log            log.Logger
-}
-
-type serviceAccountIdDTO struct {
-	Id      int64  `json:"id"`
-	Message string `json:"message"`
 }
 
 func NewServiceAccountsAPI(
@@ -81,24 +77,23 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 
 // POST /api/serviceaccounts
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
-	cmd := serviceaccounts.CreateServiceAccountForm{}
+	type createServiceAccountForm struct {
+		Name string `json:"name" binding:"Required"`
+	}
+	cmd := createServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
-	cmd.OrgID = c.OrgId
 
-	user, err := api.service.CreateServiceAccount(c.Req.Context(), &cmd)
+	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
-	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-		return response.Error(http.StatusBadRequest, "Failed to create role with the provided name", err)
+	case errors.Is(err, &database.ErrSAInvalidName{}):
+		return response.Error(http.StatusBadRequest, "Invalid service account name", err)
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
-	sa := &serviceAccountIdDTO{
-		Id:      user.Id,
-		Message: "Service account created",
-	}
-	return response.JSON(http.StatusCreated, sa)
+
+	return response.JSON(http.StatusCreated, serviceAccount)
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
