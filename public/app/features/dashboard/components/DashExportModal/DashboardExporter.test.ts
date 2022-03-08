@@ -180,7 +180,7 @@ it('handles a default datasource in a template variable', async () => {
   const dashboardModel = new DashboardModel(dashboard, {}, () => dashboard.templating.list);
   const exporter = new DashboardExporter();
   const exported: any = await exporter.makeExportable(dashboardModel);
-  expect(exported.templating.list[0].datasource).toBe('${DS_GFDB}');
+  expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
 });
 
 describe('given dashboard with repeated panels', () => {
@@ -325,7 +325,7 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should replace datasource in annotation query', () => {
-    expect(exported.annotations.list[1].datasource).toBe('${DS_GFDB}');
+    expect(exported.annotations.list[1].datasource.uid).toBe('${DS_GFDB}');
   });
 
   it('should add datasource as input', () => {
