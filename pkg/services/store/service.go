@@ -199,6 +199,9 @@ func (s *standardStorageService) Browse(c *models.ReqContext) response.Response 
 	if err != nil {
 		return response.Error(400, "error reading path", err)
 	}
+	if frame == nil {
+		return response.Error(404, "not found", nil)
+	}
 	return response.JSONStreaming(200, frame)
 }
 

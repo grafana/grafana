@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -41,15 +40,7 @@ func (t *nestedTree) GetFile(ctx context.Context, path string) (*filestorage.Fil
 }
 
 func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, error) {
-	fmt.Println("preparing to list " + path)
-	idx := strings.Index(path, "/")
-	rootKey := path
-	if idx > 0 {
-		rootKey = path[:idx]
-		path = path[idx+1:]
-	}
-
-	if rootKey == "" {
+	if path == "" || path == "/" {
 		count := len(t.roots)
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -66,34 +57,34 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return frame, nil
 	}
 
+	rootKey, path := splitFirstSegment(path)
+
 	root, ok := t.lookup[rootKey]
 	if !ok || root == nil {
-		return nil, nil // not found
+		return nil, nil // not found or not ready
 	}
 
-	listPath := path
-	if listPath == "public" || listPath == "dev-dashboards" {
-		// `public` does not exist in filestorage rooted at `/some/path/public` - we need to remove the storage prefix
-		listPath = filestorage.Delimiter
-	}
-	if !strings.HasPrefix(listPath, filestorage.Delimiter) {
-		// currently the API requires absolute paths
-		listPath = filestorage.Delimiter + listPath
-	}
-	rsp, err := root.ListFiles(ctx, listPath, nil, nil)
+	listPath := filestorage.Delimiter + path
+	files, err := root.ListFiles(ctx, listPath, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	folders, err := root.ListFolders(ctx, listPath, &filestorage.ListOptions{Recursive: false})
+	if err != nil {
+		return nil, err
+	}
+	for i := range folders {
+		folders[i].MimeType = "directory" // hack for now
+	}
 
-	count := len(rsp.Files) + len(folders)
+	count := len(files.Files) + len(folders)
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
 	names.Name = "name"
 	mtype.Name = "mediaType"
-	for i, f := range append(folders, rsp.Files...) {
+	for i, f := range append(folders, files.Files...) {
 		names.Set(i, f.Name)
 		mtype.Set(i, f.MimeType)
 		fsize.Set(i, f.Size)
@@ -102,7 +93,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 	frame.SetMeta(&data.FrameMeta{
 		Type: data.FrameTypeDirectoryListing,
 		Custom: map[string]interface{}{
-			"HasMore": rsp.HasMore,
+			"HasMore": files.HasMore,
 		},
 	})
 	return frame, nil
