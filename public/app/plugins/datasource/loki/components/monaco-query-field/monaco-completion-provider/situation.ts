@@ -5,28 +5,17 @@ import { NeverCaseError } from './util';
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeTypeName =
   | '⚠' // this is used as error-name
-  | 'VectorAggregationExpr'
   | 'Grouping'
-  | 'RangeAggregationExpr'
-  | 'Labels'
   | 'Identifier'
+  | 'LogRangeExpr'
+  | 'LogQL'
   | 'Matcher'
   | 'Matchers'
+  | 'Range'
+  | 'RangeAggregationExpr'
   | 'Selector'
-  | 'LabelName'
-  | 'PromQL'
   | 'String'
-  | 'VectorSelector'
-  | 'MatrixSelector'
-  | 'MatchOp'
-  | 'EqlSingle'
-  | 'Neq'
-  | 'EqlRegex'
-  | 'NeqRegex'
-  | 'EqlSingle'
-  | 'EqlRegex'
-  | 'Neq'
-  | 'NeqRegex';
+  | 'VectorAggregationExpr';
 
 type Path = Array<[Direction, NodeTypeName]>;
 
@@ -118,6 +107,10 @@ export type Situation =
       type: 'IN_DURATION';
     }
   | {
+      type: 'IN_GROUPING';
+      otherLabels: Label[];
+    }
+  | {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME';
       otherLabels: Label[];
     }
@@ -145,7 +138,7 @@ const RESOLVERS: Resolver[] = [
     fun: resolveSelector,
   },
   {
-    path: ['PromQL'],
+    path: ['LogQL'],
     fun: resolveTopLevel,
   },
   {
@@ -154,14 +147,18 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: ['String', 'Matcher'],
-    fun: resolveLabelMatcher,
+    fun: resolveMatcher,
+  },
+  {
+    path: ['Grouping'],
+    fun: resolveLabelsForGrouping,
   },
   {
     path: [ERROR_NODE_NAME, 'Matcher'],
-    fun: resolveLabelMatcher,
+    fun: resolveMatcher,
   },
   {
-    path: [ERROR_NODE_NAME, 'MatrixSelector'],
+    path: [ERROR_NODE_NAME, 'Range'],
     fun: resolveDurations,
   },
 ];
@@ -177,12 +174,12 @@ function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
   return LABEL_OP_MAP.get(opNode.name) ?? null;
 }
 
-function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
-  if (labelMatcherNode.type.name !== 'Matcher') {
+function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
+  if (matcherNode.type.name !== 'Matcher') {
     return null;
   }
 
-  const nameNode = walk(labelMatcherNode, [['firstChild', 'Identifier']]);
+  const nameNode = walk(matcherNode, [['firstChild', 'Identifier']]);
 
   if (nameNode === null) {
     return null;
@@ -198,7 +195,7 @@ function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
     return null;
   }
 
-  const valueNode = walk(labelMatcherNode, [['lastChild', 'String']]);
+  const valueNode = walk(matcherNode, [['lastChild', 'String']]);
 
   if (valueNode === null) {
     return null;
@@ -268,7 +265,35 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 //   return null;
 // }
 
-function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
+function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Situation | null {
+  const aggrExpNode = walk(node, [['parent', 'VectorAggregationExpr']]);
+  if (aggrExpNode === null) {
+    return null;
+  }
+  const bodyNode = aggrExpNode.getChild('MetricExpr');
+  if (bodyNode === null) {
+    return null;
+  }
+
+  const selectorNode = walk(bodyNode, [
+    ['firstChild', 'RangeAggregationExpr'],
+    ['lastChild', 'LogRangeExpr'],
+    ['firstChild', 'Selector'],
+  ]);
+
+  if (selectorNode === null) {
+    return null;
+  }
+
+  const otherLabels = getLabels(selectorNode, text);
+
+  return {
+    type: 'IN_GROUPING',
+    otherLabels,
+  };
+}
+
+function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
   // we can arrive here in two situation. `node` is either:
   // - a StringNode (like in `{job="^"}`)
   // - or an error node (like in `{job=^}`)
@@ -279,18 +304,18 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
     return null;
   }
 
-  const labelNameNode = walk(parent, [['firstChild', 'LabelName']]);
+  const labelNameNode = walk(parent, [['firstChild', 'Identifier']]);
   if (labelNameNode === null) {
     return null;
   }
 
   const labelName = getNodeText(labelNameNode, text);
 
-  // now we need to go up, to the parent of LabelMatcher,
-  // there can be one or many `LabelMatchList` parents, we have
+  // now we need to go up, to the parent of Matcher,
+  // there can be one or many `Matchers` parents, we have
   // to go through all of them
 
-  const firstListNode = walk(parent, [['parent', 'Selector']]);
+  const firstListNode = walk(parent, [['parent', 'Matchers']]);
   if (firstListNode === null) {
     return null;
   }
@@ -298,10 +323,10 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   let listNode = firstListNode;
 
   // we keep going through the parent-nodes
-  // as long as they are LabelMatchList.
-  // as soon as we reawch LabelMatchers, we stop
-  let labelMatchersNode: SyntaxNode | null = null;
-  while (labelMatchersNode === null) {
+  // as long as they are Matchers.
+  // as soon as we reawch Selector, we stop
+  let selectorNode: SyntaxNode | null = null;
+  while (selectorNode === null) {
     const p = listNode.parent;
     if (p === null) {
       return null;
@@ -310,13 +335,13 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
     const { name } = p.type;
 
     switch (name) {
-      case 'LabelMatchList':
+      case 'Matchers':
         //we keep looping
         listNode = p;
         continue;
-      case 'LabelMatchers':
+      case 'Selector':
         // we reached the end, we can stop the loop
-        labelMatchersNode = p;
+        selectorNode = p;
         continue;
       default:
         // we reached some other node, we stop
@@ -325,7 +350,7 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   }
 
   // now we need to find the other names
-  const allLabels = getLabels(labelMatchersNode, text);
+  const allLabels = getLabels(selectorNode, text);
 
   // we need to remove "our" label from all-labels, if it is in there
   const otherLabels = allLabels.filter((label) => label.name !== labelName);
@@ -356,16 +381,10 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
   };
 }
 
-// function subTreeHasError(node: SyntaxNode): boolean {
-//   return getNodeInSubtree(node, ERROR_NODE_NAME) !== null;
-// }
-
 function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation | null {
   // for example `{^}`
 
-  // there are some false positives that can end up in this situation, that we want
-
-  // next false positive:
+  // false positive:
   // `{a="1"^}`
   const child = walk(node, [['firstChild', 'Matchers']]);
   if (child !== null) {
@@ -423,12 +442,6 @@ export function getSituation(text: string, pos: number): Situation | null {
     };
   }
 
-  /*
-	PromQL
-Expr
-VectorSelector
-LabelMatchers
-*/
   const tree = parser.parse(text);
 
   // if the tree contains error, it is very probable that
