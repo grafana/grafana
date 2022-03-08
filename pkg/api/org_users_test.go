@@ -276,7 +276,7 @@ var (
 // setupOrgUsersDBForAccessControlTests creates three users placed in two orgs
 // Org1: testServerAdminViewer, testEditorOrg1
 // Org2: testServerAdminViewer, testAdminOrg2
-func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.SQLStore) {
+func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.Store) {
 	t.Helper()
 
 	var err error
@@ -337,7 +337,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			sc := setupHTTPServer(t, false, tc.enableAccessControl)
-			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			// Perform test
@@ -434,7 +434,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			sc := setupHTTPServer(t, false, tc.enableAccessControl)
-			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			// Perform test
@@ -544,7 +544,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			sc := setupHTTPServer(t, false, tc.enableAccessControl)
-			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			// Perform request
@@ -672,7 +672,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			sc := setupHTTPServer(t, false, tc.enableAccessControl)
-			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			// Perform request
@@ -792,7 +792,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			sc := setupHTTPServer(t, false, tc.enableAccessControl)
-			setupOrgUsersDBForAccessControlTests(t, *sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, tc.targetOrg, tc.targetUserId), nil, t)

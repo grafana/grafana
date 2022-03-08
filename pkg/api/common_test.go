@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -274,7 +275,7 @@ type accessControlScenarioContext struct {
 	acmock *accesscontrolmock.Mock
 
 	// db is a test database initialized with InitTestDB
-	db *sqlstore.SQLStore
+	db sqlstore.Store
 
 	// cfg is the setting provider
 	cfg *setting.Cfg
@@ -337,7 +338,25 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, cfg)
 }
 
+func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
+	// Use a new conf
+	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+
+	db := sqlstore.InitTestDB(t)
+	db.Cfg = cfg
+
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock())
+}
+
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
+	db := sqlstore.InitTestDB(t)
+	db.Cfg = cfg
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db)
+}
+
+func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store) accessControlScenarioContext {
 	t.Helper()
 
 	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
@@ -345,13 +364,10 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 
 	var acmock *accesscontrolmock.Mock
 
-	// Use a test DB
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = cfg
-
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
 
 	routeRegister := routing.NewRouteRegister()
+
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
 		Cfg:                cfg,
@@ -360,7 +376,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		Live:               newTestLive(t),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
-		SQLStore:           db,
+		SQLStore:           store,
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore, nil),
 	}
