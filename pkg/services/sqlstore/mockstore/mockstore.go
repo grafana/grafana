@@ -37,8 +37,9 @@ type SQLStoreMock struct {
 	ExpectedDataSources            []*models.DataSource
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
-
-	ExpectedError error
+	ExpectedPersistedDashboards    models.HitList
+	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedError                  error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -182,10 +183,12 @@ func (m *SQLStoreMock) GetUserOrgList(ctx context.Context, query *models.GetUser
 }
 
 func (m *SQLStoreMock) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	query.Result = m.ExpectedSignedInUser
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	query.Result = m.ExpectedSignedInUser
 	return m.ExpectedError
 }
 
@@ -451,6 +454,7 @@ func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashbo
 }
 
 func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
+	query.Result = m.ExpectedPersistedDashboards
 	return m.ExpectedError
 }
 

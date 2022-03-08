@@ -4,35 +4,30 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	stars "github.com/grafana/grafana/pkg/services/stars/starstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSearch_SortedResults(t *testing.T) {
-	bus.AddHandler("test", func(_ context.Context, query *FindPersistedDashboardsQuery) error {
-		query.Result = HitList{
-			&Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
-			&Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
-			&Hit{ID: 15, Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
-			&Hit{ID: 25, Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
-			&Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
-		}
-		return nil
-	})
+	ms := mockstore.NewSQLStoreMock()
+	ms.ExpectedPersistedDashboards = models.HitList{
+		&models.Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
+		&models.Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
+		&models.Hit{ID: 15, Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+		&models.Hit{ID: 25, Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+		&models.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
+	}
+	ms.ExpectedSignedInUser = &models.SignedInUser{IsGrafanaAdmin: true}
 
-	bus.AddHandler("test", func(_ context.Context, query *models.GetUserStarsQuery) error {
-		query.Result = map[int64]bool{10: true, 12: true}
-		return nil
-	})
-
-	bus.AddHandler("test", func(_ context.Context, query *models.GetSignedInUserQuery) error {
-		query.Result = &models.SignedInUser{IsGrafanaAdmin: true}
-		return nil
-	})
-
-	svc := &SearchService{}
+	fstars := stars.NewStarsServiceFake()
+	fstars.ExpectedUserStars = map[int64]bool{10: true, 12: true}
+	svc := &SearchService{
+		sqlstore:    ms,
+		starManager: fstars,
+	}
 
 	query := &Query{
 		Limit: 2000,
