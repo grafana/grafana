@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -231,7 +233,79 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 }
 
 func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error) {
-	return nil, nil
+	// TODO: permission check!
+	if strings.HasSuffix(path, ".json") {
+		return nil, fmt.Errorf("invalid path, do not include .json")
+	}
+
+	file, err := s.dash.GetFile(ctx, path+".json")
+	if err != nil {
+		return nil, err
+	}
+	if file == nil {
+		frame, err := s.dash.ListFolder(ctx, path)
+		if frame != nil {
+			return s.getFolderDashboard(path, frame)
+		}
+
+		return nil, err
+	}
+
+	js, err := simplejson.NewJson(file.Contents)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.DashboardFullWithMeta{
+		Dashboard: js,
+		Meta: dtos.DashboardMeta{
+			CanSave: false,
+			CanEdit: false,
+			CanStar: false,
+		},
+	}, nil
+}
+
+func (s *standardStorageService) getFolderDashboard(path string, frame *data.Frame) (*dtos.DashboardFullWithMeta, error) {
+	dash := models.NewDashboard(path)
+
+	fname := frame.Fields[0]
+
+	count := fname.Len()
+	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	paths := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	names.Name = "name"
+	paths.Name = "path"
+
+	for i := 0; i < count; i++ {
+		name := fmt.Sprintf("%v", fname.At(i))
+		name = strings.TrimSuffix(name, ".json")
+		names.Set(i, name)
+		paths.Set(i, fmt.Sprintf("%s/%s", path, name))
+	}
+	f2 := data.NewFrame("", names, paths, frame.Fields[1])
+	frame.SetMeta(&data.FrameMeta{
+		Type: data.FrameTypeDirectoryListing,
+	})
+
+	// HACK alert... stick the listing in the first panel
+	panel := map[string]interface{}{
+		"__listing": f2,
+	}
+	arr := []interface{}{panel}
+	dash.Data.Set("panels", arr)
+
+	return &dtos.DashboardFullWithMeta{
+		Dashboard: dash.Data,
+		Meta: dtos.DashboardMeta{
+			Slug:        path,
+			FolderUid:   path,
+			CanSave:     false,
+			CanEdit:     false,
+			IsFolder:    true,
+			FolderTitle: filepath.Base(path),
+		},
+	}, nil
 }
 
 func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts SaveDashboardRequest) (*dtos.DashboardFullWithMeta, error) {

@@ -31,6 +31,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { liveTimer } from '../dashgrid/liveTimer';
+import { FolderView } from '../components/FolderView/FolderView';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -317,6 +318,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
+    }
+
+    if (dashboard.meta.isFolder) {
+      return <FolderView dashboard={dashboard} />;
     }
 
     const inspectPanel = this.getInspectPanel();

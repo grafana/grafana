@@ -21,7 +21,7 @@ const (
 	EditingStarted actionType = "editing-started"
 	//EditingFinished actionType = "editing-finished"
 
-	GitopsChannel = "grafana/dashboard/store"
+	GitopsChannel = "grafana/dashboard/gitops"
 )
 
 // DashboardEvent events related to dashboards
@@ -49,8 +49,8 @@ func (h *DashboardHandler) GetHandlerForPath(_ string) (models.ChannelHandler, e
 // OnSubscribe for now allows anyone to subscribe to any dashboard
 func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
-	if parts[0] == "store" {
-		// store gets all changes for everything, so lets make sure it is an admin user
+	if parts[0] == "gitops" {
+		// gitops gets all changes for everything, so lets make sure it is an admin user
 		if !user.HasRole(models.ROLE_ADMIN) {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
@@ -87,8 +87,8 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 // OnPublish is called when someone begins to edit a dashboard
 func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
-	if parts[0] == "store" {
-		// store gets all changes for everything, so lets make sure it is an admin user
+	if parts[0] == "gitops" {
+		// gitops gets all changes for everything, so lets make sure it is an admin user
 		if !user.HasRole(models.ROLE_ADMIN) {
 			return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 		}
@@ -153,7 +153,7 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 		}
 	}
 
-	// Send everything to the store channel
+	// Send everything to the gitops channel
 	return h.Publisher(orgID, GitopsChannel, msg)
 }
 
@@ -187,7 +187,7 @@ func (h *DashboardHandler) DashboardDeleted(orgID int64, user *models.UserDispla
 	})
 }
 
-// HasGitOpsObserver will return true if anyone is listening to the `store` channel
+// HasGitOpsObserver will return true if anyone is listening to the `gitops` channel
 func (h *DashboardHandler) HasGitOpsObserver(orgID int64) bool {
 	count, err := h.ClientCount(orgID, GitopsChannel)
 	if err != nil {
