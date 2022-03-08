@@ -328,7 +328,11 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 		}
 
 		if options.isAllowed(obj.Key) {
-			if dirPath == "" {
+			if obj.IsDir && !recursive {
+				foundPaths = append(foundPaths, strings.TrimSuffix(obj.Key, Delimiter))
+			}
+
+			if dirPath == "" && !obj.IsDir {
 				dirPath = getParentFolderPath(obj.Key)
 			}
 
@@ -382,23 +386,32 @@ func (c cdkBlobStorage) ListFolders(ctx context.Context, prefix string, options 
 		path := foundPaths[i]
 		parts := strings.Split(path, Delimiter)
 		acc := parts[0]
-		j := 1
-		for {
-			acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
 
-			comparison := strings.Compare(acc, prefix)
-			if !mem[acc] && comparison > 0 {
-				folders = append(folders, FileMetadata{
-					Name:     getName(acc),
-					FullPath: acc,
-				})
+		if len(parts) > 1 {
+			j := 1
+			for {
+				acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
+
+				comparison := strings.Compare(acc, prefix)
+				if !mem[acc] && comparison > 0 {
+					folders = append(folders, FileMetadata{
+						Name:     getName(acc),
+						FullPath: acc,
+					})
+				}
+				mem[acc] = true
+
+				j += 1
+				if j >= len(parts) {
+					break
+				}
 			}
+		} else {
 			mem[acc] = true
-
-			j += 1
-			if j >= len(parts) {
-				break
-			}
+			folders = append(folders, FileMetadata{
+				Name:     acc,
+				FullPath: acc,
+			})
 		}
 	}
 

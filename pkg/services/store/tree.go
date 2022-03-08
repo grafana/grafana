@@ -85,13 +85,15 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return nil, err
 	}
 
-	count := len(rsp.Files)
+	folders, err := root.ListFolders(ctx, listPath, &filestorage.ListOptions{Recursive: false})
+
+	count := len(rsp.Files) + len(folders)
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
 	names.Name = "name"
 	mtype.Name = "mediaType"
-	for i, f := range rsp.Files {
+	for i, f := range append(folders, rsp.Files...) {
 		names.Set(i, f.Name)
 		mtype.Set(i, f.MimeType)
 		fsize.Set(i, f.Size)
