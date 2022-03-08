@@ -4,26 +4,26 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 )
 
-func ProvideService(bus bus.Bus, pluginDashboardStore plugins.DashboardFileStore) *Service {
+func ProvideService(pluginDashboardStore plugins.DashboardFileStore, dashboardPluginService dashboards.PluginService) *Service {
 	return &Service{
-		bus:                  bus,
-		pluginDashboardStore: pluginDashboardStore,
-		logger:               log.New("plugindashboards"),
+		pluginDashboardStore:   pluginDashboardStore,
+		dashboardPluginService: dashboardPluginService,
+		logger:                 log.New("plugindashboards"),
 	}
 }
 
 type Service struct {
-	bus                  bus.Bus
-	pluginDashboardStore plugins.DashboardFileStore
-	logger               log.Logger
+	pluginDashboardStore   plugins.DashboardFileStore
+	dashboardPluginService dashboards.PluginService
+	logger                 log.Logger
 }
 
 func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards.ListPluginDashboardsRequest) (*plugindashboards.ListPluginDashboardsResponse, error) {
@@ -43,7 +43,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 
 	// load current dashboards
 	query := models.GetDashboardsByPluginIdQuery{OrgId: req.OrgID, PluginId: req.PluginID}
-	if err := s.bus.Dispatch(ctx, &query); err != nil {
+	if err := s.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
 		return nil, err
 	}
 
