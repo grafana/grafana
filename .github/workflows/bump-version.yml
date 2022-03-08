@@ -16,6 +16,8 @@ on:
           required: true
         metricsWriteAPIKey:
           required: true
+env:
+    YARN_ENABLE_IMMUTABLE_INSTALLS: false
 jobs:
   main:
     runs-on: ubuntu-latest

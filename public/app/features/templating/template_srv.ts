@@ -103,7 +103,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     for (const variable of this.getAdHocVariables()) {
       const variableUid = variable.datasource?.uid;
 
-      if (variableUid === ds.uid || (variable.datasource == null && ds?.isDefault)) {
+      if (variableUid === ds.uid) {
         filters = filters.concat(variable.filters);
       } else if (variableUid?.indexOf('$') === 0) {
         if (this.replace(variableUid) === datasourceName) {

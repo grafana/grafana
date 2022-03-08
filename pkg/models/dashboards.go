@@ -21,6 +21,16 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
+	ErrDashboardCorrupt = DashboardErr{
+		Reason:     "Dashboard data is missing or corrupt",
+		StatusCode: 500,
+		Status:     "not-found",
+	}
+	ErrDashboardPanelNotFound = DashboardErr{
+		Reason:     "Dashboard panel not found",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
 	ErrDashboardFolderNotFound = DashboardErr{
 		Reason:     "Folder not found",
 		StatusCode: 404,
@@ -46,6 +56,7 @@ var (
 	ErrDashboardTitleEmpty = DashboardErr{
 		Reason:     "Dashboard title cannot be empty",
 		StatusCode: 400,
+		Status:     "empty-name",
 	}
 	ErrDashboardFolderCannotHaveParent = DashboardErr{
 		Reason:     "A Dashboard Folder cannot be added to another folder",
@@ -70,6 +81,7 @@ var (
 	ErrDashboardWithSameNameAsFolder = DashboardErr{
 		Reason:     "Dashboard name cannot be the same as folder",
 		StatusCode: 400,
+		Status:     "name-match",
 	}
 	ErrDashboardFolderNameExists = DashboardErr{
 		Reason:     "A folder with that name already exists",
@@ -101,6 +113,18 @@ var (
 	}
 	ErrDashboardIdentifierNotSet = DashboardErr{
 		Reason:     "Unique identifier needed to be able to get a dashboard",
+		StatusCode: 400,
+	}
+	ErrDashboardIdentifierInvalid = DashboardErr{
+		Reason:     "Dashboard ID not a number",
+		StatusCode: 400,
+	}
+	ErrDashboardPanelIdentifierInvalid = DashboardErr{
+		Reason:     "Dashboard panel ID not a number",
+		StatusCode: 400,
+	}
+	ErrDashboardOrPanelIdentifierNotSet = DashboardErr{
+		Reason:     "Unique identifier needed to be able to get a dashboard panel",
 		StatusCode: 400,
 	}
 	ErrProvisionedDashboardNotFound = DashboardErr{
