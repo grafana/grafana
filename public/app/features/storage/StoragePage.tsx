@@ -2,26 +2,39 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime';
-import { FilterInput, Spinner, useStyles2 } from '@grafana/ui';
+import { FilterInput, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useAsync } from 'react-use';
 import { Button } from './Button';
-import { DashboardList } from './DashboardList';
-import DataSourceList from './DataSourceList';
-import ResourceList from './ResourceList';
+import { StorageList } from './StorageList';
+import { StatusResponse, RootStorageMeta } from './types';
 
 export default function StoragePage() {
   const styles = useStyles2(getStyles);
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'storage'));
   const [searchQuery, setSearchQuery] = useState('');
+  const [dashboards, setDashboards] = useState<RootStorageMeta[]>();
+  const [resources, setResources] = useState<RootStorageMeta[]>();
 
   const status = useAsync(async () => {
-    return await getBackendSrv().get('api/storage/status'); // observable?
+    return (await getBackendSrv().get('api/storage/status')) as StatusResponse; // observable?
   }, []);
+
+  useEffect(() => {
+    const regex = new RegExp(searchQuery, 'i');
+    if (status.value?.dashboards.length) {
+      const filteredDashboard = status.value.dashboards.filter(filterByName(regex));
+      setDashboards(filteredDashboard);
+    }
+    if (status.value?.resources.length) {
+      const filteredResources = status.value.resources.filter(filterByName(regex));
+      setResources(filteredResources);
+    }
+  }, [searchQuery, status.value?.dashboards, status.value?.resources]);
 
   const doExport = useCallback(() => {
     getBackendSrv()
@@ -63,23 +76,21 @@ export default function StoragePage() {
             />
           </Stack>
         </div>
-        <div>
-          {status.loading && <Spinner />}
-          {status.value && (
-            <div>
-              <pre>{JSON.stringify(status.value)}</pre>
-            </div>
-          )}
-        </div>
-        <div className={styles.border}>
-          <DashboardList />
-        </div>
-        <div className={styles.border}>
-          <DataSourceList />
-        </div>
-        <div className={styles.border}>
-          <ResourceList />
-        </div>
+        {dashboards && (
+          <div className={styles.border}>
+            <StorageList storage={dashboards} title="Dashboards" />
+          </div>
+        )}
+        {status.value?.datasources?.length && (
+          <div className={styles.border}>
+            <StorageList storage={status.value.datasources} title="Data sources" />
+          </div>
+        )}
+        {resources && (
+          <div className={styles.border}>
+            <StorageList storage={resources} title="Resources" />
+          </div>
+        )}
       </Page.Contents>
     </Page>
   );
@@ -97,3 +108,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
   `,
 });
+
+const filterByName = (regex: RegExp) => (storage: RootStorageMeta) => regex.test(storage.config.name);
