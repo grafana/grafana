@@ -37,7 +37,7 @@ describe('Test Datasource Query Editor', () => {
   it('should switch scenario and display its default values', async () => {
     const { rerender } = setup();
 
-    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!.firstChild!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     const scs = screen.getAllByLabelText('Select option');
 
@@ -94,7 +94,7 @@ describe('Test Datasource Query Editor', () => {
         datasource: mockDatasource,
       },
     });
-    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!.firstChild!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     await userEvent.click(screen.getByText('Grafana API'));
     expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ datasource: mockDatasource }));
