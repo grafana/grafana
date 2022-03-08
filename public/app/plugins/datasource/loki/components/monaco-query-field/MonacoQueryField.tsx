@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useLatest } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
@@ -59,10 +60,8 @@ function ensureLogQL(monaco: Monaco) {
     LANGUAGE_SETUP_STARTED = true;
     monaco.languages.register({ id: LANG_ID });
 
-    // loader().then((mod) => {
-    //   monaco.languages.setMonarchTokensProvider(LANG_ID, mod.language);
-    //   monaco.languages.setLanguageConfiguration(LANG_ID, mod.languageConfiguration);
-    // });
+    monaco.languages.setMonarchTokensProvider(LANG_ID, monarchlanguage);
+    monaco.languages.setLanguageConfiguration(LANG_ID, languageConfiguration);
   }
 }
 
