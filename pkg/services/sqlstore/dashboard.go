@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -81,7 +80,7 @@ type DashboardSearchProjection struct {
 	SortMeta    int64
 }
 
-func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+func (ss *SQLStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
@@ -158,7 +157,7 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 	return res, nil
 }
 
-func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
+func (ss *SQLStore) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
 	res, err := ss.FindDashboards(ctx, query)
 	if err != nil {
 		return err
@@ -169,25 +168,25 @@ func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPers
 	return nil
 }
 
-func getHitType(item DashboardSearchProjection) search.HitType {
-	var hitType search.HitType
+func getHitType(item DashboardSearchProjection) models.HitType {
+	var hitType models.HitType
 	if item.IsFolder {
-		hitType = search.DashHitFolder
+		hitType = models.DashHitFolder
 	} else {
-		hitType = search.DashHitDB
+		hitType = models.DashHitDB
 	}
 
 	return hitType
 }
 
-func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
-	query.Result = make([]*search.Hit, 0)
-	hits := make(map[int64]*search.Hit)
+func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
+	query.Result = make([]*models.Hit, 0)
+	hits := make(map[int64]*models.Hit)
 
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			hit = &search.Hit{
+			hit = &models.Hit{
 				ID:          item.ID,
 				UID:         item.UID,
 				Title:       item.Title,
