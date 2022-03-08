@@ -50,7 +50,7 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
                   </td>
                 )}
                 <td className="pointer" onClick={() => onEdit(idx)}>
-                  {annotation.datasource || 'Default'}
+                  {annotation.datasource?.uid}
                 </td>
                 <td style={{ width: '1%' }}>
                   {idx !== 0 && (

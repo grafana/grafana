@@ -1,15 +1,15 @@
-import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { Draggable } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
+import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import React, { ReactElement } from 'react';
+import { Draggable } from 'react-beautiful-dnd';
 
-import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { hasOptions, isAdHoc, isQuery } from '../guard';
-import { KeyedVariableIdentifier } from '../state/types';
+import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
@@ -52,7 +52,9 @@ export function VariableEditorListRow({
           }}
         >
           <td className={styles.column}>
-            <span
+            <Button
+              size="xs"
+              fill="text"
               onClick={(event) => {
                 event.preventDefault();
                 propsOnEdit(identifier);
@@ -61,7 +63,7 @@ export function VariableEditorListRow({
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
             >
               {variable.name}
-            </span>
+            </Button>
           </td>
           <td
             className={styles.definitionColumn}

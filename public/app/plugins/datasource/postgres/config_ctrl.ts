@@ -4,7 +4,7 @@ import {
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
