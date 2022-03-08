@@ -77,6 +77,18 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
 				Path: filepath.Join(devenv, "dev-dashboards"),
 			}),
+			newGitStorage("it", "My dashboards in git", &StorageGitConfig{
+				Remote:      "git@github.com:ryantxu/test-dash-repo.git",
+				Branch:      "main",
+				Root:        "path/to/subfolder",
+				AccessToken: "should be more secrete",
+			}),
+			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{
+				Bucket:    "grafana-plugin-resources",
+				Folder:    "sub/path/here",
+				SecretKey: "***",
+				AccessKey: "***",
+			}),
 		},
 	}
 

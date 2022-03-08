@@ -35,6 +35,7 @@ type StorageSQLConfig struct {
 
 type StorageS3Config struct {
 	Bucket string `json:"bucket"`
+	Folder string `json:"folder"`
 
 	// SECURE!!!
 	AccessKey string `json:"accessKey"`
