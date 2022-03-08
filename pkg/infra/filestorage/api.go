@@ -67,6 +67,13 @@ type PathFilters struct {
 	allowedPrefixes []string
 }
 
+func NewPathFilters(allowedPrefixes []string) *PathFilters {
+	if len(allowedPrefixes) > 0 {
+		return &PathFilters{allowedPrefixes}
+	}
+	return nil
+}
+
 func (f *PathFilters) isAllowed(path string) bool {
 	if f == nil || f.allowedPrefixes == nil {
 		return true

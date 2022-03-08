@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -16,19 +17,23 @@ type SaveDashboardRequest struct {
 	Message string
 }
 
-type DashboardStore interface {
-	// Get a single dashboard
-	GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error)
-
+type storageTree interface {
 	// Called from the UI when a dashboard is saved
-	SaveDashboard(ctx context.Context, opts SaveDashboardRequest)
+	GetFile(ctx context.Context, path string) (*filestorage.File, error)
 
-	// Temporary: list items so we can build search index
-	ListDashboardsToBuildSearchIndex(ctx context.Context, orgId int64) DashboardBodyIterator
+	// Get a single dashboard
+	ListFolder(ctx context.Context, path string) (*data.Frame, error)
 }
 
-//--------------------------------------------
-//--------------------------------------------
+//-------------------------------------------
+// INTERNAL
+//-------------------------------------------
+
+type rootStorageState struct {
+	Meta RootStorageMeta
+
+	Store filestorage.FileStorage
+}
 
 // TEMPORARY! internally, used for listing and building an index
 type DashboardQueryResultForSearchIndex struct {
@@ -43,8 +48,11 @@ type DashboardQueryResultForSearchIndex struct {
 
 type DashboardBodyIterator func() *DashboardQueryResultForSearchIndex
 
-// Returned from the main UI
-type StorageStatus struct {
-	OrgID  int64         `json:"orgId"`
-	Config StorageConfig `json:"config"`
+type RootStorageMeta struct {
+	ReadOnly bool          `json:"editable,omitempty"`
+	Builtin  bool          `json:"builtin,omitempty"`
+	Ready    bool          `json:"ready"` // can connect
+	Notice   []data.Notice `json:"notice,omitempty"`
+
+	Config RootStorageConfig `json:"config"`
 }

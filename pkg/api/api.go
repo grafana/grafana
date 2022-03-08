@@ -210,11 +210,14 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-			apiRoute.Group("/store", func(orgRoute routing.RouteRegister) {
-				orgRoute.Get("/status", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.StorageService.GetStorageStatus))
-				orgRoute.Post("/:kind/:root", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.StorageService.GetStorageStatus))
-				orgRoute.Post("/export", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.StorageService.HandleExportSystem)
-				orgRoute.Post("/import", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionDashboardsRead)), hs.StorageService.HandleImportSystem)
+			// FGAC handled withing the storage engine
+			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
+				orgRoute.Get("/status", reqOrgAdmin, routing.Wrap(hs.StorageService.Status))
+				orgRoute.Get("/path/", routing.Wrap(hs.StorageService.Browse))
+				orgRoute.Get("/path/*", routing.Wrap(hs.StorageService.Browse))
+				orgRoute.Post("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Upsert))
+				orgRoute.Delete("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+				orgRoute.Post("/export", reqOrgAdmin, hs.StorageService.HandleExportSystem)
 			})
 		}
 
@@ -342,7 +345,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/uid/*", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
+			dashboardRoute.Get("/path/*", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
+			dashboardRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
 
 			if hs.ThumbService != nil {

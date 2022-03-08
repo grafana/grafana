@@ -35,10 +35,14 @@ type StorageSQLConfig struct {
 
 type StorageS3Config struct {
 	Bucket string `json:"bucket"`
+
+	// SECURE!!!
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
 }
 
 type StorageConfig struct {
 	Dashboard  []RootStorageConfig `json:"dashboard"`
-	DataSource []RootStorageConfig `json:"datasource"`
+	Datasource []RootStorageConfig `json:"datasource"`
 	Resource   []RootStorageConfig `json:"resource"`
 }

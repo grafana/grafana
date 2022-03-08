@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { FilterInput, Spinner, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useAsync } from 'react-use';
 import { Button } from './Button';
 import { DashboardList } from './DashboardList';
 import DataSourceList from './DataSourceList';
@@ -18,17 +19,13 @@ export default function StoragePage() {
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'storage'));
   const [searchQuery, setSearchQuery] = useState('');
 
-  const doExport = useCallback(() => {
-    getBackendSrv()
-      .post('api/gitops/export')
-      .then((v) => {
-        alert(JSON.stringify(v));
-      });
+  const status = useAsync(async () => {
+    return await getBackendSrv().get('api/storage/status'); // observable?
   }, []);
 
-  const doImport = useCallback(() => {
+  const doExport = useCallback(() => {
     getBackendSrv()
-      .post('api/gitops/import')
+      .post('api/storage/export')
       .then((v) => {
         alert(JSON.stringify(v));
       });
@@ -61,14 +58,19 @@ export default function StoragePage() {
               onChange={function (value: SelectableValue<string>): void {
                 if (value.value === 'push') {
                   doExport();
-                } else if (value.value === 'pull') {
-                  doImport();
                 }
               }}
             />
           </Stack>
         </div>
-
+        <div>
+          {status.loading && <Spinner />}
+          {status.value && (
+            <div>
+              <pre>{JSON.stringify(status.value)}</pre>
+            </div>
+          )}
+        </div>
         <div className={styles.border}>
           <DashboardList />
         </div>
