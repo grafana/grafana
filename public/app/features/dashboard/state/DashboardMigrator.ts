@@ -45,7 +45,7 @@ import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 import {
@@ -55,6 +55,7 @@ import {
 } from 'app/plugins/datasource/cloudwatch/migrations';
 import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -65,39 +66,10 @@ export class DashboardMigrator {
 
   constructor(dashboardModel: DashboardModel) {
     this.dashboard = dashboardModel;
-  }
 
-  /**
-   * When changing default datasource which is stored as null Grafana get's into a mixed state where queries have
-   * data source uid & type set that is different from the now new default
-   */
-  syncQueryDataSources() {
-    const dataSourceSrv = getDataSourceSrv();
-    // This only happens in some unit tests that does not set a DataSourceSrv
-    if (!dataSourceSrv) {
-      return;
-    }
-
-    const defaultDS = getDataSourceSrv().getInstanceSettings(null);
-    // if default ds is mixed then skip this
-    if (!defaultDS || defaultDS.meta.mixed) {
-      return;
-    }
-
-    for (const panel of this.dashboard.panels) {
-      // only interested in panels that use default (null) data source
-      if (panel.datasource) {
-        continue;
-      }
-
-      for (const target of panel.targets) {
-        // If query level data source is different from panel
-        if (target.datasource && target.datasource.uid !== defaultDS?.uid) {
-          // set panel level data source to data source on the query as this is more likely the correct one
-          // But impossible to say, and this changes the behavior of of what default means ahead of the big change to default
-          panel.datasource = target.datasource;
-        }
-      }
+    // for tests to pass
+    if (!getDataSourceSrv()) {
+      setDataSourceSrv(new DatasourceSrv());
     }
   }
 
@@ -105,7 +77,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 35;
+    this.dashboard.schemaVersion = 36;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -736,14 +708,14 @@ export class DashboardMigrator {
     // Replace datasource name with reference, uid and type
     if (oldVersion < 33) {
       panelUpgrades.push((panel) => {
-        panel.datasource = migrateDatasourceNameToRef(panel.datasource);
+        panel.datasource = migrateDatasourceNameToRef(panel.datasource, { returnDefaultAsNull: true });
 
         if (!panel.targets) {
           return panel;
         }
 
         for (const target of panel.targets) {
-          const targetRef = migrateDatasourceNameToRef(target.datasource);
+          const targetRef = migrateDatasourceNameToRef(target.datasource, { returnDefaultAsNull: true });
           if (targetRef != null) {
             target.datasource = targetRef;
           }
@@ -764,6 +736,46 @@ export class DashboardMigrator {
 
     if (oldVersion < 35) {
       panelUpgrades.push(ensureXAxisVisibility);
+    }
+
+    if (oldVersion < 36) {
+      // Migrate datasource to refs in annotations
+      for (const query of this.dashboard.annotations.list) {
+        query.datasource = migrateDatasourceNameToRef(query.datasource, { returnDefaultAsNull: false });
+      }
+
+      // Migrate datasource: null to current default
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      if (defaultDs) {
+        for (const variable of this.dashboard.templating.list) {
+          if (variable.type === 'query' && variable.datasource === null) {
+            variable.datasource = getDataSourceRef(defaultDs);
+          }
+        }
+
+        panelUpgrades.push((panel: PanelModel) => {
+          if (panel.targets) {
+            let panelDataSourceWasDefault = false;
+            if (panel.datasource == null && panel.targets.length > 0) {
+              panel.datasource = getDataSourceRef(defaultDs);
+              panelDataSourceWasDefault = true;
+            }
+
+            for (const target of panel.targets) {
+              if (target.datasource && panelDataSourceWasDefault) {
+                // We can have situations when default ds changed and the panel level data source is different from the queries
+                // In this case we use the query level data source as source for truth
+                panel.datasource = target.datasource as DataSourceRef;
+              }
+
+              if (target.datasource === null) {
+                target.datasource = getDataSourceRef(defaultDs);
+              }
+            }
+          }
+          return panel;
+        });
+      }
     }
 
     if (panelUpgrades.length === 0) {
@@ -1084,8 +1096,15 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
-export function migrateDatasourceNameToRef(nameOrRef?: string | DataSourceRef | null): DataSourceRef | null {
-  if (nameOrRef == null || nameOrRef === 'default') {
+interface MigrateDatasourceNameOptions {
+  returnDefaultAsNull: boolean;
+}
+
+export function migrateDatasourceNameToRef(
+  nameOrRef: string | DataSourceRef | null | undefined,
+  options: MigrateDatasourceNameOptions
+): DataSourceRef | null {
+  if (options.returnDefaultAsNull && (nameOrRef == null || nameOrRef === 'default')) {
     return null;
   }
 

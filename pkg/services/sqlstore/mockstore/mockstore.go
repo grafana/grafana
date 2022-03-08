@@ -136,10 +136,6 @@ func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.D
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error) {
-	return nil, m.ExpectedError
-}
-
 func (m *SQLStoreMock) CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error) {
 	return nil, m.ExpectedError
 }

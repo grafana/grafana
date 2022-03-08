@@ -27,8 +27,125 @@ import (
 )
 
 var (
-	serviceaccountIDPath = "/api/serviceaccounts/%v"
+	serviceAccountPath   = "/api/serviceaccounts/"
+	serviceAccountIDPath = serviceAccountPath + "%v"
 )
+
+func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
+	store := sqlstore.InitTestDB(t)
+	svcmock := tests.ServiceAccountMock{}
+
+	autoAssignOrg := setting.AutoAssignOrg
+	setting.AutoAssignOrg = true
+	defer func() {
+		setting.AutoAssignOrg = autoAssignOrg
+	}()
+
+	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
+	err := sqlstore.CreateOrg(context.Background(), orgCmd)
+	require.Nil(t, err)
+
+	type testCreateSATestCase struct {
+		desc         string
+		body         map[string]interface{}
+		expectedCode int
+		wantID       string
+		wantError    string
+		acmock       *accesscontrolmock.Mock
+	}
+	testCases := []testCreateSATestCase{
+		{
+			desc:   "should be ok to create serviceaccount with permissions",
+			body:   map[string]interface{}{"name": "New SA"},
+			wantID: "sa-new-sa",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusCreated,
+		},
+		{
+			desc:      "not ok - duplicate name",
+			body:      map[string]interface{}{"name": "New SA"},
+			wantError: "service account name already in use",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			desc:      "not ok - missing name",
+			body:      map[string]interface{}{},
+			wantError: "required value Name must not be empty",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			desc: "should be forbidden to create serviceaccount if no permissions",
+			body: map[string]interface{}{},
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, body io.Reader) *httptest.ResponseRecorder {
+		req, err := http.NewRequest(httpMethod, requestpath, body)
+		req.Header.Add("Content-Type", "application/json")
+		require.NoError(t, err)
+		recorder := httptest.NewRecorder()
+		server.ServeHTTP(recorder, req)
+		return recorder
+	}
+
+	testUser := &tests.TestUser{}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, user *tests.TestUser) {
+				server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+				marshalled, err := json.Marshal(tc.body)
+				require.NoError(t, err)
+
+				ioReader := bytes.NewReader(marshalled)
+
+				actual := requestResponse(server, httpmethod, endpoint, ioReader)
+
+				actualCode := actual.Code
+				actualBody := map[string]interface{}{}
+
+				err = json.Unmarshal(actual.Body.Bytes(), &actualBody)
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedCode, actualCode, actualBody)
+
+				if actualCode == http.StatusCreated {
+					assert.NotEmpty(t, actualBody["id"])
+					assert.Equal(t, tc.body["name"], actualBody["name"].(string))
+					assert.Equal(t, tc.wantID, actualBody["login"].(string))
+				} else if actualCode == http.StatusBadRequest {
+					assert.Contains(t, tc.wantError, actualBody["error"].(string))
+				}
+			})
+		})
+	}
+}
 
 // test the accesscontrol endpoints
 // with permissions and without permissions
@@ -60,7 +177,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			),
 			expectedCode: http.StatusOK,
 		}
-		serviceAccountRequestScenario(t, http.MethodDelete, serviceaccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
+		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.Id))).Code
@@ -84,7 +201,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			),
 			expectedCode: http.StatusForbidden,
 		}
-		serviceAccountRequestScenario(t, http.MethodDelete, serviceaccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
+		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.Id)).Code
@@ -186,7 +303,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			serviceAccountRequestScenario(t, http.MethodGet, serviceaccountIDPath, tc.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
+			serviceAccountRequestScenario(t, http.MethodGet, serviceAccountIDPath, tc.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 				scopeID := tc.Id
 				if tc.user != nil {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
@@ -296,7 +413,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			serviceAccountRequestScenario(t, http.MethodPatch, serviceaccountIDPath, tc.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
+			serviceAccountRequestScenario(t, http.MethodPatch, serviceAccountIDPath, tc.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 				scopeID := tc.Id
 				if tc.user != nil {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)

@@ -1,7 +1,8 @@
+import { AnnotationQuery, getDataSourceRef } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import React, { useState } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
-import { AnnotationSettingsEdit, AnnotationSettingsList } from '../AnnotationSettings';
-import { newAnnotation } from '../AnnotationSettings/AnnotationSettingsEdit';
+import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from '../AnnotationSettings';
 import { DashboardSettingsHeader } from './DashboardSettingsHeader';
 
 interface Props {
@@ -16,6 +17,13 @@ export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
   };
 
   const onNew = () => {
+    const newAnnotation: AnnotationQuery = {
+      name: newAnnotationName,
+      enable: true,
+      datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+      iconColor: 'red',
+    };
+
     dashboard.annotations.list = [...dashboard.annotations.list, { ...newAnnotation }];
     setEditIdx(dashboard.annotations.list.length - 1);
   };

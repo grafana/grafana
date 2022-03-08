@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Store interface {
@@ -46,7 +46,7 @@ type Store interface {
 	GetResourcesPermissions(ctx context.Context, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 }
 
-func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore) (*Service, error) {
+func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore) (*Service, error) {
 	var permissions []string
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -68,6 +68,7 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 
 	s := &Service{
 		ac:          ac,
+		cfg:         cfg,
 		store:       store,
 		options:     options,
 		permissions: permissions,
@@ -88,6 +89,7 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
+	cfg   *setting.Cfg
 	ac    accesscontrol.AccessControl
 	store Store
 	api   *api

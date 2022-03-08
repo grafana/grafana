@@ -3,11 +3,11 @@ package database
 //nolint:goimports
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -28,19 +28,24 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceAccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
-	// create a new service account - "user" with empty permissions
-	generatedLogin := "Service-Account-" + uuid.New().String()
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+	generatedLogin := "sa-" + strings.ToLower(name)
+	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	cmd := models.CreateUserCommand{
 		Login:            generatedLogin,
-		Name:             sa.Name,
-		OrgId:            sa.OrgID,
+		OrgId:            orgID,
+		Name:             name,
 		IsServiceAccount: true,
 	}
+
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %v", err)
+		if errors.Is(err, models.ErrUserAlreadyExists) {
+			return nil, &ErrSAInvalidName{}
+		}
+		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
+
 	return &serviceaccounts.ServiceAccountDTO{
 		Id:     newuser.Id,
 		Name:   newuser.Name,

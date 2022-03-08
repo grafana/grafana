@@ -1,9 +1,5 @@
 import { DataFrame, DataFrameType, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
-import {
-  calculateHeatmapFromData,
-  createHeatmapFromBuckets,
-  sortAscStrInf,
-} from 'app/features/transformers/calculateHeatmap/heatmap';
+import { calculateHeatmapFromData, createHeatmapFromBuckets } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
@@ -59,8 +55,11 @@ export function prepareHeatmapData(
   // detect a frame-per-bucket heatmap frame
   // TODO: improve heuristic? infer from fields[1].labels.le === '+Inf' ?
   if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.startsWith('+Inf'))) {
+    // already done by the Prometheus datasource frontend
+    //frames = prepBucketFrames(frames);
+
     return {
-      yAxisValues: frames.map((f) => f.name ?? null).sort(sortAscStrInf),
+      yAxisValues: frames.map((f) => f.name ?? null),
       ...getHeatmapData(createHeatmapFromBuckets(frames), theme),
     };
   }

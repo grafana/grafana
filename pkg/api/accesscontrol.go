@@ -182,7 +182,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{"Admin"},
+		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
 	orgReaderRole := ac.RoleRegistration{
