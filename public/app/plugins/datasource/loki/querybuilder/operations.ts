@@ -48,7 +48,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineContains,
       name: 'Line contains',
-      params: [{ name: 'String', type: 'string' }],
+      params: [{ name: 'String', type: 'string', hideName: true, placeholder: 'Text to find', minWidth: 20 }],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -59,7 +59,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
-      params: [{ name: 'String', type: 'string' }],
+      params: [{ name: 'String', type: 'string', hideName: true, placeholder: 'Text to exclude', minWidth: 22 }],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -70,7 +70,9 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
-      params: [{ name: 'Regex', type: 'string' }],
+      params: [
+        { name: 'Regex', type: 'string', hideName: true, placeholder: 'Pattern that should match', minWidth: 24 },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -81,7 +83,9 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegexNot,
       name: 'Line does not match regex',
-      params: [{ name: 'Regex', type: 'string' }],
+      params: [
+        { name: 'Regex', type: 'string', hideName: true, placeholder: 'Pattern that should not match', minWidth: 26 },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
