@@ -7,14 +7,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 var orgID = int64(1)
@@ -22,7 +22,7 @@ var user = &models.SignedInUser{UserId: 1}
 
 func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
-		store := &database.FakeDashboardStore{}
+		store := &dashboards.FakeDashboardStore{}
 		defer store.AssertExpectations(t)
 		service := ProvideFolderService(
 			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store, nil)},

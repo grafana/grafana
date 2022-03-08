@@ -8,19 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/stretchr/testify/mock"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
@@ -29,7 +29,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	folderService := &dashboards.FakeFolderService{}
 	defer folderService.AssertExpectations(t)
 
-	dashboardStore := &database.FakeDashboardStore{}
+	dashboardStore := &dashboards.FakeDashboardStore{}
 	defer dashboardStore.AssertExpectations(t)
 
 	hs := &HTTPServer{Cfg: settings, folderService: folderService, dashboardService: service.ProvideDashboardService(dashboardStore, nil), Features: featuremgmt.WithFeatures()}

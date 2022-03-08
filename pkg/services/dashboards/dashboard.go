@@ -29,7 +29,7 @@ type DashboardProvisioningService interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 }
 
-//go:generate mockery --name Store --structname FakeDashboardStore --output database --outpkg database --filename database_mock.go
+//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
 // Store is a dashboard store.
 type Store interface {
 	// ValidateDashboardBeforeSave validates a dashboard before save.
