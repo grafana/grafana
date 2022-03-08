@@ -169,7 +169,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addNumberInput({
         path: 'hideThreshold',
         name: 'Hide cell counts <=',
-        defaultValue: 0.000_000_001, // 1e-9
+        defaultValue: 1e-9,
         category,
       })
       .addSliderInput({

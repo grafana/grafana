@@ -10,12 +10,22 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	m "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
+)
+
+var (
+	provisionerPermissions = map[string][]string{
+		accesscontrol.ActionFoldersCreate:    {},
+		accesscontrol.ActionFoldersWrite:     {accesscontrol.ScopeFoldersAll},
+		accesscontrol.ActionDashboardsCreate: {accesscontrol.ScopeFoldersAll},
+		accesscontrol.ActionDashboardsWrite:  {accesscontrol.ScopeFoldersAll},
+	}
 )
 
 type DashboardServiceImpl struct {
@@ -109,11 +119,20 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	guard := guardian.New(ctx, dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
-	if canSave, err := guard.CanSave(); err != nil || !canSave {
-		if err != nil {
-			return nil, err
+	if dash.Id == 0 {
+		if canCreate, err := guard.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canCreate {
+			if err != nil {
+				return nil, err
+			}
+			return nil, models.ErrDashboardUpdateAccessDenied
 		}
-		return nil, models.ErrDashboardUpdateAccessDenied
+	} else {
+		if canSave, err := guard.CanSave(); err != nil || !canSave {
+			if err != nil {
+				return nil, err
+			}
+			return nil, models.ErrDashboardUpdateAccessDenied
+		}
 	}
 
 	cmd := &models.SaveDashboardCommand{
@@ -181,6 +200,9 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 		OrgId:   dto.OrgId,
+		Permissions: map[int64]map[string][]string{
+			dto.OrgId: provisionerPermissions,
+		},
 	}
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true, false)
@@ -216,8 +238,9 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *m.SaveDashboardDTO) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
-		UserId:  0,
-		OrgRole: models.ROLE_ADMIN,
+		UserId:      0,
+		OrgRole:     models.ROLE_ADMIN,
+		Permissions: map[int64]map[string][]string{dto.OrgId: provisionerPermissions},
 	}
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {

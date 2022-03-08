@@ -1,10 +1,15 @@
 import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { isString } from 'lodash';
 
-import TimegrainConverter from '../time_grain_converter';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
-import { routeNames } from '../utils/common';
+import TimegrainConverter from '../../../time_grain_converter';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  DatasourceValidationResult,
+  DeprecatedAzureQueryType,
+} from '../../../types';
+import { routeNames } from '../../../utils/common';
 import ResponseParser from './response_parser';
 
 export interface LogAnalyticsColumn {
@@ -94,7 +99,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
 
     return {
       refId: target.refId,
-      queryType: AzureQueryType.ApplicationInsights,
+      queryType: DeprecatedAzureQueryType.ApplicationInsights,
       appInsights: {
         timeGrain: templateSrv.replace((item.timeGrain || '').toString(), scopedVars),
         metricName: templateSrv.replace(item.metricName, scopedVars),

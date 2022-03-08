@@ -34,7 +34,7 @@ e2e.scenario({
           expect(links).to.have.length.greaterThan(13);
 
           for (let index = 0; index < links.length; index++) {
-            expect(Cypress.$(links[index]).attr('href')).contains(`var-custom=${variableValue}`);
+            expect(Cypress.$(links[index]).attr('href')).contains(`var-custom=${encodeURI(variableValue)}`);
           }
         });
     };
@@ -43,6 +43,14 @@ e2e.scenario({
 
     // verify all links, should have All value
     verifyLinks('All');
+
+    // Data links should percent encode var values
+    e2e()
+      .get('[aria-label="Data link"]')
+      .should('exist')
+      .and((link) => {
+        expect(link.attr('href')).contains(encodeURI('test%25value'));
+      });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
 

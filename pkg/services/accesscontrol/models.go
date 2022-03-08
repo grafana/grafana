@@ -250,6 +250,10 @@ const (
 	GlobalOrgID = 0
 	// Permission actions
 
+	ActionAPIKeyRead   = "apikeys:read"
+	ActionAPIKeyCreate = "apikeys:create"
+	ActionAPIKeyDelete = "apikeys:delete"
+
 	// Users actions
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
@@ -299,6 +303,9 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
+	// APIKeys scope
+	ScopeAPIKeysAll = "apikeys:*"
+
 	// Users scope
 	ScopeUsersAll = "users:*"
 
@@ -323,17 +330,41 @@ const (
 	ScopeTeamsAll = "teams:*"
 
 	// Annotations related actions
-	ActionAnnotationsRead = "annotations:read"
-
+	ActionAnnotationsRead     = "annotations:read"
 	ActionAnnotationsTagsRead = "annotations.tags:read"
 
 	ScopeAnnotationsAll     = "annotations:*"
 	ScopeAnnotationsTagsAll = "annotations:tags:*"
+
+	// Dashboard actions
+	ActionDashboardsCreate           = "dashboards:create"
+	ActionDashboardsRead             = "dashboards:read"
+	ActionDashboardsWrite            = "dashboards:write"
+	ActionDashboardsDelete           = "dashboards:delete"
+	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
+	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
+
+	// Dashboard scopes
+	ScopeDashboardsAll = "dashboards:*"
+
+	// Folder actions
+	ActionFoldersCreate           = "folders:create"
+	ActionFoldersRead             = "folders:read"
+	ActionFoldersWrite            = "folders:write"
+	ActionFoldersDelete           = "folders:delete"
+	ActionFoldersPermissionsRead  = "folders.permissions:read"
+	ActionFoldersPermissionsWrite = "folders.permissions:write"
+
+	// Folder scopes
+	ScopeFoldersAll = "folders:*"
 )
 
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	// Folder scopes
+	ScopeFolderID = Scope("folders", "id", Parameter(":id"))
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

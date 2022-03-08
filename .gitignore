@@ -7,7 +7,6 @@ awsconfig
 /.awcache
 /dist
 /public/build
-public/dist/tsconfig.tsbuildinfo
 /public/views/index.html
 /public/views/error.html
 /emails/dist
@@ -17,6 +16,7 @@ public/dist/tsconfig.tsbuildinfo
 vendor/
 /docs/menu.yaml
 /requests
+tsconfig.tsbuildinfo
 
 # Yarn
 .yarn/*

@@ -2,6 +2,7 @@ package queryhistory
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -39,6 +40,70 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *models.Signe
 	}
 
 	return dto, nil
+}
+
+func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
+	var dtos []QueryHistoryDTO
+	var allQueries []interface{}
+
+	if len(query.DatasourceUIDs) == 0 {
+		return QueryHistorySearchResult{}, errors.New("no selected data source for query history search")
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+
+	if query.Limit <= 0 {
+		query.Limit = 100
+	}
+
+	if query.Sort == "" {
+		query.Sort = "time-desc"
+	}
+
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		dtosBuilder := sqlstore.SQLBuilder{}
+		dtosBuilder.Write(`SELECT
+			query_history.uid,
+			query_history.datasource_uid,
+			query_history.created_by,
+			query_history.created_at AS created_at,
+			query_history.comment,
+			query_history.queries,
+		`)
+		writeStarredSQL(query, s.SQLStore, &dtosBuilder)
+		writeFiltersSQL(query, user, s.SQLStore, &dtosBuilder)
+		writeSortSQL(query, s.SQLStore, &dtosBuilder)
+		writeLimitSQL(query, s.SQLStore, &dtosBuilder)
+		writeOffsetSQL(query, s.SQLStore, &dtosBuilder)
+
+		err := session.SQL(dtosBuilder.GetSQLString(), dtosBuilder.GetParams()...).Find(&dtos)
+		if err != nil {
+			return err
+		}
+
+		countBuilder := sqlstore.SQLBuilder{}
+		countBuilder.Write(`SELECT
+		`)
+		writeStarredSQL(query, s.SQLStore, &countBuilder)
+		writeFiltersSQL(query, user, s.SQLStore, &countBuilder)
+		err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&allQueries)
+		return err
+	})
+
+	if err != nil {
+		return QueryHistorySearchResult{}, err
+	}
+
+	response := QueryHistorySearchResult{
+		QueryHistory: dtos,
+		TotalCount:   len(allQueries),
+		Page:         query.Page,
+		PerPage:      query.Limit,
+	}
+
+	return response, nil
 }
 
 func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
