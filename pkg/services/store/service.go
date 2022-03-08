@@ -31,6 +31,7 @@ type StorageService interface {
 	Browse(c *models.ReqContext) response.Response
 	Upsert(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
+	PostDashboard(c *models.ReqContext) response.Response
 
 	// List folder contents
 	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
@@ -256,15 +257,30 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 		return nil, err
 	}
 
+	readonly := false // TODO: depends on ?
+
 	return &dtos.DashboardFullWithMeta{
 		Dashboard: js,
 		Meta: dtos.DashboardMeta{
-			CanSave: false,
-			CanEdit: false,
+			CanSave: !readonly,
+			CanEdit: !readonly,
 			CanStar: false,
 			Slug:    path,
 		},
 	}, nil
+}
+
+func (s *standardStorageService) PostDashboard(c *models.ReqContext) response.Response {
+	params := web.Params(c.Req)
+	path := params["*"]
+	if path == "" || strings.HasSuffix(path, ".json") {
+		return response.Error(400, "invalid path", nil)
+	}
+
+	return response.JSON(200, map[string]string{
+		"action": "SAVE",
+		"path":   path,
+	})
 }
 
 func (s *standardStorageService) getFolderDashboard(path string, frame *data.Frame) (*dtos.DashboardFullWithMeta, error) {

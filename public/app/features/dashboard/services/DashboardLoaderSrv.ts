@@ -41,7 +41,15 @@ export class DashboardLoaderSrv {
     } else if (type === 'ds') {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === DashboardRoutes.Path) {
-      promise = backendSrv.getDashboardByPath(slug); // explore dashboards as code
+      // explore dashboards as code
+      promise = backendSrv.getDashboardByPath(slug).then((result: any) => {
+        // Force everythign to match the request path
+        result.meta.slug = slug;
+        result.meta.uid = slug;
+        result.dashboard.uid = slug;
+        delete result.dashboard.id; // remove the internal ID
+        return result;
+      });
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)
