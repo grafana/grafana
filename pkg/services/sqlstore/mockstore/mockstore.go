@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -469,7 +468,7 @@ func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashbo
 	return m.ExpectedError
 }
 
-func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
+func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
 	return m.ExpectedError
 }
 
