@@ -33,6 +33,8 @@ func getParentFolderPath(path string) string {
 		return Delimiter
 	}
 
+	path = strings.TrimSuffix(path, Delimiter)
+
 	if !strings.Contains(path, Delimiter) {
 		return Delimiter
 	}

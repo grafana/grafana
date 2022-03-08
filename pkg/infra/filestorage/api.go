@@ -3,6 +3,7 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -20,10 +21,14 @@ var (
 	ErrPathInvalid           = errors.New("path is invalid")
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
 	Delimiter                = "/"
+	multipleDelimiters       = regexp.MustCompile(`/+`)
 )
 
 func Join(parts ...string) string {
-	return Delimiter + strings.Join(parts, Delimiter)
+	joinedPath := Delimiter + strings.Join(parts, Delimiter)
+
+	// makes the API more forgiving for clients without compromising safety
+	return multipleDelimiters.ReplaceAllString(joinedPath, Delimiter)
 }
 
 func belongsToStorage(path string, storageName StorageName) bool {
