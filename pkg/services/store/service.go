@@ -2,10 +2,13 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -270,6 +273,12 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 	}, nil
 }
 
+type saveDashboardBody struct {
+	Dashboard *json.RawMessage `json:"dashboard"`
+	Overwrite bool             `json:"overwrite"`
+	Message   string           `json:"message"`
+}
+
 func (s *standardStorageService) PostDashboard(c *models.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path := params["*"]
@@ -277,9 +286,28 @@ func (s *standardStorageService) PostDashboard(c *models.ReqContext) response.Re
 		return response.Error(400, "invalid path", nil)
 	}
 
-	return response.JSON(200, map[string]string{
-		"action": "SAVE",
-		"path":   path,
+	cmd := saveDashboardBody{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	req := SaveDashboardRequest{
+		Path:    path,
+		Body:    *cmd.Dashboard,
+		Message: cmd.Message,
+	}
+
+	rsp, err := s.SaveDashboard(c.Req.Context(), c.SignedInUser, req)
+	if err != nil {
+		return response.Error(400, "err", err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"action":  "SAVE",
+		"path":    path,
+		"url":     "/g/" + path, // will redirect here
+		"version": time.Now().Unix(),
+		"out":     rsp,
 	})
 }
 
@@ -329,7 +357,21 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 }
 
 func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts SaveDashboardRequest) (*dtos.DashboardFullWithMeta, error) {
-	return nil, nil
+	// TODO: authentication!
+
+	root, p := s.dash.getRoot(opts.Path)
+	if root == nil {
+		return nil, fmt.Errorf("invalid root")
+	}
+
+	// Write the change
+	err := root.Upsert(ctx, &filestorage.UpsertFileCommand{
+		Path:     fmt.Sprintf("%s.json", p),
+		Contents: (*[]byte)(&opts.Body),
+		MimeType: "application/json",
+	})
+
+	return nil, err
 }
 
 func (s *standardStorageService) ListDashboardsToBuildSearchIndex(ctx context.Context, orgId int64) DashboardBodyIterator {

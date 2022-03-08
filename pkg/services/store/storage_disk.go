@@ -66,3 +66,11 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 	s.settings = cfg
 	return s
 }
+
+// with local disk user metadata and messages are lost
+func (s *rootStorageDisk) Write(ctx context.Context, cmd *writeCommand) error {
+	return s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
+		Path:     cmd.Path,
+		Contents: &cmd.Body,
+	})
+}

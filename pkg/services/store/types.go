@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -29,10 +30,21 @@ type storageTree interface {
 // INTERNAL
 //-------------------------------------------
 
+type writeCommand struct {
+	Path      string
+	Body      []byte
+	User      *models.SignedInUser
+	Message   string
+	Overwrite bool
+}
+
 type storageRuntime interface {
 	Meta() RootStorageMeta
 
 	Store() filestorage.FileStorage
+
+	// Different storage knows how to handle comments and tracking
+	Write(ctx context.Context, cmd *writeCommand) error
 }
 
 type baseStorageRuntime struct {
@@ -46,6 +58,10 @@ func (t *baseStorageRuntime) Meta() RootStorageMeta {
 
 func (t *baseStorageRuntime) Store() filestorage.FileStorage {
 	return t.store
+}
+
+func (t *baseStorageRuntime) Write(ctx context.Context, cmd *writeCommand) error {
+	return fmt.Errorf("unsupportted operation") // will be overridden
 }
 
 func (t *baseStorageRuntime) setReadOnly(val bool) *baseStorageRuntime {
