@@ -378,3 +378,21 @@ As of Grafana v8.1, we no longer support unencrypted storage of passwords and ba
 > **Note:** Since Grafana v6.2, new or updated data sources store passwords and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed.
 
 To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../administration/cli.md#migrate-data-and-encrypt-passwords" >}}) for further instructions.
+
+## Upgrading to 8.3
+
+In 8.3 Grafana dashboards queries now reference to data sources using and object with an `uid` and `type` property, instead of the
+data source name property used before. A schema migration will applied when opening an existing dashboard. If you provision dashboards to multiple
+Grafana instances we recommend that you also provision data sources as you can then specify the uid to be the same for data sources across your instances.
+
+If you need to know the uid for a data source you have created in the UI you can find that out by checking the URL when visiting the data source settings page. The url follows the pattern ` /datasources/edit/${uid}`, meaning the last part is the uid. In Grafana v8.5 we will make it possible to view and edit the uid directly from the UI.
+
+## Upgrading to 8.5
+
+The concept of a `default` data source has existed in Grafana since the start. But the meaning and behavior might not have been clear. The default data source was not just the starting data source
+for new panels but also saved using a special value (null). This was to make it possible to change the default data source to another and have that change impact all dashboards that used the default data source.
+This behavior is not very intutive and has caused many issues to users thinking that changing default should not impact existing dashboards.
+
+This is why we are changing this in 8.5. From now on the default data source will not be a persisted property but just the starting data source for new panels and queries.
+Existing dashboards that still have panels with a `datasource` set to null will be migrated on opening the dashboard. The migration will set the datasource property to the **current** default
+data source.
