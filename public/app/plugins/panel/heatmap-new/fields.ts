@@ -2,7 +2,6 @@ import { DataFrame, DataFrameType, getDisplayProcessor, GrafanaTheme2 } from '@g
 import {
   calculateHeatmapFromData,
   createHeatmapFromBuckets,
-  prepBucketFrames,
   sortAscStrInf,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
