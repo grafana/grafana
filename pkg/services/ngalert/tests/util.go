@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -42,9 +43,10 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
 	folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore, nil), dashboardStore, nil)
+	ac := mock.New()
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore,
-		nil, nil, nil, nil, secretsService, nil, m, folderService,
+		nil, nil, nil, nil, secretsService, nil, m, folderService, ac,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
