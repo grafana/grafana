@@ -1,8 +1,10 @@
-import React, { FC, RefCallback } from 'react';
-import { useTheme2 } from '../../themes/ThemeContext';
-import { getSelectStyles } from './getSelectStyles';
+import React, { FC, RefCallback, useCallback } from 'react';
 import { cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
+import { useIntersection } from 'react-use';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+import { getSelectStyles } from './getSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
@@ -56,10 +58,26 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
 }) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+  const contentRef = React.useRef(null);
 
-  const content = (
+  const intersection = useIntersection(contentRef, {
+    root: document.querySelector('#select-menu-list-test'),
+    rootMargin: '0px',
+    threshold: 0.5,
+  });
+
+  // We need ref internally but also need to supply it to the parent. This also needs to be in useCallback as having
+  // inline function as ref messes things up.
+  const refFunc = useCallback(
+    (el) => {
+      innerRef?.(el);
+      contentRef.current = el;
+    },
+    [innerRef, contentRef]
+  );
+
+  let content = (
     <div
-      ref={innerRef}
       className={cx(
         styles.option,
         isFocused && styles.optionFocused,
@@ -80,13 +98,18 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
   );
 
   if (data.tooltip) {
-    return (
-      <Tooltip content={data.tooltip} show={isFocused} interactive={false} placement={'right'}>
+    content = (
+      <Tooltip
+        content={data.tooltip}
+        show={isFocused && (intersection?.intersectionRatio || 0) > 0.5}
+        interactive={false}
+        placement={'right'}
+      >
         {content}
       </Tooltip>
     );
   }
-  return content;
+  return <div ref={refFunc}>{content}</div>;
 };
 
 SelectMenuOptions.displayName = 'SelectMenuOptions';
