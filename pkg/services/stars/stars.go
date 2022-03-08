@@ -3,7 +3,6 @@ package stars
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	starsstore "github.com/grafana/grafana/pkg/services/stars/store"
@@ -22,15 +21,7 @@ type ManagerImpl struct {
 
 func ProvideService(sqlstore sqlstore.Store) Manager {
 	m := &ManagerImpl{starsStore: starsstore.NewStarsStore(sqlstore)}
-	m.addStarQueryAndCommandHandlers()
 	return m
-}
-
-func (s *ManagerImpl) addStarQueryAndCommandHandlers() {
-	bus.AddHandler("sql", s.StarDashboard)
-	bus.AddHandler("sql", s.UnstarDashboard)
-	bus.AddHandler("sql", s.GetUserStars)
-	bus.AddHandler("sql", s.IsStarredByUserCtx)
 }
 
 func (m *ManagerImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
