@@ -350,7 +350,6 @@ func (m *pluginStoreMock) Plugin(ctx context.Context, pluginID string) (plugins.
 }
 
 type pluginDashboardServiceMock struct {
-	plugins.DashboardFileStore
 	listPluginDashboardsFunc func(ctx context.Context, req *plugindashboards.ListPluginDashboardsRequest) (*plugindashboards.ListPluginDashboardsResponse, error)
 	loadPluginDashboardfunc  func(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error)
 }
