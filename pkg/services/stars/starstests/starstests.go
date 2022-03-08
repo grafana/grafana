@@ -7,8 +7,9 @@ import (
 )
 
 type FakeStarsService struct {
-	ExpectedStars *models.Star
-	ExpectedError error
+	ExpectedStars     *models.Star
+	ExpectedError     error
+	ExpectedUserStars map[int64]bool
 }
 
 func NewStarsServiceFake() *FakeStarsService {
@@ -27,8 +28,8 @@ func (f *FakeStarsService) UnstarDashboard(ctx context.Context, cmd *models.Unst
 	return f.ExpectedError
 }
 
-func (f *FakeStarsService) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
-	return f.ExpectedError
+func (f *FakeStarsService) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error) {
+	return f.ExpectedUserStars, f.ExpectedError
 }
 
 type FakeStarsStore struct {
