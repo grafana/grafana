@@ -229,3 +229,17 @@ func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dash
 
 	return r0, r1
 }
+
+// GetDashboardsByPluginID provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardsByPluginIdQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}

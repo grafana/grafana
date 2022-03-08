@@ -405,3 +405,7 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *m.Save
 func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
 	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 }
+
+func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
+}

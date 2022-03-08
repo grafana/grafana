@@ -16,6 +16,11 @@ type DashboardService interface {
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 }
 
+// PluginService is a service for operating on plugin dashboards.
+type PluginService interface {
+	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
+}
+
 //go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
@@ -46,4 +51,6 @@ type Store interface {
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 	UnprovisionDashboard(ctx context.Context, id int64) error
+	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
+	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
 }
