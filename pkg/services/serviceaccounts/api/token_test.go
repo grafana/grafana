@@ -342,7 +342,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			endpoint := fmt.Sprintf(serviceaccountIDPath+"/tokens", sa.Id)
+			endpoint := fmt.Sprintf(serviceAccountIDPath+"/tokens", sa.Id)
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, &saStoreMockTokens{saAPIKeys: tc.tokens})
 			actual := requestResponse(server, http.MethodGet, endpoint, http.NoBody)
 
