@@ -13,7 +13,7 @@ seqs: [
                 // attention!
                 //uid: string
                 //orgId: int
-                //name: string
+                name: string
                 type: string
                 typeLogoUrl?: string
                 access: *"proxy" | "direct" // TODO are we sure this default is right?

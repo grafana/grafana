@@ -10,18 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"k8s.io/apimachinery/pkg/types"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
-
-/*
-This exists as part of the intent-api labeled projects.
-More can be seen at https://github.com/grafana/grafana/issues/44570.
-
-This is highly experimental.
-
-Until this comment is removed, if you are wondering if you should use things in here to access SQL, the answer is no.
-
-*/
 
 var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
 	ProvideDataSourceSchemaStore,
@@ -39,26 +30,26 @@ type storeDS struct {
 	ss *sqlstore.SQLStore
 }
 
-func (s storeDS) Get(ctx context.Context, uid string) (store.UniqueObject, error) {
+func (s storeDS) Get(ctx context.Context, uid string) (runtime.Object, error) {
 	cmd := &models.GetDataSourceQuery{
 		OrgId: 1, // Hardcode for now
 		Uid:   uid,
 	}
 
 	if err := s.ss.GetDataSource(ctx, cmd); err != nil {
-		return Datasource{}, err
+		return nil, err
 	}
 
 	return s.oldToNew(cmd.Result), nil
 }
 
-func (s storeDS) Insert(ctx context.Context, o store.UniqueObject) error {
-	ds, ok := o.(Datasource)
+func (s storeDS) Insert(ctx context.Context, o runtime.Object) error {
+	ds, ok := o.(*Datasource)
 	if !ok {
 		return fmt.Errorf("unexpected type: %T", o)
 	}
 	cmd := &models.AddDataSourceCommand{
-		Name:              ds.Name,
+		Name:              ds.Spec.Name,
 		Type:              ds.Spec.Type,
 		Access:            models.DsAccess(ds.Spec.Access),
 		Url:               ds.Spec.Url,
@@ -72,14 +63,14 @@ func (s storeDS) Insert(ctx context.Context, o store.UniqueObject) error {
 		IsDefault:         ds.Spec.IsDefault,
 		JsonData:          simplejson.NewFromAny(ds.Spec.JsonData),
 		// SecureJsonData: TODO,
-		Uid:   string(ds.GetIdentifier()),
+		Uid:   ds.ObjectMeta.Name,
 		OrgId: 1, // hardcode for now, TODO
 	}
 	return s.ss.AddDataSource(ctx, cmd)
 }
 
-func (s storeDS) Update(ctx context.Context, o store.UniqueObject) error {
-	ds, ok := o.(Datasource)
+func (s storeDS) Update(ctx context.Context, o runtime.Object) error {
+	ds, ok := o.(*Datasource)
 	if !ok {
 		return fmt.Errorf("unexpected type: %T", o)
 	}
@@ -88,7 +79,7 @@ func (s storeDS) Update(ctx context.Context, o store.UniqueObject) error {
 		return err
 	}
 	cmd := &models.UpdateDataSourceCommand{
-		Name:              ds.Name,
+		Name:              ds.Spec.Name,
 		Type:              ds.Spec.Type,
 		Access:            models.DsAccess(ds.Spec.Access),
 		Url:               ds.Spec.Url,
@@ -102,7 +93,7 @@ func (s storeDS) Update(ctx context.Context, o store.UniqueObject) error {
 		IsDefault:         ds.Spec.IsDefault,
 		JsonData:          simplejson.NewFromAny(ds.Spec.JsonData),
 		// SecureJsonData: TODO,
-		Uid:     string(ds.GetIdentifier()),
+		Uid:     ds.ObjectMeta.Name,
 		OrgId:   1, // hardcode for now, TODO
 		Version: rv,
 		// TODO: sets updated timestamp
@@ -120,10 +111,15 @@ func (s storeDS) Delete(ctx context.Context, uid string) error {
 }
 
 // oldToNew doesn't need to be method, but keeps things bundled
-func (s storeDS) oldToNew(ds *models.DataSource) Datasource {
+func (s storeDS) oldToNew(ds *models.DataSource) *Datasource {
 	jdMap := ds.JsonData.MustMap()
 	cr := Datasource{
+		ObjectMeta: v1.ObjectMeta{
+			Name: ds.Uid,
+			ResourceVersion: strconv.Itoa(ds.Version),
+		},
 		Spec: Model{
+			Name: ds.Name,
 			Type:              ds.Type,
 			Access:            string(ds.Access),
 			Url:               ds.Url,
@@ -141,8 +137,5 @@ func (s storeDS) oldToNew(ds *models.DataSource) Datasource {
 			// Note: Not mapped is created / updated time stamps
 		},
 	}
-	cr.UID = types.UID(ds.Uid)
-	cr.Name = ds.Name
-	cr.ResourceVersion = strconv.Itoa(ds.Version)
-	return cr
+	return &cr
 }

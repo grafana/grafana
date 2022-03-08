@@ -47,8 +47,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 
 	// TODO: check ACTUAL error
 	if errors.Is(err, errNotFound) {
-		// TODO: fix me: we don't know the UID at this point (it's empty)
-		return reconcile.Result{}, d.sto.Delete(ctx, string(ds.UID))
+		return reconcile.Result{}, d.sto.Delete(ctx, ds.ObjectMeta.Name)
 	}
 
 	if err != nil {
@@ -58,7 +57,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}, err
 	}
 
-	_, err = d.sto.Get(ctx, string(ds.UID))
+	_, err = d.sto.Get(ctx, string(ds.ObjectMeta.Name))
 	if err != nil {
 		if !errors.Is(err, models.ErrDataSourceNotFound) {
 			return reconcile.Result{

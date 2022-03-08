@@ -5,13 +5,12 @@ package datasource
 
 import (
 	"context"
-	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestStoreDSStoreCRUD(t *testing.T) {
@@ -25,65 +24,71 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		jd["test"] = "test"
 
 		modelToInsert := Datasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: uid,
+			},
 			Spec: Model{
+				Name: "Test",
 				JsonData: jd,
 			},
 		}
-		modelToInsert.Name = "Test"
-		modelToInsert.UID = types.UID(uid)
 
 		// Insert
-		err := dsStore.Insert(ctx, modelToInsert)
+		err := dsStore.Insert(ctx, &modelToInsert)
 		require.NoError(t, err)
 
 		// Get
-		fetched, err := dsStore.Get(ctx, uid)
+		fetchedObject, err := dsStore.Get(ctx, uid)
 		require.NoError(t, err)
 
-		fetchedDS, ok := fetched.(Datasource)
+		fetchedDS, ok := fetchedObject.(*Datasource)
 		require.True(t, ok)
 
 		modelToInsertWithVersionBumped := Datasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: uid,
+				ResourceVersion: "1",
+			},
 			Spec: Model{
+				Name: "Test",
 				JsonData: jd,
 			},
 		}
-		modelToInsertWithVersionBumped.Name = "Test"
-		modelToInsertWithVersionBumped.UID = types.UID(uid)
-		modelToInsertWithVersionBumped.ResourceVersion = strconv.Itoa(1)
 
-		require.Equal(t, modelToInsertWithVersionBumped, fetchedDS)
+		require.Equal(t, &modelToInsertWithVersionBumped, fetchedDS)
 
 		// Update
 		modelForUpdate := Datasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: uid,
+				ResourceVersion: fetchedDS.ResourceVersion,
+			},
 			Spec: Model{
+				Name: "Test",
 				JsonData: jd,
 				Type:     "slothFactory",
 			},
 		}
-		modelForUpdate.Name = "Test"
-		modelForUpdate.UID = types.UID(uid)
-		modelForUpdate.ResourceVersion = fetchedDS.ResourceVersion // We are manually setting version
 
-		err = dsStore.Update(ctx, modelForUpdate)
+		err = dsStore.Update(ctx, &modelForUpdate)
 		require.NoError(t, err)
 
 		// Get updated
 		modelForUpdateWithVersionBump := Datasource{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: uid,
+				ResourceVersion: "2",
+			},
 			Spec: Model{
+				Name: "Test",
 				JsonData: jd,
 				Type:     "slothFactory",
 			},
 		}
-		modelForUpdateWithVersionBump.Name = "Test"
-		modelForUpdateWithVersionBump.UID = types.UID(uid)
-		rv, err := strconv.Atoi(fetchedDS.ResourceVersion)
-		require.NoError(t, err)
-		modelForUpdateWithVersionBump.ResourceVersion = strconv.Itoa(rv + 1) // We are manually setting version
 
 		fetchedUpdatedDS, err := dsStore.Get(ctx, uid)
 		require.NoError(t, err)
-		require.Equal(t, modelForUpdateWithVersionBump, fetchedUpdatedDS)
+		require.Equal(t, &modelForUpdateWithVersionBump, fetchedUpdatedDS)
 
 		// Delete it
 		err = dsStore.Delete(ctx, uid)
