@@ -1,9 +1,5 @@
 import { DataFrame, DataFrameType, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
-import {
-  calculateHeatmapFromData,
-  createHeatmapFromBuckets,
-  sortAscStrInf,
-} from 'app/features/transformers/calculateHeatmap/heatmap';
+import { calculateHeatmapFromData, createHeatmapFromBuckets } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
@@ -63,7 +59,7 @@ export function prepareHeatmapData(
     //frames = prepBucketFrames(frames);
 
     return {
-      yAxisValues: frames.map((f) => f.name ?? null).sort(sortAscStrInf),
+      yAxisValues: frames.map((f) => f.name ?? null),
       ...getHeatmapData(createHeatmapFromBuckets(frames), theme),
     };
   }
