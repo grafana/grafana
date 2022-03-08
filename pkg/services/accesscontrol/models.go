@@ -356,7 +356,18 @@ const (
 	ActionFoldersPermissionsWrite = "folders.permissions:write"
 
 	// Folder scopes
-	ScopeFoldersAll = "folders:*"
+	ScopeFoldersRoot = "folders"
+
+	// Datasource Actions
+	ActionDatasourcesRead   = "datasources:read"
+	ActionDatasourcesQuery  = "datasources:query"
+	ActionDatasourcesCreate = "datasources:create"
+	ActionDatasourcesWrite  = "datasources:write"
+	ActionDatasourcesDelete = "datasources:delete"
+	ActionDatasourcesIDRead = "datasources.id:read"
+
+	// Datasource scopes
+	ScopeDatasourcesRoot = "datasources"
 )
 
 var (
@@ -364,7 +375,11 @@ var (
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 
 	// Folder scopes
-	ScopeFolderID = Scope("folders", "id", Parameter(":id"))
+	ScopeFoldersAll = GetResourceAllScope(ScopeFoldersRoot)
+	ScopeFolderID   = GetResourceScope(ScopeFoldersRoot, Parameter(":id"))
+
+	// Datasource scopes
+	ScopeDatasourcesAll = Scope(ScopeDatasourcesRoot, "*")
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

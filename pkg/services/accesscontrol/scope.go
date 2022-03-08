@@ -22,6 +22,14 @@ func GetResourceScope(resource string, resourceID string) string {
 	return Scope(resource, "id", resourceID)
 }
 
+func GetResourceScopeUID(resource string, resourceID string) string {
+	return Scope(resource, "uid", resourceID)
+}
+
+func GetResourceScopeName(resource string, resourceID string) string {
+	return Scope(resource, "name", resourceID)
+}
+
 func GetResourceAllScope(resource string) string {
 	return Scope(resource, "*")
 }
