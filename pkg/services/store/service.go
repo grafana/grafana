@@ -9,12 +9,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
@@ -22,11 +24,17 @@ var grafanaStorageLogger = log.New("grafanaStorageLogger")
 type StorageService interface {
 	registry.BackgroundService
 
-	// Management
+	// HTTP API
 	Status(c *models.ReqContext) response.Response
 	Browse(c *models.ReqContext) response.Response
 	Upsert(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
+
+	// List folder contents
+	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
+
+	// Called from the UI when a dashboard is saved
+	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
 
 	// Get the dashboard lookup service
 	GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error)
@@ -42,10 +50,7 @@ type StorageService interface {
 }
 
 type standardStorageService struct {
-	sql      *sqlstore.SQLStore
-	datapath string
-
-	// Scopes
+	sql    *sqlstore.SQLStore
 	res    *nestedTree
 	dash   *nestedTree
 	lookup map[string]*nestedTree
@@ -57,12 +62,11 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
 				Path: cfg.StaticRootPath,
 				Roots: []string{
-					"testdata/",
-					"img/icons/",
-					"img/bg/",
-					"gazetteer/",
-					"maps/",
-					"upload/",
+					"/testdata/",
+					"/img/icons/",
+					"/img/bg/",
+					"/gazetteer/",
+					"/maps/",
 				},
 			}).setReadOnly(true).setBuiltin(true),
 			newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
@@ -91,14 +95,15 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			}),
 		},
 	}
+	s := newStandardStorageService(res, dash)
+	s.sql = sql
+	return s
+}
 
+func newStandardStorageService(res *nestedTree, dash *nestedTree) *standardStorageService {
 	res.init()
 	dash.init()
-
 	return &standardStorageService{
-		sql:      sql,
-		datapath: cfg.DataPath,
-
 		res:  res,
 		dash: dash,
 		lookup: map[string]*nestedTree{
@@ -169,8 +174,20 @@ func (s *standardStorageService) Delete(c *models.ReqContext) response.Response 
 }
 
 func (s *standardStorageService) Browse(c *models.ReqContext) response.Response {
-	scope, path := getPathAndScope(c)
-	if scope == "" && path == "" {
+	params := web.Params(c.Req)
+	path := params["*"]
+	frame, err := s.List(c.Req.Context(), c.SignedInUser, path)
+	if err != nil {
+		return response.Error(400, "error reading path", err)
+	}
+	if frame == nil {
+		return response.Error(404, "not found", nil)
+	}
+	return response.JSONStreaming(200, frame)
+}
+
+func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
+	if path == "" {
 		count := 2
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -185,24 +202,32 @@ func (s *standardStorageService) Browse(c *models.ReqContext) response.Response 
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})
-		return response.JSONStreaming(200, frame)
+		return frame, nil
 	}
+
+	scope, path := splitFirstSegment(path)
 
 	root, ok := s.lookup[scope]
 	if !ok {
-		return response.Error(400, fmt.Sprintf("unknown scope(%s, %s)", scope, path), nil)
+		return nil, fmt.Errorf("not found")
 	}
 
 	// TODO: permission check!
 
-	frame, err := root.ListFolder(c.Req.Context(), path)
-	if err != nil {
-		return response.Error(400, "error reading path", err)
+	return root.ListFolder(ctx, path)
+}
+
+func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
+	scope, path := splitFirstSegment(path)
+
+	root, ok := s.lookup[scope]
+	if !ok {
+		return nil, fmt.Errorf("not found")
 	}
-	if frame == nil {
-		return response.Error(404, "not found", nil)
-	}
-	return response.JSONStreaming(200, frame)
+
+	// TODO: permission check!
+
+	return root.GetFile(ctx, path)
 }
 
 func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error) {

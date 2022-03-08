@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -24,19 +23,29 @@ func (t *nestedTree) init() {
 	}
 }
 
+func (t *nestedTree) getRoot(path string) (filestorage.FileStorage, string) {
+	if path == "" {
+		return nil, ""
+	}
+
+	rootKey, path := splitFirstSegment(path)
+	root, ok := t.lookup[rootKey]
+	if !ok || root == nil {
+		return nil, path // not found or not ready
+	}
+	return root, filestorage.Delimiter + path
+}
+
 func (t *nestedTree) GetFile(ctx context.Context, path string) (*filestorage.File, error) {
 	if path == "" {
 		return nil, nil // not found
 	}
-	idx := strings.Index(path, "/")
-	if idx > 0 {
-		root, ok := t.lookup[path[:idx]]
-		if !ok || root == nil {
-			return nil, nil // not found
-		}
-		return root.Get(ctx, path[idx+1:])
+
+	root, path := t.getRoot(path)
+	if root == nil {
+		return nil, nil // not found (or not ready)
 	}
-	return nil, nil
+	return root.Get(ctx, path)
 }
 
 func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, error) {
@@ -57,20 +66,17 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return frame, nil
 	}
 
-	rootKey, path := splitFirstSegment(path)
-
-	root, ok := t.lookup[rootKey]
-	if !ok || root == nil {
-		return nil, nil // not found or not ready
+	root, path := t.getRoot(path)
+	if root == nil {
+		return nil, nil // not found (or not ready)
 	}
 
-	listPath := filestorage.Delimiter + path
-	files, err := root.ListFiles(ctx, listPath, nil, nil)
+	files, err := root.ListFiles(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	folders, err := root.ListFolders(ctx, listPath, &filestorage.ListOptions{Recursive: false})
+	folders, err := root.ListFolders(ctx, path, &filestorage.ListOptions{Recursive: false})
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +90,10 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
 	names.Name = "name"
 	mtype.Name = "mediaType"
+	fsize.Name = "size"
+	fsize.Config = &data.FieldConfig{
+		Unit: "bytes",
+	}
 	for i, f := range append(folders, files.Files...) {
 		names.Set(i, f.Name)
 		mtype.Set(i, f.MimeType)
