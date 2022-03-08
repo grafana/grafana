@@ -29,10 +29,33 @@ type storageTree interface {
 // INTERNAL
 //-------------------------------------------
 
-type rootStorageState struct {
-	Meta RootStorageMeta
+type storageRuntime interface {
+	Meta() RootStorageMeta
 
-	Store filestorage.FileStorage
+	Store() filestorage.FileStorage
+}
+
+type baseStorageRuntime struct {
+	meta  RootStorageMeta
+	store filestorage.FileStorage
+}
+
+func (t *baseStorageRuntime) Meta() RootStorageMeta {
+	return t.meta
+}
+
+func (t *baseStorageRuntime) Store() filestorage.FileStorage {
+	return t.store
+}
+
+func (t *baseStorageRuntime) setReadOnly(val bool) *baseStorageRuntime {
+	t.meta.ReadOnly = val
+	return t
+}
+
+func (t *baseStorageRuntime) setBuiltin(val bool) *baseStorageRuntime {
+	t.meta.Builtin = val
+	return t
 }
 
 // TEMPORARY! internally, used for listing and building an index

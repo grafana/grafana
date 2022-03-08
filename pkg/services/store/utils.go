@@ -19,10 +19,13 @@ func splitFirstSegment(path string) (string, string) {
 		return path[:idx], path[idx+1:]
 	}
 	return path, ""
-
 }
 
 func getPathAndScope(c *models.ReqContext) (string, string) {
 	params := web.Params(c.Req)
-	return splitFirstSegment(filepath.Clean(params["*"]))
+	path := params["*"]
+	if path == "" {
+		return "", ""
+	}
+	return splitFirstSegment(filepath.Clean(path))
 }

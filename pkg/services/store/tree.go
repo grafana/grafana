@@ -9,7 +9,7 @@ import (
 )
 
 type nestedTree struct {
-	roots  []rootStorageState
+	roots  []storageRuntime
 	lookup map[string]filestorage.FileStorage
 }
 
@@ -20,12 +20,8 @@ var (
 func (t *nestedTree) init() {
 	t.lookup = make(map[string]filestorage.FileStorage, len(t.roots))
 	for _, root := range t.roots {
-		t.lookup[root.Meta.Config.Prefix] = root.Store
+		t.lookup[root.Meta().Config.Prefix] = root.Store()
 	}
-}
-
-func (t *nestedTree) GetRoots(ctx context.Context) []rootStorageState {
-	return t.roots
 }
 
 func (t *nestedTree) GetFile(ctx context.Context, path string) (*filestorage.File, error) {
@@ -58,7 +54,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		names.Name = "name"
 		mtype.Name = "mediaType"
 		for i, f := range t.roots {
-			names.Set(i, f.Meta.Config.Prefix)
+			names.Set(i, f.Meta().Config.Prefix)
 			mtype.Set(i, "directory")
 		}
 		frame := data.NewFrame("", names, mtype)

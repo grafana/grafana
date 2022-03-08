@@ -12,12 +12,12 @@ import (
 const rootStorageTypeDisk = "disk"
 
 type rootStorageDisk struct {
-	rootStorageState
+	baseStorageRuntime
 
 	settings *StorageLocalDiskConfig
 }
 
-func newDiskStorage(name string, prefix string, cfg *StorageLocalDiskConfig) *rootStorageDisk {
+func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *rootStorageDisk {
 	if cfg == nil {
 		cfg = &StorageLocalDiskConfig{}
 	}
@@ -43,19 +43,18 @@ func newDiskStorage(name string, prefix string, cfg *StorageLocalDiskConfig) *ro
 		})
 	}
 	s := &rootStorageDisk{}
-	s.Meta = meta
-	s.settings = cfg
 
 	if meta.Notice == nil {
 		path := fmt.Sprintf("file://%s", cfg.Path)
 		bucket, err := blob.OpenBucket(context.Background(), path)
 		if err != nil {
+			grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
 			meta.Notice = append(meta.Notice, data.Notice{
 				Severity: data.NoticeSeverityError,
 				Text:     "Failed to initalize storage",
 			})
 		} else {
-			s.Store = filestorage.NewCdkBlobStorage(grafanaStorageLogger,
+			s.store = filestorage.NewCdkBlobStorage(grafanaStorageLogger,
 				bucket, "",
 				filestorage.NewPathFilters(cfg.Roots))
 
@@ -63,19 +62,7 @@ func newDiskStorage(name string, prefix string, cfg *StorageLocalDiskConfig) *ro
 		}
 	}
 
+	s.meta = meta
+	s.settings = cfg
 	return s
-}
-
-func newPublicFolder(root string) *rootStorageDisk {
-	return newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
-		Path: root,
-		Roots: []string{
-			"testdata/",
-			"img/icons/",
-			"img/bg/",
-			"gazetteer/",
-			"maps/",
-			"upload/",
-		},
-	})
 }

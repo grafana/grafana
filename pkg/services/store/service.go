@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -42,17 +44,55 @@ type StorageService interface {
 type standardStorageService struct {
 	sql      *sqlstore.SQLStore
 	datapath string
+
+	// Scopes
+	res    *nestedTree
+	dash   *nestedTree
+	lookup map[string]*nestedTree
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
-	fmt.Printf("DATA:%s\n", cfg.StaticRootPath)
-	fmt.Printf("TOGGLES:%v\n", features.IsEnabled(featuremgmt.FlagDashboardPreviews))
+	res := &nestedTree{
+		roots: []storageRuntime{
+			newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
+				Path: cfg.StaticRootPath,
+				Roots: []string{
+					"testdata/",
+					"img/icons/",
+					"img/bg/",
+					"gazetteer/",
+					"maps/",
+					"upload/",
+				},
+			}).setReadOnly(true).setBuiltin(true),
+			newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
+				Path: filepath.Join(cfg.DataPath, "upload"),
+			}),
+		},
+	}
 
-	//staticRoot := newPublicFolder(cfg.StaticRootPath)
+	devenv, _ := filepath.Abs("devenv")
+	dash := &nestedTree{
+		roots: []storageRuntime{
+			newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
+				Path: filepath.Join(devenv, "dev-dashboards"),
+			}),
+		},
+	}
+
+	res.init()
+	dash.init()
 
 	return &standardStorageService{
 		sql:      sql,
 		datapath: cfg.DataPath,
+
+		res:  res,
+		dash: dash,
+		lookup: map[string]*nestedTree{
+			"dash": dash,
+			"res":  res,
+		},
 	}
 }
 
@@ -77,9 +117,21 @@ func (s *standardStorageService) HandleExportSystem(c *models.ReqContext) respon
 }
 
 func (s *standardStorageService) Status(c *models.ReqContext) response.Response {
-	return response.JSON(200, map[string]string{
-		"TODO": "status",
-	})
+	status := make(map[string][]RootStorageMeta)
+
+	meta := make([]RootStorageMeta, 0)
+	for _, root := range s.res.roots {
+		meta = append(meta, root.Meta())
+	}
+	status["resources"] = meta
+
+	meta = make([]RootStorageMeta, 0)
+	for _, root := range s.dash.roots {
+		meta = append(meta, root.Meta())
+	}
+	status["dashboards"] = meta
+
+	return response.JSON(200, status)
 }
 
 func (s *standardStorageService) Upsert(c *models.ReqContext) response.Response {
@@ -105,14 +157,37 @@ func (s *standardStorageService) Delete(c *models.ReqContext) response.Response 
 }
 
 func (s *standardStorageService) Browse(c *models.ReqContext) response.Response {
-	action := "Browse"
 	scope, path := getPathAndScope(c)
+	if scope == "" && path == "" {
+		count := 2
+		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		names.Name = "name"
+		mtype.Name = "mediaType"
+		names.Set(0, "dash")
+		names.Set(1, "res")
+		for i := 0; i < count; i++ {
+			mtype.Set(i, "directory")
+		}
+		frame := data.NewFrame("", names, mtype)
+		frame.SetMeta(&data.FrameMeta{
+			Type: data.FrameTypeDirectoryListing,
+		})
+		return response.JSONStreaming(200, frame)
+	}
 
-	return response.JSON(200, map[string]string{
-		"action": action,
-		"scope":  scope,
-		"path":   path,
-	})
+	root, ok := s.lookup[scope]
+	if !ok {
+		return response.Error(400, fmt.Sprintf("unknown scope(%s, %s)", scope, path), nil)
+	}
+
+	// TODO: permission check!
+
+	frame, err := root.ListFolder(c.Req.Context(), path)
+	if err != nil {
+		return response.Error(400, "error reading path", err)
+	}
+	return response.JSONStreaming(200, frame)
 }
 
 func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error) {
