@@ -14,19 +14,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 )
 
 func ProvideService(routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
-	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store,
+	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices, features featuremgmt.FeatureToggles,
 ) *ImportDashboardService {
 	s := &ImportDashboardService{
 		features:                    features,
-		pluginDashboardManager:      pluginDashboardManager,
+		pluginDashboardService:      pluginDashboardService,
 		dashboardService:            dashboardService,
 		libraryPanelService:         libraryPanelService,
 		dashboardPermissionsService: permissionsServices.GetDashboardService(),
@@ -40,7 +41,7 @@ func ProvideService(routeRegister routing.RouteRegister,
 
 type ImportDashboardService struct {
 	features                    featuremgmt.FeatureToggles
-	pluginDashboardManager      plugins.PluginDashboardManager
+	pluginDashboardService      plugindashboards.Service
 	dashboardService            dashboards.DashboardService
 	libraryPanelService         librarypanels.Service
 	dashboardPermissionsService accesscontrol.PermissionsService
@@ -49,9 +50,14 @@ type ImportDashboardService struct {
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
 	var dashboard *models.Dashboard
 	if req.PluginId != "" {
-		var err error
-		if dashboard, err = s.pluginDashboardManager.LoadPluginDashboard(ctx, req.PluginId, req.Path); err != nil {
+		loadReq := &plugindashboards.LoadPluginDashboardRequest{
+			PluginID:  req.PluginId,
+			Reference: req.Path,
+		}
+		if resp, err := s.pluginDashboardService.LoadPluginDashboard(ctx, loadReq); err != nil {
 			return nil, err
+		} else {
+			dashboard = resp.Dashboard
 		}
 	} else {
 		dashboard = models.NewDashboardFromJson(req.Dashboard)
