@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
@@ -24,11 +25,15 @@ func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		defer store.AssertExpectations(t)
+		ac := acmock.New()
 		service := ProvideFolderService(
 			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store, nil)},
 			store,
 			nil,
+			ac,
 		)
+
+		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 1)
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New
