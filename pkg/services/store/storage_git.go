@@ -3,8 +3,13 @@ package store
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"gocloud.dev/blob"
 )
 
 const rootStorageTypeGit = "git"
@@ -13,9 +18,10 @@ type rootStorageGit struct {
 	baseStorageRuntime
 
 	settings *StorageGitConfig
+	repo     *git.Repository
 }
 
-func newGitStorage(prefix string, name string, cfg *StorageGitConfig) *rootStorageGit {
+func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGitConfig) *rootStorageGit {
 	if cfg == nil {
 		cfg = &StorageGitConfig{}
 	}
@@ -40,13 +46,57 @@ func newGitStorage(prefix string, name string, cfg *StorageGitConfig) *rootStora
 			Text:     "Missing remote path configuration",
 		})
 	}
+	if len(localRoot) < 2 {
+		meta.Notice = append(meta.Notice, data.Notice{
+			Severity: data.NoticeSeverityError,
+			Text:     "Invalid local root folder",
+		})
+	} else if _, err := os.Stat(localRoot); os.IsNotExist(err) {
+		meta.Notice = append(meta.Notice, data.Notice{
+			Severity: data.NoticeSeverityError,
+			Text:     "Local root does not exist",
+		})
+	}
+
 	s := &rootStorageGit{}
 
 	if meta.Notice == nil {
-		meta.Notice = append(meta.Notice, data.Notice{
-			Severity: data.NoticeSeverityError,
-			Text:     "not impemented yet...",
-		})
+		dir := filepath.Join(localRoot, prefix)
+		repo, err := git.PlainOpen(dir)
+		if err == git.ErrRepositoryNotExists {
+			repo, err = git.PlainClone(dir, false, &git.CloneOptions{
+				URL:      cfg.Remote,
+				Progress: os.Stdout,
+				Depth:    1,
+			})
+		}
+
+		if err != nil {
+			meta.Notice = append(meta.Notice, data.Notice{
+				Severity: data.NoticeSeverityError,
+				Text:     err.Error(),
+			})
+		}
+
+		if err == nil {
+			path := fmt.Sprintf("file://%s", dir)
+			bucket, err := blob.OpenBucket(context.Background(), path)
+			if err != nil {
+				grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
+				meta.Notice = append(meta.Notice, data.Notice{
+					Severity: data.NoticeSeverityError,
+					Text:     "Failed to initalize storage",
+				})
+			} else {
+				s.store = filestorage.NewCdkBlobStorage(
+					grafanaStorageLogger,
+					bucket, "", nil)
+
+				meta.Ready = true // exists!
+			}
+		}
+
+		s.repo = repo
 	}
 
 	s.meta = meta

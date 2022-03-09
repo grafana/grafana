@@ -81,17 +81,20 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		},
 	}
 
+	storage := filepath.Join(cfg.DataPath, "storage")
+	_ = os.MkdirAll(storage, 0700)
+
 	devenv, _ := filepath.Abs("devenv")
 	dash := &nestedTree{
 		roots: []storageRuntime{
 			newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
 				Path: filepath.Join(devenv, "dev-dashboards"),
 			}),
-			newGitStorage("it", "My dashboards in git", &StorageGitConfig{
-				Remote:      "git@github.com:ryantxu/test-dash-repo.git",
+			newGitStorage("it", "My dashboards in git", storage, &StorageGitConfig{
+				Remote:      "https://github.com/ryantxu/test-dash-repo.git",
 				Branch:      "main",
-				Root:        "path/to/subfolder",
-				AccessToken: "should be more secrete",
+				Root:        "",
+				AccessToken: "",
 			}),
 			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{
 				Bucket:    "grafana-plugin-resources",
