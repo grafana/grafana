@@ -35,16 +35,24 @@ describe('situation', () => {
       type: 'AT_ROOT',
     });
 
-    assertSituation('count_over_time(^)', {
-      type: 'IN_FUNCTION',
+    assertSituation('{level="info"} ^', {
+      type: 'AFTER_SELECTOR',
+      labels: [{ name: 'level', value: 'info', op: '=' }],
     });
 
-    assertSituation('count_over_time({level="info"}[10s]) / count_over_time(^)', {
-      type: 'IN_FUNCTION',
+    assertSituation('^ {level="info"}', null);
+
+    assertSituation('count_over_time({level="info"}^[10s])', {
+      type: 'AFTER_SELECTOR',
+      labels: [{ name: 'level', value: 'info', op: '=' }],
     });
 
-    assertSituation('count_over_time({level="info"}[^])', {
-      type: 'IN_DURATION',
+    assertSituation('count_over_time(^{level="info"}[10s])', null);
+
+    // should work even when the query is half-complete
+    assertSituation('count_over_time({level="info"}^)', {
+      type: 'AFTER_SELECTOR',
+      labels: [{ name: 'level', value: 'info', op: '=' }],
     });
   });
 

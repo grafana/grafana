@@ -5,8 +5,10 @@ import { NeverCaseError } from './util';
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeTypeName =
   | '⚠' // this is used as error-name
+  | 'Expr'
   | 'Grouping'
   | 'Identifier'
+  | 'LogExpr'
   | 'LogRangeExpr'
   | 'LogQL'
   | 'Matcher'
@@ -95,9 +97,6 @@ export type Label = {
 
 export type Situation =
   | {
-      type: 'IN_FUNCTION';
-    }
-  | {
       type: 'AT_ROOT';
     }
   | {
@@ -119,6 +118,10 @@ export type Situation =
       labelName: string;
       betweenQuotes: boolean;
       otherLabels: Label[];
+    }
+  | {
+      type: 'AFTER_SELECTOR';
+      labels: Label[];
     };
 
 type Resolver = {
@@ -142,10 +145,6 @@ const RESOLVERS: Resolver[] = [
     fun: resolveTopLevel,
   },
   {
-    path: ['RangeAggregationExpr'],
-    fun: resolveInFunction,
-  },
-  {
     path: ['String', 'Matcher'],
     fun: resolveMatcher,
   },
@@ -160,6 +159,14 @@ const RESOLVERS: Resolver[] = [
   {
     path: [ERROR_NODE_NAME, 'Range'],
     fun: resolveDurations,
+  },
+  {
+    path: ['LogRangeExpr'],
+    fun: resolveLogRange,
+  },
+  {
+    path: [ERROR_NODE_NAME, 'LogRangeExpr'],
+    fun: resolveLogRangeFromError,
   },
 ];
 
@@ -363,15 +370,37 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
-function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation {
-  return {
-    type: 'AT_ROOT',
-  };
+function getSelectorDirectlyBeforeTheCursor(node: SyntaxNode, text: string, pos: number): SyntaxNode | null {
+  return null;
 }
 
-function resolveInFunction(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // we try a specific path down from here, if it exists, then we are
+  // in a `{x="y"}` situation, with the cursor at the end
+
+  const selectorNode = walk(node, [
+    ['lastChild', 'Expr'],
+    ['lastChild', 'LogExpr'],
+    ['lastChild', 'Selector'],
+  ]);
+
+  if (selectorNode !== null) {
+    // note: we might be directly-before or directly-after the selector,
+    // we only want to handle the `after` situation.
+    if (selectorNode.to <= pos) {
+      const labels = getLabels(selectorNode, text);
+      return {
+        type: 'AFTER_SELECTOR',
+        labels,
+      };
+    } else {
+      // we are before the selector, we don't have a named situation for this case
+      return null;
+    }
+  }
+
   return {
-    type: 'IN_FUNCTION',
+    type: 'AT_ROOT',
   };
 }
 
@@ -379,6 +408,31 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
   return {
     type: 'IN_DURATION',
   };
+}
+
+function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): Situation | null {
+  const parent = walk(node, [['parent', 'LogRangeExpr']]);
+  if (parent === null) {
+    return null;
+  }
+
+  return resolveLogRange(parent, text, pos);
+}
+
+function resolveLogRange(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // we want to handle the case where we are next to a selector
+  const selectorNode = walk(node, [['firstChild', 'Selector']]);
+
+  // we check that the selector is before the cursor, not after it
+  if (selectorNode != null && selectorNode.to <= pos) {
+    const labels = getLabels(selectorNode, text);
+    return {
+      type: 'AFTER_SELECTOR',
+      labels,
+    };
+  }
+
+  return null;
 }
 
 function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation | null {

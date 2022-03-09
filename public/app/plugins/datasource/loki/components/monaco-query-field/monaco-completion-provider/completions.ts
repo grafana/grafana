@@ -20,6 +20,7 @@ export type DataProvider = {
   getAllLabelNames: () => Promise<string[]>;
   getLabelValues: (labelName: string) => Promise<string[]>;
   getSeriesLabels: (selector: string) => Promise<Record<string, string[]>>;
+  getLogInfo: (selector: string) => Promise<{ labelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }>;
 };
 
 const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
@@ -58,24 +59,9 @@ async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Com
   }));
 }
 
-function escapeLabelValueFunction(op: LabelOperator): (val: string) => string {
-  switch (op) {
-    case '!=':
-      return escapeLabelValueInExactSelector;
-    case '=':
-      return escapeLabelValueInExactSelector;
-    case '=~':
-      return escapeLabelValueInRegexSelector;
-    case '!~':
-      return escapeLabelValueInRegexSelector;
-    default:
-      throw new NeverCaseError(op);
-  }
-}
-
 function makeSelector(labels: Label[]): string {
   const allLabelTexts = labels.map(
-    (label) => `${label.name}${label.op}"${escapeLabelValueFunction(label.op)(label.value)}"`
+    (label) => `${label.name}${label.op}"${escapeLabelValueInExactSelector(label.value)}"`
   );
 
   return `{${allLabelTexts.join(',')}}`;
@@ -131,6 +117,19 @@ async function getLabelValues(labelName: string, otherLabels: Label[], dataProvi
   }
 }
 
+async function getLogInfo(labels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
+  const result = await dataProvider.getLogInfo(makeSelector(labels));
+  const completions: Completion[] = [];
+  if (result.hasJSON) {
+    completions.push({ type: 'DURATION', label: 'json', insertText: '| json', documentation: 'use JSON parser' });
+  }
+
+  if (result.hasLogfmt) {
+    completions.push({ type: 'DURATION', label: 'logfmt', insertText: '| logfmt', documentation: 'use logfmt parser' });
+  }
+  return completions;
+}
+
 async function getLabelValuesForMetricCompletions(
   labelName: string,
   betweenQuotes: boolean,
@@ -149,8 +148,6 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
   switch (situation.type) {
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
-    case 'IN_FUNCTION':
-      return FUNCTION_COMPLETIONS;
     case 'AT_ROOT': {
       return FUNCTION_COMPLETIONS;
     }
@@ -169,6 +166,9 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
         situation.otherLabels,
         dataProvider
       );
+
+    case 'AFTER_SELECTOR':
+      return getLogInfo(situation.labels, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }
