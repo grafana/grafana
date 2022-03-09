@@ -98,7 +98,7 @@ func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 		return nil, err
 	}
 
-	if !b.pathFilters.isAllowed(path) {
+	if !b.pathFilters.IsAllowed(path) {
 		return nil, nil
 	}
 
@@ -109,7 +109,7 @@ func (b wrapper) Delete(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.isAllowed(path) {
+	if !b.pathFilters.IsAllowed(path) {
 		return nil
 	}
 
@@ -132,7 +132,7 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 		return err
 	}
 
-	if !b.pathFilters.isAllowed(file.Path) {
+	if !b.pathFilters.IsAllowed(file.Path) {
 		return nil
 	}
 
@@ -153,8 +153,8 @@ func (b wrapper) withDefaults(options *ListOptions, folderQuery bool) *ListOptio
 	if options == nil {
 		options = &ListOptions{}
 		options.Recursive = folderQuery
-		if b.pathFilters != nil && b.pathFilters.allowedPrefixes != nil {
-			options.PathFilters = *b.pathFilters
+		if b.pathFilters != nil {
+			options.PathFilters = b.pathFilters
 		}
 
 		return options
@@ -167,6 +167,36 @@ func (b wrapper) withDefaults(options *ListOptions, folderQuery bool) *ListOptio
 			copiedPrefixes := make([]string, len(b.pathFilters.allowedPrefixes))
 			copy(copiedPrefixes, b.pathFilters.allowedPrefixes)
 			options.allowedPrefixes = copiedPrefixes
+		}
+	}
+
+	if b.pathFilters != nil && b.pathFilters.allowedPaths != nil {
+		if options.allowedPaths != nil {
+			options.allowedPaths = append(options.allowedPaths, b.pathFilters.allowedPaths...)
+		} else {
+			copiedPaths := make([]string, len(b.pathFilters.allowedPaths))
+			copy(copiedPaths, b.pathFilters.allowedPaths)
+			options.allowedPaths = copiedPaths
+		}
+	}
+
+	if b.pathFilters != nil && b.pathFilters.disallowedPrefixes != nil {
+		if options.disallowedPrefixes != nil {
+			options.disallowedPrefixes = append(options.disallowedPrefixes, b.pathFilters.disallowedPrefixes...)
+		} else {
+			copiedPrefixes := make([]string, len(b.pathFilters.disallowedPrefixes))
+			copy(copiedPrefixes, b.pathFilters.disallowedPrefixes)
+			options.disallowedPrefixes = copiedPrefixes
+		}
+	}
+
+	if b.pathFilters != nil && b.pathFilters.disallowedPaths != nil {
+		if options.disallowedPaths != nil {
+			options.disallowedPaths = append(options.disallowedPaths, b.pathFilters.disallowedPaths...)
+		} else {
+			copiedPaths := make([]string, len(b.pathFilters.disallowedPaths))
+			copy(copiedPaths, b.pathFilters.disallowedPaths)
+			options.disallowedPaths = copiedPaths
 		}
 	}
 
@@ -202,7 +232,7 @@ func (b wrapper) CreateFolder(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.isAllowed(path) {
+	if !b.pathFilters.IsAllowed(path) {
 		return nil
 	}
 
@@ -214,7 +244,7 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.isAllowed(path) {
+	if !b.pathFilters.IsAllowed(path) {
 		return nil
 	}
 
