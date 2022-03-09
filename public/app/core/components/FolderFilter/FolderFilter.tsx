@@ -52,7 +52,7 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
           onClick={() => onChange([])}
           aria-label="Clear folders"
         >
-          Clear types
+          Clear folders
         </Button>
       )}
       <AsyncMultiSelect
