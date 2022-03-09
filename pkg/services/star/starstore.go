@@ -1,4 +1,4 @@
-package starstore
+package star
 
 import (
 	"context"
@@ -7,23 +7,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type Store interface {
-	IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error)
-	StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error
-	UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error
-	GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error)
+type store interface {
+	isStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error)
+	insert(ctx context.Context, cmd *models.StarDashboardCommand) error
+	delete(ctx context.Context, cmd *models.UnstarDashboardCommand) error
+	getUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error)
 }
 
 type storeImpl struct {
 	SqlStore sqlstore.Store
 }
 
-func NewStarStore(sqlstore sqlstore.Store) *storeImpl {
+func newStarStore(sqlstore sqlstore.Store) *storeImpl {
 	s := &storeImpl{SqlStore: sqlstore}
 	return s
 }
 
-func (s *storeImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
+func (s *storeImpl) isStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
 	var isStarred bool
 	err := s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
@@ -44,11 +44,7 @@ func (s *storeImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStar
 	return isStarred, err
 }
 
-func (s *storeImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
-	if cmd.DashboardId == 0 || cmd.UserId == 0 {
-		return models.ErrCommandValidationFailed
-	}
-
+func (s *storeImpl) insert(ctx context.Context, cmd *models.StarDashboardCommand) error {
 	return s.SqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		entity := models.Star{
 			UserId:      cmd.UserId,
@@ -60,11 +56,7 @@ func (s *storeImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboard
 	})
 }
 
-func (s *storeImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
-	if cmd.DashboardId == 0 || cmd.UserId == 0 {
-		return models.ErrCommandValidationFailed
-	}
-
+func (s *storeImpl) delete(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
 	return s.SqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
 		_, err := sess.Exec(rawSQL, cmd.UserId, cmd.DashboardId)
@@ -72,7 +64,7 @@ func (s *storeImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashb
 	})
 }
 
-func (s *storeImpl) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error) {
+func (s *storeImpl) getUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error) {
 	var userStars map[int64]bool
 	err := s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var stars = make([]models.Star, 0)

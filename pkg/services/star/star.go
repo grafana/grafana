@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	starstore "github.com/grafana/grafana/pkg/services/star/store"
 )
 
 type Manager interface {
@@ -16,26 +15,32 @@ type Manager interface {
 }
 
 type managerImpl struct {
-	starStore starstore.Store
+	starStore store
 }
 
 func ProvideService(sqlstore sqlstore.Store) Manager {
-	m := &managerImpl{starStore: starstore.NewStarStore(sqlstore)}
+	m := &managerImpl{starStore: newStarStore(sqlstore)}
 	return m
 }
 
 func (m *managerImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
-	return m.starStore.StarDashboard(ctx, cmd)
+	if cmd.DashboardId == 0 || cmd.UserId == 0 {
+		return models.ErrCommandValidationFailed
+	}
+	return m.starStore.insert(ctx, cmd)
 }
 
 func (m *managerImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
-	return m.starStore.UnstarDashboard(ctx, cmd)
+	if cmd.DashboardId == 0 || cmd.UserId == 0 {
+		return models.ErrCommandValidationFailed
+	}
+	return m.starStore.delete(ctx, cmd)
 }
 
 func (m *managerImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
-	return m.starStore.IsStarredByUserCtx(ctx, query)
+	return m.starStore.isStarredByUserCtx(ctx, query)
 }
 
 func (m *managerImpl) GetUserStars(ctx context.Context, cmd *models.GetUserStarsQuery) (map[int64]bool, error) {
-	return m.starStore.GetUserStars(ctx, cmd)
+	return m.starStore.getUserStars(ctx, cmd)
 }

@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package starstore
+package star
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 func TestUserStarsDataAccess(t *testing.T) {
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		starsStore := NewStarStore(sqlStore)
+		starsStore := newStarStore(sqlStore)
 
 		t.Run("Given saved star", func(t *testing.T) {
 			cmd := models.StarDashboardCommand{
@@ -23,12 +23,12 @@ func TestUserStarsDataAccess(t *testing.T) {
 				UserId:      12,
 			}
 
-			err := starsStore.StarDashboard(context.Background(), &cmd)
+			err := starsStore.insert(context.Background(), &cmd)
 			require.NoError(t, err)
 
 			t.Run("IsStarredByUser should return true when starred", func(t *testing.T) {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 10}
-				isStarred, err := starsStore.IsStarredByUserCtx(context.Background(), &query)
+				isStarred, err := starsStore.isStarredByUserCtx(context.Background(), &query)
 				require.NoError(t, err)
 
 				require.True(t, isStarred)
@@ -36,7 +36,7 @@ func TestUserStarsDataAccess(t *testing.T) {
 
 			t.Run("IsStarredByUser should return false when not starred", func(t *testing.T) {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 12}
-				isStarred, err := starsStore.IsStarredByUserCtx(context.Background(), &query)
+				isStarred, err := starsStore.isStarredByUserCtx(context.Background(), &query)
 				require.NoError(t, err)
 
 				require.False(t, isStarred)
