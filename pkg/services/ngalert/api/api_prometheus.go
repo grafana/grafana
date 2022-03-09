@@ -24,7 +24,7 @@ import (
 
 type PrometheusSrv struct {
 	log     log.Logger
-	manager *state.Manager
+	manager state.AlertInstanceManager
 	store   store.RuleStore
 }
 
