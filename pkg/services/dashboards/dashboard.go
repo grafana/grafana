@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+//go:generate mockery --name Store --structname FakeDashboardStore --output database --outpkg database --filename database_mock.go
+
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
@@ -34,7 +36,6 @@ type DashboardProvisioningService interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 }
 
-//go:generate mockery --name Store --structname FakeDashboardStore --output database --outpkg database --filename database_mock.go
 // Store is a dashboard store.
 type Store interface {
 	// ValidateDashboardBeforeSave validates a dashboard before save.
