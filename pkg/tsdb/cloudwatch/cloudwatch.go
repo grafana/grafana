@@ -223,6 +223,8 @@ func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region 
 	}
 
 	return e.sessions.GetSession(awsds.SessionConfig{
+		// https://github.com/grafana/grafana/issues/46365
+		// HTTPClient: dsInfo.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
 			Profile:       dsInfo.profile,
 			Region:        region,
