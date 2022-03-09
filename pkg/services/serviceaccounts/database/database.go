@@ -299,8 +299,6 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 }
 
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	query.IsServiceAccount = true
-
 	serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -313,9 +311,10 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, query.OrgID)
 
-		// TODO: add to chore, for cleaning up after we have created
-		// service accounts table in the modelling
-		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", s.sqlStore.Dialect.Quote("user"), query.IsServiceAccount))
+		whereConditions = append(whereConditions,
+			fmt.Sprintf("%s.is_service_account = %s",
+				s.sqlStore.Dialect.Quote("user"),
+				s.sqlStore.Dialect.BooleanStr(true)))
 
 		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
 			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", "serviceaccounts:read", query.User)
@@ -348,6 +347,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			"user.name",
 			"user.login",
 			"user.last_seen_at",
+			"user.is_disabled",
 		)
 		sess.Asc("user.email", "user.login")
 		if err := sess.Find(&serviceAccounts); err != nil {
