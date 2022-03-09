@@ -105,7 +105,7 @@ The current team members are:
 - Will Browne ([Grafana Labs](https://grafana.com/))
 - Zoltán Bedi ([Grafana Labs](https://grafana.com/))
 
-### Hall of fame 🕺🏽🌟
+### Emeritus Members
 
 List of previous team members that have had a big impact on the company or the product and contributed during a long period of time.
 
