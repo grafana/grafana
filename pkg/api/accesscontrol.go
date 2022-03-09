@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -283,8 +284,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create dashboard in general folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionFoldersRead, Scope: ac.Scope("folders", "id", "0")},
-				{Action: ac.ActionDashboardsCreate, Scope: ac.Scope("folders", "id", "0")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
+				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -314,7 +315,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
 				{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeDashboardsAll},
 				{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeDashboardsAll},
-				{Action: ac.ActionDashboardsCreate, Scope: ac.ScopeFoldersAll},
+				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
 				{Action: ac.ActionDashboardsPermissionsRead, Scope: ac.ScopeDashboardsAll},
 				{Action: ac.ActionDashboardsPermissionsWrite, Scope: ac.ScopeDashboardsAll},
 			}),
@@ -330,7 +331,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create folders.",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionFoldersCreate},
+				{Action: dashboards.ActionFoldersCreate},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -344,8 +345,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read all folders and dashboards.",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionFoldersRead, Scope: ac.ScopeFoldersAll},
-				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeFoldersAll},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -361,14 +362,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Permissions: ac.ConcatPermissions(
 				foldersReaderRole.Role.Permissions,
 				[]ac.Permission{
-					{Action: ac.ActionFoldersCreate},
-					{Action: ac.ActionFoldersWrite, Scope: ac.ScopeFoldersAll},
-					{Action: ac.ActionFoldersDelete, Scope: ac.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsCreate, Scope: ac.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsPermissionsRead, Scope: ac.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsPermissionsWrite, Scope: ac.ScopeFoldersAll},
+					{Action: dashboards.ActionFoldersCreate},
+					{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsDelete, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeFoldersAll},
 				}),
 		},
 		Grants: []string{"Admin"},

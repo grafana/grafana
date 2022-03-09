@@ -346,17 +346,6 @@ const (
 
 	// Dashboard scopes
 	ScopeDashboardsAll = "dashboards:*"
-
-	// Folder actions
-	ActionFoldersCreate           = "folders:create"
-	ActionFoldersRead             = "folders:read"
-	ActionFoldersWrite            = "folders:write"
-	ActionFoldersDelete           = "folders:delete"
-	ActionFoldersPermissionsRead  = "folders.permissions:read"
-	ActionFoldersPermissionsWrite = "folders.permissions:write"
-
-	// Folder scopes
-	ScopeFoldersRoot = "folders"
 )
 
 var (
@@ -364,8 +353,6 @@ var (
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 
 	// Folder scopes
-	ScopeFoldersAll = GetResourceAllScope(ScopeFoldersRoot)
-	ScopeFolderID   = GetResourceScope(ScopeFoldersRoot, Parameter(":id"))
 
 	// Datasource scopes
 

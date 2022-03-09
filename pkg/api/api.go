@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -315,18 +316,18 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-			folderRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
-			folderRoute.Get("/id/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead, ac.ScopeFolderID)), routing.Wrap(hs.GetFolderByID))
-			folderRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
+			folderRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+			folderRoute.Get("/id/:id", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.GetFolderByID))
+			folderRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead)), routing.Wrap(hs.GetFolderByUID))
-				folderUidRoute.Put("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersWrite)), routing.Wrap(hs.UpdateFolder))
-				folderUidRoute.Delete("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersDelete)), routing.Wrap(hs.DeleteFolder))
+				folderUidRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolderByUID))
+				folderUidRoute.Put("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersWrite)), routing.Wrap(hs.UpdateFolder))
+				folderUidRoute.Delete("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersDelete)), routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersPermissionsRead)), routing.Wrap(hs.GetFolderPermissionList))
-					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersPermissionsWrite)), routing.Wrap(hs.UpdateFolderPermissions))
+					folderPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersPermissionsRead)), routing.Wrap(hs.GetFolderPermissionList))
+					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite)), routing.Wrap(hs.UpdateFolderPermissions))
 				})
 			})
 		})
