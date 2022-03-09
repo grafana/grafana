@@ -139,10 +139,16 @@ mockery --name InterfaceName --structname MockImplementationName --inpackage --f
 
 If any interface signature changes, executing the command again updates the mock.
 
-Additionally, you can put `go:generate` command on the top of the interface as a comment. It's useful because some IDEs
-like Goland allows executing scripts from the IDE.
+Additionally, you can put `go:generate` command on the top of the file as a comment. It's useful because some IDEs
+like Goland and Visual Studio Code allows executing scripts from the IDE.
 
 ```
+package <package>
+
+import (
+	...
+)
+
 //go:generate mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
 ```
 
