@@ -148,13 +148,16 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		OrgID:    c.OrgId,
 	})
 	if err != nil {
-		if !errors.Is(err, models.ErrPluginSettingNotFound) {
-			return response.Error(500, "Failed to get login settings", nil)
+		status := http.StatusInternalServerError
+		if errors.Is(err, models.ErrPluginSettingNotFound) {
+			status = http.StatusNotFound
 		}
+		return response.Error(status, "Failed to get plugin settings", nil)
+	} else {
+		dto.Enabled = ps.Enabled
+		dto.Pinned = ps.Pinned
+		dto.JsonData = ps.JSONData
 	}
-	dto.Enabled = ps.Enabled
-	dto.Pinned = ps.Pinned
-	dto.JsonData = ps.JSONData
 
 	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
 	if exists {
