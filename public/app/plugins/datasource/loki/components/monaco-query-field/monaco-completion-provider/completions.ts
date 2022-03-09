@@ -117,16 +117,41 @@ async function getLabelValues(labelName: string, otherLabels: Label[], dataProvi
   }
 }
 
-async function getLogInfo(labels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
+async function getAfterSelectorCompletions(
+  labels: Label[],
+  afterPipe: boolean,
+  dataProvider: DataProvider
+): Promise<Completion[]> {
   const result = await dataProvider.getLogInfo(makeSelector(labels));
+  const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
   const completions: Completion[] = [];
+  const prefix = afterPipe ? '' : '| ';
   if (result.hasJSON) {
-    completions.push({ type: 'DURATION', label: 'json', insertText: '| json', documentation: 'use JSON parser' });
+    allParsers.delete('json');
+    completions.push({
+      type: 'DURATION',
+      label: 'json (detected)',
+      insertText: `${prefix}json`,
+    });
   }
 
   if (result.hasLogfmt) {
-    completions.push({ type: 'DURATION', label: 'logfmt', insertText: '| logfmt', documentation: 'use logfmt parser' });
+    allParsers.delete('logfmt');
+    completions.push({
+      type: 'DURATION',
+      label: 'logfmt (detected)',
+      insertText: `${prefix}logfmt`,
+    });
   }
+
+  const remainingParsers = Array.from(allParsers).sort();
+  remainingParsers.forEach((parser) => {
+    completions.push({
+      type: 'DURATION',
+      label: parser,
+      insertText: `${prefix}${parser}`,
+    });
+  });
   return completions;
 }
 
@@ -148,9 +173,6 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
   switch (situation.type) {
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
-    case 'AT_ROOT': {
-      return FUNCTION_COMPLETIONS;
-    }
     case 'EMPTY': {
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...FUNCTION_COMPLETIONS];
@@ -168,7 +190,7 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
       );
 
     case 'AFTER_SELECTOR':
-      return getLogInfo(situation.labels, dataProvider);
+      return getAfterSelectorCompletions(situation.labels, situation.afterPipe, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }
