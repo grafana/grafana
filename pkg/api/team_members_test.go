@@ -102,7 +102,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	})
 }
 
-func createUser(db *sqlstore.SQLStore, orgId int64, t *testing.T) int64 {
+func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
 	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{
 		Login:    fmt.Sprintf("TestUser%d", rand.Int()),
 		OrgId:    orgId,
@@ -113,7 +113,7 @@ func createUser(db *sqlstore.SQLStore, orgId int64, t *testing.T) int64 {
 	return user.Id
 }
 
-func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) int64 {
+func setupTeamTestScenario(userCount int, db sqlstore.Store, t *testing.T) int64 {
 	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
 	testOrg, err := db.CreateOrgWithMember("TestOrg", user.Id)

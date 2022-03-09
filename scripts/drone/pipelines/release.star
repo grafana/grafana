@@ -199,7 +199,7 @@ def get_steps(edition, ver_mode):
             test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
         ])
 
     # Insert remaining steps
@@ -243,7 +243,7 @@ def get_steps(edition, ver_mode):
 
     if include_enterprise2:
         publish_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64']),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:

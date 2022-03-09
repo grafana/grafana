@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,6 +32,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			Cfg:              settings,
 			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore, nil),
 			SQLStore:         mockSQLStore,
+			Features:         featuremgmt.WithFeatures(),
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {

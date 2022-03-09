@@ -1,14 +1,23 @@
 .git
 .github
-dist/
-pkg/
-node_modules
-public/vendor/
-vendor/
-/data/
+.yarn
+build
+compiled
+data
+deployment_tools_config.json
+devenv
+dist
 e2e/tmp
-scripts/grafana-server/tmp
-public/build/
-public/sass/*.generated.scss
-devenv/
+node_modules
+pkg
 public/lib/monaco
+public/sass/*.generated.scss
+scripts/grafana-server/tmp
+vendor
+
+# TS generate from cue by cuetsy
+**/*.gen.ts
+
+# Auto-generated localisation files
+public/locales/_build/
+public/locales/**/*.js
