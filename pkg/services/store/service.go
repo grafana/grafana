@@ -2,19 +2,26 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
@@ -22,11 +29,18 @@ var grafanaStorageLogger = log.New("grafanaStorageLogger")
 type StorageService interface {
 	registry.BackgroundService
 
-	// Management
+	// HTTP API
 	Status(c *models.ReqContext) response.Response
 	Browse(c *models.ReqContext) response.Response
 	Upsert(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
+	PostDashboard(c *models.ReqContext) response.Response
+
+	// List folder contents
+	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
+
+	// Called from the UI when a dashboard is saved
+	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
 
 	// Get the dashboard lookup service
 	GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error)
@@ -42,10 +56,7 @@ type StorageService interface {
 }
 
 type standardStorageService struct {
-	sql      *sqlstore.SQLStore
-	datapath string
-
-	// Scopes
+	sql    *sqlstore.SQLStore
 	res    *nestedTree
 	dash   *nestedTree
 	lookup map[string]*nestedTree
@@ -57,12 +68,11 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
 				Path: cfg.StaticRootPath,
 				Roots: []string{
-					"testdata/",
-					"img/icons/",
-					"img/bg/",
-					"gazetteer/",
-					"maps/",
-					"upload/",
+					"/testdata/",
+					"/img/icons/",
+					"/img/bg/",
+					"/gazetteer/",
+					"/maps/",
 				},
 			}).setReadOnly(true).setBuiltin(true),
 			newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
@@ -71,17 +81,26 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		},
 	}
 
+	storage := filepath.Join(cfg.DataPath, "storage")
+	_ = os.MkdirAll(storage, 0700)
+
 	devenv, _ := filepath.Abs("devenv")
 	dash := &nestedTree{
 		roots: []storageRuntime{
 			newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
 				Path: filepath.Join(devenv, "dev-dashboards"),
 			}),
-			newGitStorage("it", "My dashboards in git", &StorageGitConfig{
-				Remote:      "git@github.com:ryantxu/test-dash-repo.git",
+			newGitStorage("it-A", "Github dashbboards A", storage, &StorageGitConfig{
+				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
 				Branch:      "main",
-				Root:        "path/to/subfolder",
-				AccessToken: "should be more secrete",
+				Root:        "dashboards",
+				AccessToken: "",
+			}),
+			newGitStorage("it-B", "Github dashbboards B", storage, &StorageGitConfig{
+				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-B.git",
+				Branch:      "main",
+				Root:        "dashboards",
+				AccessToken: "",
 			}),
 			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{
 				Bucket:    "grafana-plugin-resources",
@@ -91,14 +110,15 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			}),
 		},
 	}
+	s := newStandardStorageService(res, dash)
+	s.sql = sql
+	return s
+}
 
+func newStandardStorageService(res *nestedTree, dash *nestedTree) *standardStorageService {
 	res.init()
 	dash.init()
-
 	return &standardStorageService{
-		sql:      sql,
-		datapath: cfg.DataPath,
-
 		res:  res,
 		dash: dash,
 		lookup: map[string]*nestedTree{
@@ -169,8 +189,20 @@ func (s *standardStorageService) Delete(c *models.ReqContext) response.Response 
 }
 
 func (s *standardStorageService) Browse(c *models.ReqContext) response.Response {
-	scope, path := getPathAndScope(c)
-	if scope == "" && path == "" {
+	params := web.Params(c.Req)
+	path := params["*"]
+	frame, err := s.List(c.Req.Context(), c.SignedInUser, path)
+	if err != nil {
+		return response.Error(400, "error reading path", err)
+	}
+	if frame == nil {
+		return response.Error(404, "not found", nil)
+	}
+	return response.JSONStreaming(200, frame)
+}
+
+func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
+	if path == "" {
 		count := 2
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -185,29 +217,170 @@ func (s *standardStorageService) Browse(c *models.ReqContext) response.Response 
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})
-		return response.JSONStreaming(200, frame)
+		return frame, nil
 	}
+
+	scope, path := splitFirstSegment(path)
 
 	root, ok := s.lookup[scope]
 	if !ok {
-		return response.Error(400, fmt.Sprintf("unknown scope(%s, %s)", scope, path), nil)
+		return nil, fmt.Errorf("not found")
 	}
 
 	// TODO: permission check!
 
-	frame, err := root.ListFolder(c.Req.Context(), path)
-	if err != nil {
-		return response.Error(400, "error reading path", err)
+	return root.ListFolder(ctx, path)
+}
+
+func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
+	scope, path := splitFirstSegment(path)
+
+	root, ok := s.lookup[scope]
+	if !ok {
+		return nil, fmt.Errorf("not found")
 	}
-	return response.JSONStreaming(200, frame)
+
+	// TODO: permission check!
+
+	return root.GetFile(ctx, path)
 }
 
 func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error) {
-	return nil, nil
+	// TODO: permission check!
+	if strings.HasSuffix(path, ".json") {
+		return nil, fmt.Errorf("invalid path, do not include .json")
+	}
+
+	file, err := s.dash.GetFile(ctx, path+".json")
+	if err != nil {
+		return nil, err
+	}
+	if file == nil {
+		frame, err := s.dash.ListFolder(ctx, path)
+		if frame != nil {
+			return s.getFolderDashboard(path, frame)
+		}
+
+		return nil, err
+	}
+
+	js, err := simplejson.NewJson(file.Contents)
+	if err != nil {
+		return nil, err
+	}
+
+	readonly := false // TODO: depends on ?
+
+	return &dtos.DashboardFullWithMeta{
+		Dashboard: js,
+		Meta: dtos.DashboardMeta{
+			CanSave: !readonly,
+			CanEdit: !readonly,
+			CanStar: false,
+			Slug:    path,
+		},
+	}, nil
+}
+
+type saveDashboardBody struct {
+	Dashboard *json.RawMessage `json:"dashboard"`
+	Overwrite bool             `json:"overwrite"`
+	Message   string           `json:"message"`
+}
+
+func (s *standardStorageService) PostDashboard(c *models.ReqContext) response.Response {
+	params := web.Params(c.Req)
+	path := params["*"]
+	if path == "" || strings.HasSuffix(path, ".json") {
+		return response.Error(400, "invalid path", nil)
+	}
+
+	cmd := saveDashboardBody{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	req := SaveDashboardRequest{
+		Path:    path,
+		Body:    *cmd.Dashboard,
+		Message: cmd.Message,
+	}
+
+	rsp, err := s.SaveDashboard(c.Req.Context(), c.SignedInUser, req)
+	if err != nil {
+		return response.Error(400, "err", err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"action":  "SAVE",
+		"path":    path,
+		"url":     "/g/" + path, // will redirect here
+		"version": time.Now().Unix(),
+		"out":     rsp,
+	})
+}
+
+func (s *standardStorageService) getFolderDashboard(path string, frame *data.Frame) (*dtos.DashboardFullWithMeta, error) {
+	dash := models.NewDashboard(path)
+
+	fname := frame.Fields[0]
+	count := fname.Len()
+	if count < 1 {
+		return nil, nil
+	}
+
+	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	paths := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	names.Name = "name"
+	paths.Name = "path"
+
+	for i := 0; i < count; i++ {
+		name := fmt.Sprintf("%v", fname.At(i))
+		name = strings.TrimSuffix(name, ".json")
+		names.Set(i, name)
+		paths.Set(i, filestorage.Join(path, name))
+	}
+	f2 := data.NewFrame("", names, paths, frame.Fields[1])
+	frame.SetMeta(&data.FrameMeta{
+		Type: data.FrameTypeDirectoryListing,
+	})
+
+	// HACK alert... stick the listing in the first panel
+	panel := map[string]interface{}{
+		"__listing": f2,
+	}
+	arr := []interface{}{panel}
+	dash.Data.Set("panels", arr)
+
+	return &dtos.DashboardFullWithMeta{
+		Dashboard: dash.Data,
+		Meta: dtos.DashboardMeta{
+			Slug:        path,
+			FolderUid:   path,
+			CanSave:     false,
+			CanEdit:     false,
+			IsFolder:    true,
+			FolderTitle: filepath.Base(path),
+		},
+	}, nil
 }
 
 func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts SaveDashboardRequest) (*dtos.DashboardFullWithMeta, error) {
-	return nil, nil
+	// TODO: authentication!
+
+	root, p := s.dash.getRoot(opts.Path)
+	if root == nil {
+		return nil, fmt.Errorf("invalid root")
+	}
+
+	// Write the change
+	err := root.Upsert(ctx, &filestorage.UpsertFileCommand{
+		Path:     fmt.Sprintf("%s.json", p),
+		Contents: (*[]byte)(&opts.Body),
+		MimeType: "application/json",
+	})
+
+	return nil, err
 }
 
 func (s *standardStorageService) ListDashboardsToBuildSearchIndex(ctx context.Context, orgId int64) DashboardBodyIterator {

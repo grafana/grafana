@@ -10,6 +10,7 @@ import { getDashboardSrv } from './DashboardSrv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
+import { DashboardRoutes } from 'app/types';
 
 export class DashboardLoaderSrv {
   constructor() {}
@@ -39,10 +40,24 @@ export class DashboardLoaderSrv {
       });
     } else if (type === 'ds') {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
+    } else if (type === DashboardRoutes.Path) {
+      // explore dashboards as code
+      promise = backendSrv.getDashboardByPath(slug).then((result: any) => {
+        // Force everythign to match the request path
+        result.meta.slug = slug;
+        result.meta.uid = slug;
+        result.dashboard.uid = slug;
+        delete result.dashboard.id; // remove the internal ID
+        return result;
+      });
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)
         .then((result: any) => {
+          if (result.meta.isFolder) {
+            appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
+            throw new Error('Dashboard not found');
+          }
           return result;
         })
         .catch(() => {

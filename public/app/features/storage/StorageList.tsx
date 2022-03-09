@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Icon, IconName, Tag, useStyles2 } from '@grafana/ui';
+import { Badge, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { uniqueId } from 'lodash';
 import React from 'react';
 import { RootStorageMeta } from './types';
@@ -19,15 +19,15 @@ export function StorageList({ storage, title }: Props) {
       {storage.map((s) => {
         return (
           <Card key={uniqueId()}>
-            <Card.Heading>{s.config.name}</Card.Heading>
+            <Card.Heading className={styles.heading}>
+              {s.config.name}
+              <Badge text={s.ready ? 'Ready' : 'Not ready'} color={s.ready ? 'green' : 'red'} />
+            </Card.Heading>
             <Card.Meta>{s.config.prefix}</Card.Meta>
             <Card.Description>{getDescription(s)}</Card.Description>
             <Card.Figure>
               <Icon name={getIconName(s.config.type)} size="xxxl" className={styles.secondaryTextColor} />
             </Card.Figure>
-            <Card.Tags>
-              {s.ready ? <Tag colorIndex={5} name="Ready" /> : <Tag colorIndex={0} name="Not ready" />}
-            </Card.Tags>
           </Card>
         );
       })}
@@ -38,6 +38,10 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     secondaryTextColor: css`
       color: ${theme.colors.text.secondary};
+    `,
+    heading: css`
+      justify-content: flex-start;
+      gap: 0.5rem;
     `,
   };
 }

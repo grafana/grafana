@@ -1,6 +1,9 @@
 package store
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -49,4 +52,8 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 	s.meta = meta
 	s.settings = cfg
 	return s
+}
+
+func (s *rootStorageS3) Write(ctx context.Context, cmd *writeCommand) error {
+	return fmt.Errorf("not implemented!!!")
 }

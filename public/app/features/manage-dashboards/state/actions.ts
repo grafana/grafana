@@ -266,6 +266,17 @@ export interface SaveDashboardOptions {
 export function saveDashboard(options: SaveDashboardOptions) {
   dashboardWatcher.ignoreNextSave();
 
+  // Check the path based endpoint
+  const { uid } = options.dashboard;
+  if (uid && uid.indexOf('/') > 0) {
+    return getBackendSrv().post(`/api/dashboards/path/${uid}`, {
+      dashboard: options.dashboard,
+      message: options.message ?? '',
+      overwrite: options.overwrite ?? false,
+      folderId: options.folderId,
+    });
+  }
+
   return getBackendSrv().post('/api/dashboards/db/', {
     dashboard: options.dashboard,
     message: options.message ?? '',

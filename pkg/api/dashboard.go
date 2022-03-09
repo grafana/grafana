@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -77,60 +76,20 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(200, dto)
 }
 
-func (hs *HTTPServer) getPathBasedDashboard(c *models.ReqContext, uid string) *dtos.DashboardFullWithMeta {
-	idx := strings.Index(uid, "/")
-	if idx <= 0 {
-		return nil // not found
-	}
-
-	if strings.Contains(uid, "..") {
-		return nil // cheap path cleanup for now
-	}
-
-	root := uid[:idx]
-	if root == "devdash" {
-		fpath := filepath.Join("devenv", "dev-dashboards", uid[idx+1:])
-		raw, err := os.ReadFile(fpath + ".json")
-		if err == nil {
-			js, err := simplejson.NewJson(raw)
-			if err == nil {
-				return &dtos.DashboardFullWithMeta{
-					Dashboard: js,
-					Meta: dtos.DashboardMeta{
-						CanSave: false,
-						CanEdit: false,
-						CanStar: false,
-					},
-				}
-			}
-		} else {
-			// if it is a directory....
-			fmt.Printf("directory????\n")
-		}
-		fmt.Printf("--------------------------------")
-		fmt.Printf("LOAD!!! %s\n", fpath)
-		fmt.Printf("--------------------------------")
-	}
-
-	return nil
-}
-
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path, ok := params["*"] // path based endpoint
-	uid := params["uid"]
+	uid := params[":uid"]
 
 	// Check for path based UIDs (from file systems)
-	if ok {
-		if strings.Index(path, "/") > 0 {
-			dto, err := hs.StorageService.GetDashboard(c.Req.Context(), c.SignedInUser, path)
-			if err != nil {
-				return response.Error(500, "error getting path dashboard", err)
-			}
-			if dto != nil {
-				c.TimeRequest(metrics.MApiDashboardGet)
-				return response.JSON(200, dto)
-			}
+	if ok || uid == "" {
+		dto, err := hs.StorageService.GetDashboard(c.Req.Context(), c.SignedInUser, path)
+		if err != nil {
+			return response.Error(500, "error getting path dashboard", err)
+		}
+		if dto != nil {
+			c.TimeRequest(metrics.MApiDashboardGet)
+			return response.JSON(200, dto)
 		}
 		uid = path // assume the path is acutally UID
 	}
@@ -396,16 +355,16 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 			dashboard = dash // the original request
 		}
 
-		// This will broadcast all save requests only if a `store` observer exists.
-		// store is useful when trying to save dashboards in an environment where the user can not save
+		// This will broadcast all save requests only if a `gitops` observer exists.
+		// gitops is useful when trying to save dashboards in an environment where the user can not save
 		channel := hs.Live.GrafanaScope.Dashboards
 		liveerr := channel.DashboardSaved(c.SignedInUser.OrgId, c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
 
-		// When an error exists, but the value broadcast to a store listener return 202
+		// When an error exists, but the value broadcast to a gitops listener return 202
 		if liveerr == nil && err != nil && channel.HasGitOpsObserver(c.SignedInUser.OrgId) {
 			return response.JSON(202, util.DynMap{
 				"status":  "pending",
-				"message": "changes were broadcast to the store listener",
+				"message": "changes were broadcast to the gitops listener",
 			})
 		}
 

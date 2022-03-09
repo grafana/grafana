@@ -329,6 +329,10 @@ func SlugifyTitle(title string) string {
 
 // GetUrl return the html url for a folder if it's folder, otherwise for a dashboard
 func (d *Dashboard) GetUrl() string {
+	if strings.Contains(d.Slug, "/") {
+		return fmt.Sprintf("%s/g/%s", setting.AppSubUrl, d.Slug)
+	}
+
 	return GetDashboardFolderUrl(d.IsFolder, d.Uid, d.Slug)
 }
 

@@ -294,7 +294,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	if c.OrgRole == models.ROLE_ADMIN {
-		if hs.Features.IsEnabled(featuremgmt.FlagFileStoreApi) {
+		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 			configNodes = append(configNodes, &dtos.NavLink{
 				Text:        "Storage",
 				Id:          "storage",
