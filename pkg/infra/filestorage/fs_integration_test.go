@@ -234,11 +234,11 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder2"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder2"}}}},
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
 						list:  checks(listSize(1), listHasMore(false)),
 						files: [][]interface{}{
 							checks(fPath("/folder1/folder2/file.jpg")),

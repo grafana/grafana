@@ -69,23 +69,68 @@ type UpsertFileCommand struct {
 }
 
 type PathFilters struct {
-	allowedPrefixes []string
+	allowedPrefixes    []string
+	disallowedPrefixes []string
+	allowedPaths       []string
+	disallowedPaths    []string
 }
 
-func NewPathFilters(allowedPrefixes []string) *PathFilters {
-	if len(allowedPrefixes) > 0 {
-		return &PathFilters{allowedPrefixes}
+func toLower(list []string) []string {
+	if list == nil {
+		return nil
 	}
-	return nil
+	lower := make([]string, 0)
+	for _, el := range list {
+		lower = append(lower, strings.ToLower(el))
+	}
+	return lower
 }
 
-func (f *PathFilters) isAllowed(path string) bool {
-	if f == nil || f.allowedPrefixes == nil {
+func allowAllPathFilters() *PathFilters {
+	return NewPathFilters(nil, nil, nil, nil)
+}
+
+func NewPathFilters(allowedPrefixes []string, allowedPaths []string, disallowedPrefixes []string, disallowedPaths []string) *PathFilters {
+	return &PathFilters{
+		allowedPrefixes:    toLower(allowedPrefixes),
+		allowedPaths:       toLower(allowedPaths),
+		disallowedPaths:    toLower(disallowedPaths),
+		disallowedPrefixes: toLower(disallowedPrefixes),
+	}
+}
+
+func (f *PathFilters) IsAllowed(path string) bool {
+	if f == nil {
 		return true
 	}
 
+	if !strings.HasPrefix(path, Delimiter) {
+		path = Join(path)
+	}
+
+	for i := range f.disallowedPaths {
+		if f.disallowedPaths[i] == path {
+			return false
+		}
+	}
+
+	for i := range f.disallowedPrefixes {
+		if strings.HasPrefix(path, f.disallowedPrefixes[i]) {
+			return false
+		}
+	}
+
+	if f.allowedPrefixes == nil && f.allowedPaths == nil {
+		return true
+	}
+
+	for i := range f.allowedPaths {
+		if f.allowedPaths[i] == path {
+			return true
+		}
+	}
 	for i := range f.allowedPrefixes {
-		if strings.HasPrefix(path, strings.ToLower(f.allowedPrefixes[i])) {
+		if strings.HasPrefix(path, f.allowedPrefixes[i]) {
 			return true
 		}
 	}
@@ -95,7 +140,7 @@ func (f *PathFilters) isAllowed(path string) bool {
 
 type ListOptions struct {
 	Recursive bool
-	PathFilters
+	*PathFilters
 }
 
 type FileStorage interface {

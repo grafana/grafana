@@ -177,7 +177,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 
 		path := obj.Key
 
-		allowed := options.isAllowed(obj.Key)
+		allowed := options.IsAllowed(obj.Key)
 		if obj.IsDir && recursive {
 			newPaging := &Paging{
 				First: pageSize - len(files),
@@ -216,8 +216,16 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 
 			attributes, err := c.bucket.Attributes(ctx, strings.ToLower(path))
 			if err != nil {
-				c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
-				return nil, err
+				if gcerrors.Code(err) == gcerrors.NotFound {
+					attributes, err = c.bucket.Attributes(ctx, path)
+					if err != nil {
+						c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
+						return nil, err
+					}
+				} else {
+					c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
+					return nil, err
+				}
 			}
 
 			var originalPath string
@@ -286,23 +294,9 @@ func fixPath(path string) string {
 	return newPath
 }
 
-func (c cdkBlobStorage) convertListOptions(options *ListOptions) *ListOptions {
-	if options == nil || options.allowedPrefixes == nil || len(options.allowedPrefixes) == 0 {
-		return options
-	}
-
-	newPrefixes := make([]string, len(options.allowedPrefixes))
-	for i, prefix := range options.allowedPrefixes {
-		newPrefixes[i] = c.fixInputPrefix(prefix)
-	}
-
-	options.PathFilters.allowedPrefixes = newPrefixes
-	return options
-}
-
 func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
 	paging.After = c.fixInputPrefix(paging.After)
-	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), paging, c.convertListOptions(options))
+	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), paging, options)
 }
 
 func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath string, options *ListOptions) ([]string, error) {
@@ -327,7 +321,7 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 			return nil, err
 		}
 
-		if options.isAllowed(obj.Key) {
+		if options.IsAllowed(obj.Key) {
 			if obj.IsDir && !recursive {
 				foundPaths = append(foundPaths, strings.TrimSuffix(obj.Key, Delimiter))
 			}
@@ -375,7 +369,7 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 }
 
 func (c cdkBlobStorage) ListFolders(ctx context.Context, prefix string, options *ListOptions) ([]FileMetadata, error) {
-	foundPaths, err := c.listFolderPaths(ctx, c.convertFolderPathToPrefix(prefix), c.convertListOptions(options))
+	foundPaths, err := c.listFolderPaths(ctx, c.convertFolderPathToPrefix(prefix), options)
 	if err != nil {
 		return nil, err
 	}
