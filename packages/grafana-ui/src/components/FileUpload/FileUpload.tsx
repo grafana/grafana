@@ -1,10 +1,9 @@
-import React, { FC, FormEvent, useCallback, useState } from 'react';
+import React, { FC, FormEvent, useCallback, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
-import { css, cx } from '@emotion/css';
-import { Icon } from '../index';
+import { css } from '@emotion/css';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { ComponentSize } from '../../types/size';
-import { getButtonStyles } from '../Button';
+import { Button } from '../Button';
 import { trimFileName } from '../../utils/file';
 
 export interface Props {
@@ -25,6 +24,7 @@ export const FileUpload: FC<Props> = ({
   accept = '*',
   size = 'md',
 }) => {
+  const fileUploadRef = useRef<HTMLInputElement>(null);
   const theme = useTheme2();
   const style = getStyles(theme, size);
   const [fileName, setFileName] = useState('');
@@ -42,12 +42,14 @@ export const FileUpload: FC<Props> = ({
 
   return (
     <>
-      <label className={cx(style.button, className)}>
-        <Icon name="upload" className={style.icon} />
-        {children}
+      <label className={className}>
+        <Button icon="upload" onClick={() => fileUploadRef.current?.click()}>
+          {children}
+        </Button>
         <input
           type="file"
           id="fileUpload"
+          ref={fileUploadRef}
           className={style.fileUpload}
           onChange={onChange}
           multiple={false}
@@ -64,13 +66,10 @@ export const FileUpload: FC<Props> = ({
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, size: ComponentSize) => {
-  const buttonStyles = getButtonStyles({ theme, variant: 'primary', size, iconOnly: false });
   return {
     fileUpload: css`
       display: none;
     `,
-    button: buttonStyles.button,
-    icon: buttonStyles.icon,
     fileName: css`
       margin-left: ${theme.spacing(0.5)};
     `,
