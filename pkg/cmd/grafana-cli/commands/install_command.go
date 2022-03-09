@@ -14,8 +14,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/repository/service"
-
 	"github.com/fatih/color"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -24,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/repository"
+	"github.com/grafana/grafana/pkg/plugins/repository/service"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
