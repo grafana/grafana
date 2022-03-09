@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
 	"github.com/stretchr/testify/require"
 )
 

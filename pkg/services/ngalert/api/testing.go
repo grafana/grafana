@@ -7,12 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type FakeAlertingStore struct {
