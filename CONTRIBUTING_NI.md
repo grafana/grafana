@@ -29,10 +29,10 @@ Create a branch prefixed with ni/pub based on the same tag that ni/grafana's mai
 ```
 # Finds the most recent tag reachable from main
 git describe --tags --abbrev=0 main
-git checkout -b ni/pub/cool-new-feature v8.3.6
+git checkout -b ni/pub/cool-new-feature <latest-tag>
 ```
 
-Then make your changes on this branch and open a pull request merging it into _main_. After the changes are reviewed and accepted, the branch should be merged **via a merge commit** (not squashing) and **not** deleted. Merge commits will make it easier to undo the changes later on if they are accepted upstream.
+Then make your changes on this branch and open a pull request merging it into _main_. If your changes on an ni/pub/* branch result in merge conflicts with another ni/pub/* branch, rebase your branch on the conflicting branch and force push. After the changes are reviewed and accepted, the branch should be merged **via a merge commit** (not squashing) and **not** deleted. Merge commits will make it easier to undo the changes later on if they are accepted upstream.
 
 #### Integrate a new release of Grafana into the fork?
 
