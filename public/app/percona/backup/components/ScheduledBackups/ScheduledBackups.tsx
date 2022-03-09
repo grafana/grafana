@@ -133,7 +133,7 @@ export const ScheduledBackups: FC = () => {
       {
         Header: Messages.scheduledBackups.table.columns.frequency,
         accessor: 'cronExpression',
-        Cell: ({ value }) => cronstrue.toString(value),
+        Cell: ({ value }) => cronstrue.toString(value, { use24HourTimeFormat: true }),
       },
       {
         Header: Messages.scheduledBackups.table.columns.retention,
