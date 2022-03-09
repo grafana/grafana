@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useAsync } from 'react-use';
 import { Button } from './Button';
+import { FileBrowser } from './FileBrowser';
 import { StorageList } from './StorageList';
 import { StatusResponse, RootStorageMeta } from './types';
 
@@ -19,6 +20,7 @@ export default function StoragePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dashboards, setDashboards] = useState<RootStorageMeta[]>();
   const [resources, setResources] = useState<RootStorageMeta[]>();
+  const [browsePath, setBrowsePath] = useState('dev-dashboards'); // TODO? in URL?
 
   const status = useAsync(async () => {
     return (await getBackendSrv().get('api/storage/status')) as StatusResponse; // observable?
@@ -91,6 +93,11 @@ export default function StoragePage() {
             <StorageList storage={resources} title="Resources" />
           </div>
         )}
+
+        <br />
+        <br />
+        <h1>move to config page:</h1>
+        <FileBrowser prefix={'dash'} path={browsePath} onPathChange={setBrowsePath} />
       </Page.Contents>
     </Page>
   );
