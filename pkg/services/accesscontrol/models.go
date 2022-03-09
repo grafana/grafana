@@ -357,17 +357,6 @@ const (
 
 	// Folder scopes
 	ScopeFoldersRoot = "folders"
-
-	// Datasource Actions
-	ActionDatasourcesRead   = "datasources:read"
-	ActionDatasourcesQuery  = "datasources:query"
-	ActionDatasourcesCreate = "datasources:create"
-	ActionDatasourcesWrite  = "datasources:write"
-	ActionDatasourcesDelete = "datasources:delete"
-	ActionDatasourcesIDRead = "datasources.id:read"
-
-	// Datasource scopes
-	ScopeDatasourcesRoot = "datasources"
 )
 
 var (
@@ -379,7 +368,7 @@ var (
 	ScopeFolderID   = GetResourceScope(ScopeFoldersRoot, Parameter(":id"))
 
 	// Datasource scopes
-	ScopeDatasourcesAll = GetResourceAllScope(ScopeDatasourcesRoot)
+
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
