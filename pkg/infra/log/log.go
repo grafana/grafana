@@ -201,6 +201,11 @@ func New(ctx ...interface{}) *ConcreteLogger {
 	return root.New(ctx...)
 }
 
+// NewNopLogger returns a logger that doesn't do anything.
+func NewNopLogger() *ConcreteLogger {
+	return newConcreteLogger(gokitlog.NewNopLogger())
+}
+
 func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return ctxLogger
