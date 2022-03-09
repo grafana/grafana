@@ -3,7 +3,9 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -60,9 +62,11 @@ type standardStorageService struct {
 	res    *nestedTree
 	dash   *nestedTree
 	lookup map[string]*nestedTree
+	log    log.Logger
+	auth   StorageAuthService
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
+func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices) StorageService {
 	res := &nestedTree{
 		roots: []storageRuntime{
 			newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
@@ -110,21 +114,23 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			}),
 		},
 	}
-	s := newStandardStorageService(res, dash)
+	s := newStandardStorageService(res, dash, NewStorageAuthService(ac, permissionsServices))
 	s.sql = sql
 	return s
 }
 
-func newStandardStorageService(res *nestedTree, dash *nestedTree) *standardStorageService {
+func newStandardStorageService(res *nestedTree, dash *nestedTree, auth StorageAuthService) *standardStorageService {
 	res.init()
 	dash.init()
 	return &standardStorageService{
 		res:  res,
 		dash: dash,
+		log:  log.New("standardStorageService"),
 		lookup: map[string]*nestedTree{
 			"dash": dash,
 			"res":  res,
 		},
+		auth: auth,
 	}
 }
 
@@ -227,9 +233,8 @@ func (s *standardStorageService) List(ctx context.Context, user *models.SignedIn
 		return nil, fmt.Errorf("not found")
 	}
 
-	// TODO: permission check!
-
-	return root.ListFolder(ctx, path)
+	guardian := s.auth.newGuardian(ctx, user, s.dash.getRootPrefix(path))
+	return root.ListFolder(ctx, path, guardian.getViewPathFilters())
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
@@ -240,6 +245,13 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 		return nil, fmt.Errorf("not found")
 	}
 
+	rootPrefix := s.dash.getRootPrefix(path)
+	guardian := s.auth.newGuardian(ctx, user, rootPrefix)
+	allowed := guardian.canView(path)
+	if !allowed {
+		s.log.Warn("read access denied", "path", path, "rootPrefix", rootPrefix)
+		return nil, errors.New("not found")
+	}
 	// TODO: permission check!
 
 	return root.GetFile(ctx, path)
@@ -251,17 +263,26 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 		return nil, fmt.Errorf("invalid path, do not include .json")
 	}
 
-	file, err := s.dash.GetFile(ctx, path+".json")
+	rootPrefix := s.dash.getRootPrefix(path)
+	guardian := s.auth.newGuardian(ctx, user, rootPrefix)
+	filePath := path + ".json"
+	file, err := s.dash.GetFile(ctx, filePath)
 	if err != nil {
 		return nil, err
 	}
 	if file == nil {
-		frame, err := s.dash.ListFolder(ctx, path)
+		frame, err := s.dash.ListFolder(ctx, path, guardian.getViewPathFilters())
 		if frame != nil {
 			return s.getFolderDashboard(path, frame)
 		}
 
 		return nil, err
+	} else {
+		allowed := guardian.canView(filePath)
+		if !allowed {
+			s.log.Warn("get dashboard access denied", "path", path, "rootPrefix", rootPrefix)
+			return nil, errors.New("not found")
+		}
 	}
 
 	js, err := simplejson.NewJson(file.Contents)
@@ -368,7 +389,19 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts SaveDashboardRequest) (*dtos.DashboardFullWithMeta, error) {
 	// TODO: authentication!
 
-	root, p := s.dash.getRoot(opts.Path)
+	path := opts.Path
+	rootPrefix := s.dash.getRootPrefix(path)
+	guardian := s.auth.newGuardian(ctx, user, rootPrefix)
+	if !guardian.canView(path) {
+		s.log.Warn("save dashboard access denied - no view access", "path", path, "rootPrefix", rootPrefix)
+		return nil, errors.New("unauthorized")
+	}
+	if !guardian.canSave(path) {
+		s.log.Warn("save dashboard access denied - no write access", "path", path, "rootPrefix", rootPrefix)
+		return nil, errors.New("unauthorized")
+	}
+
+	root, p := s.dash.getRoot(path)
 	if root == nil {
 		return nil, fmt.Errorf("invalid root")
 	}

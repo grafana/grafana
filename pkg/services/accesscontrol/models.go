@@ -365,8 +365,7 @@ const (
 	ActionFilesDelete = "files:delete"
 
 	// File scopes
-	ScopeFilesAll       = "files:prefix:/"
-	ScopeFilesDashboard = "files:prefix:/dashboards/"
+	ScopeFilesAll = "files:path:/*"
 )
 
 var (

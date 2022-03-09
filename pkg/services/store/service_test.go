@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"context"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"path"
 	"path/filepath"
 	"testing"
@@ -31,7 +32,7 @@ func TestListFiles(t *testing.T) {
 		},
 	}
 
-	store := newStandardStorageService(res, &nestedTree{})
+	store := newStandardStorageService(res, &nestedTree{}, NewStorageAuthService(&acmock.Mock{}, acmock.NewPermissionsServicesMock()))
 	frame, err := store.List(context.Background(), nil, "res/public/testdata")
 	require.NoError(t, err)
 

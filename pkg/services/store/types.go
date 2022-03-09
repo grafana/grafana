@@ -23,7 +23,7 @@ type storageTree interface {
 	GetFile(ctx context.Context, path string) (*filestorage.File, error)
 
 	// Get a single dashboard
-	ListFolder(ctx context.Context, path string) (*data.Frame, error)
+	ListFolder(ctx context.Context, path string, pathFilters *filestorage.PathFilters) (*data.Frame, error)
 }
 
 //-------------------------------------------

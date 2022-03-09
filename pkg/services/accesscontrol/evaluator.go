@@ -220,3 +220,58 @@ func (a anyEvaluator) GoString() string {
 
 	return fmt.Sprintf("any(%s)", strings.Join(permissions, " "))
 }
+
+// EvalAny returns evaluator that requires none of the validators to pass
+func EvalNone(none ...Evaluator) Evaluator {
+	return noneEvaluator{noneOf: none}
+}
+
+type noneEvaluator struct {
+	noneOf []Evaluator
+}
+
+func (a noneEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
+	for _, e := range a.noneOf {
+		ok, err := e.Evaluate(permissions)
+		if err != nil {
+			return false, err
+		}
+		if ok {
+			fmt.Println("returning false from eval none")
+			return false, nil
+		}
+	}
+	fmt.Println("returning true from eval none")
+
+	return true, nil
+}
+
+func (a noneEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+	var modified []Evaluator
+	for _, e := range a.noneOf {
+		i, err := e.MutateScopes(ctx, modifiers...)
+		if err != nil {
+			return nil, err
+		}
+		modified = append(modified, i)
+	}
+	return EvalNone(modified...), nil
+}
+
+func (a noneEvaluator) String() string {
+	permissions := make([]string, 0, len(a.noneOf))
+	for _, e := range a.noneOf {
+		permissions = append(permissions, e.String())
+	}
+
+	return fmt.Sprintf("none of %s", strings.Join(permissions, ", "))
+}
+
+func (a noneEvaluator) GoString() string {
+	permissions := make([]string, 0, len(a.noneOf))
+	for _, e := range a.noneOf {
+		permissions = append(permissions, e.String())
+	}
+
+	return fmt.Sprintf("none(%s)", strings.Join(permissions, " "))
+}

@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 )
@@ -21,6 +20,15 @@ func (t *nestedTree) init() {
 	for _, root := range t.roots {
 		t.lookup[root.Meta().Config.Prefix] = root.Store()
 	}
+}
+
+func (t *nestedTree) getRootPrefix(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	rootKey, _ := splitFirstSegment(path)
+	return filestorage.Join(rootKey)
 }
 
 func (t *nestedTree) getRoot(path string) (filestorage.FileStorage, string) {
@@ -48,7 +56,7 @@ func (t *nestedTree) GetFile(ctx context.Context, path string) (*filestorage.Fil
 	return root.Get(ctx, path)
 }
 
-func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, error) {
+func (t *nestedTree) ListFolder(ctx context.Context, path string, filters *filestorage.PathFilters) (*data.Frame, error) {
 	if path == "" || path == "/" {
 		count := len(t.roots)
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -71,12 +79,12 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return nil, nil // not found (or not ready)
 	}
 
-	files, err := root.ListFiles(ctx, path, nil, nil)
+	files, err := root.ListFiles(ctx, path, nil, &filestorage.ListOptions{Recursive: false, PathFilters: filters})
 	if err != nil {
 		return nil, err
 	}
 
-	folders, err := root.ListFolders(ctx, path, &filestorage.ListOptions{Recursive: false})
+	folders, err := root.ListFolders(ctx, path, &filestorage.ListOptions{Recursive: false, PathFilters: filters})
 	if err != nil {
 		return nil, err
 	}
