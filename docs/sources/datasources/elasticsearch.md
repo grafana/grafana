@@ -158,7 +158,7 @@ You can use other variables inside the query. Example query definition for a var
 {"find": "terms", "field": "hostname", "query": "source:$source"}
 ```
 
-In the above example, we use another variable named `$source` inside the query definition. Whenever you change, via the dropdown, the current value of the ` source` variable, it will trigger an update of the `$host` variable so it now only contains hostnames filtered by in this case the
+In the above example, we use another variable named `$source` inside the query definition. Whenever you change, via the dropdown, the current value of the `$source` variable, it will trigger an update of the `$host` variable so it now only contains hostnames filtered by in this case the
 `source` document property.
 
 These queries by default return results in term order (which can then be sorted alphabetically or numerically as for any variable).
