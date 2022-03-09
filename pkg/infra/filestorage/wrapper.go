@@ -160,6 +160,14 @@ func (b wrapper) withDefaults(options *ListOptions, folderQuery bool) *ListOptio
 		return options
 	}
 
+	if options.PathFilters == nil {
+		if b.pathFilters != nil {
+			options.PathFilters = b.pathFilters
+		} else {
+			options.PathFilters = allowAllPathFilters()
+		}
+	}
+
 	if b.pathFilters != nil && b.pathFilters.allowedPrefixes != nil {
 		if options.allowedPrefixes != nil {
 			options.allowedPrefixes = append(options.allowedPrefixes, b.pathFilters.allowedPrefixes...)
