@@ -60,7 +60,9 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
         return false;
       }
 
-      if (key === 'custom') {
+      if (key === 'interval') {
+        continue;
+      } else if (key === 'custom') {
         if (!shallowCompare(cfgA[key], cfgB[key])) {
           return false;
         }
