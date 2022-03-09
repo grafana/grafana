@@ -70,7 +70,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
-      params: [{ name: 'Regex', type: 'string', hideName: true, placeholder: 'Pattern to match', minWidth: 24 }],
+      params: [{ name: 'Regex', type: 'string', hideName: true, placeholder: 'Pattern to match', minWidth: 30 }],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -81,7 +81,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegexNot,
       name: 'Line does not match regex',
-      params: [{ name: 'Regex', type: 'string', hideName: true, placeholder: 'Pattern to exclude', minWidth: 26 }],
+      params: [{ name: 'Regex', type: 'string', hideName: true, placeholder: 'Pattern to exclude', minWidth: 30 }],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -116,13 +116,15 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Unwrap,
       name: 'Unwrap',
-      params: [{ name: 'Identifier', type: 'string' }],
+      params: [{ name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' }],
       defaultParams: [''],
       category: LokiVisualQueryOperationCategory.Formats,
       renderer: (op, def, innerExpr) => `${innerExpr} | unwrap ${op.params[0]}`,
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) =>
-        `Use the extracted label \`${op.params[0]}\` as sample values instead of log lines for the subsequent range aggregation.`,
+      explainHandler: (op) => {
+        let label = String(op.params[0]).length > 0 ? op.params[0] : '<label>';
+        return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.`;
+      },
     },
   ];
 
