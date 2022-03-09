@@ -10,15 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
+	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestPrometheusRules(t *testing.T) {
@@ -207,7 +209,7 @@ func TestPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: invalid alert rule: cannot have Panel ID without a Dashboard UID"}`, string(b))
+		require.JSONEq(t, `{"message": "invalid rule specification at index [0]: both annotations __dashboardUid__ and __panelId__ must be specified"}`, string(b))
 	}
 
 	// Now, let's see how this looks like.
@@ -634,6 +636,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
 
@@ -729,7 +732,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2
-	require.NoError(t, store.UpdateDashboardACL(context.Background(), 2, nil))
+	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
 
 	// make sure that folder2 is not included in the response
 	{
@@ -778,7 +781,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from _ALL_ folders
-	require.NoError(t, store.UpdateDashboardACL(context.Background(), 1, nil))
+	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 1, nil))
 
 	// make sure that no folders are included in the response
 	{

@@ -148,6 +148,27 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses function with argument', () => {
+    expect(
+      buildVisualQueryFromString('histogram_quantile(0.99, rate(counters_logins{app="backend"}[$__rate_interval]))')
+    ).toEqual(
+      noErrors({
+        metric: 'counters_logins',
+        labels: [{ label: 'app', op: '=', value: 'backend' }],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'histogram_quantile',
+            params: [0.99],
+          },
+        ],
+      })
+    );
+  });
+
   it('parses function with multiple arguments', () => {
     expect(
       buildVisualQueryFromString(
@@ -324,6 +345,86 @@ describe('buildVisualQueryFromString', () => {
         metric: 'ewafweaf',
         labels: [{ label: 'afea', op: '=', value: '' }],
         operations: [],
+      },
+    });
+  });
+
+  it('parses query without metric', () => {
+    expect(buildVisualQueryFromString('label_replace(rate([$__rate_interval]), "", "$1", "", "(.*)")')).toEqual({
+      errors: [],
+      query: {
+        metric: '',
+        labels: [],
+        operations: [
+          { id: 'rate', params: ['$__rate_interval'] },
+          {
+            id: 'label_replace',
+            params: ['', '$1', '', '(.*)'],
+          },
+        ],
+      },
+    });
+  });
+
+  it('lone aggregation without params', () => {
+    expect(buildVisualQueryFromString('sum()')).toEqual({
+      errors: [],
+      query: {
+        metric: '',
+        labels: [],
+        operations: [{ id: 'sum', params: [] }],
+      },
+    });
+  });
+
+  it('handles multiple binary scalar operations', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name + 1 - 1 / 1 * 1 % 1 ^ 1')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__addition',
+            params: [1],
+          },
+          {
+            id: '__subtraction',
+            params: [1],
+          },
+          {
+            id: '__divide_by',
+            params: [1],
+          },
+          {
+            id: '__multiply_by',
+            params: [1],
+          },
+          {
+            id: '__modulo',
+            params: [1],
+          },
+          {
+            id: '__exponent',
+            params: [1],
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles scalar comparison operators', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name <= 2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__less_or_equal',
+            params: [2],
+          },
+        ],
       },
     });
   });

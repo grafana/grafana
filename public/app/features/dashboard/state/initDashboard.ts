@@ -7,13 +7,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp } from 'app/core/actions';
-import {
-  dashboardInitCompleted,
-  dashboardInitFailed,
-  dashboardInitFetching,
-  dashboardInitServices,
-  dashboardInitSlow,
-} from './reducers';
+import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 // Types
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
@@ -23,6 +17,8 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { getIfExistsLastKey } from '../../variables/state/selectors';
+import { toStateKey } from 'app/features/variables/utils';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -108,14 +104,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // set fetching state
     dispatch(dashboardInitFetching());
 
-    // Detect slow loading / initializing and set state flag
-    // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
-    setTimeout(() => {
-      if (getState().dashboard.getModel() === null) {
-        dispatch(dashboardInitSlow());
-      }
-    }, 500);
-
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
 
@@ -155,15 +143,16 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     timeSrv.init(dashboard);
 
+    const dashboardUid = toStateKey(args.urlUid ?? dashboard.uid);
     // template values service needs to initialize completely before the rest of the dashboard can load
-    await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
+    await dispatch(initVariablesTransaction(dashboardUid, dashboard));
 
     // DashboardQueryRunner needs to run after all variables have been resolved so that any annotation query including a variable
     // will be correctly resolved
     const runner = createDashboardQueryRunner({ dashboard, timeSrv });
     runner.run({ dashboard, range: timeSrv.timeRange() });
 
-    if (getState().templating.transaction.uid !== args.urlUid) {
+    if (getIfExistsLastKey(getState()) !== dashboardUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
       // but the args.urlUid will be the same as before initVariablesTransaction was called so then we can't continue initializing
       // the previous dashboard.

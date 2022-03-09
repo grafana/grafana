@@ -32,15 +32,16 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 
 func (a *api) registerEndpoints() {
 	auth := middleware.Middleware(a.ac)
+	uidSolver := solveUID(a.service.options.UidSolver)
 	disable := middleware.Disable(a.ac.IsDisabled())
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
 		idScope := accesscontrol.Scope(a.service.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
 		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.service.options.Resource), fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
+		r.Get("/:resourceID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID/users/:userID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
+		r.Post("/:resourceID/teams/:teamID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
+		r.Post("/:resourceID/builtInRoles/:builtInRole", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
 	})
 }
 
@@ -81,14 +82,22 @@ type resourcePermissionDTO struct {
 func (a *api) getPermissions(c *models.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
-	permissions, err := a.service.GetPermissions(c.Req.Context(), c.OrgId, resourceID)
+	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
+	if a.service.options.Assignments.BuiltInRoles && !a.service.cfg.IsEnterprise {
+		permissions = append(permissions, accesscontrol.ResourcePermission{
+			Actions:     a.service.actions,
+			Scope:       "*",
+			BuiltInRole: string(models.ROLE_ADMIN),
+		})
+	}
+
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission := a.service.mapActions(p); permission != "" {
+		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)

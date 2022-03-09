@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
@@ -113,17 +111,18 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 
 	// create user
 	user = models.User{
-		Email:         args.Email,
-		Name:          args.Name,
-		Login:         args.Login,
-		Company:       args.Company,
-		IsAdmin:       args.IsAdmin,
-		IsDisabled:    args.IsDisabled,
-		OrgId:         orgID,
-		EmailVerified: args.EmailVerified,
-		Created:       time.Now(),
-		Updated:       time.Now(),
-		LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+		Email:            args.Email,
+		Name:             args.Name,
+		Login:            args.Login,
+		Company:          args.Company,
+		IsAdmin:          args.IsAdmin,
+		IsDisabled:       args.IsDisabled,
+		OrgId:            orgID,
+		EmailVerified:    args.EmailVerified,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		IsServiceAccount: false,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -183,25 +182,6 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	}
 
 	return user, nil
-}
-
-func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error) {
-	cmd := models.CreateUserCommand{
-		Login:            "Service-Account-" + uuid.New().String(),
-		Email:            uuid.New().String(),
-		Password:         "Password-" + uuid.New().String(),
-		Name:             siUser.Name + "-Service-Account-" + uuid.New().String(),
-		OrgId:            siUser.OrgId,
-		IsServiceAccount: true,
-	}
-
-	newuser, err := ss.CreateUser(ctx, cmd)
-	if err != nil {
-		ss.log.Warn("user not cloned", "err", err)
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	return newuser, err
 }
 
 func (ss *SQLStore) CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error) {
@@ -321,7 +301,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 }
 
 func (ss SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
-	return withDbSession(ctx, x, func(sess *DBSession) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		user := new(models.User)
 		has, err := sess.ID(query.Id).Get(user)
 
@@ -617,6 +597,10 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 	return err
 }
 
+func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	return SearchUsers(ctx, query)
+}
+
 func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 	query.Result = models.SearchUserQueryResult{
 		Users: make([]*models.UserSearchHitDTO, 0),
@@ -630,7 +614,8 @@ func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, "u.is_service_account = false")
+	whereConditions = append(whereConditions, "u.is_service_account = ?")
+	whereParams = append(whereParams, dialect.BooleanStr(false))
 
 	// Join with only most recent auth module
 	joinCondition := `(

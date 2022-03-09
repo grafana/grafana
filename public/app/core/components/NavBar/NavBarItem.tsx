@@ -33,7 +33,9 @@ const NavBarItem = ({
   const { i18n } = useLingui();
   const theme = useTheme2();
   const menuItems = link.children ?? [];
-  const menuItemsSorted = reverseMenuDirection ? menuItems.reverse() : menuItems;
+
+  // Spreading `menuItems` here as otherwise we'd be mutating props
+  const menuItemsSorted = reverseMenuDirection ? [...menuItems].reverse() : menuItems;
   const filteredItems = menuItemsSorted
     .filter((item) => !item.hideFromMenu)
     .map((i) => ({ ...i, menuItemType: NavMenuItemType.Item }));

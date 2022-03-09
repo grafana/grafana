@@ -42,11 +42,11 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
         <Highlighter
           searchWords={meta.inputValue.split(splitSeparator)}
           textToHighlight={option.label ?? ''}
-          highlightClassName={styles.hightlight}
+          highlightClassName={styles.highlight}
         />
       );
     },
-    [styles.hightlight]
+    [styles.highlight]
   );
 
   return (
@@ -69,7 +69,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           options={state.metrics}
           onChange={({ value }) => {
             if (value) {
-              onChange({ ...query, metric: value, labels: [] });
+              onChange({ ...query, metric: value });
             }
           }}
         />
@@ -82,7 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   select: css`
     min-width: 125px;
   `,
-  hightlight: css`
+  highlight: css`
     label: select__match-highlight;
     background: inherit;
     padding: inherit;

@@ -3,24 +3,30 @@ import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
-import { StoreState, ServiceAccountDTO, ApiKey } from 'app/types';
+import { StoreState, ServiceAccountDTO, ApiKey, Role } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   deleteServiceAccountToken,
   loadServiceAccount,
   loadServiceAccountTokens,
   createServiceAccountToken,
+  fetchACOptions,
+  updateServiceAccount,
+  deleteServiceAccount,
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, NavModel, OrgRole } from '@grafana/data';
+import { getTimeZone, NavModel } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { CreateTokenModal } from './CreateTokenModal';
+import { contextSrv } from 'app/core/core';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
   serviceAccount?: ServiceAccountDTO;
   tokens: ApiKey[];
   isLoading: boolean;
+  roleOptions: Role[];
+  builtInRoles: Record<string, Role[]>;
 }
 
 function mapStateToProps(state: StoreState) {
@@ -29,6 +35,8 @@ function mapStateToProps(state: StoreState) {
     serviceAccount: state.serviceAccountProfile.serviceAccount,
     tokens: state.serviceAccountProfile.tokens,
     isLoading: state.serviceAccountProfile.isLoading,
+    roleOptions: state.serviceAccounts.roleOptions,
+    builtInRoles: state.serviceAccounts.builtInRoles,
     timezone: getTimeZone(state.user),
   };
 }
@@ -37,6 +45,9 @@ const mapDispatchToProps = {
   loadServiceAccountTokens,
   createServiceAccountToken,
   deleteServiceAccountToken,
+  deleteServiceAccount,
+  updateServiceAccount,
+  fetchACOptions,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -49,10 +60,15 @@ const ServiceAccountPageUnconnected = ({
   tokens,
   timezone,
   isLoading,
+  roleOptions,
+  builtInRoles,
   loadServiceAccount,
   loadServiceAccountTokens,
   createServiceAccountToken,
   deleteServiceAccountToken,
+  deleteServiceAccount,
+  updateServiceAccount,
+  fetchACOptions,
 }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
@@ -61,21 +77,17 @@ const ServiceAccountPageUnconnected = ({
     const serviceAccountId = parseInt(match.params.id, 10);
     loadServiceAccount(serviceAccountId);
     loadServiceAccountTokens(serviceAccountId);
-  }, [match, loadServiceAccount, loadServiceAccountTokens]);
+    if (contextSrv.accessControlEnabled()) {
+      fetchACOptions();
+    }
+  }, [match, loadServiceAccount, loadServiceAccountTokens, fetchACOptions]);
 
   const onDeleteServiceAccountToken = (key: ApiKey) => {
     deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
   };
 
-  const onCreateToken = (name: string) => {
-    createServiceAccountToken(
-      serviceAccount.id,
-      {
-        name,
-        role: OrgRole.Viewer,
-      },
-      setNewToken
-    );
+  const onCreateToken = (token: ApiKey) => {
+    createServiceAccountToken(serviceAccount.id, token, setNewToken);
   };
 
   const onModalClose = () => {
@@ -89,19 +101,12 @@ const ServiceAccountPageUnconnected = ({
         {serviceAccount && (
           <>
             <ServiceAccountProfile
-              serviceaccount={serviceAccount}
-              onServiceAccountDelete={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountUpdate={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountDisable={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountEnable={() => {
-                console.log(`not implemented`);
-              }}
+              serviceAccount={serviceAccount}
+              timeZone={timezone}
+              roleOptions={roleOptions}
+              builtInRoles={builtInRoles}
+              updateServiceAccount={updateServiceAccount}
+              deleteServiceAccount={deleteServiceAccount}
             />
           </>
         )}

@@ -17,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -100,6 +102,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	canEdit, _ := guardian.CanEdit()
 	canSave, _ := guardian.CanSave()
 	canAdmin, _ := guardian.CanAdmin()
+	canDelete, _ := guardian.CanDelete()
 
 	isStarred, err := hs.isDashboardStarredByUser(c, dash.Id)
 	if err != nil {
@@ -122,6 +125,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		CanSave:     canSave,
 		CanEdit:     canEdit,
 		CanAdmin:    canAdmin,
+		CanDelete:   canDelete,
 		Created:     dash.Created,
 		Updated:     dash.Updated,
 		UpdatedBy:   updater,
@@ -148,8 +152,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	svc := dashboards.NewProvisioningService(hs.SQLStore)
-	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -224,7 +227,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return rsp
 	}
 	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+	if canDelete, err := guardian.CanDelete(); err != nil || !canDelete {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -233,8 +236,8 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	if err != nil {
 		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
-	svc := dashboards.NewService(hs.SQLStore)
-	err = svc.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
+
+	err = hs.dashboardService.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -271,8 +274,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 	if cmd.FolderUid != "" {
-		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-		folder, err := folders.GetFolderByUID(ctx, cmd.FolderUid)
+		folder, err := hs.folderService.GetFolderByUID(ctx, c.SignedInUser, c.OrgId, cmd.FolderUid)
 		if err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
@@ -294,18 +296,17 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	svc := dashboards.NewProvisioningService(hs.SQLStore)
 	var provisioningData *models.DashboardProvisioning
 	if dash.Id != 0 {
-		data, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(dash.Id)
 		if err != nil {
 			return response.Error(500, "Error while checking if dashboard is provisioned using ID", err)
 		}
 		provisioningData = data
 	} else if dash.Uid != "" {
-		data, err := svc.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
-		if err != nil && (!errors.Is(err, models.ErrProvisionedDashboardNotFound) && !errors.Is(err, models.ErrDashboardNotFound)) {
-			return response.Error(500, "Error while checking if dashboard is provisioned using UID", err)
+		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
+		if err != nil && !errors.Is(err, models.ErrProvisionedDashboardNotFound) && !errors.Is(err, models.ErrDashboardNotFound) {
+			return response.Error(500, "Error while checking if dashboard is provisioned", err)
 		}
 		provisioningData = data
 	}
@@ -329,8 +330,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashSvc := dashboards.NewService(hs.SQLStore)
-	dashboard, err := dashSvc.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
+	dashboard, err := hs.dashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
@@ -360,10 +360,8 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
 	}
 
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := dashSvc.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
+	if newDashboard {
+		if err := hs.setDashboardPermissions(c, cmd, dashboard); err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
@@ -383,6 +381,35 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		"uid":     dashboard.Uid,
 		"url":     dashboard.GetUrl(),
 	})
+}
+
+func (hs *HTTPServer) setDashboardPermissions(c *models.ReqContext, cmd models.SaveDashboardCommand, dash *models.Dashboard) error {
+	inFolder := dash.FolderId > 0
+	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		resourceID := strconv.FormatInt(dash.Id, 10)
+		svc := hs.permissionServices.GetDashboardService()
+
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{UserID: c.UserId, Permission: models.PERMISSION_ADMIN.String()},
+		}
+
+		if !inFolder {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
+			}...)
+		}
+		_, err := svc.SetPermissions(c.Req.Context(), c.OrgId, resourceID, permissions...)
+		if err != nil {
+			return err
+		}
+	} else if hs.Cfg.EditorsCanAdmin {
+		if err := hs.dashboardService.MakeUserAdmin(c.Req.Context(), cmd.OrgId, cmd.UserId, dash.Id, !inFolder); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // GetHomeDashboard returns the home dashboard.

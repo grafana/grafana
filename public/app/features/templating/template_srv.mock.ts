@@ -45,4 +45,14 @@ export class TemplateSrvMock implements TemplateSrv {
     }
     return match.slice(1).find((match) => match !== undefined);
   }
+
+  containsTemplate(target: string | undefined): boolean {
+    if (!target) {
+      return false;
+    }
+
+    this.regex.lastIndex = 0;
+    const match = this.regex.exec(target);
+    return match !== null;
+  }
 }

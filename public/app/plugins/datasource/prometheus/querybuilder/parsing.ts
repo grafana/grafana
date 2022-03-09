@@ -1,7 +1,8 @@
 import { parser } from 'lezer-promql';
-import { SyntaxNode } from 'lezer-tree';
+import { SyntaxNode, TreeCursor } from '@lezer/common';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery } from './types';
+import { binaryScalarDefs } from './binaryScalarOperations';
 
 // Taken from template_srv, but copied so to not mess with the regex.index which is manipulated in the service
 /*
@@ -56,7 +57,7 @@ function returnVariables(expr: string) {
 /**
  * Parses a PromQL query into a visual query model.
  *
- * It traverses the tree and uses sort of state machine to update update the query model. The query model is modified
+ * It traverses the tree and uses sort of state machine to update the query model. The query model is modified
  * during the traversal and sent to each handler as context.
  *
  * @param expr
@@ -72,19 +73,27 @@ export function buildVisualQueryFromString(expr: string): Context {
     labels: [],
     operations: [],
   };
-  const context = {
+  const context: Context = {
     query: visQuery,
     errors: [],
   };
 
-  handleExpression(replacedExpr, node, context);
+  try {
+    handleExpression(replacedExpr, node, context);
+  } catch (err) {
+    // Not ideal to log it here, but otherwise we would lose the stack trace.
+    console.error(err);
+    context.errors.push({
+      text: err.message,
+    });
+  }
   return context;
 }
 
 interface ParsingError {
   text: string;
-  from: number;
-  to: number;
+  from?: number;
+  to?: number;
   parentType?: string;
 }
 
@@ -98,7 +107,7 @@ const ErrorName = '⚠';
 
 /**
  * Handler for default state. It will traverse the tree and call the appropriate handler for each node. The node
- * handled here does not necessarily needs to be of type == Expr.
+ * handled here does not necessarily need to be of type == Expr.
  * @param expr
  * @param node
  * @param context
@@ -201,6 +210,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const body = node.getChild('FunctionCallBody');
   const callArgs = body!.getChild('FunctionCallArgs');
   const params = [];
+  let interval = '';
 
   // This is a bit of a shortcut to get the interval argument. Reasons are
   // - interval is not part of the function args per promQL grammar but we model it as argument for the function in
@@ -209,14 +219,23 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   if (rangeFunctions.includes(funcName) || funcName.endsWith('_over_time')) {
     let match = getString(expr, node).match(/\[(.+)\]/);
     if (match?.[1]) {
-      params.push(returnVariables(match[1]));
+      interval = match[1];
+      params.push(match[1]);
     }
   }
 
   const op = { id: funcName, params };
   // We unshift operations to keep the more natural order that we want to have in the visual query editor.
   visQuery.operations.unshift(op);
-  updateFunctionArgs(expr, callArgs!, context, op);
+
+  if (callArgs) {
+    if (getString(expr, callArgs) === interval + ']') {
+      // This is a special case where we have a function with a single argument and it is the interval.
+      // This happens when you start adding operations in query builder and did not set a metric yet.
+      return;
+    }
+    updateFunctionArgs(expr, callArgs, context, op);
+  }
 }
 
 /**
@@ -252,7 +271,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
-  updateFunctionArgs(expr, callArgs!, context, op);
+  updateFunctionArgs(expr, callArgs, context, op);
   // We add labels after params in the visual query editor.
   op.params.push(...labels);
 }
@@ -269,7 +288,10 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
  * @param context
  * @param op - We need the operation to add the params to as an additional context.
  */
-function updateFunctionArgs(expr: string, node: SyntaxNode, context: Context, op: QueryBuilderOperation) {
+function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Context, op: QueryBuilderOperation) {
+  if (!node) {
+    return;
+  }
   switch (node.name) {
     // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
     case 'Expr':
@@ -284,7 +306,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode, context: Context, op
     }
 
     case 'NumberLiteral': {
-      op.params.push(parseInt(getString(expr, node), 10));
+      op.params.push(parseFloat(getString(expr, node)));
       break;
     }
 
@@ -301,10 +323,10 @@ function updateFunctionArgs(expr: string, node: SyntaxNode, context: Context, op
   }
 }
 
-const operatorToOpName: Record<string, string> = {
-  '/': '__divide_by',
-  '*': '__multiply_by',
-};
+const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
+  acc[def.sign] = def.id;
+  return acc;
+}, {} as Record<string, string>);
 
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
@@ -317,6 +339,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
+  // TODO: we are skipping BinModifiers
   const right = node.lastChild!;
 
   const opName = operatorToOpName[op];
@@ -326,9 +349,40 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   if (leftNumber || rightNumber) {
     // Scalar case, just add operation.
-    const [num, query] = leftNumber ? [leftNumber, right] : [rightNumber, left];
-    visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, num), 10)] });
-    handleExpression(expr, query, context);
+    if (leftNumber) {
+      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+      //  if query starts with a number that isn't handled now.
+    } else {
+      handleExpression(expr, left, context);
+    }
+
+    if (rightNumber) {
+      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+      //  if query starts with a number that isn't handled now.
+      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, right), 10)] });
+    } else {
+      handleExpression(expr, right, context);
+    }
+    return;
+  }
+
+  const leftBinary = left.getChild('BinaryExpr');
+  const rightBinary = right.getChild('BinaryExpr');
+
+  if (leftBinary || rightBinary) {
+    // One of the sides is binary which means we don't really know if there is a query or just chained scalars. So
+    // we have to traverse a bit deeper to know
+    handleExpression(expr, left, context);
+
+    // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
+    // is a factor for a current binary operation. So we have to add it as an operation now.
+    const leftMostChild = getLeftMostChild(right);
+    if (leftMostChild?.name === 'NumberLiteral') {
+      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, leftMostChild), 10)] });
+    }
+    // If we added the first number literal as operation here we still can continue and handle the rest as the first
+    // number will be just skipped.
+    handleExpression(expr, right, context);
   } else {
     // Two queries case so we create a binary query.
     visQuery.binaryQueries = visQuery.binaryQueries || [];
@@ -356,7 +410,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
  * @param expr
  * @param node
  */
-function getString(expr: string, node: SyntaxNode | null) {
+function getString(expr: string, node: SyntaxNode | TreeCursor | null) {
   if (!node) {
     return '';
   }
@@ -384,6 +438,18 @@ function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
     child = cur.childAfter(pos);
   }
   return values;
+}
+
+function getLeftMostChild(cur: SyntaxNode): SyntaxNode | null {
+  let child = cur;
+  while (true) {
+    if (child.firstChild) {
+      child = child.firstChild;
+    } else {
+      break;
+    }
+  }
+  return child;
 }
 
 // Debugging function for convenience.

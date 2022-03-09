@@ -9,6 +9,7 @@ export const initialState: FolderState = {
   title: 'loading',
   url: '',
   canSave: false,
+  canDelete: false,
   hasChanged: false,
   version: 1,
   permissions: [],

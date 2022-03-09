@@ -2,12 +2,12 @@ import { variableAdapters } from '../adapters';
 import { constantBuilder, customBuilder } from '../shared/testing/builders';
 import { DashboardState, StoreState } from '../../../types';
 import { initialState } from '../../dashboard/state/reducers';
-import { TemplatingState } from './reducers';
 import { ExtendedUrlQueryMap } from '../utils';
 import { templateVarsChangedInUrl } from './actions';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { VariablesState } from './types';
 import { DashboardModel } from '../../dashboard/state';
+import { getPreloadedState } from './helpers';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { VariableModel } from '../types';
 
@@ -18,9 +18,11 @@ variableAdapters.setInit(() => [createCustomVariableAdapter(), createConstantVar
 async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: VariableModel | undefined = undefined) {
   jest.clearAllMocks();
 
+  const key = 'key';
   if (!variable) {
     variable = customBuilder()
       .withId('variable')
+      .withRootStateKey(key)
       .withName('variable')
       .withCurrent(['A', 'C'])
       .withOptions('A', 'B', 'C')
@@ -43,15 +45,14 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
   };
 
   const variables: VariablesState = { variable };
-  const templating = { variables } as unknown as TemplatingState;
   const state: Partial<StoreState> = {
     dashboard,
-    templating,
+    ...getPreloadedState(key, { variables }),
   };
   const getState = () => state as unknown as StoreState;
 
   const dispatch = jest.fn();
-  const thunk = templateVarsChangedInUrl(urlQueryMap);
+  const thunk = templateVarsChangedInUrl(key, urlQueryMap);
 
   await thunk(dispatch, getState, undefined);
 
@@ -125,6 +126,7 @@ describe('templateVarsChangedInUrl', () => {
         it('then the value should change to the value in dashboard json and dashboard should be refreshed', async () => {
           const constant = constantBuilder()
             .withId('variable')
+            .withRootStateKey('key')
             .withName('variable')
             .withQuery('default value in dash.json')
             .build();
