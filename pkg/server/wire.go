@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/filestore"
+	pluginFileStore "github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -226,8 +226,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
-	wire.Bind(new(filestore.Manager), new(*filestore.Service)),
-	filestore.ProvideService,
+	wire.Bind(new(pluginFileStore.Manager), new(*pluginFileStore.Service)),
+	pluginFileStore.ProvideService,
 )
 
 var wireSet = wire.NewSet(
