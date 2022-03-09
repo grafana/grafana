@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/internal/components/store"
-	"github.com/grafana/grafana/pkg/models"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/grafana/grafana/internal/k8sbridge"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // requeueAfter can be overidden by the tests
@@ -21,14 +23,18 @@ type DatasourceReconciler struct {
 }
 
 
-// We could also accept Bridge instead
-func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor store.Store) (*DatasourceReconciler, error) {
+// TODO: Looks like this should be the other way around,
+// Otherwise the reconciler will never be registered,
+// since there are no components that depend on DatasourceReconciler
+// I think we need some kind of reconciler registry (maybe just as part of the k8s bridge),
+// similar to background services registry.
+func ProvideDatasourceReconciler(bridge *k8sbridge.Service, store Store) (*DatasourceReconciler, error) {
 	d := &DatasourceReconciler{
-		cli: cli,
+		cli: bridge.Client().GrafanaCoreV1(),
 	}
 
 	// TODO should Thema-based approaches differ from pure k8s here? (research!)
-	if err := ctrl.NewControllerManagedBy(mgr).
+	if err := ctrl.NewControllerManagedBy(bridge.ControllerManager()).
 		Named("datasource-controller").
 		For(&Datasource{}).
 		Complete(reconcile.Func(d.Reconcile)); err != nil {

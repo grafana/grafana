@@ -1,6 +1,7 @@
 package backgroundsvcs
 
 import (
+	"github.com/grafana/grafana/internal/intentapi"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -26,7 +27,7 @@ import (
 )
 
 func ProvideBackgroundServiceRegistry(
-	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
+	httpServer *api.HTTPServer, intentApiServer *intentapi.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
 	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pm *manager.PluginManager,
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService, tracing tracing.Tracer,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
@@ -39,6 +40,7 @@ func ProvideBackgroundServiceRegistry(
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
+		intentApiServer,
 		ng,
 		cleanup,
 		live,
