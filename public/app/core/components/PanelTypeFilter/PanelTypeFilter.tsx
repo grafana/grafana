@@ -54,7 +54,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
         <Button
           size="xs"
           icon="trash-alt"
-          variant="secondary"
+          variant="link"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear types"
@@ -81,12 +81,6 @@ function getStyles(theme: GrafanaTheme2) {
       position: absolute;
       top: -${theme.spacing(4.5)};
       right: 0;
-      cursor: pointer;
-      color: ${theme.colors.text.link};
-
-      &:hover {
-        color: ${theme.colors.text.maxContrast};
-      }
     `,
   };
 }

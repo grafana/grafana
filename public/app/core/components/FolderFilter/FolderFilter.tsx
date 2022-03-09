@@ -47,7 +47,7 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         <Button
           size="xs"
           icon="trash-alt"
-          variant="secondary"
+          variant="link"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear folders"
@@ -97,17 +97,10 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     clear: css`
       label: clear;
-      text-decoration: underline;
       font-size: ${theme.spacing(1.5)};
       position: absolute;
       top: -${theme.spacing(4.5)};
       right: 0;
-      cursor: pointer;
-      color: ${theme.colors.text.link};
-
-      &:hover {
-        color: ${theme.colors.text.maxContrast};
-      }
     `,
   };
 }
