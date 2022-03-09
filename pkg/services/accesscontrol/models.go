@@ -379,7 +379,7 @@ var (
 	ScopeFolderID   = GetResourceScope(ScopeFoldersRoot, Parameter(":id"))
 
 	// Datasource scopes
-	ScopeDatasourcesAll = Scope(ScopeDatasourcesRoot, "*")
+	ScopeDatasourcesAll = GetResourceAllScope(ScopeDatasourcesRoot)
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
