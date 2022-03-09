@@ -87,6 +87,14 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
+	if a.service.options.Assignments.BuiltInRoles && !a.service.cfg.IsEnterprise {
+		permissions = append(permissions, accesscontrol.ResourcePermission{
+			Actions:     a.service.actions,
+			Scope:       "*",
+			BuiltInRole: string(models.ROLE_ADMIN),
+		})
+	}
+
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
 		if permission := a.service.MapActions(p); permission != "" {
