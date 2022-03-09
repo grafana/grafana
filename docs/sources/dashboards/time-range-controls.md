@@ -36,7 +36,7 @@ Here are some examples:
 
 ### Note about Grafana alerting
 
-For Grafana alerting, we do not support are the following syntaxes at this time.
+For Grafana alerting, we do not support the following syntaxes at this time.
 
 - now+n for future timestamps.
 - now-1n/n for "start of n until end of n" since this is an absolute timestamp.
