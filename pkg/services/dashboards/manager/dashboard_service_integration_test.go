@@ -16,8 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/setting"
-	starstests "github.com/grafana/grafana/pkg/services/stars/starstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -858,10 +858,10 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	starsFake := starstests.NewStarsServiceFake()
+	starsFake := startest.NewStarsServiceFake()
 	service := ProvideDashboardService(
 		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),starsFake,
+		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(), starsFake,
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 
@@ -873,10 +873,10 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	starsFake := starstests.NewStarsServiceFake()
+	starsFake := startest.NewStarsServiceFake()
 	service := ProvideDashboardService(
 		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),starsFake,
+		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(), starsFake,
 	)
 	_, err := service.SaveDashboard(context.Background(), &dto, false)
 	return err
@@ -905,10 +905,10 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	starsFake := starstests.NewStarsServiceFake()
+	starsFake := startest.NewStarsServiceFake()
 	service := ProvideDashboardService(
 		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),starsFake,
+		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(), starsFake,
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
@@ -938,7 +938,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	starsFake := starstests.NewStarsServiceFake()
+	starsFake := startest.NewStarsServiceFake()
 	service := ProvideDashboardService(
 		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(), starsFake,

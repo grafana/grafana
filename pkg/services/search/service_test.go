@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	stars "github.com/grafana/grafana/pkg/services/stars/starstests"
+	stars "github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

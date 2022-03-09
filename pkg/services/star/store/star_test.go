@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package starsstore
+package starstore
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 func TestUserStarsDataAccess(t *testing.T) {
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		starsStore := NewStarsStore(sqlStore)
+		starsStore := NewStarStore(sqlStore)
 
 		t.Run("Given saved star", func(t *testing.T) {
 			cmd := models.StarDashboardCommand{

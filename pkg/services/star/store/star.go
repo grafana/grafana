@@ -1,4 +1,4 @@
-package starsstore
+package starstore
 
 import (
 	"context"
@@ -14,16 +14,16 @@ type Store interface {
 	GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error)
 }
 
-type StoreImpl struct {
+type storeImpl struct {
 	SqlStore sqlstore.Store
 }
 
-func NewStarsStore(sqlstore sqlstore.Store) *StoreImpl {
-	s := &StoreImpl{SqlStore: sqlstore}
+func NewStarStore(sqlstore sqlstore.Store) *storeImpl {
+	s := &storeImpl{SqlStore: sqlstore}
 	return s
 }
 
-func (s *StoreImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
+func (s *storeImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
 	var isStarred bool
 	err := s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
@@ -44,7 +44,7 @@ func (s *StoreImpl) IsStarredByUserCtx(ctx context.Context, query *models.IsStar
 	return isStarred, err
 }
 
-func (s *StoreImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
+func (s *storeImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
 		return models.ErrCommandValidationFailed
 	}
@@ -60,7 +60,7 @@ func (s *StoreImpl) StarDashboard(ctx context.Context, cmd *models.StarDashboard
 	})
 }
 
-func (s *StoreImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
+func (s *storeImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
 		return models.ErrCommandValidationFailed
 	}
@@ -72,7 +72,7 @@ func (s *StoreImpl) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashb
 	})
 }
 
-func (s *StoreImpl) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error) {
+func (s *storeImpl) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error) {
 	var userStars map[int64]bool
 	err := s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var stars = make([]models.Star, 0)

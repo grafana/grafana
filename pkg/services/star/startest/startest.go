@@ -32,12 +32,12 @@ func (f *FakeStarsService) GetUserStars(ctx context.Context, query *models.GetUs
 	return f.ExpectedUserStars, f.ExpectedError
 }
 
-type FakeStarsStore struct {
+type FakeStarStore struct {
 	ExpectedStars     *models.Star
 	ExpectedListStars []*models.Star
 	ExpectedError     error
 }
 
-func NewStarsStoreFake() *FakeStarsStore {
-	return &FakeStarsStore{}
+func NewStarStoreFake() *FakeStarStore {
+	return &FakeStarStore{}
 }

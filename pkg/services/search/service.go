@@ -5,14 +5,14 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/stars"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore, starManager stars.Manager) *SearchService {
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore, starManager star.Manager) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		Bus: bus,
@@ -54,7 +54,7 @@ type SearchService struct {
 	Cfg         *setting.Cfg
 	sortOptions map[string]models.SortOption
 	sqlstore    sqlstore.Store
-	starManager stars.Manager
+	starManager star.Manager
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
