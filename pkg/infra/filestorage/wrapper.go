@@ -224,7 +224,30 @@ func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, opt
 		paging.First = 100
 	}
 
-	return b.wrapped.ListFiles(ctx, path, paging, b.withDefaults(options, false))
+	resp, err := b.wrapped.ListFiles(ctx, path, paging, b.withDefaults(options, false))
+	if err != nil {
+		return resp, err
+	}
+
+	if len(resp.Files) != 0 {
+		return resp, err
+	}
+
+	// TODO: optimize, don't fetch the contents in this case
+	file, err := b.Get(ctx, path)
+	if err != nil {
+		return resp, err
+	}
+
+	if file != nil {
+		return &ListFilesResponse{
+			Files:    []FileMetadata{file.FileMetadata},
+			HasMore:  false,
+			LastPath: file.FileMetadata.FullPath,
+		}, nil
+	}
+
+	return resp, err
 }
 
 func (b wrapper) ListFolders(ctx context.Context, path string, options *ListOptions) ([]FileMetadata, error) {

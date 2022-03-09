@@ -219,6 +219,47 @@ func TestFsStorage(t *testing.T) {
 				},
 			},
 			{
+				name: "listing files with path to a file",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/folder2/file.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/file-inner.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1"},
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jp", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/folder2/file.jpg", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2/file.jpg"), fName("file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jpg", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/file-inner.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/file-inner.jpg"), fName("file-inner.jpg"), fProperties(map[string]string{"prop1": "val1"})),
+						},
+					},
+				},
+			},
+			{
 				name: "listing files with prefix filter",
 				steps: []interface{}{
 					cmdUpsert{
