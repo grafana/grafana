@@ -4,23 +4,19 @@ import { Stack } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
+import { useNavModel } from 'app/core/hooks/useNavModel';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useAsync } from 'react-use';
-import { Button } from './Button';
-import { FileBrowser } from './FileBrowser';
+import { StorageButton } from './StorageButton';
 import { StorageList } from './StorageList';
-import { StatusResponse, RootStorageMeta } from './types';
+import { RootStorageMeta, StatusResponse } from './types';
 
 export default function StoragePage() {
   const styles = useStyles2(getStyles);
-  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'storage'));
+  const navModel = useNavModel('storage');
   const [searchQuery, setSearchQuery] = useState('');
   const [dashboards, setDashboards] = useState<RootStorageMeta[]>();
   const [resources, setResources] = useState<RootStorageMeta[]>();
-  const [browsePath, setBrowsePath] = useState('dev-dashboards'); // TODO? in URL?
 
   const status = useAsync(async () => {
     return (await getBackendSrv().get('api/storage/status')) as StatusResponse; // observable?
@@ -52,7 +48,7 @@ export default function StoragePage() {
         <div className={styles.toolbar}>
           <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder="Search by name or type" width={50} />
           <Stack direction="row" gap={2}>
-            <Button
+            <StorageButton
               buttonProps={{ variant: 'primary', icon: 'plus', children: 'Add storage' }}
               options={[
                 { value: 'sql', label: 'SQL (Grafana default)' },
@@ -64,7 +60,7 @@ export default function StoragePage() {
                 console.log(value);
               }}
             />
-            <Button
+            <StorageButton
               buttonProps={{ variant: 'secondary', children: 'Actions', icon: '' }}
               options={[
                 { value: 'push', label: 'Push storage to git', icon: 'arrow-up' },
@@ -93,11 +89,6 @@ export default function StoragePage() {
             <StorageList storage={resources} title="Resources" />
           </div>
         )}
-
-        <br />
-        <br />
-        <h1>move to config page:</h1>
-        <FileBrowser prefix={'dash'} path={browsePath} onPathChange={setBrowsePath} />
       </Page.Contents>
     </Page>
   );

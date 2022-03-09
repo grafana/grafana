@@ -22,7 +22,7 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 
 	meta := RootStorageMeta{
 		Config: RootStorageConfig{
-			Type:   rootStorageTypeGit,
+			Type:   rootStorageTypeS3,
 			Prefix: prefix,
 			Name:   name,
 			S3:     cfg,

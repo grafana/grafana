@@ -3,7 +3,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { uniqueId } from 'lodash';
 import React from 'react';
+import { useDispatch } from 'react-redux';
 import { RootStorageMeta } from './types';
+import { setSelectedStorage } from './storageSlice';
+import { useHistory } from 'react-router-dom';
 
 interface Props {
   storage: RootStorageMeta[];
@@ -12,16 +15,28 @@ interface Props {
 
 export function StorageList({ storage, title }: Props) {
   const styles = useStyles2(getStyles);
+  const history = useHistory();
+  const dispatch = useDispatch();
 
   return (
     <>
       <h4 className={styles.secondaryTextColor}>{title}</h4>
       {storage.map((s) => {
         return (
-          <Card key={uniqueId()}>
-            <Card.Heading className={styles.heading}>
+          <Card
+            key={uniqueId()}
+            onClick={() => {
+              dispatch(setSelectedStorage(s));
+              history.push(`/org/storage/edit`);
+            }}
+          >
+            <Card.Heading>
               {s.config.name}
-              <Badge text={s.ready ? 'Ready' : 'Not ready'} color={s.ready ? 'green' : 'red'} />
+              <Badge
+                className={styles.badge}
+                text={s.ready ? 'Ready' : 'Not ready'}
+                color={s.ready ? 'green' : 'red'}
+              />
             </Card.Heading>
             <Card.Meta>{s.config.prefix}</Card.Meta>
             <Card.Description>{getDescription(s)}</Card.Description>
@@ -39,9 +54,8 @@ function getStyles(theme: GrafanaTheme2) {
     secondaryTextColor: css`
       color: ${theme.colors.text.secondary};
     `,
-    heading: css`
-      justify-content: flex-start;
-      gap: 0.5rem;
+    badge: css`
+      margin-left: ${theme.spacing(1)};
     `,
   };
 }

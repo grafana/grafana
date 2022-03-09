@@ -20,6 +20,7 @@ import panelsReducers from 'app/features/panel/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 import searchPageReducers from 'app/features/search/page/state/reducers';
+import storagePageReducers from 'app/features/storage/storageSlice';
 
 const rootReducers = {
   ...sharedReducers,
@@ -41,6 +42,7 @@ const rootReducers = {
   ...panelsReducers,
   ...templatingReducers,
   ...searchPageReducers,
+  storagePageReducers,
   plugins: pluginsReducer,
 };
 
