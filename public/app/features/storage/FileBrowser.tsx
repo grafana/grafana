@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { dataFrameFromJSON, DataFrameJSON, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getBackendSrv, PanelRenderer } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
-import { uniqueId } from 'lodash';
 import React from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Breadcrumb } from './Breadcrumb';
 
 interface Props {
   prefix: string;
@@ -15,7 +15,6 @@ interface Props {
 
 export function FileBrowser({ path, prefix, onPathChange }: Props) {
   const styles = useStyles2(getStyles);
-  const parts = path.split('/');
 
   const folder = useAsync(async () => {
     const rsp = (await getBackendSrv().get(`api/storage/path/${prefix}/${path}`)) as DataFrameJSON;
@@ -44,29 +43,7 @@ export function FileBrowser({ path, prefix, onPathChange }: Props) {
 
   return (
     <>
-      <ul className={styles.breadCrumb}>
-        {parts.map((part, index) => {
-          let url = '/' + parts.slice(0, index + 1).join('/');
-          if (index === 0) {
-            url = part;
-          }
-          return (
-            <li
-              key={uniqueId(part)}
-              onClick={() => {
-                // Don't change path if it's the last part
-                if (index === parts.length - 1) {
-                  return;
-                }
-                onPathChange(url);
-              }}
-            >
-              {part}
-            </li>
-          );
-        })}
-      </ul>
-
+      <Breadcrumb pathName={path} onPathChange={onPathChange} />
       <div className={styles.wrap}>
         <AutoSizer disableHeight style={{ width: '100%' }}>
           {({ width }) => {
