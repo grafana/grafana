@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/fs"
+	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -779,15 +779,15 @@ func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
 }
 
 type fakeFsManager struct {
-	fs.Manager
+	filestore.Manager
 
 	added   int
 	removed int
 }
 
-func (fsm *fakeFsManager) Add(_ context.Context, _ *zip.ReadCloser, _, _ string) (*fs.ExtractedPluginArchive, error) {
+func (fsm *fakeFsManager) Add(_ context.Context, _ *zip.ReadCloser, _, _ string) (*filestore.ExtractedPluginArchive, error) {
 	fsm.added++
-	return &fs.ExtractedPluginArchive{}, nil
+	return &filestore.ExtractedPluginArchive{}, nil
 }
 
 func (fsm *fakeFsManager) Remove(_ context.Context, _ string) error {

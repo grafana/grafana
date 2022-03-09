@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/plugins/fs"
+	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -30,11 +30,11 @@ type PluginManager struct {
 	pluginLoader plugins.Loader
 	pluginsMu    sync.RWMutex
 	pluginPaths  map[plugins.Class][]string
-	pluginFs     fs.Manager
+	pluginFs     filestore.Manager
 	log          log.Logger
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader, pluginFs fs.Manager) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader, pluginFs filestore.Manager) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), map[plugins.Class][]string{
 		plugins.Core:     corePluginPaths(grafanaCfg),
 		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
@@ -46,7 +46,7 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader, plugin
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader, pluginFs fs.Manager) *PluginManager {
+func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader, pluginFs filestore.Manager) *PluginManager {
 	return &PluginManager{
 		cfg:          cfg,
 		pluginLoader: pluginLoader,

@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/plugins/fs"
+	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/repository"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -86,7 +86,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 		}
 	}
 
-	pluginFs := fs.New(services.Logger)
+	pluginFs := filestore.New(services.Logger)
 	extractedArchive, err := pluginFs.Add(ctx, archive.File, pluginID, pluginsPath)
 	if err != nil {
 		return err
