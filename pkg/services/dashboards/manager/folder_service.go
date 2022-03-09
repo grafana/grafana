@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -20,7 +21,9 @@ type FolderServiceImpl struct {
 	log              log.Logger
 }
 
-func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, searchService *search.SearchService) *FolderServiceImpl {
+func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, searchService *search.SearchService, ac accesscontrol.AccessControl) *FolderServiceImpl {
+	ac.RegisterAttributeScopeResolver(dashboards.NewNameScopeResolver(dashboardStore))
+
 	return &FolderServiceImpl{
 		dashboardService: dashboardService,
 		dashboardStore:   dashboardStore,
