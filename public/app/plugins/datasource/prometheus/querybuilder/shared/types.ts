@@ -62,6 +62,7 @@ export interface QueryBuilderOperationParamDef {
   restParam?: boolean;
   optional?: boolean;
   placeholder?: string;
+  description?: string;
   minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
 }

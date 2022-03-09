@@ -26,6 +26,7 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
       defaultValue={props.value}
       minWidth={props.paramDef.minWidth}
       placeholder={props.paramDef.placeholder}
+      title={props.paramDef.description}
       onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
       }}
@@ -57,6 +58,7 @@ function SelectInputParamEditor({
       menuShouldPortal
       value={valueOption}
       options={selectOptions}
+      placeholder={paramDef.placeholder}
       onChange={(value) => onChange(index, value.value!)}
     />
   );
