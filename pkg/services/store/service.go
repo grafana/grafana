@@ -90,10 +90,16 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
 				Path: filepath.Join(devenv, "dev-dashboards"),
 			}),
-			newGitStorage("it", "My dashboards in git", storage, &StorageGitConfig{
-				Remote:      "https://github.com/ryantxu/test-dash-repo.git",
+			newGitStorage("it-A", "Github dashbboards A", storage, &StorageGitConfig{
+				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
 				Branch:      "main",
-				Root:        "",
+				Root:        "dashboards",
+				AccessToken: "",
+			}),
+			newGitStorage("it-B", "Github dashbboards B", storage, &StorageGitConfig{
+				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-B.git",
+				Branch:      "main",
+				Root:        "dashboards",
 				AccessToken: "",
 			}),
 			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{

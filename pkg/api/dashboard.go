@@ -79,7 +79,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path, ok := params["*"] // path based endpoint
-	uid := params["uid"]
+	uid := params[":uid"]
 
 	// Check for path based UIDs (from file systems)
 	if ok || uid == "" {

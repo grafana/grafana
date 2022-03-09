@@ -79,7 +79,12 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 		}
 
 		if err == nil {
-			path := fmt.Sprintf("file://%s", dir)
+			p := dir
+			if cfg.Root != "" {
+				p = filepath.Join(p, cfg.Root)
+			}
+
+			path := fmt.Sprintf("file://%s", p)
 			bucket, err := blob.OpenBucket(context.Background(), path)
 			if err != nil {
 				grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
