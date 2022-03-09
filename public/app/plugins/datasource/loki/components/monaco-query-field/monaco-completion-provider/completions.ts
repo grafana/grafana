@@ -13,6 +13,7 @@ type Completion = {
   detail?: string;
   documentation?: string;
   triggerOnInsert?: boolean;
+  isSnippet?: boolean;
 };
 
 export type DataProvider = {
@@ -22,6 +23,16 @@ export type DataProvider = {
   getSeriesLabels: (selector: string) => Promise<Record<string, string[]>>;
   getLogInfo: (selector: string) => Promise<{ labelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }>;
 };
+
+const LOG_COMPLETIONS: Completion[] = [
+  {
+    type: 'DURATION',
+    label: '{}',
+    insertText: '{$0}',
+    isSnippet: true,
+    triggerOnInsert: true,
+  },
+];
 
 const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   type: 'FUNCTION',
@@ -175,7 +186,7 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
       return DURATION_COMPLETIONS;
     case 'EMPTY': {
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...FUNCTION_COMPLETIONS];
+      return [...historyCompletions, ...LOG_COMPLETIONS, ...FUNCTION_COMPLETIONS];
     }
     case 'IN_GROUPING':
       return getLabelNamesForByCompletions(situation.otherLabels, dataProvider);

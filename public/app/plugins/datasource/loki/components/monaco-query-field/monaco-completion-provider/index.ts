@@ -4,6 +4,9 @@ import { getSituation } from './situation';
 import { getCompletions, DataProvider, CompletionType } from './completions';
 import { NeverCaseError } from './util';
 
+// from: monacoTypes.languages.CompletionItemInsertTextRule.InsertAsSnippet
+const INSERT_AS_SNIPPET_ENUM_VALUE = 4;
+
 export function getSuggestOptions(): monacoTypes.editor.ISuggestOptions {
   return {
     // monaco-editor sometimes provides suggestions automatically, i am not
@@ -79,6 +82,7 @@ export function getCompletionProvider(
         kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
         insertText: item.insertText,
+        insertTextRules: item.isSnippet ? INSERT_AS_SNIPPET_ENUM_VALUE : undefined,
         detail: item.detail,
         documentation: item.documentation,
         sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
