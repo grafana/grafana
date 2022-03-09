@@ -357,6 +357,16 @@ const (
 
 	// Folder scopes
 	ScopeFoldersAll = "folders:*"
+
+	// File actions
+	ActionFilesCreate = "files:create"
+	ActionFilesRead   = "files:read"
+	ActionFilesWrite  = "files:write"
+	ActionFilesDelete = "files:delete"
+
+	// File scopes
+	ScopeFilesAll       = "files:prefix:/"
+	ScopeFilesDashboard = "files:prefix:/dashboards/"
 )
 
 var (
