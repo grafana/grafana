@@ -11,7 +11,7 @@ import {
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
 } from '../shared/types';
-import { OperationHeader } from './OperationName';
+import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
 import { getOperationParamId } from './operationUtils';
 
