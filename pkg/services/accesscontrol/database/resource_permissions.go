@@ -236,7 +236,7 @@ func (s *AccessControlStore) setResourcePermission(
 		keep = append(keep, id)
 	}
 
-	permissions, err := s.getResourcePermissions(sess, cmd.ResourceID, keep)
+	permissions, err := s.getResourcePermissionsByIds(sess, cmd.ResourceID, keep)
 	if err != nil {
 		return nil, err
 	}
@@ -249,12 +249,12 @@ func (s *AccessControlStore) setResourcePermission(
 	return permission, nil
 }
 
-func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) GetResourcePermissions(ctx context.Context, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	var result []accesscontrol.ResourcePermission
 
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
-		result, err = s.getResourcesPermissions(sess, orgID, query)
+		result, err = s.getResourcePermissions(sess, orgID, query)
 		return err
 	})
 
@@ -273,12 +273,8 @@ func (s *AccessControlStore) createResourcePermission(sess *sqlstore.DBSession, 
 	return permission.ID, nil
 }
 
-func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) getResourcePermissions(sess *sqlstore.DBSession, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	if len(query.Actions) == 0 {
-		return nil, nil
-	}
-
-	if len(query.ResourceIDs) == 0 {
 		return nil, nil
 	}
 
@@ -286,6 +282,7 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 	SELECT
 		p.*,
 		r.name as role_name,
+		? as resource_id,
 	`
 
 	userSelect := rawSelect + `
@@ -336,7 +333,7 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 	`
 	where := `
 	WHERE (r.org_id = ? OR r.org_id = 0)
-		AND (p.scope = '*' OR p.scope = ? OR p.scope = ? OR p.scope IN (?` + strings.Repeat(",?", len(query.ResourceIDs)-1) + `))
+		AND (p.scope = '*' OR p.scope = ? OR p.scope = ? OR p.scope = ?)
 		AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)
 	`
 
@@ -345,14 +342,12 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 	}
 
 	args := []interface{}{
+		query.Resource,
 		orgID,
 		orgID,
 		accesscontrol.GetResourceAllScope(query.Resource),
 		accesscontrol.GetResourceAllIDScope(query.Resource),
-	}
-
-	for _, id := range query.ResourceIDs {
-		args = append(args, accesscontrol.GetResourceScope(query.Resource, id))
+		accesscontrol.GetResourceScope(query.Resource, query.ResourceID),
 	}
 
 	for _, a := range query.Actions {
@@ -386,33 +381,16 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 		return nil, err
 	}
 
-	scopeAll := accesscontrol.GetResourceAllScope(query.Resource)
-	scopeAllIDs := accesscontrol.GetResourceAllIDScope(query.Resource)
-
-	byResource := make(map[string][]flatResourcePermission)
-	// Add resourceIds and generate permissions for `*`, `resource:*` and `resource:id:*`
-	for _, id := range query.ResourceIDs {
-		scope := accesscontrol.GetResourceScope(query.Resource, id)
-		for _, p := range queryResults {
-			if p.Scope == scope || p.Scope == scopeAll || p.Scope == scopeAllIDs || p.Scope == "*" {
-				p.ResourceID = id
-				byResource[p.ResourceID] = append(byResource[p.ResourceID], p)
-			}
-		}
-	}
-
 	var result []accesscontrol.ResourcePermission
-	for _, permissions := range byResource {
-		users, teams, builtins := groupPermissionsByAssignment(permissions)
-		for _, p := range users {
-			result = append(result, flatPermissionsToResourcePermissions(p)...)
-		}
-		for _, p := range teams {
-			result = append(result, flatPermissionsToResourcePermissions(p)...)
-		}
-		for _, p := range builtins {
-			result = append(result, flatPermissionsToResourcePermissions(p)...)
-		}
+	users, teams, builtins := groupPermissionsByAssignment(queryResults)
+	for _, p := range users {
+		result = append(result, flatPermissionsToResourcePermissions(p)...)
+	}
+	for _, p := range teams {
+		result = append(result, flatPermissionsToResourcePermissions(p)...)
+	}
+	for _, p := range builtins {
+		result = append(result, flatPermissionsToResourcePermissions(p)...)
 	}
 
 	return result, nil
@@ -582,7 +560,7 @@ func (s *AccessControlStore) getOrCreateManagedRole(sess *sqlstore.DBSession, or
 	return &role, nil
 }
 
-func (s *AccessControlStore) getResourcePermissions(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]flatResourcePermission, error) {
+func (s *AccessControlStore) getResourcePermissionsByIds(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]flatResourcePermission, error) {
 	var result []flatResourcePermission
 	if len(ids) == 0 {
 		return result, nil

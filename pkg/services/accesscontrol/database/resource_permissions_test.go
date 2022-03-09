@@ -311,29 +311,29 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 	}
 }
 
-type getResourcesPermissionsTest struct {
+type getResourcePermissionsTest struct {
 	desc        string
 	user        *models.SignedInUser
 	numUsers    int
 	actions     []string
 	resource    string
-	resourceIDs []string
+	resourceID  string
 	onlyManaged bool
 }
 
-func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
-	tests := []getResourcesPermissionsTest{
+func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
+	tests := []getResourcePermissionsTest{
 		{
-			desc: "should return permissions for all resource ids",
+			desc: "should return permissions for resource id",
 			user: &models.SignedInUser{
 				OrgId: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
-			numUsers:    3,
-			actions:     []string{"datasources:query"},
-			resource:    "datasources",
-			resourceIDs: []string{"1", "2"},
+			numUsers:   3,
+			actions:    []string{"datasources:query"},
+			resource:   "datasources",
+			resourceID: "1",
 		},
 		{
 			desc: "should return manage permissions for all resource ids",
@@ -345,7 +345,7 @@ func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 			numUsers:    3,
 			actions:     []string{"datasources:query"},
 			resource:    "datasources",
-			resourceIDs: []string{"1", "2"},
+			resourceID:  "1",
 			onlyManaged: true,
 		},
 	}
@@ -389,22 +389,20 @@ func TestAccessControlStore_GetResourcesPermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			for _, id := range test.resourceIDs {
-				seedResourcePermissions(t, store, sql, test.actions, test.resource, id, test.numUsers)
-			}
+			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.numUsers)
 
-			permissions, err := store.GetResourcesPermissions(context.Background(), test.user.OrgId, types.GetResourcesPermissionsQuery{
+			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgId, types.GetResourcePermissionsQuery{
 				User:        test.user,
 				Actions:     test.actions,
 				Resource:    test.resource,
-				ResourceIDs: test.resourceIDs,
+				ResourceID:  test.resourceID,
 				OnlyManaged: test.onlyManaged,
 			})
 			require.NoError(t, err)
 
-			expectedLen := test.numUsers * len(test.resourceIDs)
+			expectedLen := test.numUsers
 			if !test.onlyManaged {
-				expectedLen += len(test.resourceIDs)
+				expectedLen += 1
 			}
 			assert.Len(t, permissions, expectedLen)
 		})
