@@ -115,6 +115,11 @@ async function getLabelNamesForSelectorCompletions(
 ): Promise<Completion[]> {
   return getLabelNamesForCompletions('=', true, otherLabels, dataProvider);
 }
+
+async function getLabelNamesForByCompletions(otherLabels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
+  return getLabelNamesForCompletions('', true, otherLabels, dataProvider);
+}
+
 async function getLabelValues(labelName: string, otherLabels: Label[], dataProvider: DataProvider): Promise<string[]> {
   if (otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
@@ -153,6 +158,8 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...FUNCTION_COMPLETIONS];
     }
+    case 'IN_GROUPING':
+      return getLabelNamesForByCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
       return getLabelNamesForSelectorCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':

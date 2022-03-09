@@ -26,32 +26,42 @@ function assertSituation(situation: string, expectedSituation: Situation | null)
 }
 
 describe('situation', () => {
-  // it('handles things', () => {
-  //   assertSituation('^', {
-  //     type: 'EMPTY',
-  //   });
+  it('handles things', () => {
+    assertSituation('^', {
+      type: 'EMPTY',
+    });
 
-  //   assertSituation('count_over_time({level="info"}[10s]) / ^', {
-  //     type: 'AT_ROOT',
-  //   });
+    assertSituation('count_over_time({level="info"}[10s]) / ^', {
+      type: 'AT_ROOT',
+    });
 
-  //   assertSituation('count_over_time(^)', {
-  //     type: 'IN_FUNCTION',
-  //   });
+    assertSituation('count_over_time(^)', {
+      type: 'IN_FUNCTION',
+    });
 
-  //   assertSituation('count_over_time({level="info"}[10s]) / count_over_time(^)', {
-  //     type: 'IN_FUNCTION',
-  //   });
+    assertSituation('count_over_time({level="info"}[10s]) / count_over_time(^)', {
+      type: 'IN_FUNCTION',
+    });
 
-  //   assertSituation('count_over_time({level="info"}[^])', {
-  //     type: 'IN_DURATION',
-  //   });
-  // });
+    assertSituation('count_over_time({level="info"}[^])', {
+      type: 'IN_DURATION',
+    });
+  });
 
   it('handles label names', () => {
     assertSituation('{^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [],
+    });
+
+    assertSituation('sum(count_over_time({level="info"})) by (^)', {
+      type: 'IN_GROUPING',
+      otherLabels: [{ name: 'level', value: 'info', op: '=' }],
+    });
+
+    assertSituation('sum by (^) (count_over_time({level="info"}))', {
+      type: 'IN_GROUPING',
+      otherLabels: [{ name: 'level', value: 'info', op: '=' }],
     });
 
     assertSituation('{one="val1",two!="val2",three=~"val3",four!~"val4",^}', {
@@ -88,70 +98,70 @@ describe('situation', () => {
     });
   });
 
-  // it('handles label values', () => {
-  //   assertSituation('{job=^}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'job',
-  //     betweenQuotes: false,
-  //     otherLabels: [],
-  //   });
+  it('handles label values', () => {
+    assertSituation('{job=^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'job',
+      betweenQuotes: false,
+      otherLabels: [],
+    });
 
-  //   assertSituation('{job!=^}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'job',
-  //     betweenQuotes: false,
-  //     otherLabels: [],
-  //   });
+    assertSituation('{job!=^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'job',
+      betweenQuotes: false,
+      otherLabels: [],
+    });
 
-  //   assertSituation('{job=~^}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'job',
-  //     betweenQuotes: false,
-  //     otherLabels: [],
-  //   });
+    assertSituation('{job=~^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'job',
+      betweenQuotes: false,
+      otherLabels: [],
+    });
 
-  //   assertSituation('{job!~^}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'job',
-  //     betweenQuotes: false,
-  //     otherLabels: [],
-  //   });
+    assertSituation('{job!~^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'job',
+      betweenQuotes: false,
+      otherLabels: [],
+    });
 
-  //   assertSituation('{job=^,host="h1"}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'job',
-  //     betweenQuotes: false,
-  //     otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
-  //   });
+    assertSituation('{job=^,host="h1"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'job',
+      betweenQuotes: false,
+      otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
+    });
 
-  //   assertSituation('{job="j1",host="^"}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'host',
-  //     betweenQuotes: true,
-  //     otherLabels: [{ name: 'job', value: 'j1', op: '=' }],
-  //   });
+    assertSituation('{job="j1",host="^"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'host',
+      betweenQuotes: true,
+      otherLabels: [{ name: 'job', value: 'j1', op: '=' }],
+    });
 
-  //   assertSituation('{job="j1"^}', null);
-  //   assertSituation('{job="j1" ^ }', null);
-  //   assertSituation('{job="j1" ^   ,   }', null);
+    assertSituation('{job="j1"^}', null);
+    assertSituation('{job="j1" ^ }', null);
+    assertSituation('{job="j1" ^   ,   }', null);
 
-  //   assertSituation('{job=^,host="h1"}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'job',
-  //     betweenQuotes: false,
-  //     otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
-  //   });
+    assertSituation('{job=^,host="h1"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'job',
+      betweenQuotes: false,
+      otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
+    });
 
-  //   assertSituation('{one="val1",two!="val2",three=^,four=~"val4",five!~"val5"}', {
-  //     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-  //     labelName: 'three',
-  //     betweenQuotes: false,
-  //     otherLabels: [
-  //       { name: 'one', value: 'val1', op: '=' },
-  //       { name: 'two', value: 'val2', op: '!=' },
-  //       { name: 'four', value: 'val4', op: '=~' },
-  //       { name: 'five', value: 'val5', op: '!~' },
-  //     ],
-  //   });
-  // });
+    assertSituation('{one="val1",two!="val2",three=^,four=~"val4",five!~"val5"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName: 'three',
+      betweenQuotes: false,
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'four', value: 'val4', op: '=~' },
+        { name: 'five', value: 'val5', op: '!~' },
+      ],
+    });
+  });
 });
