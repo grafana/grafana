@@ -12,10 +12,28 @@ When you become a Grafana Enterprise customer, you receive a license that govern
 
 You either have:
 
-- tiered licensing, or
-- combined licensing
+- combined licensing, or
+- tiered licensing
 
 To understand which license type you have, refer to [Determine the number of active users for each licensed role](#determine-the-number-of-active-users-for-each-licensed-role).
+
+## Combined licensing
+
+As of Grafana Enterprise Version 8.3, you can purchase (or transition to) combined licensing. With combined licensing, you purchase a specific number of users, and you are free to distribute those users across all roles, in any combination.
+For example, if you purchase 150 licenses, you can have 20 admins, 70 editors, and 60 viewers, or you can have 10 admins, 100 editors, and 40 viewers. This change reduces license complexity.
+
+### Transition to combined license model
+
+To transition from the tiered licensing model to the combined license model, contact your Grafana account team and request to switch to combined user pricing. Once you update your contract with the account team, they will issue you a new license token.
+For instructions about how to update your license, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
+
+After you apply the token, Grafana Enterprise resets your license and updates the user counts on the **Utilization** panel.
+
+> If you are running Grafana Enterprise 8.2 or earlier, the license grants you the total number of licensed users _for each user type_.
+
+For example, if your current license includes 60 viewers and 40 dditor/admins, the new license includes 100 viewers and 100 editor/admins. Grafana Enterprise 8.3 removes the distinction between viewers and editor/admins as shown on the **Utilization** panel.
+
+Before you upgrade to Grafana 8.3, ensure that the total number of active users in Grafana does not exceed the number of users in your combined license. If it does, then new users cannot sign in to Grafana 8.3 until the active user count returns below the licensed limit.
 
 ## Tiered licensing
 
@@ -108,24 +126,6 @@ To change user permissions for dashboards:
 1. Use the dropdown list to select a role.
 
 The next time the user signs in, the **Utilization** panel on the **Statistics and licensing** page displays updated data.
-
-## Combined licensing
-
-As of Grafana Enterprise Version 8.3, you can purchase (or transition to) combined licensing. With combined licensing, you purchase a specific number of users, and you are free to distribute those users across all roles, in any combination.
-For example, if you purchase 150 licenses, you can have 20 admins, 70 editors, and 60 viewers, or you can have 10 admins, 100 editors, and 40 viewers. This change reduces license complexity.
-
-### Transition to combined license model
-
-To transition from the tiered licensing model to the combined license model, contact your Grafana account team and request to switch to combined user pricing. Once you update your contract with the account team, they will issue you a new license token.
-For instructions about how to update your license, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
-
-After you apply the token, Grafana Enterprise resets your license and updates the user counts on the **Utilization** panel.
-
-> If you are running Grafana Enterprise 8.2 or earlier, the license grants you the total number of licensed users _for each user type_.
-
-For example, if your current license includes 60 viewers and 40 dditor/admins, the new license includes 100 viewers and 100 editor/admins. Grafana Enterprise 8.3 removes the distinction between viewers and editor/admins as shown on the **Utilization** panel.
-
-Before you upgrade to Grafana 8.3, ensure that the total number of active users in Grafana does not exceed the number of users in your combined license. If it does, then new users cannot sign in to Grafana 8.3 until the active user count returns below the licensed limit.
 
 ## Determining your current license type
 
