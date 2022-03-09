@@ -11,10 +11,6 @@
   flex-direction: column;
 }
 
-.explore + .explore {
-  border-left: 1px dotted $table-border;
-}
-
 .explore-container {
   display: flex;
   flex: 1 1 auto;
@@ -27,8 +23,9 @@
   display: flex;
   height: 100%;
 
-  > .explore-split {
-    width: 50%;
+  > .explore-split:nth-child(1) {
+    width: 30%; // Must correspond to Resizable's minWidth in Wrapper.tsx
+    border-right: 1px dotted $table-border;
   }
 }
 

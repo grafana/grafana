@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { Resizable } from 're-resizable';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
@@ -80,7 +81,23 @@ class WrapperUnconnected extends PureComponent<Props> {
           </ErrorBoundaryAlert>
           {hasSplit && (
             <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
+              <Resizable
+                defaultSize={{ width: '50%', height: '100%' }}
+                enable={{
+                  top: false,
+                  right: false,
+                  bottom: false,
+                  left: true,
+                  topRight: false,
+                  bottomRight: false,
+                  bottomLeft: false,
+                  topLeft: false,
+                }}
+                minWidth="30%"
+                maxWidth="70%"
+              >
+                <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
+              </Resizable>
             </ErrorBoundaryAlert>
           )}
         </div>
