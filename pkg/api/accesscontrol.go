@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,10 +30,6 @@ var (
 	ScopeProvisionersPlugins       = ac.Scope("provisioners", "plugins")
 	ScopeProvisionersDatasources   = ac.Scope("provisioners", "datasources")
 	ScopeProvisionersNotifications = ac.Scope("provisioners", "notifications")
-
-	ScopeDatasourceID   = ac.GetResourceScope(ac.ScopeDatasourcesRoot, ac.Parameter(":id"))
-	ScopeDatasourceUID  = ac.GetResourceScopeUID(ac.ScopeDatasourcesRoot, ac.Parameter(":uid"))
-	ScopeDatasourceName = ac.GetResourceScopeName(ac.ScopeDatasourcesRoot, ac.Parameter(":name"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -85,12 +82,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Data sources",
 			Permissions: []ac.Permission{
 				{
-					Action: ac.ActionDatasourcesRead,
-					Scope:  ac.ScopeDatasourcesAll,
+					Action: datasources.ActionDatasourcesRead,
+					Scope:  datasources.ScopeDatasourcesProvider.GetResourceAllScope(),
 				},
 				{
-					Action: ac.ActionDatasourcesQuery,
-					Scope:  ac.ScopeDatasourcesAll,
+					Action: datasources.ActionDatasourcesQuery,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 			},
 		},
@@ -106,15 +103,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Data sources",
 			Permissions: ac.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []ac.Permission{
 				{
-					Action: ac.ActionDatasourcesWrite,
-					Scope:  ac.ScopeDatasourcesAll,
+					Action: datasources.ActionDatasourcesWrite,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 				{
-					Action: ac.ActionDatasourcesCreate,
+					Action: datasources.ActionDatasourcesCreate,
 				},
 				{
-					Action: ac.ActionDatasourcesDelete,
-					Scope:  ac.ScopeDatasourcesAll,
+					Action: datasources.ActionDatasourcesDelete,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 			}),
 		},
@@ -130,8 +127,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Infrequently used",
 			Permissions: []ac.Permission{
 				{
-					Action: ac.ActionDatasourcesIDRead,
-					Scope:  ac.ScopeDatasourcesAll,
+					Action: datasources.ActionDatasourcesIDRead,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 			},
 		},
@@ -146,8 +143,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Only used for open source compatibility. Query data sources.",
 			Group:       "Infrequently used",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionDatasourcesQuery},
-				{Action: ac.ActionDatasourcesRead},
+				{Action: datasources.ActionDatasourcesQuery},
+				{Action: datasources.ActionDatasourcesRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -391,25 +388,25 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 // dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
 var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ac.ActionDatasourcesRead),
+	ac.EvalPermission(datasources.ActionDatasourcesRead),
 	ac.EvalAny(
-		ac.EvalPermission(ac.ActionDatasourcesCreate),
-		ac.EvalPermission(ac.ActionDatasourcesDelete),
-		ac.EvalPermission(ac.ActionDatasourcesWrite),
+		ac.EvalPermission(datasources.ActionDatasourcesCreate),
+		ac.EvalPermission(datasources.ActionDatasourcesDelete),
+		ac.EvalPermission(datasources.ActionDatasourcesWrite),
 	),
 )
 
 // dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
 var dataSourcesNewAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ac.ActionDatasourcesRead),
-	ac.EvalPermission(ac.ActionDatasourcesCreate),
-	ac.EvalPermission(ac.ActionDatasourcesWrite),
+	ac.EvalPermission(datasources.ActionDatasourcesRead),
+	ac.EvalPermission(datasources.ActionDatasourcesCreate),
+	ac.EvalPermission(datasources.ActionDatasourcesWrite),
 )
 
 // dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
 var dataSourcesEditAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ac.ActionDatasourcesRead),
-	ac.EvalPermission(ac.ActionDatasourcesWrite),
+	ac.EvalPermission(datasources.ActionDatasourcesRead),
+	ac.EvalPermission(datasources.ActionDatasourcesWrite),
 )
 
 // orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
