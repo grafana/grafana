@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Icon, Select, useStyles2 } from '@grafana/ui';
+import { FlexItem } from '@grafana/experimental';
+import { Button, Select, useStyles2 } from '@grafana/ui';
 import React, { useState } from 'react';
+import { OperationInfoButton } from './OperationInfoButton';
 import { VisualQueryModeller, QueryBuilderOperation, QueryBuilderOperationDef } from './types';
 
 export interface Props {
@@ -9,7 +11,9 @@ export interface Props {
   def: QueryBuilderOperationDef;
   index: number;
   queryModeller: VisualQueryModeller;
+  dragHandleProps: any;
   onChange: (index: number, update: QueryBuilderOperation) => void;
+  onRemove: (index: number) => void;
 }
 
 interface State {
@@ -17,62 +21,69 @@ interface State {
   alternatives?: Array<SelectableValue<QueryBuilderOperationDef>>;
 }
 
-export const OperationName = React.memo<Props>(({ operation, def, index, onChange, queryModeller }) => {
-  const styles = useStyles2(getStyles);
-  const [state, setState] = useState<State>({});
+export const OperationHeader = React.memo<Props>(
+  ({ operation, def, index, onChange, onRemove, queryModeller, dragHandleProps }) => {
+    const styles = useStyles2(getStyles);
+    const [state, setState] = useState<State>({});
 
-  const onToggleSwitcher = () => {
-    if (state.isOpen) {
-      setState({ ...state, isOpen: false });
-    } else {
-      const alternatives = queryModeller
-        .getAlternativeOperations(def.alternativesKey!)
-        .map((alt) => ({ label: alt.name, value: alt }));
-      setState({ isOpen: true, alternatives });
-    }
-  };
+    const onToggleSwitcher = () => {
+      if (state.isOpen) {
+        setState({ ...state, isOpen: false });
+      } else {
+        const alternatives = queryModeller
+          .getAlternativeOperations(def.alternativesKey!)
+          .map((alt) => ({ label: alt.name, value: alt }));
+        setState({ isOpen: true, alternatives });
+      }
+    };
 
-  const nameElement = <span>{def.name ?? def.id}</span>;
-
-  if (!def.alternativesKey) {
-    return nameElement;
+    return (
+      <div className={styles.header}>
+        {!state.isOpen && <div {...dragHandleProps}>{def.name ?? def.id}</div>}
+        {state.isOpen && (
+          <Select
+            autoFocus
+            openMenuOnFocus
+            placeholder="Replace with"
+            options={state.alternatives}
+            isOpen={true}
+            onCloseMenu={onToggleSwitcher}
+            onChange={(value) => {
+              if (value.value) {
+                // Operation should exist if it is selectable
+                const newDef = queryModeller.getOperationDef(value.value.id)!;
+                let changedOp = { ...operation, id: value.value.id };
+                onChange(index, def.changeTypeHandler ? def.changeTypeHandler(changedOp, newDef) : changedOp);
+              }
+            }}
+          />
+        )}
+        <FlexItem grow={1} />
+        <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
+          <Button
+            icon="angle-down"
+            size="sm"
+            onClick={onToggleSwitcher}
+            fill="text"
+            variant="secondary"
+            title="Click to view alternative operations"
+          />
+          <OperationInfoButton def={def} operation={operation} />
+          <Button
+            icon="times"
+            size="sm"
+            onClick={() => onRemove(index)}
+            fill="text"
+            variant="secondary"
+            title="Remove operation"
+          />
+        </div>
+      </div>
+    );
   }
+);
 
-  return (
-    <>
-      {!state.isOpen && (
-        <button
-          className={styles.wrapper}
-          onClick={onToggleSwitcher}
-          title={'Click to replace with alternative function'}
-        >
-          {nameElement}
-          <Icon className={`${styles.dropdown} operation-header-show-on-hover`} name="angle-down" size="md" />
-        </button>
-      )}
-      {state.isOpen && (
-        <Select
-          autoFocus
-          openMenuOnFocus
-          placeholder="Replace with"
-          options={state.alternatives}
-          isOpen={true}
-          onCloseMenu={onToggleSwitcher}
-          onChange={(value) => {
-            if (value.value) {
-              // Operation should exist if it is selectable
-              const newDef = queryModeller.getOperationDef(value.value.id)!;
-              let changedOp = { ...operation, id: value.value.id };
-              onChange(index, def.changeTypeHandler ? def.changeTypeHandler(changedOp, newDef) : changedOp);
-            }
-          }}
-        />
-      )}
-    </>
-  );
-});
-
-OperationName.displayName = 'OperationName';
+OperationHeader.displayName = 'OperationHeader';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -87,6 +98,21 @@ const getStyles = (theme: GrafanaTheme2) => {
     dropdown: css({
       opacity: 0,
       color: theme.colors.text.secondary,
+    }),
+    header: css({
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      padding: theme.spacing(0.5, 0.5, 0.5, 1),
+      display: 'flex',
+      alignItems: 'center',
+      '&:hover .operation-header-show-on-hover': css({
+        opacity: 1,
+      }),
+    }),
+    operationHeaderButtons: css({
+      opacity: 0,
+      transition: theme.transitions.create(['opacity'], {
+        duration: theme.transitions.duration.short,
+      }),
     }),
   };
 };
