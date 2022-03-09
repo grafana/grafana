@@ -39,45 +39,51 @@ export const OperationHeader = React.memo<Props>(
 
     return (
       <div className={styles.header}>
-        {!state.isOpen && <div {...dragHandleProps}>{def.name ?? def.id}</div>}
-        {state.isOpen && (
-          <Select
-            autoFocus
-            openMenuOnFocus
-            placeholder="Replace with"
-            options={state.alternatives}
-            isOpen={true}
-            onCloseMenu={onToggleSwitcher}
-            onChange={(value) => {
-              if (value.value) {
-                // Operation should exist if it is selectable
-                const newDef = queryModeller.getOperationDef(value.value.id)!;
-                let changedOp = { ...operation, id: value.value.id };
-                onChange(index, def.changeTypeHandler ? def.changeTypeHandler(changedOp, newDef) : changedOp);
-              }
-            }}
-          />
+        {!state.isOpen && (
+          <>
+            <div {...dragHandleProps}>{def.name ?? def.id}</div>
+            <FlexItem grow={1} />
+            <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
+              <Button
+                icon="angle-down"
+                size="sm"
+                onClick={onToggleSwitcher}
+                fill="text"
+                variant="secondary"
+                title="Click to view alternative operations"
+              />
+              <OperationInfoButton def={def} operation={operation} />
+              <Button
+                icon="times"
+                size="sm"
+                onClick={() => onRemove(index)}
+                fill="text"
+                variant="secondary"
+                title="Remove operation"
+              />
+            </div>
+          </>
         )}
-        <FlexItem grow={1} />
-        <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
-          <Button
-            icon="angle-down"
-            size="sm"
-            onClick={onToggleSwitcher}
-            fill="text"
-            variant="secondary"
-            title="Click to view alternative operations"
-          />
-          <OperationInfoButton def={def} operation={operation} />
-          <Button
-            icon="times"
-            size="sm"
-            onClick={() => onRemove(index)}
-            fill="text"
-            variant="secondary"
-            title="Remove operation"
-          />
-        </div>
+        {state.isOpen && (
+          <div className={styles.selectWrapper}>
+            <Select
+              autoFocus
+              openMenuOnFocus
+              placeholder="Replace with"
+              options={state.alternatives}
+              isOpen={true}
+              onCloseMenu={onToggleSwitcher}
+              onChange={(value) => {
+                if (value.value) {
+                  // Operation should exist if it is selectable
+                  const newDef = queryModeller.getOperationDef(value.value.id)!;
+                  let changedOp = { ...operation, id: value.value.id };
+                  onChange(index, def.changeTypeHandler ? def.changeTypeHandler(changedOp, newDef) : changedOp);
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -87,18 +93,6 @@ OperationHeader.displayName = 'OperationHeader';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css({
-      display: 'inline-block',
-      background: 'transparent',
-      padding: 0,
-      border: 'none',
-      boxShadow: 'none',
-      cursor: 'pointer',
-    }),
-    dropdown: css({
-      opacity: 0,
-      color: theme.colors.text.secondary,
-    }),
     header: css({
       borderBottom: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(0.5, 0.5, 0.5, 1),
@@ -113,6 +107,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       transition: theme.transitions.create(['opacity'], {
         duration: theme.transitions.duration.short,
       }),
+    }),
+    selectWrapper: css({
+      paddingRight: theme.spacing(2),
     }),
   };
 };
