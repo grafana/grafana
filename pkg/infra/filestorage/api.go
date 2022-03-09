@@ -86,6 +86,10 @@ func toLower(list []string) []string {
 	return lower
 }
 
+func allowAllPathFilters() *PathFilters {
+	return NewPathFilters(nil, nil, nil, nil)
+}
+
 func NewPathFilters(allowedPrefixes []string, allowedPaths []string, disallowedPrefixes []string, disallowedPaths []string) *PathFilters {
 	return &PathFilters{
 		allowedPrefixes:    toLower(allowedPrefixes),
