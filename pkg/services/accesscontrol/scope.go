@@ -173,3 +173,48 @@ func ScopeInjector(params ScopeParams) ScopeMutator {
 		return buf.String(), nil
 	}
 }
+
+// ScopeProvider provides methods that construct scopes
+type ScopeProvider interface {
+	GetResourceScope(resourceID string) string
+	GetResourceScopeUID(resourceID string) string
+	GetResourceScopeName(resourceID string) string
+	GetResourceAllScope() string
+	GetResourceAllIDScope() string
+}
+
+type scopeProviderImpl struct {
+	root string
+}
+
+// NewScopeProvider creates a new ScopeProvider that is configured with specific root scope
+func NewScopeProvider(root string) ScopeProvider {
+	return &scopeProviderImpl{
+		root: root,
+	}
+}
+
+// GetResourceScope returns scope that has the format "<rootScope>:id:<resourceID>"
+func (s scopeProviderImpl) GetResourceScope(resourceID string) string {
+	return GetResourceScope(s.root, resourceID)
+}
+
+// GetResourceScopeUID returns scope that has the format "<rootScope>:uid:<resourceID>"
+func (s scopeProviderImpl) GetResourceScopeUID(resourceID string) string {
+	return GetResourceScopeUID(s.root, resourceID)
+}
+
+// GetResourceScopeName returns scope that has the format "<rootScope>:name:<resourceID>"
+func (s scopeProviderImpl) GetResourceScopeName(resourceID string) string {
+	return GetResourceScopeName(s.root, resourceID)
+}
+
+// GetResourceAllScope returns scope that has the format "<rootScope>:*"
+func (s scopeProviderImpl) GetResourceAllScope() string {
+	return GetResourceAllScope(s.root)
+}
+
+// GetResourceAllIDScope returns scope that has the format "<rootScope>:id:*"
+func (s scopeProviderImpl) GetResourceAllIDScope() string {
+	return GetResourceAllIDScope(s.root)
+}
