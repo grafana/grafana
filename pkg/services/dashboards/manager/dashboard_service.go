@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,10 +22,10 @@ import (
 
 var (
 	provisionerPermissions = map[string][]string{
-		accesscontrol.ActionFoldersCreate:    {},
-		accesscontrol.ActionFoldersWrite:     {accesscontrol.ScopeFoldersAll},
-		accesscontrol.ActionDashboardsCreate: {accesscontrol.ScopeFoldersAll},
-		accesscontrol.ActionDashboardsWrite:  {accesscontrol.ScopeFoldersAll},
+		m.ActionFoldersCreate:                {},
+		m.ActionFoldersWrite:                 {m.ScopeFoldersAll},
+		accesscontrol.ActionDashboardsCreate: {m.ScopeFoldersAll},
+		accesscontrol.ActionDashboardsWrite:  {m.ScopeFoldersAll},
 	}
 )
 
