@@ -54,7 +54,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	)
 	folderService := dashboardservice.ProvideFolderService(
 		cfg, dashboardService, dashboardStore, nil,
-		features, permissionsServices,
+		features, permissionsServices, ac,
 	)
 
 	ng, err := ngalert.ProvideService(

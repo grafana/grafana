@@ -1,6 +1,12 @@
 package dashboards
 
-import "github.com/grafana/grafana/pkg/services/accesscontrol"
+import (
+	"context"
+	"strconv"
+	"strings"
+
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+)
 
 const (
 	ActionFoldersCreate           = "folders:create"
@@ -14,6 +20,26 @@ const (
 )
 
 var (
-	ScopeFoldersAll      = accesscontrol.GetResourceAllScope(ScopeFoldersRoot)
-	ScopeFoldersProvider = accesscontrol.NewScopeProvider(ScopeFoldersRoot)
+	ScopeFoldersAll      = ac.GetResourceAllScope(ScopeFoldersRoot)
+	ScopeFoldersProvider = ac.NewScopeProvider(ScopeFoldersRoot)
 )
+
+// NewNameScopeResolver provides an AttributeScopeResolver that is able to convert a scope prefixed with "folders:name:" into an id based scope.
+func NewNameScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
+	prefix := ScopeFoldersProvider.GetResourceScopeName("")
+	resolver := func(ctx context.Context, orgID int64, scope string) (string, error) {
+		if !strings.HasPrefix(scope, prefix) {
+			return "", ac.ErrInvalidScope
+		}
+		nsName := scope[len(prefix):]
+		if len(nsName) == 0 {
+			return "", ac.ErrInvalidScope
+		}
+		folder, err := db.GetFolderByTitle(orgID, nsName)
+		if err != nil {
+			return "", err
+		}
+		return ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(folder.Id, 10)), nil
+	}
+	return prefix, resolver
+}

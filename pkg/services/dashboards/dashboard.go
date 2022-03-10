@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-//go:generate mockery --name Store --structname FakeDashboardStore --output database --outpkg database --filename database_mock.go
+//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
 
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
