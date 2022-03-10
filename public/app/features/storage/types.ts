@@ -4,7 +4,7 @@ export interface RootStorageMeta {
   editable?: boolean;
   builtin?: boolean;
   ready: boolean;
-  notice?: QueryResultMetaNotice;
+  notice?: QueryResultMetaNotice[];
   config: RootStorageConfig;
 }
 

@@ -76,17 +76,17 @@ export default function StoragePage() {
         </div>
         {dashboards && (
           <div className={styles.border}>
-            <StorageList storage={dashboards} title="Dashboards" />
+            <StorageList storage={dashboards} type="dash" title="Dashboards" />
           </div>
         )}
-        {status.value?.datasources?.length && (
+        {/* {status.value?.datasources?.length && (
           <div className={styles.border}>
             <StorageList storage={status.value.datasources} title="Data sources" />
           </div>
-        )}
+        )} */}
         {resources && (
           <div className={styles.border}>
-            <StorageList storage={resources} title="Resources" />
+            <StorageList storage={resources} type="res" title="Resources" />
           </div>
         )}
       </Page.Contents>

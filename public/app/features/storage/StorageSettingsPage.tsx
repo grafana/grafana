@@ -1,24 +1,49 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Button, InlineField, Input, useStyles2 } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import { Alert, Button, InlineField, Input, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types';
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useHistory, useLocation, useParams, useRouteMatch } from 'react-router-dom';
+import { useAsync } from 'react-use';
 import { FileBrowser } from './FileBrowser';
 import { getIconName } from './StorageList';
+import { RootStorageMeta, StatusResponse } from './types';
 
 export default function StorageSettingsPage() {
-  // This should come from an ID selector
-  const selectedStorage = useSelector((state: StoreState) => state.storagePageReducers.selectedStorage);
-  const [browsePath, setBrowsePath] = useState(selectedStorage?.config.prefix); // TODO? in URL?
+  const { prefix, type } = useParams<{ prefix: string; type: 'dash' | 'res' }>();
+  const { search } = useLocation();
+  const { url } = useRouteMatch();
+  const history = useHistory();
+  const path = new URLSearchParams(search).get('path');
   const styles = useStyles2(getStyles);
+  const [selectedStorage, setSelectedStorage] = useState<RootStorageMeta>();
+  const status = useAsync(async () => {
+    return (await getBackendSrv().get('api/storage/status')) as StatusResponse; // observable?
+  }, []);
+
+  useEffect(() => {
+    if (prefix && type) {
+      if (type === 'dash' && status.value?.dashboards.length) {
+        const storage = status.value.dashboards.find((x) => x.config.prefix === prefix);
+        setSelectedStorage(storage);
+      }
+      if (type === 'res' && status.value?.resources.length) {
+        const storage = status.value.resources.find((x) => x.config.prefix === prefix);
+        setSelectedStorage(storage);
+      }
+    }
+  }, [type, prefix, status.value?.dashboards, status.value?.resources]);
+
+  if (status.loading) {
+    return null;
+  }
 
   if (!selectedStorage) {
     return (
       <div className={styles.noStorage}>
-        <h3>No storage selected</h3>
-        <Button variant="secondary" fill="solid" type="button" onClick={() => history.back()}>
+        <h3>No {type === 'dash' ? 'dashboard' : 'resource'} found</h3>
+        <Button variant="secondary" fill="solid" type="button" onClick={() => history.goBack()}>
           Back
         </Button>
       </div>
@@ -90,10 +115,22 @@ export default function StorageSettingsPage() {
             </InlineField>
           </div>
         )}
-        <FileBrowser prefix="dash" path={browsePath!} onPathChange={setBrowsePath} />
+        <FileBrowser
+          prefix="dash"
+          path={path || selectedStorage.config.prefix}
+          onPathChange={(changedPath) => {
+            history.push(`${url}?path=${changedPath}`);
+          }}
+        />
+
+        {selectedStorage.notice?.length && (
+          <div className="gf-form-group p-t-2">
+            <Alert severity={selectedStorage.notice[0].severity} title={selectedStorage.notice[0].text} />
+          </div>
+        )}
 
         <div className="gf-form-button-row">
-          <Button variant="secondary" fill="solid" type="button" onClick={() => history.back()}>
+          <Button variant="secondary" fill="solid" type="button" onClick={() => history.goBack()}>
             Back
           </Button>
           <Button type="button" variant="destructive" onClick={() => console.log('delete')}>

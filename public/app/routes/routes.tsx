@@ -208,7 +208,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/org/storage/edit',
+      path: '/org/storage/:type(dash|res)/:prefix',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StorageSettingsPage"*/ 'app/features/storage/StorageSettingsPage')
       ),

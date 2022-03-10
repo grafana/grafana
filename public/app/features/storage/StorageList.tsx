@@ -3,33 +3,23 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { uniqueId } from 'lodash';
 import React from 'react';
-import { useDispatch } from 'react-redux';
 import { RootStorageMeta } from './types';
-import { setSelectedStorage } from './storageSlice';
-import { useHistory } from 'react-router-dom';
 
 interface Props {
   storage: RootStorageMeta[];
   title: string;
+  type: 'dash' | 'res';
 }
 
-export function StorageList({ storage, title }: Props) {
+export function StorageList({ storage, title, type }: Props) {
   const styles = useStyles2(getStyles);
-  const history = useHistory();
-  const dispatch = useDispatch();
 
   return (
     <>
       <h4 className={styles.secondaryTextColor}>{title}</h4>
       {storage.map((s) => {
         return (
-          <Card
-            key={uniqueId()}
-            onClick={() => {
-              dispatch(setSelectedStorage(s));
-              history.push(`/org/storage/edit`);
-            }}
-          >
+          <Card key={uniqueId()} href={`/org/storage/${type}/${s.config.prefix}?path=${s.config.prefix}`}>
             <Card.Heading>
               {s.config.name}
               <Badge

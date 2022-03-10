@@ -120,7 +120,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
   const [showDiff, setShowDiff] = useState(false);
 
-  const [error, setError] = useState<Error>();
+  const [error, _setError] = useState<Error>();
   const [rsp, setRsp] = useState<WriteValueResponse>();
   const [saving, setSaving] = useState(false);
 
