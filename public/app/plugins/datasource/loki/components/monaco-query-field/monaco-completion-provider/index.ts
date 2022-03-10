@@ -4,6 +4,9 @@ import { getSituation } from './situation';
 import { getCompletions, DataProvider, CompletionType } from './completions';
 import { NeverCaseError } from './util';
 
+// from: monacoTypes.languages.CompletionItemInsertTextRule.InsertAsSnippet
+const INSERT_AS_SNIPPET_ENUM_VALUE = 4;
+
 export function getSuggestOptions(): monacoTypes.editor.ISuggestOptions {
   return {
     // monaco-editor sometimes provides suggestions automatically, i am not
@@ -37,8 +40,12 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
       return monaco.languages.CompletionItemKind.Enum;
     case 'LABEL_VALUE':
       return monaco.languages.CompletionItemKind.EnumMember;
-    case 'METRIC_NAME':
+    case 'PATTERN':
       return monaco.languages.CompletionItemKind.Constructor;
+    case 'PARSER':
+      return monaco.languages.CompletionItemKind.Class;
+    case 'LINE_FILTER':
+      return monaco.languages.CompletionItemKind.TypeParameter;
     default:
       throw new NeverCaseError(type);
   }
@@ -71,6 +78,7 @@ export function getCompletionProvider(
     const situation = getSituation(model.getValue(), offset);
     const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
     return completionsPromise.then((items) => {
+      console.log('completions', model.getValue(), offset, items);
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
@@ -79,6 +87,7 @@ export function getCompletionProvider(
         kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
         insertText: item.insertText,
+        insertTextRules: item.isSnippet ? INSERT_AS_SNIPPET_ENUM_VALUE : undefined,
         detail: item.detail,
         documentation: item.documentation,
         sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
@@ -95,7 +104,7 @@ export function getCompletionProvider(
   };
 
   return {
-    triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
+    triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"', '|'],
     provideCompletionItems,
   };
 }

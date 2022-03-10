@@ -27,24 +27,56 @@ function assertSituation(situation: string, expectedSituation: Situation | null)
 
 describe('situation', () => {
   it('handles things', () => {
-    assertSituation('^', {
-      type: 'EMPTY',
-    });
+    // assertSituation('^', {
+    //   type: 'EMPTY',
+    // });
 
-    assertSituation('count_over_time({level="info"}[10s]) / ^', {
+    assertSituation('s^', {
       type: 'AT_ROOT',
     });
 
-    assertSituation('count_over_time(^)', {
-      type: 'IN_FUNCTION',
+    assertSituation('{level="info"} ^', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: false,
+      labels: [{ name: 'level', value: 'info', op: '=' }],
     });
 
-    assertSituation('count_over_time({level="info"}[10s]) / count_over_time(^)', {
-      type: 'IN_FUNCTION',
+    // should not trigger AFTER_SELECTOR before the selector
+    assertSituation('^ {level="info"}', null);
+
+    // check for an error we had during the implementation
+    assertSituation('{level="info" ^', null);
+
+    assertSituation('{level="info"} | json ^', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: false,
+      labels: [{ name: 'level', value: 'info', op: '=' }],
     });
 
-    assertSituation('count_over_time({level="info"}[^])', {
-      type: 'IN_DURATION',
+    assertSituation('{level="info"} | json | ^', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: true,
+      labels: [{ name: 'level', value: 'info', op: '=' }],
+    });
+
+    assertSituation('count_over_time({level="info"}^[10s])', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: false,
+      labels: [{ name: 'level', value: 'info', op: '=' }],
+    });
+
+    // should not trigger AFTER_SELECTOR before the selector
+    assertSituation('count_over_time(^{level="info"}[10s])', null);
+
+    // should work even when the query is half-complete
+    assertSituation('count_over_time({level="info"}^)', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: false,
+      labels: [{ name: 'level', value: 'info', op: '=' }],
+    });
+
+    assertSituation('sum(^)', {
+      type: 'IN_AGGREGATION',
     });
   });
 

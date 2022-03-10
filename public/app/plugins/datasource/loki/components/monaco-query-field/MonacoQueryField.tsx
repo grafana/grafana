@@ -129,7 +129,9 @@ const MonacoQueryField = (props: Props) => {
 
           const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
 
-          const dataProvider = { getSeriesLabels, getHistory, getAllLabelNames, getLabelValues };
+          const getLogInfo = (selector: string) => lpRef.current.getLogInfo(selector);
+
+          const dataProvider = { getSeriesLabels, getHistory, getAllLabelNames, getLabelValues, getLogInfo };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
@@ -177,6 +179,12 @@ const MonacoQueryField = (props: Props) => {
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
             onRunQueryRef.current(editor.getValue());
+          });
+
+          editor.onDidFocusEditorText(() => {
+            if (editor.getValue().trim() === '') {
+              editor.trigger('', 'editor.action.triggerSuggest', {});
+            }
           });
         }}
       />

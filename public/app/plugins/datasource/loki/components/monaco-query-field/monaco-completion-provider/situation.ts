@@ -5,12 +5,16 @@ import { NeverCaseError } from './util';
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeTypeName =
   | '⚠' // this is used as error-name
+  | 'Expr'
   | 'Grouping'
   | 'Identifier'
+  | 'LogExpr'
   | 'LogRangeExpr'
   | 'LogQL'
   | 'Matcher'
   | 'Matchers'
+  | 'PipelineStage'
+  | 'PipelineExpr'
   | 'Range'
   | 'RangeAggregationExpr'
   | 'Selector'
@@ -95,16 +99,16 @@ export type Label = {
 
 export type Situation =
   | {
-      type: 'IN_FUNCTION';
+      type: 'EMPTY';
     }
   | {
       type: 'AT_ROOT';
     }
   | {
-      type: 'EMPTY';
+      type: 'IN_DURATION';
     }
   | {
-      type: 'IN_DURATION';
+      type: 'IN_AGGREGATION';
     }
   | {
       type: 'IN_GROUPING';
@@ -119,6 +123,11 @@ export type Situation =
       labelName: string;
       betweenQuotes: boolean;
       otherLabels: Label[];
+    }
+  | {
+      type: 'AFTER_SELECTOR';
+      afterPipe: boolean;
+      labels: Label[];
     };
 
 type Resolver = {
@@ -142,10 +151,6 @@ const RESOLVERS: Resolver[] = [
     fun: resolveTopLevel,
   },
   {
-    path: ['RangeAggregationExpr'],
-    fun: resolveInFunction,
-  },
-  {
     path: ['String', 'Matcher'],
     fun: resolveMatcher,
   },
@@ -154,12 +159,28 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLabelsForGrouping,
   },
   {
+    path: ['LogRangeExpr'],
+    fun: resolveLogRange,
+  },
+  {
     path: [ERROR_NODE_NAME, 'Matcher'],
     fun: resolveMatcher,
   },
   {
     path: [ERROR_NODE_NAME, 'Range'],
     fun: resolveDurations,
+  },
+  {
+    path: [ERROR_NODE_NAME, 'LogRangeExpr'],
+    fun: resolveLogRangeFromError,
+  },
+  {
+    path: [ERROR_NODE_NAME, 'VectorAggregationExpr'],
+    fun: () => ({ type: 'IN_AGGREGATION' }),
+  },
+  {
+    path: [ERROR_NODE_NAME, 'PipelineStage', 'PipelineExpr'],
+    fun: resolvePipeError,
   },
 ];
 
@@ -265,6 +286,32 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 //   return null;
 // }
 
+function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // for example `{level="info"} |`
+  const exprNode = walk(node, [
+    ['parent', 'PipelineStage'],
+    ['parent', 'PipelineExpr'],
+  ]);
+
+  if (exprNode === null) {
+    return null;
+  }
+
+  const { parent } = exprNode;
+
+  if (parent === null) {
+    return null;
+  }
+
+  const parentName = parent.type.name;
+
+  if (parentName === 'LogExpr' || parentName === 'LogRangeExpr') {
+    return resolveLogOrLogRange(parent, text, pos, true);
+  }
+
+  return null;
+}
+
 function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Situation | null {
   const aggrExpNode = walk(node, [['parent', 'VectorAggregationExpr']]);
   if (aggrExpNode === null) {
@@ -363,22 +410,72 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
-function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation {
-  return {
-    type: 'AT_ROOT',
-  };
-}
+function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // we try a couply specific paths here.
+  // `{x="y"}` situation, with the cursor at the end
 
-function resolveInFunction(node: SyntaxNode, text: string, pos: number): Situation {
-  return {
-    type: 'IN_FUNCTION',
-  };
+  const logExprNode = walk(node, [
+    ['lastChild', 'Expr'],
+    ['lastChild', 'LogExpr'],
+  ]);
+
+  if (logExprNode != null) {
+    return resolveLogOrLogRange(logExprNode, text, pos, false);
+  }
+
+  // `s` situation, with the cursor at the end.
+  // (basically, user enters a non-special characters as first
+  // character in query field)
+  const idNode = walk(node, [
+    ['firstChild', ERROR_NODE_NAME],
+    ['firstChild', 'Identifier'],
+  ]);
+
+  if (idNode != null) {
+    return {
+      type: 'AT_ROOT',
+    };
+  }
+
+  // no patterns match
+  return null;
 }
 
 function resolveDurations(node: SyntaxNode, text: string, pos: number): Situation {
   return {
     type: 'IN_DURATION',
   };
+}
+
+function resolveLogRange(node: SyntaxNode, text: string, pos: number): Situation | null {
+  return resolveLogOrLogRange(node, text, pos, false);
+}
+
+function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): Situation | null {
+  const parent = walk(node, [['parent', 'LogRangeExpr']]);
+  if (parent === null) {
+    return null;
+  }
+
+  return resolveLogOrLogRange(parent, text, pos, false);
+}
+
+function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, afterPipe: boolean): Situation | null {
+  // here the `node` is either a LogExpr or a LogRangeExpr
+  // we want to handle the case where we are next to a selector
+  const selectorNode = walk(node, [['firstChild', 'Selector']]);
+
+  // we check that the selector is before the cursor, not after it
+  if (selectorNode != null && selectorNode.to <= pos) {
+    const labels = getLabels(selectorNode, text);
+    return {
+      type: 'AFTER_SELECTOR',
+      afterPipe,
+      labels,
+    };
+  }
+
+  return null;
 }
 
 function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation | null {
@@ -415,7 +512,12 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
 // also, only go to places that are in the sub-tree of the node found
 // by default by lezer. problem is, `next()` will go upward too,
 // and we do not want to go higher than our node
-function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
+function getErrorNode(tree: Tree, text: string, cursorPos: number): SyntaxNode | null {
+  // sometimes the cursor is a couple spaces after the end of the expression.
+  // to account for this situation, we "move" the cursor position back,
+  // so that there are no spaces between the end-of-expression and the cursor
+  const trimRightTextLen = text.trimRight().length;
+  const pos = trimRightTextLen < cursorPos ? trimRightTextLen : cursorPos;
   const cur = tree.cursor(pos);
   while (true) {
     if (cur.from === pos && cur.to === pos) {
@@ -449,7 +551,7 @@ export function getSituation(text: string, pos: number): Situation | null {
   // also, if there are errors, the node lezer finds us,
   // might not be the best node.
   // so first we check if there is an error-node at the cursor-position
-  const maybeErrorNode = getErrorNode(tree, pos);
+  const maybeErrorNode = getErrorNode(tree, text, pos);
 
   const cur = maybeErrorNode != null ? maybeErrorNode.cursor : tree.cursor(pos);
   const currentNode = cur.node;

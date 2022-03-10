@@ -13,11 +13,24 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
 import { LokiQuery, LokiQueryType } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
+import {
+  dateTime,
+  AbsoluteTimeRange,
+  LanguageProvider,
+  HistoryItem,
+  AbstractQuery,
+  DataQueryRequest,
+  CoreApp,
+  DataFrame,
+  getParser,
+  LogsParsers,
+  FieldType,
+} from '@grafana/data';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
+import { lastValueFrom } from 'rxjs';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -64,6 +77,48 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
     ...item,
     documentation: hint,
   };
+}
+
+function extractLogInfo(frame: DataFrame): { extractedLabelKeys: string[]; hasLogfmt: boolean; hasJSON: boolean } {
+  const lineField = frame.fields.find((field) => field.type === FieldType.string);
+  if (lineField == null) {
+    return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
+  }
+
+  const texts: string[] = lineField.values.toArray();
+
+  let hasJSON = false;
+  let hasLogfmt = false;
+
+  const keys = new Set<string>();
+  texts.forEach((text) => {
+    const parser = getParser(text);
+    if (parser === LogsParsers.JSON) {
+      // FIXME: we javascript-parse here, we should call Loki probably
+      parser
+        .getFields(text)
+        .map((field) => parser.getLabelFromField(field))
+        .forEach((key) => {
+          keys.add(key);
+        });
+      hasJSON = true;
+    }
+    if (parser === LogsParsers.logfmt) {
+      // FIXME: we javascript-parse here, we should call Loki probably
+      parser
+        .getFields(text)
+        .map((field) => parser.getLabelFromField(field))
+        .forEach((key) => {
+          keys.add(key);
+        });
+      hasLogfmt = true;
+    }
+  });
+
+  const extractedLabelKeys = Array.from(keys);
+  extractedLabelKeys.sort();
+
+  return { extractedLabelKeys, hasLogfmt, hasJSON };
 }
 
 export default class LokiLanguageProvider extends LanguageProvider {
@@ -463,5 +518,39 @@ export default class LokiLanguageProvider extends LanguageProvider {
     }
 
     return labelValues ?? [];
+  }
+
+  async getLogInfo(selector: string): Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }> {
+    const request: DataQueryRequest<LokiQuery> = {
+      requestId: 'LOKI_LOG_INFO',
+      interval: '1s',
+      intervalMs: 1000,
+      range: this.datasource.getTimeRange(),
+      scopedVars: {},
+      timezone: 'UTC', // FIXME
+      app: CoreApp.Explore, // FIXME
+      startTime: 0, // FIXME
+      targets: [
+        {
+          refId: 'A',
+          expr: selector,
+          maxLines: 5, // FIXME
+        },
+      ],
+    };
+    return lastValueFrom(this.datasource.query(request)).then(
+      (response) => {
+        const frame: DataFrame | undefined = response.data[0];
+        if (frame == null) {
+          return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
+        }
+        return extractLogInfo(frame);
+      },
+      (error) => {
+        // TODO: better error handling
+        console.error(error);
+        return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
+      }
+    );
   }
 }

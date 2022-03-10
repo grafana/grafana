@@ -1,10 +1,18 @@
-import type { Situation, Label, LabelOperator } from './situation';
+import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
-import { FUNCTIONS } from '../../../syntax';
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../../language_utils';
+import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
+import { escapeLabelValueInExactSelector } from '../../../language_utils';
 
-export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
+export type CompletionType =
+  | 'HISTORY'
+  | 'FUNCTION'
+  | 'DURATION'
+  | 'LABEL_NAME'
+  | 'LABEL_VALUE'
+  | 'PATTERN'
+  | 'PARSER'
+  | 'LINE_FILTER';
 
 type Completion = {
   type: CompletionType;
@@ -13,6 +21,7 @@ type Completion = {
   detail?: string;
   documentation?: string;
   triggerOnInsert?: boolean;
+  isSnippet?: boolean;
 };
 
 export type DataProvider = {
@@ -20,12 +29,35 @@ export type DataProvider = {
   getAllLabelNames: () => Promise<string[]>;
   getLabelValues: (labelName: string) => Promise<string[]>;
   getSeriesLabels: (selector: string) => Promise<Record<string, string[]>>;
+  getLogInfo: (selector: string) => Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }>;
 };
 
-const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
+const LOG_COMPLETIONS: Completion[] = [
+  {
+    type: 'PATTERN',
+    label: '{}',
+    insertText: '{$0}',
+    isSnippet: true,
+    triggerOnInsert: true,
+  },
+];
+
+const AGGREGATION_COMPLETIONS: Completion[] = AGGREGATION_OPERATORS.map((f) => ({
   type: 'FUNCTION',
   label: f.label,
-  insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
+  insertText: `${f.insertText ?? ''}($0)`, // i don't know what to do when this is nullish. it should not be.
+  isSnippet: true,
+  triggerOnInsert: true,
+  detail: f.detail,
+  documentation: f.documentation,
+}));
+
+const FUNCTION_COMPLETIONS: Completion[] = RANGE_VEC_FUNCTIONS.map((f) => ({
+  type: 'FUNCTION',
+  label: f.label,
+  insertText: `${f.insertText ?? ''}({$0}[\\$__interval])`, // i don't know what to do when this is nullish. it should not be.
+  isSnippet: true,
+  triggerOnInsert: true,
   detail: f.detail,
   documentation: f.documentation,
 }));
@@ -46,36 +78,31 @@ const DURATION_COMPLETIONS: Completion[] = [
   insertText: text,
 }));
 
-async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
-  // NOTE: the typescript types are wrong. historyItem.query.expr can be undefined
-  const allHistory = await dataProvider.getHistory();
-  // FIXME: find a better history-limit
-  return allHistory.slice(0, 10).map((expr) => ({
-    type: 'HISTORY',
-    label: expr,
-    insertText: expr,
-  }));
-}
+const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
+  type: 'LINE_FILTER',
+  label: `${item} "something"`,
+  insertText: `${item} "$0"`,
+  isSnippet: true,
+}));
 
-function escapeLabelValueFunction(op: LabelOperator): (val: string) => string {
-  switch (op) {
-    case '!=':
-      return escapeLabelValueInExactSelector;
-    case '=':
-      return escapeLabelValueInExactSelector;
-    case '=~':
-      return escapeLabelValueInRegexSelector;
-    case '!~':
-      return escapeLabelValueInRegexSelector;
-    default:
-      throw new NeverCaseError(op);
-  }
+async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  // NOTE: we have this commented out currently, to make demonstrating autocomplete easier
+  return [];
+
+  // // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
+  // // NOTE: the typescript types are wrong. historyItem.query.expr can be undefined
+  // const allHistory = await dataProvider.getHistory();
+  // // FIXME: find a better history-limit
+  // return allHistory.slice(0, 2).map((expr) => ({
+  //   type: 'HISTORY',
+  //   label: expr,
+  //   insertText: expr,
+  // }));
 }
 
 function makeSelector(labels: Label[]): string {
   const allLabelTexts = labels.map(
-    (label) => `${label.name}${label.op}"${escapeLabelValueFunction(label.op)(label.value)}"`
+    (label) => `${label.name}${label.op}"${escapeLabelValueInExactSelector(label.value)}"`
   );
 
   return `{${allLabelTexts.join(',')}}`;
@@ -97,27 +124,42 @@ async function getLabelNames(otherLabels: Label[], dataProvider: DataProvider): 
 async function getLabelNamesForCompletions(
   suffix: string,
   triggerOnInsert: boolean,
+  addExtractedLabels: boolean,
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
   const labelNames = await getLabelNames(otherLabels, dataProvider);
-  return labelNames.map((text) => ({
+  const result: Completion[] = labelNames.map((text) => ({
     type: 'LABEL_NAME',
     label: text,
     insertText: `${text}${suffix}`,
     triggerOnInsert,
   }));
+
+  if (addExtractedLabels) {
+    const { extractedLabelKeys } = await dataProvider.getLogInfo(makeSelector(otherLabels));
+    extractedLabelKeys.forEach((key) => {
+      result.push({
+        type: 'LABEL_NAME',
+        label: `${key} (parsed)`,
+        insertText: `${key}${suffix}`,
+        triggerOnInsert,
+      });
+    });
+  }
+
+  return result;
 }
 
 async function getLabelNamesForSelectorCompletions(
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions('=', true, otherLabels, dataProvider);
+  return getLabelNamesForCompletions('=', true, false, otherLabels, dataProvider);
 }
 
-async function getLabelNamesForByCompletions(otherLabels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
-  return getLabelNamesForCompletions('', true, otherLabels, dataProvider);
+async function getInGroupingCompletions(otherLabels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
+  return getLabelNamesForCompletions('', false, true, otherLabels, dataProvider);
 }
 
 async function getLabelValues(labelName: string, otherLabels: Label[], dataProvider: DataProvider): Promise<string[]> {
@@ -129,6 +171,57 @@ async function getLabelValues(labelName: string, otherLabels: Label[], dataProvi
     const data = await dataProvider.getSeriesLabels(selector);
     return data[labelName] ?? [];
   }
+}
+
+async function getAfterSelectorCompletions(
+  labels: Label[],
+  afterPipe: boolean,
+  dataProvider: DataProvider
+): Promise<Completion[]> {
+  const result = await dataProvider.getLogInfo(makeSelector(labels));
+  const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
+  const completions: Completion[] = [];
+  const prefix = afterPipe ? '' : '| ';
+  if (result.hasJSON) {
+    allParsers.delete('json');
+    completions.push({
+      type: 'PARSER',
+      label: 'json (detected)',
+      insertText: `${prefix}json`,
+    });
+  }
+
+  if (result.hasLogfmt) {
+    allParsers.delete('logfmt');
+    completions.push({
+      type: 'DURATION',
+      label: 'logfmt (detected)',
+      insertText: `${prefix}logfmt`,
+    });
+  }
+
+  const remainingParsers = Array.from(allParsers).sort();
+  remainingParsers.forEach((parser) => {
+    completions.push({
+      type: 'PARSER',
+      label: parser,
+      insertText: `${prefix}${parser}`,
+    });
+  });
+
+  const unwrapCompletions: Completion[] = result.extractedLabelKeys.map((key) => ({
+    type: 'LINE_FILTER',
+    label: `unwrap ${key} (detected)`,
+    insertText: `${prefix}unwrap ${key}`,
+  }));
+
+  unwrapCompletions.push({
+    type: 'LINE_FILTER',
+    label: 'unwrap',
+    insertText: `${prefix}unwrap`,
+  });
+
+  return [...completions, ...LINE_FILTER_COMPLETIONS, ...unwrapCompletions];
 }
 
 async function getLabelValuesForMetricCompletions(
@@ -147,19 +240,18 @@ async function getLabelValuesForMetricCompletions(
 
 export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
   switch (situation.type) {
+    case 'AT_ROOT':
+      const historyCompletions = await getAllHistoryCompletions(dataProvider);
+      // FIXME: find a good amount of history-items
+      return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
-    case 'IN_FUNCTION':
-      return FUNCTION_COMPLETIONS;
-    case 'AT_ROOT': {
-      return FUNCTION_COMPLETIONS;
-    }
     case 'EMPTY': {
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...FUNCTION_COMPLETIONS];
+      return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
     }
     case 'IN_GROUPING':
-      return getLabelNamesForByCompletions(situation.otherLabels, dataProvider);
+      return getInGroupingCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
       return getLabelNamesForSelectorCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':
@@ -169,6 +261,10 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
         situation.otherLabels,
         dataProvider
       );
+    case 'AFTER_SELECTOR':
+      return getAfterSelectorCompletions(situation.labels, situation.afterPipe, dataProvider);
+    case 'IN_AGGREGATION':
+      return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     default:
       throw new NeverCaseError(situation);
   }
