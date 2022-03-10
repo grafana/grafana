@@ -522,14 +522,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
       (response) => {
         const frame: DataFrame | undefined = response.data[0];
         if (frame == null) {
-          return { labelKeys: [] };
+          return { labelKeys: [], hasJSON: false, hasLogfmt: false };
         }
         return extractLogInfo(frame);
       },
       (error) => {
         // TODO: better error handling
         console.error(error);
-        return { labelKeys: [] };
+        return { labelKeys: [], hasJSON: false, hasLogfmt: false };
       }
     );
   }
