@@ -69,6 +69,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 				Severity: data.NoticeSeverityError,
 				Text:     "Unable to find token environment variable: " + credentialsFilePath,
 			})
+			s.meta = meta
 			return s
 		}
 	}
@@ -82,6 +83,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 			Severity: data.NoticeSeverityError,
 			Text:     "Failed to initialize storage",
 		})
+		s.meta = meta
 		return s
 	}
 	client, err := gcp.NewHTTPClient(
@@ -94,6 +96,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 			Severity: data.NoticeSeverityError,
 			Text:     "Failed to initialize storage",
 		})
+		s.meta = meta
 		return s
 	}
 

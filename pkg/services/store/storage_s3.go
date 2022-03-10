@@ -66,6 +66,7 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 				Severity: data.NoticeSeverityError,
 				Text:     "Unable to find token environment variable: " + accessKey,
 			})
+			s.meta = meta
 			return s
 		}
 	}
@@ -79,6 +80,7 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 				Severity: data.NoticeSeverityError,
 				Text:     "Unable to find token environment variable: " + secretKey,
 			})
+			s.meta = meta
 			return s
 		}
 	}
@@ -92,6 +94,7 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 				Severity: data.NoticeSeverityError,
 				Text:     "Unable to find token environment variable: " + region,
 			})
+			s.meta = meta
 			return s
 		}
 	}
