@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -463,7 +462,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs := &HTTPServer{
 		RouteRegister:      routing.NewRouteRegister(),
 		Cfg:                setting.NewCfg(),
-		AccessControl:      acmock.New().WithDisabled(),
+		AccessControl:      accesscontrolmock.New().WithDisabled(),
 		Features:           featuremgmt.WithFeatures(),
 		searchUsersService: &searchusers.OSSService{},
 	}

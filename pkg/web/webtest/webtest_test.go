@@ -43,6 +43,7 @@ func TestServer(t *testing.T) {
 			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
+			require.NoError(t, resp.Body.Close())
 			require.NotNil(t, actualRequest)
 			require.Equal(t, "application/json", actualRequest.Header.Get("Content-Type"))
 		})
