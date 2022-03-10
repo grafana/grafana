@@ -97,7 +97,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
 	mContext.Map(mContext.Req)
 
-	traceID := tracing.TraceIDFromContext(mContext.Req.Context())
+	traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
 	if traceID != "" {
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}

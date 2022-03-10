@@ -52,7 +52,7 @@ func (ctx *ReqContext) IsApiRequest() bool {
 
 func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
-	traceID := tracing.TraceIDFromContext(ctx.Req.Context())
+	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 
 	if err != nil {
 		resp["traceID"] = traceID

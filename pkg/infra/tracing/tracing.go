@@ -53,12 +53,17 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	return ots, ots.initOpentelemetryTracer()
 }
 
-type traceIDKey struct{}
+type traceKey struct{}
+type traceValue struct {
+	ID        string
+	IsSampled bool
+}
 
-func TraceIDFromContext(c context.Context) string {
-	v := c.Value(traceIDKey{})
-	if s, ok := v.(string); ok {
-		return s
+func TraceIDFromContext(c context.Context, sampled bool) string {
+	v := c.Value(traceKey{})
+	// Return traceID if a) it is present and b) it is sampled when sampled param is true
+	if trace, ok := v.(traceValue); ok && (!sampled || trace.IsSampled) {
+		return trace.ID
 	}
 	return ""
 }
@@ -184,7 +189,7 @@ func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace
 	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
 	opentracingSpan := OpentracingSpan{span: span}
 	if sctx, ok := span.Context().(jaeger.SpanContext); ok {
-		ctx = context.WithValue(ctx, traceIDKey{}, sctx.TraceID().String())
+		ctx = context.WithValue(ctx, traceKey{}, traceValue{sctx.TraceID().String(), sctx.IsSampled()})
 	}
 	return ctx, opentracingSpan
 }

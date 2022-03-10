@@ -75,7 +75,7 @@ func (r *NormalResponse) ErrMessage() string {
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
 		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(),
-			"traceID", tracing.TraceIDFromContext(ctx.Req.Context()))
+			"traceID", tracing.TraceIDFromContext(ctx.Req.Context(), false))
 	}
 
 	header := ctx.Resp.Header()

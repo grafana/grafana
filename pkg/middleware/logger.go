@@ -58,7 +58,7 @@ func Logger(cfg *setting.Cfg) web.Handler {
 				"referer", req.Referer(),
 			}
 
-			traceID := tracing.TraceIDFromContext(ctx.Req.Context())
+			traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 			if traceID != "" {
 				logParams = append(logParams, "traceID", traceID)
 			}
