@@ -22,7 +22,7 @@ func TestSearch_SortedResults(t *testing.T) {
 	}
 	ms.ExpectedSignedInUser = &models.SignedInUser{IsGrafanaAdmin: true}
 
-	fstars := stars.NewStarsServiceFake()
+	fstars := stars.NewStarServiceFake()
 	fstars.ExpectedUserStars = map[int64]bool{10: true, 12: true}
 	svc := &SearchService{
 		sqlstore:    ms,

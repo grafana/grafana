@@ -14,19 +14,20 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	startest "github.com/grafana/grafana/pkg/services/star/startest"
+	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
-		dashboardStore := &database.FakeDashboardStore{}
-		starsFake := startest.NewStarsServiceFake()
+		dashboardStore := &dashboards.FakeDashboardStore{}
+		starFake := startest.NewStarServiceFake()
 		defer dashboardStore.AssertExpectations(t)
 
 		features := featuremgmt.WithFeatures()
@@ -37,7 +38,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			SQLStore: mockSQLStore,
 			Features: features,
 			dashboardService: dashboardservice.ProvideDashboardService(
-				settings, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), starsFake,
+				settings, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), starFake,
 			),
 		}
 

@@ -7,10 +7,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -29,16 +25,16 @@ var user = &models.SignedInUser{UserId: 1}
 
 func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
-		store := &database.FakeDashboardStore{}
-		starsFake := startest.NewStarsServiceFake()
+		store := &dashboards.FakeDashboardStore{}
+		starFake := startest.NewStarServiceFake()
 		defer store.AssertExpectations(t)
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 		permissionsServices := acmock.NewPermissionsServicesMock()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices, starFake)
 		ac := acmock.New()
 		service := ProvideFolderService(
-			cfg, &dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store, nil, starsFake)},
+			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
 			store, nil, features, permissionsServices, ac,
 		)
 

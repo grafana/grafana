@@ -1,40 +1,40 @@
-package stars
+package startest
 
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	starmodel "github.com/grafana/grafana/pkg/models"
 )
 
-type FakeStarsService struct {
-	ExpectedStars     *models.Star
+type FakeStarService struct {
+	ExpectedStars     *starmodel.Star
 	ExpectedError     error
 	ExpectedUserStars map[int64]bool
 }
 
-func NewStarsServiceFake() *FakeStarsService {
-	return &FakeStarsService{}
+func NewStarServiceFake() *FakeStarService {
+	return &FakeStarService{}
 }
 
-func (f *FakeStarsService) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error) {
+func (f *FakeStarService) IsStarredByUserCtx(ctx context.Context, query *starmodel.IsStarredByUserQuery) (bool, error) {
 	return true, f.ExpectedError
 }
 
-func (f *FakeStarsService) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
+func (f *FakeStarService) StarDashboard(ctx context.Context, cmd *starmodel.StarDashboardCommand) error {
 	return f.ExpectedError
 }
 
-func (f *FakeStarsService) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
+func (f *FakeStarService) UnstarDashboard(ctx context.Context, cmd *starmodel.UnstarDashboardCommand) error {
 	return f.ExpectedError
 }
 
-func (f *FakeStarsService) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) (map[int64]bool, error) {
+func (f *FakeStarService) GetUserStars(ctx context.Context, query *starmodel.GetUserStarsQuery) (map[int64]bool, error) {
 	return f.ExpectedUserStars, f.ExpectedError
 }
 
 type FakeStarStore struct {
-	ExpectedStars     *models.Star
-	ExpectedListStars []*models.Star
+	ExpectedStars     *starmodel.Star
+	ExpectedListStars []*starmodel.Star
 	ExpectedError     error
 }
 

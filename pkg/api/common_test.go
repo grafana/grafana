@@ -368,7 +368,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
 
-	starsFake := startest.NewStarsManagerFake()
+	starFake := startest.NewStarServiceFake()
 
 	routeRegister := routing.NewRouteRegister()
 
@@ -382,8 +382,8 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
-		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), nil, starsFake),
-		StarManager:        starsFake,
+		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), starFake),
+		StarManager:        starFake,
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
