@@ -210,16 +210,6 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 			}
 
 			attributes, err := c.bucket.Attributes(ctx, strings.ToLower(path))
-			if attributes.ContentType == "application/x-directory; charset=UTF-8" {
-				// S3 directory representation
-				continue
-			}
-
-			if attributes.ContentType == "text/plain" && obj.Key == folderPath && attributes.Size == 0 {
-				// GCS directory representation
-				continue
-			}
-
 			if err != nil {
 				if gcerrors.Code(err) == gcerrors.NotFound {
 					attributes, err = c.bucket.Attributes(ctx, path)
@@ -231,6 +221,16 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 					c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
 					return nil, err
 				}
+			}
+
+			if attributes.ContentType == "application/x-directory; charset=UTF-8" {
+				// S3 directory representation
+				continue
+			}
+
+			if attributes.ContentType == "text/plain" && obj.Key == folderPath && attributes.Size == 0 {
+				// GCS directory representation
+				continue
 			}
 
 			var originalPath string

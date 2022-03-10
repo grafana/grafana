@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"golang.org/x/sync/errgroup"
 )
 
 type nestedTree struct {
@@ -71,17 +72,25 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return nil, nil // not found (or not ready)
 	}
 
-	files, err := root.ListFiles(ctx, path, nil, nil)
-	if err != nil {
-		return nil, err
-	}
+	var files *filestorage.ListFilesResponse
+	var folders []filestorage.FileMetadata
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		f, err := root.ListFiles(ctx, path, nil, nil)
+		files = f
+		return err
+	})
+	g.Go(func() error {
+		f, err := root.ListFolders(ctx, path, &filestorage.ListOptions{Recursive: false})
+		for i := range f {
+			f[i].MimeType = "directory" // hack for now
+		}
+		folders = f
+		return err
+	})
 
-	folders, err := root.ListFolders(ctx, path, &filestorage.ListOptions{Recursive: false})
-	if err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
-	}
-	for i := range folders {
-		folders[i].MimeType = "directory" // hack for now
 	}
 
 	count := len(files.Files) + len(folders)

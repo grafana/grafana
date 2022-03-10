@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -99,10 +102,16 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				AccessToken: "$GITHUB_AUTH_TOKEN",
 			}),
 			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{
-				Bucket:    "grafana-plugin-resources",
-				Folder:    "sub/path/here",
-				SecretKey: "***",
-				AccessKey: "***",
+				Bucket:    "s3-dashbucket",
+				Folder:    "dashboards",
+				SecretKey: "$STORAGE_AWS_SECRET_KEY",
+				AccessKey: "$STORAGE_AWS_ACCESS_KEY",
+				Region:    "$STORAGE_AWS_REGION",
+			}),
+			newGCSstorage("gcs", "My dashboards in GCS", &StorageGCSConfig{
+				Bucket:          "git-the-things-gcs",
+				Folder:          "dashboards",
+				CredentialsFile: "$STORAGE_GCS_CREDENTIALS_FILE",
 			}),
 		},
 	}
@@ -252,17 +261,31 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 		return nil, fmt.Errorf("invalid path, do not include .json")
 	}
 
-	file, err := s.dash.GetFile(ctx, path+".json")
-	if err != nil {
+	var file *filestorage.File
+	var frame *data.Frame
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		f, err := s.dash.GetFile(ctx, path+".json")
+		file = f
+		return err
+	})
+	g.Go(func() error {
+		f, err := s.dash.ListFolder(ctx, path)
+		frame = f
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
+
 	if file == nil {
-		frame, err := s.dash.ListFolder(ctx, path)
 		if frame != nil {
 			return s.getFolderDashboard(path, frame)
 		}
 
-		return nil, err
+		return nil, errors.New("failed to load dashboard")
 	}
 
 	js, err := simplejson.NewJson(file.Contents)

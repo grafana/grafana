@@ -31,7 +31,7 @@ func newGithubHelper(ctx context.Context, uri string, token string) (*githubHelp
 	}
 
 	if token == "" {
-		return nil, fmt.Errorf("Unauthorized: No token present")
+		return nil, fmt.Errorf("unauthorized: No token present")
 	}
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
