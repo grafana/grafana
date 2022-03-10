@@ -58,7 +58,10 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 	}
 	ctx := context.Background()
 
-	creds, err := transport.Creds(ctx, option.WithCredentialsFile("/home/artur/.gcs/service-account.json"), option.WithScopes("https://www.googleapis.com/auth/devstorage.read_only"))
+	creds, err := transport.Creds(ctx,
+		option.WithCredentialsFile("/home/artur/.gcs/service-account.json"),
+		option.WithScopes("https://www.googleapis.com/auth/devstorage.read_only"),
+	)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage - failed to load creds", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
