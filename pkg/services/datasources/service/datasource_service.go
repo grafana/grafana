@@ -11,11 +11,13 @@ import (
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -96,14 +98,14 @@ type DataSourceRetriever interface {
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
 	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		dsNames := strings.Split(initialScope, ":")
-		if dsNames[0] != "datasources" || len(dsNames) != 3 {
+		if dsNames[0] != datasources.ScopeDatasourcesRoot || len(dsNames) != 3 {
 			return "", accesscontrol.ErrInvalidScope
 		}
 
 		dsName := dsNames[2]
 		// Special wildcard case
 		if dsName == "*" {
-			return accesscontrol.Scope("datasources", "id", "*"), nil
+			return datasources.ScopeDatasourcesProvider.GetResourceAllIDScope(), nil
 		}
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
@@ -111,10 +113,10 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", err
 		}
 
-		return accesscontrol.Scope("datasources", "id", fmt.Sprintf("%v", query.Result.Id)), nil
+		return datasources.ScopeDatasourcesProvider.GetResourceScope(fmt.Sprintf("%v", query.Result.Id)), nil
 	}
 
-	return "datasources:name:", dsNameResolver
+	return datasources.ScopeDatasourcesProvider.GetResourceScopeName(""), dsNameResolver
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
