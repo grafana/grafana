@@ -138,6 +138,12 @@ func TestService_NameScopeResolver(t *testing.T) {
 			want:    "",
 			wantErr: accesscontrol.ErrInvalidScope,
 		},
+		{
+			desc:    "empty name scope",
+			given:   "datasources:name:",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
 	}
 	prefix, resolver := NewNameScopeResolver(retriever)
 	require.Equal(t, "datasources:name:", prefix)
@@ -184,6 +190,12 @@ func TestService_UIDScopeResolver(t *testing.T) {
 		{
 			desc:    "malformed scope",
 			given:   "datasources:unknown",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+		{
+			desc:    "empty uid scope",
+			given:   "datasources:uid:",
 			want:    "",
 			wantErr: accesscontrol.ErrInvalidScope,
 		},

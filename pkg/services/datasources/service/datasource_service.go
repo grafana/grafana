@@ -104,6 +104,9 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 		}
 
 		dsName := initialScope[len(prefix):]
+		if dsName == "" {
+			return "", accesscontrol.ErrInvalidScope
+		}
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
@@ -126,6 +129,9 @@ func NewUidScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribut
 		}
 
 		dsUID := initialScope[len(prefix):]
+		if dsUID == "" {
+			return "", accesscontrol.ErrInvalidScope
+		}
 
 		query := models.GetDataSourceQuery{Uid: dsUID, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
