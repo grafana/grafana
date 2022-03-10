@@ -26,7 +26,7 @@ export const FileUpload: FC<Props> = ({
 }) => {
   const fileUploadRef = useRef<HTMLInputElement>(null);
   const theme = useTheme2();
-  const style = getStyles(theme, size);
+  const style = getStyles(theme);
   const [fileName, setFileName] = useState('');
 
   const onChange = useCallback(
@@ -42,20 +42,18 @@ export const FileUpload: FC<Props> = ({
 
   return (
     <>
-      <label className={className}>
-        <Button icon="upload" onClick={() => fileUploadRef.current?.click()}>
-          {children}
-        </Button>
-        <input
-          type="file"
-          id="fileUpload"
-          ref={fileUploadRef}
-          className={style.fileUpload}
-          onChange={onChange}
-          multiple={false}
-          accept={accept}
-        />
-      </label>
+      <Button icon="upload" size={size} onClick={() => fileUploadRef.current?.click()}>
+        {children}
+      </Button>
+      <input
+        type="file"
+        id="fileUpload"
+        ref={fileUploadRef}
+        className={style.fileUpload}
+        onChange={onChange}
+        multiple={false}
+        accept={accept}
+      />
       {fileName && (
         <span aria-label="File name" className={style.fileName}>
           {trimFileName(fileName)}
@@ -65,7 +63,7 @@ export const FileUpload: FC<Props> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, size: ComponentSize) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     fileUpload: css`
       display: none;
