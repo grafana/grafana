@@ -216,11 +216,15 @@ func (hs *HTTPServer) registerRoutes() {
 			// FGAC handled withing the storage engine
 			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
 				orgRoute.Get("/status", reqOrgAdmin, routing.Wrap(hs.StorageService.Status))
+				orgRoute.Get("/root/:key", reqOrgAdmin, routing.Wrap(hs.StorageService.HandleRootRequest))
+				orgRoute.Post("/root/:key", reqOrgAdmin, routing.Wrap(hs.StorageService.HandleRootRequest))
+				orgRoute.Post("/export", reqOrgAdmin, hs.StorageService.HandleExportSystem)
+
+				// Paths to individual objects
 				orgRoute.Get("/path/", routing.Wrap(hs.StorageService.Browse))
 				orgRoute.Get("/path/*", routing.Wrap(hs.StorageService.Browse))
 				orgRoute.Post("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Upsert))
 				orgRoute.Delete("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
-				orgRoute.Post("/export", reqOrgAdmin, hs.StorageService.HandleExportSystem)
 			})
 		}
 

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Badge, Button, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { uniqueId } from 'lodash';
 import React, { useCallback, useState } from 'react';
@@ -51,8 +52,15 @@ interface Props2 {
 function PullButton({ storage }: Props2) {
   const [pulling, setPulling] = useState(false);
   const onClick = useCallback(() => {
-    console.log('HERE', storage);
     setPulling(true);
+    getBackendSrv()
+      .post(`api/storage/root/${storage.config.prefix}?action=sync`, {})
+      .then((v) => {
+        console.log('GOT', v);
+      })
+      .finally(() => {
+        setPulling(false);
+      });
   }, [storage]);
 
   return (

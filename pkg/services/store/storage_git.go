@@ -319,3 +319,14 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 		Message: "made commit",
 	}, nil
 }
+
+func (s *rootStorageGit) Sync() error {
+	grafanaStorageLogger.Info("GIT PULL", "remote", s.settings.Remote)
+	err := s.Pull()
+	if err != nil {
+		if err.Error() == "already up-to-date" {
+			return nil
+		}
+	}
+	return err
+}

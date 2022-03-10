@@ -124,3 +124,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 func (s *rootStorageGCS) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+
+func (s *rootStorageGCS) Sync() error {
+	return nil // already in sync
+}
