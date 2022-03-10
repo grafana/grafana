@@ -215,6 +215,11 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 				continue
 			}
 
+			if attributes.ContentType == "text/plain" && obj.Key == folderPath && attributes.Size == 0 {
+				// GCS directory representation
+				continue
+			}
+
 			if err != nil {
 				if gcerrors.Code(err) == gcerrors.NotFound {
 					attributes, err = c.bucket.Attributes(ctx, path)
