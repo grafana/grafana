@@ -32,6 +32,9 @@ func NewNameScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
 			return "", ac.ErrInvalidScope
 		}
 		nsName := scope[len(prefix):]
+		if len(nsName) == 0 {
+			return "", ac.ErrInvalidScope
+		}
 		folder, err := db.GetFolderByTitle(orgID, nsName)
 		if err != nil {
 			return "", err

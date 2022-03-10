@@ -47,6 +47,13 @@ func TestNewNameScopeResolver(t *testing.T) {
 		_, err := resolver(context.Background(), rand.Int63(), "folders:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
+	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
+		dashboardStore := &FakeDashboardStore{}
+		_, resolver := NewNameScopeResolver(dashboardStore)
+
+		_, err := resolver(context.Background(), rand.Int63(), "folders:name:")
+		require.ErrorIs(t, err, ac.ErrInvalidScope)
+	})
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
