@@ -255,6 +255,7 @@ require (
 	cloud.google.com/go/kms v1.1.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang-migrate/migrate/v4 v4.7.0
+	github.com/google/go-github/v43 v43.0.0
 	gocloud.dev v0.24.0
 )
 

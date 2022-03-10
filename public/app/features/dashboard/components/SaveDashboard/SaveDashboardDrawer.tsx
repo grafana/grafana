@@ -31,7 +31,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 interface FormDTO {
   action?: string; //
   title?: string;
-  branch?: string;
   message?: string;
 
   saveTimerange?: boolean;
@@ -48,6 +47,16 @@ const selectOptions = [
     value: 'pr',
   },
 ];
+
+interface WriteValueResponse {
+  code: number;
+  message?: string;
+  url?: string;
+  hash?: string;
+  branch?: string;
+  pending?: boolean;
+  size?: number;
+}
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModalProps) => {
   const styles = useStyles2(getStyles);
@@ -111,17 +120,27 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
   const [showDiff, setShowDiff] = useState(false);
 
-  const [error, setError] = useState<Error>();
+  const [error, _setError] = useState<Error>();
+  const [rsp, setRsp] = useState<WriteValueResponse>();
   const [saving, setSaving] = useState(false);
 
   const doSave = async (dto: FormDTO) => {
     setSaving(true);
-    const rsp = await backendSrv.post(`/api/dashboards/path/${dashboard.uid}`, {
-      dashboard: data.clone,
+    const rsp = (await backendSrv.post(`/api/dashboards/path/${dashboard.uid}`, {
+      body: data.clone,
       message: dto.message ?? '',
-    });
-    console.log('SAVING!!!', rsp);
+      title: dto.title,
+      action: dto.action,
+    })) as WriteValueResponse;
+
+    // It is OK
+    if (rsp.code === 200 && !rsp.pending) {
+      onDismiss();
+    }
+
+    console.log('Results', rsp);
     setSaving(false);
+    setRsp(rsp);
   };
 
   const getActionName = () => {
@@ -159,7 +178,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
         >
           <CustomScrollbar autoHeightMin="100%">
             <TabContent>
-              {showDiff && (
+              {showDiff && !rsp && (
                 <>
                   {previous.loading && <Spinner />}
                   {data.diff && (
@@ -176,7 +195,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                   )}
                 </>
               )}
-              {!showDiff && (
+              {!showDiff && !rsp && (
                 <div>
                   <form onSubmit={handleSubmit(doSave)}>
                     <>
@@ -206,25 +225,20 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                         </Field>
                       )}
 
-                      {currentValue.action === 'branch' && (
-                        <>
-                          <Field label="Branch" invalid={!!errors.branch} error="invalid branch">
-                            <Input {...register('branch', {})} placeholder="main" />
-                          </Field>
-                        </>
-                      )}
-
                       {currentValue.action === 'pr' && (
                         <>
-                          <Field label="Title" invalid={!!errors.branch} error="invalid branch">
-                            <Input {...register('branch', {})} placeholder="Set title on pull request" />
+                          <Field label="Title" invalid={!!errors.title} error="Title is required">
+                            <Input
+                              {...register('title', { required: storage.isGit })}
+                              placeholder="Set title on pull request"
+                            />
                           </Field>
                         </>
                       )}
 
                       <Field label="Changelog" invalid={!!errors.message} error="Changelog is required">
                         <TextArea
-                          {...register('message', { required: true })}
+                          {...register('message', { required: storage.isGit })}
                           rows={5}
                           placeholder="Add a note to describe your changes."
                         />
@@ -243,6 +257,16 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                       )}
                     </>
                   </form>
+                </div>
+              )}
+              {rsp && (
+                <div>
+                  <pre>{JSON.stringify(rsp, null, 2)}</pre>
+                  {rsp.url && (
+                    <div>
+                      <a href={rsp.url}>rsp.url</a>
+                    </div>
+                  )}
                 </div>
               )}
             </TabContent>
