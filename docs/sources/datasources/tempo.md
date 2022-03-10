@@ -69,14 +69,14 @@ Tempo search is an experimental feature behind a feature toggle. Use this to sea
 
 #### Search recent traces
 
-Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data, and this search is disabled. Enable this search capability by setting the `tempoSearch` feature toggle. 
+Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data, and this search is disabled. Enable this search capability by setting the `tempoSearch` feature toggle.
 
 You must also configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
 
 #### Search backend datastore
 
 Tempo includes the ability to search the entire backend datastore. You can enable this capability by setting the `tempoSearch` and `tempoBackendSearch` feature toggles.
-		
+
 You must also configure your Tempo data source to use this feature.Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
 
 ### Loki search
