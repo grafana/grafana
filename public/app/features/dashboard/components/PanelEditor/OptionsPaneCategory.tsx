@@ -108,9 +108,8 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
             aria-controls={id}
             id={`button-${id}`}
             className={cx(styles.toggle, 'editor-options-group-toggle')}
-          >
-            <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
-          </Button>
+            icon={isExpanded ? 'angle-down' : 'angle-right'}
+          />
           <h6 className={styles.title}>{renderTitle(isExpanded)}</h6>
         </div>
         {isExpanded && (
