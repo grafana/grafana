@@ -69,9 +69,11 @@ export function OperationEditor({
 
     operationElements.push(
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
-        <label className={styles.paramName} htmlFor={getOperationParamId(index, paramIndex)}>
-          {paramDef.name}
-        </label>
+        {!paramDef.hideName && (
+          <label className={styles.paramName} htmlFor={getOperationParamId(index, paramIndex)}>
+            {paramDef.name}
+          </label>
+        )}
         <div className={styles.paramValue}>
           <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
             <Editor
