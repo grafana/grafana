@@ -204,14 +204,21 @@ func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Con
 
 type dashboardPluginServiceMock struct {
 	pluginDashboards map[string][]*models.Dashboard
+	args             []*models.GetDashboardsByPluginIdQuery
 }
 
-func (d dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 	query.Result = []*models.Dashboard{}
 
 	if dashboards, exists := d.pluginDashboards[query.PluginId]; exists {
 		query.Result = dashboards
 	}
+
+	if d.args == nil {
+		d.args = []*models.GetDashboardsByPluginIdQuery{}
+	}
+
+	d.args = append(d.args, query)
 
 	return nil
 }

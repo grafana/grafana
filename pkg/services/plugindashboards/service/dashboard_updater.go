@@ -9,25 +9,29 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
 func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
-	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service) *DashboardUpdater {
-	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService, pluginSettingsService)
+	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service,
+	dashboardPluginService dashboards.PluginService) *DashboardUpdater {
+	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService, pluginSettingsService, dashboardPluginService)
 	du.updateAppDashboards()
 	return du
 }
 
-func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
-	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service) *DashboardUpdater {
+func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
+	pluginDashboardService plugindashboards.Service, dashboardImportService dashboardimport.Service,
+	pluginSettingsService pluginsettings.Service, dashboardPluginService dashboards.PluginService) *DashboardUpdater {
 	s := &DashboardUpdater{
 		bus:                    bus,
 		pluginStore:            pluginStore,
 		pluginDashboardService: pluginDashboardService,
 		dashboardImportService: dashboardImportService,
 		pluginSettingsService:  pluginSettingsService,
+		dashboardPluginService: dashboardPluginService,
 		logger:                 log.New("plugindashboards"),
 	}
 	bus.AddEventListener(s.handlePluginStateChanged)
@@ -41,6 +45,7 @@ type DashboardUpdater struct {
 	pluginDashboardService plugindashboards.Service
 	dashboardImportService dashboardimport.Service
 	pluginSettingsService  pluginsettings.Service
+	dashboardPluginService dashboards.PluginService
 	logger                 log.Logger
 }
 
@@ -136,7 +141,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 		du.syncPluginDashboards(ctx, p, event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := du.bus.Dispatch(ctx, &query); err != nil {
+		if err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
 			return err
 		}
 

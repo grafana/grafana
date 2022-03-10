@@ -205,9 +205,9 @@ func TestDashboardUpdater(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				require.Len(t, ctx.getDashboardsByPluginIdQueryArgs, 1)
-				require.Equal(t, int64(2), ctx.getDashboardsByPluginIdQueryArgs[0].OrgId)
-				require.Equal(t, "test", ctx.getDashboardsByPluginIdQueryArgs[0].PluginId)
+				require.Len(t, ctx.dashboardPluginService.args, 1)
+				require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgId)
+				require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginId)
 				require.Empty(t, ctx.deleteDashboardArgs)
 			})
 	})
@@ -253,9 +253,9 @@ func TestDashboardUpdater(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, ctx.getDashboardsByPluginIdQueryArgs, 1)
-			require.Equal(t, int64(2), ctx.getDashboardsByPluginIdQueryArgs[0].OrgId)
-			require.Equal(t, "test", ctx.getDashboardsByPluginIdQueryArgs[0].PluginId)
+			require.Len(t, ctx.dashboardPluginService.args, 1)
+			require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgId)
+			require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginId)
 			require.Len(t, ctx.deleteDashboardArgs, 3)
 		})
 
@@ -427,31 +427,30 @@ type scenarioInput struct {
 }
 
 type scenarioContext struct {
-	t                                *testing.T
-	bus                              bus.Bus
-	pluginSettingsService            *pluginsSettingsServiceMock
-	pluginStore                      plugins.Store
-	pluginDashboardService           plugindashboards.Service
-	importDashboardService           dashboardimport.Service
-	importDashboardArgs              []*dashboardimport.ImportDashboardRequest
-	deleteDashboardArgs              []*models.DeleteDashboardCommand
-	getPluginSettingsByIdArgs        []*models.GetPluginSettingByIdQuery
-	updatePluginSettingVersionArgs   []*models.UpdatePluginSettingVersionCmd
-	getDashboardsByPluginIdQueryArgs []*models.GetDashboardsByPluginIdQuery
-	dashboardUpdater                 *DashboardUpdater
+	t                              *testing.T
+	bus                            bus.Bus
+	pluginSettingsService          *pluginsSettingsServiceMock
+	pluginStore                    plugins.Store
+	pluginDashboardService         plugindashboards.Service
+	importDashboardService         dashboardimport.Service
+	dashboardPluginService         *dashboardPluginServiceMock
+	importDashboardArgs            []*dashboardimport.ImportDashboardRequest
+	deleteDashboardArgs            []*models.DeleteDashboardCommand
+	getPluginSettingsByIdArgs      []*models.GetPluginSettingByIdQuery
+	updatePluginSettingVersionArgs []*models.UpdatePluginSettingVersionCmd
+	dashboardUpdater               *DashboardUpdater
 }
 
 func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenarioContext)) {
 	t.Helper()
 
 	sCtx := &scenarioContext{
-		t:                                t,
-		bus:                              bus.New(),
-		importDashboardArgs:              []*dashboardimport.ImportDashboardRequest{},
-		deleteDashboardArgs:              []*models.DeleteDashboardCommand{},
-		getPluginSettingsByIdArgs:        []*models.GetPluginSettingByIdQuery{},
-		updatePluginSettingVersionArgs:   []*models.UpdatePluginSettingVersionCmd{},
-		getDashboardsByPluginIdQueryArgs: []*models.GetDashboardsByPluginIdQuery{},
+		t:                              t,
+		bus:                            bus.New(),
+		importDashboardArgs:            []*dashboardimport.ImportDashboardRequest{},
+		deleteDashboardArgs:            []*models.DeleteDashboardCommand{},
+		getPluginSettingsByIdArgs:      []*models.GetPluginSettingByIdQuery{},
+		updatePluginSettingVersionArgs: []*models.UpdatePluginSettingVersionCmd{},
 	}
 
 	getPlugin := func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -470,6 +469,21 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 
 	sCtx.pluginStore = &pluginStoreMock{
 		pluginFunc: getPlugin,
+	}
+
+	pluginDashboards := map[string][]*models.Dashboard{}
+	for _, pluginDashboard := range input.pluginDashboards {
+		if _, exists := pluginDashboards[pluginDashboard.PluginId]; !exists {
+			pluginDashboards[pluginDashboard.PluginId] = []*models.Dashboard{}
+		}
+
+		pluginDashboards[pluginDashboard.PluginId] = append(pluginDashboards[pluginDashboard.PluginId], &models.Dashboard{
+			PluginId: pluginDashboard.PluginId,
+		})
+	}
+
+	sCtx.dashboardPluginService = &dashboardPluginServiceMock{
+		pluginDashboards: pluginDashboards,
 	}
 
 	listPluginDashboards := func(ctx context.Context, req *plugindashboards.ListPluginDashboardsRequest) (*plugindashboards.ListPluginDashboardsResponse, error) {
@@ -521,37 +535,14 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		return nil
 	})
 
-	sCtx.bus.AddHandler(func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-		sCtx.getDashboardsByPluginIdQueryArgs = append(sCtx.getDashboardsByPluginIdQueryArgs, query)
-		dashboards := []*models.Dashboard{}
-
-		var plugin *models.PluginSettingInfoDTO
-
-		for _, p := range input.storedPluginSettings {
-			if p.PluginId == query.PluginId {
-				plugin = p
-			}
-		}
-
-		if plugin == nil {
-			return nil
-		}
-
-		for _, d := range input.pluginDashboards {
-			if d.PluginId == plugin.PluginId {
-				dashboards = append(dashboards, &models.Dashboard{
-					Id:    d.DashboardId,
-					OrgId: plugin.OrgId,
-				})
-			}
-		}
-
-		query.Result = dashboards
-
-		return nil
-	})
-
-	sCtx.dashboardUpdater = newDashboardUpdater(sCtx.bus, sCtx.pluginStore, sCtx.pluginDashboardService, sCtx.importDashboardService, sCtx.pluginSettingsService)
+	sCtx.dashboardUpdater = newDashboardUpdater(
+		sCtx.bus,
+		sCtx.pluginStore,
+		sCtx.pluginDashboardService,
+		sCtx.importDashboardService,
+		sCtx.pluginSettingsService,
+		sCtx.dashboardPluginService,
+	)
 
 	t.Cleanup(bus.ClearBusHandlers)
 
