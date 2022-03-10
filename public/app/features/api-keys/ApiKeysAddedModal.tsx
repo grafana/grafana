@@ -1,6 +1,6 @@
 ﻿import React, { useCallback } from 'react';
 import { css } from '@emotion/css';
-import { Alert, Field, Modal, useStyles2, ClipboardButton } from '@grafana/ui';
+import { Alert, Field, Modal, useStyles2, Input, Icon, ClipboardButton } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { notifyApp } from '../../core/actions';
 import { dispatch } from '../../store/store';
@@ -21,13 +21,16 @@ export function ApiKeysAddedModal({ onDismiss, apiKey, rootPath }: Props): JSX.E
   return (
     <Modal title="API Key Created" onDismiss={onDismiss} onClickBackdrop={onDismiss} isOpen>
       <Field label="Key">
-        <span className={styles.label}>{apiKey}</span>
-      </Field>
-
-      <Field>
-        <ClipboardButton getText={getClipboardText} onClipboardCopy={onClipboardCopy} size="xs">
-          Copy to Clipboard
-        </ClipboardButton>
+        <Input
+          id="Key"
+          value={apiKey}
+          readOnly
+          addonAfter={
+            <ClipboardButton variant="primary" getText={getClipboardText} onClipboardCopy={onClipboardCopy}>
+              <Icon name="copy" /> Copy
+            </ClipboardButton>
+          }
+        />
       </Field>
       <Alert severity="info" title="You will only be able to view this key here once!">
         It is not stored in this form, so be sure to copy it now.
