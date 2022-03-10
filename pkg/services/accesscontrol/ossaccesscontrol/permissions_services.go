@@ -185,7 +185,7 @@ func provideDashboardService(
 			}
 			return query.Result.Id, nil
 		},
-		InheritedScopes: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
