@@ -180,6 +180,12 @@ const MonacoQueryField = (props: Props) => {
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
             onRunQueryRef.current(editor.getValue());
           });
+
+          editor.onDidFocusEditorText(() => {
+            if (editor.getValue().trim() === '') {
+              editor.trigger('', 'editor.action.triggerSuggest', {});
+            }
+          });
         }}
       />
     </div>
