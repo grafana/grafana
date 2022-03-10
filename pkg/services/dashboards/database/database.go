@@ -47,15 +47,15 @@ func (d *DashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard
 	return isParentFolderChanged, nil
 }
 
-func (d *DashboardStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
+func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error) {
 	if title == "" {
-		return nil, models.ErrDashboardIdentifierNotSet
+		return nil, models.ErrFolderTitleEmpty
 	}
 
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
