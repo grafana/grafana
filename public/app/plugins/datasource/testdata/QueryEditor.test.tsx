@@ -94,7 +94,7 @@ describe('Test Datasource Query Editor', () => {
         datasource: mockDatasource,
       },
     });
-    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!.firstChild!;
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     await userEvent.click(screen.getByText('Grafana API'));
     expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ datasource: mockDatasource }));

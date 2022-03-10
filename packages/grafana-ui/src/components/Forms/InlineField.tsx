@@ -54,7 +54,7 @@ export const InlineField: FC<Props> = ({
     <div className={cx(styles.container, className)} {...htmlProps}>
       {labelElement}
       <div className={styles.childContainer}>
-        <div className={styles.rowContainer}>{React.cloneElement(children, { invalid, disabled, loading })}</div>
+        {React.cloneElement(children, { invalid, disabled, loading })}
         {invalid && error && (
           <div className={cx(styles.fieldValidationWrapper)}>
             <FieldValidationMessage>{error}</FieldValidationMessage>
@@ -83,12 +83,6 @@ const getStyles = (theme: GrafanaTheme2, grow?: boolean) => {
     `,
     fieldValidationWrapper: css`
       margin-top: ${theme.spacing(0.5)};
-    `,
-    rowContainer: css`
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      flex: ${grow ? 1 : 0} 0 auto;
     `,
   };
 };
