@@ -42,31 +42,31 @@ func TestDashboardFileStore(t *testing.T) {
 			}
 		})
 
-		t.Run("GetPluginDashboardFileContent", func(t *testing.T) {
+		t.Run("GetPluginDashboardFileContents", func(t *testing.T) {
 			testCases := []struct {
 				name string
-				args *plugins.GetPluginDashboardFileContentArgs
+				args *plugins.GetPluginDashboardFileContentsArgs
 			}{
 				{
 					name: "nil args should return error",
 				},
 				{
 					name: "empty args.PluginID should return error",
-					args: &plugins.GetPluginDashboardFileContentArgs{},
+					args: &plugins.GetPluginDashboardFileContentsArgs{},
 				},
 				{
 					name: "args.PluginID with only space should return error",
-					args: &plugins.GetPluginDashboardFileContentArgs{PluginID: " "},
+					args: &plugins.GetPluginDashboardFileContentsArgs{PluginID: " "},
 				},
 				{
 					name: "empty args.FileReference should return error",
-					args: &plugins.GetPluginDashboardFileContentArgs{
+					args: &plugins.GetPluginDashboardFileContentsArgs{
 						PluginID: "pluginWithDashboards",
 					},
 				},
 				{
 					name: "args.FileReference with only space should return error",
-					args: &plugins.GetPluginDashboardFileContentArgs{
+					args: &plugins.GetPluginDashboardFileContentsArgs{
 						PluginID:      "pluginWithDashboard",
 						FileReference: " \t",
 					},
@@ -75,7 +75,7 @@ func TestDashboardFileStore(t *testing.T) {
 
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					res, err := m.GetPluginDashboardFileContent(context.Background(), tc.args)
+					res, err := m.GetPluginDashboardFileContents(context.Background(), tc.args)
 					assert.Error(t, err)
 					assert.Nil(t, res)
 				})
@@ -94,7 +94,7 @@ func TestDashboardFileStore(t *testing.T) {
 		})
 
 		t.Run("Should return file not found error when trying to get non-existing plugin dashboard file content", func(t *testing.T) {
-			res, err := m.GetPluginDashboardFileContent(context.Background(), &plugins.GetPluginDashboardFileContentArgs{
+			res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
 				PluginID:      "pluginWithoutDashboards",
 				FileReference: "dashboards/dash2.json",
 			})
@@ -136,7 +136,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return file not found error when trying to get non-existing plugin dashboard file content", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContent(context.Background(), &plugins.GetPluginDashboardFileContentArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/dash3.json",
 				})
@@ -146,7 +146,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return file content for dashboards/dash1.json", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContent(context.Background(), &plugins.GetPluginDashboardFileContentArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/dash1.json",
 				})
@@ -160,7 +160,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return file content for dashboards/dash2.json", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContent(context.Background(), &plugins.GetPluginDashboardFileContentArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/dash2.json",
 				})
@@ -174,7 +174,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return error when trying to read relative file", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContent(context.Background(), &plugins.GetPluginDashboardFileContentArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/../dash2.json",
 				})

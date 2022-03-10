@@ -83,14 +83,14 @@ type ListPluginDashboardFilesResult struct {
 	FileReferences []string
 }
 
-// GetPluginDashboardFileContentArgs get plugin dashboard file content argument model.
-type GetPluginDashboardFileContentArgs struct {
+// GetPluginDashboardFileContentsArgs get plugin dashboard file content argument model.
+type GetPluginDashboardFileContentsArgs struct {
 	PluginID      string
 	FileReference string
 }
 
-// GetPluginDashboardFileContentResult get plugin dashboard file content result model.
-type GetPluginDashboardFileContentResult struct {
+// GetPluginDashboardFileContentsResult get plugin dashboard file content result model.
+type GetPluginDashboardFileContentsResult struct {
 	Content io.ReadCloser
 }
 
@@ -99,6 +99,6 @@ type DashboardFileStore interface {
 	// ListPluginDashboardFiles lists plugin dashboard files.
 	ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error)
 
-	// GetPluginDashboardFileContent gets the referenced plugin dashboard file content.
-	GetPluginDashboardFileContent(ctx context.Context, args *GetPluginDashboardFileContentArgs) (*GetPluginDashboardFileContentResult, error)
+	// GetPluginDashboardFileContents gets the referenced plugin dashboard file content.
+	GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error)
 }

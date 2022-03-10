@@ -42,7 +42,7 @@ func (m *PluginManager) ListPluginDashboardFiles(ctx context.Context, args *plug
 	}, nil
 }
 
-func (m *PluginManager) GetPluginDashboardFileContent(ctx context.Context, args *plugins.GetPluginDashboardFileContentArgs) (*plugins.GetPluginDashboardFileContentResult, error) {
+func (m *PluginManager) GetPluginDashboardFileContents(ctx context.Context, args *plugins.GetPluginDashboardFileContentsArgs) (*plugins.GetPluginDashboardFileContentsResult, error) {
 	if args == nil {
 		return nil, fmt.Errorf("args cannot be nil")
 	}
@@ -84,7 +84,7 @@ func (m *PluginManager) GetPluginDashboardFileContent(ctx context.Context, args 
 		return nil, err
 	}
 
-	return &plugins.GetPluginDashboardFileContentResult{
+	return &plugins.GetPluginDashboardFileContentsResult{
 		Content: file,
 	}, nil
 }

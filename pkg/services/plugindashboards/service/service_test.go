@@ -187,11 +187,11 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 	return nil, plugins.NotFoundError{PluginID: args.PluginID}
 }
 
-func (m pluginDashboardStoreMock) GetPluginDashboardFileContent(ctx context.Context, args *plugins.GetPluginDashboardFileContentArgs) (*plugins.GetPluginDashboardFileContentResult, error) {
+func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Context, args *plugins.GetPluginDashboardFileContentsArgs) (*plugins.GetPluginDashboardFileContentsResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		if content, exists := dashboardFiles[args.FileReference]; exists {
 			r := bytes.NewReader(content)
-			return &plugins.GetPluginDashboardFileContentResult{
+			return &plugins.GetPluginDashboardFileContentsResult{
 				Content: io.NopCloser(r),
 			}, nil
 		}

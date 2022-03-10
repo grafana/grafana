@@ -106,11 +106,11 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 		return nil, fmt.Errorf("req cannot be nil")
 	}
 
-	args := &plugins.GetPluginDashboardFileContentArgs{
+	args := &plugins.GetPluginDashboardFileContentsArgs{
 		PluginID:      req.PluginID,
 		FileReference: req.Reference,
 	}
-	resp, err := s.pluginDashboardStore.GetPluginDashboardFileContent(ctx, args)
+	resp, err := s.pluginDashboardStore.GetPluginDashboardFileContents(ctx, args)
 	if err != nil {
 		return nil, err
 	}
