@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -30,7 +30,7 @@ type Service struct {
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
 	features           featuremgmt.FeatureToggles
-	permissionsService accesscontrol.PermissionsService
+	permissionsService ac.PermissionsService
 
 	ptc               proxyTransportCache
 	dsDecryptionCache secureJSONDecryptionCache
@@ -58,7 +58,7 @@ type cachedDecryptedJSON struct {
 
 func ProvideService(
 	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
-	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	ac ac.AccessControl, permissionsServices ac.PermissionsServices,
 ) *Service {
 	s := &Service{
 		Bus:            bus,
@@ -95,28 +95,24 @@ type DataSourceRetriever interface {
 
 // NewNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an id based scope.
-func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+func NewNameScopeResolver(db DataSourceRetriever) (string, ac.AttributeScopeResolveFunc) {
+	prefix := datasources.ScopeDatasourcesProvider.GetResourceScopeName("")
 	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
-		dsNames := strings.Split(initialScope, ":")
-		if dsNames[0] != datasources.ScopeDatasourcesRoot || len(dsNames) != 3 {
-			return "", accesscontrol.ErrInvalidScope
+		if !strings.HasPrefix(initialScope, prefix) {
+			return "", ac.ErrInvalidScope
 		}
 
-		dsName := dsNames[2]
-		// Special wildcard case
-		if dsName == "*" {
-			return datasources.ScopeDatasourcesProvider.GetResourceAllIDScope(), nil
-		}
+		dsName := initialScope[len(prefix):]
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return "", err
 		}
 
-		return datasources.ScopeDatasourcesProvider.GetResourceScope(fmt.Sprintf("%v", query.Result.Id)), nil
+		return datasources.ScopeDatasourcesProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
 	}
 
-	return datasources.ScopeDatasourcesProvider.GetResourceScopeName(""), dsNameResolver
+	return prefix, dsNameResolver
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
@@ -143,10 +139,10 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), accesscontrol.SetResourcePermissionCommand{
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), ac.SetResourcePermissionCommand{
 			BuiltinRole: "Viewer",
 			Permission:  "Query",
-		}, accesscontrol.SetResourcePermissionCommand{
+		}, ac.SetResourcePermissionCommand{
 			BuiltinRole: "Editor",
 			Permission:  "Query",
 		}); err != nil {
