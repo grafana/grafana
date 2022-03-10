@@ -3,11 +3,13 @@ package store
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"gocloud.dev/blob/gcsblob"
 	"gocloud.dev/gcp"
 	"google.golang.org/api/option"
 	"google.golang.org/api/transport"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	_ "gocloud.dev/blob/gcsblob"
@@ -58,12 +60,24 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 	}
 	ctx := context.Background()
 
+	credentialsFilePath := cfg.CredentialsFile
+	if strings.HasPrefix(credentialsFilePath, "$") {
+		credentialsFilePath = os.Getenv(credentialsFilePath[1:])
+		if credentialsFilePath == "" {
+			grafanaStorageLogger.Warn("error loading gcs storage - no credentials file path", "bucket", cfg.Bucket)
+			meta.Notice = append(meta.Notice, data.Notice{
+				Severity: data.NoticeSeverityError,
+				Text:     "Unable to find token environment variable: " + credentialsFilePath,
+			})
+			return s
+		}
+	}
 	creds, err := transport.Creds(ctx,
-		option.WithCredentialsFile("/home/artur/.gcs/service-account.json"),
+		option.WithCredentialsFile(credentialsFilePath),
 		option.WithScopes("https://www.googleapis.com/auth/devstorage.read_only"),
 	)
 	if err != nil {
-		grafanaStorageLogger.Warn("error loading storage - failed to load creds", "bucket", cfg.Bucket, "err", err)
+		grafanaStorageLogger.Warn("error loading gcs storage - failed to load creds", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Failed to initalize storage",
@@ -75,7 +89,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 		gcp.CredentialsTokenSource(creds))
 
 	if err != nil {
-		grafanaStorageLogger.Warn("error loading storage - failed to create http client", "bucket", cfg.Bucket, "err", err)
+		grafanaStorageLogger.Warn("error loading gcs storage - failed to create http client", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Failed to initalize storage",
@@ -84,9 +98,9 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 	}
 
 	grafanaStorageLogger.Info("Loading gcs bucket", "bucket", cfg.Bucket)
-	bucket, err := gcsblob.OpenBucket(context.Background(), client, strings.TrimPrefix(cfg.Bucket, "gs://"), nil)
+	bucket, err := gcsblob.OpenBucket(context.Background(), client, cfg.Bucket, nil)
 	if err != nil {
-		grafanaStorageLogger.Warn("error loading storage", "bucket", cfg.Bucket, "err", err)
+		grafanaStorageLogger.Warn("error loading gcs storage", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Failed to initalize storage",

@@ -41,15 +41,14 @@ type StorageS3Config struct {
 	// SECURE!!!
 	AccessKey string `json:"accessKey"`
 	SecretKey string `json:"secretKey"`
+	Region    string `json:"region"`
 }
 
 type StorageGCSConfig struct {
 	Bucket string `json:"bucket"`
 	Folder string `json:"folder"`
 
-	// SECURE!!!
-	AccessKey string `json:"accessKey"`
-	SecretKey string `json:"secretKey"`
+	CredentialsFile string `json:"credentialsFile"`
 }
 
 type StorageConfig struct {

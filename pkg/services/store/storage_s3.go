@@ -2,9 +2,16 @@ package store
 
 import (
 	"context"
+	"os"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"gocloud.dev/blob/s3blob"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"gocloud.dev/blob"
+	_ "gocloud.dev/blob/s3blob"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -51,8 +58,52 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 		})
 	}
 
-	grafanaStorageLogger.Info("Loading s3 bucket", "bucket", prefix)
-	bucket, err := blob.OpenBucket(context.Background(), cfg.Bucket)
+	accessKey := cfg.AccessKey
+	if strings.HasPrefix(accessKey, "$") {
+		accessKey = os.Getenv(accessKey[1:])
+		if accessKey == "" {
+			grafanaStorageLogger.Warn("error loading s3 storage - no access key", "bucket", cfg.Bucket)
+			meta.Notice = append(meta.Notice, data.Notice{
+				Severity: data.NoticeSeverityError,
+				Text:     "Unable to find token environment variable: " + accessKey,
+			})
+			return s
+		}
+	}
+
+	secretKey := cfg.SecretKey
+	if strings.HasPrefix(secretKey, "$") {
+		secretKey = os.Getenv(secretKey[1:])
+		if secretKey == "" {
+			grafanaStorageLogger.Warn("error loading s3 storage - no secret key", "bucket", cfg.Bucket)
+			meta.Notice = append(meta.Notice, data.Notice{
+				Severity: data.NoticeSeverityError,
+				Text:     "Unable to find token environment variable: " + secretKey,
+			})
+			return s
+		}
+	}
+
+	region := cfg.Region
+	if strings.HasPrefix(region, "$") {
+		region = os.Getenv(region[1:])
+		if region == "" {
+			grafanaStorageLogger.Warn("error loading s3 storage - no region", "bucket", cfg.Bucket)
+			meta.Notice = append(meta.Notice, data.Notice{
+				Severity: data.NoticeSeverityError,
+				Text:     "Unable to find token environment variable: " + region,
+			})
+			return s
+		}
+	}
+
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region:      aws.String(region),
+		Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
+	}))
+
+	grafanaStorageLogger.Info("Loading s3 bucket", "bucket", cfg.Bucket)
+	bucket, err := s3blob.OpenBucket(context.Background(), sess, cfg.Bucket, nil)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
