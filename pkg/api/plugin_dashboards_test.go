@@ -82,7 +82,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 		})
 
-		t.Run("When plugint exist should return 200 OK with expected payload", func(t *testing.T) {
+		t.Run("When plugin exists should return 200 OK with expected payload", func(t *testing.T) {
 			resp, err := sendGetPluginDashboardsRequestForSignedInUser(t, s, existingPluginID, user)
 			require.NoError(t, err)
 			require.Equal(t, http.StatusOK, resp.StatusCode)
