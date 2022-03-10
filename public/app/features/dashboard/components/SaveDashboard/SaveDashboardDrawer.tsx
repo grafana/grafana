@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import {
+  Alert,
   Button,
   Checkbox,
   CustomScrollbar,
@@ -16,6 +17,7 @@ import {
   TabsBar,
   TextArea,
   useStyles2,
+  VerticalGroup,
 } from '@grafana/ui';
 import { useForm, useWatch } from 'react-hook-form';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
@@ -115,6 +117,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       cloneJSON,
       diff,
       diffCount,
+      hasChanges: diffCount > 0,
     };
   }, [dashboard, previous.value, currentValue.saveTimerange, currentValue.saveVariables]);
 
@@ -171,7 +174,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
           subtitle={
             <TabsBar className={styles.tabsBar}>
               <Tab label={'Save'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-              <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+              {data.hasChanges && (
+                <Tab
+                  label={'Changes'}
+                  active={showDiff}
+                  onChangeTab={() => setShowDiff(true)}
+                  counter={data.diffCount}
+                />
+              )}
             </TabsBar>
           }
           expandable
@@ -181,7 +191,8 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
               {showDiff && !rsp && (
                 <>
                   {previous.loading && <Spinner />}
-                  {data.diff && (
+                  {!data.hasChanges && <div>No changes made to this dashboard</div>}
+                  {data.diff && data.hasChanges && (
                     <div>
                       <div className={styles.spacer}>
                         {Object.entries(data.diff).map(([key, diffs]) => (
@@ -244,28 +255,40 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                         />
                       </Field>
 
-                      {saving && <Spinner />}
-                      {!saving && (
-                        <HorizontalGroup>
-                          <Button type="submit" aria-label="Save dashboard button">
-                            {getActionName()}
-                          </Button>
-                          <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
-                            Cancel
-                          </Button>
-                        </HorizontalGroup>
-                      )}
+                      <HorizontalGroup>
+                        <Button
+                          type="submit"
+                          aria-label="Save dashboard button"
+                          disabled={!data.hasChanges}
+                          icon={saving ? 'fa fa-spinner' : undefined}
+                        >
+                          {saving ? '' : getActionName()}
+                        </Button>
+                        <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
+                          Cancel
+                        </Button>
+                      </HorizontalGroup>
+                      {!data.hasChanges && <div className={styles.nothing}>No changes to save</div>}
                     </>
                   </form>
                 </div>
               )}
               {rsp && (
                 <div>
-                  <pre>{JSON.stringify(rsp, null, 2)}</pre>
+                  {false && <pre>{JSON.stringify(rsp, null, 2)}</pre>}
                   {rsp.url && (
-                    <div>
-                      <a href={rsp.url}>rsp.url</a>
-                    </div>
+                    <>
+                      <Alert title={'Pull request created'} severity="success">
+                        <VerticalGroup>
+                          <a href={rsp.url}>{rsp.url}</a>
+                        </VerticalGroup>
+                      </Alert>
+                      <HorizontalGroup>
+                        <Button type="button" variant="secondary" onClick={onDismiss}>
+                          Close
+                        </Button>
+                      </HorizontalGroup>
+                    </>
                   )}
                 </div>
               )}
@@ -284,5 +307,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   spacer: css`
     margin-bottom: ${theme.v1.spacing.xl};
+  `,
+  nothing: css`
+    margin: ${theme.v1.spacing.sm};
+    color: ${theme.colors.secondary.shade};
   `,
 });

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { uniqueId } from 'lodash';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { RootStorageMeta } from './types';
 
 interface Props {
@@ -30,6 +30,11 @@ export function StorageList({ storage, title, type }: Props) {
             </Card.Heading>
             <Card.Meta>{s.config.prefix}</Card.Meta>
             <Card.Description>{getDescription(s)}</Card.Description>
+            {s.config.git && (
+              <Card.Tags>
+                <PullButton storage={s} />
+              </Card.Tags>
+            )}
             <Card.Figure>
               <Icon name={getIconName(s.config.type)} size="xxxl" className={styles.secondaryTextColor} />
             </Card.Figure>
@@ -39,6 +44,26 @@ export function StorageList({ storage, title, type }: Props) {
     </>
   );
 }
+interface Props2 {
+  storage: RootStorageMeta;
+}
+
+function PullButton({ storage }: Props2) {
+  const [pulling, setPulling] = useState(false);
+  const onClick = useCallback(() => {
+    console.log('HERE', storage);
+    setPulling(true);
+  }, [storage]);
+
+  return (
+    <>
+      <Button key="settings" variant="secondary" icon={pulling ? 'fa fa-spinner' : undefined} onClick={onClick}>
+        Pull
+      </Button>
+    </>
+  );
+}
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     secondaryTextColor: css`
