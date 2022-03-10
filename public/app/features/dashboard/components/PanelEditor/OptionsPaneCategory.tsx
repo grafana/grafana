@@ -1,7 +1,7 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
@@ -100,13 +100,25 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         aria-label={selectors.components.OptionsGroup.group(id)}
         ref={ref}
       >
-        <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
+        <Button
+          fill="text"
+          aria-expanded="true"
+          aria-controls={id}
+          id={`button-${id}`}
+          className={headerStyles}
+          onClick={onToggle}
+          aria-label={selectors.components.OptionsGroup.toggle(id)}
+        >
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
           </div>
           <h6 className={styles.title}>{renderTitle(isExpanded)}</h6>
-        </div>
-        {isExpanded && <div className={bodyStyles}>{children}</div>}
+        </Button>
+        {isExpanded && (
+          <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
+            {children}
+          </div>
+        )}
       </div>
     );
   }
