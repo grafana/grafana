@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,13 +28,16 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 		dashboardStore := &dashboards.FakeDashboardStore{}
 		defer dashboardStore.AssertExpectations(t)
 
+		features := featuremgmt.WithFeatures()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
 		hs := &HTTPServer{
-			Cfg:              settings,
-			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore, nil),
-			SQLStore:         mockSQLStore,
-			Features:         featuremgmt.WithFeatures(),
+			Cfg:      settings,
+			SQLStore: mockSQLStore,
+			Features: features,
+			dashboardService: dashboardservice.ProvideDashboardService(
+				settings, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			),
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
