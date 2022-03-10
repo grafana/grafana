@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"gocloud.dev/blob"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -47,6 +50,22 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 			Severity: data.NoticeSeverityError,
 			Text:     "not impemented yet...",
 		})
+	}
+
+	grafanaStorageLogger.Info("Loading s3 bucket", "bucket", prefix)
+	bucket, err := blob.OpenBucket(context.Background(), cfg.Bucket)
+	if err != nil {
+		grafanaStorageLogger.Warn("error loading storage", "bucket", cfg.Bucket, "err", err)
+		meta.Notice = append(meta.Notice, data.Notice{
+			Severity: data.NoticeSeverityError,
+			Text:     "Failed to initalize storage",
+		})
+	} else {
+		s.store = filestorage.NewCdkBlobStorage(
+			grafanaStorageLogger,
+			bucket, cfg.Folder+filestorage.Delimiter, nil)
+
+		meta.Ready = true // exists!
 	}
 
 	s.meta = meta
