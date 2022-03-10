@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.22'
-build_image = 'grafana/build-container:1.5.1'
+grabpl_version = 'v2.9.23'
+build_image = 'grafana/build-container:1.5.2'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
@@ -728,7 +728,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'cypress/included:9.5.0',
+        'image': 'cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97',
         'depends_on': [
             'grafana-server',
         ],
