@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,11 +25,11 @@ func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Respons
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
-		return response.Error(500, "Failed to get plugin dashboards", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get plugin dashboards", err)
 	}
 
-	return response.JSON(200, list.Items)
+	return response.JSON(http.StatusOK, list.Items)
 }
