@@ -102,7 +102,13 @@ export type Situation =
       type: 'EMPTY';
     }
   | {
+      type: 'AT_ROOT';
+    }
+  | {
       type: 'IN_DURATION';
+    }
+  | {
+      type: 'IN_AGGREGATION';
     }
   | {
       type: 'IN_GROUPING';
@@ -167,6 +173,10 @@ const RESOLVERS: Resolver[] = [
   {
     path: [ERROR_NODE_NAME, 'LogRangeExpr'],
     fun: resolveLogRangeFromError,
+  },
+  {
+    path: [ERROR_NODE_NAME, 'VectorAggregationExpr'],
+    fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
     path: [ERROR_NODE_NAME, 'PipelineStage', 'PipelineExpr'],
@@ -401,19 +411,34 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
 }
 
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // we try a specific path down from here, if it exists, then we are
-  // in a `{x="y"}` situation, with the cursor at the end
+  // we try a couply specific paths here.
+  // `{x="y"}` situation, with the cursor at the end
 
   const logExprNode = walk(node, [
     ['lastChild', 'Expr'],
     ['lastChild', 'LogExpr'],
   ]);
 
-  if (logExprNode === null) {
-    return null;
+  if (logExprNode != null) {
+    return resolveLogOrLogRange(logExprNode, text, pos, false);
   }
 
-  return resolveLogOrLogRange(logExprNode, text, pos, false);
+  // `s` situation, with the cursor at the end.
+  // (basically, user enters a non-special characters as first
+  // character in query field)
+  const idNode = walk(node, [
+    ['firstChild', ERROR_NODE_NAME],
+    ['firstChild', 'Identifier'],
+  ]);
+
+  if (idNode != null) {
+    return {
+      type: 'AT_ROOT',
+    };
+  }
+
+  // no patterns match
+  return null;
 }
 
 function resolveDurations(node: SyntaxNode, text: string, pos: number): Situation {

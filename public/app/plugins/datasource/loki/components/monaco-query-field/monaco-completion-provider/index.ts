@@ -40,8 +40,12 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
       return monaco.languages.CompletionItemKind.Enum;
     case 'LABEL_VALUE':
       return monaco.languages.CompletionItemKind.EnumMember;
-    case 'METRIC_NAME':
+    case 'PATTERN':
       return monaco.languages.CompletionItemKind.Constructor;
+    case 'PARSER':
+      return monaco.languages.CompletionItemKind.Class;
+    case 'LINE_FILTER':
+      return monaco.languages.CompletionItemKind.TypeParameter;
     default:
       throw new NeverCaseError(type);
   }
@@ -74,6 +78,7 @@ export function getCompletionProvider(
     const situation = getSituation(model.getValue(), offset);
     const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
     return completionsPromise.then((items) => {
+      console.log('completions', model.getValue(), offset, items);
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use

@@ -1,16 +1,21 @@
 import { Grammar } from 'prismjs';
 import { CompletionItem } from '@grafana/ui';
 
-const AGGREGATION_OPERATORS: CompletionItem[] = [
+export const AGGREGATION_OPERATORS: CompletionItem[] = [
   {
-    label: 'sum',
-    insertText: 'sum',
-    documentation: 'Calculate sum over dimensions',
+    label: 'avg',
+    insertText: 'avg',
+    documentation: 'Calculate the average over dimensions',
   },
   {
-    label: 'min',
-    insertText: 'min',
-    documentation: 'Select minimum over dimensions',
+    label: 'bottomk',
+    insertText: 'bottomk',
+    documentation: 'Smallest k elements by sample value',
+  },
+  {
+    label: 'count',
+    insertText: 'count',
+    documentation: 'Count number of elements in the vector',
   },
   {
     label: 'max',
@@ -18,9 +23,9 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
     documentation: 'Select maximum over dimensions',
   },
   {
-    label: 'avg',
-    insertText: 'avg',
-    documentation: 'Calculate the average over dimensions',
+    label: 'min',
+    insertText: 'min',
+    documentation: 'Select minimum over dimensions',
   },
   {
     label: 'stddev',
@@ -33,14 +38,9 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
     documentation: 'Calculate population standard variance over dimensions',
   },
   {
-    label: 'count',
-    insertText: 'count',
-    documentation: 'Count number of elements in the vector',
-  },
-  {
-    label: 'bottomk',
-    insertText: 'bottomk',
-    documentation: 'Smallest k elements by sample value',
+    label: 'sum',
+    insertText: 'sum',
+    documentation: 'Calculate sum over dimensions',
   },
   {
     label: 'topk',
@@ -103,50 +103,6 @@ export const RANGE_VEC_FUNCTIONS = [
     documentation: 'The average of all values in the specified interval. Only available in Loki 2.0+.',
   },
   {
-    insertText: 'min_over_time',
-    label: 'min_over_time',
-    detail: 'min_over_time(range-vector)',
-    documentation: 'The minimum of all values in the specified interval. Only available in Loki 2.0+.',
-  },
-  {
-    insertText: 'max_over_time',
-    label: 'max_over_time',
-    detail: 'max_over_time(range-vector)',
-    documentation: 'The maximum of all values in the specified interval. Only available in Loki 2.0+.',
-  },
-  {
-    insertText: 'sum_over_time',
-    label: 'sum_over_time',
-    detail: 'sum_over_time(range-vector)',
-    documentation: 'The sum of all values in the specified interval. Only available in Loki 2.0+.',
-  },
-  {
-    insertText: 'count_over_time',
-    label: 'count_over_time',
-    detail: 'count_over_time(range-vector)',
-    documentation: 'The count of all values in the specified interval.',
-  },
-  {
-    insertText: 'stdvar_over_time',
-    label: 'stdvar_over_time',
-    detail: 'stdvar_over_time(range-vector)',
-    documentation:
-      'The population standard variance of the values in the specified interval. Only available in Loki 2.0+.',
-  },
-  {
-    insertText: 'stddev_over_time',
-    label: 'stddev_over_time',
-    detail: 'stddev_over_time(range-vector)',
-    documentation:
-      'The population standard deviation of the values in the specified interval. Only available in Loki 2.0+.',
-  },
-  {
-    insertText: 'quantile_over_time',
-    label: 'quantile_over_time',
-    detail: 'quantile_over_time(scalar, range-vector)',
-    documentation: 'The φ-quantile (0 ≤ φ ≤ 1) of the values in the specified interval. Only available in Loki 2.0+.',
-  },
-  {
     insertText: 'bytes_over_time',
     label: 'bytes_over_time',
     detail: 'bytes_over_time(range-vector)',
@@ -159,10 +115,54 @@ export const RANGE_VEC_FUNCTIONS = [
     documentation: 'Calculates the number of bytes per second for each stream.',
   },
   {
+    insertText: 'count_over_time',
+    label: 'count_over_time',
+    detail: 'count_over_time(range-vector)',
+    documentation: 'The count of all values in the specified interval.',
+  },
+  {
+    insertText: 'max_over_time',
+    label: 'max_over_time',
+    detail: 'max_over_time(range-vector)',
+    documentation: 'The maximum of all values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
+    insertText: 'min_over_time',
+    label: 'min_over_time',
+    detail: 'min_over_time(range-vector)',
+    documentation: 'The minimum of all values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
+    insertText: 'quantile_over_time',
+    label: 'quantile_over_time',
+    detail: 'quantile_over_time(scalar, range-vector)',
+    documentation: 'The φ-quantile (0 ≤ φ ≤ 1) of the values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
     insertText: 'rate',
     label: 'rate',
     detail: 'rate(v range-vector)',
     documentation: 'Calculates the number of entries per second.',
+  },
+  {
+    insertText: 'stddev_over_time',
+    label: 'stddev_over_time',
+    detail: 'stddev_over_time(range-vector)',
+    documentation:
+      'The population standard deviation of the values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
+    insertText: 'stdvar_over_time',
+    label: 'stdvar_over_time',
+    detail: 'stdvar_over_time(range-vector)',
+    documentation:
+      'The population standard variance of the values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
+    insertText: 'sum_over_time',
+    label: 'sum_over_time',
+    detail: 'sum_over_time(range-vector)',
+    documentation: 'The sum of all values in the specified interval. Only available in Loki 2.0+.',
   },
 ];
 

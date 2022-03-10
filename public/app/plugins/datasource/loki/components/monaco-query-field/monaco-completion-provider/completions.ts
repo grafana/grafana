@@ -1,10 +1,18 @@
 import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
-import { FUNCTIONS } from '../../../syntax';
+import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 
-export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
+export type CompletionType =
+  | 'HISTORY'
+  | 'FUNCTION'
+  | 'DURATION'
+  | 'LABEL_NAME'
+  | 'LABEL_VALUE'
+  | 'PATTERN'
+  | 'PARSER'
+  | 'LINE_FILTER';
 
 type Completion = {
   type: CompletionType;
@@ -21,12 +29,12 @@ export type DataProvider = {
   getAllLabelNames: () => Promise<string[]>;
   getLabelValues: (labelName: string) => Promise<string[]>;
   getSeriesLabels: (selector: string) => Promise<Record<string, string[]>>;
-  getLogInfo: (selector: string) => Promise<{ labelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }>;
+  getLogInfo: (selector: string) => Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }>;
 };
 
 const LOG_COMPLETIONS: Completion[] = [
   {
-    type: 'DURATION',
+    type: 'PATTERN',
     label: '{}',
     insertText: '{$0}',
     isSnippet: true,
@@ -34,10 +42,22 @@ const LOG_COMPLETIONS: Completion[] = [
   },
 ];
 
-const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
+const AGGREGATION_COMPLETIONS: Completion[] = AGGREGATION_OPERATORS.map((f) => ({
   type: 'FUNCTION',
   label: f.label,
-  insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
+  insertText: `${f.insertText ?? ''}($0)`, // i don't know what to do when this is nullish. it should not be.
+  isSnippet: true,
+  triggerOnInsert: true,
+  detail: f.detail,
+  documentation: f.documentation,
+}));
+
+const FUNCTION_COMPLETIONS: Completion[] = RANGE_VEC_FUNCTIONS.map((f) => ({
+  type: 'FUNCTION',
+  label: f.label,
+  insertText: `${f.insertText ?? ''}({$0}[\\$__interval])`, // i don't know what to do when this is nullish. it should not be.
+  isSnippet: true,
+  triggerOnInsert: true,
   detail: f.detail,
   documentation: f.documentation,
 }));
@@ -58,16 +78,26 @@ const DURATION_COMPLETIONS: Completion[] = [
   insertText: text,
 }));
 
+const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
+  type: 'LINE_FILTER',
+  label: `${item} "something"`,
+  insertText: `${item} "$0"`,
+  isSnippet: true,
+}));
+
 async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
-  // NOTE: the typescript types are wrong. historyItem.query.expr can be undefined
-  const allHistory = await dataProvider.getHistory();
-  // FIXME: find a better history-limit
-  return allHistory.slice(0, 10).map((expr) => ({
-    type: 'HISTORY',
-    label: expr,
-    insertText: expr,
-  }));
+  // NOTE: we have this commented out currently, to make demonstrating autocomplete easier
+  return [];
+
+  // // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
+  // // NOTE: the typescript types are wrong. historyItem.query.expr can be undefined
+  // const allHistory = await dataProvider.getHistory();
+  // // FIXME: find a better history-limit
+  // return allHistory.slice(0, 2).map((expr) => ({
+  //   type: 'HISTORY',
+  //   label: expr,
+  //   insertText: expr,
+  // }));
 }
 
 function makeSelector(labels: Label[]): string {
@@ -94,27 +124,42 @@ async function getLabelNames(otherLabels: Label[], dataProvider: DataProvider): 
 async function getLabelNamesForCompletions(
   suffix: string,
   triggerOnInsert: boolean,
+  addExtractedLabels: boolean,
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
   const labelNames = await getLabelNames(otherLabels, dataProvider);
-  return labelNames.map((text) => ({
+  const result: Completion[] = labelNames.map((text) => ({
     type: 'LABEL_NAME',
     label: text,
     insertText: `${text}${suffix}`,
     triggerOnInsert,
   }));
+
+  if (addExtractedLabels) {
+    const { extractedLabelKeys } = await dataProvider.getLogInfo(makeSelector(otherLabels));
+    extractedLabelKeys.forEach((key) => {
+      result.push({
+        type: 'LABEL_NAME',
+        label: `${key} (extracted)`,
+        insertText: `${key}${suffix}`,
+        triggerOnInsert,
+      });
+    });
+  }
+
+  return result;
 }
 
 async function getLabelNamesForSelectorCompletions(
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions('=', true, otherLabels, dataProvider);
+  return getLabelNamesForCompletions('=', true, false, otherLabels, dataProvider);
 }
 
-async function getLabelNamesForByCompletions(otherLabels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
-  return getLabelNamesForCompletions('', true, otherLabels, dataProvider);
+async function getInGroupingCompletions(otherLabels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
+  return getLabelNamesForCompletions('', false, true, otherLabels, dataProvider);
 }
 
 async function getLabelValues(labelName: string, otherLabels: Label[], dataProvider: DataProvider): Promise<string[]> {
@@ -140,7 +185,7 @@ async function getAfterSelectorCompletions(
   if (result.hasJSON) {
     allParsers.delete('json');
     completions.push({
-      type: 'DURATION',
+      type: 'PARSER',
       label: 'json (detected)',
       insertText: `${prefix}json`,
     });
@@ -158,12 +203,25 @@ async function getAfterSelectorCompletions(
   const remainingParsers = Array.from(allParsers).sort();
   remainingParsers.forEach((parser) => {
     completions.push({
-      type: 'DURATION',
+      type: 'PARSER',
       label: parser,
       insertText: `${prefix}${parser}`,
     });
   });
-  return completions;
+
+  const unwrapCompletions: Completion[] = result.extractedLabelKeys.map((key) => ({
+    type: 'LINE_FILTER',
+    label: `unwrap ${key} (detected)`,
+    insertText: `${prefix}unwrap ${key}`,
+  }));
+
+  unwrapCompletions.push({
+    type: 'LINE_FILTER',
+    label: 'unwrap',
+    insertText: `${prefix}unwrap`,
+  });
+
+  return [...completions, ...LINE_FILTER_COMPLETIONS, ...unwrapCompletions];
 }
 
 async function getLabelValuesForMetricCompletions(
@@ -182,14 +240,18 @@ async function getLabelValuesForMetricCompletions(
 
 export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
   switch (situation.type) {
+    case 'AT_ROOT':
+      const historyCompletions = await getAllHistoryCompletions(dataProvider);
+      // FIXME: find a good amount of history-items
+      return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
     case 'EMPTY': {
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...LOG_COMPLETIONS, ...FUNCTION_COMPLETIONS];
+      return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
     }
     case 'IN_GROUPING':
-      return getLabelNamesForByCompletions(situation.otherLabels, dataProvider);
+      return getInGroupingCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
       return getLabelNamesForSelectorCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':
@@ -199,9 +261,10 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
         situation.otherLabels,
         dataProvider
       );
-
     case 'AFTER_SELECTOR':
       return getAfterSelectorCompletions(situation.labels, situation.afterPipe, dataProvider);
+    case 'IN_AGGREGATION':
+      return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     default:
       throw new NeverCaseError(situation);
   }

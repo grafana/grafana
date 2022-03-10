@@ -27,8 +27,12 @@ function assertSituation(situation: string, expectedSituation: Situation | null)
 
 describe('situation', () => {
   it('handles things', () => {
-    assertSituation('^', {
-      type: 'EMPTY',
+    // assertSituation('^', {
+    //   type: 'EMPTY',
+    // });
+
+    assertSituation('s^', {
+      type: 'AT_ROOT',
     });
 
     assertSituation('{level="info"} ^', {
@@ -69,6 +73,10 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
+    });
+
+    assertSituation('sum(^)', {
+      type: 'IN_AGGREGATION',
     });
   });
 
