@@ -121,7 +121,7 @@ func TestService_NameScopeResolver(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			desc:    "semicolon in name",
+			desc:    "colon in name",
 			given:   "datasources:name::",
 			want:    "datasources:id:4",
 			wantErr: nil,

@@ -83,6 +83,7 @@ func ProvideService(
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
+	ac.RegisterAttributeScopeResolver(NewUidScopeResolver(store))
 
 	return s
 }
