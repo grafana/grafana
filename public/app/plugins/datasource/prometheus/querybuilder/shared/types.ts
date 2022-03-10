@@ -58,8 +58,12 @@ export interface QueryBuilderOperationParamDef {
   name: string;
   type: string;
   options?: string[] | number[] | Array<SelectableValue<string>>;
+  hideName?: boolean;
   restParam?: boolean;
   optional?: boolean;
+  placeholder?: string;
+  description?: string;
+  minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
 }
 
