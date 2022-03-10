@@ -46,6 +46,25 @@ func addRootFolderToFilters(pathFilters *PathFilters, rootFolder string) *PathFi
 	return pathFilters
 }
 
+func copyPathFilters(p *PathFilters) *PathFilters {
+	var allowedPrefixes, allowedPaths, disallowedPrefixes, disallowedPaths []string
+
+	if p.disallowedPaths != nil {
+		disallowedPaths = append([]string{}, p.disallowedPaths...)
+	}
+	if p.disallowedPrefixes != nil {
+		disallowedPrefixes = append([]string{}, p.disallowedPrefixes...)
+	}
+	if p.allowedPaths != nil {
+		allowedPaths = append([]string{}, p.allowedPaths...)
+	}
+	if p.allowedPrefixes != nil {
+		allowedPrefixes = append([]string{}, p.allowedPrefixes...)
+	}
+
+	return NewPathFilters(allowedPrefixes, allowedPaths, disallowedPrefixes, disallowedPaths)
+}
+
 func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
 	if new.allowedPrefixes != nil {
 		if base.allowedPrefixes != nil {
@@ -283,7 +302,7 @@ func (b wrapper) listOptionsWithDefaults(options *ListOptions, folderQuery bool)
 		}
 	}
 
-	rootedFilters := addRootFolderToFilters(options.PathFilters, b.rootFolder)
+	rootedFilters := addRootFolderToFilters(copyPathFilters(options.PathFilters), b.rootFolder)
 	return &ListOptions{
 		Recursive:   options.Recursive,
 		PathFilters: addPathFilters(rootedFilters, b.pathFilters),

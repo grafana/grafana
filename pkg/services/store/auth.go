@@ -3,12 +3,12 @@ package store
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"strings"
 )
 
 var (
@@ -69,18 +69,7 @@ func createPathFilters(prefix string, action string, user *models.SignedInUser, 
 		}
 	}
 
-	fmt.Println()
-	fmt.Println()
-
 	filters := filestorage.NewPathFilters(allowedPrefixes, allowedPaths, disallowedPrefixes, disallowedPaths)
-	fmt.Println("allowedPrefixes")
-	fmt.Println(allowedPrefixes)
-	fmt.Println("allowedPaths")
-	fmt.Println(allowedPaths)
-	fmt.Println("disallowedPaths")
-	fmt.Println(disallowedPaths)
-	fmt.Println("disallowedPrefixes")
-	fmt.Println(disallowedPrefixes)
 	return filters, nil
 }
 
