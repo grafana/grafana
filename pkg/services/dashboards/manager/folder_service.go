@@ -31,7 +31,10 @@ type FolderServiceImpl struct {
 func ProvideFolderService(
 	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
 	searchService *search.SearchService, features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+	ac accesscontrol.AccessControl,
 ) *FolderServiceImpl {
+	ac.RegisterAttributeScopeResolver(dashboards.NewNameScopeResolver(dashboardStore))
+
 	return &FolderServiceImpl{
 		cfg:              cfg,
 		log:              log.New("folder-service"),

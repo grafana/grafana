@@ -139,22 +139,23 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 							s.github = nil
 						} else {
 							grafanaStorageLogger.Info("default branch", "branch", *ghrepo.DefaultBranch)
-
-							s.repo = repo
-							err = s.Pull()
-							if err != nil {
-								meta.Notice = append(meta.Notice, data.Notice{
-									Severity: data.NoticeSeverityError,
-									Text:     "unable to pull: " + err.Error(),
-								})
-							}
 						}
 					}
 				}
 			}
 		}
-
 		s.repo = repo
+
+		// Try pulling after init
+		if s.repo != nil {
+			err = s.Pull()
+			if err != nil {
+				meta.Notice = append(meta.Notice, data.Notice{
+					Severity: data.NoticeSeverityError,
+					Text:     "unable to pull: " + err.Error(),
+				})
+			}
+		}
 	}
 
 	s.meta = meta
@@ -182,6 +183,10 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 	if s.github == nil {
 		return nil, fmt.Errorf("github client not initialized")
 	}
+	// Write to the correct subfolder
+	if s.settings.Root != "" {
+		cmd.Path = s.settings.Root + "/" + cmd.Path
+	}
 
 	if cmd.Action == "pr" {
 		prcmd := makePRCommand{
@@ -199,11 +204,6 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 			res.Code = 500
 			res.Message = "unable to create branch"
 			return res, nil
-		}
-
-		// Write to the correct subfolder
-		if s.settings.Root != "" {
-			cmd.Path = s.settings.Root + "/" + cmd.Path
 		}
 
 		err = s.github.pushCommit(ctx, ref, cmd)

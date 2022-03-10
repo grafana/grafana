@@ -43,9 +43,8 @@ func TestImportDashboardAPI(t *testing.T) {
 			cmd := &dashboardimport.ImportDashboardRequest{}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
-			req.Header.Add("Content-Type", "application/json")
-			resp, err := s.Send(req)
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
@@ -58,12 +57,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
-			req.Header.Add("Content-Type", "application/json")
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
@@ -75,12 +73,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
-			req.Header.Add("Content-Type", "application/json")
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -93,12 +90,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
-			req.Header.Add("Content-Type", "application/json")
+			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -136,12 +132,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
-			req.Header.Add("Content-Type", "application/json")
+			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -165,12 +160,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
-			req.Header.Add("Content-Type", "application/json")
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusForbidden, resp.StatusCode)
