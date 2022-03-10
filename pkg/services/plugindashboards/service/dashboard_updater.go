@@ -16,22 +16,24 @@ import (
 
 func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
 	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service,
-	dashboardPluginService dashboards.PluginService) *DashboardUpdater {
-	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService, pluginSettingsService, dashboardPluginService)
+	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
+	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
+		pluginSettingsService, dashboardPluginService, dashboardService)
 	du.updateAppDashboards()
 	return du
 }
 
 func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
 	pluginDashboardService plugindashboards.Service, dashboardImportService dashboardimport.Service,
-	pluginSettingsService pluginsettings.Service, dashboardPluginService dashboards.PluginService) *DashboardUpdater {
+	pluginSettingsService pluginsettings.Service, dashboardPluginService dashboards.PluginService,
+	dashboardService dashboards.DashboardService) *DashboardUpdater {
 	s := &DashboardUpdater{
-		bus:                    bus,
 		pluginStore:            pluginStore,
 		pluginDashboardService: pluginDashboardService,
 		dashboardImportService: dashboardImportService,
 		pluginSettingsService:  pluginSettingsService,
 		dashboardPluginService: dashboardPluginService,
+		dashboardService:       dashboardService,
 		logger:                 log.New("plugindashboards"),
 	}
 	bus.AddEventListener(s.handlePluginStateChanged)
@@ -40,12 +42,12 @@ func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
 }
 
 type DashboardUpdater struct {
-	bus                    bus.Bus
 	pluginStore            plugins.Store
 	pluginDashboardService plugindashboards.Service
 	dashboardImportService dashboardimport.Service
 	pluginSettingsService  pluginsettings.Service
 	dashboardPluginService dashboards.PluginService
+	dashboardService       dashboards.DashboardService
 	logger                 log.Logger
 }
 
@@ -92,8 +94,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 		if dash.Removed {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", plugin.ID, "dashboard", dash.Slug)
 
-			deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dash.DashboardId}
-			if err := du.bus.Dispatch(ctx, &deleteCmd); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.DashboardId, orgID); err != nil {
 				du.logger.Error("Failed to auto update app dashboard", "pluginId", plugin.ID, "error", err)
 				return
 			}
@@ -147,8 +148,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 
 		for _, dash := range query.Result {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
-			deleteCmd := models.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
-			if err := du.bus.Dispatch(ctx, &deleteCmd); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.Id, dash.OrgId); err != nil {
 				return err
 			}
 		}
