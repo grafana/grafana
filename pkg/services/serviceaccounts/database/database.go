@@ -3,13 +3,15 @@ package database
 //nolint:goimports
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
@@ -26,19 +28,24 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceAccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
-	// create a new service account - "user" with empty permissions
-	generatedLogin := "Service-Account-" + uuid.New().String()
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+	generatedLogin := "sa-" + strings.ToLower(name)
+	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	cmd := models.CreateUserCommand{
 		Login:            generatedLogin,
-		Name:             sa.Name,
-		OrgId:            sa.OrgID,
+		OrgId:            orgID,
+		Name:             name,
 		IsServiceAccount: true,
 	}
+
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %v", err)
+		if errors.Is(err, models.ErrUserAlreadyExists) {
+			return nil, &ErrSAInvalidName{}
+		}
+		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
+
 	return &serviceaccounts.ServiceAccountDTO{
 		Id:     newuser.Id,
 		Name:   newuser.Name,
@@ -289,6 +296,85 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	})
 
 	return updatedUser, err
+}
+
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
+	serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
+
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
+
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
+
+		whereConditions = append(whereConditions, "org_user.org_id = ?")
+		whereParams = append(whereParams, query.OrgID)
+
+		whereConditions = append(whereConditions,
+			fmt.Sprintf("%s.is_service_account = %s",
+				s.sqlStore.Dialect.Quote("user"),
+				s.sqlStore.Dialect.BooleanStr(true)))
+
+		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", "serviceaccounts:read", query.User)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
+
+		if query.Query != "" {
+			queryWithWildcards := "%" + query.Query + "%"
+			whereConditions = append(whereConditions, "(email "+s.sqlStore.Dialect.LikeStr()+" ? OR name "+s.sqlStore.Dialect.LikeStr()+" ? OR login "+s.sqlStore.Dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
+
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
+
+		sess.Cols(
+			"org_user.user_id",
+			"org_user.org_id",
+			"org_user.role",
+			"user.email",
+			"user.name",
+			"user.login",
+			"user.last_seen_at",
+			"user.is_disabled",
+		)
+		sess.Asc("user.email", "user.login")
+		if err := sess.Find(&serviceAccounts); err != nil {
+			return err
+		}
+
+		// get total
+		serviceaccount := serviceaccounts.ServiceAccountDTO{}
+		countSess := dbSession.Table("org_user")
+		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
+
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+		count, err := countSess.Count(&serviceaccount)
+		if err != nil {
+			return err
+		}
+		query.Result.TotalCount = count
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccounts, nil
 }
 
 func contains(s []int64, e int64) bool {

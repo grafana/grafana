@@ -1,7 +1,8 @@
 import { parser } from 'lezer-promql';
-import { SyntaxNode } from '@lezer/common';
+import { SyntaxNode, TreeCursor } from '@lezer/common';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery } from './types';
+import { binaryScalarDefs } from './binaryScalarOperations';
 
 // Taken from template_srv, but copied so to not mess with the regex.index which is manipulated in the service
 /*
@@ -322,10 +323,10 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
   }
 }
 
-const operatorToOpName: Record<string, string> = {
-  '/': '__divide_by',
-  '*': '__multiply_by',
-};
+const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
+  acc[def.sign] = def.id;
+  return acc;
+}, {} as Record<string, string>);
 
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
@@ -338,6 +339,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
+  // TODO: we are skipping BinModifiers
   const right = node.lastChild!;
 
   const opName = operatorToOpName[op];
@@ -347,9 +349,40 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   if (leftNumber || rightNumber) {
     // Scalar case, just add operation.
-    const [num, query] = leftNumber ? [leftNumber, right] : [rightNumber, left];
-    visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, num), 10)] });
-    handleExpression(expr, query, context);
+    if (leftNumber) {
+      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+      //  if query starts with a number that isn't handled now.
+    } else {
+      handleExpression(expr, left, context);
+    }
+
+    if (rightNumber) {
+      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+      //  if query starts with a number that isn't handled now.
+      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, right), 10)] });
+    } else {
+      handleExpression(expr, right, context);
+    }
+    return;
+  }
+
+  const leftBinary = left.getChild('BinaryExpr');
+  const rightBinary = right.getChild('BinaryExpr');
+
+  if (leftBinary || rightBinary) {
+    // One of the sides is binary which means we don't really know if there is a query or just chained scalars. So
+    // we have to traverse a bit deeper to know
+    handleExpression(expr, left, context);
+
+    // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
+    // is a factor for a current binary operation. So we have to add it as an operation now.
+    const leftMostChild = getLeftMostChild(right);
+    if (leftMostChild?.name === 'NumberLiteral') {
+      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, leftMostChild), 10)] });
+    }
+    // If we added the first number literal as operation here we still can continue and handle the rest as the first
+    // number will be just skipped.
+    handleExpression(expr, right, context);
   } else {
     // Two queries case so we create a binary query.
     visQuery.binaryQueries = visQuery.binaryQueries || [];
@@ -377,7 +410,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
  * @param expr
  * @param node
  */
-function getString(expr: string, node: SyntaxNode | null) {
+function getString(expr: string, node: SyntaxNode | TreeCursor | null) {
   if (!node) {
     return '';
   }
@@ -405,6 +438,18 @@ function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
     child = cur.childAfter(pos);
   }
   return values;
+}
+
+function getLeftMostChild(cur: SyntaxNode): SyntaxNode | null {
+  let child = cur;
+  while (true) {
+    if (child.firstChild) {
+      child = child.firstChild;
+    } else {
+      break;
+    }
+  }
+  return child;
 }
 
 // Debugging function for convenience.

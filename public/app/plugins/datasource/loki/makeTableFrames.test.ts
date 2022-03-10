@@ -133,7 +133,7 @@ const outputMulti = [
   },
 ];
 
-describe('loki backendResultTransformer', () => {
+describe('loki makeTableFrames', () => {
   it('converts a single instant metric dataframe to table dataframe', () => {
     const result = makeTableFrames([frame1]);
     expect(result).toEqual(outputSingle);

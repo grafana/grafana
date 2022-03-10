@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 
 	"github.com/prometheus/common/model"
 
@@ -261,27 +262,48 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
 	// TODO add create rules authz logic
 
-	var changes *RuleChanges = nil
+	var groupChanges *changes = nil
 	err := srv.store.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		var err error
-		changes, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
+		groupChanges, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
 		if err != nil {
 			return err
 		}
 
-		// TODO add update/delete authz logic
-		err = srv.store.UpsertAlertRules(tranCtx, changes.Upsert)
-		if err != nil {
-			return fmt.Errorf("failed to add or update rules: %w", err)
+		if groupChanges.isEmpty() {
+			srv.log.Info("no changes detected in the request. Do nothing")
+			return nil
 		}
 
-		for _, rule := range changes.Delete {
+		if len(groupChanges.Update) > 0 || len(groupChanges.New) > 0 {
+			upsert := make([]store.UpsertRule, 0, len(groupChanges.Update)+len(groupChanges.New))
+			for _, update := range groupChanges.Update {
+				srv.log.Debug("updating rule", "uid", update.New.UID, "diff", update.Diff.String())
+				upsert = append(upsert, store.UpsertRule{
+					Existing: update.Existing,
+					New:      *update.New,
+				})
+			}
+			for _, rule := range groupChanges.New {
+				upsert = append(upsert, store.UpsertRule{
+					Existing: nil,
+					New:      *rule,
+				})
+			}
+			// TODO add update/delete authz logic
+			err = srv.store.UpsertAlertRules(tranCtx, upsert)
+			if err != nil {
+				return fmt.Errorf("failed to add or update rules: %w", err)
+			}
+		}
+
+		for _, rule := range groupChanges.Delete {
 			if err = srv.store.DeleteAlertRuleByUID(tranCtx, c.SignedInUser.OrgId, rule.UID); err != nil {
 				return fmt.Errorf("failed to delete rule %d with UID %s: %w", rule.ID, rule.UID, err)
 			}
 		}
 
-		if changes.newRules > 0 {
+		if len(groupChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
 				OrgId:  c.OrgId,
 				UserId: c.UserId,
@@ -307,21 +329,22 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	// TODO uncomment when rules that are not changed will be filter out from the upsert list.
-	// for _, rule := range changes.Upsert {
-	// 	if rule.Existing != nil {
-	// 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
-	// 			OrgID: c.SignedInUser.OrgId,
-	// 			UID:   rule.Existing.UID,
-	// 		})
-	// 	}
-	// }
+	for _, rule := range groupChanges.Update {
+		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   rule.Existing.UID,
+		})
+	}
 
-	for _, rule := range changes.Delete {
+	for _, rule := range groupChanges.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.UID,
 		})
+	}
+
+	if groupChanges.isEmpty() {
+		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
@@ -364,15 +387,25 @@ func toNamespaceErrorResponse(err error) response.Response {
 	return apierrors.ToFolderErrorResponse(err)
 }
 
-type RuleChanges struct {
-	newRules int
-	Upsert   []store.UpsertRule
-	Delete   []*ngmodels.AlertRule
+type ruleUpdate struct {
+	Existing *ngmodels.AlertRule
+	New      *ngmodels.AlertRule
+	Diff     cmputil.DiffReport
+}
+
+type changes struct {
+	New    []*ngmodels.AlertRule
+	Update []ruleUpdate
+	Delete []*ngmodels.AlertRule
+}
+
+func (c *changes) isEmpty() bool {
+	return len(c.Update)+len(c.New)+len(c.Delete) == 0
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
-func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*RuleChanges, error) {
+func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*changes, error) {
 	q := &ngmodels.ListRuleGroupAlertRulesQuery{
 		OrgID:        orgId,
 		NamespaceUID: namespace.Uid,
@@ -388,9 +421,8 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		existingGroupRulesUIDs[r.UID] = r
 	}
 
-	upsert := make([]store.UpsertRule, 0, len(submittedRules))
-	toDelete := make([]*ngmodels.AlertRule, 0, len(submittedRules))
-	newRules := 0
+	var toAdd, toDelete []*ngmodels.AlertRule
+	var toUpdate []ruleUpdate
 	for _, r := range submittedRules {
 		var existing *ngmodels.AlertRule = nil
 
@@ -414,19 +446,21 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		}
 
 		if existing == nil {
-			upsert = append(upsert, store.UpsertRule{
-				Existing: nil,
-				New:      *r,
-			})
-			newRules++
+			toAdd = append(toAdd, r)
 			continue
 		}
 
 		ngmodels.PatchPartialAlertRule(existing, r)
-		// TODO diff between patched and existing, as well as between submitted
-		upsert = append(upsert, store.UpsertRule{
+
+		diff := existing.Diff(r, alertRuleFieldsToIgnoreInDiff...)
+		if len(diff) == 0 {
+			continue
+		}
+
+		toUpdate = append(toUpdate, ruleUpdate{
 			Existing: existing,
-			New:      *r,
+			New:      r,
+			Diff:     diff,
 		})
 		continue
 	}
@@ -435,9 +469,12 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		toDelete = append(toDelete, rule)
 	}
 
-	return &RuleChanges{
-		Upsert:   upsert,
-		Delete:   toDelete,
-		newRules: newRules,
+	return &changes{
+		New:    toAdd,
+		Delete: toDelete,
+		Update: toUpdate,
 	}, nil
 }
+
+// alertRuleFieldsToIgnoreInDiff contains fields that the AlertRule.Diff should ignore
+var alertRuleFieldsToIgnoreInDiff = []string{"ID", "Version", "Updated"}

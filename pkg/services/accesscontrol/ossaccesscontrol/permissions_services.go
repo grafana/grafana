@@ -10,19 +10,24 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*PermissionsServices, error) {
-	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
+func ProvidePermissionsServices(
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
+	ac accesscontrol.AccessControl, store resourcepermissions.Store,
+) (*PermissionsServices, error) {
+	teamPermissions, err := ProvideTeamPermissions(cfg, router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
-	folderPermissions, err := provideFolderService(router, sql, ac, store)
+	folderPermissions, err := provideFolderService(cfg, router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
-	dashboardPermissions, err := provideDashboardService(router, sql, ac, store)
+	dashboardPermissions, err := provideDashboardService(cfg, router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +77,10 @@ var (
 	}
 )
 
-func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+func ProvideTeamPermissions(
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
+	ac accesscontrol.AccessControl, store resourcepermissions.Store,
+) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
 		OnlyManaged: true,
@@ -126,17 +134,20 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		},
 	}
 
-	return resourcepermissions.New(options, router, ac, store, sql)
+	return resourcepermissions.New(options, cfg, router, ac, store, sql)
 }
 
 var DashboardViewActions = []string{accesscontrol.ActionDashboardsRead}
 var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
-var FolderViewActions = []string{accesscontrol.ActionFoldersRead}
-var FolderEditActions = append(FolderViewActions, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionDashboardsCreate}...)
-var FolderAdminActions = append(FolderEditActions, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
+var FolderViewActions = []string{dashboards.ActionFoldersRead}
+var FolderEditActions = append(FolderViewActions, []string{dashboards.ActionFoldersWrite, dashboards.ActionFoldersDelete, accesscontrol.ActionDashboardsCreate}...)
+var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
-func provideDashboardService(router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+func provideDashboardService(
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
+	accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store,
+) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource: "dashboards",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -180,10 +191,13 @@ func provideDashboardService(router routing.RouteRegister, sql *sqlstore.SQLStor
 		RoleGroup:      "Dashboards",
 	}
 
-	return resourcepermissions.New(options, router, accesscontrol, store, sql)
+	return resourcepermissions.New(options, cfg, router, accesscontrol, store, sql)
 }
 
-func provideFolderService(router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+func provideFolderService(
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
+	accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store,
+) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource: "folders",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -227,7 +241,7 @@ func provideFolderService(router routing.RouteRegister, sql *sqlstore.SQLStore, 
 		RoleGroup:      "Folders",
 	}
 
-	return resourcepermissions.New(options, router, accesscontrol, store, sql)
+	return resourcepermissions.New(options, cfg, router, accesscontrol, store, sql)
 }
 
 func provideEmptyPermissionsService() accesscontrol.PermissionsService {
