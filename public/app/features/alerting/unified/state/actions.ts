@@ -15,6 +15,7 @@ import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
+  PromRulerMode,
   RuleIdentifier,
   RuleNamespace,
   RuleWithLocation,
@@ -43,7 +44,7 @@ import {
   fetchExternalAlertmanagers,
   fetchExternalAlertmanagerConfig,
 } from '../api/alertmanager';
-import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
+import { fetchBuildInfo, FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
   deleteNamespace,
   deleteRulerRulesGroup,
@@ -56,6 +57,7 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import {
   getAllRulesSourceNames,
+  getRulesDataSources,
   getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
   isGrafanaRulesSource,
@@ -73,9 +75,10 @@ import {
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute, isFetchError } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
-import { isEmpty } from 'lodash';
+import { isEmpty, keyBy } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
+import { AlertingDataSourceJsonData } from '@grafana/data';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
@@ -167,9 +170,35 @@ export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkRe
   };
 }
 
+export const fetchPromBuildInfoAction = createAsyncThunk('unifiedalerting/fetchPromBuildinfo', async (_, thunkApi) => {
+  const dsBuildInfo = await Promise.all(
+    getRulesDataSources().map(async ({ name, jsonData }) => {
+      const buildInfo = await fetchBuildInfo(name);
+      const customRulerConfig = (jsonData as AlertingDataSourceJsonData).ruler;
+
+      return {
+        dataSource: name,
+        rulerMode: buildInfo.features.rulerConfigApp
+          ? Boolean(customRulerConfig?.url)
+            ? PromRulerMode.Custom
+            : PromRulerMode.Default
+          : PromRulerMode.NotSupported,
+      };
+    })
+  );
+
+  return keyBy(dsBuildInfo, (x) => x.dataSource);
+});
+
 export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { promRules, rulerRules } = getStore().unifiedAlerting;
+  return async (dispatch, getStore) => {
+    await dispatch(fetchPromBuildInfoAction());
+
+    const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
+
+    // const dsBuildInfo = await Promise.all(getAllRulesSourceNames().map(rulesSourceName => fetchBuildInfo(rulesSourceName)));
+    console.log(dataSources);
+
     getAllRulesSourceNames().map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {
         dispatch(fetchPromRulesAction({ rulesSourceName }));
@@ -182,7 +211,7 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
 }
 
 export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
-  return (dispatch, getStore) => {
+  return async (dispatch, getStore) => {
     const { promRules } = getStore().unifiedAlerting;
     getAllRulesSourceNames().map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {
