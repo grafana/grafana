@@ -55,7 +55,7 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 			grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
 			meta.Notice = append(meta.Notice, data.Notice{
 				Severity: data.NoticeSeverityError,
-				Text:     "Failed to initalize storage",
+				Text:     "Failed to initialize storage",
 			})
 		} else {
 			s.store = filestorage.NewCdkBlobStorage(grafanaStorageLogger,

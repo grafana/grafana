@@ -100,7 +100,7 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 				grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
 				meta.Notice = append(meta.Notice, data.Notice{
 					Severity: data.NoticeSeverityError,
-					Text:     "Failed to initalize storage",
+					Text:     "Failed to initialize storage",
 				})
 			} else {
 				s.store = filestorage.NewCdkBlobStorage(
@@ -180,7 +180,7 @@ func (s *rootStorageGit) Pull() error {
 
 func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
 	if s.github == nil {
-		return nil, fmt.Errorf("github client not initalized")
+		return nil, fmt.Errorf("github client not initialized")
 	}
 
 	if cmd.Action == "pr" {
@@ -265,7 +265,6 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 
 		res.Code = 200
 		return res, nil
-
 	}
 
 	rel := cmd.Path

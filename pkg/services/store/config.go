@@ -10,7 +10,7 @@ type RootStorageConfig struct {
 	Git  *StorageGitConfig       `json:"git,omitempty"`
 	SQL  *StorageSQLConfig       `json:"sql,omitempty"`
 	S3   *StorageS3Config        `json:"s3,omitempty"`
-	GCS  *StorageGCSConfig       `json:"s3,omitempty"`
+	GCS  *StorageGCSConfig       `json:"gcs,omitempty"`
 }
 
 type StorageLocalDiskConfig struct {

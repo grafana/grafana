@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"gocloud.dev/blob/gcsblob"
+
 	"gocloud.dev/gcp"
 	"google.golang.org/api/option"
 	"google.golang.org/api/transport"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	_ "gocloud.dev/blob/gcsblob"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -80,7 +80,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 		grafanaStorageLogger.Warn("error loading gcs storage - failed to load creds", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
-			Text:     "Failed to initalize storage",
+			Text:     "Failed to initialize storage",
 		})
 		return s
 	}
@@ -92,7 +92,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 		grafanaStorageLogger.Warn("error loading gcs storage - failed to create http client", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
-			Text:     "Failed to initalize storage",
+			Text:     "Failed to initialize storage",
 		})
 		return s
 	}
@@ -103,7 +103,7 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 		grafanaStorageLogger.Warn("error loading gcs storage", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
-			Text:     "Failed to initalize storage",
+			Text:     "Failed to initialize storage",
 		})
 	} else {
 		s.store = filestorage.NewCdkBlobStorage(
@@ -119,5 +119,5 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 }
 
 func (s *rootStorageGCS) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
-	return nil, fmt.Errorf("not implemented!!!")
+	return nil, fmt.Errorf("not implemented")
 }

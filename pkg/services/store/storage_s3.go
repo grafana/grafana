@@ -11,7 +11,6 @@ import (
 	"gocloud.dev/blob/s3blob"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	_ "gocloud.dev/blob/s3blob"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -108,7 +107,7 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 		grafanaStorageLogger.Warn("error loading storage", "bucket", cfg.Bucket, "err", err)
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
-			Text:     "Failed to initalize storage",
+			Text:     "Failed to initialize storage",
 		})
 	} else {
 		s.store = filestorage.NewCdkBlobStorage(
