@@ -74,10 +74,10 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 		repo, err := git.PlainOpen(dir)
 		if err == git.ErrRepositoryNotExists {
 			repo, err = git.PlainClone(dir, false, &git.CloneOptions{
-				URL:          cfg.Remote,
-				Progress:     os.Stdout,
-				Depth:        1,
-				SingleBranch: true,
+				URL:      cfg.Remote,
+				Progress: os.Stdout,
+				//Depth:    1,
+				//SingleBranch: true,
 			})
 		}
 
@@ -169,8 +169,8 @@ func (s *rootStorageGit) Pull() error {
 	}
 
 	err = w.Pull(&git.PullOptions{
-		Depth:        1,
-		SingleBranch: true,
+		// Depth: 1,
+		//SingleBranch: true,
 	})
 	if err != nil {
 		return err

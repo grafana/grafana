@@ -2,7 +2,9 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -12,6 +14,38 @@ import (
 )
 
 func TestGitStorage(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test_git_store_")
+	require.NoError(t, err)
+	fmt.Printf("REPO: %s\n", dir)
+
+	store := newGitStorage("it-A", "Github dashbboards A", dir, &StorageGitConfig{
+		Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
+		Branch:      "main",
+		Root:        "dashboards",
+		AccessToken: "$GITHUB_AUTH_TOKEN",
+	})
+	require.NotNil(t, store)
+	require.True(t, store.meta.Ready, "should be OK")
+
+	rsp, err := store.Write(context.Background(), &WriteValueRequest{
+		Path: "test.txt",
+		Body: json.RawMessage([]byte(fmt.Sprintf("hello from a test: %s", time.Now()))),
+		User: &models.SignedInUser{
+			Name: "ryan",
+		},
+		Title:   "TTT",
+		Message: "YYY",
+	})
+	require.NoError(t, err)
+	fmt.Printf("RSP: %s\n", rsp.URL)
+
+	//		err = store.Pull()
+	require.NoError(t, err)
+
+	t.Fail()
+}
+
+func TestGithubHelper(t *testing.T) {
 	ctx := context.Background()
 	token := os.Getenv("GITHUB_AUTH_TOKEN")
 
