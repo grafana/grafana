@@ -37,22 +37,28 @@ func TestNewNameScopeResolver(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, fmt.Sprintf("folders:id:%v", db.Id), resolvedScope)
+
+		dashboardStore.AssertCalled(t, "GetFolderByTitle", orgId, title)
 	})
-
-	t.Run("resolver should convert wildcard", func(t *testing.T) {
-		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewNameScopeResolver(dashboardStore)
-
-		resolvedScope, err := resolver(context.Background(), rand.Int63(), "folders:name:*")
-		require.NoError(t, err)
-		require.Equal(t, "folders:id:*", resolvedScope)
-	})
-
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 		_, resolver := NewNameScopeResolver(dashboardStore)
 
 		_, err := resolver(context.Background(), rand.Int63(), "folders:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
+	})
+	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
+		dashboardStore := &FakeDashboardStore{}
+
+		_, resolver := NewNameScopeResolver(dashboardStore)
+
+		orgId := rand.Int63()
+		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
+
+		scope := "folders:name:" + util.GenerateShortUID()
+
+		resolvedScope, err := resolver(context.Background(), orgId, scope)
+		require.ErrorIs(t, err, models.ErrDashboardNotFound)
+		require.Empty(t, resolvedScope)
 	})
 }
