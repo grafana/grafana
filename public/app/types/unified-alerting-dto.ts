@@ -23,6 +23,32 @@ export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
 }
+export enum PromApplication {
+  Cortex = 'cortex',
+  Prometheus = 'prometheus',
+}
+
+export interface PromBuildInfoResponse {
+  application?: string;
+  version: string;
+  revision: string;
+  features?: {
+    ruler_config_app?: 'true' | 'false';
+    alertmanager_config_api?: 'true' | 'false';
+    query_sharding?: 'true' | 'false';
+    federated_rules?: 'true' | 'false';
+  };
+}
+
+export interface PromBuildInfo {
+  application?: PromApplication;
+  features: {
+    rulerConfigApp: boolean;
+    alertManagerConfigApi: boolean;
+    querySharding: boolean;
+    federatedRules: boolean;
+  };
+}
 
 interface PromRuleDTOBase {
   health: string;

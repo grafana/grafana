@@ -173,3 +173,9 @@ export interface StateHistoryItem {
   avatarUrl: string;
   data: StateHistoryItemData;
 }
+
+export enum PromRulerMode {
+  NotSupported = 'NotSupported',
+  Default = 'Default',
+  Custom = 'Custom',
+}
