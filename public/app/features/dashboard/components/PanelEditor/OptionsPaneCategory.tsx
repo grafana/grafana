@@ -102,7 +102,6 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <Button
-            size="md"
             fill="text"
             aria-expanded="true"
             aria-controls={id}
@@ -149,7 +148,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       cursor: pointer;
       align-items: baseline;
-      padding: ${theme.spacing(1)};
+      padding: ${theme.spacing(0.5)};
       color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightMedium};
 
