@@ -280,8 +280,6 @@ func TestPluginProxy(t *testing.T) {
 				break
 			}
 		}
-
-		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
 	})
 }
 

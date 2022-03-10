@@ -207,8 +207,6 @@ func TestMakePluginResourceRequest(t *testing.T) {
 			break
 		}
 	}
-
-	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
 }
 
 func callGetPluginAsset(sc *scenarioContext) {

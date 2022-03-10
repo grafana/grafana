@@ -58,6 +58,14 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		cfg.XSSProtectionHeader = false
 	})
 
+	middlewareScenario(t, "middleware should get content-security-policy header when content_security_policy is enabled", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Equal(t, "default-src 'self'; img-src *;", sc.resp.Header().Get("Content-Security-Policy"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "default-src 'self'; img-src *;"
+	})
+
 	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000", sc.resp.Header().Get("Strict-Transport-Security"))

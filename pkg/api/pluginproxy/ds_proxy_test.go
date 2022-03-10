@@ -682,7 +682,6 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		proxy.HandleRequest()
 
 		require.NoError(t, writeErr)
-		assert.Equal(t, "sandbox", proxy.ctx.Resp.Header().Get("Content-Security-Policy"))
 	})
 
 	t.Run("Data source returns status code 401", func(t *testing.T) {

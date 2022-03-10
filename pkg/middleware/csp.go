@@ -45,7 +45,9 @@ func AddCSPHeader(cfg *setting.Cfg, logger log.Logger) func(http.Handler) http.H
 			rootPath := re.ReplaceAllString(cfg.AppURL, "")
 			val = strings.ReplaceAll(val, "$ROOT_PATH", rootPath)
 			rw.Header().Set("Content-Security-Policy", val)
-			ctx.RequestNonce = nonce
+			if ctx != nil {
+				ctx.RequestNonce = nonce
+			}
 			logger.Debug("Successfully generated CSP nonce", "nonce", nonce)
 			next.ServeHTTP(rw, req)
 		})

@@ -609,8 +609,6 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 				}
 			}
 
-			proxyutil.SetProxyResponseHeaders(w.Header())
-
 			w.WriteHeader(resp.Status)
 		}
 
