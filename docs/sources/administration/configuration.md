@@ -1347,19 +1347,19 @@ Enable or disable the Explore section. Default is `enabled`.
 
 ## [help]
 
-Configures the help menu.
+Configures the help section.
 
 ### enabled
 
-Enable or disable the Help menu. Default is `enabled`.
+Enable or disable the Help section. Default is `enabled`.
 
 ## [profile]
 
-Configures the Profile menu.
+Configures the Profile section.
 
 ### enabled
 
-Enable or disable the Profile menu. Default is `enabled`.
+Enable or disable the Profile section. Default is `enabled`.
 
 ## [metrics]
 

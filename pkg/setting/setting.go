@@ -174,7 +174,7 @@ var (
 	// Help UI
 	HelpEnabled bool
 
-	// Profile menu
+	// Profile UI
 	ProfileEnabled bool
 
 	// Grafana.NET URL
