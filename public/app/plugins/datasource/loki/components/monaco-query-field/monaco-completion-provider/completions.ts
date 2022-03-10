@@ -141,7 +141,7 @@ async function getLabelNamesForCompletions(
     extractedLabelKeys.forEach((key) => {
       result.push({
         type: 'LABEL_NAME',
-        label: `${key} (extracted)`,
+        label: `${key} (parsed)`,
         insertText: `${key}${suffix}`,
         triggerOnInsert,
       });
