@@ -27,6 +27,9 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     onChange({ ...query, labels });
   };
 
+  /**
+   * Map metric metadata to SelectableValue for Select component and also adds defined template variables to the list.
+   */
   const withTemplateVariableOptions = useCallback(
     async (optionsPromise: Promise<Array<{ value: string; description?: string }>>): Promise<SelectableValue[]> => {
       const variables = datasource.getVariables();
@@ -122,6 +125,8 @@ async function getMetrics(
   datasource: PrometheusDatasource,
   query: PromVisualQuery
 ): Promise<Array<{ value: string; description?: string }>> {
+  // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
+  // don't use it with the visual builder and there is no need to run all the start() setup anyway.
   if (!datasource.languageProvider.metricsMetadata) {
     await datasource.languageProvider.loadMetricsMetadata();
   }
