@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import {
   DataSourceJsonData,
+  DataSourceInstanceSettings,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme,
   KeyValue,
@@ -25,11 +26,19 @@ export interface TraceToLogsOptions {
 
 export interface TraceToLogsData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
+  lokiSearch?: TraceToLogsOptions;
 }
 
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
+  const handleChange = (datasource: DataSourceInstanceSettings, searchType: keyof TraceToLogsData) => {
+    updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, searchType, {
+      datasourceUid: datasource.uid,
+      tags: options.jsonData.tracesToLogs?.tags,
+    });
+  };
+
   const styles = useStyles(getStyles);
 
   return (
@@ -41,19 +50,39 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       </div>
 
       <InlineFieldRow>
-        <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
+        <InlineField
+          tooltip="The data source the trace is going to navigate to"
+          label="Tempo Search data source"
+          labelWidth={26}
+        >
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            pluginId="loki"
+            name="tracesToLogs"
+            // pluginId={['loki', 'splunk']}
+            logs
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
-                datasourceUid: ds.uid,
-                tags: options.jsonData.tracesToLogs?.tags,
-              })
-            }
+            onChange={(ds: DataSourceInstanceSettings) => handleChange(ds, 'tracesToLogs')}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          tooltip="The data source the trace is going to navigate to"
+          label="Loki Search data source"
+          labelWidth={26}
+        >
+          <DataSourcePicker
+            inputId="loki-search-data-source-picker"
+            name="lokiSearch"
+            pluginId="loki"
+            logs
+            current={options.jsonData.lokiSearch?.datasourceUid}
+            autoFocus
+            width={40}
+            onChange={(ds: DataSourceInstanceSettings) => handleChange(ds, 'lokiSearch')}
           />
         </InlineField>
       </InlineFieldRow>
