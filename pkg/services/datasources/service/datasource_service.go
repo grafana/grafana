@@ -115,6 +115,28 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, ac.AttributeScopeReso
 	return prefix, dsNameResolver
 }
 
+// NewUidScopeResolver provides an AttributeScopeResolver able to
+// translate a scope prefixed with "datasources:uid:" into an id based scope.
+func NewUidScopeResolver(db DataSourceRetriever) (string, ac.AttributeScopeResolveFunc) {
+	prefix := datasources.ScopeDatasourcesProvider.GetResourceScopeUID("")
+	dsUIDResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if !strings.HasPrefix(initialScope, prefix) {
+			return "", ac.ErrInvalidScope
+		}
+
+		dsUID := initialScope[len(prefix):]
+
+		query := models.GetDataSourceQuery{Uid: dsUID, OrgId: orgID}
+		if err := db.GetDataSource(ctx, &query); err != nil {
+			return "", err
+		}
+
+		return datasources.ScopeDatasourcesProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
+	}
+
+	return prefix, dsUIDResolver
+}
+
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
 	return s.SQLStore.GetDataSource(ctx, query)
 }
