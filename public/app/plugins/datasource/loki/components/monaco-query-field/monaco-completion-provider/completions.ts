@@ -12,7 +12,8 @@ export type CompletionType =
   | 'LABEL_VALUE'
   | 'PATTERN'
   | 'PARSER'
-  | 'LINE_FILTER';
+  | 'LINE_FILTER'
+  | 'LINE_FORMAT';
 
 type Completion = {
   type: CompletionType;
@@ -209,19 +210,28 @@ async function getAfterSelectorCompletions(
     });
   });
 
-  const unwrapCompletions: Completion[] = result.extractedLabelKeys.map((key) => ({
-    type: 'LINE_FILTER',
-    label: `unwrap ${key} (detected)`,
-    insertText: `${prefix}unwrap ${key}`,
-  }));
+  result.extractedLabelKeys.forEach((key) => {
+    completions.push({
+      type: 'LINE_FILTER',
+      label: `unwrap ${key} (detected)`,
+      insertText: `${prefix}unwrap ${key}`,
+    });
+  });
 
-  unwrapCompletions.push({
+  completions.push({
     type: 'LINE_FILTER',
     label: 'unwrap',
     insertText: `${prefix}unwrap`,
   });
 
-  return [...completions, ...LINE_FILTER_COMPLETIONS, ...unwrapCompletions];
+  completions.push({
+    type: 'LINE_FORMAT',
+    label: 'line_format',
+    insertText: `${prefix}line_format "{{.$0}}"`,
+    isSnippet: true,
+  });
+
+  return [...LINE_FILTER_COMPLETIONS, ...completions];
 }
 
 async function getLabelValuesForMetricCompletions(
