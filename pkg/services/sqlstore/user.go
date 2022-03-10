@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
@@ -184,25 +182,6 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	}
 
 	return user, nil
-}
-
-func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error) {
-	cmd := models.CreateUserCommand{
-		Login:            "Service-Account-" + uuid.New().String(),
-		Email:            uuid.New().String(),
-		Password:         "Password-" + uuid.New().String(),
-		Name:             siUser.Name + "-Service-Account-" + uuid.New().String(),
-		OrgId:            siUser.OrgId,
-		IsServiceAccount: true,
-	}
-
-	newuser, err := ss.CreateUser(ctx, cmd)
-	if err != nil {
-		ss.log.Warn("user not cloned", "err", err)
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	return newuser, err
 }
 
 func (ss *SQLStore) CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error) {

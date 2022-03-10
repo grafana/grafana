@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -94,7 +95,7 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 
 	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
 		filters = []interface{}{
-			permissions.AccessControlDashboardPermissionFilter{User: query.SignedInUser},
+			permissions.AccessControlDashboardPermissionFilter{User: query.SignedInUser, PermissionLevel: query.Permission},
 		}
 	}
 
@@ -280,7 +281,7 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		}
 
 		// remove all access control permission with folder scope
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("folders", "id", strconv.FormatInt(dashboard.Id, 10)))
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(dashboard.Id, 10)))
 		if err != nil {
 			return err
 		}
