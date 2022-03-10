@@ -105,6 +105,12 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				SecretKey: "",
 				AccessKey: "",
 			}),
+			newGCSstorage("gcs", "My dashboards in S3", &StorageGCSConfig{
+				Bucket:    "gs://git-the-things-gcs",
+				Folder:    "dashboards",
+				SecretKey: "",
+				AccessKey: "",
+			}),
 		},
 	}
 	devenv := getDevenvDashboards()

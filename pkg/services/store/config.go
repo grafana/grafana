@@ -10,6 +10,7 @@ type RootStorageConfig struct {
 	Git  *StorageGitConfig       `json:"git,omitempty"`
 	SQL  *StorageSQLConfig       `json:"sql,omitempty"`
 	S3   *StorageS3Config        `json:"s3,omitempty"`
+	GCS  *StorageGCSConfig       `json:"s3,omitempty"`
 }
 
 type StorageLocalDiskConfig struct {
@@ -34,6 +35,15 @@ type StorageSQLConfig struct {
 }
 
 type StorageS3Config struct {
+	Bucket string `json:"bucket"`
+	Folder string `json:"folder"`
+
+	// SECURE!!!
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
+}
+
+type StorageGCSConfig struct {
 	Bucket string `json:"bucket"`
 	Folder string `json:"folder"`
 
