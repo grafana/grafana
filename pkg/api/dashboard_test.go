@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -214,14 +215,18 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		mockSQLStore.ExpectedDashboard = fakeDash
 
+		cfg := setting.NewCfg()
+		features := featuremgmt.WithFeatures()
 		dashboardStore := database.ProvideDashboardStore(sqlstore.InitTestDB(t))
 		hs := &HTTPServer{
-			Cfg:                   setting.NewCfg(),
+			Cfg:                   cfg,
 			Live:                  newTestLive(t),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
-			dashboardService:      service.ProvideDashboardService(dashboardStore, nil),
 			SQLStore:              mockSQLStore,
+			dashboardService: service.ProvideDashboardService(
+				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -934,14 +939,18 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := mockLibraryElementService{}
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
 
 	hs := &HTTPServer{
-		Cfg:                          setting.NewCfg(),
-		LibraryPanelService:          &libraryPanelsService,
-		LibraryElementService:        &libraryElementsService,
-		ProvisioningService:          provisioningService,
-		dashboardProvisioningService: service.ProvideDashboardService(dashboardStore, nil),
-		SQLStore:                     sc.sqlStore,
+		Cfg:                   cfg,
+		LibraryPanelService:   &libraryPanelsService,
+		LibraryElementService: &libraryElementsService,
+		SQLStore:              sc.sqlStore,
+		ProvisioningService:   provisioningService,
+		dashboardProvisioningService: service.ProvideDashboardService(
+			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+		),
 	}
 
 	hs.callGetDashboard(sc)

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -23,14 +21,12 @@ func ProvideService(routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
-	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices, features featuremgmt.FeatureToggles,
+	ac accesscontrol.AccessControl,
 ) *ImportDashboardService {
 	s := &ImportDashboardService{
-		features:                    features,
-		pluginDashboardService:      pluginDashboardService,
-		dashboardService:            dashboardService,
-		libraryPanelService:         libraryPanelService,
-		dashboardPermissionsService: permissionsServices.GetDashboardService(),
+		pluginDashboardService: pluginDashboardService,
+		dashboardService:       dashboardService,
+		libraryPanelService:    libraryPanelService,
 	}
 
 	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginStore, ac)
@@ -40,11 +36,9 @@ func ProvideService(routeRegister routing.RouteRegister,
 }
 
 type ImportDashboardService struct {
-	features                    featuremgmt.FeatureToggles
-	pluginDashboardService      plugindashboards.Service
-	dashboardService            dashboards.DashboardService
-	libraryPanelService         librarypanels.Service
-	dashboardPermissionsService accesscontrol.PermissionsService
+	pluginDashboardService plugindashboards.Service
+	dashboardService       dashboards.DashboardService
+	libraryPanelService    librarypanels.Service
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
@@ -100,12 +94,6 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if err := s.setDashboardPermissions(ctx, req.User, savedDash); err != nil {
-			return nil, err
-		}
-	}
-
 	return &dashboardimport.ImportDashboardResponse{
 		UID:              savedDash.Uid,
 		PluginId:         req.PluginId,
@@ -120,25 +108,4 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		DashboardId:      savedDash.Id,
 		Slug:             savedDash.Slug,
 	}, nil
-}
-
-func (s *ImportDashboardService) setDashboardPermissions(ctx context.Context, user *models.SignedInUser, dashboard *models.Dashboard) error {
-	resourceID := strconv.FormatInt(dashboard.Id, 10)
-
-	permissions := []accesscontrol.SetResourcePermissionCommand{
-		{UserID: user.UserId, Permission: models.PERMISSION_ADMIN.String()},
-	}
-
-	if dashboard.FolderId == 0 {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
-		}...)
-	}
-	_, err := s.dashboardPermissionsService.SetPermissions(ctx, user.OrgId, resourceID, permissions...)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
