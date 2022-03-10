@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,21 +18,15 @@ const (
 )
 
 type cdkBlobStorage struct {
-	log        log.Logger
-	bucket     *blob.Bucket
-	rootFolder string
+	log    log.Logger
+	bucket *blob.Bucket
 }
 
 func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, pathFilters *PathFilters) FileStorage {
-	return &wrapper{
-		log: log,
-		wrapped: &cdkBlobStorage{
-			log:        log,
-			bucket:     bucket,
-			rootFolder: rootFolder,
-		},
-		pathFilters: pathFilters,
-	}
+	return newWrapper(log, &cdkBlobStorage{
+		log:    log,
+		bucket: bucket,
+	}, pathFilters, rootFolder)
 }
 
 func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error) {
@@ -228,6 +223,16 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 				}
 			}
 
+			if attributes.ContentType == "application/x-directory; charset=UTF-8" {
+				// S3 directory representation
+				continue
+			}
+
+			if attributes.ContentType == "text/plain" && obj.Key == folderPath && attributes.Size == 0 {
+				// GCS directory representation
+				continue
+			}
+
 			var originalPath string
 			var props map[string]string
 			if attributes.Metadata != nil {
@@ -238,7 +243,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 				}
 			} else {
 				props = make(map[string]string)
-				originalPath = fixPath(path)
+				originalPath = strings.TrimSuffix(path, Delimiter)
 			}
 
 			files = append(files, FileMetadata{
@@ -265,38 +270,17 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 	}, nil
 }
 
-func (c cdkBlobStorage) fixInputPrefix(path string) string {
-	if path == Delimiter || path == "" {
-		return c.rootFolder
+func (c cdkBlobStorage) convertFolderPathToPrefix(path string) string {
+	if path != "" && !strings.HasSuffix(path, Delimiter) {
+		return path + Delimiter
 	}
-	if strings.HasPrefix(path, Delimiter) {
-		path = fmt.Sprintf("%s%s", c.rootFolder, strings.TrimPrefix(path, Delimiter))
-	}
-
 	return path
 }
 
-func (c cdkBlobStorage) convertFolderPathToPrefix(path string) string {
-	if path == Delimiter || path == "" {
-		return c.rootFolder
-	}
-	if strings.HasPrefix(path, Delimiter) {
-		path = fmt.Sprintf("%s%s", c.rootFolder, strings.TrimPrefix(path, Delimiter))
-	}
-	return fmt.Sprintf("%s%s", path, Delimiter)
-}
-
-func fixPath(path string) string {
-	newPath := strings.TrimSuffix(path, Delimiter)
-	if !strings.HasPrefix(newPath, Delimiter) {
-		newPath = fmt.Sprintf("%s%s", Delimiter, newPath)
-	}
-	return newPath
-}
-
 func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
-	paging.After = c.fixInputPrefix(paging.After)
-	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), paging, options)
+	prefix := c.convertFolderPathToPrefix(folderPath)
+	files, err := c.listFiles(ctx, prefix, paging, options)
+	return files, err
 }
 
 func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath string, options *ListOptions) ([]string, error) {
@@ -360,51 +344,29 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 	}
 
 	if dirMarkerPath != "" {
-		foundPaths = append(foundPaths, fixPath(dirMarkerPath))
+		foundPaths = append(foundPaths, dirMarkerPath)
 	} else if dirPath != "" {
 		// TODO replicate the changes in `createFolder`
-		foundPaths = append(foundPaths, fixPath(dirPath))
+		foundPaths = append(foundPaths, dirPath)
 	}
 	return foundPaths, nil
 }
 
 func (c cdkBlobStorage) ListFolders(ctx context.Context, prefix string, options *ListOptions) ([]FileMetadata, error) {
-	foundPaths, err := c.listFolderPaths(ctx, c.convertFolderPathToPrefix(prefix), options)
+	fixedPrefix := c.convertFolderPathToPrefix(prefix)
+	foundPaths, err := c.listFolderPaths(ctx, fixedPrefix, options)
 	if err != nil {
 		return nil, err
 	}
 
+	sort.Strings(foundPaths)
 	folders := make([]FileMetadata, 0)
-	mem := make(map[string]bool)
-	for i := 0; i < len(foundPaths); i++ {
-		path := foundPaths[i]
-		parts := strings.Split(path, Delimiter)
-		acc := parts[0]
 
-		if len(parts) > 1 {
-			j := 1
-			for {
-				acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
-
-				comparison := strings.Compare(acc, prefix)
-				if !mem[acc] && comparison > 0 {
-					folders = append(folders, FileMetadata{
-						Name:     getName(acc),
-						FullPath: acc,
-					})
-				}
-				mem[acc] = true
-
-				j += 1
-				if j >= len(parts) {
-					break
-				}
-			}
-		} else {
-			mem[acc] = true
+	for _, path := range foundPaths {
+		if strings.Compare(path, fixedPrefix) > 0 {
 			folders = append(folders, FileMetadata{
-				Name:     acc,
-				FullPath: acc,
+				Name:     getName(path),
+				FullPath: path,
 			})
 		}
 	}
@@ -470,11 +432,11 @@ func (c cdkBlobStorage) CreateFolder(ctx context.Context, path string) error {
 
 		previousFolderOriginalCasing := ""
 		if i > 0 {
-			previousFolderOriginalCasing = folderToOriginalCasing[precedingFolders[i-1]]
+			previousFolderOriginalCasing = folderToOriginalCasing[precedingFolders[i-1]] + Delimiter
 		}
 
 		metadata := make(map[string]string)
-		currentFolderWithOriginalCasing := previousFolderOriginalCasing + Delimiter + getName(currentFolder)
+		currentFolderWithOriginalCasing := previousFolderOriginalCasing + getName(currentFolder)
 		metadata[originalPathAttributeKey] = currentFolderWithOriginalCasing + Delimiter + directoryMarker
 		if err := c.bucket.WriteAll(ctx, strings.ToLower(metadata[originalPathAttributeKey]), make([]byte, 0), &blob.WriterOptions{
 			Metadata: metadata,

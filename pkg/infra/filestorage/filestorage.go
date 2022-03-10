@@ -13,7 +13,9 @@ import (
 	"gocloud.dev/blob"
 
 	_ "gocloud.dev/blob/fileblob"
+	_ "gocloud.dev/blob/gcsblob"
 	_ "gocloud.dev/blob/memblob"
+	_ "gocloud.dev/blob/s3blob"
 )
 
 const (
@@ -46,9 +48,8 @@ func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg) (File
 		grafanaDsStorage = &wrapper{
 			log: grafanaDsStorageLogger,
 			wrapped: cdkBlobStorage{
-				log:        grafanaDsStorageLogger,
-				bucket:     bucket,
-				rootFolder: "",
+				log:    grafanaDsStorageLogger,
+				bucket: bucket,
 			},
 			pathFilters: &PathFilters{allowedPrefixes: prefixes},
 		}

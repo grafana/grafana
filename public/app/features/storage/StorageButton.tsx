@@ -18,7 +18,7 @@ interface Props {
   onChange: (value: SelectableValue) => void;
 }
 
-export function Button({ buttonProps, options, onChange }: Props) {
+export function StorageButton({ buttonProps, options, onChange }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles2(getStyles);
 

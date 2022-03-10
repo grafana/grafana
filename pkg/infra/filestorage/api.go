@@ -104,10 +104,7 @@ func (f *PathFilters) IsAllowed(path string) bool {
 		return true
 	}
 
-	if !strings.HasPrefix(path, Delimiter) {
-		path = Join(path)
-	}
-
+	path = strings.ToLower(path)
 	for i := range f.disallowedPaths {
 		if f.disallowedPaths[i] == path {
 			return false
@@ -134,7 +131,6 @@ func (f *PathFilters) IsAllowed(path string) bool {
 			return true
 		}
 	}
-
 	return false
 }
 

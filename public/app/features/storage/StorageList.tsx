@@ -8,9 +8,10 @@ import { RootStorageMeta } from './types';
 interface Props {
   storage: RootStorageMeta[];
   title: string;
+  type: 'dash' | 'res';
 }
 
-export function StorageList({ storage, title }: Props) {
+export function StorageList({ storage, title, type }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -18,10 +19,14 @@ export function StorageList({ storage, title }: Props) {
       <h4 className={styles.secondaryTextColor}>{title}</h4>
       {storage.map((s) => {
         return (
-          <Card key={uniqueId()}>
-            <Card.Heading className={styles.heading}>
+          <Card key={uniqueId()} href={`/org/storage/${type}/${s.config.prefix}?path=${s.config.prefix}`}>
+            <Card.Heading>
               {s.config.name}
-              <Badge text={s.ready ? 'Ready' : 'Not ready'} color={s.ready ? 'green' : 'red'} />
+              <Badge
+                className={styles.badge}
+                text={s.ready ? 'Ready' : 'Not ready'}
+                color={s.ready ? 'green' : 'red'}
+              />
             </Card.Heading>
             <Card.Meta>{s.config.prefix}</Card.Meta>
             <Card.Description>{getDescription(s)}</Card.Description>
@@ -39,9 +44,8 @@ function getStyles(theme: GrafanaTheme2) {
     secondaryTextColor: css`
       color: ${theme.colors.text.secondary};
     `,
-    heading: css`
-      justify-content: flex-start;
-      gap: 0.5rem;
+    badge: css`
+      margin-left: ${theme.spacing(1)};
     `,
   };
 }

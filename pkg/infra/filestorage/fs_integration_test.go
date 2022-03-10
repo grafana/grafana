@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -61,7 +62,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	setupInMemFS := func() {
 		commonSetup()
 		bucket, _ := blob.OpenBucket(context.Background(), "mem://")
-		filestorage = NewCdkBlobStorage(testLogger, bucket, Delimiter, nil)
+		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
 	//setupSqlFS := func() {
@@ -85,6 +86,27 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
+	setupLocalFsNestedPath := func() {
+		commonSetup()
+		tmpDir, err := ioutil.TempDir("", "")
+		tempDir = tmpDir
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		nestedPath := path.Join("a", "b")
+		err = os.MkdirAll(path.Join(tmpDir, nestedPath), os.ModePerm)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		bucket, err := blob.OpenBucket(context.Background(), fmt.Sprintf("file://%s", tmpDir))
+		if err != nil {
+			t.Fatal(err)
+		}
+		filestorage = NewCdkBlobStorage(testLogger, bucket, nestedPath+Delimiter, nil)
+	}
+
 	backends := []struct {
 		setup func()
 		name  string
@@ -92,6 +114,10 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		{
 			setup: setupLocalFs,
 			name:  "Local FS",
+		},
+		{
+			setup: setupLocalFsNestedPath,
+			name:  "Local FS with nested path",
 		},
 		{
 			setup: setupInMemFS,
@@ -214,6 +240,47 @@ func TestFsStorage(t *testing.T) {
 						files: [][]interface{}{
 							checks(fPath("/ab/a.jpg")),
 							checks(fPath("/ab/a/a.jpg")),
+						},
+					},
+				},
+			},
+			{
+				name: "listing files with path to a file",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/folder2/file.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/file-inner.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1"},
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jp", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/folder2/file.jpg", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2/file.jpg"), fName("file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jpg", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/file-inner.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/file-inner.jpg"), fName("file-inner.jpg"), fProperties(map[string]string{"prop1": "val1"})),
 						},
 					},
 				},

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { dataFrameFromJSON, DataFrameJSON, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getBackendSrv, PanelRenderer } from '@grafana/runtime';
-import { IconName, Spinner, useStyles2 } from '@grafana/ui';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { Spinner, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { useAsync } from 'react-use';
-import { RootStorageMeta } from './types';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { Breadcrumb } from './Breadcrumb';
 
 interface Props {
   prefix: string;
@@ -15,7 +15,6 @@ interface Props {
 
 export function FileBrowser({ path, prefix, onPathChange }: Props) {
   const styles = useStyles2(getStyles);
-  const parts = path.split('/');
 
   const folder = useAsync(async () => {
     const rsp = (await getBackendSrv().get(`api/storage/path/${prefix}/${path}`)) as DataFrameJSON;
@@ -29,7 +28,7 @@ export function FileBrowser({ path, prefix, onPathChange }: Props) {
           onClick: (evt) => {
             const row = evt.origin.rowIndex;
             if (row != null) {
-              const v = name.values.get(row);
+              const v = frame.fields[0].values.get(row);
               if (v) {
                 onPathChange(`${path}/${v}`);
               }
@@ -44,8 +43,7 @@ export function FileBrowser({ path, prefix, onPathChange }: Props) {
 
   return (
     <>
-      <pre>NAV: {JSON.stringify(parts)}</pre>
-
+      <Breadcrumb pathName={path} onPathChange={onPathChange} />
       <div className={styles.wrap}>
         <AutoSizer disableHeight style={{ width: '100%' }}>
           {({ width }) => {
@@ -75,35 +73,30 @@ export function FileBrowser({ path, prefix, onPathChange }: Props) {
     </>
   );
 }
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     wrap: css`
       width: 100%;
     `,
-  };
-}
+    breadCrumb: css`
+      list-style: none;
+      padding: ${theme.spacing(2, 1)};
 
-export function getIconName(type: string): IconName {
-  switch (type) {
-    case 'git':
-      return 'code-branch';
-    case 'disk':
-      return 'folder-open';
-    case 'sql':
-      return 'database';
-    default:
-      return 'folder-open';
-  }
-}
-export function getDescription(storage: RootStorageMeta) {
-  if (storage.config.disk) {
-    return `${storage.config.disk.path}`;
-  }
-  if (storage.config.git) {
-    return `${storage.config.git.remote}`;
-  }
-  if (storage.config.sql) {
-    return `${storage.config.sql}`;
-  }
-  return '';
+      li {
+        display: inline;
+
+        :not(:last-child) {
+          color: ${theme.colors.text.link};
+          cursor: pointer;
+
+          + li:before {
+            content: '>';
+            padding: ${theme.spacing(1)};
+            color: ${theme.colors.text.secondary};
+          }
+        }
+      }
+    `,
+  };
 }

@@ -1,5 +1,7 @@
 import { dataFrameFromJSON, DataFrameJSON, DataFrameView } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Card, CustomScrollbar, Icon } from '@grafana/ui';
+import { Breadcrumb } from 'app/features/storage/Breadcrumb';
 import React from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -14,43 +16,33 @@ interface FolderListItem {
 }
 
 export const FolderView = ({ dashboard }: Props) => {
+  const history = locationService.getHistory();
+  const location = locationService.getLocation();
   const firstPanel = dashboard.panels[0];
   const frameJSON = (firstPanel as any)?.__listing as DataFrameJSON;
   if (!frameJSON) {
     console.log('GOT', dashboard);
     return <div>Missing folder listing ¯\_(ツ)_/¯ </div>;
   }
-  const parts = ((dashboard.meta as any).slug as string).split('/');
   const view = new DataFrameView<FolderListItem>(dataFrameFromJSON(frameJSON));
 
   return (
     <div>
-      <div>
-        <pre>NAVIGATE: {JSON.stringify(parts)}</pre>
-      </div>
-      <div>
-        <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true} updateAfterMountMs={500}>
-          <div>
-            {view.map((item) => {
-              const url = `/g${item.path}`;
-              return (
-                <Card
-                  key={item.name}
-                  heading={item.name}
-                  onClick={() => {
-                    // HACK! setting href not working???
-                    window.location.href = url;
-                  }}
-                >
-                  <Card.Figure>
-                    <Icon name={item.mediaType === 'directory' ? 'folder' : 'gf-grid'} size="sm" />
-                  </Card.Figure>
-                </Card>
-              );
-            })}
-          </div>
-        </CustomScrollbar>
-      </div>
+      <Breadcrumb pathName={location.pathname} onPathChange={(changedPath) => history.push(changedPath)} />
+      <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true} updateAfterMountMs={500}>
+        <div>
+          {view.map((item) => {
+            const url = `/g${item.path}`;
+            return (
+              <Card key={item.name} heading={item.name} href={url}>
+                <Card.Figure>
+                  <Icon name={item.mediaType === 'directory' ? 'folder' : 'gf-grid'} size="sm" />
+                </Card.Figure>
+              </Card>
+            );
+          })}
+        </div>
+      </CustomScrollbar>
     </div>
   );
 };
