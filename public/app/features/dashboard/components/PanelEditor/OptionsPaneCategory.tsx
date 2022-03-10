@@ -100,20 +100,19 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         aria-label={selectors.components.OptionsGroup.group(id)}
         ref={ref}
       >
-        <Button
-          fill="text"
-          aria-expanded="true"
-          aria-controls={id}
-          id={`button-${id}`}
-          className={headerStyles}
-          onClick={onToggle}
-          aria-label={selectors.components.OptionsGroup.toggle(id)}
-        >
-          <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
+        <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
+          <Button
+            size="sm"
+            fill="text"
+            aria-expanded="true"
+            aria-controls={id}
+            id={`button-${id}`}
+            className={cx(styles.toggle, 'editor-options-group-toggle')}
+          >
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
-          </div>
+          </Button>
           <h6 className={styles.title}>{renderTitle(isExpanded)}</h6>
-        </Button>
+        </div>
         {isExpanded && (
           <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
             {children}
