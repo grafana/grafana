@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	jsoniter "github.com/json-iterator/go"
@@ -73,7 +74,8 @@ func (r *NormalResponse) ErrMessage() string {
 
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
-		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr())
+		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(),
+			"traceID", tracing.TraceIDFromContext(ctx.Req.Context()))
 	}
 
 	header := ctx.Resp.Header()

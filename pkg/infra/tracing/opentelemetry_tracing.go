@@ -126,6 +126,7 @@ func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...tr
 	opentelemetrySpan := OpentelemetrySpan{
 		span: span,
 	}
+	ctx = context.WithValue(ctx, traceIDKey{}, span.SpanContext().TraceID().String())
 	return ctx, opentelemetrySpan
 }
 
