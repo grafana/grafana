@@ -102,9 +102,9 @@ type Service struct {
 
 func (s *Service) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	var inheritedScopes []string
-	if s.options.InheritedScopes != nil {
+	if s.options.InheritedScopesSolver != nil {
 		var err error
-		inheritedScopes, err = s.options.InheritedScopes(ctx, user.OrgId, resourceID)
+		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgId, resourceID)
 		if err != nil {
 			return nil, err
 		}
