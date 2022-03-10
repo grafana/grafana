@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -445,4 +447,32 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 func mockRequestBody(v interface{}) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
+}
+
+// APITestServerOption option func for customizing HTTPServer configuration
+// when setting up an API test server via SetupAPITestServer.
+type APITestServerOption func(hs *HTTPServer)
+
+// SetupAPITestServer sets up a webtest.Server ready for testing all
+// routes registered via HTTPServer.registerRoutes().
+// Optionally customize HTTPServer configuration by providing APITestServerOption
+// option(s).
+func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Server {
+	t.Helper()
+
+	hs := &HTTPServer{
+		RouteRegister:      routing.NewRouteRegister(),
+		Cfg:                setting.NewCfg(),
+		AccessControl:      acmock.New().WithDisabled(),
+		Features:           featuremgmt.WithFeatures(),
+		searchUsersService: &searchusers.OSSService{},
+	}
+
+	for _, opt := range opts {
+		opt(hs)
+	}
+
+	hs.registerRoutes()
+	s := webtest.NewServer(t, hs.RouteRegister)
+	return s
 }
