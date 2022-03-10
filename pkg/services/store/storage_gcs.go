@@ -104,6 +104,6 @@ func newGCSstorage(prefix string, name string, cfg *StorageGCSConfig) *rootStora
 	return s
 }
 
-func (s *rootStorageGCS) Write(ctx context.Context, cmd *writeCommand) error {
-	return fmt.Errorf("not implemented!!!")
+func (s *rootStorageGCS) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
+	return nil, fmt.Errorf("not implemented!!!")
 }
