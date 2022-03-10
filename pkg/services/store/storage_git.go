@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"github.com/grafana/grafana/pkg/models"
 	"gocloud.dev/blob"
 )
 
@@ -19,6 +23,8 @@ type rootStorageGit struct {
 
 	settings *StorageGitConfig
 	repo     *git.Repository
+	root     string // repostitory root
+
 }
 
 func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGitConfig) *rootStorageGit {
@@ -98,6 +104,7 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 					bucket, "", nil)
 
 				meta.Ready = true // exists!
+				s.root = dir
 			}
 		}
 
@@ -110,5 +117,51 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 }
 
 func (s *rootStorageGit) Write(ctx context.Context, cmd *writeCommand) error {
-	return fmt.Errorf("not implemented!!!")
+	rel := cmd.Path
+	if s.meta.Config.Git.Root != "" {
+		rel = filepath.Join(s.meta.Config.Git.Root, cmd.Path)
+	}
+
+	fpath := filepath.Join(s.root, rel)
+	err := os.WriteFile(fpath, cmd.Body, 0644)
+	if err != nil {
+		return err
+	}
+
+	w, err := s.repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	// The file we just wrote
+	_, err = w.Add(rel)
+	if err != nil {
+		return err
+	}
+
+	msg := cmd.Message
+	if msg == "" {
+		msg = "changes from grafana ui"
+	}
+	user := cmd.User
+	if user == nil {
+		user = &models.SignedInUser{}
+	}
+
+	hash, err := w.Commit(msg, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  firstRealString(user.Name, user.Login, user.Email, "?"),
+			Email: firstRealString(user.Email, user.Login, user.Name, "?"),
+			When:  time.Now(),
+		},
+	})
+
+	grafanaStorageLogger.Info("made commit", "hash", hash)
+
+	//
+	err = s.repo.Push(&git.PushOptions{
+		InsecureSkipTLS: true,
+	})
+
+	return err
 }

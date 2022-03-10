@@ -3,6 +3,7 @@ import { SaveProvisionedDashboard } from './SaveProvisionedDashboard';
 import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 import { SaveDashboardModalProps } from './types';
 import { SaveDashboardModal } from './SaveDashboardModal';
+import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
 export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ dashboard, onDismiss, onSaveSuccess }) => {
   const isProvisioned = dashboard.meta.provisioned;
@@ -14,6 +15,10 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
     onDismiss,
     onSaveSuccess,
   };
+
+  if (dashboard.uid && dashboard.uid.indexOf('/')) {
+    return <SaveDashboardDrawer {...modalProps} />;
+  }
 
   return (
     <>

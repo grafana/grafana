@@ -31,11 +31,10 @@ type storageTree interface {
 //-------------------------------------------
 
 type writeCommand struct {
-	Path      string
-	Body      []byte
-	User      *models.SignedInUser
-	Message   string
-	Overwrite bool
+	Path    string
+	Body    []byte
+	User    *models.SignedInUser
+	Message string
 }
 
 type storageRuntime interface {

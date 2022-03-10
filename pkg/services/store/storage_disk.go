@@ -3,6 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -72,5 +76,35 @@ func (s *rootStorageDisk) Write(ctx context.Context, cmd *writeCommand) error {
 	return s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
 		Path:     cmd.Path,
 		Contents: &cmd.Body,
+	})
+}
+
+func getDevenvDashboards() *rootStorageDisk {
+	devenv, _ := filepath.Abs("devenv")
+	devdash := filepath.Join(devenv, "dev-dashboards")
+	if _, err := os.Stat(devdash); os.IsNotExist(err) {
+		return nil
+	}
+
+	roots := []string{}
+	files, err := ioutil.ReadDir(devdash)
+	if err != nil {
+		return nil
+	}
+
+	for _, file := range files {
+		if file.IsDir() && strings.HasPrefix(file.Name(), "panel-") {
+			roots = append(roots, "/"+file.Name())
+		}
+	}
+
+	if len(roots) < 1 {
+		grafanaStorageLogger.Warn("no panel folders found in devenv", "devdash", devdash)
+		return nil
+	}
+
+	return newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
+		Path:  filepath.Join(devenv, "dev-dashboards"),
+		Roots: roots,
 	})
 }

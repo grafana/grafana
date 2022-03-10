@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -84,12 +85,8 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	storage := filepath.Join(cfg.DataPath, "storage")
 	_ = os.MkdirAll(storage, 0700)
 
-	devenv, _ := filepath.Abs("devenv")
 	dash := &nestedTree{
 		roots: []storageRuntime{
-			newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
-				Path: filepath.Join(devenv, "dev-dashboards"),
-			}),
 			newGitStorage("it-A", "Github dashbboards A", storage, &StorageGitConfig{
 				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
 				Branch:      "main",
@@ -110,6 +107,11 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			}),
 		},
 	}
+	devenv := getDevenvDashboards()
+	if devenv != nil {
+		dash.roots = append(dash.roots, devenv)
+	}
+
 	s := newStandardStorageService(res, dash)
 	s.sql = sql
 	return s
@@ -368,17 +370,39 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts SaveDashboardRequest) (*dtos.DashboardFullWithMeta, error) {
 	// TODO: authentication!
 
-	root, p := s.dash.getRoot(opts.Path)
+	var root storageRuntime
+	rootKey, path := splitFirstSegment(opts.Path)
+	for _, r := range s.dash.roots {
+		if r.Meta().Config.Prefix == rootKey {
+			root = r
+			break
+		}
+	}
 	if root == nil {
 		return nil, fmt.Errorf("invalid root")
 	}
 
-	// Write the change
-	err := root.Upsert(ctx, &filestorage.UpsertFileCommand{
-		Path:     fmt.Sprintf("%s.json", p),
-		Contents: (*[]byte)(&opts.Body),
-		MimeType: "application/json",
+	// dashboards saved as JSON
+	path += ".json"
+
+	// Save pretty JSON
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, opts.Body, "", "  "); err != nil {
+		return nil, err
+	}
+	body := prettyJSON.Bytes()
+
+	err := root.Write(ctx, &writeCommand{
+		Path:    path,
+		Body:    body,
+		Message: opts.Message,
+		User:    user,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	// ....
 
 	return nil, err
 }
