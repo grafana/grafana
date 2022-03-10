@@ -61,13 +61,57 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 			return err
 		}
 		if !has {
-			return models.ErrDashboardNotFound
+			return models.ErrFolderNotFound
 		}
 		dashboard.SetId(dashboard.Id)
 		dashboard.SetUid(dashboard.Uid)
 		return nil
 	})
-	return &dashboard, err
+	return models.DashboardToFolder(&dashboard), err
+}
+
+func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error) {
+	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Id: id}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return models.ErrFolderNotFound
+		}
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return models.DashboardToFolder(&dashboard), nil
+}
+
+func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error) {
+	if uid == "" {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
+	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Uid: uid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return models.ErrFolderNotFound
+		}
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return models.DashboardToFolder(&dashboard), nil
 }
 
 func (d *DashboardStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
