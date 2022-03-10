@@ -1,7 +1,7 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Counter, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
@@ -102,7 +102,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <Button
-            size="sm"
+            size="md"
             fill="text"
             aria-expanded="true"
             aria-controls={id}
