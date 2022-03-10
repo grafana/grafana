@@ -273,8 +273,6 @@ Two words, not one.
 - "datasource" used as an identifier
 - "datasource" in a URL
 - Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
-- Spell out "repository" and avoid the shorter "repo."
-- Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
 
 #### display (verb)
 
@@ -296,9 +294,22 @@ Do not use. This is developer jargon that refers to a UI panel. Refer to the pan
 
 One word, not two.
 
+#### Microsoft SQL Server
+
+Use the trademarked name, "SQL Server".
+If you need to be clear that you are referring to the Microsoft application,
+you can also use "Microsoft SQL Server" or "MS SQL Server".
+
 #### mixin
 
 One word, not two. Also, not hyphenated.
+
+#### node_exporter
+
+When referencing the Prometheus data source exporters, always use "node_exporter" and "windows_exporter" when referring to those tools.
+
+**Correct:** node_exporter, windows_exporter
+**Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
 
 #### open source, open-source
 
@@ -315,6 +326,10 @@ Two words if used as a verb, one word if used as a noun. Do not use _plug-in_.
 - Plug in the appliance.
 - Download the plugin.
 
+#### repository
+
+Spell out the full word, "repository." Avoid the shorter form, "repo."
+
 #### setup, set up
 
 Two words if used as a verb, one word if used as a noun.
@@ -324,12 +339,13 @@ Two words if used as a verb, one word if used as a noun.
 - Set up the workspace.
 - Initial setup might take five minutes.
 
-#### node_exporter, windows_exporter
+#### Unix
 
-When referencing the Prometheus data source exporters, always use "node_exporter" and "windows_exporter" when referring to those tools.
+Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
 
-**Correct:** node_exporter, windows_exporter
-**Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
+#### windows_exporter
+
+Refer to the [node_exporter usage guidelines](#node_exporter).
 
 #### web server
 
@@ -338,8 +354,3 @@ Two words, not one.
 **Correct:** web server
 **Incorrect:** webserver
 
-### MS SQL Server
-
-Always use "MS SQL" when referring to MS SQL Server application.
-
-Incorrect UI spellings will be corrected in a later version of Grafana.
