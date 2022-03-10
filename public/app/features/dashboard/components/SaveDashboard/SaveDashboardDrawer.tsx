@@ -9,7 +9,6 @@ import {
   HorizontalGroup,
   Input,
   InputControl,
-  LinkButton,
   RadioButtonGroup,
   Spinner,
   Tab,
@@ -265,7 +264,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                   <pre>{JSON.stringify(rsp, null, 2)}</pre>
                   {rsp.url && (
                     <div>
-                      <LinkButton href={rsp.url}>LINK</LinkButton>
+                      <a href={rsp.url}>rsp.url</a>
                     </div>
                   )}
                 </div>
