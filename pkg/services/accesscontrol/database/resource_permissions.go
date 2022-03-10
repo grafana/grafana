@@ -13,24 +13,28 @@ import (
 )
 
 type flatResourcePermission struct {
-	ID          int64  `xorm:"id"`
-	ResourceID  string `xorm:"resource_id"`
-	RoleName    string
-	Action      string
-	Scope       string
-	UserId      int64
-	UserLogin   string
-	UserEmail   string
-	TeamId      int64
-	TeamEmail   string
-	Team        string
-	BuiltInRole string
-	Created     time.Time
-	Updated     time.Time
+	ID            int64 `xorm:"id"`
+	RoleName      string
+	Action        string
+	Scope         string
+	ResourceScope string
+	UserId        int64
+	UserLogin     string
+	UserEmail     string
+	TeamId        int64
+	TeamEmail     string
+	Team          string
+	BuiltInRole   string
+	Created       time.Time
+	Updated       time.Time
 }
 
-func (p *flatResourcePermission) Managed() bool {
-	return strings.HasPrefix(p.RoleName, "managed:")
+func (p *flatResourcePermission) IsManaged() bool {
+	return strings.HasPrefix(p.RoleName, "managed:") && !p.IsInherited()
+}
+
+func (p *flatResourcePermission) IsInherited() bool {
+	return p.Scope != p.ResourceScope
 }
 
 func (s *AccessControlStore) SetUserResourcePermission(
@@ -236,7 +240,7 @@ func (s *AccessControlStore) setResourcePermission(
 		keep = append(keep, id)
 	}
 
-	permissions, err := s.getResourcePermissionsByIds(sess, cmd.ResourceID, keep)
+	permissions, err := s.getResourcePermissionsByIds(sess, cmd.Resource, cmd.ResourceID, keep)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +286,7 @@ func (s *AccessControlStore) getResourcePermissions(sess *sqlstore.DBSession, or
 	SELECT
 		p.*,
 		r.name as role_name,
-		? as resource_id,
+		? as resource_scope,
 	`
 
 	userSelect := rawSelect + `
@@ -331,23 +335,31 @@ func (s *AccessControlStore) getResourcePermissions(sess *sqlstore.DBSession, or
 	builtinFrom := rawFrom + `
 		INNER JOIN builtin_role br ON r.id = br.role_id AND (br.org_id = 0 OR br.org_id = ?)
 	`
-	where := `
-	WHERE (r.org_id = ? OR r.org_id = 0)
-		AND (p.scope = '*' OR p.scope = ? OR p.scope = ? OR p.scope = ?)
-		AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)
-	`
 
-	if query.OnlyManaged {
-		where += `AND r.name LIKE 'managed:%'`
-	}
+	where := `WHERE (r.org_id = ? OR r.org_id = 0) AND (p.scope = '*' OR p.scope = ? OR p.scope = ? OR p.scope = ?`
+
+	scope := accesscontrol.GetResourceScope(query.Resource, query.ResourceID)
 
 	args := []interface{}{
-		query.Resource,
+		scope,
 		orgID,
 		orgID,
 		accesscontrol.GetResourceAllScope(query.Resource),
 		accesscontrol.GetResourceAllIDScope(query.Resource),
-		accesscontrol.GetResourceScope(query.Resource, query.ResourceID),
+		scope,
+	}
+
+	if len(query.InheritedScopes) > 0 {
+		where += ` OR p.scope IN(?` + strings.Repeat(",?", len(query.InheritedScopes)-1) + `)`
+		for _, scope := range query.InheritedScopes {
+			args = append(args, scope)
+		}
+	}
+
+	where += `) AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)`
+
+	if query.OnlyManaged {
+		where += `AND r.name LIKE 'managed:%'`
 	}
 
 	for _, a := range query.Actions {
@@ -417,7 +429,7 @@ func groupPermissionsByAssignment(permissions []flatResourcePermission) (map[int
 func flatPermissionsToResourcePermissions(permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
 	var managed, provisioned []flatResourcePermission
 	for _, p := range permissions {
-		if p.Managed() {
+		if p.IsManaged() {
 			managed = append(managed, p)
 		} else {
 			provisioned = append(provisioned, p)
@@ -448,7 +460,6 @@ func flatPermissionsToResourcePermission(permissions []flatResourcePermission) *
 	first := permissions[0]
 	return &accesscontrol.ResourcePermission{
 		ID:          first.ID,
-		ResourceID:  first.ResourceID,
 		RoleName:    first.RoleName,
 		Actions:     actions,
 		Scope:       first.Scope,
@@ -461,6 +472,7 @@ func flatPermissionsToResourcePermission(permissions []flatResourcePermission) *
 		BuiltInRole: first.BuiltInRole,
 		Created:     first.Created,
 		Updated:     first.Updated,
+		IsManaged:   first.IsManaged(),
 	}
 }
 
@@ -560,7 +572,7 @@ func (s *AccessControlStore) getOrCreateManagedRole(sess *sqlstore.DBSession, or
 	return &role, nil
 }
 
-func (s *AccessControlStore) getResourcePermissionsByIds(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]flatResourcePermission, error) {
+func (s *AccessControlStore) getResourcePermissionsByIds(sess *sqlstore.DBSession, resource, resourceID string, ids []int64) ([]flatResourcePermission, error) {
 	var result []flatResourcePermission
 	if len(ids) == 0 {
 		return result, nil
@@ -568,7 +580,7 @@ func (s *AccessControlStore) getResourcePermissionsByIds(sess *sqlstore.DBSessio
 	rawSql := `
 	SELECT
 		p.*,
-		? AS resource_id,
+		? as resource_scope
 		ur.user_id AS user_id,
 		u.login AS user_login,
 		u.email AS user_email,
@@ -588,7 +600,7 @@ func (s *AccessControlStore) getResourcePermissionsByIds(sess *sqlstore.DBSessio
 	`
 
 	args := make([]interface{}, 0, len(ids)+1)
-	args = append(args, resourceID)
+	args = append(args, accesscontrol.GetResourceScope(resource, resourceID))
 	for _, id := range ids {
 		args = append(args, id)
 	}

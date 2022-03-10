@@ -101,12 +101,22 @@ type Service struct {
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	var inheritedScopes []string
+	if s.options.InheritedScopes != nil {
+		var err error
+		inheritedScopes, err = s.options.InheritedScopes(ctx, user.OrgId, resourceID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s.store.GetResourcePermissions(ctx, user.OrgId, types.GetResourcePermissionsQuery{
-		User:        user,
-		Actions:     s.actions,
-		Resource:    s.options.Resource,
-		ResourceID:  resourceID,
-		OnlyManaged: s.options.OnlyManaged,
+		User:            user,
+		Actions:         s.actions,
+		Resource:        s.options.Resource,
+		ResourceID:      resourceID,
+		InheritedScopes: inheritedScopes,
+		OnlyManaged:     s.options.OnlyManaged,
 	})
 }
 
