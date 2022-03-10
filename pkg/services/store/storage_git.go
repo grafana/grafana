@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -25,6 +26,11 @@ type rootStorageGit struct {
 	repo     *git.Repository
 	root     string // repostitory root
 
+	github *githubHelper
+}
+
+func getRYANToken() string {
+	return "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"
 }
 
 func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGitConfig) *rootStorageGit {
@@ -105,6 +111,38 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 
 				meta.Ready = true // exists!
 				s.root = dir
+
+				token := cfg.AccessToken
+				if strings.HasPrefix(token, "$") {
+					token = os.Getenv(token[1:])
+					if token == "" {
+						meta.Notice = append(meta.Notice, data.Notice{
+							Severity: data.NoticeSeverityError,
+							Text:     "Unable to find token environment variable: " + token,
+						})
+					}
+				}
+
+				if token != "" {
+					s.github, err = newGithubHelper(context.Background(), cfg.Remote, token)
+					if err != nil {
+						meta.Notice = append(meta.Notice, data.Notice{
+							Severity: data.NoticeSeverityError,
+							Text:     "error creating github client: " + err.Error(),
+						})
+						s.github = nil
+					} else {
+						repo, _, err := s.github.getRepo(context.Background())
+						if err != nil {
+							meta.Notice = append(meta.Notice, data.Notice{
+								Severity: data.NoticeSeverityError,
+								Text:     err.Error(),
+							})
+							s.github = nil
+						}
+						grafanaStorageLogger.Info("default branch", "branch", *repo.DefaultBranch)
+					}
+				}
 			}
 		}
 
@@ -116,7 +154,63 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 	return s
 }
 
-func (s *rootStorageGit) Write(ctx context.Context, cmd *writeCommand) error {
+func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
+	if s.github == nil {
+		return nil, fmt.Errorf("github client not initalized")
+	}
+
+	if true {
+		prcmd := makePRCommand{
+			baseBranch: s.settings.Branch,
+			headBranch: fmt.Sprintf("grafana_ui_%d", time.Now().UnixMilli()),
+			title:      cmd.Title,
+			body:       cmd.Message,
+		}
+		res := &WriteValueResponse{
+			Branch: prcmd.headBranch,
+		}
+
+		ref, _, err := s.github.createRef(ctx, prcmd.baseBranch, prcmd.headBranch)
+		if err != nil {
+			res.Code = 500
+			res.Message = "unable to create branch"
+			return res, nil
+		}
+
+		// Write to the correct subfolder
+		if s.settings.Root != "" {
+			cmd.Path = s.settings.Root + "/" + cmd.Path
+		}
+
+		err = s.github.pushCommit(ctx, ref, cmd)
+		if err != nil {
+			res.Code = 500
+			res.Message = "error creating commit"
+			return res, nil
+		}
+
+		if prcmd.title == "" {
+			prcmd.title = "Dashboard save: " + time.Now().String()
+		}
+		if prcmd.body == "" {
+			prcmd.body = "Dashboard save: " + time.Now().String()
+		}
+
+		pr, _, err := s.github.createPR(ctx, prcmd)
+		if err != nil {
+			res.Code = 500
+			res.Message = "error creating PR: " + err.Error()
+			return res, nil
+		}
+
+		res.Code = 200
+		res.URL = pr.GetHTMLURL()
+		res.Pending = true
+		res.Hash = *ref.Object.SHA
+		res.Branch = prcmd.headBranch
+		return res, nil
+	}
+
 	rel := cmd.Path
 	if s.meta.Config.Git.Root != "" {
 		rel = filepath.Join(s.meta.Config.Git.Root, cmd.Path)
@@ -125,18 +219,18 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *writeCommand) error {
 	fpath := filepath.Join(s.root, rel)
 	err := os.WriteFile(fpath, cmd.Body, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	w, err := s.repo.Worktree()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// The file we just wrote
 	_, err = w.Add(rel)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msg := cmd.Message
@@ -155,13 +249,17 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *writeCommand) error {
 			When:  time.Now(),
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	grafanaStorageLogger.Info("made commit", "hash", hash)
+	// err = s.repo.Push(&git.PushOptions{
+	// 	InsecureSkipTLS: true,
+	// })
 
-	//
-	err = s.repo.Push(&git.PushOptions{
-		InsecureSkipTLS: true,
-	})
-
-	return err
+	return &WriteValueResponse{
+		Hash:    hash.String(),
+		Message: "made commit",
+	}, nil
 }

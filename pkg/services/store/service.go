@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -47,7 +46,7 @@ type StorageService interface {
 	GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error)
 
 	// Called from the UI when a dashboard is saved
-	SaveDashboard(ctx context.Context, user *models.SignedInUser, opts SaveDashboardRequest) (*dtos.DashboardFullWithMeta, error)
+	SaveDashboard(ctx context.Context, user *models.SignedInUser, opts WriteValueRequest) (*WriteValueResponse, error)
 
 	// Writes the entire system to git
 	HandleExportSystem(c *models.ReqContext) response.Response
@@ -91,13 +90,13 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
 				Branch:      "main",
 				Root:        "dashboards",
-				AccessToken: "",
+				AccessToken: "$GITHUB_AUTH_TOKEN",
 			}),
 			newGitStorage("it-B", "Github dashbboards B", storage, &StorageGitConfig{
 				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-B.git",
 				Branch:      "main",
 				Root:        "dashboards",
-				AccessToken: "",
+				AccessToken: "$GITHUB_AUTH_TOKEN",
 			}),
 			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{
 				Bucket:    "grafana-plugin-resources",
@@ -284,12 +283,6 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 	}, nil
 }
 
-type saveDashboardBody struct {
-	Dashboard *json.RawMessage `json:"dashboard"`
-	Overwrite bool             `json:"overwrite"`
-	Message   string           `json:"message"`
-}
-
 func (s *standardStorageService) PostDashboard(c *models.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path := params["*"]
@@ -297,29 +290,26 @@ func (s *standardStorageService) PostDashboard(c *models.ReqContext) response.Re
 		return response.Error(400, "invalid path", nil)
 	}
 
-	cmd := saveDashboardBody{}
+	cmd := WriteValueRequest{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	req := SaveDashboardRequest{
-		Path:    path,
-		Body:    *cmd.Dashboard,
-		Message: cmd.Message,
+	if len(cmd.Body) < 2 {
+		return response.Error(400, "missing body JSON", nil)
 	}
 
-	rsp, err := s.SaveDashboard(c.Req.Context(), c.SignedInUser, req)
+	cmd.Path = path
+	cmd.User = c.SignedInUser
+
+	rsp, err := s.SaveDashboard(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
-		return response.Error(400, "err", err)
+		return response.Error(500, "error saving dashboard", err)
 	}
-
-	return response.JSON(200, map[string]interface{}{
-		"action":  "SAVE",
-		"path":    path,
-		"url":     "/g/" + path, // will redirect here
-		"version": time.Now().Unix(),
-		"out":     rsp,
-	})
+	if rsp.Code < 100 || rsp.Code > 700 {
+		rsp.Code = 500
+	}
+	return response.JSONStreaming(rsp.Code, rsp)
 }
 
 func (s *standardStorageService) getFolderDashboard(path string, frame *data.Frame) (*dtos.DashboardFullWithMeta, error) {
@@ -367,7 +357,7 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 	}, nil
 }
 
-func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts SaveDashboardRequest) (*dtos.DashboardFullWithMeta, error) {
+func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts WriteValueRequest) (*WriteValueResponse, error) {
 	// TODO: authentication!
 
 	var root storageRuntime
@@ -382,29 +372,17 @@ func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models
 		return nil, fmt.Errorf("invalid root")
 	}
 
-	// dashboards saved as JSON
-	path += ".json"
-
 	// Save pretty JSON
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, opts.Body, "", "  "); err != nil {
 		return nil, err
 	}
-	body := prettyJSON.Bytes()
 
-	err := root.Write(ctx, &writeCommand{
-		Path:    path,
-		Body:    body,
-		Message: opts.Message,
-		User:    user,
-	})
-	if err != nil {
-		return nil, err
-	}
+	// dashboards saved as JSON
+	opts.Path = path + ".json"
+	opts.Body = prettyJSON.Bytes()
 
-	// ....
-
-	return nil, err
+	return root.Write(ctx, &opts)
 }
 
 func (s *standardStorageService) ListDashboardsToBuildSearchIndex(ctx context.Context, orgId int64) DashboardBodyIterator {

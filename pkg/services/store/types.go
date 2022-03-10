@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -11,11 +10,23 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type SaveDashboardRequest struct {
+type WriteValueRequest struct {
 	Path    string
 	User    *models.SignedInUser
-	Body    json.RawMessage // []byte
-	Message string
+	Body    json.RawMessage `json:"body,omitempty"`
+	Message string          `json:"message,omitempty"`
+	Title   string          `json:"title,omitempty"`  // For PRs
+	Action  string          `json:"action,omitempty"` // pr | save
+}
+
+type WriteValueResponse struct {
+	Code    int    `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
+	URL     string `json:"url,omitempty"`
+	Hash    string `json:"hash,omitempty"`
+	Branch  string `json:"branch,omitempty"`
+	Pending bool   `json:"pending,omitempty"`
+	Size    int64  `json:"size,omitempty"`
 }
 
 type storageTree interface {
@@ -30,20 +41,13 @@ type storageTree interface {
 // INTERNAL
 //-------------------------------------------
 
-type writeCommand struct {
-	Path    string
-	Body    []byte
-	User    *models.SignedInUser
-	Message string
-}
-
 type storageRuntime interface {
 	Meta() RootStorageMeta
 
 	Store() filestorage.FileStorage
 
 	// Different storage knows how to handle comments and tracking
-	Write(ctx context.Context, cmd *writeCommand) error
+	Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error)
 }
 
 type baseStorageRuntime struct {
@@ -59,8 +63,11 @@ func (t *baseStorageRuntime) Store() filestorage.FileStorage {
 	return t.store
 }
 
-func (t *baseStorageRuntime) Write(ctx context.Context, cmd *writeCommand) error {
-	return fmt.Errorf("unsupportted operation") // will be overridden
+func (t *baseStorageRuntime) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
+	return &WriteValueResponse{
+		Code:    500,
+		Message: "unsupportted operation (base)",
+	}, nil
 }
 
 func (t *baseStorageRuntime) setReadOnly(val bool) *baseStorageRuntime {

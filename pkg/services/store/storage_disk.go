@@ -72,11 +72,16 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 }
 
 // with local disk user metadata and messages are lost
-func (s *rootStorageDisk) Write(ctx context.Context, cmd *writeCommand) error {
-	return s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
+func (s *rootStorageDisk) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
+	byteAray := []byte(cmd.Body)
+	err := s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
 		Path:     cmd.Path,
-		Contents: &cmd.Body,
+		Contents: &byteAray,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &WriteValueResponse{Code: 200}, nil
 }
 
 func getDevenvDashboards() *rootStorageDisk {

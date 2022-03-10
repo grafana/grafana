@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -54,6 +53,9 @@ func newS3Storage(prefix string, name string, cfg *StorageS3Config) *rootStorage
 	return s
 }
 
-func (s *rootStorageS3) Write(ctx context.Context, cmd *writeCommand) error {
-	return fmt.Errorf("not implemented!!!")
+func (s *rootStorageS3) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
+	return &WriteValueResponse{
+		Code:    500,
+		Message: "unsupportted operation (S3)",
+	}, nil
 }
