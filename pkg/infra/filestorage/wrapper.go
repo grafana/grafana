@@ -113,15 +113,14 @@ var (
 
 func getParentFolderPath(path string) string {
 	if path == Delimiter || path == "" {
-		return Delimiter
+		return path
+	}
+
+	if !strings.Contains(path, Delimiter) {
+		return ""
 	}
 
 	path = strings.TrimSuffix(path, Delimiter)
-
-	if !strings.Contains(path, Delimiter) {
-		return Delimiter
-	}
-
 	split := strings.Split(path, Delimiter)
 	splitWithoutLastPart := split[:len(split)-1]
 	if len(splitWithoutLastPart) == 1 && split[0] == "" {

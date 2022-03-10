@@ -52,18 +52,18 @@ func TestFilestorage_getParentFolderPath(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "should return root if path has a single part - relative, suffix",
+			name:     "should return empty path if path has a single part - relative, suffix",
 			path:     "ab/",
-			expected: Delimiter,
+			expected: "",
 		},
 		{
-			name:     "should return root if path has a single part - relative, no suffix",
+			name:     "should return empty path if path has a single part - relative, no suffix",
 			path:     "ab",
-			expected: Delimiter,
+			expected: "",
 		},
 		{
 			name:     "should return root if path has a single part - abs, no suffix",
-			path:     "/public/",
+			path:     "/public",
 			expected: Delimiter,
 		},
 		{
