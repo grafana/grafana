@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -30,7 +30,7 @@ type Service struct {
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
 	features           featuremgmt.FeatureToggles
-	permissionsService ac.PermissionsService
+	permissionsService accesscontrol.PermissionsService
 
 	ptc               proxyTransportCache
 	dsDecryptionCache secureJSONDecryptionCache
@@ -58,7 +58,7 @@ type cachedDecryptedJSON struct {
 
 func ProvideService(
 	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
-	ac ac.AccessControl, permissionsServices ac.PermissionsServices,
+	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
 		Bus:            bus,
@@ -96,11 +96,11 @@ type DataSourceRetriever interface {
 
 // NewNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an id based scope.
-func NewNameScopeResolver(db DataSourceRetriever) (string, ac.AttributeScopeResolveFunc) {
+func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
 	prefix := datasources.ScopeDatasourcesProvider.GetResourceScopeName("")
 	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
-			return "", ac.ErrInvalidScope
+			return "", accesscontrol.ErrInvalidScope
 		}
 
 		dsName := initialScope[len(prefix):]
@@ -118,11 +118,11 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, ac.AttributeScopeReso
 
 // NewUidScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:uid:" into an id based scope.
-func NewUidScopeResolver(db DataSourceRetriever) (string, ac.AttributeScopeResolveFunc) {
+func NewUidScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
 	prefix := datasources.ScopeDatasourcesProvider.GetResourceScopeUID("")
 	dsUIDResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
-			return "", ac.ErrInvalidScope
+			return "", accesscontrol.ErrInvalidScope
 		}
 
 		dsUID := initialScope[len(prefix):]
@@ -162,10 +162,10 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), ac.SetResourcePermissionCommand{
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), accesscontrol.SetResourcePermissionCommand{
 			BuiltinRole: "Viewer",
 			Permission:  "Query",
-		}, ac.SetResourcePermissionCommand{
+		}, accesscontrol.SetResourcePermissionCommand{
 			BuiltinRole: "Editor",
 			Permission:  "Query",
 		}); err != nil {
