@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -259,17 +262,31 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 		return nil, fmt.Errorf("invalid path, do not include .json")
 	}
 
-	file, err := s.dash.GetFile(ctx, path+".json")
-	if err != nil {
+	var file *filestorage.File
+	var frame *data.Frame
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		f, err := s.dash.GetFile(ctx, path+".json")
+		file = f
+		return err
+	})
+	g.Go(func() error {
+		f, err := s.dash.ListFolder(ctx, path)
+		frame = f
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
+
 	if file == nil {
-		frame, err := s.dash.ListFolder(ctx, path)
 		if frame != nil {
 			return s.getFolderDashboard(path, frame)
 		}
 
-		return nil, err
+		return nil, errors.New("failed to load dashboard")
 	}
 
 	js, err := simplejson.NewJson(file.Contents)
