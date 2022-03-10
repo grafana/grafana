@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -61,7 +62,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	setupInMemFS := func() {
 		commonSetup()
 		bucket, _ := blob.OpenBucket(context.Background(), "mem://")
-		filestorage = NewCdkBlobStorage(testLogger, bucket, Delimiter, nil)
+		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
 	//setupSqlFS := func() {
@@ -85,6 +86,27 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
+	setupLocalFsNestedPath := func() {
+		commonSetup()
+		tmpDir, err := ioutil.TempDir("", "")
+		tempDir = tmpDir
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		nestedPath := path.Join("a", "b")
+		err = os.MkdirAll(path.Join(tmpDir, nestedPath), os.ModePerm)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		bucket, err := blob.OpenBucket(context.Background(), fmt.Sprintf("file://%s", tmpDir))
+		if err != nil {
+			t.Fatal(err)
+		}
+		filestorage = NewCdkBlobStorage(testLogger, bucket, nestedPath+Delimiter, nil)
+	}
+
 	backends := []struct {
 		setup func()
 		name  string
@@ -92,6 +114,10 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		{
 			setup: setupLocalFs,
 			name:  "Local FS",
+		},
+		{
+			setup: setupLocalFsNestedPath,
+			name:  "Local FS with nested path",
 		},
 		{
 			setup: setupInMemFS,

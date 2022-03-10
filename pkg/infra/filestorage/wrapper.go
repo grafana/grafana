@@ -15,13 +15,96 @@ import (
 
 var (
 	directoryMarker = ".___gf_dir_marker___"
-	pathRegex       = regexp.MustCompile(`(^/$)|(^(/[A-Za-z0-9!\-_.*'()]+)+$)`)
+	pathRegex       = regexp.MustCompile(`(^/$)|(^(/[A-Za-z0-9!\-_.*'() ]+)+$)`)
 )
 
 type wrapper struct {
 	log         log.Logger
 	wrapped     FileStorage
 	pathFilters *PathFilters
+	rootFolder  string
+}
+
+func addRootFolderToFilters(pathFilters *PathFilters, rootFolder string) *PathFilters {
+	if pathFilters == nil {
+		return pathFilters
+	}
+
+	for i := range pathFilters.disallowedPaths {
+		pathFilters.disallowedPaths[i] = rootFolder + strings.TrimPrefix(pathFilters.disallowedPaths[i], Delimiter)
+	}
+	for i := range pathFilters.disallowedPrefixes {
+		pathFilters.disallowedPrefixes[i] = rootFolder + strings.TrimPrefix(pathFilters.disallowedPrefixes[i], Delimiter)
+	}
+	for i := range pathFilters.allowedPaths {
+		pathFilters.allowedPaths[i] = rootFolder + strings.TrimPrefix(pathFilters.allowedPaths[i], Delimiter)
+	}
+	for i := range pathFilters.allowedPrefixes {
+		pathFilters.allowedPrefixes[i] = rootFolder + strings.TrimPrefix(pathFilters.allowedPrefixes[i], Delimiter)
+	}
+
+	return pathFilters
+}
+
+func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
+	if new.allowedPrefixes != nil {
+		if base.allowedPrefixes != nil {
+			base.allowedPrefixes = append(base.allowedPrefixes, new.allowedPrefixes...)
+		} else {
+			copiedPrefixes := make([]string, len(new.allowedPrefixes))
+			copy(copiedPrefixes, new.allowedPrefixes)
+			base.allowedPrefixes = copiedPrefixes
+		}
+	}
+
+	if new.allowedPaths != nil {
+		if base.allowedPaths != nil {
+			base.allowedPaths = append(base.allowedPaths, new.allowedPaths...)
+		} else {
+			copiedPaths := make([]string, len(new.allowedPaths))
+			copy(copiedPaths, new.allowedPaths)
+			base.allowedPaths = copiedPaths
+		}
+	}
+
+	if new.disallowedPrefixes != nil {
+		if base.disallowedPrefixes != nil {
+			base.disallowedPrefixes = append(base.disallowedPrefixes, new.disallowedPrefixes...)
+		} else {
+			copiedPrefixes := make([]string, len(new.disallowedPrefixes))
+			copy(copiedPrefixes, new.disallowedPrefixes)
+			base.disallowedPrefixes = copiedPrefixes
+		}
+	}
+
+	if new.disallowedPaths != nil {
+		if base.disallowedPaths != nil {
+			base.disallowedPaths = append(base.disallowedPaths, new.disallowedPaths...)
+		} else {
+			copiedPaths := make([]string, len(new.disallowedPaths))
+			copy(copiedPaths, new.disallowedPaths)
+			base.disallowedPaths = copiedPaths
+		}
+	}
+
+	return base
+}
+
+func newWrapper(log log.Logger, wrapped FileStorage, pathFilters *PathFilters, rootFolder string) FileStorage {
+	var rootedPathFilters *PathFilters
+	if pathFilters != nil {
+		copied := *pathFilters
+		rootedPathFilters = addRootFolderToFilters(&copied, rootFolder)
+	} else {
+		rootedPathFilters = allowAllPathFilters()
+	}
+
+	return &wrapper{
+		log:         log,
+		wrapped:     wrapped,
+		pathFilters: rootedPathFilters,
+		rootFolder:  rootFolder,
+	}
 }
 
 var (
@@ -93,6 +176,14 @@ func (b wrapper) validatePath(path string) error {
 	return nil
 }
 
+func (b wrapper) addRoot(path string) string {
+	return b.rootFolder + strings.TrimPrefix(path, Delimiter)
+}
+
+func (b wrapper) removeRoot(path string) string {
+	return Join(Delimiter, strings.TrimPrefix(path, b.rootFolder))
+}
+
 func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 	if err := b.validatePath(path); err != nil {
 		return nil, err
@@ -102,7 +193,11 @@ func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 		return nil, nil
 	}
 
-	return b.wrapped.Get(ctx, path)
+	file, err := b.wrapped.Get(ctx, b.addRoot(path))
+	if file != nil {
+		file.FullPath = b.removeRoot(file.FullPath)
+	}
+	return file, err
 }
 func (b wrapper) Delete(ctx context.Context, path string) error {
 	if err := b.validatePath(path); err != nil {
@@ -113,7 +208,7 @@ func (b wrapper) Delete(ctx context.Context, path string) error {
 		return nil
 	}
 
-	return b.wrapped.Delete(ctx, path)
+	return b.wrapped.Delete(ctx, b.addRoot(path))
 }
 
 func detectContentType(path string, originalGuess string) string {
@@ -146,69 +241,54 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 		file.MimeType = detectContentType(file.Path, "")
 	}
 
-	return b.wrapped.Upsert(ctx, file)
+	return b.wrapped.Upsert(ctx, &UpsertFileCommand{
+		Path:       b.addRoot(file.Path),
+		MimeType:   file.MimeType,
+		Contents:   file.Contents,
+		Properties: file.Properties,
+	})
 }
 
-func (b wrapper) withDefaults(options *ListOptions, folderQuery bool) *ListOptions {
+func (b wrapper) pagingOptionsWithDefaults(paging *Paging) *Paging {
+	if paging == nil {
+		return &Paging{
+			First: 100,
+		}
+	}
+
+	if paging.First <= 0 {
+		paging.First = 100
+	}
+	if paging.After != "" {
+		paging.After = b.addRoot(paging.After)
+	}
+	return paging
+}
+
+func (b wrapper) listOptionsWithDefaults(options *ListOptions, folderQuery bool) *ListOptions {
 	if options == nil {
 		options = &ListOptions{}
 		options.Recursive = folderQuery
-		if b.pathFilters != nil {
-			options.PathFilters = b.pathFilters
-		}
+		options.PathFilters = b.pathFilters
 
-		return options
+		return &ListOptions{
+			Recursive:   folderQuery,
+			PathFilters: b.pathFilters,
+		}
 	}
 
 	if options.PathFilters == nil {
-		if b.pathFilters != nil {
-			options.PathFilters = b.pathFilters
-		} else {
-			options.PathFilters = allowAllPathFilters()
+		return &ListOptions{
+			Recursive:   options.Recursive,
+			PathFilters: b.pathFilters,
 		}
 	}
 
-	if b.pathFilters != nil && b.pathFilters.allowedPrefixes != nil {
-		if options.allowedPrefixes != nil {
-			options.allowedPrefixes = append(options.allowedPrefixes, b.pathFilters.allowedPrefixes...)
-		} else {
-			copiedPrefixes := make([]string, len(b.pathFilters.allowedPrefixes))
-			copy(copiedPrefixes, b.pathFilters.allowedPrefixes)
-			options.allowedPrefixes = copiedPrefixes
-		}
+	rootedFilters := addRootFolderToFilters(options.PathFilters, b.rootFolder)
+	return &ListOptions{
+		Recursive:   options.Recursive,
+		PathFilters: addPathFilters(rootedFilters, b.pathFilters),
 	}
-
-	if b.pathFilters != nil && b.pathFilters.allowedPaths != nil {
-		if options.allowedPaths != nil {
-			options.allowedPaths = append(options.allowedPaths, b.pathFilters.allowedPaths...)
-		} else {
-			copiedPaths := make([]string, len(b.pathFilters.allowedPaths))
-			copy(copiedPaths, b.pathFilters.allowedPaths)
-			options.allowedPaths = copiedPaths
-		}
-	}
-
-	if b.pathFilters != nil && b.pathFilters.disallowedPrefixes != nil {
-		if options.disallowedPrefixes != nil {
-			options.disallowedPrefixes = append(options.disallowedPrefixes, b.pathFilters.disallowedPrefixes...)
-		} else {
-			copiedPrefixes := make([]string, len(b.pathFilters.disallowedPrefixes))
-			copy(copiedPrefixes, b.pathFilters.disallowedPrefixes)
-			options.disallowedPrefixes = copiedPrefixes
-		}
-	}
-
-	if b.pathFilters != nil && b.pathFilters.disallowedPaths != nil {
-		if options.disallowedPaths != nil {
-			options.disallowedPaths = append(options.disallowedPaths, b.pathFilters.disallowedPaths...)
-		} else {
-			copiedPaths := make([]string, len(b.pathFilters.disallowedPaths))
-			copy(copiedPaths, b.pathFilters.disallowedPaths)
-			options.disallowedPaths = copiedPaths
-		}
-	}
-
-	return options
 }
 
 func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
@@ -216,15 +296,19 @@ func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, opt
 		return nil, err
 	}
 
-	if paging == nil {
-		paging = &Paging{
-			First: 100,
+	pathWithRoot := b.addRoot(path)
+	resp, err := b.wrapped.ListFiles(ctx, pathWithRoot, b.pagingOptionsWithDefaults(paging), b.listOptionsWithDefaults(options, false))
+
+	if resp != nil && resp.Files != nil {
+		if resp.LastPath != "" {
+			resp.LastPath = b.removeRoot(resp.LastPath)
 		}
-	} else if paging.First <= 0 {
-		paging.First = 100
+
+		for i := 0; i < len(resp.Files); i++ {
+			resp.Files[i].FullPath = b.removeRoot(resp.Files[i].FullPath)
+		}
 	}
 
-	resp, err := b.wrapped.ListFiles(ctx, path, paging, b.withDefaults(options, false))
 	if err != nil {
 		return resp, err
 	}
@@ -240,6 +324,7 @@ func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, opt
 	}
 
 	if file != nil {
+		file.FileMetadata.FullPath = b.removeRoot(file.FileMetadata.FullPath)
 		return &ListFilesResponse{
 			Files:    []FileMetadata{file.FileMetadata},
 			HasMore:  false,
@@ -255,7 +340,13 @@ func (b wrapper) ListFolders(ctx context.Context, path string, options *ListOpti
 		return nil, err
 	}
 
-	return b.wrapped.ListFolders(ctx, path, b.withDefaults(options, true))
+	folders, err := b.wrapped.ListFolders(ctx, b.addRoot(path), b.listOptionsWithDefaults(options, true))
+	if folders != nil {
+		for i := 0; i < len(folders); i++ {
+			folders[i].FullPath = b.removeRoot(folders[i].FullPath)
+		}
+	}
+	return folders, err
 }
 
 func (b wrapper) CreateFolder(ctx context.Context, path string) error {
@@ -267,7 +358,7 @@ func (b wrapper) CreateFolder(ctx context.Context, path string) error {
 		return nil
 	}
 
-	return b.wrapped.CreateFolder(ctx, path)
+	return b.wrapped.CreateFolder(ctx, b.addRoot(path))
 }
 
 func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
@@ -288,7 +379,7 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 		return fmt.Errorf("folder %s is not empty - cant remove it", path)
 	}
 
-	return b.wrapped.DeleteFolder(ctx, path)
+	return b.wrapped.DeleteFolder(ctx, b.addRoot(path))
 }
 
 func (b wrapper) isFolderEmpty(ctx context.Context, path string) (bool, error) {

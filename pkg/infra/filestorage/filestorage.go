@@ -46,9 +46,8 @@ func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg) (File
 		grafanaDsStorage = &wrapper{
 			log: grafanaDsStorageLogger,
 			wrapped: cdkBlobStorage{
-				log:        grafanaDsStorageLogger,
-				bucket:     bucket,
-				rootFolder: "",
+				log:    grafanaDsStorageLogger,
+				bucket: bucket,
 			},
 			pathFilters: &PathFilters{allowedPrefixes: prefixes},
 		}
