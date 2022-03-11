@@ -153,9 +153,10 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var sess *xorm.Session
 
+		quotedUser := s.sqlStore.Dialect.Quote("user")
 		sess = dbSession.
-			Join("inner", "user", "user.id = api_key.service_account_id").
-			Where("user.org_id=? AND user.id=?", orgID, serviceAccountID).
+			Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
+			Where(quotedUser+".org_id=? AND "+quotedUser+".id=?", orgID, serviceAccountID).
 			Asc("name")
 
 		return sess.Find(&result)

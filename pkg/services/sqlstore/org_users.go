@@ -298,7 +298,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 			}
 		} else if cmd.ShouldDeleteOrphanedUser {
 			// no other orgs, delete the full user
-			if err := deleteUserInTransaction(sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
+			if err := deleteUserInTransaction(ss, sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
 				return err
 			}
 
