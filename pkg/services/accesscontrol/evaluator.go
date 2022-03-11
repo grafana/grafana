@@ -43,10 +43,14 @@ func (p permissionEvaluator) Evaluate(permissions map[string][]string) (bool, er
 	}
 
 	for _, target := range p.Scopes {
+		var err error
 		var matches bool
 
 		for _, scope := range userScopes {
-			matches = EvalScope(scope, target)
+			matches, err = match(scope, target)
+			if err != nil {
+				return false, err
+			}
 			if matches {
 				break
 			}
@@ -59,24 +63,30 @@ func (p permissionEvaluator) Evaluate(permissions map[string][]string) (bool, er
 	return true, nil
 }
 
-func EvalScope(scope, target string) bool {
+func match(scope, target string) (bool, error) {
 	if scope == "" {
-		return false
+		return false, nil
 	}
 
 	if !ValidateScope(scope) {
-		return false
+		logger.Error(
+			"invalid scope",
+			"scope", scope,
+			"reason", "scopes should not contain meta-characters like * or ?, except in the last position",
+		)
+		return false, nil
 	}
 
 	prefix, last := scope[:len(scope)-1], scope[len(scope)-1]
 	//Prefix match
 	if last == '*' {
 		if strings.HasPrefix(target, prefix) {
-			return true
+			logger.Debug("matched scope", "user scope", scope, "target scope", target)
+			return true, nil
 		}
 	}
 
-	return scope == target
+	return scope == target, nil
 }
 
 func (p permissionEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
