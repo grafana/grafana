@@ -26,7 +26,6 @@ export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore
 //
 
 type SyncHistoryUpdatesOptions = {
-  addedQuery?: RichHistoryQuery;
   updatedQuery?: RichHistoryQuery;
   deletedId?: string;
 };
@@ -34,16 +33,10 @@ type SyncHistoryUpdatesOptions = {
 /**
  * Updates current state in both Explore panes after changing or deleting a query history item
  */
-const updateRichHistoryState = ({
-  addedQuery,
-  updatedQuery,
-  deletedId,
-}: SyncHistoryUpdatesOptions): ThunkResult<void> => {
+const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesOptions): ThunkResult<void> => {
   return async (dispatch, getState) => {
     forEachExplorePane(getState().explore, (item, exploreId) => {
-      // add
-      let newRichHistory = addedQuery ? [addedQuery, ...item.richHistory] : item.richHistory;
-      newRichHistory = newRichHistory
+      const newRichHistory = item.richHistory
         // update
         .map((query) => (query.id === updatedQuery?.id ? updatedQuery : query))
         // or remove
@@ -64,7 +57,7 @@ export const addHistoryItem = (
   queries: DataQuery[]
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { newRichHistory, richHistoryStorageFull, limitExceeded } = await addToRichHistory(
+    const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
       datasourceUid,
       datasourceName,
       queries,
@@ -73,9 +66,6 @@ export const addHistoryItem = (
       !getState().explore.richHistoryStorageFull,
       !getState().explore.richHistoryLimitExceededWarningShown
     );
-    if (newRichHistory) {
-      dispatch(updateRichHistoryState({ addedQuery: newRichHistory }));
-    }
     if (richHistoryStorageFull) {
       dispatch(richHistoryStorageFullAction());
     }
