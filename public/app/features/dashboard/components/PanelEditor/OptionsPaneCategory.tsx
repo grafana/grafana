@@ -103,7 +103,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <Button
             fill="text"
-            aria-expanded="true"
+            aria-expanded={isExpanded}
             aria-controls={id}
             className={cx(styles.toggle, 'editor-options-group-toggle')}
             icon={isExpanded ? 'angle-down' : 'angle-right'}
