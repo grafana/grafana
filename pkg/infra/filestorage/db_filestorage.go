@@ -32,15 +32,11 @@ type dbFileStorage struct {
 	log log.Logger
 }
 
-func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, pathFilters *PathFilters) FileStorage {
-	return &wrapper{
+func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, pathFilters *PathFilters, rootFolder string) FileStorage {
+	return newWrapper(log, &dbFileStorage{
 		log: log,
-		wrapped: &dbFileStorage{
-			log: log,
-			db:  db,
-		},
-		pathFilters: pathFilters,
-	}
+		db:  db,
+	}, pathFilters, rootFolder)
 }
 
 func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, lowerCasePaths []string) (map[string]map[string]string, error) {
@@ -248,8 +244,12 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 		}
 		sess.Where("LOWER(path) NOT LIKE ?", fmt.Sprintf("%s%s%s", "%", Delimiter, directoryMarker))
 
-		for _, prefix := range options.PathFilters.allowedPrefixes {
-			sess.Where("LOWER(path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
+		if options.PathFilters.isDenyAll() {
+			sess.Where("1 == 2")
+		} else {
+			for _, prefix := range options.PathFilters.allowedPrefixes {
+				sess.Where("LOWER(path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
+			}
 		}
 
 		sess.OrderBy("path")
@@ -330,8 +330,12 @@ func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string,
 			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(parentFolderPath))
 		}
 
-		for _, prefix := range options.PathFilters.allowedPrefixes {
-			sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
+		if options.PathFilters.isDenyAll() {
+			sess.Where("1 == 2")
+		} else {
+			for _, prefix := range options.PathFilters.allowedPrefixes {
+				sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
+			}
 		}
 
 		sess.OrderBy("parent_folder_path")
