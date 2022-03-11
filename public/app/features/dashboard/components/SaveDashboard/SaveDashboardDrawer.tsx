@@ -22,7 +22,6 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 import { useForm, useWatch } from 'react-hook-form';
-import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardModalProps } from './types';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DiffViewer } from '../VersionHistory/DiffViewer';
@@ -180,8 +179,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   }, [dashboard, previous.value, currentValue.saveTimerange, currentValue.saveVariables]);
 
   const [showDiff, setShowDiff] = useState(false);
-
-  const [error, _setError] = useState<Error>();
   const [rsp, setRsp] = useState<WriteValueResponse>();
   const [saving, setSaving] = useState(false);
 
@@ -268,25 +265,36 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     if (storage.loading) {
       return <Spinner />;
     }
-    return <div>???</div>;
+    return (
+      <HorizontalGroup>
+        {icon}
+        {storage.value?.status?.config.name}
+      </HorizontalGroup>
+    );
   };
 
   return (
-    <>
-      {error && (
-        <SaveDashboardErrorProxy
-          error={error}
-          dashboard={dashboard}
-          dashboardSaveModel={dashboard} // or clone?
-          onDismiss={onDismiss}
-        />
-      )}
-      {!error && (
-        <Drawer
-          title={dashboard.title}
-          onClose={onDismiss}
-          width={'40%'}
-          subtitle={
+    <form onSubmit={handleSubmit(doSave)}>
+      <Drawer
+        title={dashboard.title}
+        onClose={onDismiss}
+        width={'40%'}
+        subtitle={
+          <>
+            {hasTimeChanged && (
+              <Checkbox
+                {...register('saveTimerange')}
+                label="Save current time range as dashboard default"
+                aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+              />
+            )}
+            {hasVariableChanged && (
+              <Checkbox
+                {...register('saveVariables')}
+                label="Save current variable values as dashboard default"
+                aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+              />
+            )}
             <TabsBar className={styles.tabsBar}>
               <Tab label={'Save'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
               {data.hasChanges && (
@@ -298,138 +306,114 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                 />
               )}
             </TabsBar>
-          }
-          expandable
-        >
-          <CustomScrollbar autoHeightMin="100%">
-            <TabContent>
-              {showDiff && !rsp && (
-                <>
-                  {previous.loading && <Spinner />}
-                  {!data.hasChanges && <div>No changes made to this dashboard</div>}
-                  {data.diff && data.hasChanges && (
-                    <div>
-                      <div className={styles.spacer}>
-                        {Object.entries(data.diff).map(([key, diffs]) => (
-                          <DiffGroup diffs={diffs} key={key} title={key} />
-                        ))}
-                      </div>
-
-                      <h4>JSON Diff</h4>
-                      <DiffViewer oldValue={JSON.stringify(previous.value, null, 2)} newValue={data.cloneJSON!} />
+          </>
+        }
+        expandable
+      >
+        <CustomScrollbar autoHeightMin="100%">
+          <TabContent>
+            {showDiff && !rsp && (
+              <>
+                {previous.loading && <Spinner />}
+                {!data.hasChanges && <div>No changes made to this dashboard</div>}
+                {data.diff && data.hasChanges && (
+                  <div>
+                    <div className={styles.spacer}>
+                      {Object.entries(data.diff).map(([key, diffs]) => (
+                        <DiffGroup diffs={diffs} key={key} title={key} />
+                      ))}
                     </div>
+
+                    <h4>JSON Diff</h4>
+                    <DiffViewer oldValue={JSON.stringify(previous.value, null, 2)} newValue={data.cloneJSON!} />
+                  </div>
+                )}
+              </>
+            )}
+            {!showDiff && !rsp && (
+              <div>
+                <>
+                  <Field label="Location">{renderLocationInfo()}</Field>
+                  {isDirect && (
+                    <>
+                      <Alert title="Writing directly to a non-versioned file system" severity="info" />
+                    </>
                   )}
+
+                  {isNew && (
+                    <Field label="Dashboard title" invalid={!!errors.newDashboardTitle} error="Title is required">
+                      <Input {...register('newDashboardTitle', { required: true })} placeholder="Set dashboard title" />
+                    </Field>
+                  )}
+
+                  {storage.value?.isGit && (
+                    <Field label="Workflow">
+                      <InputControl
+                        name="action"
+                        control={control}
+                        render={({ field }) => <RadioButtonGroup {...field} options={actionOptions} />}
+                      />
+                    </Field>
+                  )}
+
+                  {isGit && currentValue.action === 'pr' && (
+                    <>
+                      <Field label="Pull request title" invalid={!!errors.title} error="Pull requests need a title">
+                        <Input {...register('title', { required: isGit })} placeholder="Set title on pull request" />
+                      </Field>
+                    </>
+                  )}
+
+                  {!isDirect && (
+                    <Field label="Message" invalid={!!errors.message} error="Message is required">
+                      <TextArea
+                        {...register('message', { required: isGit })}
+                        rows={5}
+                        placeholder="Add a note to describe your changes."
+                      />
+                    </Field>
+                  )}
+
+                  <HorizontalGroup>
+                    <Button
+                      type="submit"
+                      aria-label="Save dashboard button"
+                      disabled={!data.hasChanges && !isNew}
+                      icon={saving ? 'fa fa-spinner' : undefined}
+                    >
+                      {saving ? '' : getActionName()}
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
+                      Cancel
+                    </Button>
+                  </HorizontalGroup>
+                  {!data.hasChanges && !isNew && <div className={styles.nothing}>No changes to save</div>}
                 </>
-              )}
-              {!showDiff && !rsp && (
-                <div>
-                  <form onSubmit={handleSubmit(doSave)}>
-                    <>
-                      {hasTimeChanged && (
-                        <Checkbox
-                          {...register('saveTimerange')}
-                          label="Save current time range as dashboard default"
-                          aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-                        />
-                      )}
-                      {hasVariableChanged && (
-                        <Checkbox
-                          {...register('saveVariables')}
-                          label="Save current variable values as dashboard default"
-                          aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-                        />
-                      )}
-                      {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
-
-                      <Field label="Location">{renderLocationInfo()}</Field>
-                      {isDirect && (
-                        <>
-                          <Alert title="Writing directly to a non-versioned file system" severity="info" />
-                        </>
-                      )}
-
-                      {isNew && (
-                        <Field label="Dashboard title" invalid={!!errors.newDashboardTitle} error="Title is required">
-                          <Input
-                            {...register('newDashboardTitle', { required: true })}
-                            placeholder="Set dashboard title"
-                          />
-                        </Field>
-                      )}
-
-                      {storage.value?.isGit && (
-                        <Field label="Workflow">
-                          <InputControl
-                            name="action"
-                            control={control}
-                            render={({ field }) => <RadioButtonGroup {...field} options={actionOptions} />}
-                          />
-                        </Field>
-                      )}
-
-                      {isGit && currentValue.action === 'pr' && (
-                        <>
-                          <Field label="Pull request title" invalid={!!errors.title} error="Pull requests need a title">
-                            <Input
-                              {...register('title', { required: isGit })}
-                              placeholder="Set title on pull request"
-                            />
-                          </Field>
-                        </>
-                      )}
-
-                      {!isDirect && (
-                        <Field label="Message" invalid={!!errors.message} error="Message is required">
-                          <TextArea
-                            {...register('message', { required: isGit })}
-                            rows={5}
-                            placeholder="Add a note to describe your changes."
-                          />
-                        </Field>
-                      )}
-
-                      <HorizontalGroup>
-                        <Button
-                          type="submit"
-                          aria-label="Save dashboard button"
-                          disabled={!data.hasChanges && !isNew}
-                          icon={saving ? 'fa fa-spinner' : undefined}
-                        >
-                          {saving ? '' : getActionName()}
-                        </Button>
-                        <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
-                          Cancel
-                        </Button>
-                      </HorizontalGroup>
-                      {!data.hasChanges && !isNew && <div className={styles.nothing}>No changes to save</div>}
-                    </>
-                  </form>
-                </div>
-              )}
-              {rsp && (
-                <div>
-                  {false && <pre>{JSON.stringify(rsp, null, 2)}</pre>}
-                  {rsp.url && (
-                    <>
-                      <Alert title={'Pull request created'} severity="success">
-                        <VerticalGroup>
-                          <a href={rsp.url}>{rsp.url}</a>
-                        </VerticalGroup>
-                      </Alert>
-                      <HorizontalGroup>
-                        <Button type="button" variant="secondary" onClick={onDismiss}>
-                          Close
-                        </Button>
-                      </HorizontalGroup>
-                    </>
-                  )}
-                </div>
-              )}
-            </TabContent>
-          </CustomScrollbar>
-        </Drawer>
-      )}
-    </>
+              </div>
+            )}
+            {rsp && (
+              <div>
+                {false && <pre>{JSON.stringify(rsp, null, 2)}</pre>}
+                {rsp.url && (
+                  <>
+                    <Alert title={'Pull request created'} severity="success">
+                      <VerticalGroup>
+                        <a href={rsp.url}>{rsp.url}</a>
+                      </VerticalGroup>
+                    </Alert>
+                    <HorizontalGroup>
+                      <Button type="button" variant="secondary" onClick={onDismiss}>
+                        Close
+                      </Button>
+                    </HorizontalGroup>
+                  </>
+                )}
+              </div>
+            )}
+          </TabContent>
+        </CustomScrollbar>
+      </Drawer>
+    </form>
   );
 };
 
