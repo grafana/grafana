@@ -17,10 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -360,12 +358,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
 	}
 
-	if newDashboard {
-		if err := hs.setDashboardPermissions(c, cmd, dashboard); err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
-		}
-	}
-
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
 	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
 	if err != nil {
@@ -381,35 +373,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		"uid":     dashboard.Uid,
 		"url":     dashboard.GetUrl(),
 	})
-}
-
-func (hs *HTTPServer) setDashboardPermissions(c *models.ReqContext, cmd models.SaveDashboardCommand, dash *models.Dashboard) error {
-	inFolder := dash.FolderId > 0
-	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		resourceID := strconv.FormatInt(dash.Id, 10)
-		svc := hs.permissionServices.GetDashboardService()
-
-		permissions := []accesscontrol.SetResourcePermissionCommand{
-			{UserID: c.UserId, Permission: models.PERMISSION_ADMIN.String()},
-		}
-
-		if !inFolder {
-			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
-			}...)
-		}
-		_, err := svc.SetPermissions(c.Req.Context(), c.OrgId, resourceID, permissions...)
-		if err != nil {
-			return err
-		}
-	} else if hs.Cfg.EditorsCanAdmin {
-		if err := hs.dashboardService.MakeUserAdmin(c.Req.Context(), cmd.OrgId, cmd.UserId, dash.Id, !inFolder); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // GetHomeDashboard returns the home dashboard.

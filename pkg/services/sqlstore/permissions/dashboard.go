@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -82,7 +83,7 @@ type AccessControlDashboardPermissionFilter struct {
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
-	folderAction := accesscontrol.ActionFoldersRead
+	folderAction := dashboards.ActionFoldersRead
 	dashboardAction := accesscontrol.ActionDashboardsRead
 	if f.PermissionLevel == models.PERMISSION_EDIT {
 		folderAction = accesscontrol.ActionDashboardsCreate

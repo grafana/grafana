@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -35,21 +36,21 @@ var dashboardPermissionTranslation = map[models.PermissionType][]string{
 
 var folderPermissionTranslation = map[models.PermissionType][]string{
 	models.PERMISSION_VIEW: append(dashboardPermissionTranslation[models.PERMISSION_VIEW], []string{
-		ac.ActionFoldersRead,
+		dashboards.ActionFoldersRead,
 	}...),
 	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
-		ac.ActionFoldersRead,
-		ac.ActionFoldersWrite,
-		ac.ActionFoldersCreate,
-		ac.ActionFoldersDelete,
+		dashboards.ActionFoldersRead,
+		dashboards.ActionFoldersWrite,
+		dashboards.ActionFoldersCreate,
+		dashboards.ActionFoldersDelete,
 	}...),
 	models.PERMISSION_ADMIN: append(dashboardPermissionTranslation[models.PERMISSION_ADMIN], []string{
-		ac.ActionFoldersRead,
-		ac.ActionFoldersWrite,
-		ac.ActionFoldersCreate,
-		ac.ActionFoldersDelete,
-		ac.ActionFoldersPermissionsRead,
-		ac.ActionFoldersPermissionsWrite,
+		dashboards.ActionFoldersRead,
+		dashboards.ActionFoldersWrite,
+		dashboards.ActionFoldersCreate,
+		dashboards.ActionFoldersDelete,
+		dashboards.ActionFoldersPermissionsRead,
+		dashboards.ActionFoldersPermissionsWrite,
 	}...),
 }
 
@@ -202,7 +203,7 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.PermissionType, isFolder bool) []*ac.Permission {
 	if isFolder {
 		actions := folderPermissionTranslation[p]
-		scope := ac.Scope("folders", "id", strconv.FormatInt(id, 10))
+		scope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
 		permissions := make([]*ac.Permission, 0, len(actions))
 		for _, action := range actions {
 			permissions = append(permissions, &ac.Permission{Action: action, Scope: scope})

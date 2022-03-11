@@ -60,9 +60,32 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
+
+### Tempo search
+
+Tempo search is an experimental feature behind a feature toggle. Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application’s instrumentation, such as HTTP status code and customer ID.
+
+{{< figure src="/static/img/docs/explore/tempo-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo search feature with a trace rendered in the right panel" >}}
+
+#### Search recent traces
+
+Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data, and this search is disabled. Enable this search capability by setting the `tempoSearch` feature toggle.
+
+You must also configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
+
+#### Search backend datastore
+
+Tempo includes the ability to search the entire backend datastore. You can enable this capability by setting the `tempoSearch` and `tempoBackendSearch` feature toggles.
+
+You must also configure your Tempo data source to use this feature.Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
+
+### Loki search
+
 You can search for traces if you set up the trace to logs setting in the data source configuration page. To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the search tab" >}}
+
+### Trace ID search
 
 To query a particular trace, select the **TraceID** query type, and then put the ID into the Trace ID field.
 
