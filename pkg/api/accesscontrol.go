@@ -337,6 +337,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ac.ActionFilesRead, Scope: "files:path:/it-B/simple.json"},
 				{Action: ac.ActionFilesRead, Scope: "files:path:!/it-A/*"},
 				{Action: ac.ActionFilesRead, Scope: "files:path:/s3/*"},
+				{Action: ac.ActionFilesRead, Scope: "files:path:!/s3/nested/simple_nested.json"},
 				{Action: ac.ActionFilesRead, Scope: "files:path:/gcs/*"},
 				{Action: ac.ActionFilesRead, Scope: "files:path:!/dev-dashboards/datasource-elasticsearch/*"},
 				{Action: ac.ActionFilesRead, Scope: "files:path:!/dev-dashboards/datasource-mysql/*"},
