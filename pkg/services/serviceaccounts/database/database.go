@@ -55,28 +55,25 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	}, nil
 }
 
-func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
+func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return deleteServiceAccountInTransaction(sess, orgID, serviceaccountID)
-	})
-}
-
-func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceAccountID int64) error {
-	user := models.User{}
-	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = true`, orgID, serviceAccountID).Get(&user)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return serviceaccounts.ErrServiceAccountNotFound
-	}
-	for _, sql := range sqlstore.ServiceAccountDeletions() {
-		_, err := sess.Exec(sql, user.Id)
+		user := models.User{}
+		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
+			orgID, serviceAccountID, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
+		if !has {
+			return serviceaccounts.ErrServiceAccountNotFound
+		}
+		for _, sql := range sqlstore.ServiceAccountDeletions() {
+			_, err := sess.Exec(sql, user.Id)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
