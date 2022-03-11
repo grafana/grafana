@@ -120,14 +120,12 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/silence/new',
-    roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
     ),
   },
   {
     path: '/alerting/silence/:id/edit',
-    roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
     ),
