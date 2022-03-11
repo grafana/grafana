@@ -9,6 +9,7 @@ import {
   dateTime,
   isValidDate,
   GrafanaTheme2,
+  AppEvents,
 } from '@grafana/data';
 import { useDebounce } from 'react-use';
 import { config } from '@grafana/runtime';
@@ -27,6 +28,10 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { parseQueryParamMatchers } from '../../utils/matchers';
 import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { AccessControlAction } from '../../../../../types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { Redirect } from 'react-router-dom';
+import appEvents from 'app/core/app_events';
 
 interface Props {
   silence?: Silence;
@@ -101,6 +106,12 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
+  const userHasEditPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceUpdate, contextSrv.isEditor);
+  const userHasCreatePermissions = contextSrv.hasAccess(
+    AccessControlAction.AlertingInstanceCreate,
+    contextSrv.isEditor
+  );
+
   const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
 
   useCleanup((state) => state.unifiedAlerting.updateSilence);
@@ -160,6 +171,13 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
+
+  if (!userHasEditPermissions && !userHasCreatePermissions) {
+    appEvents.emit(AppEvents.alertError, [
+      'You do not have permission to view this page, contact your administrator to gain access',
+    ]);
+    return <Redirect to="/alerting/list" />;
+  }
 
   return (
     <FormProvider {...formAPI}>
