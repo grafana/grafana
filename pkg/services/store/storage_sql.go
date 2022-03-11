@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -83,8 +84,20 @@ func newSQLStorage(prefix string, name string, cfg *StorageSQLConfig, sql *sqlst
 }
 
 func (s *rootStorageSQL) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
-	grafanaStorageLogger.Info("trying to write at" + cmd.Path)
-	return nil, fmt.Errorf("not implemented")
+	byteAray := []byte(cmd.Body)
+
+	path := cmd.Path
+	if !strings.HasPrefix(path, filestorage.Delimiter) {
+		path = filestorage.Delimiter + path
+	}
+	err := s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
+		Path:     path,
+		Contents: &byteAray,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &WriteValueResponse{Code: 200}, nil
 }
 
 func (s *rootStorageSQL) Sync() error {
