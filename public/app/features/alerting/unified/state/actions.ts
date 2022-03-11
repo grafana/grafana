@@ -11,10 +11,11 @@ import {
   SilenceCreatePayload,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
+import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
+  PromBasedDataSource,
   PromRulerMode,
   RuleIdentifier,
   RuleNamespace,
@@ -23,6 +24,7 @@ import {
 } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
+  PromApplication,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
@@ -53,10 +55,12 @@ import {
   fetchRulerRulesNamespace,
   FetchRulerRulesFilter,
   setRulerRuleGroup,
+  RulerDataSourceConfig,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import {
   getAllRulesSourceNames,
+  getRulesDataSource,
   getRulesDataSources,
   getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
@@ -141,13 +145,16 @@ export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
 
 export const fetchRulerRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRulerRules',
-  ({
-    rulesSourceName,
-    filter,
-  }: {
-    rulesSourceName: string;
-    filter?: FetchRulerRulesFilter;
-  }): Promise<RulerRulesConfigDTO | null> => {
+  (
+    {
+      rulesSourceName,
+      filter,
+    }: {
+      rulesSourceName: string;
+      filter?: FetchRulerRulesFilter;
+    },
+    { getState }
+  ): Promise<RulerRulesConfigDTO | null> => {
     return withSerializedError(fetchRulerRules(rulesSourceName, filter));
   }
 );
@@ -170,34 +177,61 @@ export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkRe
   };
 }
 
-export const fetchPromBuildInfoAction = createAsyncThunk('unifiedalerting/fetchPromBuildinfo', async (_, thunkApi) => {
-  const dsBuildInfo = await Promise.all(
-    getRulesDataSources().map(async ({ name, jsonData }) => {
-      const buildInfo = await fetchBuildInfo(name);
-      const customRulerConfig = (jsonData as AlertingDataSourceJsonData).ruler;
+export function fetchAllPromBuildInfoAction(): ThunkResult<Promise<void>> {
+  return async (dispatch) => {
+    const allRequests = getAllRulesSourceNames().map((rulesSourceName) => {
+      dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
+    });
 
+    await Promise.allSettled(allRequests);
+  };
+}
+
+export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
+  'unifiedalerting/fetchPromBuildinfo',
+  async ({ rulesSourceName }: { rulesSourceName: string }): Promise<PromBasedDataSource> => {
+    if (rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
       return {
-        dataSource: name,
-        rulerMode: buildInfo.features.rulerConfigApp
-          ? Boolean(customRulerConfig?.url)
-            ? PromRulerMode.Custom
-            : PromRulerMode.Default
-          : PromRulerMode.NotSupported,
+        name: GRAFANA_RULES_SOURCE_NAME,
+        id: GRAFANA_RULES_SOURCE_NAME,
+        rulerConfig: {
+          dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+          apiVersion: 'legacy',
+          customRulerEnabled: false,
+        },
       };
-    })
-  );
+    }
 
-  return keyBy(dsBuildInfo, (x) => x.dataSource);
-});
+    const ds = getRulesDataSource(rulesSourceName);
+    if (!ds) {
+      throw new Error(`Missing data source configuration for ${rulesSourceName}`);
+    }
+
+    const { id, name, jsonData } = ds;
+    const buildInfo = await fetchBuildInfo(name);
+    const customRulerConfig = (jsonData as AlertingDataSourceJsonData).ruler;
+
+    const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerConfigApp
+      ? {
+          dataSourceName: name,
+          customRulerEnabled: Boolean(customRulerConfig?.url),
+          apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
+        }
+      : undefined;
+
+    return {
+      name: name,
+      id: id,
+      rulerConfig,
+    };
+  }
+);
 
 export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    await dispatch(fetchPromBuildInfoAction());
+    await dispatch(fetchAllPromBuildInfoAction());
 
-    const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
-
-    // const dsBuildInfo = await Promise.all(getAllRulesSourceNames().map(rulesSourceName => fetchBuildInfo(rulesSourceName)));
-    console.log(dataSources);
+    const { promRules, rulerRules } = getStore().unifiedAlerting;
 
     getAllRulesSourceNames().map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {

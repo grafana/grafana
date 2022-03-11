@@ -4,10 +4,103 @@ import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
+import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 
 interface ErrorResponseMessage {
   message?: string;
   error?: string;
+}
+
+export class RulerClient {
+  setRulerRuleGroup = async (
+    dataSourceName: string,
+    namespace: string,
+    group: PostableRulerRuleGroupDTO
+  ): Promise<void> => {
+    await lastValueFrom(
+      getBackendSrv().fetch<unknown>({
+        method: 'POST',
+        url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+        data: group,
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      })
+    );
+  };
+
+  fetchRulerRules = async (dataSourceName: string, filter?: FetchRulerRulesFilter) => {
+    if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+      throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
+    }
+
+    const params: Record<string, string> = {};
+    if (filter?.dashboardUID) {
+      params['dashboard_uid'] = filter.dashboardUID;
+      if (filter.panelId) {
+        params['panel_id'] = String(filter.panelId);
+      }
+    }
+    return rulerGetRequest<RulerRulesConfigDTO>(
+      `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+      {},
+      params
+    );
+  };
+
+  fetchRulerRulesNamespace = async (dataSourceName: string, namespace: string) => {
+    const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
+      `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+      {}
+    );
+    return result[namespace] || [];
+  };
+
+  fetchRulerRulesGroup = async (
+    dataSourceName: string,
+    namespace: string,
+    group: string
+  ): Promise<RulerRuleGroupDTO | null> => {
+    return rulerGetRequest<RulerRuleGroupDTO | null>(
+      `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
+        namespace
+      )}/${encodeURIComponent(group)}`,
+      null
+    );
+  };
+
+  deleteRulerRulesGroup = async (dataSourceName: string, namespace: string, groupName: string) => {
+    await lastValueFrom(
+      getBackendSrv().fetch({
+        url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
+          namespace
+        )}/${encodeURIComponent(groupName)}`,
+        method: 'DELETE',
+        showSuccessAlert: false,
+        showErrorAlert: false,
+      })
+    );
+  };
+}
+
+function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
+  const grafanaPath = `/api/ruler/${getDatasourceAPIId(rulerConfig.dataSourceName)}`;
+  const rulerPath = rulerConfig.apiVersion === 'config' ? '/config/v1/rules' : '/api/v1/rules';
+
+  const basePath = `${grafanaPath}${rulerPath}`;
+  const rulerSearchParams = new URLSearchParams();
+  if (rulerConfig.customRulerEnabled) {
+    rulerSearchParams.set('source', 'ruler');
+  }
+  if (rulerConfig.apiVersion === 'legacy') {
+    rulerSearchParams.set('noProxy', 'true');
+  }
+
+  return {
+    rules: () => `${basePath}?${rulerSearchParams.toString()}`,
+    namespace: (namespace: string) => `${basePath}/${encodeURIComponent(namespace)}?${rulerSearchParams.toString()}`,
+    namespaceGroup: (namespace: string, group: string) =>
+      `${basePath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}?${rulerSearchParams.toString()}`,
+  };
 }
 
 // upsert a rule group. use this to update rules
@@ -30,6 +123,21 @@ export async function setRulerRuleGroup(
 export interface FetchRulerRulesFilter {
   dashboardUID: string;
   panelId?: number;
+}
+
+export async function fetchRulerRulesV2(rulerConfig: RulerDataSourceConfig, filter?: FetchRulerRulesFilter) {
+  if (filter?.dashboardUID && rulerConfig.dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
+  }
+
+  const params: Record<string, string> = {};
+  if (filter?.dashboardUID) {
+    params['dashboard_uid'] = filter.dashboardUID;
+    if (filter.panelId) {
+      params['panel_id'] = String(filter.panelId);
+    }
+  }
+  return rulerGetRequest<RulerRulesConfigDTO>(rulerUrlBuilder(rulerConfig).rules(), {}, params);
 }
 
 // fetch all ruler rule namespaces and included groups

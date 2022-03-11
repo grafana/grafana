@@ -179,3 +179,15 @@ export enum PromRulerMode {
   Default = 'Default',
   Custom = 'Custom',
 }
+
+export interface RulerDataSourceConfig {
+  dataSourceName: string;
+  customRulerEnabled: boolean;
+  apiVersion: 'legacy' | 'config';
+}
+
+export interface PromBasedDataSource {
+  name: string;
+  id: string | number;
+  rulerConfig?: RulerDataSourceConfig;
+}
