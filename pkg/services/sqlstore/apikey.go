@@ -41,7 +41,7 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 	})
 }
 
-// GetAllOrgsAPIKeys queries the database for valid non SA APIKeys accross all orgs
+// GetAllOrgsAPIKeys queries the database for valid non SA APIKeys across all orgs
 func (ss *SQLStore) GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey {
 	result := make([]*models.ApiKey, 0)
 	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
