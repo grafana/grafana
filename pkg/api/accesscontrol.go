@@ -323,33 +323,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
-	filesWriter := ac.RoleRegistration{
-		Role: ac.RoleDTO{
-			Version:     1,
-			Name:        "fixed:writer:writer",
-			DisplayName: "Files writer",
-			Group:       "Files",
-			Description: "Create, read, write or delete all files.",
-			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
-				{Action: ac.ActionFilesWrite, Scope: ac.ScopeFilesAll},
-				{Action: ac.ActionFilesDelete, Scope: ac.ScopeFilesAll},
-				{Action: ac.ActionFilesCreate, Scope: ac.ScopeFilesAll},
-				{Action: ac.ActionFilesRead, Scope: "files:path:/it-B/simple.json"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:!/it-A/*"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:/s3/*"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:!/s3/nested/simple_nested.json"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:/gcs/*"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:!/dev-dashboards/datasource-elasticsearch/*"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:!/dev-dashboards/datasource-mysql/*"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:!/dev-dashboards/panel-bargauge/*"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:!/dev-dashboards/all-panels.json"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:/dev-dashboards/feature-templating/testdata-datalinks.json"},
-				{Action: ac.ActionFilesRead, Scope: "files:path:/dev-dashboards/e2e-repeats/"},
-			}),
-		},
-		Grants: []string{"Admin"},
-	}
-
 	foldersCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     1,
@@ -407,7 +380,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole, filesWriter,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
 	)
 }
 
