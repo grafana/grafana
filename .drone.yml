@@ -422,18 +422,40 @@ steps:
   image: grafana/build-container:1.5.1
   name: initialize
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.1
+  name: codespell
+- commands:
+  - yarn run prettier:checkDocs
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend
+  name: lint-docs
+- commands:
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.1
+  name: build-frontend-packages
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - initialize
+  - build-frontend-packages
   image: grafana/build-container:1.5.1
   name: build-frontend-docs
 - commands:
@@ -484,18 +506,40 @@ steps:
   image: grafana/build-container:1.5.1
   name: initialize
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.1
+  name: codespell
+- commands:
+  - yarn run prettier:checkDocs
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend
+  name: lint-docs
+- commands:
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.1
+  name: build-frontend-packages
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - initialize
+  - build-frontend-packages
   image: grafana/build-container:1.5.1
   name: build-frontend-docs
 - commands:
@@ -4101,6 +4145,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 0c535c43fd0a51fa301b294656e01a30338f227f85427757ca4fe93d6b779215
+hmac: 81f53ecf35f9d03e83f710bf183734fa33c915aa438b32dc392bd6607dbc8f08
 
 ...
