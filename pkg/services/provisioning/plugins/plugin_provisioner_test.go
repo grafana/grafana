@@ -32,7 +32,7 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 		reader := &testConfigReader{result: cfg}
 		store := &mockStore{}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store, pluginSettings: store}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
@@ -92,7 +92,19 @@ func (m *mockStore) GetPluginSettingById(ctx context.Context, query *models.GetP
 	return models.ErrPluginSettingNotFound
 }
 
-func (m *mockStore) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+func (m *mockStore) UpdatePluginSetting(_ context.Context, cmd *models.UpdatePluginSettingCmd) error {
 	m.sentCommands = append(m.sentCommands, cmd)
+	return nil
+}
+
+func (m *mockStore) UpdatePluginSettingVersion(_ context.Context, _ *models.UpdatePluginSettingVersionCmd) error {
+	return nil
+}
+
+func (m *mockStore) GetPluginSettings(_ context.Context, _ int64) ([]*models.PluginSettingInfoDTO, error) {
+	return nil, nil
+}
+
+func (m *mockStore) DecryptedValues(_ *models.PluginSetting) map[string]string {
 	return nil
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import React, { RefObject } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
@@ -106,6 +106,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   scrollElement?: Element;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 type State = {
@@ -161,6 +162,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       createLinkToExternalSpan,
       traceTimeline,
       theme,
+      topOfExploreViewRef,
       ...rest
     } = this.props;
     const { trace } = rest;
@@ -191,6 +193,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
             {...traceTimeline}
             setSpanNameColumnWidth={setSpanNameColumnWidth}
             currentViewRangeTime={viewRange.time.current}
+            topOfExploreViewRef={topOfExploreViewRef}
           />
         </div>
       </ExternalLinkContext.Provider>

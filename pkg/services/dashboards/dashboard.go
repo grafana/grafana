@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
+
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
@@ -14,6 +16,11 @@ type DashboardService interface {
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
+}
+
+// PluginService is a service for operating on plugin dashboards.
+type PluginService interface {
+	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
 }
 
 //go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
@@ -29,7 +36,6 @@ type DashboardProvisioningService interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 }
 
-//go:generate mockery --name Store --structname FakeDashboardStore --output database --outpkg database --filename database_mock.go
 // Store is a dashboard store.
 type Store interface {
 	// ValidateDashboardBeforeSave validates a dashboard before save.
@@ -46,4 +52,6 @@ type Store interface {
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 	UnprovisionDashboard(ctx context.Context, id int64) error
+	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
+	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
 }

@@ -7,22 +7,22 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
 type Store interface {
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
-	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
-	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 }
 
 // Provision scans a directory for provisioning config files
 // and provisions the app in those files.
-func Provision(ctx context.Context, configDirectory string, store Store, pluginStore plugins.Store) error {
+func Provision(ctx context.Context, configDirectory string, store Store, pluginStore plugins.Store, pluginSettings pluginsettings.Service) error {
 	logger := log.New("provisioning.plugins")
 	ap := PluginProvisioner{
-		log:         logger,
-		cfgProvider: newConfigReader(logger, pluginStore),
-		store:       store,
+		log:            logger,
+		cfgProvider:    newConfigReader(logger, pluginStore),
+		store:          store,
+		pluginSettings: pluginSettings,
 	}
 	return ap.applyChanges(ctx, configDirectory)
 }
@@ -30,9 +30,10 @@ func Provision(ctx context.Context, configDirectory string, store Store, pluginS
 // PluginProvisioner is responsible for provisioning apps based on
 // configuration read by the `configReader`
 type PluginProvisioner struct {
-	log         log.Logger
-	cfgProvider configReader
-	store       Store
+	log            log.Logger
+	cfgProvider    configReader
+	store          Store
+	pluginSettings pluginsettings.Service
 }
 
 func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) error {
@@ -48,7 +49,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 		}
 
 		query := &models.GetPluginSettingByIdQuery{OrgId: app.OrgID, PluginId: app.PluginID}
-		err := ap.store.GetPluginSettingById(ctx, query)
+		err := ap.pluginSettings.GetPluginSettingById(ctx, query)
 		if err != nil {
 			if !errors.Is(err, models.ErrPluginSettingNotFound) {
 				return err
@@ -67,7 +68,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJsonData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}
-		if err := ap.store.UpdatePluginSetting(ctx, cmd); err != nil {
+		if err := ap.pluginSettings.UpdatePluginSetting(ctx, cmd); err != nil {
 			return err
 		}
 	}
