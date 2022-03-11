@@ -148,11 +148,9 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		OrgID:    c.OrgId,
 	})
 	if err != nil {
-		status := http.StatusInternalServerError
-		if errors.Is(err, models.ErrPluginSettingNotFound) {
-			status = http.StatusNotFound
+		if !errors.Is(err, models.ErrPluginSettingNotFound) {
+			return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", nil)
 		}
-		return response.Error(status, "Failed to get plugin settings", nil)
 	} else {
 		dto.Enabled = ps.Enabled
 		dto.Pinned = ps.Pinned
