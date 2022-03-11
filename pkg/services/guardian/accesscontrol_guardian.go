@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -48,7 +49,7 @@ func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersWrite, folderScope(a.dashboardID)))
+		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, folderScope(a.dashboardID)))
 	}
 
 	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAny(
@@ -67,7 +68,7 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersWrite, folderScope(a.dashboardID)))
+		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, folderScope(a.dashboardID)))
 	}
 
 	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAny(
@@ -82,7 +83,7 @@ func (a *AccessControlDashboardGuardian) CanView() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersRead, folderScope(a.dashboardID)))
+		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(dashboards.ActionFoldersRead, folderScope(a.dashboardID)))
 	}
 
 	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAny(
@@ -98,8 +99,8 @@ func (a *AccessControlDashboardGuardian) CanAdmin() (bool, error) {
 
 	if a.dashboard.IsFolder {
 		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(accesscontrol.ActionFoldersPermissionsRead, folderScope(a.dashboard.Id)),
-			accesscontrol.EvalPermission(accesscontrol.ActionFoldersPermissionsWrite, folderScope(a.dashboard.Id)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, folderScope(a.dashboard.Id)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, folderScope(a.dashboard.Id)),
 		))
 	}
 
@@ -121,7 +122,7 @@ func (a *AccessControlDashboardGuardian) CanDelete() (bool, error) {
 	}
 
 	if a.dashboard.IsFolder {
-		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersDelete, folderScope(a.dashboard.Id)))
+		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, folderScope(a.dashboard.Id)))
 	}
 
 	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAny(
@@ -132,7 +133,7 @@ func (a *AccessControlDashboardGuardian) CanDelete() (bool, error) {
 
 func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool) (bool, error) {
 	if isFolder {
-		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersCreate))
+		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(dashboards.ActionFoldersCreate))
 	}
 
 	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate, folderScope(folderID)))
@@ -203,8 +204,36 @@ func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.Da
 }
 
 func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
-	// not used with access control
-	return nil, nil
+	var hiddenACL []*models.DashboardAcl
+	if a.user.IsGrafanaAdmin {
+		return hiddenACL, nil
+	}
+
+	existingPermissions, err := a.GetAcl()
+	if err != nil {
+		return hiddenACL, err
+	}
+
+	for _, item := range existingPermissions {
+		if item.Inherited || item.UserLogin == a.user.Login {
+			continue
+		}
+
+		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
+			hiddenACL = append(hiddenACL, &models.DashboardAcl{
+				OrgID:       item.OrgId,
+				DashboardID: item.DashboardId,
+				UserID:      item.UserId,
+				TeamID:      item.TeamId,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+
+	return hiddenACL, nil
 }
 
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
@@ -223,5 +252,5 @@ func dashboardScope(dashboardID int64) string {
 }
 
 func folderScope(folderID int64) string {
-	return accesscontrol.Scope("folders", "id", strconv.FormatInt(folderID, 10))
+	return dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(folderID, 10))
 }

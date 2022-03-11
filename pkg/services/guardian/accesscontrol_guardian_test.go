@@ -2,7 +2,10 @@ package guardian
 
 import (
 	"context"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -513,7 +517,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			isFolder: true,
 			folderID: 0,
 			permissions: []*accesscontrol.Permission{
-				{Action: accesscontrol.ActionFoldersCreate},
+				{Action: dashboards.ActionFoldersCreate},
 			},
 			expected: true,
 		},
@@ -537,6 +541,54 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 	}
 }
 
+type accessControlGuardianGetHiddenACLTestCase struct {
+	desc        string
+	permissions []accesscontrol.ResourcePermission
+	hiddenUsers map[string]struct{}
+}
+
+func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
+	tests := []accessControlGuardianGetHiddenACLTestCase{
+		{
+			desc: "should only return permissions containing hidden users",
+			permissions: []accesscontrol.ResourcePermission{
+				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1"},
+				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1"},
+				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2"},
+				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3"},
+				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4"},
+			},
+			hiddenUsers: map[string]struct{}{"user2": {}, "user3": {}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			guardian := setupAccessControlGuardianTest(t, 1, nil)
+			guardian.permissionServices.GetDashboardService()
+
+			mocked := accesscontrolmock.NewPermissionsServicesMock()
+			guardian.permissionServices = mocked
+			mocked.Dashboards.On("MapActions", mock.Anything).Return("View")
+			mocked.Dashboards.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tt.permissions, nil)
+
+			cfg := setting.NewCfg()
+			cfg.HiddenUsers = tt.hiddenUsers
+
+			permissions, err := guardian.GetHiddenACL(cfg)
+			require.NoError(t, err)
+			var hiddenUserNames []string
+			for name := range tt.hiddenUsers {
+				hiddenUserNames = append(hiddenUserNames, name)
+			}
+			assert.Len(t, permissions, len(hiddenUserNames))
+			for _, p := range permissions {
+				assert.Contains(t, hiddenUserNames, fmt.Sprintf("user%d", p.UserID))
+			}
+		})
+	}
+}
+
 func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*accesscontrol.Permission) *AccessControlDashboardGuardian {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
@@ -550,7 +602,7 @@ func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*a
 	require.NoError(t, err)
 
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	services, err := ossaccesscontrol.ProvidePermissionsServices(routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	services, err := ossaccesscontrol.ProvidePermissionsServices(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
 
 	return NewAccessControlDashboardGuardian(context.Background(), dashID, &models.SignedInUser{OrgId: 1}, store, ac, services)
