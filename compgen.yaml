@@ -1,0 +1,12 @@
+groups:
+  coremodel:
+    must:
+      register-model:
+        ruletype: "goref"
+        ident: "github.com/grafana/grafana/pkg/schema.RegisterCoreSchema"
+      has-cr:
+        ruletype: "goident"
+        name: "CR"
+        kind: "struct"
+        implements:
+          - "k8s.io/apimachinery/pkg/runtime.Object"
