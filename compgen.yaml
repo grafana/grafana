@@ -1,12 +1,20 @@
 groups:
+  # Each coremodel component canonically defines exactly one of Grafana's core object
+  # types - e.g. dashboard, datasource, folder, user, etc.
   coremodel:
     must:
+      # Every coremodel component must declare the schema for its object into
+      # the central registry.
       register-model:
         ruletype: "goref"
         ident: "github.com/grafana/grafana/pkg/schema.RegisterCoreSchema"
+      # Every coremodel component must define a struct named "CR", following the
+      # form in which Kubernetes helper libraries expect schemas to be declared.
       has-cr:
         ruletype: "goident"
         name: "CR"
         kind: "struct"
         implements:
+        # Kubernetes helper libraries require structs representing any
+        # CustomResource to implement this interface.
           - "k8s.io/apimachinery/pkg/runtime.Object"
