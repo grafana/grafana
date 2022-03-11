@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
+
+	_ "gocloud.dev/blob/fileblob"
+	_ "gocloud.dev/blob/memblob"
 )
 
 const (
