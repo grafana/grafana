@@ -84,10 +84,8 @@ describe('Wrapper', () => {
       ...urlParams,
     });
 
-    expect(store.getState().explore.left.richHistory[0]).toMatchObject({
-      datasourceName: 'loki',
-      queries: [{ expr: '{ label="value"}', refId: 'A' }],
-    });
+    // Initially loaded query is not added to the state because the query history panel is not opened
+    expect(store.getState().explore.left.richHistory).toMatchObject([]);
 
     // We called the data source query method once
     expect(datasources.loki.query).toBeCalledTimes(1);
