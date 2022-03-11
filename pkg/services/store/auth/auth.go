@@ -1,4 +1,4 @@
-package store
+package storeauth
 
 import (
 	"context"
@@ -78,15 +78,15 @@ func parsePath(scope string) string {
 }
 
 type StorageAuthService interface {
-	newGuardian(ctx context.Context, user *models.SignedInUser, path string) FilesGuardian
+	NewGuardian(ctx context.Context, user *models.SignedInUser, path string) FilesGuardian
 }
 
 type FilesGuardian interface {
-	canView(path string) bool
-	canSave(path string) bool
+	CanView(path string) bool
+	CanSave(path string) bool
 
-	getViewPathFilters() *filestorage.PathFilters
-	getSavePathFilters() *filestorage.PathFilters
+	GetViewPathFilters() *filestorage.PathFilters
+	GetSavePathFilters() *filestorage.PathFilters
 }
 
 func NewStorageAuthService(ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices) StorageAuthService {
@@ -114,7 +114,7 @@ func (a *storageAuthService) createPathFilters(ctx context.Context, action strin
 	return p
 }
 
-func (a *storageAuthService) newGuardian(ctx context.Context, user *models.SignedInUser, storagePrefix string) FilesGuardian {
+func (a *storageAuthService) NewGuardian(ctx context.Context, user *models.SignedInUser, storagePrefix string) FilesGuardian {
 	readFilters := a.createPathFilters(ctx, accesscontrol.ActionFilesRead, user, storagePrefix)
 	writeFilters := a.createPathFilters(ctx, accesscontrol.ActionFilesWrite, user, storagePrefix)
 	return &filesGuardian{
@@ -138,19 +138,19 @@ type filesGuardian struct {
 	writeFilters       *filestorage.PathFilters
 }
 
-func (a *filesGuardian) getSavePathFilters() *filestorage.PathFilters {
+func (a *filesGuardian) GetSavePathFilters() *filestorage.PathFilters {
 	return a.writeFilters
 }
 
-func (a *filesGuardian) getViewPathFilters() *filestorage.PathFilters {
+func (a *filesGuardian) GetViewPathFilters() *filestorage.PathFilters {
 	return a.readFilters
 }
 
-func (a *filesGuardian) canSave(path string) bool {
+func (a *filesGuardian) CanSave(path string) bool {
 	return a.writeFilters.IsAllowed(strings.TrimPrefix(path, a.storagePrefix))
 }
 
-func (a *filesGuardian) canView(path string) bool {
+func (a *filesGuardian) CanView(path string) bool {
 	return a.readFilters.IsAllowed(strings.TrimPrefix(path, a.storagePrefix))
 }
 

@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	storeauth "github.com/grafana/grafana/pkg/services/store/auth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"golang.org/x/sync/errgroup"
@@ -64,10 +64,9 @@ type standardStorageService struct {
 	res    *nestedTree
 	dash   *nestedTree
 	lookup map[string]*nestedTree
-	auth   StorageAuthService
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices) StorageService {
+func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
 	res := &nestedTree{
 		roots: []storageRuntime{
 			newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
@@ -122,18 +121,17 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		dash.roots = append(dash.roots, devenv)
 	}
 
-	s := newStandardStorageService(res, dash, NewStorageAuthService(ac, permissionsServices))
+	s := newStandardStorageService(res, dash)
 	s.sql = sql
 	return s
 }
 
-func newStandardStorageService(res *nestedTree, dash *nestedTree, auth StorageAuthService) *standardStorageService {
+func newStandardStorageService(res *nestedTree, dash *nestedTree) *standardStorageService {
 	res.init()
 	dash.init()
 	return &standardStorageService{
 		res:  res,
 		dash: dash,
-		auth: auth,
 		lookup: map[string]*nestedTree{
 			"dash": dash,
 			"res":  res,
@@ -267,8 +265,8 @@ func (s *standardStorageService) List(ctx context.Context, user *models.SignedIn
 		return nil, fmt.Errorf("not found")
 	}
 
-	guardian := s.auth.newGuardian(ctx, user, s.dash.getRootPrefix(path))
-	return root.ListFolder(ctx, path, guardian.getViewPathFilters())
+	guardian := storeauth.NewGuardian(ctx, user, s.dash.getRootPrefix(path))
+	return root.ListFolder(ctx, path, guardian.GetViewPathFilters())
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
@@ -280,8 +278,8 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 	}
 
 	rootPrefix := s.dash.getRootPrefix(path)
-	guardian := s.auth.newGuardian(ctx, user, rootPrefix)
-	allowed := guardian.canView(path)
+	guardian := storeauth.NewGuardian(ctx, user, rootPrefix)
+	allowed := guardian.CanView(path)
 	if !allowed {
 		grafanaStorageLogger.Warn("read access denied", "path", path, "rootPrefix", rootPrefix)
 		return nil, errors.New("not found")
@@ -302,11 +300,11 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 	var frame *data.Frame
 	g, ctx := errgroup.WithContext(ctx)
 	rootPrefix := s.dash.getRootPrefix(path)
-	guardian := s.auth.newGuardian(ctx, user, rootPrefix)
+	guardian := storeauth.NewGuardian(ctx, user, rootPrefix)
 
 	g.Go(func() error {
 		filePath := path + ".json"
-		if !guardian.canView(filePath) {
+		if !guardian.CanView(filePath) {
 			return nil
 		}
 		f, err := s.dash.GetFile(ctx, path+".json")
@@ -314,7 +312,7 @@ func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.
 		return err
 	})
 	g.Go(func() error {
-		f, err := s.dash.ListFolder(ctx, path, guardian.getViewPathFilters())
+		f, err := s.dash.ListFolder(ctx, path, guardian.GetViewPathFilters())
 		frame = f
 		return err
 	})
@@ -427,12 +425,12 @@ func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models
 	// TODO: authentication!
 	path := opts.Path
 	rootPrefix := s.dash.getRootPrefix(path)
-	guardian := s.auth.newGuardian(ctx, user, rootPrefix)
-	if !guardian.canView(path) {
+	guardian := storeauth.NewGuardian(ctx, user, rootPrefix)
+	if !guardian.CanView(path) {
 		grafanaStorageLogger.Warn("save dashboard access denied - no view access", "path", path, "rootPrefix", rootPrefix)
 		return nil, errors.New("unauthorized")
 	}
-	if !guardian.canSave(path) {
+	if !guardian.CanSave(path) {
 		grafanaStorageLogger.Warn("save dashboard access denied - no write access", "path", path, "rootPrefix", rootPrefix)
 		return nil, errors.New("unauthorized")
 	}

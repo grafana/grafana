@@ -32,8 +32,7 @@ type UsageStats struct {
 	sendReportCallbacks      []usagestats.SendReportCallbackFunc
 }
 
-// TODO: pluginStore causes cyclic dep error
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore,
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugins.Store,
 	socialService social.Service, kvStore kvstore.KVStore, routeRegister routing.RouteRegister,
 ) *UsageStats {
 	s := &UsageStats{
@@ -41,7 +40,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore,
 		SQLStore:       sqlStore,
 		oauthProviders: socialService.GetOAuthProviders(),
 		RouteRegister:  routeRegister,
-		pluginStore:    nil,
+		pluginStore:    pluginStore,
 		kvStore:        kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:            log.New("infra.usagestats"),
 		startTime:      time.Now(),
