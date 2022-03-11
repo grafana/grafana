@@ -88,6 +88,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	storage := filepath.Join(cfg.DataPath, "storage")
 	_ = os.MkdirAll(storage, 0700)
 
+	devenv := getDevenvDashboards()
 	dash := &nestedTree{
 		roots: []storageRuntime{
 			newGitStorage("it-A", "Github dashbboards A", storage, &StorageGitConfig{
@@ -114,9 +115,9 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				Folder:          "dashboards",
 				CredentialsFile: "$STORAGE_GCS_CREDENTIALS_FILE",
 			}),
+			newSQLStorage("sql", "My dashboards in SQL", &StorageSQLConfig{}, sql, devenv),
 		},
 	}
-	devenv := getDevenvDashboards()
 	if devenv != nil {
 		dash.roots = append(dash.roots, devenv)
 	}
