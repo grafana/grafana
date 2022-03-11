@@ -461,9 +461,6 @@ def build_frontend_docs_step(edition):
             'initialize'
         ],
         'commands': [
-            'yarn packages:build',
-            'yarn packages:docsExtract',
-            'yarn packages:docsToMarkdown',
             './scripts/ci-reference-docs-lint.sh ci',
         ]
     }

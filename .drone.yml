@@ -437,9 +437,15 @@ steps:
   image: grafana/build-container:1.5.2
   name: initialize
 - commands:
-  - yarn packages:build
-  - yarn packages:docsExtract
-  - yarn packages:docsToMarkdown
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: build-frontend-packages
+- commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - initialize
@@ -493,9 +499,15 @@ steps:
   image: grafana/build-container:1.5.2
   name: initialize
 - commands:
-  - yarn packages:build
-  - yarn packages:docsExtract
-  - yarn packages:docsToMarkdown
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: build-frontend-packages
+- commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - initialize
@@ -4330,6 +4342,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 2d48c15c46e95a72e8fc0715b405f17e770512a68a6526be08ca5e9f21a307f2
+hmac: b0918aeaae8ffc560bfa350a9409fa19dcdab4734c44409afb0c36d974fcf72d
 
 ...

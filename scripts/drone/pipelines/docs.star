@@ -8,6 +8,7 @@ load(
     'test_frontend_step',
     'build_storybook_step',
     'build_frontend_docs_step',
+    'build_frontend_package_step',
     'build_docs_website_step',
 )
 
@@ -28,6 +29,7 @@ def docs_pipelines(edition, ver_mode, trigger):
 
     # Insert remaining steps
     steps.extend([
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
     ])
