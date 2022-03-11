@@ -103,19 +103,19 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				Root:        "dashboards",
 				AccessToken: "$GITHUB_AUTH_TOKEN",
 			}),
-			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{
+			newS3Storage("s3", "S3 dashboards", &StorageS3Config{
 				Bucket:    "s3-dashbucket",
 				Folder:    "dashboards",
 				SecretKey: "$STORAGE_AWS_SECRET_KEY",
 				AccessKey: "$STORAGE_AWS_ACCESS_KEY",
 				Region:    "$STORAGE_AWS_REGION",
 			}),
-			newGCSstorage("gcs", "My dashboards in GCS", &StorageGCSConfig{
+			newGCSstorage("gcs", "GCS dashboards", &StorageGCSConfig{
 				Bucket:          "git-the-things-gcs",
 				Folder:          "dashboards",
 				CredentialsFile: "$STORAGE_GCS_CREDENTIALS_FILE",
 			}),
-			newSQLStorage("sql", "My dashboards in SQL", &StorageSQLConfig{}, sql, devenv),
+			newSQLStorage("sql", "SQL within grafana database", &StorageSQLConfig{}, sql, devenv),
 		},
 	}
 	if devenv != nil {

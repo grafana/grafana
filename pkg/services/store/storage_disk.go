@@ -117,7 +117,7 @@ func getDevenvDashboards() *rootStorageDisk {
 		return nil
 	}
 
-	return newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
+	return newDiskStorage("dev-dashboards", "Local disk, devenv dashboards", &StorageLocalDiskConfig{
 		Path:  filepath.Join(devenv, "dev-dashboards"),
 		Roots: roots,
 	})
