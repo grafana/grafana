@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useRef, useCallback } from 'react';
+import React, { FC, useMemo, useState, useCallback } from 'react';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,7 +29,7 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
   const settings = useSelector(getPerconaSettings);
   const { isLoading } = settings;
   const { isAuthorized } = useSelector(getPerconaUser);
-  const techPreviewRef = useRef<HTMLDivElement | null>(null);
+  const [techPreviewRef, setTechPreviewRef] = useState<HTMLDivElement | null>(null);
 
   const updateSettings = useCallback(
     async (body: SettingsAPIChangePayload, callback: LoadingCallback, onError = () => {}) => {
@@ -117,7 +117,7 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
               key: TabKeys.perconaPlatform,
               component: (
                 <>
-                  {techPreviewRef.current && createPortal(<TechnicalPreview />, techPreviewRef.current)}
+                  {techPreviewRef && createPortal(<TechnicalPreview />, techPreviewRef)}
                   <Platform isConnected={settings.isConnectedToPortal} />
                 </>
               ),
@@ -136,12 +136,12 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
             },
           ]
         : [],
-    [settings, advanced, alertManager, communication, metrics, perconaPlatform, ssh, updateSettings]
+    [settings, advanced, alertManager, communication, metrics, perconaPlatform, ssh, updateSettings, techPreviewRef]
   );
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
-      <div ref={(e) => (techPreviewRef.current = e)} />
+      <div ref={(e) => setTechPreviewRef(e)} />
       <div className={styles.settingsWrapper}>
         {(isLoading || !isAuthorized) && (
           <div className={styles.emptyBlock}>
