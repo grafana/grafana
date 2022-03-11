@@ -1,4 +1,5 @@
 import { Components } from './components';
+import { ExploreId } from '../../../../public/app/types';
 
 /**
  * Selectors grouped/defined in Pages
@@ -180,7 +181,7 @@ export const Pages = {
   Explore: {
     url: '/explore',
     General: {
-      container: 'data-testid Explore',
+      container: (exploreId: ExploreId = ExploreId.left) => `data-testid Explore ${exploreId}`,
       graph: 'Explore Graph',
       table: 'Explore Table',
       scrollBar: () => '.scrollbar-view',

@@ -44,7 +44,7 @@ export const PageToolbar: FC<Props> = React.memo(
     );
 
     return (
-      <div className={mainStyle}>
+      <div className={mainStyle} aria-label="Explore toolbar">
         {pageIcon && !onGoBack && (
           <div className={styles.pageIcon}>
             <Icon name={pageIcon} size="lg" aria-hidden />
