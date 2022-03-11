@@ -437,12 +437,40 @@ steps:
   image: grafana/build-container:1.5.2
   name: initialize
 - commands:
-  - yarn packages:build
-  - yarn packages:docsExtract
-  - yarn packages:docsToMarkdown
-  - ./scripts/ci-reference-docs-lint.sh ci
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
+  image: grafana/build-container:1.5.2
+  name: codespell
+- commands:
+  - yarn run prettier:checkDocs
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: lint-docs
+- commands:
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: build-frontend-packages
+- commands:
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - build-frontend-packages
   image: grafana/build-container:1.5.2
   name: build-frontend-docs
 - commands:
@@ -493,12 +521,40 @@ steps:
   image: grafana/build-container:1.5.2
   name: initialize
 - commands:
-  - yarn packages:build
-  - yarn packages:docsExtract
-  - yarn packages:docsToMarkdown
-  - ./scripts/ci-reference-docs-lint.sh ci
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
+  image: grafana/build-container:1.5.2
+  name: codespell
+- commands:
+  - yarn run prettier:checkDocs
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: lint-docs
+- commands:
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: build-frontend-packages
+- commands:
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - build-frontend-packages
   image: grafana/build-container:1.5.2
   name: build-frontend-docs
 - commands:
@@ -4330,6 +4386,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 2d48c15c46e95a72e8fc0715b405f17e770512a68a6526be08ca5e9f21a307f2
+hmac: 5436fa85451361525a2d8b9c40b632623bd05ddd89f76095310b359de7993f11
 
 ...
