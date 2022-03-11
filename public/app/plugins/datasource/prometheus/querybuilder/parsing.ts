@@ -413,7 +413,7 @@ function makeBinOp(
   numberNode: SyntaxNode,
   binModifier?: SyntaxNode | null
 ) {
-  const params: any[] = [parseInt(getString(expr, numberNode), 10)];
+  const params: any[] = [parseFloat(getString(expr, numberNode))];
   if (opDef.comparison) {
     params.unshift(Boolean(binModifier));
   }
