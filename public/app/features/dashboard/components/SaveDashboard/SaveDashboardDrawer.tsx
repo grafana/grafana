@@ -12,6 +12,7 @@ import {
   Input,
   InputControl,
   RadioButtonGroup,
+  Select,
   Spinner,
   Tab,
   TabContent,
@@ -30,23 +31,25 @@ import { DiffGroup } from '../VersionHistory/DiffGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getLocationSrv } from '@grafana/runtime';
 import { RootStorageMeta } from 'app/features/storage/types';
 import { getIconName } from 'app/features/storage/StorageList';
+import { isObject } from 'lodash';
+import kbn from 'app/core/utils/kbn';
 
 interface FormDTO {
   action?: string; //
   title?: string;
   message?: string;
 
-  dashboardTitle?: string;
-  targetFolder?: string;
+  newDashboardTitle?: string;
+  newDashboardStore?: string;
 
   saveTimerange?: boolean;
   saveVariables?: boolean;
 }
 
-const selectOptions = [
+const actionOptions = [
   {
     label: 'Push to main',
     value: 'save',
@@ -54,6 +57,21 @@ const selectOptions = [
   {
     label: 'Submit pull request',
     value: 'pr',
+  },
+];
+
+const storeOptions = [
+  {
+    label: 'it-A', // ???? not working !!!! Git instance A',
+    value: 'it-A',
+  },
+  {
+    label: 'it-B', // 'Git instance B',
+    value: 'it-B',
+  },
+  {
+    label: 'dev-dashboards',
+    value: 'dev-dashboards',
   },
 ];
 
@@ -74,34 +92,51 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     control,
     register,
     formState: { errors },
+    setValue,
   } = useForm<FormDTO>({ defaultValues: { action: 'save' } });
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
   const currentValue = useWatch({ control });
 
   const isNew = useMemo(() => {
-    return dashboard.version === 0 && !dashboard.uid;
-  }, [dashboard]);
+    const v = dashboard.version === 0 && !dashboard.uid;
+    if (v) {
+      currentValue.newDashboardStore = storeOptions[0].value;
+      setValue('newDashboardStore', storeOptions[0].value);
+    }
+    return v;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboard, setValue]);
+
+  // Weirdly the select returns the whole item *OR* a string :(
+  const keyFromStorage = (v: any) => {
+    if (isObject(v)) {
+      return (v as any).value as string; // !!!!!!!
+    }
+    return v ? (v as string) : '';
+  };
 
   const storage = useAsync(async () => {
+    let key = keyFromStorage(currentValue.newDashboardStore);
     const uid = dashboard.uid ?? '';
     const idx = uid.indexOf('/');
-    if (idx < 1) {
+    if (idx > 0) {
+      key = dashboard.uid.substring(0, idx);
+    }
+    if (!key) {
       return {
         isGit: false,
         isDirect: false,
       };
     }
 
-    const key = dashboard.uid.substring(0, idx);
     const status = (await getBackendSrv().get(`api/storage/root/${key}`)) as RootStorageMeta;
-
     return {
       isGit: status.config.type === 'git',
       isDirect: status.config.type === 'disk',
       status,
     };
-  }, [dashboard]);
+  }, [dashboard, currentValue.newDashboardStore]);
 
   const previous = useAsync(async () => {
     if (isNew) {
@@ -117,21 +152,19 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   }, [dashboard, isNew]);
 
   const data = useMemo(() => {
-    if (!previous.value) {
-      return {};
-    }
-
-    console.log('UPDATING data', previous.value);
-
     const clone = dashboard.getSaveModelClone({
       saveTimerange: Boolean(currentValue.saveTimerange),
       saveVariables: Boolean(currentValue.saveVariables),
     });
+
+    if (!previous.value) {
+      return { clone };
+    }
+
     const cloneJSON = JSON.stringify(clone, null, 2);
     const cloneSafe = JSON.parse(cloneJSON); // avoids undefined issues
 
     const diff = jsonDiff(previous.value, cloneSafe);
-
     let diffCount = 0;
     for (const d of Object.values(diff)) {
       diffCount += d.length;
@@ -154,21 +187,43 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
   const doSave = async (dto: FormDTO) => {
     setSaving(true);
-    const rsp = (await backendSrv.post(`/api/dashboards/path/${dashboard.uid}`, {
-      body: data.clone,
-      message: dto.message ?? '',
-      title: dto.title,
-      action: dto.action,
-    })) as WriteValueResponse;
 
-    // It is OK
-    if (rsp.code === 200 && !rsp.pending) {
-      onDismiss();
+    const body = data.clone;
+    let path = dashboard.uid;
+    if (isNew) {
+      const title = currentValue.newDashboardTitle ?? 'New Dashboard';
+      const slug = kbn.slugifyForUrl(title);
+      path = keyFromStorage(currentValue.newDashboardStore) + '/' + slug;
+      body.title = title;
     }
 
-    console.log('Results', rsp);
+    try {
+      const rsp = (await backendSrv.post(`/api/dashboards/path/${path}`, {
+        body: data.clone,
+        message: dto.message ?? '',
+        title: dto.title,
+        action: dto.action,
+      })) as WriteValueResponse;
+
+      // It is OK
+      if (rsp.code === 200 && !rsp.pending) {
+        dashboard.clearUnsavedChanges();
+        onDismiss();
+        if (isNew) {
+          dashboard.meta.canSave = false;
+          getLocationSrv().update({
+            path: `/g/${path}`,
+          });
+        }
+      }
+
+      setRsp(rsp);
+      console.log('Results', rsp);
+    } catch (e) {
+      console.log('ERROR', e);
+    }
+
     setSaving(false);
-    setRsp(rsp);
   };
 
   const isGit = storage.value?.isGit;
@@ -186,8 +241,18 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
   const renderLocationInfo = () => {
     if (isNew) {
-      return <div>TODO: path picker...</div>;
+      return (
+        <InputControl
+          name="newDashboardStore"
+          control={control}
+          rules={{
+            required: true,
+          }}
+          render={({ field }) => <Select menuShouldPortal {...field} options={storeOptions} />}
+        />
+      );
     }
+
     const icon = <Icon name={getIconName(storage.value?.status?.config.type ?? '')} />;
     if (isGit) {
       const url = storage.value?.status?.config.git?.remote;
@@ -277,20 +342,34 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                       {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
 
                       <Field label="Location">{renderLocationInfo()}</Field>
+                      {isDirect && (
+                        <>
+                          <Alert title="Writing directly to a non-versioned file system" severity="info" />
+                        </>
+                      )}
+
+                      {isNew && (
+                        <Field label="Dashboard title" invalid={!!errors.newDashboardTitle} error="Title is required">
+                          <Input
+                            {...register('newDashboardTitle', { required: true })}
+                            placeholder="Set dashboard title"
+                          />
+                        </Field>
+                      )}
 
                       {storage.value?.isGit && (
                         <Field label="Workflow">
                           <InputControl
                             name="action"
                             control={control}
-                            render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} />}
+                            render={({ field }) => <RadioButtonGroup {...field} options={actionOptions} />}
                           />
                         </Field>
                       )}
 
-                      {currentValue.action === 'pr' && (
+                      {isGit && currentValue.action === 'pr' && (
                         <>
-                          <Field label="Title" invalid={!!errors.title} error="Title is required">
+                          <Field label="Pull request title" invalid={!!errors.title} error="Pull requests need a title">
                             <Input
                               {...register('title', { required: isGit })}
                               placeholder="Set title on pull request"
@@ -300,7 +379,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                       )}
 
                       {!isDirect && (
-                        <Field label="Changelog" invalid={!!errors.message} error="Changelog is required">
+                        <Field label="Message" invalid={!!errors.message} error="Message is required">
                           <TextArea
                             {...register('message', { required: isGit })}
                             rows={5}
@@ -313,7 +392,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                         <Button
                           type="submit"
                           aria-label="Save dashboard button"
-                          disabled={!data.hasChanges}
+                          disabled={!data.hasChanges && !isNew}
                           icon={saving ? 'fa fa-spinner' : undefined}
                         >
                           {saving ? '' : getActionName()}
@@ -322,7 +401,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                           Cancel
                         </Button>
                       </HorizontalGroup>
-                      {!data.hasChanges && <div className={styles.nothing}>No changes to save</div>}
+                      {!data.hasChanges && !isNew && <div className={styles.nothing}>No changes to save</div>}
                     </>
                   </form>
                 </div>
