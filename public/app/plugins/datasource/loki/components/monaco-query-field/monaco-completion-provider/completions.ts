@@ -183,20 +183,23 @@ async function getAfterSelectorCompletions(
   const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
   const completions: Completion[] = [];
   const prefix = afterPipe ? '' : '| ';
+  const hasLevelInExtractedLabels = result.extractedLabelKeys.some((key) => key === 'level');
   if (result.hasJSON) {
     allParsers.delete('json');
+    const explanation = hasLevelInExtractedLabels ? 'use to get log-levels in the histogram' : 'detected';
     completions.push({
       type: 'PARSER',
-      label: 'json (detected)',
+      label: `json (${explanation})`,
       insertText: `${prefix}json`,
     });
   }
 
   if (result.hasLogfmt) {
     allParsers.delete('logfmt');
+    const explanation = hasLevelInExtractedLabels ? 'use to get log-levels in the histogram' : 'detected';
     completions.push({
       type: 'DURATION',
-      label: 'logfmt (detected)',
+      label: `logfmt (explanation)`,
       insertText: `${prefix}logfmt`,
     });
   }
