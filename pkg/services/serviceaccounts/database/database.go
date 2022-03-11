@@ -84,7 +84,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 }
 
 func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
-	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
+	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) > 0 {
 		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
 		go func() {
@@ -100,7 +100,7 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 }
 
 func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
-	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
+	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) == 0 {
 		return nil
 	}
@@ -121,16 +121,29 @@ func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context,
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
-	sa, err := s.sqlStore.CreateServiceAccountForApikey(ctx, key.OrgId, key.Name, key.Role)
-	if err != nil {
-		return fmt.Errorf("failed to create service account for API key with error : %w", err)
+	prefix := "sa-autogen-"
+	cmd := models.CreateUserCommand{
+		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
+		Name:             prefix + key.Name,
+		OrgId:            key.OrgId,
+		DefaultOrgRole:   string(key.Role),
+		IsServiceAccount: true,
 	}
 
-	err = s.sqlStore.UpdateApikeyServiceAccount(ctx, key.Id, sa.Id)
-	if err != nil {
-		return fmt.Errorf("failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w", key.Id, sa.Id, err)
+	newSA, errCreateSA := s.sqlStore.CreateUser(ctx, cmd)
+	if errCreateSA != nil {
+		return fmt.Errorf("failed to create service account: %w", errCreateSA)
 	}
-	s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
+
+	if errUpdateKey := s.assignApiKeyToServiceAccount(ctx, key.Id, newSA.Id); errUpdateKey != nil {
+		return fmt.Errorf(
+			"failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w",
+			key.Id, newSA.Id, errUpdateKey,
+		)
+	}
+
+	s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", newSA.Id)
+
 	return nil
 }
 

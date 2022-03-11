@@ -184,24 +184,6 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	return user, nil
 }
 
-func (ss *SQLStore) CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error) {
-	prefix := "Service-Account-Autogen-"
-	cmd := models.CreateUserCommand{
-		Login:            fmt.Sprintf("%v-%v-%v", prefix, orgId, keyname),
-		Name:             prefix + keyname,
-		OrgId:            orgId,
-		DefaultOrgRole:   string(role),
-		IsServiceAccount: true,
-	}
-
-	newuser, err := ss.CreateUser(ctx, cmd)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	return newuser, err
-}
-
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
 	var user *models.User
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
