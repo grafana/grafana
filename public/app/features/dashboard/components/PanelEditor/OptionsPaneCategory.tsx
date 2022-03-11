@@ -1,11 +1,12 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Counter, useStyles2 } from '@grafana/ui';
+import { Counter, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { CollapseToggle } from 'app/features/alerting/unified/components/CollapseToggle';
 
 export interface OptionsPaneCategoryProps {
   id: string;
@@ -101,13 +102,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         ref={ref}
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
-          <Button
-            fill="text"
-            aria-expanded={isExpanded}
-            aria-controls={id}
-            className={cx(styles.toggle, 'editor-options-group-toggle')}
-            icon={isExpanded ? 'angle-down' : 'angle-right'}
-          />
+          <CollapseToggle isCollapsed={!isExpanded} idControlled={id} onToggle={onToggle} />
           <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
           </h6>
@@ -131,10 +126,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     boxNestedExpanded: css`
       margin-bottom: ${theme.spacing(2)};
-    `,
-    toggle: css`
-      color: ${theme.colors.text.secondary};
-      margin-right: ${theme.spacing(1)};
     `,
     title: css`
       flex-grow: 1;
