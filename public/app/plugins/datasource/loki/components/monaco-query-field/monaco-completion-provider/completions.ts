@@ -196,7 +196,7 @@ async function getAfterSelectorCompletions(
 
   if (result.hasLogfmt) {
     allParsers.delete('logfmt');
-    const explanation = hasLevelInExtractedLabels ? 'use to get log-levels in the histogram' : 'detected';
+    const explanation = hasLevelInExtractedLabels ? 'get detected levels in the histogram' : 'detected';
     completions.push({
       type: 'DURATION',
       label: `logfmt (explanation)`,
