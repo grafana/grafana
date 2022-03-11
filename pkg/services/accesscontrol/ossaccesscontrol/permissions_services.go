@@ -148,7 +148,6 @@ func provideDashboardService(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl, store resourcepermissions.Store,
 ) (*resourcepermissions.Service, error) {
-
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
 		id, err := strconv.ParseInt(resourceID, 10, 64)
 		if err != nil {
