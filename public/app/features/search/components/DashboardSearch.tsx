@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { FC, memo, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +8,7 @@ import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
 import { PreviewsSystemRequirements } from './PreviewsSystemRequirements';
+import { getLocationSrv } from '@grafana/runtime';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -21,6 +22,10 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   );
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  useEffect(() => {
+    getLocationSrv().update({ path: '/g/' });
+  }, []);
 
   return (
     <div tabIndex={0} className={styles.overlay}>

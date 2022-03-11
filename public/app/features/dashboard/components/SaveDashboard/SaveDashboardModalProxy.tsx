@@ -7,7 +7,7 @@ import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
 export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ dashboard, onDismiss, onSaveSuccess }) => {
   const isProvisioned = dashboard.meta.provisioned;
-  const isNew = dashboard.version === 0;
+  const isNew = dashboard.version === 0 && !dashboard.uid;
   const isChanged = dashboard.version > 0;
 
   const modalProps = {
@@ -16,7 +16,7 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
     onSaveSuccess,
   };
 
-  if (dashboard.uid && dashboard.uid.indexOf('/')) {
+  if ((dashboard.uid && dashboard.uid.indexOf('/')) || isNew) {
     return <SaveDashboardDrawer {...modalProps} />;
   }
 

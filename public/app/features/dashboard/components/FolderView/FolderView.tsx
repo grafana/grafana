@@ -11,6 +11,7 @@ type Props = {
 
 interface FolderListItem {
   name: string;
+  title?: string;
   path: string; // without .json
   mediaType: string;
 }

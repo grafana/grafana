@@ -52,15 +52,18 @@ func (t *nestedTree) GetFile(ctx context.Context, path string) (*filestorage.Fil
 func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, error) {
 	if path == "" || path == "/" {
 		count := len(t.roots)
+		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		title.Name = "title"
 		names.Name = "name"
 		mtype.Name = "mediaType"
 		for i, f := range t.roots {
 			names.Set(i, f.Meta().Config.Prefix)
+			title.Set(i, f.Meta().Config.Name)
 			mtype.Set(i, "directory")
 		}
-		frame := data.NewFrame("", names, mtype)
+		frame := data.NewFrame("", names, title, mtype)
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})

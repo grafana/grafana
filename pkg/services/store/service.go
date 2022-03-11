@@ -216,23 +216,39 @@ func (s *standardStorageService) HandleRootRequest(c *models.ReqContext) respons
 	params := web.Params(c.Req)
 	key := params[":key"]
 	action := c.Req.URL.Query().Get("action")
+	isPost := c.Req.Method == "POST"
 
-	for _, root := range s.dash.roots {
-		m := root.Meta()
+	var root storageRuntime
+	for _, r := range s.dash.roots { // HACK!
+		m := r.Meta()
 		if m.Config.Prefix == key {
-			if action == "sync" {
-				err := root.Sync()
-				if err != nil {
-					return response.Error(400, "sync error: "+err.Error(), nil)
-				}
-				return response.Success("OK")
-			}
-			response.Error(400, "unsupported action", nil)
+			root = r
+			break
 		}
 	}
 
+	if root == nil {
+		return response.Error(400, "unknown root", nil)
+	}
+
+	if action != "" && !isPost {
+		return response.Error(400, "action requires POST", nil)
+	}
+
+	switch action {
+	case "sync":
+		err := root.Sync()
+		if err != nil {
+			return response.Error(400, "sync error: "+err.Error(), nil)
+		}
+		return response.Success("OK")
+
+	case "":
+		return response.JSON(200, root.Meta())
+	}
+
 	return response.JSON(400, map[string]string{
-		"error":  "unknown root",
+		"error":  "unknown action",
 		"action": action,
 		"key":    key,
 		"method": c.Req.Method,
@@ -366,7 +382,25 @@ func (s *standardStorageService) PostDashboard(c *models.ReqContext) response.Re
 func (s *standardStorageService) getFolderDashboard(path string, frame *data.Frame) (*dtos.DashboardFullWithMeta, error) {
 	dash := models.NewDashboard(path)
 
-	fname := frame.Fields[0]
+	var fname *data.Field
+	var ftype *data.Field
+	var ftitle *data.Field
+	for _, f := range frame.Fields {
+		if f.Name == "title" {
+			ftitle = f
+		}
+		if f.Name == "mediaType" {
+			ftype = f
+		}
+		if f.Name == "name" {
+			fname = f
+		}
+	}
+
+	if fname == nil || ftype == nil {
+		return nil, nil
+	}
+
 	count := fname.Len()
 	if count < 1 {
 		return nil, nil
@@ -380,10 +414,14 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 	for i := 0; i < count; i++ {
 		name := fmt.Sprintf("%v", fname.At(i))
 		name = strings.TrimSuffix(name, ".json")
-		names.Set(i, name)
 		paths.Set(i, filestorage.Join(path, name))
+		names.Set(i, name)
+
+		if ftitle != nil {
+			names.Set(i, ftitle.At(i))
+		}
 	}
-	f2 := data.NewFrame("", names, paths, frame.Fields[1])
+	f2 := data.NewFrame("", names, paths, ftype)
 	frame.SetMeta(&data.FrameMeta{
 		Type: data.FrameTypeDirectoryListing,
 	})
