@@ -446,6 +446,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 					query := models.GetOrgUsersQuery{UserID: int64(scopeID), OrgId: 1, IsServiceAccount: true}
 					err = store.GetOrgUsers(context.Background(), &query)
 					require.NoError(t, err)
+					require.Len(t, query.Result, 1)
 					require.Equal(t, *tc.body.Name, query.Result[0].Name)
 					require.Equal(t, string(*tc.body.Role), query.Result[0].Role)
 				}

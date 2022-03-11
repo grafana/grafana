@@ -146,35 +146,6 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	return result, err
 }
 
-func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
-	if serviceAccountID > 0 {
-		query.UserID = serviceAccountID
-	}
-
-	if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
-		return nil, err
-	}
-
-	saDTOs := make([]*serviceaccounts.ServiceAccountDTO, len(query.Result))
-	for i, user := range query.Result {
-		saDTOs[i] = &serviceaccounts.ServiceAccountDTO{
-			Id:    user.UserId,
-			OrgId: user.OrgId,
-			Name:  user.Name,
-			Login: user.Login,
-			Role:  user.Role,
-		}
-		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
-		if err != nil {
-			return nil, err
-		}
-		saDTOs[i].Tokens = int64(len(tokens))
-	}
-
-	return saDTOs, nil
-}
-
 // RetrieveServiceAccountByID returns a service account by its ID
 func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	serviceAccount := &serviceaccounts.ServiceAccountProfileDTO{}
