@@ -437,6 +437,28 @@ steps:
   image: grafana/build-container:1.5.2
   name: initialize
 - commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.2
+  name: codespell
+- commands:
+  - yarn run prettier:checkDocs
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: lint-docs
+- commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
@@ -498,6 +520,28 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.2
   name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.2
+  name: codespell
+- commands:
+  - yarn run prettier:checkDocs
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.5.2
+  name: lint-docs
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
@@ -4342,6 +4386,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6581da6833b3f2561a2cff23694a75d88867915f08fec0f7fae93c1f6c4c732e
+hmac: 5436fa85451361525a2d8b9c40b632623bd05ddd89f76095310b359de7993f11
 
 ...
