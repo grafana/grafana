@@ -312,10 +312,7 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 			if obj.IsDir && !recursive && options.IsAllowed(obj.Key) {
 				var nestedDirPath string
 				dirMPath := obj.Key + directoryMarker
-				attributes, err := c.bucket.Attributes(ctx, dirMPath)
-				if err != nil {
-					c.log.Error("Failed while retrieving attributes", "path", obj.Key, "err", err)
-				}
+				attributes, _ := c.bucket.Attributes(ctx, dirMPath)
 
 				if attributes != nil && attributes.Metadata != nil {
 					if path, ok := attributes.Metadata[originalPathAttributeKey]; ok {
