@@ -18,6 +18,7 @@ import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { isFederatedRuleGroup } from '../../utils/rules';
+import { AccessControlAction } from 'app/types';
 
 interface Props {
   rule: CombinedRule;
@@ -136,7 +137,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   }
 
-  if (alertmanagerSourceName) {
+  if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
     leftButtons.push(
       <LinkButton
         className={style.button}
