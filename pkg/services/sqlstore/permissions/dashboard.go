@@ -86,7 +86,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 	folderAction := dashboards.ActionFoldersRead
 	dashboardAction := accesscontrol.ActionDashboardsRead
 	if f.PermissionLevel == models.PERMISSION_EDIT {
-		folderAction = accesscontrol.ActionDashboardsCreate
+		folderAction = dashboards.ActionFoldersCreate
 		dashboardAction = accesscontrol.ActionDashboardsWrite
 	}
 
@@ -99,12 +99,12 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 
 	builder.WriteString(" OR ")
 
-	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", dashboardAction, f.User)
+	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", dashboards.ScopeFoldersRoot, dashboardAction, f.User)
 	builder.WriteString(dashFolderFilter.Where)
 
 	builder.WriteString(") AND NOT dashboard.is_folder) OR (")
 
-	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", folderAction, f.User)
+	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", dashboards.ScopeFoldersRoot, folderAction, f.User)
 	builder.WriteString(folderFilter.Where)
 	builder.WriteString(" AND dashboard.is_folder))")
 
