@@ -23,7 +23,7 @@ import {
 } from '@grafana/ui';
 import { useForm, useWatch } from 'react-hook-form';
 import { SaveDashboardModalProps } from './types';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { DiffViewer } from '../VersionHistory/DiffViewer';
 import { jsonDiff } from '../VersionHistory/utils';
 import { DiffGroup } from '../VersionHistory/DiffGroup';
@@ -31,7 +31,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getBackendSrv, getLocationSrv } from '@grafana/runtime';
-import { RootStorageMeta } from 'app/features/storage/types';
+import { RootStorageMeta, StatusResponse } from 'app/features/storage/types';
 import { getIconName } from 'app/features/storage/StorageList';
 import { isObject } from 'lodash';
 import kbn from 'app/core/utils/kbn';
@@ -57,21 +57,6 @@ const actionOptions = [
   },
 ];
 
-const storeOptions = [
-  {
-    label: 'it-A', // ???? not working !!!! Git instance A',
-    value: 'it-A',
-  },
-  {
-    label: 'it-B', // 'Git instance B',
-    value: 'it-B',
-  },
-  {
-    label: 'dev-dashboards',
-    value: 'dev-dashboards',
-  },
-];
-
 interface WriteValueResponse {
   code: number;
   message?: string;
@@ -91,6 +76,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     formState: { errors },
     setValue,
   } = useForm<FormDTO>({ defaultValues: { action: 'save' } });
+
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
   const currentValue = useWatch({ control });
@@ -99,14 +85,26 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   const [saveVariables, setSaveVariables] = useState(false);
 
   const isNew = useMemo(() => {
-    const v = dashboard.version === 0 && !dashboard.uid;
-    if (v) {
-      currentValue.newDashboardStore = storeOptions[0].value;
-      setValue('newDashboardStore', storeOptions[0].value);
+    return dashboard.version === 0 && !dashboard.uid;
+  }, [dashboard]);
+
+  const allStorage = useAsync(async () => {
+    const storage: Array<SelectableValue<string>> = [];
+    if (isNew) {
+      const status = (await getBackendSrv().get('api/storage/status')) as StatusResponse;
+      for (const s of status.dashboards) {
+        if (s.ready) {
+          storage.push({
+            value: s.config.prefix,
+            label: s.config.name,
+            icon: getIconName(s.config.type),
+          });
+        }
+      }
+      setValue('newDashboardStore', storage[0] as any);
     }
-    return v;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboard, setValue]);
+    return storage;
+  }, [isNew]);
 
   // Weirdly the select returns the whole item *OR* a string :(
   const keyFromStorage = (v: any) => {
@@ -252,7 +250,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
           rules={{
             required: true,
           }}
-          render={({ field }) => <Select menuShouldPortal {...field} options={storeOptions} />}
+          render={({ field }) => <Select menuShouldPortal {...field} options={allStorage.value ?? []} />}
         />
       );
     }
@@ -337,9 +335,12 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
             <form onSubmit={handleSubmit(doSave)}>
               <Field label="Location">{renderLocationInfo()}</Field>
               {isDirect && (
-                <>
-                  <Alert title="Writing directly to a non-versioned file system" severity="info" />
-                </>
+                <div>
+                  <Icon name="exclamation-triangle" /> &nbps;
+                  <span>file system is not versioned</span>
+                  <br />
+                  <br />
+                </div>
               )}
 
               {isNew && (
