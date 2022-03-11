@@ -28,7 +28,8 @@ func TestNewNameScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
 
-		db := &models.Dashboard{Id: rand.Int63()}
+		db := models.NewFolder(title)
+		db.Id = rand.Int63()
 		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:name:" + title
