@@ -47,5 +47,4 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  fileStoreApi?: boolean;
 }

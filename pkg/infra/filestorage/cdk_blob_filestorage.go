@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
+
+	_ "gocloud.dev/blob/fileblob"
+	_ "gocloud.dev/blob/memblob"
 )
 
 const (
@@ -306,7 +309,7 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 		}
 
 		if options.IsAllowed(obj.Key) {
-			if obj.IsDir && !recursive {
+			if obj.IsDir && !recursive && options.IsAllowed(obj.Key) {
 				foundPaths = append(foundPaths, strings.TrimSuffix(obj.Key, Delimiter))
 			}
 
@@ -343,11 +346,15 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 		}
 	}
 
+	var foundPath string
 	if dirMarkerPath != "" {
-		foundPaths = append(foundPaths, dirMarkerPath)
+		foundPath = dirMarkerPath
 	} else if dirPath != "" {
-		// TODO replicate the changes in `createFolder`
-		foundPaths = append(foundPaths, dirPath)
+		foundPath = dirPath
+	}
+
+	if foundPath != "" && options.IsAllowed(foundPath+Delimiter) {
+		foundPaths = append(foundPaths, foundPath)
 	}
 	return foundPaths, nil
 }

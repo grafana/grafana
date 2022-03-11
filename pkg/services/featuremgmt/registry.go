@@ -167,11 +167,5 @@ var (
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			State:       FeatureStateAlpha,
 		},
-		{
-			Name:            "fileStoreApi",
-			Description:     "Simple API for managing files",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
 	}
 )

@@ -8,12 +8,6 @@ import (
 	"time"
 )
 
-type StorageName string
-
-const (
-	StorageNamePublic StorageName = "public"
-)
-
 var (
 	ErrRelativePath          = errors.New("path cant be relative")
 	ErrNonCanonicalPath      = errors.New("path must be canonical")
@@ -29,10 +23,6 @@ func Join(parts ...string) string {
 
 	// makes the API more forgiving for clients without compromising safety
 	return multipleDelimiters.ReplaceAllString(joinedPath, Delimiter)
-}
-
-func belongsToStorage(path string, storageName StorageName) bool {
-	return strings.HasPrefix(path, Delimiter+string(storageName))
 }
 
 type File struct {
@@ -90,6 +80,11 @@ func allowAllPathFilters() *PathFilters {
 	return NewPathFilters(nil, nil, nil, nil)
 }
 
+//nolint:deadcode,unused
+func denyAllPathFilters() *PathFilters {
+	return NewPathFilters([]string{}, []string{}, nil, nil)
+}
+
 func NewPathFilters(allowedPrefixes []string, allowedPaths []string, disallowedPrefixes []string, disallowedPaths []string) *PathFilters {
 	return &PathFilters{
 		allowedPrefixes:    toLower(allowedPrefixes),
@@ -99,11 +94,16 @@ func NewPathFilters(allowedPrefixes []string, allowedPaths []string, disallowedP
 	}
 }
 
+func (f *PathFilters) isDenyAll() bool {
+	return f.allowedPaths != nil && f.allowedPrefixes != nil && (len(f.allowedPaths)+len(f.allowedPrefixes) == 0)
+}
+
 func (f *PathFilters) IsAllowed(path string) bool {
 	if f == nil {
 		return true
 	}
 
+	path = strings.ToLower(path)
 	for i := range f.disallowedPaths {
 		if f.disallowedPaths[i] == path {
 			return false

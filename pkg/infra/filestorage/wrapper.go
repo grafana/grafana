@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	_ "gocloud.dev/blob/fileblob"
-	_ "gocloud.dev/blob/memblob"
 )
 
 var (
@@ -46,7 +44,19 @@ func addRootFolderToFilters(pathFilters *PathFilters, rootFolder string) *PathFi
 	return pathFilters
 }
 
+func copyPathFilters(p *PathFilters) *PathFilters {
+	if p == nil {
+		return nil
+	}
+
+	return NewPathFilters(p.allowedPrefixes, p.allowedPaths, p.disallowedPrefixes, p.disallowedPaths)
+}
+
 func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
+	if new == nil {
+		return base
+	}
+
 	if new.allowedPrefixes != nil {
 		if base.allowedPrefixes != nil {
 			base.allowedPrefixes = append(base.allowedPrefixes, new.allowedPrefixes...)
@@ -93,8 +103,7 @@ func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
 func newWrapper(log log.Logger, wrapped FileStorage, pathFilters *PathFilters, rootFolder string) FileStorage {
 	var rootedPathFilters *PathFilters
 	if pathFilters != nil {
-		copied := *pathFilters
-		rootedPathFilters = addRootFolderToFilters(&copied, rootFolder)
+		rootedPathFilters = addRootFolderToFilters(copyPathFilters(pathFilters), rootFolder)
 	} else {
 		rootedPathFilters = allowAllPathFilters()
 	}
@@ -283,7 +292,7 @@ func (b wrapper) listOptionsWithDefaults(options *ListOptions, folderQuery bool)
 		}
 	}
 
-	rootedFilters := addRootFolderToFilters(options.PathFilters, b.rootFolder)
+	rootedFilters := addRootFolderToFilters(copyPathFilters(options.PathFilters), b.rootFolder)
 	return &ListOptions{
 		Recursive:   options.Recursive,
 		PathFilters: addPathFilters(rootedFilters, b.pathFilters),

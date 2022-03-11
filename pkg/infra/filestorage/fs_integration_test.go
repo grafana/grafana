@@ -68,7 +68,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	//setupSqlFS := func() {
 	//	commonSetup()
 	//	sqlStore = sqlstore.InitTestDB(t)
-	//	filestorage = NewDbStorage(testLogger, sqlStore, nil)
+	//	filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
 	//}
 
 	setupLocalFs := func() {
@@ -917,8 +917,156 @@ func TestFsStorage(t *testing.T) {
 		}
 	}
 
+	createPathFiltersCases := func() []fsTestCase {
+		pathFilters := NewPathFilters(
+			[]string{"/gitB/", "/s3/folder/", "/gitC/"},
+			[]string{"/gitA/dashboard2.json"},
+			[]string{"/s3/folder/nested/"},
+			[]string{"/gitC/nestedC/"},
+		)
+		return []fsTestCase{
+			{
+				name: "catch-all test - TODO: split into multiple",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/s3/folder/dashboard.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/s3/folder/nested/dashboard.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitA/dashboard1.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitA/dashboard2.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitB/nested/dashboard.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitB/nested2/dashboard2.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitC/nestedC/dashboardC.json",
+							Contents: &[]byte{},
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: allowAllPathFilters(),
+						}},
+						list: checks(listSize(7)),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: denyAllPathFilters(),
+						}},
+						list: checks(listSize(0)),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: pathFilters,
+						}},
+						list: checks(listSize(5), listHasMore(false), listLastPath("/s3/folder/dashboard.json")),
+						files: [][]interface{}{
+							// /gitA/dashboard.json is not explicitly allowed
+							checks(fPath("/gitA/dashboard2.json")),         // explicitly allowed by allowedPath
+							checks(fPath("/gitB/nested/dashboard.json")),   // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested2/dashboard2.json")), // allowed by '/gitB/' prefix
+							checks(fPath("/gitC/nestedC/dashboardC.json")), // allowed by '/gitC/' prefix
+							checks(fPath("/s3/folder/dashboard.json")),     // allowed by '/s3/folder/' prefix
+							// /s3/folder/nested/dashboard.json is denied with '/s3/folder/nested/' prefix
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: pathFilters,
+						}},
+						checks: [][]interface{}{
+							// /gitA is missing due to the lack of explicit allow
+							checks(fPath("/gitB")),         // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested")),  // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested2")), // allowed by '/gitB/' prefix
+							checks(fPath("/gitC")),         // allowed by '/gitC/' prefix
+							// /gitC/nestedC is explicitly denied
+							// /s3 is not explicitly allowed
+							checks(fPath("/s3/folder")),
+							// /s3/folder/nested is denied with '/s3/folder/nested/' prefix
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/gitA", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						list: checks(listSize(1), listHasMore(false), listLastPath("/gitA/dashboard2.json")),
+						files: [][]interface{}{
+							checks(fPath("/gitA/dashboard2.json")),
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/gitA", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						checks: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/gitC", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+						files: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/gitC/nestedC", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						list: checks(listSize(1), listHasMore(false), listLastPath("/gitC/nestedC/dashboardC.json")),
+						files: [][]interface{}{
+							checks(fPath("/gitC/nestedC/dashboardC.json")),
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/gitC", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						checks: [][]interface{}{},
+					},
+				},
+			},
+		}
+	}
+
 	runTests(createListFoldersTests, t)
 	runTests(createListFilesTests, t)
 	runTests(createFileCRUDTests, t)
 	runTests(createFolderCrudCases, t)
+	runTests(createPathFiltersCases, t)
 }
