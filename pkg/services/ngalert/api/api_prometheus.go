@@ -131,10 +131,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		groupId, namespaceUID, namespace := r[0], r[1], r[2]
 
 		newGroup := &apimodels.RuleGroup{
-			Name: groupId,
-			// This doesn't make sense in our architecture
-			// so we use this field for passing to the frontend the namespace
-			File:           namespace,
+			Name:           groupId,
+			File:           namespace, // file is what Prometheus uses for provisioning, we replace it with namespace.
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
@@ -204,6 +202,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				newRule.LastError = alertState.Error.Error()
 				newRule.Health = "error"
 			}
+
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
 		}
 
@@ -214,37 +213,28 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 
+// ruleToQuery attempts to extract the datasource queries from the alert query model.
+// Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
 func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
-	if len(rule.Data) == 1 {
-		q, err := rule.Data[0].GetQuery()
-		if err == nil {
-			return q
-		}
-
-		if err != ngmodels.ErrNoQuery {
-			logger.Debug("unable to get query", "err", err)
-		}
-
-		return encodedQueriesOrError(rule.Data)
-	}
-
 	var queryErr error
 	var queries []string
 
 	for _, q := range rule.Data {
 		q, err := q.GetQuery()
-		if err == nil {
-			queries = append(queries, q)
+		if err != nil {
+			// If we can't find the query simply omit it, and try the rest.
+			// Even single query alerts would have 2 `AlertQuery`, one for the query and one for the condition.
+			if err == ngmodels.ErrNoQuery {
+				continue
+			}
+
+			// For any other type of error, it is unexpected abort and return the whole JSON.
+			logger.Debug("failed to parse a query", "err", err)
+			queryErr = err
+			break
 		}
 
-		// If we can't find the query simply omit it, and try the rest.
-		if err == ngmodels.ErrNoQuery {
-			continue
-		}
-
-		queryErr = err
-		logger.Debug("failed to parse a query", "err", err)
-		break
+		queries = append(queries, q)
 	}
 
 	// If we were able to extract at least one query without failure use it.
