@@ -131,3 +131,7 @@ func (s *rootStorageS3) Write(ctx context.Context, cmd *WriteValueRequest) (*Wri
 		Message: "unsupportted operation (S3)",
 	}, nil
 }
+
+func (s *rootStorageS3) Sync() error {
+	return nil
+}

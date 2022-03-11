@@ -71,6 +71,10 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 	return s
 }
 
+func (s *rootStorageDisk) Sync() error {
+	return nil // already in sync
+}
+
 // with local disk user metadata and messages are lost
 func (s *rootStorageDisk) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
 	byteAray := []byte(cmd.Body)

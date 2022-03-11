@@ -46,6 +46,8 @@ type storageRuntime interface {
 
 	Store() filestorage.FileStorage
 
+	Sync() error
+
 	// Different storage knows how to handle comments and tracking
 	Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error)
 }
@@ -61,6 +63,10 @@ func (t *baseStorageRuntime) Meta() RootStorageMeta {
 
 func (t *baseStorageRuntime) Store() filestorage.FileStorage {
 	return t.store
+}
+
+func (t *baseStorageRuntime) Sync() error {
+	return nil
 }
 
 func (t *baseStorageRuntime) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {

@@ -74,10 +74,10 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 		repo, err := git.PlainOpen(dir)
 		if err == git.ErrRepositoryNotExists {
 			repo, err = git.PlainClone(dir, false, &git.CloneOptions{
-				URL:          cfg.Remote,
-				Progress:     os.Stdout,
-				Depth:        1,
-				SingleBranch: true,
+				URL:      cfg.Remote,
+				Progress: os.Stdout,
+				//Depth:    1,
+				//SingleBranch: true,
 			})
 		}
 
@@ -139,22 +139,23 @@ func newGitStorage(prefix string, name string, localRoot string, cfg *StorageGit
 							s.github = nil
 						} else {
 							grafanaStorageLogger.Info("default branch", "branch", *ghrepo.DefaultBranch)
-
-							s.repo = repo
-							err = s.Pull()
-							if err != nil {
-								meta.Notice = append(meta.Notice, data.Notice{
-									Severity: data.NoticeSeverityError,
-									Text:     "unable to pull: " + err.Error(),
-								})
-							}
 						}
 					}
 				}
 			}
 		}
-
 		s.repo = repo
+
+		// Try pulling after init
+		if s.repo != nil {
+			err = s.Pull()
+			if err != nil {
+				meta.Notice = append(meta.Notice, data.Notice{
+					Severity: data.NoticeSeverityError,
+					Text:     "unable to pull: " + err.Error(),
+				})
+			}
+		}
 	}
 
 	s.meta = meta
@@ -169,8 +170,8 @@ func (s *rootStorageGit) Pull() error {
 	}
 
 	err = w.Pull(&git.PullOptions{
-		Depth:        1,
-		SingleBranch: true,
+		// Depth: 1,
+		//SingleBranch: true,
 	})
 	if err != nil {
 		return err
@@ -181,6 +182,10 @@ func (s *rootStorageGit) Pull() error {
 func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
 	if s.github == nil {
 		return nil, fmt.Errorf("github client not initialized")
+	}
+	// Write to the correct subfolder
+	if s.settings.Root != "" {
+		cmd.Path = s.settings.Root + "/" + cmd.Path
 	}
 
 	if cmd.Action == "pr" {
@@ -199,11 +204,6 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 			res.Code = 500
 			res.Message = "unable to create branch"
 			return res, nil
-		}
-
-		// Write to the correct subfolder
-		if s.settings.Root != "" {
-			cmd.Path = s.settings.Root + "/" + cmd.Path
 		}
 
 		err = s.github.pushCommit(ctx, ref, cmd)
@@ -318,4 +318,15 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 		Hash:    hash.String(),
 		Message: "made commit",
 	}, nil
+}
+
+func (s *rootStorageGit) Sync() error {
+	grafanaStorageLogger.Info("GIT PULL", "remote", s.settings.Remote)
+	err := s.Pull()
+	if err != nil {
+		if err.Error() == "already up-to-date" {
+			return nil
+		}
+	}
+	return err
 }

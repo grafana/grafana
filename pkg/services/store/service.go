@@ -38,6 +38,7 @@ type StorageService interface {
 	Upsert(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
 	PostDashboard(c *models.ReqContext) response.Response
+	HandleRootRequest(c *models.ReqContext) response.Response
 
 	// List folder contents
 	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
@@ -211,6 +212,33 @@ func (s *standardStorageService) Browse(c *models.ReqContext) response.Response 
 		return response.Error(404, "not found", nil)
 	}
 	return response.JSONStreaming(200, frame)
+}
+
+func (s *standardStorageService) HandleRootRequest(c *models.ReqContext) response.Response {
+	params := web.Params(c.Req)
+	key := params[":key"]
+	action := c.Req.URL.Query().Get("action")
+
+	for _, root := range s.dash.roots {
+		m := root.Meta()
+		if m.Config.Prefix == key {
+			if action == "sync" {
+				err := root.Sync()
+				if err != nil {
+					return response.Error(400, "sync error: "+err.Error(), nil)
+				}
+				return response.Success("OK")
+			}
+			response.Error(400, "unsupported action", nil)
+		}
+	}
+
+	return response.JSON(400, map[string]string{
+		"error":  "unknown root",
+		"action": action,
+		"key":    key,
+		"method": c.Req.Method,
+	})
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {

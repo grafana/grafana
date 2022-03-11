@@ -39,7 +39,6 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboards)
 	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
 	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", ss.GetDashboardsByPluginId)
 	bus.AddHandler("sql", ss.GetDashboardSlugById)
 	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
 }
@@ -437,17 +436,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 			p.PermissionName = p.Permission.String()
 		}
 
-		return err
-	})
-}
-
-func (ss *SQLStore) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var dashboards = make([]*models.Dashboard, 0)
-		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
-
-		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
-		query.Result = dashboards
 		return err
 	})
 }
