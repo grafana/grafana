@@ -1,5 +1,5 @@
 import { SelectableValue, toOption } from '@grafana/data';
-import { Select } from '@grafana/ui';
+import { Checkbox, Select } from '@grafana/ui';
 import React, { ComponentType } from 'react';
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { AutoSizeInput } from './AutoSizeInput';
@@ -16,20 +16,37 @@ export function getOperationParamEditor(
     return SelectInputParamEditor;
   }
 
-  return SimpleInputParamEditor;
+  switch (paramDef.type) {
+    case 'boolean':
+      return BoolInputParamEditor;
+    case 'number':
+    case 'string':
+    default:
+      return SimpleInputParamEditor;
+  }
 }
 
 function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <AutoSizeInput
       id={getOperationParamId(props.operationIndex, props.index)}
-      defaultValue={props.value}
+      defaultValue={props.value?.toString()}
       minWidth={props.paramDef.minWidth}
       placeholder={props.paramDef.placeholder}
       title={props.paramDef.description}
       onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
       }}
+    />
+  );
+}
+
+function BoolInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
+  return (
+    <Checkbox
+      id={getOperationParamId(props.operationIndex, props.index)}
+      value={props.value as boolean}
+      onChange={(evt) => props.onChange(props.index, evt.currentTarget.checked)}
     />
   );
 }
