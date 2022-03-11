@@ -43,12 +43,12 @@ func CSRF(loginCookieName string, logger log.Logger) func(http.Handler) http.Han
 			if UseBehindProxy := os.Getenv("GF_USE_BEHIND_PROXY"); UseBehindProxy == "true" {
 				// X-Forwarded-Host for (reverse) proxy scenarios
 				// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Host
-				xfh, err := url.Parse(r.Header.Get("X-Forwarded-Host"))
+				xfh, err := util.SplitHostPortDefault(r.Header.Get("X-Forwarded-Host"), "", "0")
 				if err != nil {
 					logger.Error("error parsing X-Forwarded-Host header", "err", err)
 				}
 				// Checking that the Host header is not empty AND that the the Origin header matches the Host OR X-Forwarded-Host matches the Origin
-				if err != nil || netAddr.Host == "" || ((origin.String() != "" && origin.Hostname() != netAddr.Host) && (xfh.String() != "" && xfh.String() != origin.Hostname())) {
+				if err != nil || netAddr.Host == "" || ((origin.String() != "" && origin.Hostname() != netAddr.Host) && (xfh.Host != "" && xfh.Host != origin.Hostname())) {
 					http.Error(w, "origin not allowed", http.StatusForbidden)
 					return
 				}
