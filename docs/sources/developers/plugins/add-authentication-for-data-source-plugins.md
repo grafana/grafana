@@ -303,4 +303,16 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 }
 ```
 
+In addition, if the user's token includes an ID token, Grafana will pass the user's ID token to the plugin in an `X-ID-Token` header, available on the `QueryDataRequest` object on the `QueryData` request in your backend data source.
+
+```go
+func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+  idToken := req.Headers["X-ID-Token"]
+
+	for _, q := range req.Queries {
+		// ...
+	}
+}
+```
+
 > **Note:** Due to a bug in Grafana, using this feature with PostgreSQL can cause a deadlock. For more information, refer to [Grafana causes deadlocks in PostgreSQL, while trying to refresh users token](https://github.com/grafana/grafana/issues/20515).

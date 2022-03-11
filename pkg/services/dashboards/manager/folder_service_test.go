@@ -7,14 +7,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var orgID = int64(1)
@@ -22,13 +25,19 @@ var user = &models.SignedInUser{UserId: 1}
 
 func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
-		store := &database.FakeDashboardStore{}
+		store := &dashboards.FakeDashboardStore{}
 		defer store.AssertExpectations(t)
+		cfg := setting.NewCfg()
+		features := featuremgmt.WithFeatures()
+		permissionsServices := acmock.NewPermissionsServicesMock()
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
+		ac := acmock.New()
 		service := ProvideFolderService(
-			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store, nil)},
-			store,
-			nil,
+			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
+			store, nil, features, permissionsServices, ac,
 		)
+
+		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 1)
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New

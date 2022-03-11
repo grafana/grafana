@@ -58,8 +58,12 @@ export interface QueryBuilderOperationParamDef {
   name: string;
   type: string;
   options?: string[] | number[] | Array<SelectableValue<string>>;
+  hideName?: boolean;
   restParam?: boolean;
   optional?: boolean;
+  placeholder?: string;
+  description?: string;
+  minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
 }
 
@@ -87,14 +91,14 @@ export interface QueryBuilderOperationParamEditorProps {
 }
 
 export enum QueryEditorMode {
-  Builder,
-  Code,
-  Explain,
+  Code = 'code',
+  Builder = 'builder',
+  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
   getAlternativeOperations(key: string): QueryBuilderOperationDef[];
   getCategories(): string[];
-  getOperationDef(id: string): QueryBuilderOperationDef;
+  getOperationDef(id: string): QueryBuilderOperationDef | undefined;
 }
