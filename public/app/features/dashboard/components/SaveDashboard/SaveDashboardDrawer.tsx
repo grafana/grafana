@@ -43,9 +43,7 @@ interface FormDTO {
 
   newDashboardTitle?: string;
   newDashboardStore?: string;
-
-  saveTimerange?: boolean;
-  saveVariables?: boolean;
+  newDashboardPath?: string;
 }
 
 const actionOptions = [
@@ -96,6 +94,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
   const currentValue = useWatch({ control });
+
+  const [saveTimeRange, setSaveTimeRange] = useState(false);
+  const [saveVariables, setSaveVariables] = useState(false);
 
   const isNew = useMemo(() => {
     const v = dashboard.version === 0 && !dashboard.uid;
@@ -152,8 +153,8 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
   const data = useMemo(() => {
     const clone = dashboard.getSaveModelClone({
-      saveTimerange: Boolean(currentValue.saveTimerange),
-      saveVariables: Boolean(currentValue.saveVariables),
+      saveTimerange: Boolean(saveTimeRange),
+      saveVariables: Boolean(saveVariables),
     });
 
     if (!previous.value) {
@@ -176,7 +177,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       diffCount,
       hasChanges: diffCount > 0,
     };
-  }, [dashboard, previous.value, currentValue.saveTimerange, currentValue.saveVariables]);
+  }, [dashboard, previous.value, saveTimeRange, saveVariables]);
 
   const [showDiff, setShowDiff] = useState(false);
   const [rsp, setRsp] = useState<WriteValueResponse>();
@@ -189,8 +190,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     let path = dashboard.uid;
     if (isNew) {
       const title = currentValue.newDashboardTitle ?? 'New Dashboard';
-      const slug = kbn.slugifyForUrl(title);
-      path = keyFromStorage(currentValue.newDashboardStore) + '/' + slug;
+      path = keyFromStorage(currentValue.newDashboardStore) + '/';
+      if (currentValue.newDashboardPath) {
+        path += currentValue.newDashboardPath;
+        if (!path.endsWith('/')) {
+          path += '/';
+        }
+      }
+      path += kbn.slugifyForUrl(title);
       body.title = title;
     }
 
@@ -274,146 +281,144 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   };
 
   return (
-    <form onSubmit={handleSubmit(doSave)}>
-      <Drawer
-        title={dashboard.title}
-        onClose={onDismiss}
-        width={'40%'}
-        subtitle={
-          <>
-            {hasTimeChanged && (
-              <Checkbox
-                {...register('saveTimerange')}
-                label="Save current time range as dashboard default"
-                aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-              />
+    <Drawer
+      title={dashboard.title}
+      onClose={onDismiss}
+      width={'40%'}
+      subtitle={
+        <>
+          {hasTimeChanged && (
+            <Checkbox
+              checked={saveTimeRange}
+              onChange={() => setSaveTimeRange(!saveTimeRange)}
+              label="Save current time range as dashboard default"
+              aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+            />
+          )}
+          {hasVariableChanged && (
+            <Checkbox
+              checked={saveVariables}
+              onChange={() => setSaveVariables(!saveVariables)}
+              label="Save current variable values as dashboard default"
+              aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+            />
+          )}
+          <TabsBar className={styles.tabsBar}>
+            <Tab label={'Save'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
+            {data.hasChanges && (
+              <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
             )}
-            {hasVariableChanged && (
-              <Checkbox
-                {...register('saveVariables')}
-                label="Save current variable values as dashboard default"
-                aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-              />
-            )}
-            <TabsBar className={styles.tabsBar}>
-              <Tab label={'Save'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-              {data.hasChanges && (
-                <Tab
-                  label={'Changes'}
-                  active={showDiff}
-                  onChangeTab={() => setShowDiff(true)}
-                  counter={data.diffCount}
-                />
-              )}
-            </TabsBar>
-          </>
-        }
-        expandable
-      >
-        <CustomScrollbar autoHeightMin="100%">
-          <TabContent>
-            {showDiff && !rsp && (
-              <>
-                {previous.loading && <Spinner />}
-                {!data.hasChanges && <div>No changes made to this dashboard</div>}
-                {data.diff && data.hasChanges && (
-                  <div>
-                    <div className={styles.spacer}>
-                      {Object.entries(data.diff).map(([key, diffs]) => (
-                        <DiffGroup diffs={diffs} key={key} title={key} />
-                      ))}
-                    </div>
-
-                    <h4>JSON Diff</h4>
-                    <DiffViewer oldValue={JSON.stringify(previous.value, null, 2)} newValue={data.cloneJSON!} />
+          </TabsBar>
+        </>
+      }
+      expandable
+    >
+      <CustomScrollbar autoHeightMin="100%">
+        <TabContent>
+          {showDiff && !rsp && (
+            <>
+              {previous.loading && <Spinner />}
+              {!data.hasChanges && <div>No changes made to this dashboard</div>}
+              {data.diff && data.hasChanges && (
+                <div>
+                  <div className={styles.spacer}>
+                    {Object.entries(data.diff).map(([key, diffs]) => (
+                      <DiffGroup diffs={diffs} key={key} title={key} />
+                    ))}
                   </div>
-                )}
-              </>
-            )}
-            {!showDiff && !rsp && (
-              <div>
+
+                  <h4>JSON Diff</h4>
+                  <DiffViewer oldValue={JSON.stringify(previous.value, null, 2)} newValue={data.cloneJSON!} />
+                </div>
+              )}
+            </>
+          )}
+          {!showDiff && !rsp && (
+            <form onSubmit={handleSubmit(doSave)}>
+              <Field label="Location">{renderLocationInfo()}</Field>
+              {isDirect && (
                 <>
-                  <Field label="Location">{renderLocationInfo()}</Field>
-                  {isDirect && (
-                    <>
-                      <Alert title="Writing directly to a non-versioned file system" severity="info" />
-                    </>
-                  )}
+                  <Alert title="Writing directly to a non-versioned file system" severity="info" />
+                </>
+              )}
 
-                  {isNew && (
-                    <Field label="Dashboard title" invalid={!!errors.newDashboardTitle} error="Title is required">
-                      <Input {...register('newDashboardTitle', { required: true })} placeholder="Set dashboard title" />
-                    </Field>
-                  )}
+              {isNew && (
+                <>
+                  <Field label="Dashboard title" invalid={!!errors.newDashboardTitle} error="Title is required">
+                    <Input {...register('newDashboardTitle', { required: true })} placeholder="Set dashboard title" />
+                  </Field>
+                  <Field label="Dashboard folder">
+                    <Input {...register('newDashboardPath', { required: false })} placeholder="root folder" />
+                  </Field>
+                </>
+              )}
 
-                  {storage.value?.isGit && (
-                    <Field label="Workflow">
-                      <InputControl
-                        name="action"
-                        control={control}
-                        render={({ field }) => <RadioButtonGroup {...field} options={actionOptions} />}
-                      />
-                    </Field>
-                  )}
+              {storage.value?.isGit && (
+                <Field label="Workflow">
+                  <InputControl
+                    name="action"
+                    control={control}
+                    render={({ field }) => <RadioButtonGroup {...field} options={actionOptions} />}
+                  />
+                </Field>
+              )}
 
-                  {isGit && currentValue.action === 'pr' && (
-                    <>
-                      <Field label="Pull request title" invalid={!!errors.title} error="Pull requests need a title">
-                        <Input {...register('title', { required: isGit })} placeholder="Set title on pull request" />
-                      </Field>
-                    </>
-                  )}
+              {isGit && currentValue.action === 'pr' && (
+                <>
+                  <Field label="Pull request title" invalid={!!errors.title} error="Pull requests need a title">
+                    <Input {...register('title', { required: isGit })} placeholder="Set title on pull request" />
+                  </Field>
+                </>
+              )}
 
-                  {!isDirect && (
-                    <Field label="Message" invalid={!!errors.message} error="Message is required">
-                      <TextArea
-                        {...register('message', { required: isGit })}
-                        rows={5}
-                        placeholder="Add a note to describe your changes."
-                      />
-                    </Field>
-                  )}
+              {!isDirect && (
+                <Field label="Message" invalid={!!errors.message} error="Message is required">
+                  <TextArea
+                    {...register('message', { required: isGit })}
+                    rows={5}
+                    placeholder="Add a note to describe your changes."
+                  />
+                </Field>
+              )}
 
+              <HorizontalGroup>
+                <Button
+                  type="submit"
+                  aria-label="Save dashboard button"
+                  disabled={!data.hasChanges && !isNew}
+                  icon={saving ? 'fa fa-spinner' : undefined}
+                >
+                  {saving ? '' : getActionName()}
+                </Button>
+                <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
+                  Cancel
+                </Button>
+              </HorizontalGroup>
+              {!data.hasChanges && !isNew && <div className={styles.nothing}>No changes to save</div>}
+            </form>
+          )}
+          {rsp && (
+            <div>
+              {false && <pre>{JSON.stringify(rsp, null, 2)}</pre>}
+              {rsp.url && (
+                <>
+                  <Alert title={'Pull request created'} severity="success">
+                    <VerticalGroup>
+                      <a href={rsp.url}>{rsp.url}</a>
+                    </VerticalGroup>
+                  </Alert>
                   <HorizontalGroup>
-                    <Button
-                      type="submit"
-                      aria-label="Save dashboard button"
-                      disabled={!data.hasChanges && !isNew}
-                      icon={saving ? 'fa fa-spinner' : undefined}
-                    >
-                      {saving ? '' : getActionName()}
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
-                      Cancel
+                    <Button type="button" variant="secondary" onClick={onDismiss}>
+                      Close
                     </Button>
                   </HorizontalGroup>
-                  {!data.hasChanges && !isNew && <div className={styles.nothing}>No changes to save</div>}
                 </>
-              </div>
-            )}
-            {rsp && (
-              <div>
-                {false && <pre>{JSON.stringify(rsp, null, 2)}</pre>}
-                {rsp.url && (
-                  <>
-                    <Alert title={'Pull request created'} severity="success">
-                      <VerticalGroup>
-                        <a href={rsp.url}>{rsp.url}</a>
-                      </VerticalGroup>
-                    </Alert>
-                    <HorizontalGroup>
-                      <Button type="button" variant="secondary" onClick={onDismiss}>
-                        Close
-                      </Button>
-                    </HorizontalGroup>
-                  </>
-                )}
-              </div>
-            )}
-          </TabContent>
-        </CustomScrollbar>
-      </Drawer>
-    </form>
+              )}
+            </div>
+          )}
+        </TabContent>
+      </CustomScrollbar>
+    </Drawer>
   );
 };
 
