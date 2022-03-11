@@ -266,8 +266,16 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	return updatedUser, err
 }
 
-func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
+	ctx context.Context, orgID int64, query string, page int, limit int,
+	signedInUser *models.SignedInUser,
+) (*serviceaccounts.SearchServiceAccountsResult, error) {
+	searchResult := &serviceaccounts.SearchServiceAccountsResult{
+		TotalCount:      0,
+		ServiceAccounts: make([]*serviceaccounts.ServiceAccountDTO, 0),
+		Page:            page,
+		PerPage:         limit,
+	}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sess := dbSession.Table("org_user")
@@ -277,7 +285,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereParams := make([]interface{}, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, query.OrgID)
+		whereParams = append(whereParams, orgID)
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
@@ -285,7 +293,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				s.sqlStore.Dialect.BooleanStr(true)))
 
 		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", "serviceaccounts:read", query.User)
+			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", "serviceaccounts:read", signedInUser)
 			if err != nil {
 				return err
 			}
@@ -293,8 +301,8 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			whereParams = append(whereParams, acFilter.Args...)
 		}
 
-		if query.Query != "" {
-			queryWithWildcards := "%" + query.Query + "%"
+		if query != "" {
+			queryWithWildcards := "%" + query + "%"
 			whereConditions = append(whereConditions, "(email "+s.sqlStore.Dialect.LikeStr()+" ? OR name "+s.sqlStore.Dialect.LikeStr()+" ? OR login "+s.sqlStore.Dialect.LikeStr()+" ?)")
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 		}
@@ -302,9 +310,9 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 		}
-		if query.Limit > 0 {
-			offset := query.Limit * (query.Page - 1)
-			sess.Limit(query.Limit, offset)
+		if limit > 0 {
+			offset := limit * (page - 1)
+			sess.Limit(limit, offset)
 		}
 
 		sess.Cols(
@@ -318,7 +326,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			"user.is_disabled",
 		)
 		sess.Asc("user.email", "user.login")
-		if err := sess.Find(&serviceAccounts); err != nil {
+		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
 			return err
 		}
 
@@ -334,7 +342,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		query.Result.TotalCount = count
+		searchResult.TotalCount = count
 
 		return nil
 	})
@@ -342,7 +350,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		return nil, err
 	}
 
-	return serviceAccounts, nil
+	return searchResult, nil
 }
 
 func contains(s []int64, e int64) bool {

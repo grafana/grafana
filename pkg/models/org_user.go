@@ -117,11 +117,10 @@ type GetOrgUsersQuery struct {
 }
 
 type SearchOrgUsersQuery struct {
-	OrgID            int64
-	Query            string
-	Page             int
-	Limit            int
-	IsServiceAccount bool
+	OrgID int64
+	Query string
+	Page  int
+	Limit int
 
 	User   *SignedInUser
 	Result SearchOrgUsersQueryResult
