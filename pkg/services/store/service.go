@@ -285,13 +285,10 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 		return nil, errors.New("not found")
 	}
 
-	// TODO: permission check!
-
 	return root.GetFile(ctx, path)
 }
 
 func (s *standardStorageService) GetDashboard(ctx context.Context, user *models.SignedInUser, path string) (*dtos.DashboardFullWithMeta, error) {
-	// TODO: permission check!
 	if strings.HasSuffix(path, ".json") {
 		return nil, fmt.Errorf("invalid path, do not include .json")
 	}
@@ -422,7 +419,6 @@ func (s *standardStorageService) getFolderDashboard(path string, frame *data.Fra
 }
 
 func (s *standardStorageService) SaveDashboard(ctx context.Context, user *models.SignedInUser, opts WriteValueRequest) (*WriteValueResponse, error) {
-	// TODO: authentication!
 	path := opts.Path
 	rootPrefix := s.dash.getRootPrefix(path)
 	guardian := storeauth.NewGuardian(ctx, user, rootPrefix)
