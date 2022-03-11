@@ -331,10 +331,8 @@ const (
 
 	// Annotations related actions
 	ActionAnnotationsRead     = "annotations:read"
+	ActionAnnotationsWrite    = "annotations:write"
 	ActionAnnotationsTagsRead = "annotations.tags:read"
-
-	ScopeAnnotationsAll     = "annotations:*"
-	ScopeAnnotationsTagsAll = "annotations:tags:*"
 
 	// Dashboard actions
 	ActionDashboardsCreate           = "dashboards:create"
@@ -352,10 +350,16 @@ var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 
-	// Folder scopes
+	// Annotation scopes
+	ScopeAnnotationsRoot       = "annotations"
+	ScopeAnnotationsProvider   = NewScopeProvider(ScopeAnnotationsRoot)
+	ScopeAnnotationsAll        = ScopeAnnotationsProvider.GetResourceAllScope()
+	ScopeAnnotationsID         = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
+	ScopeAnnotationsTypeLocal  = ScopeAnnotationsProvider.GetResourceScopeType("local")
+	ScopeAnnotationsTypeGlobal = ScopeAnnotationsProvider.GetResourceScopeType("global")
 
-	// Datasource scopes
-
+	// Annotation tag scopes
+	ScopeAnnotationsTagsAll = "annotations:tags:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
