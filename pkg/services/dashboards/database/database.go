@@ -635,3 +635,14 @@ func EnsureTagsExist(sess *sqlstore.DBSession, tags []*models.Tag) ([]*models.Ta
 
 	return tags, nil
 }
+
+func (d *DashboardStore) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var dashboards = make([]*models.Dashboard, 0)
+		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + d.sqlStore.Dialect.BooleanStr(false)
+
+		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
+		query.Result = dashboards
+		return err
+	})
+}

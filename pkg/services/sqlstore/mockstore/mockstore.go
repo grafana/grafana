@@ -660,10 +660,6 @@ func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
 	return m.ExpectedError
 }
