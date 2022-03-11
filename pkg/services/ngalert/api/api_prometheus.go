@@ -224,7 +224,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 		if err != nil {
 			// If we can't find the query simply omit it, and try the rest.
 			// Even single query alerts would have 2 `AlertQuery`, one for the query and one for the condition.
-			if err == ngmodels.ErrNoQuery {
+			if errors.Is(err, ngmodels.ErrNoQuery) {
 				continue
 			}
 
