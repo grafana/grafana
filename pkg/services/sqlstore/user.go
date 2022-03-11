@@ -762,7 +762,7 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 	if !has {
 		return models.ErrUserNotFound
 	}
-	for _, sql := range userDeletions() {
+	for _, sql := range UserDeletions() {
 		_, err := sess.Exec(sql, cmd.UserId)
 		if err != nil {
 			return err
@@ -771,7 +771,7 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 	return nil
 }
 
-func userDeletions() []string {
+func UserDeletions() []string {
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",
 		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
@@ -783,14 +783,6 @@ func userDeletions() []string {
 		"DELETE FROM user_auth_token WHERE user_id = ?",
 		"DELETE FROM quota WHERE user_id = ?",
 	}
-	return deletes
-}
-
-func ServiceAccountDeletions() []string {
-	deletes := []string{
-		"DELETE FROM api_key WHERE service_account_id = ?",
-	}
-	deletes = append(deletes, userDeletions()...)
 	return deletes
 }
 

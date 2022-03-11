@@ -54,6 +54,13 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		Tokens: 0,
 	}, nil
 }
+func ServiceAccountDeletions() []string {
+	deletes := []string{
+		"DELETE FROM api_key WHERE service_account_id = ?",
+	}
+	deletes = append(deletes, sqlstore.UserDeletions()...)
+	return deletes
+}
 
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -66,7 +73,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 		if !has {
 			return serviceaccounts.ErrServiceAccountNotFound
 		}
-		for _, sql := range sqlstore.ServiceAccountDeletions() {
+		for _, sql := range ServiceAccountDeletions() {
 			_, err := sess.Exec(sql, user.Id)
 			if err != nil {
 				return err
