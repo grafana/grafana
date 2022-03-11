@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
@@ -491,6 +493,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.healthzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
+	m.Use(hs.pluginMetricsEndpoint)
 
 	m.Use(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg))
@@ -526,6 +529,31 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 	promhttp.
 		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
 		ServeHTTP(ctx.Resp, ctx.Req)
+}
+
+func (hs *HTTPServer) pluginMetricsEndpoint(ctx *web.Context) {
+	if ctx.Req.Method != http.MethodGet || !strings.HasPrefix(ctx.Req.URL.Path, "/metrics/plugins/") {
+		return
+	}
+
+	pathParts := strings.SplitAfter(ctx.Req.URL.Path, "/")
+	pluginID := pathParts[len(pathParts)-1]
+
+	resp, err := hs.pluginClient.CollectMetrics(ctx.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
+	if err != nil {
+		if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
+			ctx.Resp.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.Resp.Header().Set("Content-Type", "text/plain")
+	if _, err := ctx.Resp.Write(resp.PrometheusMetrics); err != nil {
+		hs.log.Error("Failed to write to response", "err", err)
+	}
 }
 
 // healthzHandler always return 200 - Ok if Grafana's web server is running
