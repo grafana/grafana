@@ -20,11 +20,15 @@ import {
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
   fetchGrafanaAnnotationsAction,
-  fetchPromBuildInfoAction,
+  fetchRulesSourceBuildInfoAction,
 } from './actions';
 
 export const reducer = combineReducers({
-  dataSources: createAsyncSlice('dataSources', fetchPromBuildInfoAction).reducer,
+  dataSources: createAsyncMapSlice(
+    'dataSources',
+    fetchRulesSourceBuildInfoAction,
+    ({ rulesSourceName }) => rulesSourceName
+  ).reducer,
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,
