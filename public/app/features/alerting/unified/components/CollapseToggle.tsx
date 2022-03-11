@@ -32,6 +32,7 @@ export const CollapseToggle: FC<Props> = ({
       className={cx(styles.expandButton, className)}
       icon={isCollapsed ? 'angle-right' : 'angle-down'}
       onClick={() => onToggle(!isCollapsed)}
+      {...restOfProps}
     />
   );
 };
