@@ -318,6 +318,8 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 
 func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string, options *ListOptions) ([]FileMetadata, error) {
 	folders := make([]FileMetadata, 0)
+
+	parentFolderPath = strings.TrimSuffix(parentFolderPath, Delimiter)
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var foundPaths []string
 
@@ -327,7 +329,7 @@ func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string,
 		if options.Recursive {
 			sess.Where("LOWER(parent_folder_path) > ?", strings.ToLower(parentFolderPath))
 		} else {
-			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(parentFolderPath))
+			sess.Where("LOWER(parent_folder_path) LIKE ? AND LOWER(parent_folder_path) NOT LIKE ?", strings.ToLower(parentFolderPath)+Delimiter+"%", strings.ToLower(parentFolderPath)+Delimiter+"%"+Delimiter+"%")
 		}
 
 		if options.PathFilters.isDenyAll() {
