@@ -197,11 +197,12 @@ func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 		return nil, err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil, nil
 	}
 
-	file, err := b.wrapped.Get(ctx, b.addRoot(path))
+	file, err := b.wrapped.Get(ctx, rootedPath)
 	if file != nil {
 		file.FullPath = b.removeRoot(file.FullPath)
 	}
@@ -212,11 +213,12 @@ func (b wrapper) Delete(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
-	return b.wrapped.Delete(ctx, b.addRoot(path))
+	return b.wrapped.Delete(ctx, rootedPath)
 }
 
 func detectContentType(path string, originalGuess string) string {
@@ -235,7 +237,8 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(file.Path) {
+	rootedPath := b.addRoot(file.Path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
@@ -250,7 +253,7 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 	}
 
 	return b.wrapped.Upsert(ctx, &UpsertFileCommand{
-		Path:       b.addRoot(file.Path),
+		Path:       rootedPath,
 		MimeType:   file.MimeType,
 		Contents:   file.Contents,
 		Properties: file.Properties,
@@ -362,11 +365,12 @@ func (b wrapper) CreateFolder(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
-	return b.wrapped.CreateFolder(ctx, b.addRoot(path))
+	return b.wrapped.CreateFolder(ctx, rootedPath)
 }
 
 func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
@@ -374,7 +378,8 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
@@ -387,7 +392,7 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 		return fmt.Errorf("folder %s is not empty - cant remove it", path)
 	}
 
-	return b.wrapped.DeleteFolder(ctx, b.addRoot(path))
+	return b.wrapped.DeleteFolder(ctx, rootedPath)
 }
 
 func (b wrapper) isFolderEmpty(ctx context.Context, path string) (bool, error) {
