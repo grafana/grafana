@@ -612,8 +612,6 @@ func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 	whereParams := make([]interface{}, 0)
 	sess := x.Table("user").Alias("u")
 
-	// TODO: add to chore, for cleaning up after we have created
-	// service accounts table in the modelling
 	whereConditions = append(whereConditions, "u.is_service_account = ?")
 	whereParams = append(whereParams, dialect.BooleanStr(false))
 
