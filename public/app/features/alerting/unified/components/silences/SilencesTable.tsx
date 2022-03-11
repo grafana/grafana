@@ -183,10 +183,14 @@ function useColumns(alertManagerSourceName: string) {
     const handleExpireSilenceClick = (id: string) => {
       dispatch(expireSilenceAction(alertManagerSourceName, id));
     };
+<<<<<<< HEAD
     const showActions = contextSrv.hasAccess(
       isExternalAM ? AccessControlAction.AlertingInstancesExternalWrite : AccessControlAction.AlertingInstanceUpdate,
       contextSrv.isEditor
     );
+=======
+    const showActions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceUpdate, contextSrv.isEditor);
+>>>>>>> add FGAC actions for silences table
     const columns: SilenceTableColumnProps[] = [
       {
         id: 'state',
