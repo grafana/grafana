@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
+
+	_ "gocloud.dev/blob/fileblob"
+	_ "gocloud.dev/blob/memblob"
 )
 
 const (
@@ -306,8 +309,22 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 		}
 
 		if options.IsAllowed(obj.Key) {
-			if obj.IsDir && !recursive {
-				foundPaths = append(foundPaths, strings.TrimSuffix(obj.Key, Delimiter))
+			if obj.IsDir && !recursive && options.IsAllowed(obj.Key) {
+				var nestedDirPath string
+				dirMPath := obj.Key + directoryMarker
+				attributes, _ := c.bucket.Attributes(ctx, dirMPath)
+
+				if attributes != nil && attributes.Metadata != nil {
+					if path, ok := attributes.Metadata[originalPathAttributeKey]; ok {
+						nestedDirPath = getParentFolderPath(path)
+					}
+				}
+
+				if nestedDirPath != "" {
+					foundPaths = append(foundPaths, nestedDirPath)
+				} else {
+					foundPaths = append(foundPaths, strings.TrimSuffix(obj.Key, Delimiter))
+				}
 			}
 
 			if dirPath == "" && !obj.IsDir {
@@ -343,11 +360,15 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 		}
 	}
 
+	var foundPath string
 	if dirMarkerPath != "" {
-		foundPaths = append(foundPaths, dirMarkerPath)
+		foundPath = dirMarkerPath
 	} else if dirPath != "" {
-		// TODO replicate the changes in `createFolder`
-		foundPaths = append(foundPaths, dirPath)
+		foundPath = dirPath
+	}
+
+	if foundPath != "" && options.IsAllowed(foundPath+Delimiter) {
+		foundPaths = append(foundPaths, foundPath)
 	}
 	return foundPaths, nil
 }

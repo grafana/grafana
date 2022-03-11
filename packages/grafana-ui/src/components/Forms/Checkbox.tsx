@@ -76,7 +76,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
        * Primarily to limit the classes necessary to use when these classes will be used
        * for angular components styling
        * */
-      &:checked + span {
+      &:checked + span,
+      &:indeterminate + span {
         background: blue;
         background: ${theme.colors.primary.main};
         border: none;
@@ -94,9 +95,17 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
           width: 6px;
           height: 12px;
           border: solid ${theme.colors.primary.contrastText};
-          border-width: 0 3px 3px 0;
-          transform: rotate(45deg);
         }
+      }
+
+      &:checked + span:after {
+        border-width: 0 3px 3px 0;
+        transform: rotate(45deg);
+      }
+
+      &:indeterminate + span:after {
+        border-width: 0 3px 0 0;
+        transform: rotate(90deg);
       }
 
       &:disabled + span {

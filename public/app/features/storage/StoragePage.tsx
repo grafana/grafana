@@ -5,8 +5,9 @@ import { getBackendSrv } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
+import { ExportModal } from './ExportModal';
 import { StorageButton } from './StorageButton';
 import { StorageList } from './StorageList';
 import { RootStorageMeta, StatusResponse } from './types';
@@ -15,6 +16,7 @@ export default function StoragePage() {
   const styles = useStyles2(getStyles);
   const navModel = useNavModel('storage');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   const [dashboards, setDashboards] = useState<RootStorageMeta[]>();
   const [resources, setResources] = useState<RootStorageMeta[]>();
 
@@ -33,14 +35,6 @@ export default function StoragePage() {
       setResources(filteredResources);
     }
   }, [searchQuery, status.value?.dashboards, status.value?.resources]);
-
-  const doExport = useCallback(() => {
-    getBackendSrv()
-      .post('api/storage/export')
-      .then((v) => {
-        alert(JSON.stringify(v));
-      });
-  }, []);
 
   return (
     <Page navModel={navModel}>
@@ -62,13 +56,10 @@ export default function StoragePage() {
             />
             <StorageButton
               buttonProps={{ variant: 'secondary', children: 'Actions', icon: '' }}
-              options={[
-                { value: 'push', label: 'Push storage to git', icon: 'arrow-up' },
-                { value: 'pull', label: 'Pull storage from git', icon: 'arrow-down' },
-              ]}
+              options={[{ value: 'export', label: 'Export instance to git', icon: 'arrow-up' }]}
               onChange={function (value: SelectableValue<string>): void {
-                if (value.value === 'push') {
-                  doExport();
+                if (value.value === 'export') {
+                  setIsOpen(true);
                 }
               }}
             />
@@ -89,6 +80,7 @@ export default function StoragePage() {
             <StorageList storage={resources} type="res" title="Resources" />
           </div>
         )}
+        <ExportModal isOpen={isOpen} onDismiss={() => setIsOpen(false)} dashboards={dashboards} resources={resources} />
       </Page.Contents>
     </Page>
   );
@@ -104,6 +96,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   border: css`
     border: 1px solid ${theme.colors.border.medium};
     padding: ${theme.spacing(2)};
+  `,
+  modalBody: css`
+    display: flex;
+    flex-direction: row;
   `,
 });
 

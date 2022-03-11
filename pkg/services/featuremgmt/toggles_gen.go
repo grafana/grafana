@@ -126,8 +126,4 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
-
-	// FlagFileStoreApi
-	// Simple API for managing files
-	FlagFileStoreApi = "fileStoreApi"
 )

@@ -8,6 +8,7 @@ import {
   Drawer,
   Field,
   HorizontalGroup,
+  Icon,
   Input,
   InputControl,
   RadioButtonGroup,
@@ -29,11 +30,17 @@ import { DiffGroup } from '../VersionHistory/DiffGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
+import { RootStorageMeta } from 'app/features/storage/types';
+import { getIconName } from 'app/features/storage/StorageList';
 
 interface FormDTO {
   action?: string; //
   title?: string;
   message?: string;
+
+  dashboardTitle?: string;
+  targetFolder?: string;
 
   saveTimerange?: boolean;
   saveVariables?: boolean;
@@ -72,24 +79,42 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
   const currentValue = useWatch({ control });
 
-  const storage = useMemo(() => {
-    console.log('load status from:', dashboard.uid);
-    const isGit = true;
-    const isDirect = false;
+  const isNew = useMemo(() => {
+    return dashboard.version === 0 && !dashboard.uid;
+  }, [dashboard]);
+
+  const storage = useAsync(async () => {
+    const uid = dashboard.uid ?? '';
+    const idx = uid.indexOf('/');
+    if (idx < 1) {
+      return {
+        isGit: false,
+        isDirect: false,
+      };
+    }
+
+    const key = dashboard.uid.substring(0, idx);
+    const status = (await getBackendSrv().get(`api/storage/root/${key}`)) as RootStorageMeta;
+
     return {
-      isGit,
-      isDirect,
+      isGit: status.config.type === 'git',
+      isDirect: status.config.type === 'disk',
+      status,
     };
   }, [dashboard]);
 
   const previous = useAsync(async () => {
+    if (isNew) {
+      return undefined;
+    }
+
     const slug = dashboard.uid;
     const result = await backendSrv.getDashboardByPath(slug);
     result.dashboard.uid = slug;
     delete result.dashboard.id;
     result.dashboard.version = dashboard.version; // just to avoid issues
     return result.dashboard;
-  }, [dashboard]);
+  }, [dashboard, isNew]);
 
   const data = useMemo(() => {
     if (!previous.value) {
@@ -146,14 +171,39 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     setRsp(rsp);
   };
 
+  const isGit = storage.value?.isGit;
+  const isDirect = storage.value?.isDirect;
+
   const getActionName = () => {
-    if (storage.isGit) {
+    if (isGit) {
       if (currentValue.action === 'pr') {
         return 'Submit';
       }
       return 'Push';
     }
     return 'Save';
+  };
+
+  const renderLocationInfo = () => {
+    if (isNew) {
+      return <div>TODO: path picker...</div>;
+    }
+    const icon = <Icon name={getIconName(storage.value?.status?.config.type ?? '')} />;
+    if (isGit) {
+      const url = storage.value?.status?.config.git?.remote;
+      if (url) {
+        return (
+          <HorizontalGroup>
+            {icon}
+            <a href={url}>{url}</a>
+          </HorizontalGroup>
+        );
+      }
+    }
+    if (storage.loading) {
+      return <Spinner />;
+    }
+    return <div>???</div>;
   };
 
   return (
@@ -226,7 +276,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                       )}
                       {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
 
-                      {storage.isGit && (
+                      <Field label="Location">{renderLocationInfo()}</Field>
+
+                      {storage.value?.isGit && (
                         <Field label="Workflow">
                           <InputControl
                             name="action"
@@ -240,20 +292,22 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                         <>
                           <Field label="Title" invalid={!!errors.title} error="Title is required">
                             <Input
-                              {...register('title', { required: storage.isGit })}
+                              {...register('title', { required: isGit })}
                               placeholder="Set title on pull request"
                             />
                           </Field>
                         </>
                       )}
 
-                      <Field label="Changelog" invalid={!!errors.message} error="Changelog is required">
-                        <TextArea
-                          {...register('message', { required: storage.isGit })}
-                          rows={5}
-                          placeholder="Add a note to describe your changes."
-                        />
-                      </Field>
+                      {!isDirect && (
+                        <Field label="Changelog" invalid={!!errors.message} error="Changelog is required">
+                          <TextArea
+                            {...register('message', { required: isGit })}
+                            rows={5}
+                            placeholder="Add a note to describe your changes."
+                          />
+                        </Field>
+                      )}
 
                       <HorizontalGroup>
                         <Button

@@ -1,4 +1,4 @@
-import React, { FC, memo, useState } from 'react';
+import React, { FC, memo, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { FilterInput, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -13,6 +13,7 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
+import { getLocationSrv } from '@grafana/runtime';
 
 export interface Props {
   folder?: FolderDTO;
@@ -34,6 +35,11 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     folderIds: folderId ? [folderId] : [],
     layout: defaultLayout,
   };
+
+  // HACK!
+  useEffect(() => {
+    getLocationSrv().update({ path: '/g/' });
+  }, []);
 
   const {
     query,

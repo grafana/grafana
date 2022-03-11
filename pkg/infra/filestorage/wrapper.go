@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	_ "gocloud.dev/blob/fileblob"
-	_ "gocloud.dev/blob/memblob"
 )
 
 var (
@@ -47,25 +45,18 @@ func addRootFolderToFilters(pathFilters *PathFilters, rootFolder string) *PathFi
 }
 
 func copyPathFilters(p *PathFilters) *PathFilters {
-	var allowedPrefixes, allowedPaths, disallowedPrefixes, disallowedPaths []string
-
-	if p.disallowedPaths != nil {
-		disallowedPaths = append([]string{}, p.disallowedPaths...)
-	}
-	if p.disallowedPrefixes != nil {
-		disallowedPrefixes = append([]string{}, p.disallowedPrefixes...)
-	}
-	if p.allowedPaths != nil {
-		allowedPaths = append([]string{}, p.allowedPaths...)
-	}
-	if p.allowedPrefixes != nil {
-		allowedPrefixes = append([]string{}, p.allowedPrefixes...)
+	if p == nil {
+		return nil
 	}
 
-	return NewPathFilters(allowedPrefixes, allowedPaths, disallowedPrefixes, disallowedPaths)
+	return NewPathFilters(p.allowedPrefixes, p.allowedPaths, p.disallowedPrefixes, p.disallowedPaths)
 }
 
 func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
+	if new == nil {
+		return base
+	}
+
 	if new.allowedPrefixes != nil {
 		if base.allowedPrefixes != nil {
 			base.allowedPrefixes = append(base.allowedPrefixes, new.allowedPrefixes...)
@@ -112,8 +103,7 @@ func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
 func newWrapper(log log.Logger, wrapped FileStorage, pathFilters *PathFilters, rootFolder string) FileStorage {
 	var rootedPathFilters *PathFilters
 	if pathFilters != nil {
-		copied := *pathFilters
-		rootedPathFilters = addRootFolderToFilters(&copied, rootFolder)
+		rootedPathFilters = addRootFolderToFilters(copyPathFilters(pathFilters), rootFolder)
 	} else {
 		rootedPathFilters = allowAllPathFilters()
 	}
@@ -207,11 +197,12 @@ func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 		return nil, err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil, nil
 	}
 
-	file, err := b.wrapped.Get(ctx, b.addRoot(path))
+	file, err := b.wrapped.Get(ctx, rootedPath)
 	if file != nil {
 		file.FullPath = b.removeRoot(file.FullPath)
 	}
@@ -222,11 +213,12 @@ func (b wrapper) Delete(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
-	return b.wrapped.Delete(ctx, b.addRoot(path))
+	return b.wrapped.Delete(ctx, rootedPath)
 }
 
 func detectContentType(path string, originalGuess string) string {
@@ -245,7 +237,8 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(file.Path) {
+	rootedPath := b.addRoot(file.Path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
@@ -260,7 +253,7 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 	}
 
 	return b.wrapped.Upsert(ctx, &UpsertFileCommand{
-		Path:       b.addRoot(file.Path),
+		Path:       rootedPath,
 		MimeType:   file.MimeType,
 		Contents:   file.Contents,
 		Properties: file.Properties,
@@ -372,11 +365,12 @@ func (b wrapper) CreateFolder(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
-	return b.wrapped.CreateFolder(ctx, b.addRoot(path))
+	return b.wrapped.CreateFolder(ctx, rootedPath)
 }
 
 func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
@@ -384,7 +378,8 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 		return err
 	}
 
-	if !b.pathFilters.IsAllowed(path) {
+	rootedPath := b.addRoot(path)
+	if !b.pathFilters.IsAllowed(rootedPath) {
 		return nil
 	}
 
@@ -397,7 +392,7 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 		return fmt.Errorf("folder %s is not empty - cant remove it", path)
 	}
 
-	return b.wrapped.DeleteFolder(ctx, b.addRoot(path))
+	return b.wrapped.DeleteFolder(ctx, rootedPath)
 }
 
 func (b wrapper) isFolderEmpty(ctx context.Context, path string) (bool, error) {
