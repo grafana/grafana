@@ -24,7 +24,7 @@ func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComman
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
-		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return models.ErrUserNotFound
@@ -245,7 +245,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
-		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return models.ErrUserNotFound
@@ -309,8 +309,8 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 	})
 }
 
+// validate that there is an org admin user left
 func validateOneAdminLeftInOrg(orgId int64, sess *DBSession) error {
-	// validate that there is an admin user left
 	res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and role='Admin'", orgId)
 	if err != nil {
 		return err
