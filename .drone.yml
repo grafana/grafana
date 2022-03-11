@@ -448,7 +448,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - initialize
+  - build-frontend-packages
   image: grafana/build-container:1.5.2
   name: build-frontend-docs
 - commands:
@@ -510,7 +510,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - initialize
+  - build-frontend-packages
   image: grafana/build-container:1.5.2
   name: build-frontend-docs
 - commands:
@@ -4342,6 +4342,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b0918aeaae8ffc560bfa350a9409fa19dcdab4734c44409afb0c36d974fcf72d
+hmac: 6581da6833b3f2561a2cff23694a75d88867915f08fec0f7fae93c1f6c4c732e
 
 ...
