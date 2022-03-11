@@ -419,6 +419,53 @@ func TestFsStorage(t *testing.T) {
 					},
 				},
 			},
+			{
+				name: "listing folders non recursively",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/folder2/file.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/file-inner.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folderX/folderZ/file.txt",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folderA/folderB/file.txt",
+							Contents: &[]byte{},
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/folder1", options: &ListOptions{Recursive: false}},
+						checks: [][]interface{}{
+							checks(fPath("/folder1/folder2")),
+						},
+					},
+					queryListFolders{
+						input:  queryListFoldersInput{path: "/folderZ", options: &ListOptions{Recursive: false}},
+						checks: [][]interface{}{},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: false}},
+						checks: [][]interface{}{
+							checks(fPath("/folder1")),
+							checks(fPath("/folderA")),
+							checks(fPath("/folderX")),
+						},
+					},
+				},
+			},
 		}
 	}
 
