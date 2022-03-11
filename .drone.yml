@@ -23,7 +23,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl verify-drone
@@ -43,13 +43,13 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
@@ -57,7 +57,7 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -67,19 +67,19 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -87,7 +87,7 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-frontend
 trigger:
   event:
@@ -125,7 +125,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -133,7 +133,7 @@ steps:
   depends_on:
   - initialize
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
@@ -142,7 +142,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -151,20 +151,20 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
   - initialize
   environment: null
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-plugins
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
@@ -185,7 +185,7 @@ steps:
   - git stash pop
   depends_on:
   - validate-scuemata
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
@@ -196,7 +196,7 @@ steps:
   - build-frontend
   - build-frontend-packages
   environment: null
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package
 - commands:
   - ./scripts/grafana-server/start-server
@@ -209,7 +209,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -255,7 +255,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-storybook
 - commands:
   - yarn wait-on http://$HOST:$PORT
@@ -275,7 +275,7 @@ steps:
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss -archs amd64
@@ -345,7 +345,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - apt-get update
@@ -360,7 +360,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -375,7 +375,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: mysql-integration-tests
 trigger:
   event:
@@ -419,7 +419,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - |-
@@ -433,7 +433,7 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
@@ -441,7 +441,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-docs
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -450,13 +450,13 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - build-frontend-packages
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana
@@ -503,7 +503,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - |-
@@ -517,7 +517,7 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
@@ -525,7 +525,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-docs
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -534,13 +534,13 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - build-frontend-packages
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana
@@ -584,7 +584,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl verify-drone
@@ -604,13 +604,13 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
@@ -618,7 +618,7 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -628,19 +628,19 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -648,7 +648,7 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-frontend
 trigger:
   branch: main
@@ -684,7 +684,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - image: grafana/drone-downstream
   name: trigger-enterprise-downstream
@@ -703,7 +703,7 @@ steps:
   depends_on:
   - initialize
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
@@ -712,7 +712,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -721,7 +721,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
@@ -730,13 +730,13 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-plugins
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
@@ -757,7 +757,7 @@ steps:
   - git stash pop
   depends_on:
   - validate-scuemata
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
@@ -778,7 +778,7 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package
 - commands:
   - ./scripts/grafana-server/start-server
@@ -791,7 +791,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -837,7 +837,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-storybook
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
@@ -877,14 +877,14 @@ steps:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: publish-frontend-metrics
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss
@@ -956,7 +956,7 @@ steps:
   environment:
     GITHUB_PACKAGE_TOKEN:
       from_secret: github_package_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: release-canary-npm-packages
 - commands:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
@@ -1043,7 +1043,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - apt-get update
@@ -1058,7 +1058,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -1073,7 +1073,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: mysql-integration-tests
 trigger:
   branch: main
@@ -1174,7 +1174,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
@@ -1259,7 +1259,7 @@ steps:
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
@@ -1269,7 +1269,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
@@ -1278,7 +1278,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
@@ -1287,7 +1287,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
@@ -1296,13 +1296,13 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-plugins
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
@@ -1323,7 +1323,7 @@ steps:
   - git stash pop
   depends_on:
   - validate-scuemata
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
@@ -1344,14 +1344,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss --shouldSave
@@ -1388,7 +1388,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -1434,7 +1434,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-storybook
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --src-bucket "$${PRERELEASE_BUCKET}" --src-dir
@@ -1484,7 +1484,7 @@ steps:
   - ./scripts/build/build-npm-packages.sh ${DRONE_TAG}
   depends_on:
   - store-storybook
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-npm-packages
 - commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
@@ -1543,7 +1543,7 @@ steps:
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - |-
@@ -1557,13 +1557,13 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
@@ -1571,7 +1571,7 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -1581,19 +1581,19 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -1601,7 +1601,7 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-frontend
 trigger:
   event:
@@ -1663,7 +1663,7 @@ steps:
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - apt-get update
@@ -1678,7 +1678,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -1693,7 +1693,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: mysql-integration-tests
 trigger:
   event:
@@ -1808,7 +1808,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -1828,7 +1828,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
@@ -1838,7 +1838,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
@@ -1847,7 +1847,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
@@ -1856,7 +1856,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
@@ -1866,13 +1866,13 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-plugins
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
@@ -1893,7 +1893,7 @@ steps:
   - git stash pop
   depends_on:
   - validate-scuemata
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
@@ -1903,7 +1903,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend-enterprise2
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
@@ -1925,14 +1925,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition enterprise --shouldSave
@@ -1970,7 +1970,7 @@ steps:
     ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -2051,7 +2051,7 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package-enterprise2
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "$${PRERELEASE_BUCKET}"
@@ -2128,7 +2128,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -2148,7 +2148,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - |-
@@ -2162,13 +2162,13 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise
@@ -2176,7 +2176,7 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2186,19 +2186,19 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -2206,7 +2206,7 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-frontend
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise2
@@ -2214,19 +2214,19 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration-enterprise2
 trigger:
   event:
@@ -2300,7 +2300,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -2320,7 +2320,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - apt-get update
@@ -2335,7 +2335,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -2350,7 +2350,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -2359,7 +2359,7 @@ steps:
   - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -2368,7 +2368,7 @@ steps:
   - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: memcached-integration-tests
 trigger:
   event:
@@ -2847,7 +2847,7 @@ steps:
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - mkdir -p bin
@@ -2873,7 +2873,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: release-npm-packages
 trigger:
   event:
@@ -2974,7 +2974,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -2982,7 +2982,7 @@ steps:
   depends_on:
   - initialize
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
@@ -2991,7 +2991,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -3000,7 +3000,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
@@ -3009,13 +3009,13 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-plugins
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
@@ -3036,7 +3036,7 @@ steps:
   - git stash pop
   depends_on:
   - validate-scuemata
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
@@ -3057,14 +3057,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss --shouldSave
@@ -3101,7 +3101,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -3147,7 +3147,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-storybook
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
@@ -3213,7 +3213,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - |-
@@ -3227,13 +3227,13 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
@@ -3241,7 +3241,7 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -3251,19 +3251,19 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -3271,7 +3271,7 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-frontend
 trigger:
   ref:
@@ -3326,7 +3326,7 @@ steps:
   - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - apt-get update
@@ -3341,7 +3341,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -3356,7 +3356,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: mysql-integration-tests
 trigger:
   ref:
@@ -3454,7 +3454,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -3470,7 +3470,7 @@ steps:
   depends_on:
   - clone-enterprise
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -3478,7 +3478,7 @@ steps:
   depends_on:
   - initialize
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id
@@ -3487,7 +3487,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
@@ -3496,7 +3496,7 @@ steps:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
@@ -3506,13 +3506,13 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-plugins
 - commands:
   - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: validate-scuemata
 - commands:
   - '# Make sure the git tree is clean.'
@@ -3533,7 +3533,7 @@ steps:
   - git stash pop
   depends_on:
   - validate-scuemata
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
@@ -3541,7 +3541,7 @@ steps:
   depends_on:
   - initialize
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-backend-enterprise2
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -3563,14 +3563,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition enterprise --shouldSave
@@ -3608,7 +3608,7 @@ steps:
     ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -3654,7 +3654,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: build-storybook
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "grafana-static-assets"
@@ -3698,7 +3698,7 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: package-enterprise2
 - commands:
   - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "grafana-static-assets"
@@ -3768,7 +3768,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -3784,7 +3784,7 @@ steps:
   depends_on:
   - clone-enterprise
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - |-
@@ -3798,13 +3798,13 @@ steps:
   - rm words_to_ignore.txt
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise
@@ -3812,7 +3812,7 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -3822,19 +3822,19 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -3842,7 +3842,7 @@ steps:
   - initialize
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-frontend
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise2
@@ -3850,19 +3850,19 @@ steps:
   - initialize
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - initialize
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: test-backend-integration-enterprise2
 trigger:
   ref:
@@ -3930,7 +3930,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -3946,7 +3946,7 @@ steps:
   depends_on:
   - clone-enterprise
   environment: {}
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: initialize
 - commands:
   - apt-get update
@@ -3961,7 +3961,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -3976,7 +3976,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -3985,7 +3985,7 @@ steps:
   - initialize
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -3994,7 +3994,7 @@ steps:
   - initialize
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.5.1
+  image: grafana/build-container:1.5.3
   name: memcached-integration-tests
 trigger:
   ref:
@@ -4145,6 +4145,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 81f53ecf35f9d03e83f710bf183734fa33c915aa438b32dc392bd6607dbc8f08
+hmac: 7ad7687ab8c91a3f765fa2137b62fc9be62173705760402a485735895173c33c
 
 ...
