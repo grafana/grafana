@@ -80,6 +80,23 @@ export enum AccessControlAction {
   FoldersCreate = 'folders:create',
   FoldersPermissionsRead = 'folders.permissions:read',
   FoldersPermissionsWrite = 'folders.permissions:read',
+
+  // Alerting rules
+  AlertingRuleCreate = 'alert.rules:create',
+  AlertingRuleRead = 'alert.rules:read',
+  AlertingRuleUpdate = 'alert.rules:update',
+  AlertingRuleDelete = 'alert.rules:delete',
+
+  // Alerting instances (+silences)
+  AlertingInstanceCreate = 'alert.instances:create',
+  AlertingInstanceUpdate = 'alert.instances:update',
+  AlertingInstanceRead = 'alert.instances:read',
+
+  // Alerting Notification policies
+  AlertingNotificationsCreate = 'alert.notifications:create',
+  AlertingNotificationsRead = 'alert.notifications:read',
+  AlertingNotificationsUpdate = 'alert.notifications:update',
+  AlertingNotificationsDelete = 'alert.notifications:delete',
 }
 
 export interface Role {

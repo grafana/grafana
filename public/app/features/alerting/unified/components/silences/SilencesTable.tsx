@@ -18,6 +18,7 @@ import { useDispatch } from 'react-redux';
 import { expireSilenceAction } from '../../state/actions';
 import { SilenceDetails } from './SilenceDetails';
 import { Stack } from '@grafana/experimental';
+import { AccessControlAction } from '../../../../../types';
 
 export interface SilenceTableItem extends Silence {
   silencedAlerts: AlertmanagerAlert[];
@@ -35,6 +36,9 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
   const filteredSilences = useFilteredSilences(silences);
+
+  const hasReadPermissions = contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+  const hasEditPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
 
   const { silenceState } = getSilenceFiltersFromUrlParams(queryParams);
 
@@ -61,7 +65,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
       {!!silences.length && (
         <>
           <SilencesFilter />
-          {contextSrv.isEditor && (
+          {hasEditPermissions && (
             <div className={styles.topButtonContainer}>
               <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
                 <Button className={styles.addNewSilence} icon="plus">
@@ -70,24 +74,25 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
               </Link>
             </div>
           )}
-          {!!items.length ? (
-            <>
-              <DynamicTable
-                items={items}
-                cols={columns}
-                isExpandable
-                renderExpandedContent={({ data }) => <SilenceDetails silence={data} />}
-              />
-              {showExpiredSilencesBanner && (
-                <div className={styles.callout}>
-                  <Icon className={styles.calloutIcon} name="info-circle" />
-                  <span>Expired silences are automatically deleted after 5 days.</span>
-                </div>
-              )}
-            </>
-          ) : (
-            'No matching silences found'
-          )}
+          {hasReadPermissions &&
+            (!!items.length ? (
+              <>
+                <DynamicTable
+                  items={items}
+                  cols={columns}
+                  isExpandable
+                  renderExpandedContent={({ data }) => <SilenceDetails silence={data} />}
+                />
+                {showExpiredSilencesBanner && (
+                  <div className={styles.callout}>
+                    <Icon className={styles.calloutIcon} name="info-circle" />
+                    <span>Expired silences are automatically deleted after 5 days.</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              'No matching silences found'
+            ))}
         </>
       )}
       {!silences.length && <NoSilencesSplash alertManagerSourceName={alertManagerSourceName} />}
@@ -171,7 +176,7 @@ function useColumns(alertManagerSourceName: string) {
     const handleExpireSilenceClick = (id: string) => {
       dispatch(expireSilenceAction(alertManagerSourceName, id));
     };
-    const showActions = contextSrv.isEditor;
+    const showActions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceUpdate, contextSrv.isEditor);
     const columns: SilenceTableColumnProps[] = [
       {
         id: 'state',
