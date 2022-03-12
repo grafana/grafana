@@ -119,12 +119,12 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.User != nil {
-		acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "org.users:read", query.User)
+		acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users", accesscontrol.ActionOrgUsersRead)
 		if err != nil {
 			return err
 		}
-		whereConditions = append(whereConditions, acFilter.Where)
-		whereParams = append(whereParams, acFilter.Args...)
+		whereConditions = append(whereConditions, acFilter.Where())
+		whereParams = append(whereParams, acFilter.Args()...)
 	}
 
 	if query.Query != "" {
@@ -184,12 +184,12 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "org.users:read", query.User)
+		acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users", accesscontrol.ActionOrgUsersRead)
 		if err != nil {
 			return err
 		}
-		whereConditions = append(whereConditions, acFilter.Where)
-		whereParams = append(whereParams, acFilter.Args...)
+		whereConditions = append(whereConditions, acFilter.Where())
+		whereParams = append(whereParams, acFilter.Args()...)
 	}
 
 	if query.Query != "" {

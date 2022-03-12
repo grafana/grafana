@@ -229,12 +229,12 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		err      error
 	)
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		acFilter, err = ac.Filter(ctx, "team.id", "teams", ac.ActionTeamsRead, query.SignedInUser)
+		acFilter, err = ac.Filter(query.SignedInUser, "team.id", "teams", ac.ActionTeamsRead)
 		if err != nil {
 			return err
 		}
-		sql.WriteString(` and` + acFilter.Where)
-		params = append(params, acFilter.Args...)
+		sql.WriteString(` and` + acFilter.Where())
+		params = append(params, acFilter.Args()...)
 	}
 
 	sql.WriteString(` order by team.name asc`)
@@ -274,7 +274,7 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 
 	// Only count teams user can see
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		countSess.Where(acFilter.Where, acFilter.Args...)
+		countSess.Where(acFilter.Where(), acFilter.Args()...)
 	}
 
 	count, err := countSess.Count(&team)
@@ -528,10 +528,8 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
 	// If the signed in user is not set no member will be returned
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		*acFilter, err = ac.Filter(ctx,
-			fmt.Sprintf("%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id")),
-			"users", ac.ActionOrgUsersRead, query.SignedInUser,
-		)
+		sqlID := fmt.Sprintf("%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id"))
+		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users", ac.ActionOrgUsersRead)
 		if err != nil {
 			return err
 		}
@@ -549,7 +547,7 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 	)
 
 	if acUserFilter != nil {
-		sess.Where(acUserFilter.Where, acUserFilter.Args...)
+		sess.Where(acUserFilter.Where(), acUserFilter.Args()...)
 	}
 
 	// Join with only most recent auth module
