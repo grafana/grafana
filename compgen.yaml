@@ -3,11 +3,6 @@ groups:
   # types - e.g. dashboard, datasource, folder, user, etc.
   coremodel:
     must:
-      # Every coremodel component must declare the schema for its object into
-      # the central registry.
-      register-model:
-        ruletype: "goref"
-        ident: "github.com/grafana/grafana/pkg/schema.RegisterCoreSchema"
       # Every coremodel component must define a struct named "CR", following the
       # form in which Kubernetes helper libraries expect schemas to be declared.
       has-cr:
@@ -18,3 +13,11 @@ groups:
         # Kubernetes helper libraries require structs representing any
         # CustomResource to implement this interface.
           - "k8s.io/apimachinery/pkg/runtime.Object"
+      # Every coremodel component must declare the schema for its object into
+      # the central registry.
+      register-model:
+        ruletype: "goref"
+        ident: "github.com/grafana/grafana/pkg/schema.RegisterCoreSchema"
+
+# We can always define new component groups with their own rules! Plugins,
+# services, integrations - whatever higher-order patterns we need to codify.

@@ -1,4 +1,4 @@
 groups:
   - coremodel
 owners:
-  - backend-platform
+  - "@grafana/backend-platform"
