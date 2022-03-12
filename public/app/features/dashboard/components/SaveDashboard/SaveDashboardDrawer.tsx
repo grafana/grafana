@@ -46,17 +46,6 @@ interface FormDTO {
   newDashboardPath?: string;
 }
 
-const actionOptions = [
-  {
-    label: 'Push to main',
-    value: 'save',
-  },
-  {
-    label: 'Submit pull request',
-    value: 'pr',
-  },
-];
-
 interface WriteValueResponse {
   code: number;
   message?: string;
@@ -129,12 +118,28 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     }
 
     const status = (await getBackendSrv().get(`api/storage/root/${key}`)) as RootStorageMeta;
+    const isGit = status.config.type === 'git';
+    let workflows = [
+      {
+        label: 'Push to main',
+        value: 'save',
+      },
+      {
+        label: 'Submit pull request',
+        value: 'pr',
+      },
+    ];
+    if (isGit && status.config.git?.requirePullRequest) {
+      workflows = [workflows[1]];
+      setValue('action', 'pr');
+    }
     return {
-      isGit: status.config.type === 'git',
+      isGit,
       isDirect: status.config.type === 'disk',
       status,
+      workflows,
     };
-  }, [dashboard, currentValue.newDashboardStore]);
+  }, [dashboard, currentValue.newDashboardStore, setValue]);
 
   const previous = useAsync(async () => {
     if (isNew) {
@@ -359,7 +364,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
                   <InputControl
                     name="action"
                     control={control}
-                    render={({ field }) => <RadioButtonGroup {...field} options={actionOptions} />}
+                    render={({ field }) => <RadioButtonGroup {...field} options={storage.value?.workflows ?? []} />}
                   />
                 </Field>
               )}

@@ -37,6 +37,11 @@ async function fetchDashboard(
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
+        if (1 > 0) {
+          locationService.replace('/g/it-A/home');
+          return null;
+        }
+
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 

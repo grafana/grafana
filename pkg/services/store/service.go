@@ -91,13 +91,14 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	devenv := getDevenvDashboards()
 	dash := &nestedTree{
 		roots: []storageRuntime{
-			newGitStorage("it-A", "Github dashbboards A", storage, &StorageGitConfig{
-				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
-				Branch:      "main",
-				Root:        "dashboards",
-				AccessToken: "$GITHUB_AUTH_TOKEN",
+			newGitStorage("it-A", "Github dashbboards A (Require pull requests)", storage, &StorageGitConfig{
+				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
+				Branch:             "main",
+				Root:               "dashboards",
+				AccessToken:        "$GITHUB_AUTH_TOKEN",
+				RequirePullRequest: true,
 			}),
-			newGitStorage("it-B", "Github dashbboards B", storage, &StorageGitConfig{
+			newGitStorage("it-B", "Github dashbboards B (Commit to main)", storage, &StorageGitConfig{
 				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-B.git",
 				Branch:      "main",
 				Root:        "dashboards",
