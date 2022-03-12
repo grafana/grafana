@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"context"
 	"errors"
 	"strconv"
 	"strings"
@@ -26,10 +25,23 @@ var (
 	allowAllQuery = SQLFilter{" 1 = 1", nil}
 )
 
+type SQLFilter struct {
+	where string
+	args  []interface{}
+}
+
+func (f SQLFilter) Where() string {
+	return f.where
+}
+
+func (f SQLFilter) Args() []interface{} {
+	return f.args
+}
+
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
 // is the id to generate scope from e.g. user.id
-func Filter(ctx context.Context, sqlID, prefix, action string, user *models.SignedInUser) (SQLFilter, error) {
+func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}
@@ -37,26 +49,32 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 		return denyQuery, errors.New("missing permissions")
 	}
 
-	var hasWildcard bool
-	var ids []interface{}
-	for _, scope := range user.Permissions[user.OrgId][action] {
-		if strings.HasPrefix(scope, prefix) || scope == "*" {
-			if id := strings.TrimPrefix(scope, prefix); id == "*" || id == ":*" || id == ":id:*" {
-				hasWildcard = true
-				break
-			}
-			if id, err := parseScopeID(scope); err == nil {
-				ids = append(ids, id)
-			}
+	hasWildcards := true
+	result := make(map[int64]int)
+	for _, a := range actions {
+		ids, hasWildcard := parseScopes(prefix, user.Permissions[user.OrgId][a])
+		if !hasWildcard {
+			hasWildcards = false
+		}
+		if len(ids) == 0 && !hasWildcard {
+			return denyQuery, nil
+		}
+		for _, id := range ids {
+			result[id] += 1
 		}
 	}
 
-	if hasWildcard {
+	// return early if every action has wildcard scope
+	if hasWildcards {
 		return allowAllQuery, nil
 	}
 
-	if len(ids) == 0 {
-		return denyQuery, nil
+	var ids []interface{}
+	for id, count := range result {
+		// if an id exist for every action include it in the filter
+		if count == len(actions) {
+			ids = append(ids, id)
+		}
 	}
 
 	query := strings.Builder{}
@@ -68,6 +86,20 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 	query.WriteRune(')')
 
 	return SQLFilter{query.String(), ids}, nil
+}
+
+func parseScopes(prefix string, scopes []string) (ids []int64, hasWildcard bool) {
+	for _, scope := range scopes {
+		if strings.HasPrefix(scope, prefix) || scope == "*" {
+			if id := strings.TrimPrefix(scope, prefix); id == "*" || id == ":*" || id == ":id:*" {
+				return nil, true
+			}
+			if id, err := parseScopeID(scope); err == nil {
+				ids = append(ids, id)
+			}
+		}
+	}
+	return ids, false
 }
 
 func parseScopeID(scope string) (int64, error) {
