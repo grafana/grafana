@@ -104,6 +104,7 @@ export function TraceView(props: Props) {
   const [searchBarSuffix, setSearchBarSuffix] = useState('');
 
   const nextResult = () => {
+    expandAll();
     const spanMatches = Array.from(spanFindMatches!);
     const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
       ? spanMatches.indexOf(focusedSpanIdForSearch)
@@ -122,6 +123,7 @@ export function TraceView(props: Props) {
   };
 
   const prevResult = () => {
+    expandAll();
     const spanMatches = Array.from(spanFindMatches!);
     const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
       ? spanMatches.indexOf(focusedSpanIdForSearch)
