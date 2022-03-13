@@ -23,11 +23,18 @@ import UiFindInput from '../common/UiFindInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 // eslint-disable-next-line no-duplicate-imports
 import { memo } from 'react';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = () => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
+      float: right;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: ${theme.colors.background.primary};
+      margin-bottom: -32px;
     `,
     TracePageSearchBarBar: css`
       label: TracePageSearchBarBar;

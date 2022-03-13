@@ -1,24 +1,14 @@
 import {
   DataFrame,
-  DataFrameView,
   DataLink,
   DataSourceApi,
   Field,
   LinkModel,
   mapInternalLinkToExplore,
   SplitOpen,
-  TraceSpanRow,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import {
-  Trace,
-  TracePageHeader,
-  TraceProcess,
-  TraceResponse,
-  TraceTimelineViewer,
-  transformTraceData,
-  TTraceTimeline,
-} from '@jaegertracing/jaeger-ui-components';
+import { Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -28,10 +18,8 @@ import React, { RefObject, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
-import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 function noop(): {} {
@@ -44,13 +32,33 @@ type Props = {
   exploreId: ExploreId;
   scrollElement?: Element;
   topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  traceProp: Trace;
+  spanFindMatches: any;
+  search: any;
+  focusedSpanIdForSearch: any;
+  expandOne: any;
+  expandAll: any;
+  collapseOne: any;
+  collapseAll: any;
+  childrenToggle: any;
+  childrenHiddenIDs: any;
 };
 
 export function TraceView(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
 
-  const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const {
+    expandOne,
+    expandAll,
+    collapseOne,
+    collapseAll,
+    childrenToggle,
+    childrenHiddenIDs,
+    spanFindMatches,
+    traceProp,
+  } = props;
+
   const {
     detailStates,
     toggleDetail,
@@ -76,9 +84,6 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
-
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId]?.datasourceInstance ?? undefined
   );
@@ -88,62 +93,6 @@ export function TraceView(props: Props) {
     exploreId: props.exploreId,
     datasource,
   });
-
-  const clearTraceSearch = () => {
-    setFocusedSpanIdForSearch('');
-    clearSearch();
-  };
-
-  const setTraceSearch = (value: string) => {
-    setFocusedSpanIdForSearch('');
-    setSearchBarSuffix('');
-    setSearch(value);
-  };
-
-  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
-  const [searchBarSuffix, setSearchBarSuffix] = useState('');
-
-  const nextResult = () => {
-    expandAll();
-    const spanMatches = Array.from(spanFindMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
-
-    // new query || at end, go to start
-    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
-      setFocusedSpanIdForSearch(spanMatches[0]);
-      setSearchBarSuffix(getSearchBarSuffix(1));
-      return;
-    }
-
-    // get next
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
-    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
-  };
-
-  const prevResult = () => {
-    expandAll();
-    const spanMatches = Array.from(spanFindMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
-
-    // new query || at start, go to end
-    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
-      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
-      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
-      return;
-    }
-
-    // get prev
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
-    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
-  };
-
-  const getSearchBarSuffix = (index: number): string => {
-    return index + ' of ' + spanFindMatches?.size;
-  };
 
   const createLinkToExternalSpan = (traceId: string, spanId: string) => {
     const link = createFocusSpanLink(traceId, spanId);
@@ -157,9 +106,9 @@ export function TraceView(props: Props) {
       hoverIndentGuideIds,
       shouldScrollToFirstUiFindMatch: false,
       spanNameColumnWidth,
-      traceID: traceProp?.traceID,
+      traceID: props.traceProp?.traceID,
     }),
-    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
+    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, props.traceProp?.traceID]
   );
 
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
@@ -171,7 +120,7 @@ export function TraceView(props: Props) {
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
-  if (!props.dataFrames?.length || !traceProp) {
+  if (!props.dataFrames?.length) {
     return null;
   }
 
@@ -179,21 +128,15 @@ export function TraceView(props: Props) {
     <>
       <TracePageHeader
         canCollapse={false}
-        clearSearch={clearTraceSearch}
         hideMap={false}
         hideSummary={false}
-        nextResult={nextResult}
         onSlimViewClicked={onSlimViewClicked}
         onTraceGraphViewClicked={noop}
-        prevResult={prevResult}
         slimView={slim}
         trace={traceProp}
         updateNextViewRangeTime={updateNextViewRangeTime}
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
-        searchValue={search}
-        onSearchValueChange={setTraceSearch}
-        searchBarSuffix={searchBarSuffix}
         timeZone={timeZone}
       />
       <TraceTimelineViewer
@@ -227,66 +170,16 @@ export function TraceView(props: Props) {
         addHoverIndentGuideId={addHoverIndentGuideId}
         removeHoverIndentGuideId={removeHoverIndentGuideId}
         linksGetter={noop as any}
-        uiFind={search}
+        uiFind={props.search}
         createSpanLink={createSpanLink}
         scrollElement={props.scrollElement}
         focusedSpanId={focusedSpanId}
-        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        focusedSpanIdForSearch={props.focusedSpanIdForSearch}
         createFocusSpanLink={createFocusSpanLink}
         topOfExploreViewRef={props.topOfExploreViewRef}
       />
     </>
   );
-}
-
-function transformDataFrames(frame?: DataFrame): Trace | null {
-  if (!frame) {
-    return null;
-  }
-  let data: TraceResponse =
-    frame.fields.length === 1
-      ? // For backward compatibility when we sent whole json response in a single field/value
-        frame.fields[0].values.get(0)
-      : transformTraceDataFrame(frame);
-  return transformTraceData(data);
-}
-
-function transformTraceDataFrame(frame: DataFrame): TraceResponse {
-  const view = new DataFrameView<TraceSpanRow>(frame);
-  const processes: Record<string, TraceProcess> = {};
-  for (let i = 0; i < view.length; i++) {
-    const span = view.get(i);
-    if (!processes[span.spanID]) {
-      processes[span.spanID] = {
-        serviceName: span.serviceName,
-        tags: span.serviceTags,
-      };
-    }
-  }
-
-  return {
-    traceID: view.get(0).traceID,
-    processes,
-    spans: view.toArray().map((s, index) => {
-      const references = [];
-      if (s.parentSpanID) {
-        references.push({ refType: 'CHILD_OF' as const, spanID: s.parentSpanID, traceID: s.traceID });
-      }
-      if (s.references) {
-        references.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
-      }
-      return {
-        ...s,
-        duration: s.duration * 1000,
-        startTime: s.startTime * 1000,
-        processID: s.spanID,
-        flags: 0,
-        references,
-        logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
-        dataFrameRowIndex: index,
-      };
-    }),
-  };
 }
 
 /**

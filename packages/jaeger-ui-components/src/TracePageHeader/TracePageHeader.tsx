@@ -21,7 +21,6 @@ import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import SpanGraph from './SpanGraph';
-import TracePageSearchBar from './TracePageSearchBar';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
@@ -138,21 +137,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
-  clearSearch: () => void;
   hideMap: boolean;
   hideSummary: boolean;
-  nextResult: () => void;
   onSlimViewClicked: () => void;
   onTraceGraphViewClicked: () => void;
-  prevResult: () => void;
   slimView: boolean;
   trace: Trace;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
-  searchValue: string;
-  onSearchValueChange: (value: string) => void;
-  searchBarSuffix: string;
   timeZone: TimeZone;
 };
 
@@ -199,20 +192,14 @@ export const HEADER_ITEMS = [
 export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const {
     canCollapse,
-    clearSearch,
     hideMap,
     hideSummary,
-    nextResult,
     onSlimViewClicked,
-    prevResult,
     slimView,
     trace,
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
-    searchValue,
-    onSearchValueChange,
-    searchBarSuffix,
     timeZone,
   } = props;
 
@@ -265,15 +252,6 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
         ) : (
           title
         )}
-        <TracePageSearchBar
-          clearSearch={clearSearch}
-          nextResult={nextResult}
-          prevResult={prevResult}
-          navigable={true}
-          searchValue={searchValue}
-          onSearchValueChange={onSearchValueChange}
-          searchBarSuffix={searchBarSuffix}
-        />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
       {!hideMap && !slimView && (
