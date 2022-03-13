@@ -49,12 +49,13 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 		return denyQuery, errors.New("missing permissions")
 	}
 
-	hasWildcards := true
+	wildcards := 0
 	result := make(map[int64]int)
 	for _, a := range actions {
 		ids, hasWildcard := parseScopes(prefix, user.Permissions[user.OrgId][a])
-		if !hasWildcard {
-			hasWildcards = false
+		if hasWildcard {
+			wildcards += 1
+			continue
 		}
 		if len(ids) == 0 && !hasWildcard {
 			return denyQuery, nil
@@ -65,14 +66,14 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	}
 
 	// return early if every action has wildcard scope
-	if hasWildcards {
+	if wildcards == len(actions) {
 		return allowAllQuery, nil
 	}
 
 	var ids []interface{}
 	for id, count := range result {
 		// if an id exist for every action include it in the filter
-		if count == len(actions) {
+		if count+wildcards == len(actions) {
 			ids = append(ids, id)
 		}
 	}

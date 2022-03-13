@@ -105,6 +105,18 @@ func TestFilter_Datasources(t *testing.T) {
 			expectedDataSources: []string{"ds:3", "ds:8"},
 			expectErr:           false,
 		},
+		{
+			desc:    "expect data sources that users has several actions for",
+			sqlID:   "data_source.id",
+			prefix:  "datasources",
+			actions: []string{"datasources:read", "datasources:write"},
+			permissions: map[string][]string{
+				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
+				"datasources:write": {"datasources:*"},
+			},
+			expectedDataSources: []string{"ds:3", "ds:7", "ds:8"},
+			expectErr:           false,
+		},
 	}
 
 	// set sqlIDAcceptList before running tests
@@ -127,7 +139,7 @@ func TestFilter_Datasources(t *testing.T) {
 			}
 
 			baseSql := `SELECT data_source.* FROM data_source WHERE`
-			acFilter, err := accesscontrol.Filter2(
+			acFilter, err := accesscontrol.Filter(
 				&models.SignedInUser{
 					OrgId:       1,
 					Permissions: map[int64]map[string][]string{1: tt.permissions},
@@ -140,7 +152,7 @@ func TestFilter_Datasources(t *testing.T) {
 			if !tt.expectErr {
 				require.NoError(t, err)
 				var datasources []models.DataSource
-				err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
+				err = sess.SQL(baseSql+acFilter.Where(), acFilter.Args()...).Find(&datasources)
 				require.NoError(t, err)
 
 				assert.Len(t, datasources, len(tt.expectedDataSources))
