@@ -89,6 +89,60 @@ export function TraceView(props: Props) {
     datasource,
   });
 
+  const clearTraceSearch = () => {
+    setFocusedSpanIdForSearch('');
+    clearSearch();
+  };
+
+  const setTraceSearch = (value: string) => {
+    setFocusedSpanIdForSearch('');
+    setSearchBarSuffix('');
+    setSearch(value);
+  };
+
+  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
+  const [searchBarSuffix, setSearchBarSuffix] = useState('');
+
+  const nextResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at end, go to start
+    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
+      setFocusedSpanIdForSearch(spanMatches[0]);
+      setSearchBarSuffix(getSearchBarSuffix(1));
+      return;
+    }
+
+    // get next
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
+  };
+
+  const prevResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at start, go to end
+    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
+      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
+      return;
+    }
+
+    // get prev
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
+  };
+
+  const getSearchBarSuffix = (index: number): string => {
+    return index + ' of ' + spanFindMatches?.size;
+  };
+
   const createLinkToExternalSpan = (traceId: string, spanId: string) => {
     const link = createFocusSpanLink(traceId, spanId);
     return link.href;
@@ -123,22 +177,21 @@ export function TraceView(props: Props) {
     <>
       <TracePageHeader
         canCollapse={false}
-        clearSearch={clearSearch}
-        focusUiFindMatches={noop}
+        clearSearch={clearTraceSearch}
         hideMap={false}
         hideSummary={false}
-        nextResult={noop}
+        nextResult={nextResult}
         onSlimViewClicked={onSlimViewClicked}
         onTraceGraphViewClicked={noop}
-        prevResult={noop}
-        resultCount={spanFindMatches?.size ?? 0}
+        prevResult={prevResult}
         slimView={slim}
         trace={traceProp}
         updateNextViewRangeTime={updateNextViewRangeTime}
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
         searchValue={search}
-        onSearchValueChange={setSearch}
+        onSearchValueChange={setTraceSearch}
+        searchBarSuffix={searchBarSuffix}
         timeZone={timeZone}
       />
       <TraceTimelineViewer
@@ -176,6 +229,7 @@ export function TraceView(props: Props) {
         createSpanLink={createSpanLink}
         scrollElement={props.scrollElement}
         focusedSpanId={focusedSpanId}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
         createFocusSpanLink={createFocusSpanLink}
         topOfExploreViewRef={props.topOfExploreViewRef}
       />

@@ -45,7 +45,7 @@ describe('<TracePageSearchBar>', () => {
           name: 'search',
         })
       );
-      expect(suffix.hasClass(getStyles().TracePageSearchBarCount)).toBe(true);
+      expect(suffix.hasClass(getStyles().TracePageSearchBarSuffix)).toBe(true);
       expect(suffix.text()).toBe(String(defaultProps.resultCount));
     });
 

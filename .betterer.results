@@ -92,7 +92,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TracePageHeader/TracePageHeader.test.js:3669774385": [
       [15, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:1298620967": [
+    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:4231093203": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:793239444": [

@@ -139,14 +139,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
   clearSearch: () => void;
-  focusUiFindMatches: () => void;
   hideMap: boolean;
   hideSummary: boolean;
   nextResult: () => void;
   onSlimViewClicked: () => void;
   onTraceGraphViewClicked: () => void;
   prevResult: () => void;
-  resultCount: number;
   slimView: boolean;
   trace: Trace;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
@@ -154,6 +152,7 @@ type TracePageHeaderEmbedProps = {
   viewRange: ViewRange;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
+  searchBarSuffix: string;
   timeZone: TimeZone;
 };
 
@@ -201,13 +200,11 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const {
     canCollapse,
     clearSearch,
-    focusUiFindMatches,
     hideMap,
     hideSummary,
     nextResult,
     onSlimViewClicked,
     prevResult,
-    resultCount,
     slimView,
     trace,
     updateNextViewRangeTime,
@@ -215,6 +212,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     viewRange,
     searchValue,
     onSearchValueChange,
+    searchBarSuffix,
     timeZone,
   } = props;
 
@@ -269,14 +267,12 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
         )}
         <TracePageSearchBar
           clearSearch={clearSearch}
-          focusUiFindMatches={focusUiFindMatches}
           nextResult={nextResult}
           prevResult={prevResult}
-          resultCount={resultCount}
-          // TODO: we can change this when we have scroll to span functionality
-          navigable={false}
+          navigable={true}
           searchValue={searchValue}
           onSearchValueChange={onSearchValueChange}
+          searchBarSuffix={searchBarSuffix}
         />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}

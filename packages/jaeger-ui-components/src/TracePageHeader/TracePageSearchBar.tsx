@@ -14,7 +14,6 @@
 
 import * as React from 'react';
 import cx from 'classnames';
-import IoAndroidLocate from 'react-icons/lib/io/android-locate';
 import { css } from '@emotion/css';
 import { Button, useStyles2 } from '@grafana/ui';
 
@@ -38,8 +37,8 @@ export const getStyles = () => {
         max-width: 100%;
       }
     `,
-    TracePageSearchBarCount: css`
-      label: TracePageSearchBarCount;
+    TracePageSearchBarSuffix: css`
+      label: TracePageSearchBarSuffix;
       opacity: 0.6;
     `,
     TracePageSearchBarBtn: css`
@@ -62,27 +61,17 @@ type TracePageSearchBarProps = {
   prevResult: () => void;
   nextResult: () => void;
   clearSearch: () => void;
-  focusUiFindMatches: () => void;
-  resultCount: number;
   navigable: boolean;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
+  searchBarSuffix: string;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const {
-    clearSearch,
-    focusUiFindMatches,
-    navigable,
-    nextResult,
-    prevResult,
-    resultCount,
-    onSearchValueChange,
-    searchValue,
-  } = props;
+  const { clearSearch, navigable, nextResult, prevResult, searchValue, onSearchValueChange, searchBarSuffix } = props;
   const styles = useStyles2(getStyles);
 
-  const count = searchValue ? <span className={styles.TracePageSearchBarCount}>{resultCount}</span> : null;
+  const count = searchValue ? <span className={styles.TracePageSearchBarSuffix}>{searchBarSuffix}</span> : null;
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
@@ -100,27 +89,18 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
           {navigable && (
             <>
               <Button
-                className={cx(btnClass, styles.TracePageSearchBarLocateBtn)}
-                disabled={!searchValue}
-                type="button"
-                onClick={focusUiFindMatches}
-              >
-                <IoAndroidLocate />
-              </Button>
-              <Button className={btnClass} disabled={!searchValue} type="button" icon="arrow-up" onClick={prevResult} />
-              <Button
                 className={btnClass}
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
                 onClick={nextResult}
               />
+              <Button className={btnClass} disabled={!searchValue} type="button" icon="arrow-up" onClick={prevResult} />
             </>
           )}
           <Button
             variant={'secondary'}
             fill={'text'}
-            // className={btnClass}
             disabled={!searchValue}
             type="button"
             icon="times"
