@@ -8,7 +8,13 @@ import {
   SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from '@jaegertracing/jaeger-ui-components';
+import {
+  Trace,
+  TracePageHeader,
+  TraceSpan,
+  TraceTimelineViewer,
+  TTraceTimeline,
+} from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -33,15 +39,15 @@ type Props = {
   scrollElement?: Element;
   topOfExploreViewRef?: RefObject<HTMLDivElement>;
   traceProp: Trace;
-  spanFindMatches: any;
-  search: any;
-  focusedSpanIdForSearch: any;
-  expandOne: any;
-  expandAll: any;
-  collapseOne: any;
-  collapseAll: any;
-  childrenToggle: any;
-  childrenHiddenIDs: any;
+  spanFindMatches?: Set<string>;
+  search: string;
+  focusedSpanIdForSearch: string;
+  expandOne: (spans: TraceSpan[]) => void;
+  expandAll: () => void;
+  collapseOne: (spans: TraceSpan[]) => void;
+  collapseAll: (spans: TraceSpan[]) => void;
+  childrenToggle: (spanId: string) => void;
+  childrenHiddenIDs: Set<string>;
 };
 
 export function TraceView(props: Props) {

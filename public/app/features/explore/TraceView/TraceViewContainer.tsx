@@ -107,14 +107,14 @@ export function TraceViewContainer(props: Props) {
           topOfExploreViewRef={topOfExploreViewRef}
           traceProp={traceProp}
           spanFindMatches={spanFindMatches}
-          search={clearTraceSearch}
+          search={search}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           expandOne={expandOne}
           collapseOne={collapseOne}
-          childrenToggle={childrenToggle}
           collapseAll={collapseAll}
-          childrenHiddenIDs={childrenHiddenIDs}
           expandAll={expandAll}
+          childrenToggle={childrenToggle}
+          childrenHiddenIDs={childrenHiddenIDs}
         />
       </Collapse>
     </>
