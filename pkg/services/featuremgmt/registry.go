@@ -148,6 +148,12 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
+			Name:         "saveWithDiff",
+			Description:  "Open a drawer view with diff for save modal",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "dashboardComments",
 			Description: "Enable dashboard-wide comments",
 			State:       FeatureStateAlpha,
