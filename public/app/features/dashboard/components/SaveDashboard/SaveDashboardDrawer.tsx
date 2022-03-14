@@ -26,6 +26,8 @@ import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
+import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
+import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 
 interface FormDTO {
   message?: string; // the commit message
@@ -101,7 +103,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   const [saving, setSaving] = useState(false);
 
   // reuse current save path
-  const { onDashboardSave } = useDashboardSave(dashboard);
+  const { state, onDashboardSave } = useDashboardSave(dashboard);
   const doSave = async (dto: FormDTO) => {
     setSaving(true);
 
@@ -154,6 +156,20 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       );
     }
 
+    if (status.isNew) {
+      return (
+        <SaveDashboardAsForm
+          dashboard={dashboard}
+          onCancel={onDismiss}
+          onSuccess={onDismiss}
+          onSubmit={(clone, options, dashboard) => {
+            return onDashboardSave(clone, options, dashboard);
+          }}
+          isNew={status.isNew}
+        />
+      );
+    }
+
     if (status.isProvisioned) {
       return <SaveProvisionedDashboardForm dashboard={dashboard} onCancel={onDismiss} onSuccess={onDismiss} />;
     }
@@ -196,6 +212,17 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       </form>
     );
   };
+
+  if (state.error) {
+    return (
+      <SaveDashboardErrorProxy
+        error={state.error}
+        dashboard={dashboard}
+        dashboardSaveModel={data.clone}
+        onDismiss={onDismiss}
+      />
+    );
+  }
 
   return (
     <Drawer
