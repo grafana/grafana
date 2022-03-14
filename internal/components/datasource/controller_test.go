@@ -5,12 +5,12 @@ import (
 
 	"github.com/grafana/grafana/internal/components/store"
 	"github.com/grafana/grafana/internal/components/testinfra"
+	"github.com/grafana/grafana/internal/k8sbridge"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 func TestDatasource(t *testing.T) {
@@ -18,12 +18,12 @@ func TestDatasource(t *testing.T) {
 		GroupVersion: schema.GroupVersion{Group: "grafana.core.group", Version: "v1alpha1"},
 		// TODO generate CRD from thema (for ThemaSchema components)
 		CRDDirectoryPaths: []string{"./crd.yml"},
-		Objects: []runtime.Object{&Datasource{}, &CRList{}},
+		ObjectSchemaFactory: newDatasourceThemaSchema,
 		StoreFactory: func(ss *sqlstore.SQLStore) store.Store {
 			return ProvideDataSourceSchemaStore(ss)
 		},
-		ControllerFactory: func(mgr manager.Manager, cli rest.Interface, s store.Store) error {
-			_, err := ProvideDatasourceController(mgr, cli, s)
+		ReconcilerFactory: func(cfg *setting.Cfg, bridge *k8sbridge.Service, s store.Store) error {
+			_, err := ProvideDatasourceReconciler(cfg, bridge, s)
 			return err
 		},
 		ObjectFactory: func() (runtime.Object, string) {

@@ -6,27 +6,28 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/internal/components/store"
+	"github.com/grafana/grafana/internal/k8sbridge"
+	grafanaSchema "github.com/grafana/grafana/pkg/schema"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
+	"gopkg.in/ini.v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/rest"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
 type TestCompCfg struct {
 	GroupVersion schema.GroupVersion
 	CRDDirectoryPaths []string
-	Objects []runtime.Object
+	ObjectSchemaFactory func() grafanaSchema.ObjectSchema
 	StoreFactory func(*sqlstore.SQLStore) store.Store
-	ControllerFactory func (manager.Manager, rest.Interface, store.Store) error
+	ReconcilerFactory func (*setting.Cfg, *k8sbridge.Service, store.Store) error
 	ObjectFactory func() (runtime.Object, string)
 	Resource string
 	Namespace string
@@ -35,7 +36,7 @@ type TestCompCfg struct {
 
 type TestManager struct {
 	manager.Manager
-	Client rest.RESTClient
+	Client *k8sbridge.Clientset
 	env *envtest.Environment
 	componentStore store.Store
 }
@@ -56,13 +57,13 @@ func RunComponentTests(t *testing.T, testCompCfg TestCompCfg) {
 
 	testCases := []struct {
 		desc string
-		testScenario func(c rest.RESTClient) error
+		testScenario func(c *k8sbridge.Clientset) error
 	}{
 		{
-			desc: "Test datasource creation",
-			testScenario: func (c rest.RESTClient) error {
+			desc: "Test resource creation",
+			testScenario: func (c *k8sbridge.Clientset) error {
 				// create object
-				req := c.Post().
+				req := c.GrafanaCoreV1().Post().
 				Resource(testCompCfg.Resource).
 				// TODO create namespace for tests
 				Namespace(testCompCfg.Namespace)
@@ -72,7 +73,7 @@ func RunComponentTests(t *testing.T, testCompCfg TestCompCfg) {
 
 				defer func () {
 					// delete object
-					res := c.Delete().
+					res := c.GrafanaCoreV1().Delete().
 					Resource(testCompCfg.Resource).
 					Namespace(testCompCfg.Namespace).
 					Name(objectName).
@@ -81,7 +82,7 @@ func RunComponentTests(t *testing.T, testCompCfg TestCompCfg) {
 
 					// make sure that the object is deleted
 					assert.Eventually(t, func() bool {
-						res = c.Get().
+						res = c.GrafanaCoreV1().Get().
 						Resource(testCompCfg.Resource).
 						Namespace(testCompCfg.Namespace).
 						Name(objectName).
@@ -122,10 +123,14 @@ func RunComponentTests(t *testing.T, testCompCfg TestCompCfg) {
 func setup(t *testing.T, componentCfg TestCompCfg) TestManager {
 	t.Helper()
 
-	schemaBuilder := &scheme.Builder{GroupVersion: componentCfg.GroupVersion}
+	grafanaCfg := setting.Cfg{
+		Raw: ini.Empty(),
+	}
+	grafanaCfg.Raw.Section("intentapi.kubebridge").
+	Key("kubeconfig_path").
+	SetValue("/Users/josefk/go/src/github.com/grafana/grafana/devenv/docker/blocks/intentapi/apiserver.kubeconfig")
 
-	schemaBuilder.Register(componentCfg.Objects...)
-	schm, err := schemaBuilder.Build()
+	brdg, err := k8sbridge.ProvideService(&grafanaCfg, &fakeFeatureManager{}, []grafanaSchema.ObjectSchema{componentCfg.ObjectSchemaFactory()})
 	require.NoError(t, err)
 
 	testEnv := envtest.Environment {
@@ -133,21 +138,12 @@ func setup(t *testing.T, componentCfg TestCompCfg) TestManager {
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			CleanUpAfterUse: true,
 		},
-		Config: getConfig(schm, componentCfg.GroupVersion),
+		Config: brdg.RestConfig(),
 		UseExistingCluster: pointer.Bool(true),
-		Scheme: schm,
+		Scheme: brdg.ControllerManager().GetScheme(),
 	}
 
-	cfg, err := testEnv.Start()
-	require.NoError(t, err)
-
-	mgr, err := manager.New(cfg, manager.Options{
-		Scheme: schm,
-		//SyncPeriod: pointer.Duration(time.Second),
-	})
-	require.NoError(t, err)
-
-	c, err := rest.RESTClientFor(cfg)
+	_, err = testEnv.Start()
 	require.NoError(t, err)
 
 	ossMigrations := migrations.ProvideOSSMigrations()
@@ -155,17 +151,17 @@ func setup(t *testing.T, componentCfg TestCompCfg) TestManager {
 	require.NoError(t, err)
 
 	compStore := componentCfg.StoreFactory(sqlStore)
-	err = componentCfg.ControllerFactory(mgr, c, compStore)
+	err = componentCfg.ReconcilerFactory(&grafanaCfg, brdg, compStore)
 	require.NoError(t, err)
 
 	go func() {
-		err = mgr.Start(ctrl.SetupSignalHandler())
+		err = brdg.Run(context.Background())
 		require.NoError(t, err)
 	}()
 
 	return TestManager{
-		mgr,
-		*c,
+		brdg.ControllerManager(),
+		brdg.Client(),
 		&testEnv,
 		compStore,
 	}
@@ -178,20 +174,8 @@ func tearDown(t *testing.T, mgr TestManager) {
 	require.NoError(t, err)
 }
 
-func getConfig(schm *runtime.Scheme, gv schema.GroupVersion) *rest.Config {
-	return &rest.Config{
-		Host: "localhost:6443",
-		Username: "admin",
-		APIPath: "/apis",
-		TLSClientConfig: rest.TLSClientConfig{
-			ServerName: "localhost",
-			CertFile: "/Users/josefk/go/src/github.com/grafana/grafana/devenv/docker/blocks/intentapi/certs/admin.pem",
-			KeyFile: "/Users/josefk/go/src/github.com/grafana/grafana/devenv/docker/blocks/intentapi/certs/admin-key.pem",
-			CAFile: "/Users/josefk/go/src/github.com/grafana/grafana/devenv/docker/blocks/intentapi/certs/ca.pem",
-		},
-		ContentConfig: rest.ContentConfig{
-			GroupVersion: &gv,
-			NegotiatedSerializer: serializer.NewCodecFactory(schm),
-		},
-	}
+type fakeFeatureManager struct {}
+
+func (fm *fakeFeatureManager) IsEnabled(flag string) bool {
+	return flag == featuremgmt.FlagIntentapi
 }
