@@ -3857,14 +3857,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:~0.19.0":
-  version: 0.19.0
-  resolution: "@es-joy/jsdoccomment@npm:0.19.0"
+"@es-joy/jsdoccomment@npm:~0.20.1":
+  version: 0.20.1
+  resolution: "@es-joy/jsdoccomment@npm:0.20.1"
   dependencies:
     comment-parser: 1.3.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: ~2.2.2
-  checksum: 60614ccb08f421ff23a300063989c334d76450c44ed293fdfaaf53b5d4d96a79550873b4e054d75f293433ded5ee201758134f78dd54e9461cf102c08da0727a
+    jsdoc-type-pratt-parser: ~2.2.3
+  checksum: b64afeaddccbc8da185c640e608496f6d6f8ee564c6255cdb44b16e00fe441e1f0552b5748033df2baf42187cfbfa9f31c46716982945d4343f8eaf44e253087
   languageName: node
   linkType: hard
 
@@ -7747,13 +7747,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/dragscroll@npm:^1.0.1, @scena/dragscroll@npm:^1.0.2, @scena/dragscroll@npm:^1.0.3":
+"@scena/dragscroll@npm:^1.0.1, @scena/dragscroll@npm:^1.0.3":
   version: 1.0.3
   resolution: "@scena/dragscroll@npm:1.0.3"
   dependencies:
     "@daybrush/utils": 1.6.0
     "@scena/event-emitter": ^1.0.2
   checksum: d7f3695cba4503d39292e899bed5d61aa24b98cb0443450b434fad29fa05d671837022eae4d324eb6e23cd5c1a179d2b4a1236245e6025b932a722eca26bcb83
+  languageName: node
+  linkType: hard
+
+"@scena/dragscroll@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@scena/dragscroll@npm:1.1.1"
+  dependencies:
+    "@daybrush/utils": 1.6.0
+    "@scena/event-emitter": ^1.0.2
+  checksum: aacb33587034a216aadca035e837e831029c73e37961217e2a3b910527f0798efc491a604088b979144ab0172cb978cd8e8cd2b2a7b91532312459a533f6bc2b
   languageName: node
   linkType: hard
 
@@ -18592,11 +18602,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:37.9.1":
-  version: 37.9.1
-  resolution: "eslint-plugin-jsdoc@npm:37.9.1"
+"eslint-plugin-jsdoc@npm:38.0.0":
+  version: 38.0.0
+  resolution: "eslint-plugin-jsdoc@npm:38.0.0"
   dependencies:
-    "@es-joy/jsdoccomment": ~0.19.0
+    "@es-joy/jsdoccomment": ~0.20.1
     comment-parser: 1.3.0
     debug: ^4.3.3
     escape-string-regexp: ^4.0.0
@@ -18606,7 +18616,7 @@ __metadata:
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: 32186fda33838a86df98c86febadf283b7c85ab3fe54e70d3a209af968cce05bba6abdbedc43888fb9a6f143e0c14e11114a14bc7c9449a23182fdc7fcde81ac
+  checksum: 19149dda7a720adaffaee511fb92428027fd9bcf3f9bfd2f3e3db2ca3e866434f2250de6f6fb4f47bbf2abc860d3bc5e4604bc66a000166ea51ced62498c9004
   languageName: node
   linkType: hard
 
@@ -20206,13 +20216,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.5.0":
-  version: 1.5.0
-  resolution: "gesto@npm:1.5.0"
+"gesto@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "gesto@npm:1.7.0"
   dependencies:
     "@daybrush/utils": ^1.0.0
     "@scena/event-emitter": ^1.0.2
-  checksum: e282ac16a63add43986c19af881b7aa5df95eb926f8dce96149a7f6f98b8257454977c8036e7337d0d03fc32a3b7b283d2609395d931ea39e9ebe9d2e3214875
+  checksum: f2a66bcf0f0e2d72572ea0360ed11a86772449298207a6bb35ae7535b81af142729fbff749a93b1eba89b644b582ee0fde98880aed7b195f5d9cd0aeeb243e7a
   languageName: node
   linkType: hard
 
@@ -20865,7 +20875,7 @@ __metadata:
     eslint: 8.10.0
     eslint-config-prettier: 8.5.0
     eslint-plugin-jest: ^26.1.0
-    eslint-plugin-jsdoc: 37.9.1
+    eslint-plugin-jsdoc: 38.0.0
     eslint-plugin-lodash: 7.4.0
     eslint-plugin-react: 7.29.2
     eslint-plugin-react-hooks: 4.3.0
@@ -20969,7 +20979,7 @@ __metadata:
     sass: 1.49.7
     sass-loader: 12.6.0
     search-query-parser: 1.6.0
-    selecto: 1.13.2
+    selecto: 1.15.0
     semver: ^7.1.3
     sinon: 13.0.1
     slate: 0.47.8
@@ -24460,6 +24470,13 @@ __metadata:
   version: 2.2.2
   resolution: "jsdoc-type-pratt-parser@npm:2.2.2"
   checksum: 719ed04ab39f05849e293ae30253166a555c477e99f79025df1686d664764a9e1e8c679bdeba0f60381c4539dbce27687417d5f810ffedbc2adbede0bedec107
+  languageName: node
+  linkType: hard
+
+"jsdoc-type-pratt-parser@npm:~2.2.3":
+  version: 2.2.4
+  resolution: "jsdoc-type-pratt-parser@npm:2.2.4"
+  checksum: fdfcaf9d31cb10dce377d02d9b79a12d468d80e7de93047e969c3cf125725a4aa56580a31eb11bd18ac9401abfceae0194c951f619e3c38772784d6c24e97dc9
   languageName: node
   linkType: hard
 
@@ -32844,21 +32861,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selecto@npm:1.13.2":
-  version: 1.13.2
-  resolution: "selecto@npm:1.13.2"
+"selecto@npm:1.15.0":
+  version: 1.15.0
+  resolution: "selecto@npm:1.15.0"
   dependencies:
     "@daybrush/utils": ^1.4.0
     "@egjs/children-differ": ^1.0.1
-    "@scena/dragscroll": ^1.0.2
+    "@scena/dragscroll": ^1.1.1
     "@scena/event-emitter": ^1.0.5
     css-styled: ^1.0.0
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.5.0
+    gesto: ^1.7.0
     keycon: ^1.1.2
     overlap-area: ^1.0.0
-  checksum: c39159a6018d3c715d1ce6a4af656f429f539c8496681bbade615d3b04b4f689065e8ca5bacf6a54cf4664dc06ce8af8d5cbfc25de56da414d88b9de78d3ba25
+  checksum: ae19513c77180ecb4b24f1dd49b5dbe6800c9574ce839a8299748f213763a41a30292754d210490d77579f1c09b991b03e88fe76b29df68c3e9db474d9bafb4c
   languageName: node
   linkType: hard
 

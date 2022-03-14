@@ -3,29 +3,46 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type FolderServiceImpl struct {
+	log              log.Logger
+	cfg              *setting.Cfg
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
 	searchService    *search.SearchService
-	log              log.Logger
+	features         featuremgmt.FeatureToggles
+	permissions      accesscontrol.PermissionsService
 }
 
-func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, searchService *search.SearchService) *FolderServiceImpl {
+func ProvideFolderService(
+	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
+	searchService *search.SearchService, features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+	ac accesscontrol.AccessControl,
+) *FolderServiceImpl {
+	ac.RegisterAttributeScopeResolver(dashboards.NewNameScopeResolver(dashboardStore))
+
 	return &FolderServiceImpl{
+		cfg:              cfg,
+		log:              log.New("folder-service"),
 		dashboardService: dashboardService,
 		dashboardStore:   dashboardStore,
 		searchService:    searchService,
-		log:              log.New("folder-service"),
+		features:         features,
+		permissions:      permissionsServices.GetFolderService(),
 	}
 }
 
@@ -147,6 +164,22 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 	dashFolder, err = getFolder(ctx, query)
 	if err != nil {
 		return nil, toFolderError(err)
+	}
+
+	var permissionErr error
+	if f.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		resourceID := strconv.FormatInt(dashFolder.Id, 10)
+		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, resourceID, []accesscontrol.SetResourcePermissionCommand{
+			{UserID: userID, Permission: models.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
+		}...)
+	} else if f.cfg.EditorsCanAdmin {
+		permissionErr = f.MakeUserAdmin(ctx, orgID, userID, dashFolder.Id, true)
+	}
+
+	if permissionErr != nil {
+		f.log.Error("Could not make user admin", "folder", dashFolder.Title, "user", userID, "error", permissionErr)
 	}
 
 	return dashToFolder(dashFolder), nil

@@ -5,34 +5,39 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
-		dashboardStore := &database.FakeDashboardStore{}
+		dashboardStore := &dashboards.FakeDashboardStore{}
 		defer dashboardStore.AssertExpectations(t)
 
+		features := featuremgmt.WithFeatures()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
 		hs := &HTTPServer{
-			Cfg:              settings,
-			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore, nil),
-			SQLStore:         mockSQLStore,
-			Features:         featuremgmt.WithFeatures(),
+			Cfg:      settings,
+			SQLStore: mockSQLStore,
+			Features: features,
+			dashboardService: dashboardservice.ProvideDashboardService(
+				settings, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			),
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
