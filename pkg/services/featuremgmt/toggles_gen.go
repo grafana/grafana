@@ -122,4 +122,8 @@ const (
 	// FlagMigrationLocking
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
+
+	// FlagAzureMonitorResourcePickerForMetrics
+	// New UI for Azure Monitor Metrics Query
+	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 )

@@ -133,10 +133,10 @@ describe('Azure Monitor QueryEditor', () => {
   });
 
   it('renders the new query editor for metrics when enabled with a feature toggle', async () => {
-    const originalConfigValue = config.featureToggles.resourcePickerForMetrics;
+    const originalConfigValue = config.featureToggles.azureMonitorResourcePickerForMetrics;
 
     // To do this irl go to custom.ini file and add resourcePickerForMetrics = true under [feature_toggles]
-    config.featureToggles.resourcePickerForMetrics = true;
+    config.featureToggles.azureMonitorResourcePickerForMetrics = true;
 
     const mockDatasource = createMockDatasource();
     const mockQuery = {
@@ -151,6 +151,6 @@ describe('Azure Monitor QueryEditor', () => {
     );
 
     // reset config to not impact future tests
-    config.featureToggles.resourcePickerForMetrics = originalConfigValue;
+    config.featureToggles.azureMonitorResourcePickerForMetrics = originalConfigValue;
   });
 });
