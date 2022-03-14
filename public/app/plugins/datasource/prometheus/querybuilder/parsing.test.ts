@@ -414,7 +414,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('handles scalar comparison operators', () => {
-    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name <= 2')).toEqual({
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name <= 2.5')).toEqual({
       errors: [],
       query: {
         metric: 'cluster_namespace_slug_dialer_name',
@@ -422,7 +422,23 @@ describe('buildVisualQueryFromString', () => {
         operations: [
           {
             id: '__less_or_equal',
-            params: [2],
+            params: [false, 2.5],
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles bool with comparison operator', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name <= bool 2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__less_or_equal',
+            params: [true, 2],
           },
         ],
       },
