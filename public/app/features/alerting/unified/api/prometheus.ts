@@ -15,10 +15,6 @@ export interface FetchPromRulesFilter {
   panelId?: number;
 }
 
-interface PrometheusClient {
-  fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]>;
-}
-
 export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');

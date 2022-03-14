@@ -117,6 +117,7 @@ export interface CloudRuleIdentifier {
   rulerRuleHash: number;
 }
 export interface GrafanaRuleIdentifier {
+  ruleSourceName: 'grafana';
   uid: string;
 }
 

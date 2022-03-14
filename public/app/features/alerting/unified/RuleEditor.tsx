@@ -11,8 +11,9 @@ import { useDispatch } from 'react-redux';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchEditableRuleAction } from './state/actions';
+import { fetchEditableRuleAction, fetchRulesSourceBuildInfoAction } from './state/actions';
 import * as ruleId from './utils/rule-id';
+import { useAsync } from 'react-use';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
@@ -24,9 +25,10 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   const dispatch = useDispatch();
   const { isEditable } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), result?.rule);
 
-  useEffect(() => {
+  useAsync(async () => {
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
     if (!dispatched) {
-      dispatch(fetchEditableRuleAction(identifier));
+      await dispatch(fetchEditableRuleAction(identifier));
     }
   }, [dispatched, dispatch, identifier]);
 
