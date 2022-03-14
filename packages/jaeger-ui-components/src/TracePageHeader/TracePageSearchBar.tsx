@@ -33,7 +33,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       position: sticky;
       top: 0;
       z-index: 5;
-      background: ${theme.colors.background.primary};
+      background: ${theme ? theme.colors.background.primary : ''};
       margin-bottom: -32px;
     `,
     TracePageSearchBarBar: css`
@@ -75,7 +75,7 @@ type TracePageSearchBarProps = {
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { clearSearch, navigable, nextResult, prevResult, searchValue, onSearchValueChange, searchBarSuffix } = props;
+  const { clearSearch, navigable, nextResult, prevResult, onSearchValueChange, searchValue, searchBarSuffix } = props;
   const styles = useStyles2(getStyles);
 
   const count = searchValue ? <span className={styles.TracePageSearchBarSuffix}>{searchBarSuffix}</span> : null;

@@ -105,7 +105,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
-  focusedSpanIdForSearch?: string;
+  focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };

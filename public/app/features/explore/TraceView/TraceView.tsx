@@ -51,9 +51,6 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  // At this point we only show single trace
-  const frame = props.dataFrames[0];
-
   const {
     expandOne,
     expandAll,
@@ -95,7 +92,7 @@ export function TraceView(props: Props) {
   );
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
-    refId: frame?.refId,
+    refId: props.dataFrames[0]?.refId,
     exploreId: props.exploreId,
     datasource,
   });
@@ -120,8 +117,8 @@ export function TraceView(props: Props) {
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
   const createSpanLink = useMemo(
-    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
-    [props.splitOpenFn, traceToLogsOptions, frame]
+    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: props.dataFrames[0] }),
+    [props.splitOpenFn, traceToLogsOptions, props.dataFrames]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));

@@ -18,13 +18,14 @@ import { shallow } from 'enzyme';
 import * as markers from './TracePageSearchBar.markers';
 import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
 import UiFindInput from '../common/UiFindInput';
+import { useStyles2 } from '@grafana/ui';
 
 const defaultProps = {
   forwardedRef: React.createRef(),
   navigable: true,
   nextResult: () => {},
   prevResult: () => {},
-  resultCount: 0,
+  suffix: '',
   searchValue: 'something',
 };
 
@@ -46,12 +47,12 @@ describe('<TracePageSearchBar>', () => {
         })
       );
       expect(suffix.hasClass(getStyles().TracePageSearchBarSuffix)).toBe(true);
-      expect(suffix.text()).toBe(String(defaultProps.resultCount));
+      expect(suffix.text()).toBe(String(defaultProps.suffix));
     });
 
     it('renders buttons', () => {
       const buttons = wrapper.find('Button');
-      expect(buttons.length).toBe(4);
+      expect(buttons.length).toBe(3);
       buttons.forEach((button) => {
         expect(button.prop('disabled')).toBe(false);
       });
@@ -79,7 +80,7 @@ describe('<TracePageSearchBar>', () => {
 
     it('renders buttons', () => {
       const buttons = wrapper.find('Button');
-      expect(buttons.length).toBe(4);
+      expect(buttons.length).toBe(3);
       buttons.forEach((button) => {
         expect(button.prop('disabled')).toBe(true);
       });
