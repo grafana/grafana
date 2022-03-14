@@ -114,7 +114,6 @@ func TestHTTPServer_PluginMetricsEndpoint(t *testing.T) {
 			require.Equal(t, http.StatusNotFound, resp.StatusCode)
 		})
 	})
-
 }
 
 type fakePluginClientMetrics struct {
