@@ -262,7 +262,7 @@ Content-Type: application/json
 | description | string     | No       | Description of the role.                                                                                                                                                                                                                                            |
 | displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                                        |
 | group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                                 |
-| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                                      |
+| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                                    |
 | permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                                   |
 
 **Permission**
@@ -354,15 +354,15 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name  | Data Type           | Required | Description                                                                                                                                                                    |
-| ----------- | ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| version     | number              | Yes      | Version of the role. Must be incremented for update to work.                                                                                                                   |
-| name        | string              | Yes      | Name of the role.                                                                                                                                                              |
-| description | string              | No       | Description of the role.                                                                                                                                                       |
-| displayName | string              | No       | Display name of the role, visible in the UI.                                                                                                                                   |
-| group       | string              | No       | The group name the role belongs to.                                                                                                                                            |
+| Field Name  | Data Type           | Required | Description                                                                                                                                                                      |
+| ----------- | ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| version     | number              | Yes      | Version of the role. Must be incremented for update to work.                                                                                                                     |
+| name        | string              | Yes      | Name of the role.                                                                                                                                                                |
+| description | string              | No       | Description of the role.                                                                                                                                                         |
+| displayName | string              | No       | Display name of the role, visible in the UI.                                                                                                                                     |
+| group       | string              | No       | The group name the role belongs to.                                                                                                                                              |
 | hidden      | boolean             | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified. |
-| permissions | List of Permissions | No       | The full list of permissions for the role after the update.                                                                                                             |
+| permissions | List of Permissions | No       | The full list of permissions for the role after the update.                                                                                                                      |
 
 **Permission**
 
@@ -716,7 +716,7 @@ Content-Type: application/json
 | ------------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | global        | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. |
 | roleUids      | list      | Yes      | List of role UIDs.                                                                                                                                   |
-| includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated.                                                                                  |
+| includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated.                                                                                       |
 
 #### Example response
 
@@ -930,9 +930,9 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name    | Date Type | Required | Description                                                         |
-| ------------- | --------- | -------- | ------------------------------------------------------------------- |
-| roleUids      | list      | Yes      | List of role UIDs.                                                  |
+| Field Name    | Date Type | Required | Description                                                    |
+| ------------- | --------- | -------- | -------------------------------------------------------------- |
+| roleUids      | list      | Yes      | List of role UIDs.                                             |
 | includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated. |
 
 #### Example response
