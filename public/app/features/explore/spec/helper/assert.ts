@@ -10,21 +10,23 @@ export const assertQueryHistoryExists = (query: string, exploreId: ExploreId = E
   expect(queryItem).toHaveTextContent(query);
 };
 
-export const assertQueryHistory = async (queries: string[], exploreId: ExploreId = ExploreId.left) => {
+export const assertQueryHistory = async (expectedQueryTexts: string[], exploreId: ExploreId = ExploreId.left) => {
   const selector = withinExplore(exploreId);
   await waitFor(() => {
-    expect(selector.getByText(`${queries.length} queries`)).toBeInTheDocument();
+    expect(selector.getByText(`${expectedQueryTexts.length} queries`)).toBeInTheDocument();
+    const queryTexts = selector.getAllByLabelText('Query text');
+    expectedQueryTexts.forEach((expectedQueryText, queryIndex) => {
+      expect(queryTexts[queryIndex]).toHaveTextContent(expectedQueryText);
+    });
   });
 };
 
-export const assertQueryHistoryIsStarred = async (
-  queryIndex: number,
-  starred: boolean,
-  exploreId: ExploreId = ExploreId.left
-) => {
+export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], exploreId: ExploreId = ExploreId.left) => {
   const selector = withinExplore(exploreId);
   const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
   await waitFor(() =>
-    expect(starButtons[queryIndex].getAttribute('title')).toBe(starred ? 'Unstar query' : 'Star query')
+    expectedStars.forEach((starred, queryIndex) => {
+      expect(starButtons[queryIndex].getAttribute('title')).toBe(starred ? 'Unstar query' : 'Star query');
+    })
   );
 };

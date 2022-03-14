@@ -77,16 +77,12 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
 
     // star one one query
-    starQueryHistory(0, ExploreId.left);
-    await assertQueryHistoryIsStarred(0, true, ExploreId.left);
-    await assertQueryHistoryIsStarred(1, false, ExploreId.left);
-    await assertQueryHistoryIsStarred(2, false, ExploreId.left);
-    await assertQueryHistoryIsStarred(0, true, ExploreId.right);
-    await assertQueryHistoryIsStarred(1, false, ExploreId.right);
-    await assertQueryHistoryIsStarred(2, false, ExploreId.right);
+    starQueryHistory(2, ExploreId.left);
+    await assertQueryHistoryIsStarred([false, false, true], ExploreId.left);
+    await assertQueryHistoryIsStarred([false, false, true], ExploreId.right);
 
     deleteQueryHistory(1, ExploreId.left);
     await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #1"}'], ExploreId.left);
-    await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #1"}'], ExploreId.left);
+    await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #1"}'], ExploreId.right);
   });
 });
