@@ -40,12 +40,12 @@ type DashboardServiceImpl struct {
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.PermissionsService
 	dashboardPermissions accesscontrol.PermissionsService
-	starManager          star.Manager
+	starService          star.Service
 }
 
 func ProvideDashboardService(
 	cfg *setting.Cfg, store m.Store, dashAlertExtractor alerting.DashAlertExtractor,
-	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices, starManager star.Manager,
+	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices, starService star.Service,
 ) *DashboardServiceImpl {
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -55,7 +55,7 @@ func ProvideDashboardService(
 		features:             features,
 		folderPermissions:    permissionsServices.GetFolderService(),
 		dashboardPermissions: permissionsServices.GetDashboardService(),
-		starManager:          starManager,
+		starService:          starService,
 	}
 }
 
@@ -175,7 +175,7 @@ func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int6
 }
 
 func (dr *DashboardServiceImpl) DashboardIsStarredByUserCtx(ctx context.Context, cmd *models.IsStarredByUserQuery) (bool, error) {
-	return dr.starManager.IsStarredByUserCtx(ctx, cmd)
+	return dr.starService.IsStarredByUserCtx(ctx, cmd)
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {

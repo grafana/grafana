@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore, starManager star.Manager) *SearchService {
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore, starService star.Service) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		Bus: bus,
@@ -21,7 +21,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore, 
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
 		sqlstore:    sqlstore,
-		starManager: starManager,
+		starService: starService,
 	}
 	s.Bus.AddHandler(s.SearchHandler)
 	return s
@@ -54,7 +54,7 @@ type SearchService struct {
 	Cfg         *setting.Cfg
 	sortOptions map[string]models.SortOption
 	sqlstore    sqlstore.Store
-	starManager star.Manager
+	starService star.Service
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
@@ -111,7 +111,7 @@ func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, 
 		UserId: userID,
 	}
 
-	iuserstars, err := s.starManager.GetUserStars(ctx, &query)
+	iuserstars, err := s.starService.GetUserStars(ctx, &query)
 	if err != nil {
 		return err
 	}

@@ -23,13 +23,13 @@ import (
 
 func TestDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
-	var starManager star.Manager
+	var starService star.Service
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		starManager = star.ProvideService(sqlStore)
+		starService = star.ProvideService(sqlStore)
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
@@ -385,13 +385,13 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to search for starred dashboards", func(t *testing.T) {
 		setup()
 		starredDash := insertTestDashboard(t, dashboardStore, "starred dash", 1, 0, false)
-		err := starManager.StarDashboard(context.Background(), &models.StarDashboardCommand{
+		err := starService.StarDashboard(context.Background(), &models.StarDashboardCommand{
 			DashboardId: starredDash.Id,
 			UserId:      10,
 		})
 		require.NoError(t, err)
 
-		err = starManager.StarDashboard(context.Background(), &models.StarDashboardCommand{
+		err = starService.StarDashboard(context.Background(), &models.StarDashboardCommand{
 			DashboardId: savedDash.Id,
 			UserId:      1,
 		})

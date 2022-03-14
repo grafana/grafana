@@ -26,7 +26,7 @@ func TestSearch_SortedResults(t *testing.T) {
 	fstars.ExpectedUserStars = map[int64]bool{10: true, 12: true}
 	svc := &SearchService{
 		sqlstore:    ms,
-		starManager: fstars,
+		starService: fstars,
 	}
 
 	query := &Query{
