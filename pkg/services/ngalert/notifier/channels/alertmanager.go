@@ -54,7 +54,10 @@ func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedVal
 func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 	config, err := NewAlertmanagerConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewAlertmanagerNotifier(config, nil, fc.DecryptFunc), nil
 }

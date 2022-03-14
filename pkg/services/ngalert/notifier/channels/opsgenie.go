@@ -54,7 +54,10 @@ type OpsgenieConfig struct {
 func OpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewOpsgenieConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.Template, fc.DecryptFunc), nil
 }

@@ -40,7 +40,10 @@ type TelegramConfig struct {
 func TelegramFactory(fc FactoryConfig) (NotificationChannel, error) {
 	config, err := NewTelegramConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewTelegramNotifier(config, fc.NotificationService, fc.Template), nil
 }

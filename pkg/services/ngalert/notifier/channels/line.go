@@ -26,7 +26,10 @@ type LineConfig struct {
 func LineFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewLineConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewLineNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

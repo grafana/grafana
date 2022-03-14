@@ -500,7 +500,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			}
 			_, err = receiverFactory(factoryConfig)
 			if err != nil {
-				return fmt.Errorf(`failed to validate receiver "%s" of type "%s": %w`, gr.Name, gr.Type, err)
+				return err
 			}
 		}
 	}

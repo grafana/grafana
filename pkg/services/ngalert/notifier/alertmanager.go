@@ -508,7 +508,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,
-			Err:      fmt.Errorf(`failed to validate receiver "%s" of type "%s": %w`, r.Name, r.Type, err),
+			Err:      err,
 		}
 	}
 	return n, nil

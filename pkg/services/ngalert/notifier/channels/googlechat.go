@@ -36,7 +36,10 @@ type GoogleChatConfig struct {
 func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewGoogleChatConfig(fc.Config)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewGoogleChatNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

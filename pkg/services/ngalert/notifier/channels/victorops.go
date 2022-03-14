@@ -35,7 +35,10 @@ type VictorOpsConfig struct {
 func VictorOpsFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewVictorOpsConfig(fc.Config)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewVictoropsNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

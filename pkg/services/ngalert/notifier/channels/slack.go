@@ -62,7 +62,10 @@ type SlackConfig struct {
 func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewSlackConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewSlackNotifier(cfg, fc.Template), nil
 }

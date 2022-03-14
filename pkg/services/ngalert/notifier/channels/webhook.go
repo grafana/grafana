@@ -41,7 +41,10 @@ type WebhookConfig struct {
 func WebHookFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewWebHookConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewWebHookNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

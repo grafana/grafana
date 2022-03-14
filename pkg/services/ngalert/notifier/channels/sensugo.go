@@ -44,7 +44,10 @@ type SensuGoConfig struct {
 func SensuGoFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewSensuGoConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewSensuGoNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

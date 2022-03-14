@@ -58,7 +58,10 @@ type PushoverConfig struct {
 func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewPushoverConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewPushoverNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

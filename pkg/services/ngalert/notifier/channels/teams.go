@@ -33,7 +33,10 @@ type TeamsConfig struct {
 func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewTeamsConfig(fc.Config)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewTeamsNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

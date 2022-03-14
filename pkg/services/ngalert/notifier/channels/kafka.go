@@ -36,7 +36,10 @@ type KafkaConfig struct {
 func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewKafkaConfig(fc.Config)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewKafkaNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

@@ -54,7 +54,10 @@ type PagerdutyConfig struct {
 func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewPagerdutyConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

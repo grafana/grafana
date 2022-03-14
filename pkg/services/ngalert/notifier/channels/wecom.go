@@ -23,7 +23,10 @@ type WeComConfig struct {
 func WeComFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewWeComConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewWeComNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

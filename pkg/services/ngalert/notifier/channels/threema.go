@@ -42,7 +42,10 @@ type ThreemaConfig struct {
 func ThreemaFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewThreemaConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewThreemaNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

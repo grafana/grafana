@@ -39,7 +39,10 @@ func NewDingDingConfig(config *NotificationChannelConfig) (*DingDingConfig, erro
 func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewDingDingConfig(fc.Config)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewDingDingNotifier(cfg, fc.NotificationService, fc.Template), nil
 }

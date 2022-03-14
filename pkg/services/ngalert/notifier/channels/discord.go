@@ -53,7 +53,10 @@ func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error)
 func DiscrodFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewDiscordConfig(fc.Config)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
 	return NewDiscordNotifier(cfg, fc.NotificationService, fc.Template), nil
 }
