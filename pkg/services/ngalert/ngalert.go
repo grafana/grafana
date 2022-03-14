@@ -154,7 +154,10 @@ func (ng *AlertNG) init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	return api.DeclareFixedRoles()
+	if ng.isFgacDisabled() {
+		return nil
+	}
+	return DeclareFixedRoles(ng.accesscontrol)
 }
 
 // Run starts the scheduler and Alertmanager.
@@ -181,4 +184,10 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.UnifiedAlerting.IsEnabled()
+}
+
+// TODO temporary. Remove after https://github.com/grafana/grafana/pull/46358 is merged
+// isFgacDisabled returns true if fine-grained access for Alerting is enabled.
+func (ng *AlertNG) isFgacDisabled() bool {
+	return ng.Cfg.IsFeatureToggleEnabled == nil || !ng.Cfg.IsFeatureToggleEnabled("alerting_fgac")
 }

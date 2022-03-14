@@ -358,16 +358,23 @@ const (
 	ActionAlertingNotificationsRead   = "alert.notifications:read"
 	ActionAlertingNotificationsUpdate = "alert.notifications:update"
 	ActionAlertingNotificationsDelete = "alert.notifications:delete"
+
+	// External alerting rule actions
+	ActionAlertingRuleExternalEdit = "alert.rules.external:edit"
+	ActionAlertingRuleExternalRead = "alert.rules.external:read"
+
+	// External alerting instances actions
+	ActionAlertingInstancesExternalEdit = "alert.instances.external:edit"
+	ActionAlertingInstancesExternalRead = "alert.instances.external:read"
+
+	// External alerting notifications actions
+	ActionAlertingNotificationsExternalEdit = "alert.notifications.external:edit"
+	ActionAlertingNotificationsExternalRead = "alert.notifications.external:read"
 )
 
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
-
-	// Folder scopes
-
-	// Datasource scopes
-
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
