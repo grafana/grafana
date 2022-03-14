@@ -4459,7 +4459,7 @@ __metadata:
     prismjs: 1.27.0
     process: ^0.11.10
     raw-loader: 4.0.2
-    rc-cascader: 3.2.1
+    rc-cascader: 3.3.1
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: ^3.7.3
@@ -20937,7 +20937,7 @@ __metadata:
     prismjs: 1.27.0
     prop-types: 15.8.1
     raw-loader: 4.0.2
-    rc-cascader: 3.2.1
+    rc-cascader: 3.3.1
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
@@ -30352,9 +30352,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.2.1":
-  version: 3.2.1
-  resolution: "rc-cascader@npm:3.2.1"
+"rc-cascader@npm:3.3.1":
+  version: 3.3.1
+  resolution: "rc-cascader@npm:3.3.1"
   dependencies:
     "@babel/runtime": ^7.12.5
     array-tree-filter: ^2.1.0
@@ -30365,7 +30365,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 0f96d976adc68dc1e83d0a4d9186451db4d360860d585bc00415970076acf0a1906b22b808a7f703814b2e02992b2655533247c3089ccc009282728020111e4b
+  checksum: 8b691bce0d82a881dbba0ee738faf2f8ba9a4286f1eaeda8b1b1f9960ec3d388ddb65e726a50651a441213324340bf00ccbb38a8d81c59151158ff8e4436be5e
   languageName: node
   linkType: hard
 
