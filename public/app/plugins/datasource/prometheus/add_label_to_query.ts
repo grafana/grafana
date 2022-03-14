@@ -41,17 +41,17 @@ type VectorSelectorPosition = { from: number; to: number; query: PromVisualQuery
  */
 function getVectorSelectorPositions(query: string): VectorSelectorPosition[] {
   const tree = parser.parse(query);
-  const labelMatchersPositions: VectorSelectorPosition[] = [];
+  const positions: VectorSelectorPosition[] = [];
   tree.iterate({
     enter: (type, from, to, get): false | void => {
       if (type.name === 'VectorSelector') {
         const visQuery = buildVisualQueryFromString(query.substring(from, to));
-        labelMatchersPositions.push({ query: visQuery.query, from, to });
+        positions.push({ query: visQuery.query, from, to });
         return false;
       }
     },
   });
-  return labelMatchersPositions;
+  return positions;
 }
 
 function toLabelFilter(key: string, value: string | number, operator: string): QueryBuilderLabelFilter {
