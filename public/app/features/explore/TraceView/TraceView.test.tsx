@@ -4,16 +4,22 @@ import { TraceView } from './TraceView';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { ExploreId } from 'app/types';
 import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
-import { MutableDataFrame } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, MutableDataFrame } from '@grafana/data';
 import { configureStore } from '../../../store/configureStore';
 import { Provider } from 'react-redux';
 import userEvent from '@testing-library/user-event';
 
 function renderTraceView(frames = [frameOld]) {
   const store = configureStore();
+  const mockPanelData = {
+    state: LoadingState.Done,
+    series: [],
+    timeRange: getDefaultTimeRange(),
+  };
+
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceView exploreId={ExploreId.left} dataFrames={frames} splitOpenFn={() => {}} />
+      <TraceView exploreId={ExploreId.left} dataFrames={frames} splitOpenFn={() => {}} queryResponse={mockPanelData} />
     </Provider>
   );
   return {
@@ -146,9 +152,20 @@ describe('TraceView', () => {
 
   it('resets detail view for new trace with the identical spanID', () => {
     const store = configureStore();
+    const mockPanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: getDefaultTimeRange(),
+    };
+
     const { rerender } = render(
       <Provider store={store}>
-        <TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} />
+        <TraceView
+          exploreId={ExploreId.left}
+          dataFrames={[frameOld]}
+          splitOpenFn={() => {}}
+          queryResponse={mockPanelData}
+        />
       </Provider>
     );
     const span = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
@@ -158,7 +175,12 @@ describe('TraceView', () => {
 
     rerender(
       <Provider store={store}>
-        <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />
+        <TraceView
+          exploreId={ExploreId.left}
+          dataFrames={[frameNew]}
+          splitOpenFn={() => {}}
+          queryResponse={mockPanelData}
+        />
       </Provider>
     );
     expect(screen.queryByText(/Process/)).not.toBeInTheDocument();
