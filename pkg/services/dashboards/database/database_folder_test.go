@@ -7,11 +7,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardFolderDataAccess(t *testing.T) {
@@ -525,9 +526,57 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			folder1 = insertTestDashboard(t, dashboardStore, title, orgId, 0, true, "prod")
 
 			t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
-				result, err := dashboardStore.GetFolderByTitle(orgId, title)
+				result, err := dashboardStore.GetFolderByTitle(context.Background(), orgId, title)
 				require.NoError(t, err)
 				require.Equal(t, folder1.Id, result.Id)
+			})
+		})
+
+		t.Run("GetFolderByUID", func(t *testing.T) {
+			var orgId int64 = 1
+			sqlStore := sqlstore.InitTestDB(t)
+			dashboardStore := ProvideDashboardStore(sqlStore)
+			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
+			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
+
+			t.Run("should return folder by UID", func(t *testing.T) {
+				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, folder.Uid)
+				require.Equal(t, folder.Id, d.Id)
+				require.NoError(t, err)
+			})
+			t.Run("should not find dashboard", func(t *testing.T) {
+				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, dash.Uid)
+				require.Nil(t, d)
+				require.ErrorIs(t, err, models.ErrFolderNotFound)
+			})
+			t.Run("should search in organization", func(t *testing.T) {
+				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId+1, folder.Uid)
+				require.Nil(t, d)
+				require.ErrorIs(t, err, models.ErrFolderNotFound)
+			})
+		})
+
+		t.Run("GetFolderByID", func(t *testing.T) {
+			var orgId int64 = 1
+			sqlStore := sqlstore.InitTestDB(t)
+			dashboardStore := ProvideDashboardStore(sqlStore)
+			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
+			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
+
+			t.Run("should return folder by ID", func(t *testing.T) {
+				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, folder.Id)
+				require.Equal(t, folder.Id, d.Id)
+				require.NoError(t, err)
+			})
+			t.Run("should not find dashboard", func(t *testing.T) {
+				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, dash.Id)
+				require.Nil(t, d)
+				require.ErrorIs(t, err, models.ErrFolderNotFound)
+			})
+			t.Run("should search in organization", func(t *testing.T) {
+				d, err := dashboardStore.GetFolderByID(context.Background(), orgId+1, folder.Id)
+				require.Nil(t, d)
+				require.ErrorIs(t, err, models.ErrFolderNotFound)
 			})
 		})
 	})
