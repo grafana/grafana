@@ -109,18 +109,21 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
     builder
       .addBooleanSwitch({
         path: 'showHeader',
+        category: ['Header and footer'],
         name: 'Show header',
         description: "To display table's header or not to display",
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
         path: 'footer.show',
+        category: ['Header and footer'],
         name: 'Show Footer',
         description: "To display table's footer or not to display",
         defaultValue: defaultPanelOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
+        category: ['Header and footer'],
         path: 'footer.reducer',
         name: 'Calculation',
         description: 'Choose a reducer function / calculation',
@@ -130,6 +133,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       })
       .addMultiSelect({
         path: 'footer.fields',
+        category: ['Header and footer'],
         name: 'Fields',
         description: 'Select the fields that should be calculated',
         settings: {
@@ -156,6 +160,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       })
       .addCustomEditor({
         id: 'footer.enablePagination',
+        category: ['Header and footer'],
         path: 'footer.enablePagination',
         name: 'Enable pagination',
         editor: PaginationEditor,
