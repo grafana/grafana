@@ -96,7 +96,7 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
 		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
-			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission),
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
 		}
 	}
 
