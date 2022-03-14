@@ -40,7 +40,7 @@ export async function addToRichHistory(
   comment: string | null,
   showQuotaExceededError: boolean,
   showLimitExceededWarning: boolean
-): Promise<{ newRichHistory?: RichHistoryQuery; richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
+): Promise<{ richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
 
@@ -48,7 +48,6 @@ export async function addToRichHistory(
     let richHistoryStorageFull = false;
     let limitExceeded = false;
     let warning: RichHistoryStorageWarningDetails | undefined;
-    let newRichHistory: RichHistoryQuery;
 
     try {
       const result = await getRichHistoryStorage().addToRichHistory({
@@ -59,7 +58,6 @@ export async function addToRichHistory(
         comment: comment ?? '',
       });
       warning = result.warning;
-      newRichHistory = result.richHistoryQuery;
     } catch (error) {
       if (error.name === RichHistoryServiceError.StorageFull) {
         richHistoryStorageFull = true;
@@ -77,8 +75,7 @@ export async function addToRichHistory(
       showLimitExceededWarning && dispatch(notifyApp(createWarningNotification(warning.message)));
     }
 
-    // Saving successful - add new entry.
-    return { newRichHistory, richHistoryStorageFull, limitExceeded };
+    return { richHistoryStorageFull, limitExceeded };
   }
 
   // Nothing to change

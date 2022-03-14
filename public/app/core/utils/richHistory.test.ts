@@ -12,7 +12,7 @@ import {
 } from './richHistory';
 import store from 'app/core/store';
 import { dateTime, DataQuery } from '@grafana/data';
-import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from '../history/RichHistoryStorage';
+import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
 import { RichHistoryQuery } from '../../types';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
@@ -91,19 +91,10 @@ describe('richHistory', () => {
       deleteAllFromRichHistory();
       expect(store.exists(key)).toBeFalsy();
     });
-    const expectedResult = {
-      comment: mock.testComment,
-      datasourceUid: mock.testDatasourceUid,
-      datasourceName: mock.testDatasourceName,
-      queries: mock.testQueries,
-      starred: mock.testStarred,
-      createdAt: 2,
-      id: 'GENERATED ID',
-    };
 
     it('should append query to query history', async () => {
       Date.now = jest.fn(() => 2);
-      const { newRichHistory } = await addToRichHistory(
+      const { limitExceeded, richHistoryStorageFull } = await addToRichHistory(
         mock.testDatasourceUid,
         mock.testDatasourceName,
         mock.testQueries,
@@ -112,22 +103,8 @@ describe('richHistory', () => {
         true,
         true
       );
-      expect(newRichHistory).toEqual(expectedResult);
-    });
-
-    it('should return query history if it was added', async () => {
-      Date.now = jest.fn(() => 2);
-
-      const { newRichHistory } = await addToRichHistory(
-        mock.testDatasourceUid,
-        mock.testDatasourceName,
-        mock.testQueries,
-        mock.testStarred,
-        mock.testComment,
-        true,
-        true
-      );
-      expect(newRichHistory).toMatchObject(expectedResult);
+      expect(limitExceeded).toBeFalsy();
+      expect(richHistoryStorageFull).toBeFalsy();
       expect(richHistoryStorageMock.addToRichHistory).toBeCalledWith({
         datasourceUid: mock.testDatasourceUid,
         datasourceName: mock.testDatasourceName,
@@ -137,26 +114,7 @@ describe('richHistory', () => {
       });
     });
 
-    it('should not return new item if it is duplicated', async () => {
-      Date.now = jest.fn(() => 2);
-
-      const duplicatedEntryError = new Error();
-      duplicatedEntryError.name = RichHistoryServiceError.DuplicatedEntry;
-      richHistoryStorageMock.addToRichHistory = jest.fn().mockRejectedValue(duplicatedEntryError);
-
-      const { newRichHistory } = await addToRichHistory(
-        mock.datasourceUid,
-        mock.datasourceName,
-        [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
-        mock.testStarred,
-        mock.testComment,
-        true,
-        true
-      );
-      expect(newRichHistory).toEqual(undefined);
-    });
-
-    it('it should return newly added items even when the limit is exceeded', async () => {
+    it('it should return a flag indicating that the limit has been exceed', async () => {
       Date.now = jest.fn(() => 2);
 
       richHistoryStorageMock.addToRichHistory = jest.fn((query) => {
@@ -169,7 +127,7 @@ describe('richHistory', () => {
         });
       });
 
-      const { newRichHistory, limitExceeded } = await addToRichHistory(
+      const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
         mock.testDatasourceUid,
         mock.testDatasourceName,
         mock.testQueries,
@@ -178,7 +136,7 @@ describe('richHistory', () => {
         true,
         true
       );
-      expect(newRichHistory).toEqual(expectedResult);
+      expect(richHistoryStorageFull).toBeFalsy();
       expect(limitExceeded).toBeTruthy();
     });
   });
