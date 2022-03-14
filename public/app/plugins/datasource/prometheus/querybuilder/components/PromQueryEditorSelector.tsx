@@ -13,7 +13,7 @@ import { buildVisualQueryFromString } from '../parsing';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
-import { getQueryWithDefaults } from '../types';
+import { changeEditorMode, getQueryWithDefaults } from '../state';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;
@@ -24,7 +24,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      const change = { ...query, editorMode: newMetricEditorMode };
       if (newMetricEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
@@ -33,7 +32,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           return;
         }
       }
-      onChange(change);
+      changeEditorMode(query, newMetricEditorMode, onChange);
     },
     [onChange, query]
   );
@@ -52,7 +51,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         body="There were errors while trying to parse the query. Continuing to visual builder may loose some parts of the query."
         confirmText="Continue"
         onConfirm={() => {
-          onChange({ ...query, editorMode: QueryEditorMode.Builder });
+          changeEditorMode(query, QueryEditorMode.Builder, onChange);
           setParseModalOpen(false);
         }}
         onDismiss={() => setParseModalOpen(false)}

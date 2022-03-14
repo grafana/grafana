@@ -48,7 +48,16 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineContains,
       name: 'Line contains',
-      params: [{ name: 'String', type: 'string' }],
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to find',
+          description: 'Find log lines that contains this text',
+          minWidth: 20,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -59,7 +68,16 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
-      params: [{ name: 'String', type: 'string' }],
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to exclude',
+          description: 'Find log lines that does not contain this text',
+          minWidth: 26,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -70,7 +88,16 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
-      params: [{ name: 'Regex', type: 'string' }],
+      params: [
+        {
+          name: 'Regex',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Pattern to match',
+          description: 'Find log lines that match this regex pattern',
+          minWidth: 30,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -81,7 +108,16 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegexNot,
       name: 'Line does not match regex',
-      params: [{ name: 'Regex', type: 'string' }],
+      params: [
+        {
+          name: 'Regex',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Pattern to exclude',
+          description: 'Find log lines that does not match this regex pattern',
+          minWidth: 30,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
@@ -116,13 +152,15 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Unwrap,
       name: 'Unwrap',
-      params: [{ name: 'Identifier', type: 'string' }],
+      params: [{ name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' }],
       defaultParams: [''],
       category: LokiVisualQueryOperationCategory.Formats,
       renderer: (op, def, innerExpr) => `${innerExpr} | unwrap ${op.params[0]}`,
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) =>
-        `Use the extracted label \`${op.params[0]}\` as sample values instead of log lines for the subsequent range aggregation.`,
+      explainHandler: (op) => {
+        let label = String(op.params[0]).length > 0 ? op.params[0] : '<label>';
+        return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.`;
+      },
     },
   ];
 
@@ -220,7 +258,11 @@ function getIndexOfOrLast(
   condition: (def: QueryBuilderOperationDef) => boolean
 ) {
   const index = operations.findIndex((x) => {
-    return condition(queryModeller.getOperationDef(x.id));
+    const opDef = queryModeller.getOperationDef(x.id);
+    if (!opDef) {
+      return false;
+    }
+    return condition(opDef);
   });
 
   return index === -1 ? operations.length : index;
@@ -242,7 +284,11 @@ export function addLokiOperation(
     case LokiVisualQueryOperationCategory.Aggregations:
     case LokiVisualQueryOperationCategory.Functions: {
       const rangeVectorFunction = operations.find((x) => {
-        return isRangeVectorFunction(modeller.getOperationDef(x.id));
+        const opDef = modeller.getOperationDef(x.id);
+        if (!opDef) {
+          return false;
+        }
+        return isRangeVectorFunction(opDef);
       });
 
       // If we are adding a function but we have not range vector function yet add one

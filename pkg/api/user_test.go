@@ -148,92 +148,58 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
+		mock.ExpectedSearchUsers = mockResult
 
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
-		assert.Equal(t, 1000, sentLimit)
-		assert.Equal(t, 1, sendPage)
-
 		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 		require.NoError(t, err)
+
 		assert.Equal(t, 2, len(respJSON.MustArray()))
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
+		mock.ExpectedSearchUsers = mockResult
 
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
-
-		assert.Equal(t, 10, sentLimit)
-		assert.Equal(t, 2, sendPage)
-	}, mock)
-
-	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
-
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
-		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-		assert.Equal(t, 1000, sentLimit)
-		assert.Equal(t, 1, sendPage)
 
 		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 		require.NoError(t, err)
 
+		assert.Equal(t, 2, len(respJSON.MustArray()))
+	}, mock)
+
+	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
+		mock.ExpectedSearchUsers = mockResult
+
+		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, respJSON.Get("page").MustInt())
+		assert.Equal(t, 1000, respJSON.Get("perPage").MustInt())
 		assert.Equal(t, 2, respJSON.Get("totalCount").MustInt())
 		assert.Equal(t, 2, len(respJSON.Get("users").MustArray()))
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
+		mock.ExpectedSearchUsers = mockResult
 
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
-		assert.Equal(t, 10, sentLimit)
-		assert.Equal(t, 2, sendPage)
+		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+		require.NoError(t, err)
+
+		assert.Equal(t, 2, respJSON.Get("page").MustInt())
+		assert.Equal(t, 10, respJSON.Get("perPage").MustInt())
 	}, mock)
 }

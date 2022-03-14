@@ -5,7 +5,7 @@ on:
       - opened
       - synchronize
 concurrency:
-  group: pr-commands-${{ github.event.issue.number }}
+  group: pr-commands-${{ github.event.number }}
 jobs:
   main:
     runs-on: ubuntu-latest

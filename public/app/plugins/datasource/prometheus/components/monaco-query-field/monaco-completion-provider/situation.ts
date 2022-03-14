@@ -1,5 +1,5 @@
 import { parser } from 'lezer-promql';
-import type { Tree, SyntaxNode } from 'lezer-tree';
+import type { Tree, SyntaxNode } from '@lezer/common';
 import { NeverCaseError } from './util';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -14,8 +15,8 @@ type MockPermissionsService struct {
 	mock.Mock
 }
 
-func (m *MockPermissionsService) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
-	mockedArgs := m.Called(ctx, orgID, resourceID)
+func (m *MockPermissionsService) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	mockedArgs := m.Called(ctx, user, resourceID)
 	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }
 
@@ -37,4 +38,9 @@ func (m *MockPermissionsService) SetBuiltInRolePermission(ctx context.Context, o
 func (m *MockPermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, resourceID, commands)
 	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
+}
+
+func (m *MockPermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
+	mockedArgs := m.Called(permission)
+	return mockedArgs.Get(0).(string)
 }
