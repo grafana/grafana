@@ -25,6 +25,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { useDashboardSave } from './useDashboardSave';
+import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
 
 interface FormDTO {
   message?: string; // the commit message
@@ -152,8 +153,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
         </>
       );
     }
+
     if (status.isProvisioned) {
-      return <div>TODO: the provisioning feedback message</div>;
+      return <SaveProvisionedDashboardForm dashboard={dashboard} onCancel={onDismiss} onSuccess={onDismiss} />;
     }
 
     return (
