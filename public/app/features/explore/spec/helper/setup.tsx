@@ -6,7 +6,6 @@ import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { fromPairs } from 'lodash';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceApi, DataSourceInstanceSettings, QueryEditorProps, ScopedVars } from '@grafana/data';
 import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
@@ -147,13 +146,9 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
   };
 }
 
-const getExploreTestId = (exploreId: ExploreId) => {
-  return selectors.pages.Explore.General.container(exploreId);
-};
-
 export const waitForExplore = async (exploreId: ExploreId = ExploreId.left) => {
-  const container = await screen.findByTestId(getExploreTestId(exploreId));
-  return await within(container).findByText(/Editor/i);
+  const container = await screen.findAllByTestId('data-testid Explore');
+  return await within(container[exploreId === ExploreId.left ? 0 : 1]).findByText(/Editor/i);
 };
 
 export const tearDown = () => {
@@ -161,6 +156,6 @@ export const tearDown = () => {
 };
 
 export const withinExplore = (exploreId: ExploreId) => {
-  const container = screen.getByTestId(getExploreTestId(exploreId));
-  return within(container);
+  const container = screen.getAllByTestId('data-testid Explore');
+  return within(container[exploreId === ExploreId.left ? 0 : 1]);
 };

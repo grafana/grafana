@@ -180,7 +180,7 @@ export const Pages = {
   Explore: {
     url: '/explore',
     General: {
-      container: (exploreId = 'left') => `data-testid Explore ${exploreId}`,
+      container: 'data-testid Explore',
       graph: 'Explore Graph',
       table: 'Explore Table',
       scrollBar: () => '.scrollbar-view',
