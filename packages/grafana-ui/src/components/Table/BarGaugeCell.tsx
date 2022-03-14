@@ -3,6 +3,7 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { TableCellProps, TableCellDisplayMode } from './types';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
+import { isFunction } from 'lodash';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -39,7 +40,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   }
 
   const getLinks = () => {
-    if (field.getLinks === undefined) {
+    if (!isFunction(field.getLinks)) {
       return [] as LinkModel[];
     }
 
@@ -71,7 +72,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   };
 
   return (
-    <div {...cellProps} className={tableStyles.cellContainer}>
+    <div {...cellProps}>
       {hasLinks && (
         <DataLinksContextMenu links={getLinks} config={config}>
           {(api) => renderComponent(api)}
