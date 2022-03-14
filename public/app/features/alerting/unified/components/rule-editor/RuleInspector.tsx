@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import YAML from 'yaml';
+import { dump, load } from 'js-yaml';
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,20 +9,28 @@ import { RuleFormValues } from '../../types/rule-form';
 
 interface Props {
   onClose: () => void;
-  onSubmit: () => void;
 }
 
 const tabs = [{ label: 'Yaml', value: 'yaml' }];
 
 export const RuleInspector: FC<Props> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('yaml');
+  const { setValue } = useFormContext();
+  const onApply = (formValues: RuleFormValues) => {
+    // Need to loop through all values and set them individually
+    Object.entries(formValues).map(([key, value]) => {
+      setValue(key, value);
+    });
+    onClose();
+  };
+
   return (
     <Drawer
       title="Inspect Alert rule"
       subtitle={<RuleInspectorSubtitle setActiveTab={setActiveTab} activeTab={activeTab} />}
       onClose={onClose}
     >
-      {activeTab === 'yaml' && <InspectorYamlTab onSubmit={() => {}} />}
+      {activeTab === 'yaml' && <InspectorYamlTab onSubmit={onApply} />}
     </Drawer>
   );
 };
@@ -51,15 +59,17 @@ const RuleInspectorSubtitle: FC<SubtitleProps> = ({ activeTab, setActiveTab }) =
 };
 
 interface YamlTabProps {
-  onSubmit: () => void;
+  onSubmit: (newModel: RuleFormValues) => void;
 }
 
 const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
   const styles = useStyles2(yamlTabStyle);
   const { getValues } = useFormContext<RuleFormValues>();
-  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(YAML.stringify(getValues()));
+  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(getValues()));
 
-  const onApply = () => {};
+  const onApply = () => {
+    onSubmit(load(alertRuleAsYaml) as RuleFormValues);
+  };
 
   return (
     <>

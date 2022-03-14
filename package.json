@@ -378,8 +378,7 @@
     "uuid": "8.3.2",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.6.2",
-    "yaml": "^1.10.2"
+    "whatwg-fetch": "3.6.2"
   },
   "resolutions": {
     "underscore": "1.13.2",
