@@ -31,8 +31,7 @@ type SQLFilter struct {
 }
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions
-// Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
-// is the id to generate scope from e.g. user.id
+// Scopes that exists for all actions will be parsed and compared against the supplied sqlID
 func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
