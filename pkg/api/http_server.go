@@ -532,6 +532,10 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 }
 
 func (hs *HTTPServer) pluginMetricsEndpoint(ctx *web.Context) {
+	if !hs.Cfg.MetricsEndpointEnabled {
+		return
+	}
+
 	if ctx.Req.Method != http.MethodGet || !strings.HasPrefix(ctx.Req.URL.Path, "/metrics/plugins/") {
 		return
 	}
