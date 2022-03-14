@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type setUserPermissionTest struct {
@@ -219,7 +220,9 @@ func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission,
 
 	sql := sqlstore.InitTestDB(t)
 	store := database.ProvideService(sql)
-	service, err := New(ops, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store, sql)
+	cfg := setting.NewCfg()
+	cfg.IsEnterprise = true
+	service, err := New(ops, cfg, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store, sql)
 	require.NoError(t, err)
 
 	return service, sql
