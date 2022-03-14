@@ -151,6 +151,10 @@ class DataSourceWithBackend<
 
     const body: any = { queries };
 
+    // add additional params to query so we can validate on the backend.
+    body.dashboardId = request.dashboardId;
+    body.panelId = request.panelId;
+
     if (range) {
       body.range = range;
       body.from = range.from.valueOf().toString();
