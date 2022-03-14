@@ -5,11 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
+
+	_ "gocloud.dev/blob/fileblob"
+	_ "gocloud.dev/blob/memblob"
 )
 
 const (
@@ -17,21 +21,15 @@ const (
 )
 
 type cdkBlobStorage struct {
-	log        log.Logger
-	bucket     *blob.Bucket
-	rootFolder string
+	log    log.Logger
+	bucket *blob.Bucket
 }
 
 func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, pathFilters *PathFilters) FileStorage {
-	return &wrapper{
-		log: log,
-		wrapped: &cdkBlobStorage{
-			log:        log,
-			bucket:     bucket,
-			rootFolder: rootFolder,
-		},
-		pathFilters: pathFilters,
-	}
+	return newWrapper(log, &cdkBlobStorage{
+		log:    log,
+		bucket: bucket,
+	}, pathFilters, rootFolder)
 }
 
 func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error) {
@@ -177,7 +175,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 
 		path := obj.Key
 
-		allowed := options.isAllowed(obj.Key)
+		allowed := options.IsAllowed(obj.Key)
 		if obj.IsDir && recursive {
 			newPaging := &Paging{
 				First: pageSize - len(files),
@@ -216,8 +214,26 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 
 			attributes, err := c.bucket.Attributes(ctx, strings.ToLower(path))
 			if err != nil {
-				c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
-				return nil, err
+				if gcerrors.Code(err) == gcerrors.NotFound {
+					attributes, err = c.bucket.Attributes(ctx, path)
+					if err != nil {
+						c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
+						return nil, err
+					}
+				} else {
+					c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
+					return nil, err
+				}
+			}
+
+			if attributes.ContentType == "application/x-directory; charset=UTF-8" {
+				// S3 directory representation
+				continue
+			}
+
+			if attributes.ContentType == "text/plain" && obj.Key == folderPath && attributes.Size == 0 {
+				// GCS directory representation
+				continue
 			}
 
 			var originalPath string
@@ -230,7 +246,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 				}
 			} else {
 				props = make(map[string]string)
-				originalPath = fixPath(path)
+				originalPath = strings.TrimSuffix(path, Delimiter)
 			}
 
 			files = append(files, FileMetadata{
@@ -257,52 +273,17 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 	}, nil
 }
 
-func (c cdkBlobStorage) fixInputPrefix(path string) string {
-	if path == Delimiter || path == "" {
-		return c.rootFolder
+func (c cdkBlobStorage) convertFolderPathToPrefix(path string) string {
+	if path != "" && !strings.HasSuffix(path, Delimiter) {
+		return path + Delimiter
 	}
-	if strings.HasPrefix(path, Delimiter) {
-		path = fmt.Sprintf("%s%s", c.rootFolder, strings.TrimPrefix(path, Delimiter))
-	}
-
 	return path
 }
 
-func (c cdkBlobStorage) convertFolderPathToPrefix(path string) string {
-	if path == Delimiter || path == "" {
-		return c.rootFolder
-	}
-	if strings.HasPrefix(path, Delimiter) {
-		path = fmt.Sprintf("%s%s", c.rootFolder, strings.TrimPrefix(path, Delimiter))
-	}
-	return fmt.Sprintf("%s%s", path, Delimiter)
-}
-
-func fixPath(path string) string {
-	newPath := strings.TrimSuffix(path, Delimiter)
-	if !strings.HasPrefix(newPath, Delimiter) {
-		newPath = fmt.Sprintf("%s%s", Delimiter, newPath)
-	}
-	return newPath
-}
-
-func (c cdkBlobStorage) convertListOptions(options *ListOptions) *ListOptions {
-	if options == nil || options.allowedPrefixes == nil || len(options.allowedPrefixes) == 0 {
-		return options
-	}
-
-	newPrefixes := make([]string, len(options.allowedPrefixes))
-	for i, prefix := range options.allowedPrefixes {
-		newPrefixes[i] = c.fixInputPrefix(prefix)
-	}
-
-	options.PathFilters.allowedPrefixes = newPrefixes
-	return options
-}
-
 func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
-	paging.After = c.fixInputPrefix(paging.After)
-	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), paging, c.convertListOptions(options))
+	prefix := c.convertFolderPathToPrefix(folderPath)
+	files, err := c.listFiles(ctx, prefix, paging, options)
+	return files, err
 }
 
 func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath string, options *ListOptions) ([]string, error) {
@@ -313,7 +294,8 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 
 	recursive := options.Recursive
 
-	currentDirPath := ""
+	dirPath := ""
+	dirMarkerPath := ""
 	foundPaths := make([]string, 0)
 	for {
 		obj, err := iterator.Next(ctx)
@@ -326,16 +308,43 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 			return nil, err
 		}
 
-		if currentDirPath == "" && !obj.IsDir && options.isAllowed(obj.Key) {
-			attributes, err := c.bucket.Attributes(ctx, obj.Key)
-			if err != nil {
-				c.log.Error("Failed while retrieving attributes", "path", obj.Key, "err", err)
-				return nil, err
+		if options.IsAllowed(obj.Key) {
+			if obj.IsDir && !recursive && options.IsAllowed(obj.Key) {
+				var nestedDirPath string
+				dirMPath := obj.Key + directoryMarker
+				attributes, err := c.bucket.Attributes(ctx, dirMPath)
+				if err != nil {
+					c.log.Error("Failed while retrieving attributes", "path", obj.Key, "err", err)
+				}
+
+				if attributes != nil && attributes.Metadata != nil {
+					if path, ok := attributes.Metadata[originalPathAttributeKey]; ok {
+						nestedDirPath = getParentFolderPath(path)
+					}
+				}
+
+				if nestedDirPath != "" {
+					foundPaths = append(foundPaths, nestedDirPath)
+				} else {
+					foundPaths = append(foundPaths, strings.TrimSuffix(obj.Key, Delimiter))
+				}
 			}
 
-			if attributes.Metadata != nil {
-				if path, ok := attributes.Metadata[originalPathAttributeKey]; ok {
-					currentDirPath = getParentFolderPath(path)
+			if dirPath == "" && !obj.IsDir {
+				dirPath = getParentFolderPath(obj.Key)
+			}
+
+			if dirMarkerPath == "" && !obj.IsDir {
+				attributes, err := c.bucket.Attributes(ctx, obj.Key)
+				if err != nil {
+					c.log.Error("Failed while retrieving attributes", "path", obj.Key, "err", err)
+					return nil, err
+				}
+
+				if attributes.Metadata != nil {
+					if path, ok := attributes.Metadata[originalPathAttributeKey]; ok {
+						dirMarkerPath = getParentFolderPath(path)
+					}
 				}
 			}
 		}
@@ -354,41 +363,35 @@ func (c cdkBlobStorage) listFolderPaths(ctx context.Context, parentFolderPath st
 		}
 	}
 
-	if currentDirPath != "" {
-		foundPaths = append(foundPaths, fixPath(currentDirPath))
+	var foundPath string
+	if dirMarkerPath != "" {
+		foundPath = dirMarkerPath
+	} else if dirPath != "" {
+		foundPath = dirPath
+	}
+
+	if foundPath != "" && options.IsAllowed(foundPath+Delimiter) {
+		foundPaths = append(foundPaths, foundPath)
 	}
 	return foundPaths, nil
 }
 
 func (c cdkBlobStorage) ListFolders(ctx context.Context, prefix string, options *ListOptions) ([]FileMetadata, error) {
-	foundPaths, err := c.listFolderPaths(ctx, c.convertFolderPathToPrefix(prefix), c.convertListOptions(options))
+	fixedPrefix := c.convertFolderPathToPrefix(prefix)
+	foundPaths, err := c.listFolderPaths(ctx, fixedPrefix, options)
 	if err != nil {
 		return nil, err
 	}
 
+	sort.Strings(foundPaths)
 	folders := make([]FileMetadata, 0)
-	mem := make(map[string]bool)
-	for i := 0; i < len(foundPaths); i++ {
-		path := foundPaths[i]
-		parts := strings.Split(path, Delimiter)
-		acc := parts[0]
-		j := 1
-		for {
-			acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
 
-			comparison := strings.Compare(acc, prefix)
-			if !mem[acc] && comparison > 0 {
-				folders = append(folders, FileMetadata{
-					Name:     getName(acc),
-					FullPath: acc,
-				})
-			}
-			mem[acc] = true
-
-			j += 1
-			if j >= len(parts) {
-				break
-			}
+	for _, path := range foundPaths {
+		if strings.Compare(path, fixedPrefix) > 0 {
+			folders = append(folders, FileMetadata{
+				Name:     getName(path),
+				FullPath: path,
+			})
 		}
 	}
 
@@ -453,11 +456,11 @@ func (c cdkBlobStorage) CreateFolder(ctx context.Context, path string) error {
 
 		previousFolderOriginalCasing := ""
 		if i > 0 {
-			previousFolderOriginalCasing = folderToOriginalCasing[precedingFolders[i-1]]
+			previousFolderOriginalCasing = folderToOriginalCasing[precedingFolders[i-1]] + Delimiter
 		}
 
 		metadata := make(map[string]string)
-		currentFolderWithOriginalCasing := previousFolderOriginalCasing + Delimiter + getName(currentFolder)
+		currentFolderWithOriginalCasing := previousFolderOriginalCasing + getName(currentFolder)
 		metadata[originalPathAttributeKey] = currentFolderWithOriginalCasing + Delimiter + directoryMarker
 		if err := c.bucket.WriteAll(ctx, strings.ToLower(metadata[originalPathAttributeKey]), make([]byte, 0), &blob.WriterOptions{
 			Metadata: metadata,

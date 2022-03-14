@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -61,13 +62,13 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	setupInMemFS := func() {
 		commonSetup()
 		bucket, _ := blob.OpenBucket(context.Background(), "mem://")
-		filestorage = NewCdkBlobStorage(testLogger, bucket, Delimiter, nil)
+		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
 	//setupSqlFS := func() {
 	//	commonSetup()
 	//	sqlStore = sqlstore.InitTestDB(t)
-	//	filestorage = NewDbStorage(testLogger, sqlStore, nil)
+	//	filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
 	//}
 
 	setupLocalFs := func() {
@@ -85,6 +86,27 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
+	setupLocalFsNestedPath := func() {
+		commonSetup()
+		tmpDir, err := ioutil.TempDir("", "")
+		tempDir = tmpDir
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		nestedPath := path.Join("a", "b")
+		err = os.MkdirAll(path.Join(tmpDir, nestedPath), os.ModePerm)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		bucket, err := blob.OpenBucket(context.Background(), fmt.Sprintf("file://%s", tmpDir))
+		if err != nil {
+			t.Fatal(err)
+		}
+		filestorage = NewCdkBlobStorage(testLogger, bucket, nestedPath+Delimiter, nil)
+	}
+
 	backends := []struct {
 		setup func()
 		name  string
@@ -92,6 +114,10 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		{
 			setup: setupLocalFs,
 			name:  "Local FS",
+		},
+		{
+			setup: setupLocalFsNestedPath,
+			name:  "Local FS with nested path",
 		},
 		{
 			setup: setupInMemFS,
@@ -219,6 +245,47 @@ func TestFsStorage(t *testing.T) {
 				},
 			},
 			{
+				name: "listing files with path to a file",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/folder2/file.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/file-inner.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1"},
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jp", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/folder2/file.jpg", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2/file.jpg"), fName("file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jpg", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/file-inner.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/file-inner.jpg"), fName("file-inner.jpg"), fProperties(map[string]string{"prop1": "val1"})),
+						},
+					},
+				},
+			},
+			{
 				name: "listing files with prefix filter",
 				steps: []interface{}{
 					cmdUpsert{
@@ -234,11 +301,11 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder2"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder2"}}}},
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
 						list:  checks(listSize(1), listHasMore(false)),
 						files: [][]interface{}{
 							checks(fPath("/folder1/folder2/file.jpg")),
@@ -348,6 +415,53 @@ func TestFsStorage(t *testing.T) {
 							checks(fPath("/folderA/folderB")),
 							checks(fPath("/folderX")),
 							checks(fPath("/folderX/folderZ")),
+						},
+					},
+				},
+			},
+			{
+				name: "listing folders non recursively",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/folder2/file.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/file-inner.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folderX/folderZ/file.txt",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folderA/folderB/file.txt",
+							Contents: &[]byte{},
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/folder1", options: &ListOptions{Recursive: false}},
+						checks: [][]interface{}{
+							checks(fPath("/folder1/folder2")),
+						},
+					},
+					queryListFolders{
+						input:  queryListFoldersInput{path: "/folderZ", options: &ListOptions{Recursive: false}},
+						checks: [][]interface{}{},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: false}},
+						checks: [][]interface{}{
+							checks(fPath("/folder1")),
+							checks(fPath("/folderA")),
+							checks(fPath("/folderX")),
 						},
 					},
 				},
@@ -850,8 +964,156 @@ func TestFsStorage(t *testing.T) {
 		}
 	}
 
+	createPathFiltersCases := func() []fsTestCase {
+		pathFilters := NewPathFilters(
+			[]string{"/gitB/", "/s3/folder/", "/gitC/"},
+			[]string{"/gitA/dashboard2.json"},
+			[]string{"/s3/folder/nested/"},
+			[]string{"/gitC/nestedC/"},
+		)
+		return []fsTestCase{
+			{
+				name: "catch-all test - TODO: split into multiple",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/s3/folder/dashboard.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/s3/folder/nested/dashboard.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitA/dashboard1.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitA/dashboard2.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitB/nested/dashboard.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitB/nested2/dashboard2.json",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/gitC/nestedC/dashboardC.json",
+							Contents: &[]byte{},
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: allowAllPathFilters(),
+						}},
+						list: checks(listSize(7)),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: denyAllPathFilters(),
+						}},
+						list: checks(listSize(0)),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: pathFilters,
+						}},
+						list: checks(listSize(5), listHasMore(false), listLastPath("/s3/folder/dashboard.json")),
+						files: [][]interface{}{
+							// /gitA/dashboard.json is not explicitly allowed
+							checks(fPath("/gitA/dashboard2.json")),         // explicitly allowed by allowedPath
+							checks(fPath("/gitB/nested/dashboard.json")),   // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested2/dashboard2.json")), // allowed by '/gitB/' prefix
+							checks(fPath("/gitC/nestedC/dashboardC.json")), // allowed by '/gitC/' prefix
+							checks(fPath("/s3/folder/dashboard.json")),     // allowed by '/s3/folder/' prefix
+							// /s3/folder/nested/dashboard.json is denied with '/s3/folder/nested/' prefix
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: pathFilters,
+						}},
+						checks: [][]interface{}{
+							// /gitA is missing due to the lack of explicit allow
+							checks(fPath("/gitB")),         // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested")),  // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested2")), // allowed by '/gitB/' prefix
+							checks(fPath("/gitC")),         // allowed by '/gitC/' prefix
+							// /gitC/nestedC is explicitly denied
+							// /s3 is not explicitly allowed
+							checks(fPath("/s3/folder")),
+							// /s3/folder/nested is denied with '/s3/folder/nested/' prefix
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/gitA", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						list: checks(listSize(1), listHasMore(false), listLastPath("/gitA/dashboard2.json")),
+						files: [][]interface{}{
+							checks(fPath("/gitA/dashboard2.json")),
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/gitA", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						checks: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/gitC", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+						files: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/gitC/nestedC", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						list: checks(listSize(1), listHasMore(false), listLastPath("/gitC/nestedC/dashboardC.json")),
+						files: [][]interface{}{
+							checks(fPath("/gitC/nestedC/dashboardC.json")),
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/gitC", options: &ListOptions{
+							Recursive:   false,
+							PathFilters: pathFilters,
+						}},
+						checks: [][]interface{}{},
+					},
+				},
+			},
+		}
+	}
+
 	runTests(createListFoldersTests, t)
 	runTests(createListFilesTests, t)
 	runTests(createFileCRUDTests, t)
 	runTests(createFolderCrudCases, t)
+	runTests(createPathFiltersCases, t)
 }
