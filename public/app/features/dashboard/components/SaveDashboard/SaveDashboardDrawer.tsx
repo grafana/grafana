@@ -102,7 +102,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
   const [showDiff, setShowDiff] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // reuse current save path
   const { state, onDashboardSave } = useDashboardSave(dashboard);
   const doSave = async (dto: FormDTO) => {
     setSaving(true);
@@ -139,7 +138,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       return (
         <>
           {previous.loading && <Spinner />}
-          {!data.hasChanges && <div>No changes made to this dashboard</div>}
+          {!data.hasChanges && <div>No changs in this dashboard</div>}
           {data.diff && data.hasChanges && (
             <div>
               <div className={styles.spacer}>
@@ -166,6 +165,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
             return onDashboardSave(clone, options, dashboard);
           }}
           isNew={status.isNew}
+          leftButtons={true}
         />
       );
     }
