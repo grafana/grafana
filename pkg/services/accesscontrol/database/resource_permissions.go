@@ -365,17 +365,17 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 	if err != nil {
 		return nil, err
 	}
-	user := userSelect + userFrom + where + " AND " + userFilter.Where()
-	args = append(args, userFilter.Args()...)
+	user := userSelect + userFrom + where + " AND " + userFilter.Where
+	args = append(args, userFilter.Args...)
 
 	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams", accesscontrol.ActionTeamsRead)
 	if err != nil {
 		return nil, err
 	}
 
-	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where()
+	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
 	args = append(args, args[:initialLength]...)
-	args = append(args, teamFilter.Args()...)
+	args = append(args, teamFilter.Args...)
 
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)

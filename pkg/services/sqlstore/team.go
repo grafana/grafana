@@ -233,8 +233,8 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		if err != nil {
 			return err
 		}
-		sql.WriteString(` and` + acFilter.Where())
-		params = append(params, acFilter.Args()...)
+		sql.WriteString(` and` + acFilter.Where)
+		params = append(params, acFilter.Args...)
 	}
 
 	sql.WriteString(` order by team.name asc`)
@@ -274,7 +274,7 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 
 	// Only count teams user can see
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		countSess.Where(acFilter.Where(), acFilter.Args()...)
+		countSess.Where(acFilter.Where, acFilter.Args...)
 	}
 
 	count, err := countSess.Count(&team)
@@ -547,7 +547,7 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 	)
 
 	if acUserFilter != nil {
-		sess.Where(acUserFilter.Where(), acUserFilter.Args()...)
+		sess.Where(acUserFilter.Where, acUserFilter.Args...)
 	}
 
 	// Join with only most recent auth module

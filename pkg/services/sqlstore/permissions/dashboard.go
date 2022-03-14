@@ -94,20 +94,20 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 	builder.WriteString("(((")
 
 	dashFilter, _ := accesscontrol.Filter(f.User, "dashboard.id", "dashboards", dashboardActions...)
-	builder.WriteString(dashFilter.Where())
-	args = append(args, dashFilter.Args()...)
+	builder.WriteString(dashFilter.Where)
+	args = append(args, dashFilter.Args...)
 
 	builder.WriteString(" OR ")
 
 	dashFolderFilter, _ := accesscontrol.Filter(f.User, "dashboard.folder_id", "folders", dashboardActions...)
-	builder.WriteString(dashFolderFilter.Where())
+	builder.WriteString(dashFolderFilter.Where)
 	builder.WriteString(") AND NOT dashboard.is_folder) OR (")
-	args = append(args, dashFolderFilter.Args()...)
+	args = append(args, dashFolderFilter.Args...)
 
 	folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.id", "folders", folderActions...)
-	builder.WriteString(folderFilter.Where())
+	builder.WriteString(folderFilter.Where)
 	builder.WriteString(" AND dashboard.is_folder))")
-	args = append(args, folderFilter.Args()...)
+	args = append(args, folderFilter.Args...)
 
 	return builder.String(), args
 }

@@ -123,8 +123,8 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 		if err != nil {
 			return err
 		}
-		whereConditions = append(whereConditions, acFilter.Where())
-		whereParams = append(whereParams, acFilter.Args()...)
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 	}
 
 	if query.Query != "" {
@@ -188,8 +188,8 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 		if err != nil {
 			return err
 		}
-		whereConditions = append(whereConditions, acFilter.Where())
-		whereParams = append(whereParams, acFilter.Args()...)
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 	}
 
 	if query.Query != "" {

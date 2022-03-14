@@ -26,16 +26,8 @@ var (
 )
 
 type SQLFilter struct {
-	where string
-	args  []interface{}
-}
-
-func (f SQLFilter) Where() string {
-	return f.where
-}
-
-func (f SQLFilter) Args() []interface{} {
-	return f.args
+	Where string
+	Args  []interface{}
 }
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions

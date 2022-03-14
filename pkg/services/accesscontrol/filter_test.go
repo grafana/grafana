@@ -152,7 +152,7 @@ func TestFilter_Datasources(t *testing.T) {
 			if !tt.expectErr {
 				require.NoError(t, err)
 				var datasources []models.DataSource
-				err = sess.SQL(baseSql+acFilter.Where(), acFilter.Args()...).Find(&datasources)
+				err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 				require.NoError(t, err)
 
 				assert.Len(t, datasources, len(tt.expectedDataSources))

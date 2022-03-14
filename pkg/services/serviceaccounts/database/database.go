@@ -321,8 +321,8 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			if err != nil {
 				return err
 			}
-			whereConditions = append(whereConditions, acFilter.Where())
-			whereParams = append(whereParams, acFilter.Args()...)
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
 		}
 
 		if query.Query != "" {

@@ -41,7 +41,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 
 		var datasources []models.DataSource
 		sess := store.NewSession(context.Background())
-		err = sess.SQL(baseSql+acFilter.Where(), acFilter.Args()...).Find(&datasources)
+		err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 		require.NoError(b, err)
 		sess.Close()
 		require.Len(b, datasources, numPermissions)
