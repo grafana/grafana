@@ -28,8 +28,9 @@ func TestNewNameScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
 
-		db := &models.Dashboard{Id: rand.Int63()}
-		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything).Return(db, nil).Once()
+		db := models.NewFolder(title)
+		db.Id = rand.Int63()
+		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:name:" + title
 
@@ -38,7 +39,7 @@ func TestNewNameScopeResolver(t *testing.T) {
 
 		require.Equal(t, fmt.Sprintf("folders:id:%v", db.Id), resolvedScope)
 
-		dashboardStore.AssertCalled(t, "GetFolderByTitle", orgId, title)
+		dashboardStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title)
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
@@ -60,7 +61,7 @@ func TestNewNameScopeResolver(t *testing.T) {
 		_, resolver := NewNameScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
-		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
+		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
 
 		scope := "folders:name:" + util.GenerateShortUID()
 
