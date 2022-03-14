@@ -162,11 +162,5 @@ var (
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
 		},
-		{
-			Name:            "fileStoreApi",
-			Description:     "Simple API for managing files",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
 	}
 )
