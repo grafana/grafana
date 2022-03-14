@@ -10495,7 +10495,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/js-yaml@npm:^4":
+"@types/js-yaml@npm:^4.0.5":
   version: 4.0.5
   resolution: "@types/js-yaml@npm:4.0.5"
   checksum: 7dcac8c50fec31643cc9d6444b5503239a861414cdfaa7ae9a38bc22597c4d850c4b8cec3d82d73b3fbca408348ce223b0408d598b32e094470dfffc6d486b4d
@@ -20806,7 +20806,7 @@ __metadata:
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 27.4.0
     "@types/jquery": 3.5.13
-    "@types/js-yaml": ^4
+    "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
     "@types/lodash": 4.14.149

@@ -128,7 +128,7 @@
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/jest": "27.4.0",
     "@types/jquery": "3.5.13",
-    "@types/js-yaml": "^4",
+    "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
     "@types/lingui__macro": "^3",
     "@types/lodash": "4.14.149",
