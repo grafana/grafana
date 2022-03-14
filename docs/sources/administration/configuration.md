@@ -1853,6 +1853,10 @@ Set this to `true` to disable loading other custom base maps and hide them in th
 
 Settings related to the Intent API.
 
+### requeueAfter
+
+The duration after which the controller requeues the the reconcile key.
+
 ## [intentapi.server]
 
 Settings related to the Intent API HTTP server.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/internal/components/store"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -12,14 +13,14 @@ import (
 
 	"github.com/grafana/grafana/internal/k8sbridge"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
-
-// requeueAfter can be overidden by the tests
-var requeueAfter = 1 * time.Minute
 
 type DatasourceReconciler struct {
 	cli rest.Interface
 	sto store.Store
+	Requeue bool
+	RequeueAfter time.Duration
 }
 
 
@@ -28,9 +29,16 @@ type DatasourceReconciler struct {
 // since there are no components that depend on DatasourceReconciler
 // I think we need some kind of reconciler registry (maybe just as part of the k8s bridge),
 // similar to background services registry.
-func ProvideDatasourceReconciler(bridge *k8sbridge.Service, store Store) (*DatasourceReconciler, error) {
+func ProvideDatasourceReconciler(cfg *setting.Cfg, bridge *k8sbridge.Service, store store.Store) (*DatasourceReconciler, error) {
+	sec := cfg.Raw.Section("intentapi")
+	requeueAfter, err := gtime.ParseDuration(sec.Key("requeueAfter").MustString("1m"))
+	if err != nil {
+		return nil, err
+	}
+
 	d := &DatasourceReconciler{
 		cli: bridge.Client().GrafanaCoreV1(),
+		RequeueAfter: requeueAfter,
 	}
 
 	// TODO should Thema-based approaches differ from pure k8s here? (research!)
@@ -59,7 +67,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 	if err != nil {
 		return reconcile.Result{
 			Requeue:      true,
-			RequeueAfter: requeueAfter,
+			RequeueAfter: d.RequeueAfter,
 		}, err
 	}
 
@@ -68,14 +76,14 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		if !errors.Is(err, models.ErrDataSourceNotFound) {
 			return reconcile.Result{
 				Requeue:      true,
-				RequeueAfter: requeueAfter,
+				RequeueAfter: d.RequeueAfter,
 			}, err 
 		}
 
 		if err := d.sto.Insert(ctx, &ds); err != nil {
 			return reconcile.Result{
 				Requeue:      true,
-				RequeueAfter: requeueAfter,
+				RequeueAfter: d.RequeueAfter,
 			}, err
 		}
 	}
@@ -83,7 +91,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 	if err := d.sto.Update(ctx, &ds); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
-			RequeueAfter: requeueAfter,
+			RequeueAfter: d.RequeueAfter,
 		}, err
 	}
 
