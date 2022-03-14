@@ -66,7 +66,7 @@ Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#bui
 
 Query Parameters:
 
-- `includeHidden`: boolean. Optional. Include roles that are set to `hidden`.
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
 
@@ -262,7 +262,7 @@ Content-Type: application/json
 | description | string     | No       | Description of the role.                                                                                                                                                                                                                                            |
 | displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                                        |
 | group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                                 |
-| hidden      | boolean    | No       | A flag indicating if the role is hidden or not. If set to `true`, role will not appear in the role picker and will not be listed by API endpoints unless explicitly specified.                                                                                      |
+| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                                      |
 | permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                                   |
 
 **Permission**
@@ -361,8 +361,8 @@ Content-Type: application/json
 | description | string              | No       | Description of the role.                                                                                                                                                       |
 | displayName | string              | No       | Display name of the role, visible in the UI.                                                                                                                                   |
 | group       | string              | No       | The group name the role belongs to.                                                                                                                                            |
-| hidden      | boolean             | No       | A flag indicating if the role is hidden or not. If set to `true`, role will not appear in the role picker and will not be listed by API endpoints unless explicitly specified. |
-| permissions | List of Permissions | No       | The full list of permissions the role should have after the update.                                                                                                            |
+| hidden      | boolean             | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified. |
+| permissions | List of Permissions | No       | The full list of permissions for the role after the update.                                                                                                             |
 
 **Permission**
 
@@ -474,7 +474,7 @@ Lists the roles that have been directly assigned to a given user. The list does 
 
 Query Parameters:
 
-- `includeHidden`: boolean. Optional. Include roles that are set to `hidden`.
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
 
@@ -716,7 +716,7 @@ Content-Type: application/json
 | ------------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | global        | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. |
 | roleUids      | list      | Yes      | List of role UIDs.                                                                                                                                   |
-| includeHidden | boolean   | No       | A flag indicating if hidden roles should be updated by the request.                                                                                  |
+| includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated.                                                                                  |
 
 #### Example response
 
@@ -748,7 +748,7 @@ Lists the roles that have been directly assigned to a given team.
 
 Query Parameters:
 
-- `includeHidden`: boolean. Optional. Include roles that are set to `hidden`.
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
 
@@ -933,7 +933,7 @@ Content-Type: application/json
 | Field Name    | Date Type | Required | Description                                                         |
 | ------------- | --------- | -------- | ------------------------------------------------------------------- |
 | roleUids      | list      | Yes      | List of role UIDs.                                                  |
-| includeHidden | boolean   | No       | A flag indicating if hidden roles should be updated by the request. |
+| includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated. |
 
 #### Example response
 
@@ -967,7 +967,7 @@ Gets all built-in role assignments.
 
 Query Parameters:
 
-- `includeHidden`: boolean. Optional. Include roles that are set to `hidden`.
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
 
