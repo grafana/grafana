@@ -11,77 +11,6 @@ interface ErrorResponseMessage {
   error?: string;
 }
 
-export class RulerClient {
-  setRulerRuleGroup = async (
-    dataSourceName: string,
-    namespace: string,
-    group: PostableRulerRuleGroupDTO
-  ): Promise<void> => {
-    await lastValueFrom(
-      getBackendSrv().fetch<unknown>({
-        method: 'POST',
-        url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-        data: group,
-        showErrorAlert: false,
-        showSuccessAlert: false,
-      })
-    );
-  };
-
-  fetchRulerRules = async (dataSourceName: string, filter?: FetchRulerRulesFilter) => {
-    if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-      throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
-    }
-
-    const params: Record<string, string> = {};
-    if (filter?.dashboardUID) {
-      params['dashboard_uid'] = filter.dashboardUID;
-      if (filter.panelId) {
-        params['panel_id'] = String(filter.panelId);
-      }
-    }
-    return rulerGetRequest<RulerRulesConfigDTO>(
-      `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
-      {},
-      params
-    );
-  };
-
-  fetchRulerRulesNamespace = async (dataSourceName: string, namespace: string) => {
-    const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
-      `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-      {}
-    );
-    return result[namespace] || [];
-  };
-
-  fetchRulerRulesGroup = async (
-    dataSourceName: string,
-    namespace: string,
-    group: string
-  ): Promise<RulerRuleGroupDTO | null> => {
-    return rulerGetRequest<RulerRuleGroupDTO | null>(
-      `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
-        namespace
-      )}/${encodeURIComponent(group)}`,
-      null
-    );
-  };
-
-  deleteRulerRulesGroup = async (dataSourceName: string, namespace: string, groupName: string) => {
-    await lastValueFrom(
-      getBackendSrv().fetch({
-        url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
-          namespace
-        )}/${encodeURIComponent(groupName)}`,
-        method: 'DELETE',
-        showSuccessAlert: false,
-        showErrorAlert: false,
-      })
-    );
-  };
-}
-
 function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   const grafanaPath = `/api/ruler/${getDatasourceAPIId(rulerConfig.dataSourceName)}`;
   const rulerPath = rulerConfig.apiVersion === 'config' ? '/config/v1/rules' : '/api/v1/rules';
@@ -120,24 +49,25 @@ export async function setRulerRuleGroup(
   );
 }
 
+export async function setRulerRuleGroupV2(
+  rulerConfig: RulerDataSourceConfig,
+  namespace: string,
+  group: PostableRulerRuleGroupDTO
+): Promise<void> {
+  await lastValueFrom(
+    getBackendSrv().fetch<unknown>({
+      method: 'POST',
+      url: rulerUrlBuilder(rulerConfig).namespace(namespace),
+      data: group,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
+}
+
 export interface FetchRulerRulesFilter {
   dashboardUID: string;
   panelId?: number;
-}
-
-export async function fetchRulerRulesV2(rulerConfig: RulerDataSourceConfig, filter?: FetchRulerRulesFilter) {
-  if (filter?.dashboardUID && rulerConfig.dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
-  }
-
-  const params: Record<string, string> = {};
-  if (filter?.dashboardUID) {
-    params['dashboard_uid'] = filter.dashboardUID;
-    if (filter.panelId) {
-      params['panel_id'] = String(filter.panelId);
-    }
-  }
-  return rulerGetRequest<RulerRulesConfigDTO>(rulerUrlBuilder(rulerConfig).rules(), {}, params);
 }
 
 // fetch all ruler rule namespaces and included groups
@@ -160,11 +90,34 @@ export async function fetchRulerRules(dataSourceName: string, filter?: FetchRule
   );
 }
 
+export async function fetchRulerRulesV2(rulerConfig: RulerDataSourceConfig, filter?: FetchRulerRulesFilter) {
+  if (filter?.dashboardUID && rulerConfig.dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
+  }
+
+  const params: Record<string, string> = {};
+  if (filter?.dashboardUID) {
+    params['dashboard_uid'] = filter.dashboardUID;
+    if (filter.panelId) {
+      params['panel_id'] = String(filter.panelId);
+    }
+  }
+  return rulerGetRequest<RulerRulesConfigDTO>(rulerUrlBuilder(rulerConfig).rules(), {}, params);
+}
+
 // fetch rule groups for a particular namespace
 // will throw with { status: 404 } if namespace does not exist
 export async function fetchRulerRulesNamespace(dataSourceName: string, namespace: string) {
   const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
     `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+    {}
+  );
+  return result[namespace] || [];
+}
+
+export async function fetchRulerRulesNamespaceV2(rulerConfig: RulerDataSourceConfig, namespace: string) {
+  const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
+    rulerUrlBuilder(rulerConfig).namespace(namespace),
     {}
   );
   return result[namespace] || [];
@@ -185,12 +138,35 @@ export async function fetchRulerRulesGroup(
   );
 }
 
+export async function fetchRulerRulesGroupV2(
+  rulerConfig: RulerDataSourceConfig,
+  namespace: string,
+  group: string
+): Promise<RulerRuleGroupDTO | null> {
+  return rulerGetRequest<RulerRuleGroupDTO | null>(rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group), null);
+}
+
 export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
   await lastValueFrom(
     getBackendSrv().fetch({
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
         namespace
       )}/${encodeURIComponent(groupName)}`,
+      method: 'DELETE',
+      showSuccessAlert: false,
+      showErrorAlert: false,
+    })
+  );
+}
+
+export async function deleteRulerRulesGroupV2(
+  rulerConfig: RulerDataSourceConfig,
+  namespace: string,
+  groupName: string
+) {
+  await lastValueFrom(
+    getBackendSrv().fetch({
+      url: rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, groupName),
       method: 'DELETE',
       showSuccessAlert: false,
       showErrorAlert: false,
@@ -257,6 +233,17 @@ export async function deleteNamespace(dataSourceName: string, namespace: string)
     getBackendSrv().fetch<unknown>({
       method: 'DELETE',
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
+}
+
+export async function deleteNamespaceV2(rulerConfig: RulerDataSourceConfig, namespace: string): Promise<void> {
+  await lastValueFrom(
+    getBackendSrv().fetch<unknown>({
+      method: 'DELETE',
+      url: rulerUrlBuilder(rulerConfig).namespace(namespace),
       showErrorAlert: false,
       showSuccessAlert: false,
     })
