@@ -76,7 +76,7 @@ export function TraceView(props: Props) {
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
-  } = useDetailState(frame);
+  } = useDetailState(props.dataFrames[0]);
 
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
@@ -126,7 +126,7 @@ export function TraceView(props: Props) {
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
-  if (!props.dataFrames?.length) {
+  if (!props.dataFrames?.length || !traceProp) {
     return null;
   }
 

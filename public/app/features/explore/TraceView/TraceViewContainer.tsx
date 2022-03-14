@@ -121,7 +121,7 @@ export function TraceViewContainer(props: Props) {
   );
 }
 
-function transformDataFrames(frame?: DataFrame): Trace | null {
+export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {
     return null;
   }
