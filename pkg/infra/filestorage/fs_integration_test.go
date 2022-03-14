@@ -8,11 +8,20 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"net/http/httptest"
 	"os"
 	"path"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/johannesboyne/gofakes3/backend/s3mem"
+	s3blob "gocloud.dev/blob/s3blob"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/johannesboyne/gofakes3"
 	"gocloud.dev/blob"
 )
 
@@ -41,6 +50,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string
+	var s3server *httptest.Server
 
 	commonSetup := func() {
 		testLogger = log.New("testStorageLogger")
@@ -57,6 +67,36 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 		ctx = nil
 		_ = os.RemoveAll(tempDir)
+
+		if s3server != nil {
+			s3server.Close()
+			s3server = nil
+		}
+	}
+
+	setupFakeS3 := func() {
+		commonSetup()
+		backend := s3mem.New()
+		faker := gofakes3.New(backend)
+		s3server = httptest.NewServer(faker.Server())
+
+		s3Config := &aws.Config{
+			Credentials:      credentials.NewStaticCredentials("any-access-key", "any-secret", ""),
+			Endpoint:         aws.String(s3server.URL),
+			Region:           aws.String("eu-central-1"),
+			DisableSSL:       aws.Bool(true),
+			S3ForcePathStyle: aws.Bool(true),
+		}
+		sess := session.Must(session.NewSession(s3Config))
+
+		bucketName := "bucket"
+		if _, err := s3.New(sess).CreateBucket(&s3.CreateBucketInput{
+			Bucket: aws.String(bucketName),
+		}); err != nil {
+			t.Fatal("failed to create bucket", err)
+		}
+		bucket, _ := s3blob.OpenBucket(ctx, sess, bucketName, nil)
+		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
 	setupInMemFS := func() {
@@ -122,6 +162,10 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		{
 			setup: setupInMemFS,
 			name:  "In-mem FS",
+		},
+		{
+			setup: setupFakeS3,
+			name:  "Fake S3",
 		},
 		//{
 		//	setup: setupSqlFS,
