@@ -202,6 +202,10 @@ func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 		return nil, nil
 	}
 
+	if b.rootFolder == rootedPath {
+		return nil, nil
+	}
+
 	file, err := b.wrapped.Get(ctx, rootedPath)
 	if file != nil {
 		file.FullPath = b.removeRoot(file.FullPath)
