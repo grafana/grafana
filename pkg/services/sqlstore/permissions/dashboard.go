@@ -85,17 +85,18 @@ type AccessControlDashboardPermissionFilter struct {
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
 func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
+	needEdit := permissionLevel > models.PERMISSION_VIEW
 	var folderActions []string
 	var dashboardActions []string
 	if queryType == searchstore.TypeAlertFolder {
 		folderActions = append(folderActions, accesscontrol.ActionAlertingRuleRead)
-		if permissionLevel == models.PERMISSION_EDIT {
+		if needEdit {
 			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleUpdate)
 		}
 	} else {
 		folderActions = append(folderActions, dashboards.ActionFoldersRead)
 		dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsRead)
-		if permissionLevel == models.PERMISSION_EDIT {
+		if needEdit {
 			folderActions = append(folderActions, accesscontrol.ActionDashboardsCreate)
 			dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsWrite)
 		}
@@ -129,8 +130,10 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		builder.WriteString("(")
 		folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.id", "folders", f.folderActions...)
 		builder.WriteString(folderFilter.Where)
-		builder.WriteString(" AND dashboard.is_folder))")
+		builder.WriteString(" AND dashboard.is_folder)")
 		args = append(args, folderFilter.Args...)
 	}
+
+	builder.WriteString(")")
 	return builder.String(), args
 }
