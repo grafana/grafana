@@ -311,6 +311,6 @@ func (b *BaseDialect) Unlock(_ LockCfg) error {
 	return nil
 }
 
-func (db *BaseDialect) OrderBy(order string) string {
+func (b *BaseDialect) OrderBy(order string) string {
 	return order
 }
