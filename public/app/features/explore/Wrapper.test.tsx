@@ -66,7 +66,7 @@ describe('Wrapper', () => {
         range: { from: 'now-1h', to: 'now' },
       }),
     };
-    const { datasources, store } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
@@ -83,9 +83,6 @@ describe('Wrapper', () => {
       orgId: '1',
       ...urlParams,
     });
-
-    // Initially loaded query is not added to the state because the query history panel is not opened
-    expect(store.getState().explore.left.richHistory).toMatchObject([]);
 
     // We called the data source query method once
     expect(datasources.loki.query).toBeCalledTimes(1);
