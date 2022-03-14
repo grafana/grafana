@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/star"
+	starmodel "github.com/grafana/grafana/pkg/services/star/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -174,7 +175,7 @@ func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int6
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
-func (dr *DashboardServiceImpl) DashboardIsStarredByUserCtx(ctx context.Context, cmd *models.IsStarredByUserQuery) (bool, error) {
+func (dr *DashboardServiceImpl) DashboardIsStarredByUserCtx(ctx context.Context, cmd *starmodel.IsStarredByUserQuery) (bool, error) {
 	return dr.starService.IsStarredByUserCtx(ctx, cmd)
 }
 

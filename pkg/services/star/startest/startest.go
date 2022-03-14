@@ -3,7 +3,7 @@ package startest
 import (
 	"context"
 
-	starmodel "github.com/grafana/grafana/pkg/models"
+	starmodel "github.com/grafana/grafana/pkg/services/star/model"
 )
 
 type FakeStarService struct {

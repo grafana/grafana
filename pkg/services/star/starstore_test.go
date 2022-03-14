@@ -7,8 +7,8 @@ import (
 	"context"
 	"testing"
 
-	starmodel "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	starmodel "github.com/grafana/grafana/pkg/services/star/model"
 	"github.com/stretchr/testify/require"
 )
 

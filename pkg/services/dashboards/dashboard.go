@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	starmodel "github.com/grafana/grafana/pkg/services/star/model"
 )
 
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
@@ -16,7 +17,7 @@ type DashboardService interface {
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
-	DashboardIsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) (bool, error)
+	DashboardIsStarredByUserCtx(ctx context.Context, query *starmodel.IsStarredByUserQuery) (bool, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.

@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
+	starmodel "github.com/grafana/grafana/pkg/services/star/model"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -107,7 +108,7 @@ func sortedHits(unsorted models.HitList) models.HitList {
 }
 
 func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, hits []*models.Hit) error {
-	query := models.GetUserStarsQuery{
+	query := starmodel.GetUserStarsQuery{
 		UserId: userID,
 	}
 

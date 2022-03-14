@@ -374,13 +374,14 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
-		Cfg:                cfg,
-		Features:           features,
-		Bus:                bus.GetBus(),
-		Live:               newTestLive(t),
-		QuotaService:       &quota.QuotaService{Cfg: cfg},
-		RouteRegister:      routeRegister,
-		SQLStore:           store,
+		Cfg:           cfg,
+		Features:      features,
+		Bus:           bus.GetBus(),
+		Live:          newTestLive(t),
+		QuotaService:  &quota.QuotaService{Cfg: cfg},
+		RouteRegister: routeRegister,
+		SQLStore:      store,
+
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), starFake),
 		StarService:        starFake,
