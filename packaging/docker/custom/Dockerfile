@@ -18,6 +18,7 @@ RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
     echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
     apk --no-cache  upgrade && \
     apk add --no-cache udev ttf-opensans chromium && \
+    apk add fontconfig mkfontscale wqy-zenhei --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing --allow-untrusted && \
     rm -rf /tmp/* && \
     rm -rf /usr/share/grafana/tools/phantomjs; \
 fi
