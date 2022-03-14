@@ -341,6 +341,23 @@ const (
 
 	// Dashboard scopes
 	ScopeDashboardsAll = "dashboards:*"
+
+	// Alerting rules actions
+	ActionAlertingRuleCreate = "alert.rules:create"
+	ActionAlertingRuleRead   = "alert.rules:read"
+	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleDelete = "alert.rules:delete"
+
+	// Alerting instances (+silences) actions
+	ActionAlertingInstanceCreate = "alert.instances:create"
+	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceRead   = "alert.instances:read"
+
+	// Alerting Notification policies actions
+	ActionAlertingNotificationsCreate = "alert.notifications:create"
+	ActionAlertingNotificationsRead   = "alert.notifications:read"
+	ActionAlertingNotificationsUpdate = "alert.notifications:update"
+	ActionAlertingNotificationsDelete = "alert.notifications:delete"
 )
 
 var (

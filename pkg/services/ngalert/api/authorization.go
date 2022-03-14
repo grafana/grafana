@@ -4,35 +4,9 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
-)
-
-var (
-	// Namespaces (aka folder) scopes
-	ScopeNamespace     = "namespaces"
-	ScopeNamespaceAll  = ac.GetResourceAllScope(ScopeNamespace)
-	ScopeNamespaceName = ac.Scope(ScopeNamespace, "title", ac.Parameter(":Namespace"))
-
-	ScopeDatasource     = "datasources"
-	ScopeDatasourcesAll = ac.GetResourceAllScope(ScopeDatasource)
-	ScopeDatasourceID   = ac.Scope(ScopeDatasource, "id", ac.Parameter(":Recipient"))
-
-	// Alerting rules actions
-	ActionAlertingRuleCreate = "alert.rules:create"
-	ActionAlertingRuleRead   = "alert.rules:read"
-	ActionAlertingRuleUpdate = "alert.rules:update"
-	ActionAlertingRuleDelete = "alert.rules:delete"
-
-	// Alerting instances (+silences) actions
-	ActionAlertingInstanceCreate = "alert.instances:create"
-	ActionAlertingInstanceUpdate = "alert.instances:update"
-	ActionAlertingInstanceRead   = "alert.instances:read"
-
-	// Alerting Notification policies actions
-	ActionAlertingNotificationsCreate = "alert.notifications:create"
-	ActionAlertingNotificationsRead   = "alert.notifications:read"
-	ActionAlertingNotificationsUpdate = "alert.notifications:update"
-	ActionAlertingNotificationsDelete = "alert.notifications:delete"
 )
 
 var (
@@ -48,18 +22,18 @@ var (
 			Version:     1,
 			Permissions: []ac.Permission{
 				{
-					Action: ActionAlertingRuleRead,
-					Scope:  ScopeNamespaceAll,
+					Action: ac.ActionAlertingRuleRead,
+					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
-					Action: ActionAlertingRuleRead,
-					Scope:  ScopeDatasourcesAll,
+					Action: ac.ActionAlertingRuleRead,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 				{
-					Action: ActionAlertingInstanceRead, // scope is the current organization
+					Action: ac.ActionAlertingInstanceRead, // scope is the current organization
 				},
 				{
-					Action: ActionAlertingNotificationsRead, // scope is the current organization
+					Action: ac.ActionAlertingNotificationsRead, // scope is the current organization
 				},
 			},
 		},
@@ -75,43 +49,43 @@ var (
 			Version:     1,
 			Permissions: ac.ConcatPermissions(alertingReaderRole.Role.Permissions, []ac.Permission{
 				{
-					Action: ActionAlertingRuleCreate,
-					Scope:  ScopeNamespaceAll,
+					Action: ac.ActionAlertingRuleCreate,
+					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
-					Action: ActionAlertingRuleUpdate,
-					Scope:  ScopeNamespaceAll,
+					Action: ac.ActionAlertingRuleUpdate,
+					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
-					Action: ActionAlertingRuleDelete,
-					Scope:  ScopeNamespaceAll,
+					Action: ac.ActionAlertingRuleDelete,
+					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
-					Action: ActionAlertingRuleCreate,
-					Scope:  ScopeDatasourcesAll,
+					Action: ac.ActionAlertingRuleCreate,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 				{
-					Action: ActionAlertingRuleUpdate,
-					Scope:  ScopeDatasourcesAll,
+					Action: ac.ActionAlertingRuleUpdate,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 				{
-					Action: ActionAlertingRuleDelete,
-					Scope:  ScopeDatasourcesAll,
+					Action: ac.ActionAlertingRuleDelete,
+					Scope:  datasources.ScopeDatasourcesAll,
 				},
 				{
-					Action: ActionAlertingInstanceCreate, // scope is the current organization
+					Action: ac.ActionAlertingInstanceCreate, // scope is the current organization
 				},
 				{
-					Action: ActionAlertingInstanceUpdate, // scope is the current organization
+					Action: ac.ActionAlertingInstanceUpdate, // scope is the current organization
 				},
 				{
-					Action: ActionAlertingNotificationsCreate, // scope is the current organization
+					Action: ac.ActionAlertingNotificationsCreate, // scope is the current organization
 				},
 				{
-					Action: ActionAlertingNotificationsUpdate, // scope is the current organization
+					Action: ac.ActionAlertingNotificationsUpdate, // scope is the current organization
 				},
 				{
-					Action: ActionAlertingNotificationsDelete, // scope is the current organization
+					Action: ac.ActionAlertingNotificationsDelete, // scope is the current organization
 				},
 			}),
 		},
