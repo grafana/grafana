@@ -4,7 +4,7 @@ import React, { FC } from 'react';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType } from '../../../types/rule-form';
 import { GrafanaManagedRuleType } from './GrafanaManaged';
-import { PrometheusFlavoredType } from './PrometheusFlavor';
+import { CortexFlavoredType } from './CortexFlavor';
 import { RecordingRuleType } from './RecordingRule';
 
 interface RuleTypePickerProps {
@@ -19,7 +19,7 @@ const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
   return (
     <HorizontalGroup spacing="md">
       <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={onChange} />
-      <PrometheusFlavoredType
+      <CortexFlavoredType
         selected={selected === RuleFormType.cloudAlerting}
         onClick={onChange}
         disabled={!hasLotexDatasources}

@@ -8,9 +8,9 @@ const GrafanaManagedRuleType: FC<SharedProps> = ({ selected = false, disabled, o
       name="Grafana managed"
       description={
         <p>
-          Use any data source.
+          Use any data source
           <br />
-          Transform data with expressions.
+          Transform data with expressions
         </p>
       }
       image="/public/img/grafana_icon.svg"

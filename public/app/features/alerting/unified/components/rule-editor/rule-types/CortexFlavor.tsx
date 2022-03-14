@@ -7,19 +7,19 @@ interface Props extends SharedProps {
   onClick: (value: RuleFormType) => void;
 }
 
-const PrometheusFlavoredType: FC<Props> = ({ selected = false, disabled = false, onClick }) => {
+const CortexFlavoredType: FC<Props> = ({ selected = false, disabled = false, onClick }) => {
   return (
     <DisabledTooltip visible={disabled}>
       <RuleType
-        name="Prometheus-style alert"
+        name="Cortex or Loki alert"
         description={
           <p>
-            Use Prometheus-compatible datasource.
+            Use Cortex or Loki datasource
             <br />
-            Expressions not supported.
+            Grafana expressions not supported
           </p>
         }
-        image="/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+        image="/public/img/alerting/cortex_logo.svg"
         selected={selected}
         disabled={disabled}
         value={RuleFormType.cloudAlerting}
@@ -29,4 +29,4 @@ const PrometheusFlavoredType: FC<Props> = ({ selected = false, disabled = false,
   );
 };
 
-export { PrometheusFlavoredType };
+export { CortexFlavoredType };
