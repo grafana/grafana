@@ -17,11 +17,6 @@ export const inputQuery = (query: string, exploreId: ExploreId = ExploreId.left)
   userEvent.type(input, query);
 };
 
-export const splitView = () => {
-  const button = screen.getByRole('button', { name: /split/i });
-  userEvent.click(button);
-};
-
 export const runQuery = (exploreId: ExploreId = ExploreId.left) => {
   const explore = withinExplore(exploreId);
   const toolbar = within(explore.getByLabelText('Explore toolbar'));

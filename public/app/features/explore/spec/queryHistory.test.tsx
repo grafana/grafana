@@ -1,16 +1,10 @@
 import React from 'react';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
-import {
-  deleteQueryHistory,
-  inputQuery,
-  openQueryHistory,
-  runQuery,
-  splitView,
-  starQueryHistory,
-} from './helper/interactions';
+import { deleteQueryHistory, inputQuery, openQueryHistory, runQuery, starQueryHistory } from './helper/interactions';
 import { assertQueryHistory, assertQueryHistoryExists, assertQueryHistoryIsStarred } from './helper/assert';
 import { makeLogsQueryResponse } from './helper/query';
 import { ExploreId } from '../../../types';
+import { serializeStateToUrlParam } from '../../../../../packages/grafana-data';
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -54,35 +48,37 @@ describe('Explore: Query History', () => {
   });
 
   it('updates the state in both Explore panes', async () => {
-    const { datasources } = setupExplore();
+    const urlParams = {
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: 'query #1' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+      right: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: 'query #2' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+    };
+
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as jest.Mock).mockReturnValue(makeLogsQueryResponse());
     await waitForExplore();
-
-    inputQuery('query #1', ExploreId.left);
-    runQuery();
-
-    inputQuery('query #2', ExploreId.left);
-    runQuery();
-
-    splitView();
     await waitForExplore(ExploreId.right);
-
-    inputQuery('query #3', ExploreId.right);
-    runQuery(ExploreId.right);
 
     // queries in history
     await openQueryHistory(ExploreId.left);
-    await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
+    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
     await openQueryHistory(ExploreId.right);
-    await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
+    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
 
     // star one one query
-    starQueryHistory(2, ExploreId.left);
-    await assertQueryHistoryIsStarred([false, false, true], ExploreId.left);
-    await assertQueryHistoryIsStarred([false, false, true], ExploreId.right);
+    starQueryHistory(1, ExploreId.left);
+    await assertQueryHistoryIsStarred([false, true], ExploreId.left);
+    await assertQueryHistoryIsStarred([false, true], ExploreId.right);
 
-    deleteQueryHistory(1, ExploreId.left);
-    await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #1"}'], ExploreId.left);
-    await assertQueryHistory(['{"expr":"query #3"}', '{"expr":"query #1"}'], ExploreId.right);
+    deleteQueryHistory(0, ExploreId.left);
+    await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
+    await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.right);
   });
 });
