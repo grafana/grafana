@@ -1,0 +1,16 @@
+{
+  "type": "panel",
+  "name": "Flame Graph",
+  "id": "flameGraph",
+  "state": "beta",
+  "info": {
+    "author": {
+      "name": "Pyroscope",
+      "url": "https://pyroscope.io/"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    }
+  }
+}

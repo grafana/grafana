@@ -53,6 +53,7 @@ function setup(error: DataQueryError) {
     graphFrames: [],
     logsFrames: [],
     tableFrames: [],
+    profileFrames: [],
     traceFrames: [],
     nodeGraphFrames: [],
     graphResult: null,
