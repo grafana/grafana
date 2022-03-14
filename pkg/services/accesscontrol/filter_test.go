@@ -112,7 +112,7 @@ func TestFilter_Datasources(t *testing.T) {
 			actions: []string{"datasources:read", "datasources:write"},
 			permissions: map[string][]string{
 				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
-				"datasources:write": {"datasources:*"},
+				"datasources:write": {"datasources:*", "datasources:id:8"},
 			},
 			expectedDataSources: []string{"ds:3", "ds:7", "ds:8"},
 			expectErr:           false,

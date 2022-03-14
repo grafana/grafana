@@ -49,7 +49,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 			wildcards += 1
 			continue
 		}
-		if len(ids) == 0 && !hasWildcard {
+		if len(ids) == 0 {
 			return denyQuery, nil
 		}
 		for _, id := range ids {
