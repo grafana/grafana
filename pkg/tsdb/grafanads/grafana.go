@@ -117,7 +117,7 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 }
 
 func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) backend.DataResponse {
-	q := &listQueryModel{}
+	q := &readQueryModel{}
 	response := backend.DataResponse{}
 	err := json.Unmarshal(query.JSON, &q)
 	if err != nil {
