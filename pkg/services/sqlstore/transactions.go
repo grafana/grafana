@@ -16,11 +16,6 @@ import (
 
 var tsclogger = log.New("sqlstore.transactions")
 
-// TransactionManager represents the ability to issue and close transactions through contexts.
-type TransactionManagerCtx interface {
-	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
-}
-
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)

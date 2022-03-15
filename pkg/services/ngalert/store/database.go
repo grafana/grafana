@@ -34,7 +34,3 @@ type DBstore struct {
 	Logger          log.Logger
 	FolderService   dashboards.FolderService
 }
-
-func (st *DBstore) InTransaction(ctx context.Context, f func(ctx context.Context) error) error {
-	return st.SQLStore.InTransaction(ctx, f)
-}

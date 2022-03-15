@@ -82,7 +82,7 @@ func TestProvisioningStore(t *testing.T) {
 		require.Equal(t, models.ProvenanceFile, p)
 	})
 
-	t.Run("Store saves provenance type when transaction is applied", func(t *testing.T) {
+	t.Run("Store saves provenance type when contextual transaction is applied", func(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "456",
 		}
@@ -97,7 +97,7 @@ func TestProvisioningStore(t *testing.T) {
 		require.Equal(t, models.ProvenanceFile, provenance)
 	})
 
-	t.Run("Transactional store which errors before saving rolls back type update", func(t *testing.T) {
+	t.Run("Contextual transaction which errors before saving rolls back type update", func(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "789",
 		}
