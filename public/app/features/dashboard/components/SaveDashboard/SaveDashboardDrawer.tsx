@@ -145,7 +145,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, isCopy }: SaveDashbo
             />
           )}
           <TabsBar className={styles.tabsBar}>
-            <Tab label={'Save'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
+            <Tab label={isCopy ? 'Save as' : 'Save'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
             {data.hasChanges && (
               <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
             )}
