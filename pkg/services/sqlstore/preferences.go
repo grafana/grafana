@@ -122,7 +122,12 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 		}
 		// Wrap this in an if statement to maintain backwards compatibility
 		if cmd.Navbar != nil {
-			prefs.JsonData.Navbar = *cmd.Navbar
+			if prefs.JsonData == nil {
+				prefs.JsonData = &models.PreferencesJsonData{}
+			}
+			if cmd.Navbar.SavedItems != nil {
+				prefs.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
+			}
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
 		prefs.Timezone = cmd.Timezone
@@ -154,7 +159,12 @@ func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.PatchPrefe
 		}
 
 		if cmd.Navbar != nil {
-			prefs.JsonData.Navbar = *cmd.Navbar
+			if prefs.JsonData == nil {
+				prefs.JsonData = &models.PreferencesJsonData{}
+			}
+			if cmd.Navbar.SavedItems != nil {
+				prefs.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
+			}
 		}
 
 		if cmd.HomeDashboardId != nil {

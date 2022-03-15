@@ -46,7 +46,7 @@ func (j *PreferencesJsonData) ToDB() ([]byte, error) {
 }
 
 type NavbarPreference struct {
-	SavedItems []NavLink
+	SavedItems []NavLink `json:"savedItems"`
 }
 
 type PreferencesJsonData struct {
