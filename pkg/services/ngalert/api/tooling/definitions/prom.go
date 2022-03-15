@@ -149,7 +149,7 @@ type GetGrafanaAlertStatusesParams struct {
 	// in: query
 	// required: false
 	// default: false
-	includeInternalLabels bool `json:"includeInternalLabels"`
+	IncludeInternalLabels bool `json:"includeInternalLabels"`
 }
 
 // swagger:parameters RouteGetGrafanaRuleStatuses
@@ -158,7 +158,7 @@ type GetGrafanaRuleStatusesParams struct {
 	// in: query
 	// required: false
 	// default: false
-	includeInternalLabels bool `json:"includeInternalLabels"`
+	IncludeInternalLabels bool `json:"includeInternalLabels"`
 
 	// Filter the list of rules to those that belong to the specified dashboard UID.
 	// in: query
