@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+//nolint:gocyclo
 func (api *API) authorize(method, path string) web.Handler {
 	authorize := acmiddleware.Middleware(api.AccessControl)
 	var eval ac.Evaluator = nil
