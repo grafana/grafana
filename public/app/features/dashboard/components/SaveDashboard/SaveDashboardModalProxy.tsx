@@ -13,7 +13,7 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({
   isCopy,
 }) => {
   const isProvisioned = dashboard.meta.provisioned;
-  const isNew = dashboard.version === 0 && !dashboard.uid;
+  const isNew = dashboard.version === 0;
   const isChanged = dashboard.version > 0;
 
   const modalProps = {
