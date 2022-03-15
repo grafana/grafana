@@ -68,7 +68,6 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
 	CreateServiceAccount      []interface{}
-	ListServiceAccounts       []interface{}
 	RetrieveServiceAccount    []interface{}
 	DeleteServiceAccount      []interface{}
 	UpgradeServiceAccounts    []interface{}
@@ -110,10 +109,6 @@ func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, 
 	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
 	return nil, nil
 }
-func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64, serviceAccountID int64) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	s.Calls.ListServiceAccounts = append(s.Calls.ListServiceAccounts, []interface{}{ctx, orgID})
-	return nil, nil
-}
 
 func (s *ServiceAccountsStoreMock) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	s.Calls.RetrieveServiceAccount = append(s.Calls.RetrieveServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
@@ -128,8 +123,9 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 	return nil, nil
 }
 
-func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, query})
+func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, page int, limit int,
+	user *models.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
+	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, orgID, query, page, limit, user})
 	return nil, nil
 }
 

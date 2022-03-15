@@ -2,7 +2,6 @@ package filestorage
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -160,7 +159,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 
 			file := &file{
 				Path:             cmd.Path,
-				ParentFolderPath: getParentFolderPath(cmd.Path),
+				ParentFolderPath: strings.ToLower(getParentFolderPath(cmd.Path)),
 				Contents:         contentsToInsert,
 				MimeType:         cmd.MimeType,
 				Size:             int64(len(contentsToInsert)),
@@ -223,33 +222,85 @@ func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key st
 	return err
 }
 
-func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
-	var resp *ListFilesResponse
+//nolint: gocyclo
+func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
+	var resp *ListResponse
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var foundFiles = make([]*file, 0)
-
-		sess.Table("file")
-		lowerFolderPath := strings.ToLower(folderPath)
-		if options.Recursive {
-			var nestedFolders string
-			if folderPath == Delimiter {
-				nestedFolders = "%"
+		cursor := ""
+		if paging != nil && paging.After != "" {
+			exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(paging.After)+Delimiter).Cols("mime_type").Exist()
+			if err != nil {
+				return err
+			}
+			if exists {
+				cursor = paging.After + Delimiter
 			} else {
-				nestedFolders = fmt.Sprintf("%s%s%s", lowerFolderPath, Delimiter, "%")
+				cursor = paging.After
 			}
-			sess.Where("(LOWER(parent_folder_path) = ?) OR (LOWER(parent_folder_path) LIKE ?)", lowerFolderPath, nestedFolders)
-		} else {
-			sess.Where("LOWER(parent_folder_path) = ?", lowerFolderPath)
 		}
-		sess.Where("LOWER(path) NOT LIKE ?", fmt.Sprintf("%s%s%s", "%", Delimiter, directoryMarker))
 
-		if options.PathFilters.isDenyAll() {
-			sess.Where("1 == 2")
+		var foundFiles = make([]*file, 0)
+		sess.Table("file")
+		lowerFolderPrefix := ""
+		lowerFolderPath := strings.ToLower(folderPath)
+		if lowerFolderPath == "" || lowerFolderPath == Delimiter {
+			lowerFolderPrefix = Delimiter
+			lowerFolderPath = Delimiter
 		} else {
+			lowerFolderPath = strings.TrimSuffix(lowerFolderPath, Delimiter)
+			lowerFolderPrefix = lowerFolderPath + Delimiter
+		}
+
+		sess.Where("LOWER(path) != ?", lowerFolderPrefix)
+
+		if !options.Recursive {
+			sess.Where("parent_folder_path = ?", lowerFolderPath)
+		} else {
+			sess.Where("(parent_folder_path = ?) OR (parent_folder_path LIKE ?)", lowerFolderPath, lowerFolderPrefix+"%")
+		}
+
+		if !options.WithFolders && options.WithFiles {
+			sess.Where("path NOT LIKE ?", "%/")
+		}
+
+		if options.WithFolders && !options.WithFiles {
+			sess.Where("path LIKE ?", "%/")
+		}
+
+		if len(options.PathFilters.allowedPrefixes)+len(options.PathFilters.allowedPaths) > 0 {
+			queries := make([]string, 0)
+			args := make([]interface{}, 0)
 			for _, prefix := range options.PathFilters.allowedPrefixes {
-				sess.Where("LOWER(path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
+				queries = append(queries, "LOWER(path) LIKE ?")
+				args = append(args, prefix+"%")
 			}
+
+			for _, path := range options.PathFilters.allowedPaths {
+				queries = append(queries, "LOWER(path) = ?")
+				args = append(args, path)
+			}
+			sess.Where(strings.Join(queries, " OR "), args...)
+		}
+
+		if options.PathFilters.disallowedPrefixes != nil && len(options.PathFilters.disallowedPrefixes) > 0 {
+			queries := make([]string, 0)
+			args := make([]interface{}, 0)
+			for _, prefix := range options.PathFilters.disallowedPrefixes {
+				queries = append(queries, "LOWER(path) NOT LIKE ?")
+				args = append(args, prefix+"%")
+			}
+			sess.Where(strings.Join(queries, " AND "), args...)
+		}
+
+		if options.PathFilters.disallowedPaths != nil && len(options.PathFilters.disallowedPaths) > 0 {
+			queries := make([]string, 0)
+			args := make([]interface{}, 0)
+			for _, path := range options.PathFilters.disallowedPaths {
+				queries = append(queries, "LOWER(path) != ?")
+				args = append(args, path)
+			}
+			sess.Where(strings.Join(queries, " AND "), args...)
 		}
 
 		sess.OrderBy("path")
@@ -257,8 +308,8 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 		pageSize := paging.First
 		sess.Limit(pageSize + 1)
 
-		if paging != nil && paging.After != "" {
-			sess.Where("path > ?", paging.After)
+		if cursor != "" {
+			sess.Where("path > ?", cursor)
 		}
 
 		if err := sess.Find(&foundFiles); err != nil {
@@ -272,24 +323,33 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 
 		lowerCasePaths := make([]string, 0)
 		for i := 0; i < foundLength; i++ {
-			lowerCasePaths = append(lowerCasePaths, strings.ToLower(foundFiles[i].Path))
+			isFolder := strings.HasSuffix(foundFiles[i].Path, Delimiter)
+			if !isFolder {
+				lowerCasePaths = append(lowerCasePaths, strings.ToLower(foundFiles[i].Path))
+			}
 		}
 		propertiesByLowerPath, err := s.getProperties(sess, lowerCasePaths)
 		if err != nil {
 			return err
 		}
 
-		files := make([]FileMetadata, 0)
+		files := make([]*File, 0)
 		for i := 0; i < foundLength; i++ {
 			var props map[string]string
-			path := foundFiles[i].Path
+			path := strings.TrimSuffix(foundFiles[i].Path, Delimiter)
 			if foundProps, ok := propertiesByLowerPath[strings.ToLower(path)]; ok {
 				props = foundProps
 			} else {
 				props = make(map[string]string)
 			}
 
-			files = append(files, FileMetadata{
+			var contents []byte
+			if options.WithContents {
+				contents = foundFiles[i].Contents
+			} else {
+				contents = []byte{}
+			}
+			files = append(files, &File{Contents: contents, FileMetadata: FileMetadata{
 				Name:       getName(path),
 				FullPath:   path,
 				Created:    foundFiles[i].Created,
@@ -297,7 +357,7 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 				Modified:   foundFiles[i].Updated,
 				Size:       foundFiles[i].Size,
 				MimeType:   foundFiles[i].MimeType,
-			})
+			}})
 		}
 
 		lastPath := ""
@@ -305,7 +365,7 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 			lastPath = files[len(files)-1].FullPath
 		}
 
-		resp = &ListFilesResponse{
+		resp = &ListResponse{
 			Files:    files,
 			LastPath: lastPath,
 			HasMore:  len(foundFiles) == pageSize+1,
@@ -316,67 +376,6 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 	return resp, err
 }
 
-func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string, options *ListOptions) ([]FileMetadata, error) {
-	folders := make([]FileMetadata, 0)
-
-	parentFolderPath = strings.TrimSuffix(parentFolderPath, Delimiter)
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var foundPaths []string
-
-		sess.Table("file")
-		sess.Distinct("parent_folder_path")
-
-		if options.Recursive {
-			sess.Where("LOWER(parent_folder_path) > ?", strings.ToLower(parentFolderPath))
-		} else {
-			sess.Where("LOWER(parent_folder_path) LIKE ? AND LOWER(parent_folder_path) NOT LIKE ?", strings.ToLower(parentFolderPath)+Delimiter+"%", strings.ToLower(parentFolderPath)+Delimiter+"%"+Delimiter+"%")
-		}
-
-		if options.PathFilters.isDenyAll() {
-			sess.Where("1 == 2")
-		} else {
-			for _, prefix := range options.PathFilters.allowedPrefixes {
-				sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
-			}
-		}
-
-		sess.OrderBy("parent_folder_path")
-		sess.Cols("parent_folder_path")
-
-		if err := sess.Find(&foundPaths); err != nil {
-			return err
-		}
-
-		mem := make(map[string]bool)
-		for i := 0; i < len(foundPaths); i++ {
-			path := foundPaths[i]
-			parts := strings.Split(path, Delimiter)
-			acc := parts[0]
-			j := 1
-			for {
-				acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
-				comparison := strings.Compare(acc, parentFolderPath)
-				if !mem[acc] && comparison > 0 {
-					folders = append(folders, FileMetadata{
-						Name:     getName(acc),
-						FullPath: acc,
-					})
-				}
-				mem[acc] = true
-
-				j += 1
-				if j >= len(parts) {
-					break
-				}
-			}
-		}
-
-		return nil
-	})
-
-	return folders, err
-}
-
 func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 	now := time.Now()
 	precedingFolders := precedingFolders(path)
@@ -384,29 +383,32 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var insertErr error
 		sess.MustLogSQL(true)
-		previousFolder := ""
+		previousFolder := Delimiter
 		for i := 0; i < len(precedingFolders); i++ {
 			existing := &file{}
-			directoryMarkerParentPath := previousFolder + Delimiter + getName(precedingFolders[i])
-			previousFolder = directoryMarkerParentPath
-			directoryMarkerPath := fmt.Sprintf("%s%s%s", directoryMarkerParentPath, Delimiter, directoryMarker)
-			lower := strings.ToLower(directoryMarkerPath)
-			exists, err := sess.Table("file").Where("LOWER(path) = ?", lower).Get(existing)
+			currentFolderParentPath := previousFolder
+			previousFolder = Join(previousFolder, getName(precedingFolders[i]))
+			currentFolderPath := previousFolder
+			if !strings.HasSuffix(currentFolderPath, Delimiter) {
+				currentFolderPath = currentFolderPath + Delimiter
+			}
+			exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(currentFolderPath)).Get(existing)
 			if err != nil {
 				insertErr = err
 				break
 			}
 
 			if exists {
-				previousFolder = existing.ParentFolderPath
+				previousFolder = strings.TrimSuffix(existing.Path, Delimiter)
 				continue
 			}
 
 			file := &file{
-				Path:             strings.ToLower(directoryMarkerPath),
-				ParentFolderPath: directoryMarkerParentPath,
+				Path:             currentFolderPath,
+				ParentFolderPath: strings.ToLower(currentFolderParentPath),
 				Contents:         make([]byte, 0),
 				Updated:          now,
+				MimeType:         DirectoryMimeType,
 				Created:          now,
 			}
 			_, err = sess.Insert(file)
@@ -433,8 +435,8 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) error {
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
-		directoryMarkerPath := fmt.Sprintf("%s%s%s", folderPath, Delimiter, directoryMarker)
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(directoryMarkerPath)).Get(existing)
+		internalFolderPath := strings.ToLower(folderPath) + Delimiter
+		exists, err := sess.Table("file").Where("LOWER(path) = ?", internalFolderPath).Get(existing)
 		if err != nil {
 			return err
 		}
@@ -443,7 +445,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) erro
 			return nil
 		}
 
-		_, err = sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(directoryMarkerPath)).Delete(existing)
+		_, err = sess.Table("file").Where("LOWER(path) = ?", internalFolderPath).Delete(existing)
 		return err
 	})
 

@@ -162,5 +162,12 @@ var (
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
 		},
+		{
+			Name:            "azureMonitorResourcePickerForMetrics",
+			Description:     "New UI for Azure Monitor Metrics Query",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
+		},
 	}
 )

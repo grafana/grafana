@@ -28,7 +28,6 @@ type Store interface {
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
-	CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error)
 	CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error)
 	GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error
 	GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error
@@ -134,10 +133,9 @@ type Store interface {
 	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
 	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
 	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetNonServiceAccountAPIKeys(ctx context.Context) []*models.ApiKey
+	GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey
 	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	UpdateApikeyServiceAccount(ctx context.Context, apikeyId int64, saccountId int64) error
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
 	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
