@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input, Switch, Form, Field, InputControl, Modal, HorizontalGroup } from '@grafana/ui';
+import { Button, Input, Switch, Form, Field, InputControl, Modal } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -36,7 +36,6 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
 
 export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
-  leftButtons?: boolean;
 }
 
 export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
@@ -45,7 +44,6 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
   onSubmit,
   onCancel,
   onSuccess,
-  leftButtons,
 }) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
@@ -70,7 +68,6 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
 
   return (
     <Form
-      maxWidth={1024}
       defaultValues={defaultValues}
       onSubmit={async (data: SaveDashboardAsFormDTO) => {
         if (!onSubmit) {
@@ -122,29 +119,19 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
               name="$folder"
             />
           </Field>
-          <Field label="Copy tags">
-            <Switch {...register('copyTags')} />
-          </Field>
-          {leftButtons && (
-            <HorizontalGroup>
-              <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
-                Cancel
-              </Button>
-              <Button type="submit" aria-label="Save dashboard button">
-                Save
-              </Button>
-            </HorizontalGroup>
+          {!isNew && (
+            <Field label="Copy tags">
+              <Switch {...register('copyTags')} />
+            </Field>
           )}
-          {!leftButtons && (
-            <Modal.ButtonRow>
-              <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
-                Cancel
-              </Button>
-              <Button type="submit" aria-label="Save dashboard button">
-                Save
-              </Button>
-            </Modal.ButtonRow>
-          )}
+          <Modal.ButtonRow>
+            <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
+              Cancel
+            </Button>
+            <Button type="submit" aria-label="Save dashboard button">
+              Save
+            </Button>
+          </Modal.ButtonRow>
         </>
       )}
     </Form>

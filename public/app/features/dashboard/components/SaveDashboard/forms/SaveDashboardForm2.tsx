@@ -22,6 +22,17 @@ type Props = {
 export const SaveDashboardForm2 = ({ dashboard, saveModel, options, onSubmit, onCancel, onSuccess }: Props) => {
   const [saving, setSaving] = useState(false);
 
+  if (!saveModel.hasChanges) {
+    return (
+      <div>
+        <p>No changes to save</p>
+        <Button variant="secondary" onClick={onCancel} fill="outline">
+          Cancel
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <Form
       onSubmit={async (data: FormDTO) => {
@@ -54,15 +65,12 @@ export const SaveDashboardForm2 = ({ dashboard, saveModel, options, onSubmit, on
             </Button>
             <Button
               type="submit"
-              disabled={!saveModel.hasChanges}
               icon={saving ? 'fa fa-spinner' : undefined}
               aria-label={selectors.pages.SaveDashboardModal.save}
             >
               {saving ? '' : 'Save'}
             </Button>
           </Modal.ButtonRow>
-
-          {!saveModel.hasChanges && <div>No changes to save</div>}
         </>
       )}
     </Form>

@@ -25,7 +25,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
   const status = useMemo(() => {
     const isProvisioned = dashboard.meta.provisioned;
-    const isNew = dashboard.version === 0 && !dashboard.uid;
+    const isNew = dashboard.version === 0;
     const isChanged = dashboard.version > 0;
 
     return {
@@ -87,7 +87,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
           onSuccess={onDismiss}
           onSubmit={onDashboardSave}
           isNew={status.isNew}
-          leftButtons={true}
         />
       );
     }
