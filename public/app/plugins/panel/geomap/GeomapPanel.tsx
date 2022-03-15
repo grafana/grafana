@@ -501,7 +501,7 @@ export class GeomapPanel extends Component<Props, State> {
     return state;
   }
 
-  initMapView(config: MapViewConfig, layers: undefined | Collection<BaseLayer>): View {
+  initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {
     let view = new View({
       center: [0, 0],
       zoom: 1,
