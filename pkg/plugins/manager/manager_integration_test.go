@@ -87,7 +87,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(sqlstore.InitTestDB(t))
-	graf := grafanads.ProvideService(cfg, sv2, nil)
+	graf := grafanads.ProvideService(cfg, sv2)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
