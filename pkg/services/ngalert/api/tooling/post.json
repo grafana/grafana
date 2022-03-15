@@ -3034,6 +3034,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3055,17 +3056,14 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3185,7 +3183,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3244,7 +3241,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
@@ -3254,7 +3253,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3306,15 +3304,16 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -4634,11 +4633,13 @@
     "operationId": "RouteGetGrafanaRuleStatuses",
     "parameters": [
      {
+      "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
       "in": "query",
       "name": "DashboardUID",
       "type": "string"
      },
      {
+      "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
       "format": "int64",
       "in": "query",
       "name": "PanelID",
@@ -4690,17 +4691,6 @@
     "description": "gets the evaluation statuses of all rules",
     "operationId": "RouteGetRuleStatuses",
     "parameters": [
-     {
-      "in": "query",
-      "name": "DashboardUID",
-      "type": "string"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "PanelID",
-      "type": "integer"
-     },
      {
       "description": "Recipient should be the numeric datasource id",
       "format": "int64",

@@ -9,23 +9,31 @@ import (
 	"strings"
 	"time"
 
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
 	store   store.RuleStore
+}
+
+const queryIncludeInternalLabels = "includeInternalLabels"
+
+// grafanaLabels are labels that grafana automatically include as part of the labelset.
+var grafanaLabels = map[string]struct{}{
+	ngmodels.RuleUIDLabel:      {},
+	ngmodels.NamespaceUIDLabel: {},
 }
 
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
@@ -42,6 +50,10 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		valString := ""
 		if alertState.State == eval.Alerting {
 			valString = alertState.LastEvaluationString
+		}
+
+		if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+			removeGrafanaLabels(alertState.Labels)
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
@@ -169,6 +181,12 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			if alertState.State == eval.Alerting {
 				valString = alertState.LastEvaluationString
 			}
+
+			if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+				removeGrafanaLabels(map[string]string(newRule.Labels))
+				removeGrafanaLabels(alertState.Labels)
+			}
+
 			alert := &apimodels.Alert{
 				Labels:      map[string]string(alertState.Labels),
 				Annotations: alertState.Annotations,
@@ -253,4 +271,13 @@ func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
 	}
 
 	return err.Error()
+}
+
+// removeGrafanaLabels removes from the label set the Grafana internal labels.
+func removeGrafanaLabels(labels data.Labels) {
+	for k := range labels {
+		if _, ok := grafanaLabels[k]; ok {
+			delete(labels, k)
+		}
+	}
 }

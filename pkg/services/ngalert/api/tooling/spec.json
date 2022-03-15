@@ -1042,12 +1042,14 @@
         "parameters": [
           {
             "type": "string",
+            "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
             "name": "DashboardUID",
             "in": "query"
           },
           {
             "type": "integer",
             "format": "int64",
+            "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
             "name": "PanelID",
             "in": "query"
           }
@@ -1097,17 +1099,6 @@
         ],
         "operationId": "RouteGetRuleStatuses",
         "parameters": [
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          },
           {
             "type": "integer",
             "format": "int64",
@@ -4786,6 +4777,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -4808,17 +4800,14 @@
           "$ref": "#/definitions/receiver"
         }
       },
-      "x-go-name": "AlertGroup",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
       },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroups"
     },
     "alertStatus": {
@@ -4939,7 +4928,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -4999,6 +4987,8 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
@@ -5010,7 +5000,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5063,15 +5052,16 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilences"
     },
     "labelSet": {
