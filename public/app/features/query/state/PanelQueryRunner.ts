@@ -48,6 +48,7 @@ export interface QueryRunnerOptions<
   panelId?: number;
   dashboardId?: number;
   dashboardUid?: string;
+  userCanEditDashboard?: boolean;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -197,6 +198,7 @@ export class PanelQueryRunner {
       panelId,
       dashboardId,
       dashboardUid,
+      userCanEditDashboard,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -217,6 +219,7 @@ export class PanelQueryRunner {
       panelId,
       dashboardId,
       dashboardUid,
+      userCanEditDashboard,
       range: timeRange,
       timeInfo,
       interval: '',

@@ -318,6 +318,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       panel.runAllPanelQueries(
         this.props.dashboard.id,
         this.props.dashboard.uid,
+        this.props.dashboard.meta.canEdit || false,
         this.props.dashboard.getTimezone(),
         timeData,
         width

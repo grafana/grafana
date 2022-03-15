@@ -493,6 +493,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelId?: number;
   dashboardId?: number;
   dashboardUid?: string;
+  userCanEditDashboard?: boolean;
 
   // Request Timing
   startTime: number;

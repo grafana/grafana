@@ -300,6 +300,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   runAllPanelQueries(
     dashboardId: number,
     dashboardUid: string,
+    userCanEditDashboard: boolean,
     dashboardTimezone: string,
     timeData: TimeOverrideResult,
     width: number
@@ -310,6 +311,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       panelId: this.id,
       dashboardId: dashboardId,
       dashboardUid,
+      userCanEditDashboard,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,

@@ -103,7 +103,12 @@ class DataSourceWithBackend<
   }
 
   getUrlForRequest(request: DataQueryRequest<TQuery>): string {
-    if (config.featureToggles.validatedQueries && request.dashboardUid != null && request.panelId != null) {
+    if (
+      config.featureToggles.validatedQueries &&
+      !request.userCanEditDashboard &&
+      request.dashboardUid != null &&
+      request.panelId != null
+    ) {
       // add additional params to query so we can validate on the backend.
       return `/api/dashboards/org/${config.bootData.user.orgId}/uid/${request.dashboardUid}/panels/${request.panelId}/query`;
     }
