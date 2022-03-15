@@ -41,7 +41,7 @@ type standardStorageService struct {
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
 	roots := []storageRuntime{
-		newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
+		newDiskStorage("public-static", "Public static files", &StorageLocalDiskConfig{
 			Path: cfg.StaticRootPath,
 			Roots: []string{
 				"/testdata/",
