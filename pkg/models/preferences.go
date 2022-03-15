@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"time"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
 )
 
 type Preferences struct {
@@ -39,12 +41,11 @@ func (j *PreferencesJsonData) ToDB() ([]byte, error) {
 }
 
 type NavbarPreference struct {
-	Id   string `json:"id"`
-	Hide bool   `json:"hide"`
+	SavedItems []dtos.NavLinks
 }
 
 type PreferencesJsonData struct {
-	Navbar []NavbarPreference `json:"navbar"`
+	Navbar NavbarPreference `json:"navbar"`
 }
 
 // ---------------------
