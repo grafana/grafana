@@ -11,7 +11,7 @@ interface SaveDashboardDiffProps {
   oldValue?: any;
   newValue?: any;
 
-  // calculated outside
+  // calculated by parent so we can see summary in tabs
   diff?: Diffs;
 }
 

@@ -14,7 +14,7 @@ import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm2 } from './forms/SaveDashboardForm2';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 
-export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModalProps) => {
+export const SaveDashboardDrawer = ({ dashboard, onDismiss, isCopy }: SaveDashboardModalProps) => {
   const styles = useStyles2(getStyles);
 
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
@@ -79,7 +79,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
     }
 
-    if (status.isNew) {
+    if (status.isNew || isCopy) {
       return (
         <SaveDashboardAsForm
           dashboard={dashboard}

@@ -26,4 +26,5 @@ export interface SaveDashboardModalProps {
   dashboard: DashboardModel;
   onDismiss: () => void;
   onSaveSuccess?: () => void;
+  isCopy?: boolean;
 }

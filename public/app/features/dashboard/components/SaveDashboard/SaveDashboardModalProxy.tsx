@@ -6,7 +6,12 @@ import { SaveDashboardModal } from './SaveDashboardModal';
 import { config } from '@grafana/runtime';
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
-export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ dashboard, onDismiss, onSaveSuccess }) => {
+export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({
+  dashboard,
+  onDismiss,
+  onSaveSuccess,
+  isCopy,
+}) => {
   const isProvisioned = dashboard.meta.provisioned;
   const isNew = dashboard.version === 0 && !dashboard.uid;
   const isChanged = dashboard.version > 0;
@@ -15,6 +20,7 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
     dashboard,
     onDismiss,
     onSaveSuccess,
+    isCopy,
   };
 
   // Feature flag to show save as a drawer (and diff) rather than just simple modal
@@ -26,7 +32,7 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
     <>
       {isChanged && !isProvisioned && <SaveDashboardModal {...modalProps} />}
       {isProvisioned && <SaveProvisionedDashboard {...modalProps} />}
-      {isNew && <SaveDashboardAsModal {...modalProps} isNew />}
+      {(isNew || isCopy) && <SaveDashboardAsModal {...modalProps} isNew />}
     </>
   );
 };
