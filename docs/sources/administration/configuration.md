@@ -361,6 +361,9 @@ Defaults to `private`.
 
 ## [remote_cache]
 
+Allows caching sessions information and settings in the configured database, Redis or Memcached.
+This does not configure [Query Caching in Grafana Enterprise]({{< relref "../enterprise/query-caching.md" >}}).
+
 ### type
 
 Either `redis`, `memcached`, or `database`. Defaults to `database`
