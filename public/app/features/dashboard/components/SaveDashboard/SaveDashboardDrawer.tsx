@@ -1,20 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import {
-  Button,
-  Checkbox,
-  CustomScrollbar,
-  Drawer,
-  Field,
-  HorizontalGroup,
-  Tab,
-  TabContent,
-  TabsBar,
-  TextArea,
-  useStyles2,
-} from '@grafana/ui';
-import { useForm } from 'react-hook-form';
-import { SaveDashboardModalProps } from './types';
+import { Checkbox, CustomScrollbar, Drawer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { SaveDashboardData, SaveDashboardModalProps } from './types';
 import { GrafanaTheme2 } from '@grafana/data';
 import { jsonDiff } from '../VersionHistory/utils';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,26 +11,16 @@ import { useDashboardSave } from './useDashboardSave';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
+import { SaveDashboardForm2 } from './forms/SaveDashboardForm2';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
-
-interface FormDTO {
-  message?: string; // the commit message
-
-  newDashboardTitle?: string;
-}
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModalProps) => {
   const styles = useStyles2(getStyles);
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-  } = useForm<FormDTO>({ defaultValues: {} });
 
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
-  const [saveTimeRange, setSaveTimeRange] = useState(false);
+  const [saveTimerange, setSaveTimerange] = useState(false);
   const [saveVariables, setSaveVariables] = useState(false);
 
   const status = useMemo(() => {
@@ -67,14 +44,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     return result.dashboard;
   }, [dashboard, status]);
 
-  const data = useMemo(() => {
+  const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({
-      saveTimerange: Boolean(saveTimeRange),
+      saveTimerange: Boolean(saveTimerange),
       saveVariables: Boolean(saveVariables),
     });
 
     if (!previous.value) {
-      return { clone };
+      return { clone, diff: {}, diffCount: 0, hasChanges: false };
     }
 
     const cloneJSON = JSON.stringify(clone, null, 2);
@@ -92,41 +69,10 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       diffCount,
       hasChanges: diffCount > 0 && !status.isNew,
     };
-  }, [dashboard, previous.value, saveTimeRange, saveVariables, status.isNew]);
+  }, [dashboard, previous.value, saveTimerange, saveVariables, status.isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
-  const [saving, setSaving] = useState(false);
-
   const { state, onDashboardSave } = useDashboardSave(dashboard);
-  const doSave = async (dto: FormDTO) => {
-    setSaving(true);
-
-    const body = data.clone;
-    if (status.isNew && dto.newDashboardTitle) {
-      body.title = dto.newDashboardTitle;
-    }
-
-    const result = await onDashboardSave(
-      body,
-      {
-        message: dto.message,
-        saveTimerange: saveTimeRange,
-        saveVariables: saveVariables,
-      },
-      dashboard
-    );
-
-    if (result.status === 'success') {
-      if (saveVariables) {
-        dashboard.resetOriginalVariables();
-      }
-      if (saveTimeRange) {
-        dashboard.resetOriginalTime();
-      }
-    }
-    onDismiss();
-    setSaving(false);
-  };
 
   const renderBody = () => {
     if (showDiff) {
@@ -139,9 +85,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
           dashboard={dashboard}
           onCancel={onDismiss}
           onSuccess={onDismiss}
-          onSubmit={(clone, options, dashboard) => {
-            return onDashboardSave(clone, options, dashboard);
-          }}
+          onSubmit={onDashboardSave}
           isNew={status.isNew}
           leftButtons={true}
         />
@@ -153,31 +97,17 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     }
 
     return (
-      <form onSubmit={handleSubmit(doSave)}>
-        <Field label="Message" invalid={!!errors.message} error="Message is required">
-          <TextArea
-            {...register('message', { required: false })}
-            rows={5}
-            placeholder="Add a note to describe your changes."
-            autoFocus
-          />
-        </Field>
-
-        <HorizontalGroup>
-          <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={!data.hasChanges}
-            icon={saving ? 'fa fa-spinner' : undefined}
-            aria-label={selectors.pages.SaveDashboardModal.save}
-          >
-            {saving ? '' : 'Save'}
-          </Button>
-        </HorizontalGroup>
-        {!data.hasChanges && <div className={styles.nothing}>No changes to save</div>}
-      </form>
+      <SaveDashboardForm2
+        dashboard={dashboard}
+        saveModel={data}
+        onCancel={onDismiss}
+        onSuccess={onDismiss}
+        onSubmit={onDashboardSave}
+        options={{
+          saveTimerange,
+          saveVariables,
+        }}
+      />
     );
   };
 
@@ -201,8 +131,8 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
         <>
           {hasTimeChanged && (
             <Checkbox
-              checked={saveTimeRange}
-              onChange={() => setSaveTimeRange(!saveTimeRange)}
+              checked={saveTimerange}
+              onChange={() => setSaveTimerange(!saveTimerange)}
               label="Save current time range as dashboard default"
               aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
             />

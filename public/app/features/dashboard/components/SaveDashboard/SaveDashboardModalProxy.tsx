@@ -18,7 +18,7 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
   };
 
   // Feature flag to show save as a drawer (and diff) rather than just simple modal
-  if (config.featureToggles.saveWithDiff) {
+  if (true || config.featureToggles.saveWithDiff) {
     return <SaveDashboardDrawer {...modalProps} />;
   }
 
