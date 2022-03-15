@@ -3,14 +3,9 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
-)
-
-type StorageName string
-
-const (
-	StorageNamePublic StorageName = "public"
 )
 
 var (
@@ -20,14 +15,14 @@ var (
 	ErrPathInvalid           = errors.New("path is invalid")
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
 	Delimiter                = "/"
+	multipleDelimiters       = regexp.MustCompile(`/+`)
 )
 
 func Join(parts ...string) string {
-	return Delimiter + strings.Join(parts, Delimiter)
-}
+	joinedPath := Delimiter + strings.Join(parts, Delimiter)
 
-func belongsToStorage(path string, storageName StorageName) bool {
-	return strings.HasPrefix(path, Delimiter+string(storageName))
+	// makes the API more forgiving for clients without compromising safety
+	return multipleDelimiters.ReplaceAllString(joinedPath, Delimiter)
 }
 
 type File struct {
@@ -64,26 +59,83 @@ type UpsertFileCommand struct {
 }
 
 type PathFilters struct {
-	allowedPrefixes []string
+	allowedPrefixes    []string
+	disallowedPrefixes []string
+	allowedPaths       []string
+	disallowedPaths    []string
 }
 
-func (f *PathFilters) isAllowed(path string) bool {
-	if f == nil || f.allowedPrefixes == nil {
+func toLower(list []string) []string {
+	if list == nil {
+		return nil
+	}
+	lower := make([]string, 0)
+	for _, el := range list {
+		lower = append(lower, strings.ToLower(el))
+	}
+	return lower
+}
+
+func allowAllPathFilters() *PathFilters {
+	return NewPathFilters(nil, nil, nil, nil)
+}
+
+//nolint:deadcode,unused
+func denyAllPathFilters() *PathFilters {
+	return NewPathFilters([]string{}, []string{}, nil, nil)
+}
+
+func NewPathFilters(allowedPrefixes []string, allowedPaths []string, disallowedPrefixes []string, disallowedPaths []string) *PathFilters {
+	return &PathFilters{
+		allowedPrefixes:    toLower(allowedPrefixes),
+		allowedPaths:       toLower(allowedPaths),
+		disallowedPaths:    toLower(disallowedPaths),
+		disallowedPrefixes: toLower(disallowedPrefixes),
+	}
+}
+
+func (f *PathFilters) isDenyAll() bool {
+	return f.allowedPaths != nil && f.allowedPrefixes != nil && (len(f.allowedPaths)+len(f.allowedPrefixes) == 0)
+}
+
+func (f *PathFilters) IsAllowed(path string) bool {
+	if f == nil {
 		return true
 	}
 
-	for i := range f.allowedPrefixes {
-		if strings.HasPrefix(path, strings.ToLower(f.allowedPrefixes[i])) {
-			return true
+	path = strings.ToLower(path)
+	for i := range f.disallowedPaths {
+		if f.disallowedPaths[i] == path {
+			return false
 		}
 	}
 
+	for i := range f.disallowedPrefixes {
+		if strings.HasPrefix(path, f.disallowedPrefixes[i]) {
+			return false
+		}
+	}
+
+	if f.allowedPrefixes == nil && f.allowedPaths == nil {
+		return true
+	}
+
+	for i := range f.allowedPaths {
+		if f.allowedPaths[i] == path {
+			return true
+		}
+	}
+	for i := range f.allowedPrefixes {
+		if strings.HasPrefix(path, f.allowedPrefixes[i]) {
+			return true
+		}
+	}
 	return false
 }
 
 type ListOptions struct {
 	Recursive bool
-	PathFilters
+	*PathFilters
 }
 
 type FileStorage interface {

@@ -113,6 +113,7 @@ const ServiceAccountsListPage = ({
                     <th>Display name</th>
                     <th>ID</th>
                     <th>Roles</th>
+                    <th>Status</th>
                     <th>Tokens</th>
                     <th style={{ width: '34px' }} />
                   </tr>
@@ -174,10 +175,13 @@ type ServiceAccountListItemProps = {
 const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
+const getServiceAccountsEnabledStatus = (disabled: boolean) => {
+  return disabled ? 'Disabled' : 'Enabled';
+};
 
 const ServiceAccountListItem = memo(
   ({ serviceAccount, onRoleChange, roleOptions, builtInRoles, onSetToRemove }: ServiceAccountListItemProps) => {
-    const editUrl = `org/serviceAccounts/${serviceAccount.id}`;
+    const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
     const rolePickerDisabled = !canUpdateRole;
@@ -237,7 +241,17 @@ const ServiceAccountListItem = memo(
           <a
             className="ellipsis"
             href={editUrl}
-            title="tokens"
+            title={getServiceAccountsEnabledStatus(serviceAccount.isDisabled)}
+            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
+          >
+            {getServiceAccountsEnabledStatus(serviceAccount.isDisabled)}
+          </a>
+        </td>
+        <td className="link-td max-width-10">
+          <a
+            className="ellipsis"
+            href={editUrl}
+            title="Tokens"
             aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
           >
             <span>

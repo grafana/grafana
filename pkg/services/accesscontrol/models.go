@@ -23,6 +23,7 @@ type Role struct {
 	DisplayName string `json:"displayName"`
 	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
+	Hidden      bool   `json:"hidden"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -65,6 +66,7 @@ type RoleDTO struct {
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 	Delegatable *bool        `json:"delegatable,omitempty"`
+	Hidden      bool         `json:"hidden,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
@@ -82,6 +84,7 @@ func (r RoleDTO) Role() Role {
 		DisplayName: r.DisplayName,
 		Group:       r.Group,
 		Description: r.Description,
+		Hidden:      r.Hidden,
 		Updated:     r.Updated,
 		Created:     r.Created,
 	}
@@ -241,14 +244,13 @@ type SetResourcePermissionCommand struct {
 	Permission  string
 }
 
-type SQLFilter struct {
-	Where string
-	Args  []interface{}
-}
-
 const (
 	GlobalOrgID = 0
 	// Permission actions
+
+	ActionAPIKeyRead   = "apikeys:read"
+	ActionAPIKeyCreate = "apikeys:create"
+	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
 	ActionUsersRead     = "users:read"
@@ -299,6 +301,9 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
+	// APIKeys scope
+	ScopeAPIKeysAll = "apikeys:*"
+
 	// Users scope
 	ScopeUsersAll = "users:*"
 
@@ -339,17 +344,6 @@ const (
 
 	// Dashboard scopes
 	ScopeDashboardsAll = "dashboards:*"
-
-	// Folder actions
-	ActionFoldersCreate           = "folders:create"
-	ActionFoldersRead             = "folders:read"
-	ActionFoldersWrite            = "folders:write"
-	ActionFoldersDelete           = "folders:delete"
-	ActionFoldersPermissionsRead  = "folders.permissions:read"
-	ActionFoldersPermissionsWrite = "folders.permissions:write"
-
-	// Folder scopes
-	ScopeFoldersAll = "folders:*"
 )
 
 var (
@@ -357,7 +351,9 @@ var (
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 
 	// Folder scopes
-	ScopeFolderID = Scope("folders", "id", Parameter(":id"))
+
+	// Datasource scopes
+
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

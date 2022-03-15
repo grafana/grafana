@@ -1,14 +1,14 @@
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { notifyApp, updateNavIndex } from 'app/core/actions';
+import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { FolderState, ThunkResult } from 'app/types';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
-import { notifyApp, updateNavIndex } from 'app/core/actions';
-import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { lastValueFrom } from 'rxjs';
 import { buildNavModel } from './navModel';
 import { loadFolder, loadFolderPermissions, setCanViewFolderPermissions } from './reducers';
-import { lastValueFrom } from 'rxjs';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async (dispatch) => {
