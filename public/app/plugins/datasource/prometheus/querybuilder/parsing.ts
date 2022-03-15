@@ -350,44 +350,31 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const leftNumber = left.getChild('NumberLiteral');
   const rightNumber = right.getChild('NumberLiteral');
 
-  if (leftNumber || rightNumber) {
-    // Scalar case, just add operation.
-    if (leftNumber) {
-      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
-      //  if query starts with a number that isn't handled now.
-    } else {
-      handleExpression(expr, left, context);
-    }
-
-    if (rightNumber) {
-      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
-      //  if query starts with a number that isn't handled now.
-      visQuery.operations.push(makeBinOp(opDef, expr, right, binModifier));
-    } else {
-      handleExpression(expr, right, context);
-    }
-    return;
-  }
-
-  const leftBinary = left.getChild('BinaryExpr');
   const rightBinary = right.getChild('BinaryExpr');
 
-  if (leftBinary || rightBinary) {
-    // One of the sides is binary which means we don't really know if there is a query or just chained scalars. So
+  if (leftNumber) {
+    // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+    //  if query starts with a number that isn't handled now.
+  } else {
+    // If this is binary we don't really know if there is a query or just chained scalars. So
     // we have to traverse a bit deeper to know
     handleExpression(expr, left, context);
+  }
 
+  if (rightNumber) {
+    visQuery.operations.push(makeBinOp(opDef, expr, right, binModifier));
+  } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
     if (leftMostChild?.name === 'NumberLiteral') {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, binModifier));
     }
+
     // If we added the first number literal as operation here we still can continue and handle the rest as the first
     // number will be just skipped.
     handleExpression(expr, right, context);
   } else {
-    // Two queries case so we create a binary query.
     visQuery.binaryQueries = visQuery.binaryQueries || [];
     const binQuery = {
       operator: op,
@@ -398,8 +385,6 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
       },
     };
     visQuery.binaryQueries.push(binQuery);
-    // One query is the main query, second is wrapped in the binaryQuery wrapper.
-    handleExpression(expr, left, context);
     handleExpression(expr, right, {
       query: binQuery.query,
       errors: context.errors,
