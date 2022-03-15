@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, Link, Portal, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { MenuTriggerProps } from '@react-types/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
@@ -144,29 +144,55 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     overlayRef
   );
 
+  const boundingClientRect = ref.current?.getBoundingClientRect();
+  console.log({ boundingClientRect });
+  const x = boundingClientRect?.x || 0;
+  const y = boundingClientRect?.y || 0;
+  const width = boundingClientRect?.width || 0;
+  const height = boundingClientRect?.height || 0;
+  console.log({ isOpen: state.isOpen });
+
   return (
-    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
+    <div
+      className={cx(styles.element, 'dropdown')}
+      {...focusWithinProps}
+      {...hoverProps}
+      onMouseEnter={() => console.log('mouseEnter!')}
+      onMouseLeave={() => console.log('mouseLeave!')}
+      onMouseOver={() => console.log('mouseOver!')}
+      onMouseOut={() => console.log('mouseOut!')}
+    >
       {element}
       {state.isOpen && (
-        <NavBarItemMenuContext.Provider
-          value={{
-            menuProps,
-            menuHasFocus,
-            onClose: () => state.close(),
-            onLeft: () => {
-              setMenuHasFocus(false);
-              ref.current?.focus();
-            },
-          }}
-        >
-          <FocusScope restoreFocus>
-            <div {...overlayProps} {...dialogProps} ref={overlayRef}>
-              <DismissButton onDismiss={() => state.close()} />
-              {menu}
-              <DismissButton onDismiss={() => state.close()} />
-            </div>
-          </FocusScope>
-        </NavBarItemMenuContext.Provider>
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              top: y,
+              left: x + width,
+            }}
+          >
+            <NavBarItemMenuContext.Provider
+              value={{
+                menuProps,
+                menuHasFocus,
+                onClose: () => state.close(),
+                onLeft: () => {
+                  setMenuHasFocus(false);
+                  ref.current?.focus();
+                },
+              }}
+            >
+              <FocusScope restoreFocus>
+                <div {...overlayProps} {...dialogProps} ref={overlayRef}>
+                  <DismissButton onDismiss={() => state.close()} />
+                  {menu}
+                  <DismissButton onDismiss={() => state.close()} />
+                </div>
+              </FocusScope>
+            </NavBarItemMenuContext.Provider>
+          </div>
+        </Portal>
       )}
     </div>
   );
