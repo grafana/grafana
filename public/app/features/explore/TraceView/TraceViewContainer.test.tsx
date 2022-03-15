@@ -4,14 +4,26 @@ import { TraceViewContainer } from './TraceViewContainer';
 import { frameOld } from './TraceView.test';
 import { ExploreId } from 'app/types';
 import { configureStore } from '../../../store/configureStore';
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { Provider } from 'react-redux';
 import userEvent from '@testing-library/user-event';
 
 function renderTraceViewContainer(frames = [frameOld]) {
   const store = configureStore();
+  const mockPanelData = {
+    state: LoadingState.Done,
+    series: [],
+    timeRange: getDefaultTimeRange(),
+  };
+
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceViewContainer exploreId={ExploreId.left} dataFrames={frames} splitOpenFn={() => {}} />
+      <TraceViewContainer
+        exploreId={ExploreId.left}
+        dataFrames={frames}
+        splitOpenFn={() => {}}
+        queryResponse={mockPanelData}
+      />
     </Provider>
   );
   return {

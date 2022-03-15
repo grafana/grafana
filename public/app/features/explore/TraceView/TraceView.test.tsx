@@ -4,7 +4,7 @@ import { TraceView } from './TraceView';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { ExploreId } from 'app/types';
 import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
-import { DataFrame, MutableDataFrame } from '@grafana/data';
+import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { configureStore } from '../../../store/configureStore';
 import { Provider } from 'react-redux';
 import { transformDataFrames } from './TraceViewContainer';
@@ -12,6 +12,12 @@ import userEvent from '@testing-library/user-event';
 
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
+  const mockPanelData = {
+    state: LoadingState.Done,
+    series: [],
+    timeRange: getDefaultTimeRange(),
+  };
+
   const traceView = (
     <Provider store={store}>
       <TraceView
@@ -27,6 +33,7 @@ function getTraceView(frames: DataFrame[]) {
         collapseAll={() => {}}
         childrenToggle={() => {}}
         childrenHiddenIDs={new Set()}
+        queryResponse={mockPanelData}
       />
     </Provider>
   );

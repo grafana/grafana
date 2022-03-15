@@ -24,7 +24,7 @@ func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComman
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
-		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return models.ErrUserNotFound
@@ -114,12 +114,11 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 		whereParams = append(whereParams, query.UserID)
 	}
 
-	// TODO: add to chore, for cleaning up after we have created
-	// service accounts table in the modelling
-	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = ?", dialect.Quote("user")))
+	whereParams = append(whereParams, dialect.BooleanStr(false))
 
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.User != nil {
-		acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "org.users:read", query.User)
+		acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users", accesscontrol.ActionOrgUsersRead)
 		if err != nil {
 			return err
 		}
@@ -179,12 +178,10 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgID)
 
-	// TODO: add to chore, for cleaning up after we have created
-	// service accounts table in the modelling
-	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
+	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %s", x.Dialect().Quote("user"), ss.Dialect.BooleanStr(false)))
 
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "org.users:read", query.User)
+		acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users", accesscontrol.ActionOrgUsersRead)
 		if err != nil {
 			return err
 		}
@@ -248,7 +245,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
-		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return models.ErrUserNotFound
@@ -301,7 +298,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 			}
 		} else if cmd.ShouldDeleteOrphanedUser {
 			// no other orgs, delete the full user
-			if err := deleteUserInTransaction(sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
+			if err := deleteUserInTransaction(ss, sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
 				return err
 			}
 
@@ -312,8 +309,8 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 	})
 }
 
+// validate that there is an org admin user left
 func validateOneAdminLeftInOrg(orgId int64, sess *DBSession) error {
-	// validate that there is an admin user left
 	res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and role='Admin'", orgId)
 	if err != nil {
 		return err

@@ -104,6 +104,17 @@ export function matcherFieldToMatcher(field: MatcherFieldValue): Matcher {
   };
 }
 
+export function matchersToString(matchers: Matcher[]) {
+  const matcherFields = matchers.map(matcherToMatcherField);
+
+  const combinedMatchers = matcherFields.reduce((acc, current) => {
+    const currentMatcherString = `${current.name}${current.operator}"${current.value}"`;
+    return acc ? `${acc},${currentMatcherString}` : currentMatcherString;
+  }, '');
+
+  return `{${combinedMatchers}}`;
+}
+
 export const matcherFieldOptions: SelectableValue[] = [
   { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
   { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },

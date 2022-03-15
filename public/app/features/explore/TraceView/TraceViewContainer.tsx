@@ -1,6 +1,6 @@
 import React, { RefObject, useMemo, useState } from 'react';
 import { Collapse } from '@grafana/ui';
-import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow } from '@grafana/data';
+import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow, PanelData } from '@grafana/data';
 import { TraceView } from './TraceView';
 import { ExploreId } from 'app/types/explore';
 import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
@@ -13,12 +13,13 @@ interface Props {
   exploreId: ExploreId;
   scrollElement?: Element;
   topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  queryResponse: PanelData;
 }
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
 
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfExploreViewRef } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfExploreViewRef, queryResponse } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
@@ -115,6 +116,7 @@ export function TraceViewContainer(props: Props) {
           expandAll={expandAll}
           childrenToggle={childrenToggle}
           childrenHiddenIDs={childrenHiddenIDs}
+          queryResponse={queryResponse}
         />
       </Collapse>
     </>
