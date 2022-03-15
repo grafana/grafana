@@ -239,7 +239,6 @@ func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*mode
 	}
 
 	return query.Result, nil
-
 }
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
