@@ -85,7 +85,7 @@ func TestNewUidScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		uid := util.GenerateShortUID()
 
-		db := &models.Dashboard{Id: rand.Int63()}
+		db := &models.Folder{Id: rand.Int63()}
 		dashboardStore.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:uid:" + uid
