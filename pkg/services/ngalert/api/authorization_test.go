@@ -40,19 +40,24 @@ func TestAuthorize(t *testing.T) {
 		}
 		paths[p] = methods
 	}
-
 	require.Len(t, paths, 29)
-
-	require.NoErrorf(t, err, "failed to read swagger specification")
 
 	ac := acmock.New()
 	api := &API{AccessControl: ac}
 
-	for path, methods := range paths {
-		for _, method := range methods {
-			require.NotPanics(t, func() {
-				api.authorize(method, path)
-			})
+	t.Run("should not panic on known routes", func(t *testing.T) {
+		for path, methods := range paths {
+			for _, method := range methods {
+				require.NotPanics(t, func() {
+					api.authorize(method, path)
+				})
+			}
 		}
-	}
+	})
+
+	t.Run("should panic if route is unknown", func(t *testing.T) {
+		require.Panics(t, func() {
+			api.authorize("test", "test")
+		})
+	})
 }
