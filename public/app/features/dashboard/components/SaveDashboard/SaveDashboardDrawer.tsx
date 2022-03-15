@@ -14,7 +14,7 @@ import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm2 } from './forms/SaveDashboardForm2';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 
-export const SaveDashboardDrawer = ({ dashboard, onDismiss, isCopy }: SaveDashboardModalProps) => {
+export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const styles = useStyles2(getStyles);
 
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
@@ -73,6 +73,12 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, isCopy }: SaveDashbo
 
   const [showDiff, setShowDiff] = useState(false);
   const { state, onDashboardSave } = useDashboardSave(dashboard);
+  const onSuccess = onSaveSuccess
+    ? () => {
+        onDismiss();
+        onSaveSuccess();
+      }
+    : onDismiss;
 
   const renderBody = () => {
     if (showDiff) {
@@ -84,7 +90,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, isCopy }: SaveDashbo
         <SaveDashboardAsForm
           dashboard={dashboard}
           onCancel={onDismiss}
-          onSuccess={onDismiss}
+          onSuccess={onSuccess}
           onSubmit={onDashboardSave}
           isNew={status.isNew}
         />
@@ -92,7 +98,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, isCopy }: SaveDashbo
     }
 
     if (status.isProvisioned) {
-      return <SaveProvisionedDashboardForm dashboard={dashboard} onCancel={onDismiss} onSuccess={onDismiss} />;
+      return <SaveProvisionedDashboardForm dashboard={dashboard} onCancel={onDismiss} onSuccess={onSuccess} />;
     }
 
     return (
@@ -100,7 +106,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, isCopy }: SaveDashbo
         dashboard={dashboard}
         saveModel={data}
         onCancel={onDismiss}
-        onSuccess={onDismiss}
+        onSuccess={onSuccess}
         onSubmit={onDashboardSave}
         options={{
           saveTimerange,
