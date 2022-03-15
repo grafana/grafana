@@ -15,25 +15,53 @@ export interface FetchPromRulesFilter {
   panelId?: number;
 }
 
-export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
+export interface PrometheusDataSourceConfig {
+  dataSourceName: string;
+  customRulerEnabled: boolean;
+}
+
+export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
+  const { dataSourceName, customRulerEnabled } = dataSourceConfig;
+
+  const searchParams = new URLSearchParams();
+  if (customRulerEnabled) {
+    searchParams.set('source', 'ruler');
+  }
+
+  return {
+    rules: (filter?: FetchPromRulesFilter) => {
+      if (filter?.dashboardUID) {
+        searchParams.set('dashboard_uid', filter.dashboardUID);
+        if (filter?.panelId) {
+          searchParams.set('panel_id', String(filter.panelId));
+        }
+      }
+
+      return {
+        url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+        params: Object.fromEntries(searchParams),
+      };
+    },
+  };
+}
+
+export async function fetchRules(
+  dataSourceName: string,
+  filter?: FetchPromRulesFilter,
+  customRulerEnabled = false
+): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
   }
 
-  const params: Record<string, string> = {};
-  if (filter?.dashboardUID) {
-    params['dashboard_uid'] = filter.dashboardUID;
-    if (filter.panelId) {
-      params['panel_id'] = String(filter.panelId);
-    }
-  }
+  const { url, params } = prometheusUrlBuilder({ dataSourceName, customRulerEnabled }).rules(filter);
 
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({
-      url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+      url,
+      params,
       showErrorAlert: false,
       showSuccessAlert: false,
-      params,
     })
   ).catch((e) => {
     if ('status' in e && e.status === 404) {
