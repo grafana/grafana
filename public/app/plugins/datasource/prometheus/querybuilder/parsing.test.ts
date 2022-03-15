@@ -444,6 +444,67 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('handles multiple binary operations', () => {
+    expect(buildVisualQueryFromString('foo{x="yy"} * metric{y="zz",a="bb"} * metric2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [{ label: 'x', op: '=', value: 'yy' }],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            query: {
+              metric: 'metric',
+              labels: [
+                { label: 'y', op: '=', value: 'zz' },
+                { label: 'a', op: '=', value: 'bb' },
+              ],
+              operations: [],
+            },
+          },
+          {
+            operator: '*',
+            query: {
+              metric: 'metric2',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles multiple binary operations and scalar', () => {
+    expect(buildVisualQueryFromString('foo{x="yy"} * metric{y="zz",a="bb"} * 2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [{ label: 'x', op: '=', value: 'yy' }],
+        operations: [
+          {
+            id: '__multiply_by',
+            params: [2],
+          },
+        ],
+        binaryQueries: [
+          {
+            operator: '*',
+            query: {
+              metric: 'metric',
+              labels: [
+                { label: 'y', op: '=', value: 'zz' },
+                { label: 'a', op: '=', value: 'bb' },
+              ],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
