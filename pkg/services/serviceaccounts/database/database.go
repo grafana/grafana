@@ -253,7 +253,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 			orgUser.Role = *saForm.Role
 			orgUser.Updated = updateTime
 
-			if _, err := sess.ID(orgUser.Id).Update(&orgUser); err != nil {
+			if _, err := sess.Where("org_id = ? AND user_id = ?", orgID, serviceAccountID).Update(&orgUser); err != nil {
 				return err
 			}
 
