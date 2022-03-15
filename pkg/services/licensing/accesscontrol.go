@@ -3,14 +3,14 @@ package licensing
 import "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 const (
-	ActionLicensingRead        = "licensing:read"
-	ActionLicensingUpdate      = "licensing:update"
-	ActionLicensingDelete      = "licensing:delete"
-	ActionLicensingReportsRead = "licensing.reports:read"
+	ActionRead        = "licensing:read"
+	ActionUpdate      = "licensing:update"
+	ActionDelete      = "licensing:delete"
+	ActionReportsRead = "licensing.reports:read"
 )
 
-// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
-var LicensingPageReaderAccess = accesscontrol.EvalAny(
-	accesscontrol.EvalPermission(ActionLicensingRead),
+// PageAccess defines permissions that grant access to the licensing and stats page
+var PageAccess = accesscontrol.EvalAny(
+	accesscontrol.EvalPermission(ActionRead),
 	accesscontrol.EvalPermission(accesscontrol.ActionServerStatsRead),
 )
