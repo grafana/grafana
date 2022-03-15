@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useMemo } from 'react';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
-import { Button, InlineField, InlineFieldRow, Select, useStyles2, NumberInput } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { StyleEditor } from '../layers/data/StyleEditor';
 import { defaultStyleConfig, StyleConfig } from '../style/types';
@@ -11,6 +11,7 @@ import { useObservable } from 'react-use';
 import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { FeatureLike } from 'ol/Feature';
 import { getSelectionInfo } from '../utils/selection';
+import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;

@@ -1,8 +1,9 @@
 import React, { FC, useMemo, useCallback } from 'react';
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { Button, InlineField, InlineFieldRow, Select, VerticalGroup, NumberInput } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { GeomapPanelOptions, MapViewConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
+import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 import { toLonLat } from 'ol/proj';
 import { GeomapInstanceState } from '../GeomapPanel';
 

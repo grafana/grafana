@@ -4,7 +4,8 @@ import {
   HistogramTransformerOptions,
   histogramFieldInfo,
 } from '@grafana/data/src/transformations/transformers/histogram';
-import { InlineField, InlineFieldRow, InlineSwitch, NumberInput } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+import { NumberInput } from '../../dimensions/editors/NumberInput';
 
 export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTransformerOptions>> = ({
   input,
