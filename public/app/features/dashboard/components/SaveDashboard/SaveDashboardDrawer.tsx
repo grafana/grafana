@@ -172,8 +172,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-left: ${theme.v1.spacing.md};
     margin: ${theme.v1.spacing.lg} -${theme.v1.spacing.sm} -${theme.v1.spacing.lg} -${theme.v1.spacing.lg};
   `,
-  nothing: css`
-    margin: ${theme.v1.spacing.sm};
-    color: ${theme.colors.secondary.shade};
-  `,
 });
