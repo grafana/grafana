@@ -20947,6 +20947,7 @@ __metadata:
     lru-cache: 7.5.1
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
+    minisearch: ^4.0.3
     moment: 2.29.1
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
@@ -26357,6 +26358,13 @@ __metadata:
   dependencies:
     yallist: ^4.0.0
   checksum: 8b410b9a5bd99ceb9d63c895891d1c30511791fdc7b717da4cf9403ca2419bc57af63b8485ffdaa421ef6cff56f63ae0b2f5135f8df502d21296e8c91460ebf9
+  languageName: node
+  linkType: hard
+
+"minisearch@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "minisearch@npm:4.0.3"
+  checksum: 9730af234b69c5e37408b4eee54031300ff19b0b0c38877d8d69bf3957ad8ebe1113285a9f63b202db93115483b5bfb729884363db967a45b1c0f172a41d2c9e
   languageName: node
   linkType: hard
 
