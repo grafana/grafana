@@ -1,10 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { Checkbox, CustomScrollbar, Drawer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
-import { SaveDashboardData, SaveDashboardModalProps } from './types';
+import { CustomScrollbar, Drawer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
 import { GrafanaTheme2 } from '@grafana/data';
 import { jsonDiff } from '../VersionHistory/utils';
-import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { useDashboardSave } from './useDashboardSave';
@@ -16,12 +15,7 @@ import { SaveDashboardDiff } from './SaveDashboardDiff';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const styles = useStyles2(getStyles);
-
-  const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
-  const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
-
-  const [saveTimerange, setSaveTimerange] = useState(false);
-  const [saveVariables, setSaveVariables] = useState(false);
+  const [options, setOptions] = useState<SaveDashboardOptions>({});
 
   const status = useMemo(() => {
     const isProvisioned = dashboard.meta.provisioned;
@@ -46,8 +40,8 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
 
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({
-      saveTimerange: Boolean(saveTimerange),
-      saveVariables: Boolean(saveVariables),
+      saveTimerange: Boolean(options.saveTimerange),
+      saveVariables: Boolean(options.saveVariables),
     });
 
     if (!previous.value) {
@@ -69,7 +63,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       diffCount,
       hasChanges: diffCount > 0 && !status.isNew,
     };
-  }, [dashboard, previous.value, saveTimerange, saveVariables, status.isNew]);
+  }, [dashboard, previous.value, options, status.isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
   const { state, onDashboardSave } = useDashboardSave(dashboard);
@@ -108,10 +102,8 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
         onCancel={onDismiss}
         onSuccess={onSuccess}
         onSubmit={onDashboardSave}
-        options={{
-          saveTimerange,
-          saveVariables,
-        }}
+        options={options}
+        onOptionsChange={setOptions}
       />
     );
   };
@@ -129,30 +121,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
 
   return (
     <Drawer
-      title={dashboard.title}
+      title={isCopy ? 'Save dashboard as...' : 'Save dashboard'}
       onClose={onDismiss}
       width={'40%'}
       subtitle={
         <>
-          {hasTimeChanged && (
-            <Checkbox
-              checked={saveTimerange}
-              onChange={() => setSaveTimerange(!saveTimerange)}
-              label="Save current time range as dashboard default"
-              aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-            />
-          )}
-          {hasVariableChanged && (
-            <Checkbox
-              checked={saveVariables}
-              onChange={() => setSaveVariables(!saveVariables)}
-              label="Save current variable values as dashboard default"
-              aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-            />
-          )}
           <TabsBar className={styles.tabsBar}>
-            <Tab label={isCopy ? 'Save as' : 'Save'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-            {data.hasChanges && (
+            <Tab label={'Options'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
+            {data.hasChanges && !isCopy && (
               <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
             )}
           </TabsBar>
