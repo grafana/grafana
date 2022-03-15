@@ -47,7 +47,7 @@ func newSQLStorage(prefix string, name string, cfg *StorageSQLConfig, sql *sqlst
 
 	ctx := context.Background()
 	if devenv != nil {
-		resp, err := devenv.store.ListFiles(ctx, "/", nil, &filestorage.ListOptions{
+		resp, err := devenv.store.List(ctx, "/", nil, &filestorage.ListOptions{
 			Recursive:   true,
 			PathFilters: filestorage.NewPathFilters([]string{"/panel-"}, nil, nil, nil),
 		})
