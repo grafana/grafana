@@ -144,6 +144,7 @@ func (ng *AlertNG) init() error {
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		SecretsService:       ng.SecretsService,
+		TransactionManager:   store,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
