@@ -162,6 +162,8 @@ These options are available in the [configuration]({{< relref "../administration
 
 ```ini
 [reporting]
+# Whether the reporting feature is enabled (true if unset)
+enabled = true
 # Set timeout for each panel rendering request
 rendering_timeout = 10s
 # Set maximum number of concurrent calls to the rendering service
