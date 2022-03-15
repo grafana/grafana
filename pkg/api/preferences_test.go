@@ -17,9 +17,9 @@ var (
 	patchUserPreferencesUrl = "/api/user/preferences/"
 
 	testUpdateOrgPreferencesCmd    = `{ "theme": "light", "homeDashboardId": 1 }`
-	testPatchOrgPreferencesCmd     = `{"navbar":[{"id": "explore", "hideFromNavbar": true}]}`
+	testPatchOrgPreferencesCmd     = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
 	testPatchOrgPreferencesCmdBad  = `this is not json`
-	testPatchUserPreferencesCmd    = `{"navbar":[{"id": "explore", "hideFromNavbar": true}]}`
+	testPatchUserPreferencesCmd    = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
 	testPatchUserPreferencesCmdBad = `this is not json`
 )
 
