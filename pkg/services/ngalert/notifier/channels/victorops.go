@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -25,32 +26,52 @@ const (
 	victoropsAlertStateRecovery = "RECOVERY"
 )
 
+type VictorOpsConfig struct {
+	*NotificationChannelConfig
+	URL         string
+	MessageType string
+}
+
+func VictorOpsFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewVictorOpsConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewVictoropsNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewVictorOpsConfig(config *NotificationChannelConfig) (*VictorOpsConfig, error) {
+	url := config.Settings.Get("url").MustString()
+	if url == "" {
+		return nil, errors.New("could not find victorops url property in settings")
+	}
+	return &VictorOpsConfig{
+		NotificationChannelConfig: config,
+		URL:                       url,
+		MessageType:               config.Settings.Get("messageType").MustString(),
+	}, nil
+}
+
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*VictoropsNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find victorops url property in settings"}
-	}
-
+func NewVictoropsNotifier(config *VictorOpsConfig, ns notifications.WebhookSender, t *template.Template) *VictoropsNotifier {
 	return &VictoropsNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		URL:         url,
-		MessageType: model.Settings.Get("messageType").MustString(),
+		URL:         config.URL,
+		MessageType: config.MessageType,
 		log:         log.New("alerting.notifier.victorops"),
 		ns:          ns,
 		tmpl:        t,
-	}, nil
+	}
 }
 
 // VictoropsNotifier defines URL property for Victorops REST API

@@ -23,6 +23,7 @@ type Role struct {
 	DisplayName string `json:"displayName"`
 	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
+	Hidden      bool   `json:"hidden"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -65,6 +66,7 @@ type RoleDTO struct {
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 	Delegatable *bool        `json:"delegatable,omitempty"`
+	Hidden      bool         `json:"hidden,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
@@ -82,6 +84,7 @@ func (r RoleDTO) Role() Role {
 		DisplayName: r.DisplayName,
 		Group:       r.Group,
 		Description: r.Description,
+		Hidden:      r.Hidden,
 		Updated:     r.Updated,
 		Created:     r.Created,
 	}
@@ -239,11 +242,6 @@ type SetResourcePermissionCommand struct {
 	TeamID      int64
 	BuiltinRole string
 	Permission  string
-}
-
-type SQLFilter struct {
-	Where string
-	Args  []interface{}
 }
 
 const (

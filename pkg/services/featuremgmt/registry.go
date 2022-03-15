@@ -163,10 +163,11 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "fileStoreApi",
-			Description:     "Simple API for managing files",
+			Name:            "azureMonitorResourcePickerForMetrics",
+			Description:     "New UI for Azure Monitor Metrics Query",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+			FrontendOnly:    true,
 		},
 	}
 )

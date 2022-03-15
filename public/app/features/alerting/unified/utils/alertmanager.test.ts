@@ -1,6 +1,12 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
-import { parseMatcher, parseMatchers, labelsMatchMatchers, removeMuteTimingFromRoute } from './alertmanager';
+import {
+  parseMatcher,
+  parseMatchers,
+  labelsMatchMatchers,
+  removeMuteTimingFromRoute,
+  matchersToString,
+} from './alertmanager';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
@@ -160,6 +166,21 @@ describe('Alertmanager utils', () => {
           },
         ],
       });
+    });
+  });
+
+  describe('matchersToString', () => {
+    it('Should create a comma-separated list of labels and values wrapped into curly brackets', () => {
+      const matchers: Matcher[] = [
+        { name: 'severity', value: 'critical', isEqual: true, isRegex: false },
+        { name: 'resource', value: 'cpu', isEqual: true, isRegex: true },
+        { name: 'rule_uid', value: '2Otf8canzz', isEqual: false, isRegex: false },
+        { name: 'cluster', value: 'prom', isEqual: false, isRegex: true },
+      ];
+
+      const matchersString = matchersToString(matchers);
+
+      expect(matchersString).toBe('{severity="critical",resource=~"cpu",rule_uid!="2Otf8canzz",cluster!~"prom"}');
     });
   });
 });
