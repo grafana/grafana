@@ -73,7 +73,7 @@ func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Trace
 		httpClientProvider: httpClientProvider,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 
-		defaultProjectGetter: utils.GCEDefaultProject,
+		gceDefaultProjectGetter: utils.GCEDefaultProject,
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
@@ -135,7 +135,7 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 
 	// mocked in tests
-	defaultProjectGetter func(ctx context.Context) (string, error)
+	gceDefaultProjectGetter func(ctx context.Context) (string, error)
 }
 
 type QueryModel struct {
@@ -620,7 +620,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return s.defaultProjectGetter(ctx)
+		return s.gceDefaultProjectGetter(ctx)
 	}
 	return dsInfo.defaultProject, nil
 }
