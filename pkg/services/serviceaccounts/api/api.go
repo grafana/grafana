@@ -55,16 +55,20 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
-		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
+		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
 		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.updateServiceAccount))
-		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
-		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
+		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
+		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
 		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
@@ -191,6 +195,11 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 			return response.Error(http.StatusInternalServerError, "Failed update service account", err)
 		}
 	}
+
+	saIDString := strconv.FormatInt(resp.Id, 10)
+	metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
+	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault("", resp.Name)
+	resp.AccessControl = metadata[saIDString]
 
 	return response.JSON(http.StatusOK, resp)
 }
