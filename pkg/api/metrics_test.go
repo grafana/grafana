@@ -325,7 +325,7 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 		expectedError        error
 	}{
 		{
-			name:         "Work when correct dashboardId and panelId given",
+			name:         "Work when correct dashboardUid and panelId given",
 			orgId:        testOrgID,
 			dashboardUid: "1",
 			panelId:      2,
@@ -345,7 +345,7 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			expectedError:        models.ErrDashboardNotFound,
 		},
 		{
-			name:                 "404 on invalid dashboardId",
+			name:                 "404 on invalid dashboardUid",
 			orgId:                testOrgID,
 			dashboardUid:         "",
 			panelId:              2,
@@ -419,7 +419,7 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 		expectedError          error
 	}{
 		{
-			name: "Work when correct orgId, dashboardId and panelId given",
+			name: "Work when correct orgId, dashboardUid and panelId given",
 			params: map[string]string{
 				":orgId":        strconv.FormatInt(testOrgID, 10),
 				":dashboardUid": "1",

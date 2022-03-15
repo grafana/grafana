@@ -102,6 +102,15 @@ class DataSourceWithBackend<
     super(instanceSettings);
   }
 
+  getUrlForRequest(request: DataQueryRequest<TQuery>): string {
+    if (config.featureToggles.validatedQueries && request.dashboardUid != null && request.panelId != null) {
+      // add additional params to query so we can validate on the backend.
+      return `/api/dashboards/org/${config.bootData.user.orgId}/uid/${request.dashboardUid}/panels/${request.panelId}/query`;
+    }
+
+    return '/api/ds/query';
+  }
+
   /**
    * Ideally final -- any other implementation may not work as expected
    */
@@ -151,10 +160,6 @@ class DataSourceWithBackend<
 
     const body: any = { queries };
 
-    // add additional params to query so we can validate on the backend.
-    body.dashboardId = request.dashboardId;
-    body.panelId = request.panelId;
-
     if (range) {
       body.range = range;
       body.from = range.from.valueOf().toString();
@@ -170,7 +175,7 @@ class DataSourceWithBackend<
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
+        url: this.getUrlForRequest(request),
         method: 'POST',
         data: body,
         requestId,

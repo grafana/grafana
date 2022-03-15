@@ -47,6 +47,7 @@ export interface QueryRunnerOptions<
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
+  dashboardUid?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -195,6 +196,7 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardId,
+      dashboardUid,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -214,6 +216,7 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardId,
+      dashboardUid,
       range: timeRange,
       timeInfo,
       interval: '',

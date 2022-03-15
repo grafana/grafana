@@ -67,6 +67,12 @@ type MetricRequest struct {
 	Queries []*simplejson.Json `json:"queries"`
 	// required: false
 	Debug bool `json:"debug"`
+	// DashboardUid UID of dashboard where query originated.
+	// required: false
+	DashboardUid string
+	// PanelId ID of panel in above dashboard where query originated.
+	// required: false
+	PanelId int64
 }
 
 func GetGravatarUrl(text string) string {
