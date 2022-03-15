@@ -1,7 +1,6 @@
 package permissions
 
 import (
-	"context"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -83,30 +82,32 @@ type AccessControlDashboardPermissionFilter struct {
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
-	folderAction := dashboards.ActionFoldersRead
-	dashboardAction := accesscontrol.ActionDashboardsRead
+	folderActions := []string{dashboards.ActionFoldersRead}
+	dashboardActions := []string{accesscontrol.ActionDashboardsRead}
 	if f.PermissionLevel == models.PERMISSION_EDIT {
-		folderAction = accesscontrol.ActionDashboardsCreate
-		dashboardAction = accesscontrol.ActionDashboardsWrite
+		folderActions = append(folderActions, accesscontrol.ActionDashboardsCreate)
+		dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsWrite)
 	}
 
+	var args []interface{}
 	builder := strings.Builder{}
-
 	builder.WriteString("(((")
 
-	dashFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "dashboards", dashboardAction, f.User)
+	dashFilter, _ := accesscontrol.Filter(f.User, "dashboard.id", "dashboards", dashboardActions...)
 	builder.WriteString(dashFilter.Where)
+	args = append(args, dashFilter.Args...)
 
 	builder.WriteString(" OR ")
 
-	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", dashboardAction, f.User)
+	dashFolderFilter, _ := accesscontrol.Filter(f.User, "dashboard.folder_id", "folders", dashboardActions...)
 	builder.WriteString(dashFolderFilter.Where)
-
 	builder.WriteString(") AND NOT dashboard.is_folder) OR (")
+	args = append(args, dashFolderFilter.Args...)
 
-	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", folderAction, f.User)
+	folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.id", "folders", folderActions...)
 	builder.WriteString(folderFilter.Where)
 	builder.WriteString(" AND dashboard.is_folder))")
+	args = append(args, folderFilter.Args...)
 
-	return builder.String(), append(dashFilter.Args, append(dashFolderFilter.Args, folderFilter.Args...)...)
+	return builder.String(), args
 }

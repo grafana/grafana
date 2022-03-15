@@ -52,11 +52,11 @@ export type QueryBuilderOperationRenderer = (
   innerExpr: string
 ) => string;
 
-export type QueryBuilderOperationParamValue = string | number;
+export type QueryBuilderOperationParamValue = string | number | boolean;
 
 export interface QueryBuilderOperationParamDef {
   name: string;
-  type: string;
+  type: 'string' | 'number' | 'boolean';
   options?: string[] | number[] | Array<SelectableValue<string>>;
   hideName?: boolean;
   restParam?: boolean;
