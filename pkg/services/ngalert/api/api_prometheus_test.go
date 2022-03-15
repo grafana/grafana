@@ -128,7 +128,6 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	}
 }`, string(r.Body()))
 	})
-
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {
