@@ -46,5 +46,5 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
-  fileStoreApi?: boolean;
+  azureMonitorResourcePickerForMetrics?: boolean;
 }

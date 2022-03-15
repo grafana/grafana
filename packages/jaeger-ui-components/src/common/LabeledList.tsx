@@ -48,6 +48,10 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
       color: ${theme.isLight ? '#999' : '#666'};
       margin-right: 0.25rem;
     `,
+    LabeledListValue: css`
+      label: LabeledListValue;
+      margin-right: 0.55rem;
+    `,
   };
 };
 
@@ -67,7 +71,7 @@ export default function LabeledList(props: LabeledListProps) {
         return (
           <li className={styles.LabeledListItem} key={`${key}`}>
             <span className={styles.LabeledListLabel}>{label}</span>
-            <strong>{value}</strong>
+            <strong className={styles.LabeledListValue}>{value}</strong>
           </li>
         );
       })}

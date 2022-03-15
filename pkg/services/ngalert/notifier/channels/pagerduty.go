@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -40,44 +41,69 @@ type PagerdutyNotifier struct {
 	ns            notifications.WebhookSender
 }
 
-// NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*PagerdutyNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
+type PagerdutyConfig struct {
+	*NotificationChannelConfig
+	Key       string
+	Severity  string
+	Class     string
+	Component string
+	Group     string
+	Summary   string
+}
 
-	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString())
+func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewPagerdutyConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PagerdutyConfig, error) {
+	key := decryptFunc(context.Background(), config.SecureSettings, "integrationKey", config.Settings.Get("integrationKey").MustString())
 	if key == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
+		return nil, errors.New("could not find integration key property in settings")
 	}
+	return &PagerdutyConfig{
+		NotificationChannelConfig: config,
+		Key:                       key,
+		Severity:                  config.Settings.Get("severity").MustString("critical"),
+		Class:                     config.Settings.Get("class").MustString("default"),
+		Component:                 config.Settings.Get("component").MustString("Grafana"),
+		Group:                     config.Settings.Get("group").MustString("default"),
+		Summary:                   config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
+	}, nil
+}
 
+// NewPagerdutyNotifier is the constructor for the PagerDuty notifier
+func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, t *template.Template) *PagerdutyNotifier {
 	return &PagerdutyNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		Key: key,
+		Key: config.Key,
 		CustomDetails: map[string]string{
 			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
 			"num_firing":   `{{ .Alerts.Firing | len }}`,
 			"num_resolved": `{{ .Alerts.Resolved | len }}`,
 		},
-		Severity:  model.Settings.Get("severity").MustString("critical"),
-		Class:     model.Settings.Get("class").MustString("default"),
-		Component: model.Settings.Get("component").MustString("Grafana"),
-		Group:     model.Settings.Get("group").MustString("default"),
-		Summary:   model.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
+		Severity:  config.Severity,
+		Class:     config.Class,
+		Component: config.Component,
+		Group:     config.Group,
+		Summary:   config.Summary,
 		tmpl:      t,
-		log:       log.New("alerting.notifier." + model.Name),
+		log:       log.New("alerting.notifier." + config.Name),
 		ns:        ns,
-	}, nil
+	}
 }
 
 // Notify sends an alert notification to PagerDuty

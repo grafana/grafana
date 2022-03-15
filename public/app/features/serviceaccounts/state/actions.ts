@@ -85,7 +85,9 @@ export function loadServiceAccountTokens(saID: number): ThunkResult<void> {
 
 export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
-    const response = await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.id}`, { ...serviceAccount });
+    const response = await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.id}?accesscontrol=true`, {
+      ...serviceAccount,
+    });
     dispatch(serviceAccountLoaded(response));
   };
 }

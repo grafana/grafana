@@ -244,11 +244,6 @@ type SetResourcePermissionCommand struct {
 	Permission  string
 }
 
-type SQLFilter struct {
-	Where string
-	Args  []interface{}
-}
-
 const (
 	GlobalOrgID = 0
 	// Permission actions
@@ -349,17 +344,6 @@ const (
 
 	// Dashboard scopes
 	ScopeDashboardsAll = "dashboards:*"
-
-	// Folder actions
-	ActionFoldersCreate           = "folders:create"
-	ActionFoldersRead             = "folders:read"
-	ActionFoldersWrite            = "folders:write"
-	ActionFoldersDelete           = "folders:delete"
-	ActionFoldersPermissionsRead  = "folders.permissions:read"
-	ActionFoldersPermissionsWrite = "folders.permissions:write"
-
-	// Folder scopes
-	ScopeFoldersAll = "folders:*"
 )
 
 var (
@@ -367,7 +351,9 @@ var (
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 
 	// Folder scopes
-	ScopeFolderID = Scope("folders", "id", Parameter(":id"))
+
+	// Datasource scopes
+
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
