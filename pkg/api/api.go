@@ -211,7 +211,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-			// FGAC handled withing the storage engine
+			// FGAC handled within the storage engine
 			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
 				orgRoute.Get("/path/", routing.Wrap(hs.StorageService.Browse))
 				orgRoute.Get("/path/*", routing.Wrap(hs.StorageService.Browse))
