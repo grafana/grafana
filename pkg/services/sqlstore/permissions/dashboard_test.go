@@ -27,6 +27,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			permission:               models.PERMISSION_ADMIN,
 			expectedDashboardActions: nil,
 			expectedFolderActions: []string{
+				dashboards.ActionFoldersRead,
 				accesscontrol.ActionAlertingRuleRead,
 				accesscontrol.ActionAlertingRuleUpdate,
 			},
@@ -36,6 +37,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			permission:               models.PERMISSION_EDIT,
 			expectedDashboardActions: nil,
 			expectedFolderActions: []string{
+				dashboards.ActionFoldersRead,
 				accesscontrol.ActionAlertingRuleRead,
 				accesscontrol.ActionAlertingRuleUpdate,
 			},
@@ -45,6 +47,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			permission:               models.PERMISSION_VIEW,
 			expectedDashboardActions: nil,
 			expectedFolderActions: []string{
+				dashboards.ActionFoldersRead,
 				accesscontrol.ActionAlertingRuleRead,
 			},
 		},

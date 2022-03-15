@@ -86,7 +86,7 @@ type AccessControlDashboardPermissionFilter struct {
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
 func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > models.PERMISSION_VIEW
-	var folderActions []string
+	folderActions := []string{dashboards.ActionFoldersRead}
 	var dashboardActions []string
 	if queryType == searchstore.TypeAlertFolder {
 		folderActions = append(folderActions, accesscontrol.ActionAlertingRuleRead)
@@ -94,7 +94,6 @@ func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permis
 			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleUpdate)
 		}
 	} else {
-		folderActions = append(folderActions, dashboards.ActionFoldersRead)
 		dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsRead)
 		if needEdit {
 			folderActions = append(folderActions, accesscontrol.ActionDashboardsCreate)
