@@ -8,7 +8,6 @@ import {
   Field,
   HorizontalGroup,
   Input,
-  Spinner,
   Tab,
   TabContent,
   TabsBar,
@@ -18,9 +17,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { SaveDashboardModalProps } from './types';
 import { GrafanaTheme2 } from '@grafana/data';
-import { DiffViewer } from '../VersionHistory/DiffViewer';
 import { jsonDiff } from '../VersionHistory/utils';
-import { DiffGroup } from '../VersionHistory/DiffGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -28,6 +25,7 @@ import { useDashboardSave } from './useDashboardSave';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
+import { SaveDashboardDiff } from './SaveDashboardDiff';
 
 interface FormDTO {
   message?: string; // the commit message
@@ -92,7 +90,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
     return {
       clone,
-      cloneJSON, // for diff
       diff,
       diffCount,
       hasChanges: diffCount > 0,
@@ -135,24 +132,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
   const renderBody = () => {
     if (showDiff) {
-      return (
-        <>
-          {previous.loading && <Spinner />}
-          {!data.hasChanges && <div>No changs in this dashboard</div>}
-          {data.diff && data.hasChanges && (
-            <div>
-              <div className={styles.spacer}>
-                {Object.entries(data.diff).map(([key, diffs]) => (
-                  <DiffGroup diffs={diffs} key={key} title={key} />
-                ))}
-              </div>
-
-              <h4>JSON Diff</h4>
-              <DiffViewer oldValue={JSON.stringify(previous.value, null, 2)} newValue={data.cloneJSON!} />
-            </div>
-          )}
-        </>
-      );
+      return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
     }
 
     if (status.isNew) {
@@ -268,9 +248,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabsBar: css`
     padding-left: ${theme.v1.spacing.md};
     margin: ${theme.v1.spacing.lg} -${theme.v1.spacing.sm} -${theme.v1.spacing.lg} -${theme.v1.spacing.lg};
-  `,
-  spacer: css`
-    margin-bottom: ${theme.v1.spacing.xl};
   `,
   nothing: css`
     margin: ${theme.v1.spacing.sm};
