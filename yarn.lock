@@ -4171,10 +4171,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/google-sdk@npm:0.0.2":
-  version: 0.0.2
-  resolution: "@grafana/google-sdk@npm:0.0.2"
-  checksum: a4dfe7a31a9fd8aabe8daf997d43a034226a2e366e23257080c6a2c5980f8e57e7bec74ba508ac2d860e247ea7734d91bcd6b71ca5a61fa6277344778640532f
+"@grafana/google-sdk@npm:0.0.3":
+  version: 0.0.3
+  resolution: "@grafana/google-sdk@npm:0.0.3"
+  checksum: 9eb5e043e0fc155173eda5a1819c7535c201719bddb8efcc129227e6fb1f09373f61cc2387e56418c28813dfe869b95278925ae372c95c66ad8f2d4b376875d6
   languageName: node
   linkType: hard
 
@@ -20766,7 +20766,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 3.0.0
     "@grafana/experimental": 0.0.2-canary.18
-    "@grafana/google-sdk": 0.0.2
+    "@grafana/google-sdk": 0.0.3
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -20944,7 +20944,7 @@ __metadata:
     lint-staged: 12.3.3
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: 7.4.0
+    lru-cache: 7.5.1
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
     moment: 2.29.1
@@ -25573,10 +25573,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:7.4.0":
-  version: 7.4.0
-  resolution: "lru-cache@npm:7.4.0"
-  checksum: f966d8b6832ae4b6d454b96b5814a81fdd7312d393208c8ff1456981bafa7c6d5e28f8814813ec196ffac4e33a57c22c7daa24e79192f4c7f0b16acb1b9e7ed1
+"lru-cache@npm:7.5.1":
+  version: 7.5.1
+  resolution: "lru-cache@npm:7.5.1"
+  checksum: f6980281c6ae4e58254d68b2d7878d7abb21c366a7ee527687f4a27bcbf7576f923517285d2fbd4b6a45b5eebdc66b4c565b55a8b49d5dc1babd65a912c26367
   languageName: node
   linkType: hard
 
