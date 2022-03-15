@@ -7,7 +7,6 @@ import {
   Drawer,
   Field,
   HorizontalGroup,
-  Input,
   Tab,
   TabContent,
   TabsBar,
@@ -155,36 +154,26 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
 
     return (
       <form onSubmit={handleSubmit(doSave)}>
-        {status.isNew && (
-          <>
-            <Field label="Dashboard title" invalid={!!errors.newDashboardTitle} error="Title is required">
-              <Input {...register('newDashboardTitle', { required: true })} placeholder="Set dashboard title" />
-            </Field>
-            <Field label="Dashboard folder">
-              <div>TODO: folder selectoin</div>
-            </Field>
-          </>
-        )}
-
         <Field label="Message" invalid={!!errors.message} error="Message is required">
           <TextArea
             {...register('message', { required: false })}
             rows={5}
             placeholder="Add a note to describe your changes."
+            autoFocus
           />
         </Field>
 
         <HorizontalGroup>
-          <Button
-            type="submit"
-            aria-label="Save dashboard button"
-            disabled={!data.hasChanges}
-            icon={saving ? 'fa fa-spinner' : undefined}
-          >
-            {saving ? '' : 'Save'}
-          </Button>
           <Button type="button" variant="secondary" onClick={onDismiss} fill="outline">
             Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={!data.hasChanges}
+            icon={saving ? 'fa fa-spinner' : undefined}
+            aria-label={selectors.pages.SaveDashboardModal.save}
+          >
+            {saving ? '' : 'Save'}
           </Button>
         </HorizontalGroup>
         {!data.hasChanges && <div className={styles.nothing}>No changes to save</div>}
