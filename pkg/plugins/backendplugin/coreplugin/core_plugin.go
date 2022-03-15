@@ -2,6 +2,8 @@ package coreplugin
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,6 +23,15 @@ type corePlugin struct {
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+		for _, e := range env {
+			kv := strings.Split(e, "=")
+			if len(kv) != 2 {
+				continue
+			}
+			if err := os.Setenv(kv[0], kv[1]); err != nil {
+				logger.Debug("Failed to set environment variable", "env", e, "err", err)
+			}
+		}
 		return &corePlugin{
 			pluginID:            pluginID,
 			logger:              logger,

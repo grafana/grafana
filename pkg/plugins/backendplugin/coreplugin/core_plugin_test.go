@@ -2,6 +2,7 @@ package coreplugin_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -65,5 +66,14 @@ func TestCorePlugin(t *testing.T) {
 		err = p.CallResource(context.Background(), &backend.CallResourceRequest{}, nil)
 		require.NoError(t, err)
 		require.True(t, callResourceCalled)
+	})
+
+	t.Run("New core plugin should set env vars", func(t *testing.T) {
+		require.Equal(t, "", os.Getenv("GF_PLUGIN_EXAMPLE"))
+		factory := coreplugin.New(backend.ServeOpts{})
+		p, err := factory("plugin", log.New("test"), []string{"GF_PLUGIN_EXAMPLE=abcdef"})
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, "abcdef", os.Getenv("GF_PLUGIN_EXAMPLE"))
 	})
 }
