@@ -22,6 +22,12 @@ import (
 
 var ResendDelay = 30 * time.Second
 
+// AlertInstanceManager defines the interface for querying the current alert instances.
+type AlertInstanceManager interface {
+	GetAll(orgID int64) []*State
+	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State
+}
+
 type Manager struct {
 	log     log.Logger
 	metrics *metrics.State

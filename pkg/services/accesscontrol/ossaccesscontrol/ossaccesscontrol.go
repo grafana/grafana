@@ -115,7 +115,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 		OrgID:   user.OrgId,
 		UserID:  user.UserId,
 		Roles:   ac.GetUserBuiltInRoles(user),
-		Actions: TeamAdminActions,
+		Actions: append(TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...),
 	})
 	if err != nil {
 		return nil, err

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PromQuery } from '../../types';
-import { getQueryWithDefaults } from '../types';
+import { getQueryWithDefaults } from '../state';
 import { CoreApp } from '@grafana/data';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { selectOptionInTest } from '@grafana/ui';

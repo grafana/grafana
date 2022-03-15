@@ -15,6 +15,7 @@ import {
   VisualQueryModeller,
 } from './shared/types';
 import { PromOperationId, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { binaryScalarOperations } from './binaryScalarOperations';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
@@ -90,26 +91,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: addOperationWithRangeVector,
       changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
     }),
-    // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
-    // both the operator and the operand in a single input
-    {
-      id: PromOperationId.MultiplyBy,
-      name: 'Multiply by scalar',
-      params: [{ name: 'Factor', type: 'number' }],
-      defaultParams: [2],
-      category: PromVisualQueryOperationCategory.BinaryOps,
-      renderer: getSimpleBinaryRenderer('*'),
-      addOperationHandler: defaultAddOperationHandler,
-    },
-    {
-      id: PromOperationId.DivideBy,
-      name: 'Divide by scalar',
-      params: [{ name: 'Factor', type: 'number' }],
-      defaultParams: [2],
-      category: PromVisualQueryOperationCategory.BinaryOps,
-      renderer: getSimpleBinaryRenderer('/'),
-      addOperationHandler: defaultAddOperationHandler,
-    },
+    ...binaryScalarOperations,
     {
       id: PromOperationId.NestedQuery,
       name: 'Binary operation with query',
@@ -330,12 +312,6 @@ export function operationWithRangeVectorRenderer(
   return `${def.id}(${innerExpr}[${rangeVector}])`;
 }
 
-function getSimpleBinaryRenderer(operator: string) {
-  return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${innerExpr} ${operator} ${model.params[0]}`;
-  };
-}
-
 /**
  * Since there can only be one operation with range vector this will replace the current one (if one was added )
  */
@@ -350,7 +326,8 @@ export function addOperationWithRangeVector(
   };
 
   if (query.operations.length > 0) {
-    const firstOp = modeller.getOperationDef(query.operations[0].id);
+    // If operation exists it has to be in the registry so no point to check if it was found
+    const firstOp = modeller.getOperationDef(query.operations[0].id)!;
 
     if (firstOp.addOperationHandler === addOperationWithRangeVector) {
       return {
