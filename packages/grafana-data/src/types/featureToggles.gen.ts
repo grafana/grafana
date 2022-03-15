@@ -43,7 +43,6 @@ export interface FeatureToggles {
   lokiLive?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
-  saveWithDiff?: boolean;
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;

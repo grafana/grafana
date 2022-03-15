@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import { Button, ClipboardButton, Modal, stylesFactory, TextArea, useTheme } from '@grafana/ui';
+import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useTheme } from '@grafana/ui';
 import { SaveDashboardFormProps } from '../types';
 import { GrafanaTheme } from '@grafana/data';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -57,7 +57,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           }}
           className={styles.json}
         />
-        <Modal.ButtonRow>
+        <HorizontalGroup>
           <Button variant="secondary" onClick={onCancel} fill="outline">
             Cancel
           </Button>
@@ -65,7 +65,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
             Copy JSON to clipboard
           </ClipboardButton>
           <Button onClick={saveToFile}>Save JSON to file</Button>
-        </Modal.ButtonRow>
+        </HorizontalGroup>
       </div>
     </>
   );

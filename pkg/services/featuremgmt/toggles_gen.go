@@ -111,10 +111,6 @@ const (
 	// Highlight Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagSaveWithDiff
-	// Open a drawer view with diff for save modal
-	FlagSaveWithDiff = "saveWithDiff"
-
 	// FlagDashboardComments
 	// Enable dashboard-wide comments
 	FlagDashboardComments = "dashboardComments"

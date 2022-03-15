@@ -10,33 +10,24 @@ import { useDashboardSave } from './useDashboardSave';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
-import { SaveDashboardForm2 } from './forms/SaveDashboardForm2';
+import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const styles = useStyles2(getStyles);
   const [options, setOptions] = useState<SaveDashboardOptions>({});
 
-  const status = useMemo(() => {
-    const isProvisioned = dashboard.meta.provisioned;
-    const isNew = dashboard.version === 0;
-    const isChanged = dashboard.version > 0;
-
-    return {
-      isProvisioned,
-      isNew,
-      isChanged,
-    };
-  }, [dashboard]);
+  const isProvisioned = dashboard.meta.provisioned;
+  const isNew = dashboard.version === 0;
 
   const previous = useAsync(async () => {
-    if (status.isNew) {
+    if (isNew) {
       return undefined;
     }
 
     const result = await backendSrv.getDashboardByUid(dashboard.uid);
     return result.dashboard;
-  }, [dashboard, status]);
+  }, [dashboard, isNew]);
 
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({
@@ -61,9 +52,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       clone,
       diff,
       diffCount,
-      hasChanges: diffCount > 0 && !status.isNew,
+      hasChanges: diffCount > 0 && !isNew,
     };
-  }, [dashboard, previous.value, options, status.isNew]);
+  }, [dashboard, previous.value, options, isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
   const { state, onDashboardSave } = useDashboardSave(dashboard);
@@ -79,24 +70,24 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
     }
 
-    if (status.isNew || isCopy) {
+    if (isNew || isCopy) {
       return (
         <SaveDashboardAsForm
           dashboard={dashboard}
           onCancel={onDismiss}
           onSuccess={onSuccess}
           onSubmit={onDashboardSave}
-          isNew={status.isNew}
+          isNew={isNew}
         />
       );
     }
 
-    if (status.isProvisioned) {
+    if (isProvisioned) {
       return <SaveProvisionedDashboardForm dashboard={dashboard} onCancel={onDismiss} onSuccess={onSuccess} />;
     }
 
     return (
-      <SaveDashboardForm2
+      <SaveDashboardForm
         dashboard={dashboard}
         saveModel={data}
         onCancel={onDismiss}
