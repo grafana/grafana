@@ -158,6 +158,19 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+		savedItemsLinks := hs.buildSavedItemsNavLinks(c)
+
+		navTree = append(navTree, &dtos.NavLink{
+			Text: "Saved Items",
+			Id:   "saveditems",
+			Icon: "heart",
+			// TODO test this
+			// Url:        "#",
+			SortWeight: dtos.WeightSavedItems,
+			Section:    dtos.NavSectionCore,
+			Children:   savedItemsLinks,
+		})
+
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Home",
 			Id:         "home",

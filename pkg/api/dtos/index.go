@@ -37,7 +37,8 @@ const (
 	// are negative to ensure that the default items are placed above
 	// any items with default weight.
 
-	WeightHome = (iota - 20) * 100
+	WeightSavedItems = (iota - 20) * 100
+	WeightHome
 	WeightCreate
 	WeightDashboard
 	WeightExplore
