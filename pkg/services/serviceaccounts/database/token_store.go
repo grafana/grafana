@@ -61,3 +61,27 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		return nil
 	})
 }
+
+// assignApiKeyToServiceAccount sets the API key service account ID
+func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(ctx context.Context, apikeyId int64, saccountId int64) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		key := models.ApiKey{Id: apikeyId}
+		exists, err := sess.Get(&key)
+		if err != nil {
+			s.log.Warn("API key not loaded", "err", err)
+			return err
+		}
+		if !exists {
+			s.log.Warn("API key not found", "err", err)
+			return models.ErrApiKeyNotFound
+		}
+		key.ServiceAccountId = &saccountId
+
+		if _, err := sess.ID(key.Id).Update(&key); err != nil {
+			s.log.Warn("Could not update api key", "err", err)
+			return err
+		}
+
+		return nil
+	})
+}

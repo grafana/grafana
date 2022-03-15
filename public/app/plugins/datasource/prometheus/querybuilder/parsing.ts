@@ -324,9 +324,12 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
 }
 
 const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
-  acc[def.sign] = def.id;
+  acc[def.sign] = {
+    id: def.id,
+    comparison: def.comparison,
+  };
   return acc;
-}, {} as Record<string, string>);
+}, {} as Record<string, { id: string; comparison?: boolean }>);
 
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
@@ -339,10 +342,10 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  // TODO: we are skipping BinModifiers
+  const binModifier = node.getChild('BinModifiers')?.getChild('Bool');
   const right = node.lastChild!;
 
-  const opName = operatorToOpName[op];
+  const opDef = operatorToOpName[op];
 
   const leftNumber = left.getChild('NumberLiteral');
   const rightNumber = right.getChild('NumberLiteral');
@@ -359,7 +362,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     if (rightNumber) {
       // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
       //  if query starts with a number that isn't handled now.
-      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, right), 10)] });
+      visQuery.operations.push(makeBinOp(opDef, expr, right, binModifier));
     } else {
       handleExpression(expr, right, context);
     }
@@ -378,7 +381,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
     if (leftMostChild?.name === 'NumberLiteral') {
-      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, leftMostChild), 10)] });
+      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, binModifier));
     }
     // If we added the first number literal as operation here we still can continue and handle the rest as the first
     // number will be just skipped.
@@ -402,6 +405,22 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
       errors: context.errors,
     });
   }
+}
+
+function makeBinOp(
+  opDef: { id: string; comparison?: boolean },
+  expr: string,
+  numberNode: SyntaxNode,
+  binModifier?: SyntaxNode | null
+) {
+  const params: any[] = [parseFloat(getString(expr, numberNode))];
+  if (opDef.comparison) {
+    params.unshift(Boolean(binModifier));
+  }
+  return {
+    id: opDef.id,
+    params,
+  };
 }
 
 /**

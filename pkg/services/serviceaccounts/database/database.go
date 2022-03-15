@@ -54,33 +54,37 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		Tokens: 0,
 	}, nil
 }
-
-func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return deleteServiceAccountInTransaction(sess, orgID, serviceaccountID)
-	})
+func ServiceAccountDeletions() []string {
+	deletes := []string{
+		"DELETE FROM api_key WHERE service_account_id = ?",
+	}
+	deletes = append(deletes, sqlstore.UserDeletions()...)
+	return deletes
 }
 
-func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceAccountID int64) error {
-	user := models.User{}
-	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = true`, orgID, serviceAccountID).Get(&user)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return serviceaccounts.ErrServiceAccountNotFound
-	}
-	for _, sql := range sqlstore.ServiceAccountDeletions() {
-		_, err := sess.Exec(sql, user.Id)
+func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		user := models.User{}
+		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
+			orgID, serviceAccountID, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
+		if !has {
+			return serviceaccounts.ErrServiceAccountNotFound
+		}
+		for _, sql := range ServiceAccountDeletions() {
+			_, err := sess.Exec(sql, user.Id)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
-	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
+	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) > 0 {
 		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
 		go func() {
@@ -96,7 +100,7 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 }
 
 func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
-	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
+	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) == 0 {
 		return nil
 	}
@@ -117,16 +121,29 @@ func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context,
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
-	sa, err := s.sqlStore.CreateServiceAccountForApikey(ctx, key.OrgId, key.Name, key.Role)
-	if err != nil {
-		return fmt.Errorf("failed to create service account for API key with error : %w", err)
+	prefix := "sa-autogen-"
+	cmd := models.CreateUserCommand{
+		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
+		Name:             prefix + key.Name,
+		OrgId:            key.OrgId,
+		DefaultOrgRole:   string(key.Role),
+		IsServiceAccount: true,
 	}
 
-	err = s.sqlStore.UpdateApikeyServiceAccount(ctx, key.Id, sa.Id)
-	if err != nil {
-		return fmt.Errorf("failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w", key.Id, sa.Id, err)
+	newSA, errCreateSA := s.sqlStore.CreateUser(ctx, cmd)
+	if errCreateSA != nil {
+		return fmt.Errorf("failed to create service account: %w", errCreateSA)
 	}
-	s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
+
+	if errUpdateKey := s.assignApiKeyToServiceAccount(ctx, key.Id, newSA.Id); errUpdateKey != nil {
+		return fmt.Errorf(
+			"failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w",
+			key.Id, newSA.Id, errUpdateKey,
+		)
+	}
+
+	s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", newSA.Id)
+
 	return nil
 }
 
@@ -136,43 +153,15 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var sess *xorm.Session
 
+		quotedUser := s.sqlStore.Dialect.Quote("user")
 		sess = dbSession.
-			Join("inner", "user", "user.id = api_key.service_account_id").
-			Where("user.org_id=? AND user.id=?", orgID, serviceAccountID).
+			Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
+			Where(quotedUser+".org_id=? AND "+quotedUser+".id=?", orgID, serviceAccountID).
 			Asc("name")
 
 		return sess.Find(&result)
 	})
 	return result, err
-}
-
-func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
-	if serviceAccountID > 0 {
-		query.UserID = serviceAccountID
-	}
-
-	if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
-		return nil, err
-	}
-
-	saDTOs := make([]*serviceaccounts.ServiceAccountDTO, len(query.Result))
-	for i, user := range query.Result {
-		saDTOs[i] = &serviceaccounts.ServiceAccountDTO{
-			Id:    user.UserId,
-			OrgId: user.OrgId,
-			Name:  user.Name,
-			Login: user.Login,
-			Role:  user.Role,
-		}
-		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
-		if err != nil {
-			return nil, err
-		}
-		saDTOs[i].Tokens = int64(len(tokens))
-	}
-
-	return saDTOs, nil
 }
 
 // RetrieveServiceAccountByID returns a service account by its ID
@@ -298,8 +287,16 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	return updatedUser, err
 }
 
-func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
+	ctx context.Context, orgID int64, query string, page int, limit int,
+	signedInUser *models.SignedInUser,
+) (*serviceaccounts.SearchServiceAccountsResult, error) {
+	searchResult := &serviceaccounts.SearchServiceAccountsResult{
+		TotalCount:      0,
+		ServiceAccounts: make([]*serviceaccounts.ServiceAccountDTO, 0),
+		Page:            page,
+		PerPage:         limit,
+	}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sess := dbSession.Table("org_user")
@@ -309,7 +306,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereParams := make([]interface{}, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, query.OrgID)
+		whereParams = append(whereParams, orgID)
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
@@ -317,7 +314,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				s.sqlStore.Dialect.BooleanStr(true)))
 
 		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", "serviceaccounts:read", query.User)
+			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts", serviceaccounts.ActionRead)
 			if err != nil {
 				return err
 			}
@@ -325,8 +322,8 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			whereParams = append(whereParams, acFilter.Args...)
 		}
 
-		if query.Query != "" {
-			queryWithWildcards := "%" + query.Query + "%"
+		if query != "" {
+			queryWithWildcards := "%" + query + "%"
 			whereConditions = append(whereConditions, "(email "+s.sqlStore.Dialect.LikeStr()+" ? OR name "+s.sqlStore.Dialect.LikeStr()+" ? OR login "+s.sqlStore.Dialect.LikeStr()+" ?)")
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 		}
@@ -334,9 +331,9 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 		}
-		if query.Limit > 0 {
-			offset := query.Limit * (query.Page - 1)
-			sess.Limit(query.Limit, offset)
+		if limit > 0 {
+			offset := limit * (page - 1)
+			sess.Limit(limit, offset)
 		}
 
 		sess.Cols(
@@ -350,7 +347,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			"user.is_disabled",
 		)
 		sess.Asc("user.email", "user.login")
-		if err := sess.Find(&serviceAccounts); err != nil {
+		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
 			return err
 		}
 
@@ -366,7 +363,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		query.Result.TotalCount = count
+		searchResult.TotalCount = count
 
 		return nil
 	})
@@ -374,7 +371,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		return nil, err
 	}
 
-	return serviceAccounts, nil
+	return searchResult, nil
 }
 
 func contains(s []int64, e int64) bool {

@@ -33,6 +33,31 @@ type Folder struct {
 	HasAcl    bool
 }
 
+// NewFolder creates a new Folder
+func NewFolder(title string) *Folder {
+	folder := &Folder{}
+	folder.Title = title
+	folder.Created = time.Now()
+	folder.Updated = time.Now()
+	return folder
+}
+
+// DashboardToFolder converts Dashboard to Folder
+func DashboardToFolder(dash *Dashboard) *Folder {
+	return &Folder{
+		Id:        dash.Id,
+		Uid:       dash.Uid,
+		Title:     dash.Title,
+		HasAcl:    dash.HasAcl,
+		Url:       dash.GetUrl(),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
+	}
+}
+
 // UpdateDashboardModel updates an existing model from command into model for update
 func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard, orgId int64, userId int64) {
 	dashFolder.OrgId = orgId

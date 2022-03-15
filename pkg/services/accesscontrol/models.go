@@ -241,11 +241,6 @@ type SetResourcePermissionCommand struct {
 	Permission  string
 }
 
-type SQLFilter struct {
-	Where string
-	Args  []interface{}
-}
-
 const (
 	GlobalOrgID = 0
 	// Permission actions

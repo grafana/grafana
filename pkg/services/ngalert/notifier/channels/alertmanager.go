@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -17,49 +18,64 @@ import (
 // the given key. If the key is not present, then it returns the fallback value.
 type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string
 
-// NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Template, fn GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
-	urlStr := model.Settings.Get("url").MustString()
-	if urlStr == "" {
-		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}
-	}
+type AlertmanagerConfig struct {
+	*NotificationChannelConfig
+	URLs              []*url.URL
+	BasicAuthUser     string
+	BasicAuthPassword string
+}
 
+func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn) (*AlertmanagerConfig, error) {
+	urlStr := config.Settings.Get("url").MustString()
+	if urlStr == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
 	var urls []*url.URL
 	for _, uS := range strings.Split(urlStr, ",") {
 		uS = strings.TrimSpace(uS)
 		if uS == "" {
 			continue
 		}
-
 		uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
-		u, err := url.Parse(uS)
+		url, err := url.Parse(uS)
 		if err != nil {
-			return nil, receiverInitError{Reason: "invalid url property in settings", Cfg: *model, Err: err}
+			return nil, fmt.Errorf("invalid url property in settings: %w", err)
 		}
-
-		urls = append(urls, u)
+		urls = append(urls, url)
 	}
-	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
+	return &AlertmanagerConfig{
+		NotificationChannelConfig: config,
+		URLs:                      urls,
+		BasicAuthUser:             config.Settings.Get("basicAuthUser").MustString(),
+		BasicAuthPassword:         fn(context.Background(), config.SecureSettings, "basicAuthPassword", config.Settings.Get("basicAuthPassword").MustString()),
+	}, nil
+}
 
+func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
+	config, err := NewAlertmanagerConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewAlertmanagerNotifier(config, nil, fc.DecryptFunc), nil
+}
+
+// NewAlertmanagerNotifier returns a new Alertmanager notifier.
+func NewAlertmanagerNotifier(config *AlertmanagerConfig, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		urls:              urls,
-		basicAuthUser:     basicAuthUser,
-		basicAuthPassword: basicAuthPassword,
+		urls:              config.URLs,
+		basicAuthUser:     config.BasicAuthUser,
+		basicAuthPassword: config.BasicAuthPassword,
 		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
-	}, nil
+	}
 }
 
 // AlertmanagerNotifier sends alert notifications to the alert manager
