@@ -9,7 +9,7 @@ import { useAsync } from 'react-use';
 
 interface SaveDashboardDiffProps {
   oldValue?: any;
-  newValue: any;
+  newValue?: any;
 
   // calculated outside
   diff?: Diffs;

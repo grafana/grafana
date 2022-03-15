@@ -59,7 +59,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
     };
   }, [dashboard]);
 
-  // Fetch the prevous version rather than depend on redux store
   const previous = useAsync(async () => {
     if (status.isNew) {
       return undefined;
@@ -92,9 +91,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
       clone,
       diff,
       diffCount,
-      hasChanges: diffCount > 0,
+      hasChanges: diffCount > 0 && !status.isNew,
     };
-  }, [dashboard, previous.value, saveTimeRange, saveVariables]);
+  }, [dashboard, previous.value, saveTimeRange, saveVariables, status.isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -179,7 +178,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
           <Button
             type="submit"
             aria-label="Save dashboard button"
-            disabled={!data.hasChanges && !status.isNew}
+            disabled={!data.hasChanges}
             icon={saving ? 'fa fa-spinner' : undefined}
           >
             {saving ? '' : 'Save'}
@@ -188,7 +187,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss }: SaveDashboardModal
             Cancel
           </Button>
         </HorizontalGroup>
-        {!data.hasChanges && !status.isNew && <div className={styles.nothing}>No changes to save</div>}
+        {!data.hasChanges && <div className={styles.nothing}>No changes to save</div>}
       </form>
     );
   };
