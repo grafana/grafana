@@ -20,3 +20,28 @@ var (
 	ScopeAll      = accesscontrol.GetResourceAllScope(ScopeRoot)
 	ScopeProvider = accesscontrol.NewScopeProvider(ScopeRoot)
 )
+
+var (
+	// ConfigurationPageAccess is used to protect the "Configure > Data sources" tab access
+	ConfigurationPageAccess = accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ActionRead),
+		accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(ActionCreate),
+			accesscontrol.EvalPermission(ActionDelete),
+			accesscontrol.EvalPermission(ActionWrite),
+		),
+	)
+
+	// NewPageAccess is used to protect the "Configure > Data sources > New" page access
+	NewPageAccess = accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ActionRead),
+		accesscontrol.EvalPermission(ActionCreate),
+		accesscontrol.EvalPermission(ActionWrite),
+	)
+
+	// EditPageAccess is used to protect the "Configure > Data sources > Edit" page access
+	EditPageAccess = accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ActionRead),
+		accesscontrol.EvalPermission(ActionWrite),
+	)
+)

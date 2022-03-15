@@ -387,29 +387,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 // Evaluators
 // here is the list of complex evaluators we use in this package
 
-// dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
-var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(datasources.ActionRead),
-	ac.EvalAny(
-		ac.EvalPermission(datasources.ActionCreate),
-		ac.EvalPermission(datasources.ActionDelete),
-		ac.EvalPermission(datasources.ActionWrite),
-	),
-)
-
-// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
-var dataSourcesNewAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(datasources.ActionRead),
-	ac.EvalPermission(datasources.ActionCreate),
-	ac.EvalPermission(datasources.ActionWrite),
-)
-
-// dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
-var dataSourcesEditAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(datasources.ActionRead),
-	ac.EvalPermission(datasources.ActionWrite),
-)
-
 // orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
 var orgPreferencesAccessEvaluator = ac.EvalAny(
 	ac.EvalAll(
