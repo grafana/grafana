@@ -101,7 +101,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
     const data: IconData = {
       path,
-      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#CCC',
+      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#19730E',
       api: cfg?.api ?? undefined,
     };
 
@@ -157,10 +157,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         name: 'Stroke color',
         editor: ColorDimensionEditor,
         settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
+        defaultValue: {},
         showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
       })
       .addCustomEditor({
