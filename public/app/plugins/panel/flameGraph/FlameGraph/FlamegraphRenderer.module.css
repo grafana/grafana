@@ -1,0 +1,21 @@
+.flamegraphContainer {
+  width: 100%;
+}
+
+/* We take a gamble here and assume only 2 items will exist */
+.flamegraphContainer > *:first-child {
+  margin-right: 8px;
+}
+.flamegraphContainer > *:nth-child(2) {
+  margin-left: 8px;
+  width: 50%;
+}
+
+.createdBy {
+  color: white;
+  text-align: center;
+  margin: 10px 0;
+}
+.createdBy a {
+  color: #199bef !important;
+}

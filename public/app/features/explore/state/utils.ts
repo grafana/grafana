@@ -75,6 +75,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  profileFrames: [],
   tableFrames: [],
   graphResult: null,
   logsResult: null,

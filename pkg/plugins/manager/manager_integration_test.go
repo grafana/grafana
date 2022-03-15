@@ -137,6 +137,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"timeseries":     {},
 		"welcome":        {},
 		"xychart":        {},
+		"flameGraph":     {},
 	}
 
 	expDataSources := map[string]struct{}{

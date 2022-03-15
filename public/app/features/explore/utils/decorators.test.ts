@@ -75,6 +75,7 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     timeRange: {} as unknown as TimeRange,
     state: LoadingState.Done,
     graphFrames: [],
+    profileFrames: [],
     graphResult: undefined as unknown as null,
     logsFrames: [],
     logsResult: undefined as unknown as null,
