@@ -41,7 +41,7 @@ describe('Add to Dashboard Modal', () => {
     it('Does not submit if the form is invalid', async () => {
       const saveMock = jest.fn();
 
-      render(<AddToDashboardModal queries={[]} visualization="table" onSave={saveMock} onClose={() => {}} />);
+      render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
       // there shouldn't be any alert in the modal
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('Add to Dashboard Modal', () => {
     it('Correctly submits if the form is valid', async () => {
       const saveMock = jest.fn();
 
-      render(<AddToDashboardModal queries={[]} visualization="table" onSave={saveMock} onClose={() => {}} />);
+      render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
       await waitForSearchFolderResponse();
 
       const dashboardNameInput = screen.getByRole<HTMLInputElement>('textbox', { name: /dashboard name/i });
@@ -77,8 +77,6 @@ describe('Add to Dashboard Modal', () => {
       expect(saveMock).toHaveBeenCalledWith(
         {
           dashboardName: dashboardNameInput.value,
-          queries: [],
-          visualization: 'table',
           folderId: 1,
         },
         expect.anything()
@@ -91,7 +89,7 @@ describe('Add to Dashboard Modal', () => {
       // name-exists is triggered when trying to create a dashboard in a folder that already has a dashboard with the same name
       const saveMock = jest.fn().mockResolvedValue({ status: 'name-exists', message: 'name exists' });
 
-      render(<AddToDashboardModal queries={[]} visualization="table" onSave={saveMock} onClose={() => {}} />);
+      render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
@@ -106,7 +104,7 @@ describe('Add to Dashboard Modal', () => {
       // dashboard name field
       const saveMock = jest.fn().mockResolvedValue({ status: 'empty-name', message: 'empty name' });
 
-      render(<AddToDashboardModal queries={[]} visualization="table" onSave={saveMock} onClose={() => {}} />);
+      render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
@@ -119,7 +117,7 @@ describe('Add to Dashboard Modal', () => {
       // https://github.com/grafana/grafana/blob/44f1e381cbc7a5e236b543bc6bd06b00e3152d7f/pkg/models/dashboards.go#L71
       const saveMock = jest.fn().mockResolvedValue({ status: 'name-match', message: 'name match' });
 
-      render(<AddToDashboardModal queries={[]} visualization="table" onSave={saveMock} onClose={() => {}} />);
+      render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
@@ -129,7 +127,7 @@ describe('Add to Dashboard Modal', () => {
     it('Correctly handles unknown API Errors', async () => {
       const saveMock = jest.fn().mockResolvedValue({ status: 'unknown-error', message: 'unknown error' });
 
-      render(<AddToDashboardModal queries={[]} visualization="table" onSave={saveMock} onClose={() => {}} />);
+      render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
