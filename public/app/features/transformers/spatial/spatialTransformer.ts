@@ -30,7 +30,7 @@ async function doSetGeometry(frames: DataFrame[], options: SpatialTransformOptio
         const line = createLineBetween(src.field, target.field);
         const first = fields[0];
         if (first.type === FieldType.geo && first !== src.field && first !== target.field) {
-          fields.unshift(createGeometryCollection(first, line)); //
+          fields[0] = createGeometryCollection(first, line); //
         } else {
           fields.unshift(line);
         }
