@@ -112,7 +112,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
 
   return (
     <Drawer
-      title={isCopy ? 'Save dashboard as...' : 'Save dashboard'}
+      title={isCopy ? 'Save dashboard copy' : 'Save dashboard'}
       onClose={onDismiss}
       width={'40%'}
       subtitle={
