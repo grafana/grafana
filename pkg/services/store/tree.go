@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"golang.org/x/sync/errgroup"
 )
 
 type nestedTree struct {
@@ -75,28 +74,13 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return nil, nil // not found (or not ready)
 	}
 
-	var files *filestorage.ListFilesResponse
-	var folders []filestorage.FileMetadata
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		f, err := root.ListFiles(ctx, path, nil, nil)
-		files = f
-		return err
-	})
-	g.Go(func() error {
-		f, err := root.ListFolders(ctx, path, &filestorage.ListOptions{Recursive: false})
-		for i := range f {
-			f[i].MimeType = "directory" // hack for now
-		}
-		folders = f
-		return err
-	})
+	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{Recursive: false, WithFolders: true, WithFiles: true})
 
-	if err := g.Wait(); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
-	count := len(files.Files) + len(folders)
+	count := len(listResponse.Files)
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
@@ -106,7 +90,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 	fsize.Config = &data.FieldConfig{
 		Unit: "bytes",
 	}
-	for i, f := range append(folders, files.Files...) {
+	for i, f := range listResponse.Files {
 		names.Set(i, f.Name)
 		mtype.Set(i, f.MimeType)
 		fsize.Set(i, f.Size)
@@ -115,7 +99,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 	frame.SetMeta(&data.FrameMeta{
 		Type: data.FrameTypeDirectoryListing,
 		Custom: map[string]interface{}{
-			"HasMore": files.HasMore,
+			"HasMore": listResponse.HasMore,
 		},
 	})
 	return frame, nil
