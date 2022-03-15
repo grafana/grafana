@@ -19,6 +19,8 @@ import (
 
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
+const RootPublicStatic = "public-static"
+
 type StorageService interface {
 	registry.BackgroundService
 
@@ -41,7 +43,7 @@ type standardStorageService struct {
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
 	roots := []storageRuntime{
-		newDiskStorage("public-static", "Public static files", &StorageLocalDiskConfig{
+		newDiskStorage(RootPublicStatic, "Public static files", &StorageLocalDiskConfig{
 			Path: cfg.StaticRootPath,
 			Roots: []string{
 				"/testdata/",
