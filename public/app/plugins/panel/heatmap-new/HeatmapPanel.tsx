@@ -1,6 +1,14 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
+import {
+  Field,
+  formattedValueToString,
+  GrafanaTheme2,
+  LinkModel,
+  PanelProps,
+  reduceField,
+  ReducerID,
+} from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -9,6 +17,7 @@ import {
   VizLayout,
   VizTooltipContainer,
   LegendDisplayMode,
+  UPlotConfigBuilder,
 } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
@@ -19,6 +28,7 @@ import { HeatmapHoverEvent, prepConfig } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from './ColorScale';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -133,6 +143,17 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
               </>
             )}
             <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
+            {data.annotations && (
+              <ExemplarsPlugin
+                config={{} as UPlotConfigBuilder}
+                exemplars={data.annotations}
+                timeZone={timeZone}
+                getFieldLinks={(field: Field, rowIndex: number): Array<LinkModel<Field>> => {
+                  console.log('getFieldLinks Called', field, rowIndex);
+                  return [];
+                }}
+              />
+            )}
           </VizTooltipContainer>
         )}
       </Portal>
