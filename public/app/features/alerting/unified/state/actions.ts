@@ -94,8 +94,15 @@ function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: stri
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
-  ({ rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter }): Promise<RuleNamespace[]> =>
-    withSerializedError(fetchRules(rulesSourceName, filter))
+  (
+    { rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter },
+    thunkAPI
+  ): Promise<RuleNamespace[]> => {
+    const dsConfig = getDataSourceConfig(thunkAPI.getState, rulesSourceName);
+    const customRulerEnabled = dsConfig.rulerConfig?.customRulerEnabled ?? false;
+
+    return withSerializedError(fetchRules(rulesSourceName, filter, customRulerEnabled));
+  }
 );
 
 export const fetchAlertManagerConfigAction = createAsyncThunk(
