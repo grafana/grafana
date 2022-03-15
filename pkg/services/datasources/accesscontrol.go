@@ -3,20 +3,20 @@ package datasources
 import "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 const (
-	ActionDatasourcesRead             = "datasources:read"
-	ActionDatasourcesQuery            = "datasources:query"
-	ActionDatasourcesCreate           = "datasources:create"
-	ActionDatasourcesWrite            = "datasources:write"
-	ActionDatasourcesDelete           = "datasources:delete"
-	ActionDatasourcesIDRead           = "datasources.id:read"
-	ActionDatasourcesPermissionsRead  = "datasources.permissions:read"
-	ActionDatasourcesPermissionsWrite = "datasources.permissions:write"
+	ScopeRoot = "datasources"
 
-	ScopeDatasourcesRoot = "datasources"
+	ActionRead             = "datasources:read"
+	ActionQuery            = "datasources:query"
+	ActionCreate           = "datasources:create"
+	ActionWrite            = "datasources:write"
+	ActionDelete           = "datasources:delete"
+	ActionIDRead           = "datasources.id:read"
+	ActionPermissionsRead  = "datasources.permissions:read"
+	ActionPermissionsWrite = "datasources.permissions:write"
 )
 
 var (
-	ScopeDatasourceID        = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":datasourceId"))
-	ScopeDatasourcesAll      = accesscontrol.GetResourceAllScope(ScopeDatasourcesRoot)
-	ScopeDatasourcesProvider = accesscontrol.NewScopeProvider(ScopeDatasourcesRoot)
+	ScopeID       = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":datasourceId"))
+	ScopeAll      = accesscontrol.GetResourceAllScope(ScopeRoot)
+	ScopeProvider = accesscontrol.NewScopeProvider(ScopeRoot)
 )

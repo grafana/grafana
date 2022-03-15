@@ -83,12 +83,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Data sources",
 			Permissions: []ac.Permission{
 				{
-					Action: datasources.ActionDatasourcesRead,
-					Scope:  datasources.ScopeDatasourcesProvider.GetResourceAllScope(),
+					Action: datasources.ActionRead,
+					Scope:  datasources.ScopeAll,
 				},
 				{
-					Action: datasources.ActionDatasourcesQuery,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Action: datasources.ActionQuery,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -104,15 +104,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Data sources",
 			Permissions: ac.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []ac.Permission{
 				{
-					Action: datasources.ActionDatasourcesWrite,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Action: datasources.ActionWrite,
+					Scope:  datasources.ScopeAll,
 				},
 				{
-					Action: datasources.ActionDatasourcesCreate,
+					Action: datasources.ActionCreate,
 				},
 				{
-					Action: datasources.ActionDatasourcesDelete,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Action: datasources.ActionDelete,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
@@ -128,8 +128,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Infrequently used",
 			Permissions: []ac.Permission{
 				{
-					Action: datasources.ActionDatasourcesIDRead,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Action: datasources.ActionIDRead,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -144,8 +144,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Only used for open source compatibility. Query data sources.",
 			Group:       "Infrequently used",
 			Permissions: []ac.Permission{
-				{Action: datasources.ActionDatasourcesQuery},
-				{Action: datasources.ActionDatasourcesRead},
+				{Action: datasources.ActionQuery},
+				{Action: datasources.ActionRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -389,25 +389,25 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 // dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
 var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(datasources.ActionDatasourcesRead),
+	ac.EvalPermission(datasources.ActionRead),
 	ac.EvalAny(
-		ac.EvalPermission(datasources.ActionDatasourcesCreate),
-		ac.EvalPermission(datasources.ActionDatasourcesDelete),
-		ac.EvalPermission(datasources.ActionDatasourcesWrite),
+		ac.EvalPermission(datasources.ActionCreate),
+		ac.EvalPermission(datasources.ActionDelete),
+		ac.EvalPermission(datasources.ActionWrite),
 	),
 )
 
 // dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
 var dataSourcesNewAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(datasources.ActionDatasourcesRead),
-	ac.EvalPermission(datasources.ActionDatasourcesCreate),
-	ac.EvalPermission(datasources.ActionDatasourcesWrite),
+	ac.EvalPermission(datasources.ActionRead),
+	ac.EvalPermission(datasources.ActionCreate),
+	ac.EvalPermission(datasources.ActionWrite),
 )
 
 // dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
 var dataSourcesEditAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(datasources.ActionDatasourcesRead),
-	ac.EvalPermission(datasources.ActionDatasourcesWrite),
+	ac.EvalPermission(datasources.ActionRead),
+	ac.EvalPermission(datasources.ActionWrite),
 )
 
 // orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
