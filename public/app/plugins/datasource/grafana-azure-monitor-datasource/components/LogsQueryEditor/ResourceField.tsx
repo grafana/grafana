@@ -7,6 +7,7 @@ import Datasource from '../../datasource';
 import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
+import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceURI } from '../ResourcePicker/utils';
 import { Space } from '../Space';
 import { setResource } from './setQueryValue';
@@ -65,6 +66,12 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
           templateVariables={templateVariables}
           onApply={handleApply}
           onCancel={closePicker}
+          selectableEntryTypes={[
+            ResourceRowType.Subscription,
+            ResourceRowType.ResourceGroup,
+            ResourceRowType.Resource,
+            ResourceRowType.Variable,
+          ]}
         />
       </Modal>
 

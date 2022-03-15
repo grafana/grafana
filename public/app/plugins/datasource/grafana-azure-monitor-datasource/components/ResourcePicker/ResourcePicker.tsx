@@ -15,6 +15,7 @@ interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
   templateVariables: string[];
+  selectableEntryTypes: ResourceRowType[];
 
   onApply: (resourceURI: string | undefined) => void;
   onCancel: () => void;
@@ -26,6 +27,7 @@ const ResourcePicker = ({
   templateVariables,
   onApply,
   onCancel,
+  selectableEntryTypes,
 }: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
 
@@ -154,6 +156,7 @@ const ResourcePicker = ({
             requestNestedRows={requestNestedRows}
             onRowSelectedChange={handleSelectionChanged}
             selectedRows={selectedResourceRows}
+            selectableEntryTypes={selectableEntryTypes}
           />
 
           <div className={styles.selectionFooter}>
@@ -167,6 +170,7 @@ const ResourcePicker = ({
                   onRowSelectedChange={handleSelectionChanged}
                   selectedRows={selectedResourceRows}
                   noHeader={true}
+                  selectableEntryTypes={selectableEntryTypes}
                 />
               </>
             )}
