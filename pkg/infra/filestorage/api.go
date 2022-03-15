@@ -133,7 +133,7 @@ func (f *PathFilters) IsAllowed(path string) bool {
 }
 
 type ListResponse struct {
-	Files    []File
+	Files    []*File
 	HasMore  bool
 	LastPath string
 }

@@ -247,7 +247,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 		foundCursor = false
 	}
 
-	files := make([]File, 0)
+	files := make([]*File, 0)
 
 	visitedFolders := map[string]bool{}
 	visitedFolders[lowerRootPath] = true
@@ -306,7 +306,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 					p = strings.TrimSuffix(obj.Key, Delimiter)
 				}
 
-				files = append(files, File{
+				files = append(files, &File{
 					Contents: nil,
 					FileMetadata: FileMetadata{
 						MimeType:   DirectoryMimeType,
@@ -373,7 +373,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 				}
 			}
 
-			files = append(files, File{
+			files = append(files, &File{
 				Contents: contents,
 				FileMetadata: FileMetadata{
 					Name:       getName(originalPath),

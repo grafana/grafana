@@ -222,7 +222,7 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 	}
 
 	switch o := output.(type) {
-	case File:
+	case *File:
 		for _, check := range checks {
 			checkName := interfaceName(check)
 			if fileContentsCheck, ok := check.(fileContentsCheck); ok {
@@ -257,7 +257,7 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 
 }
 
-func formatPathStructure(files []File) string {
+func formatPathStructure(files []*File) string {
 	if len(files) == 0 {
 		return "<<EMPTY>>"
 	}
@@ -280,7 +280,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		if q.checks != nil && len(q.checks) > 0 {
 			require.NotNil(t, file, "%s %s", queryName, inputPath)
 			require.Equal(t, strings.ToLower(inputPath), strings.ToLower(file.FullPath), "%s %s", queryName, inputPath)
-			runChecks(t, queryName, inputPath, *file, q.checks)
+			runChecks(t, queryName, inputPath, file, q.checks)
 		} else {
 			require.Nil(t, file, "%s %s", queryName, inputPath)
 		}

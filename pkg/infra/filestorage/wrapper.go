@@ -358,7 +358,7 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 	options = b.listOptionsWithDefaults(options)
 	if (!options.WithFiles && !options.WithFolders) || options.isDenyAll() {
 		return &ListResponse{
-			Files:    []File{},
+			Files:    []*File{},
 			HasMore:  false,
 			LastPath: "",
 		}, nil
@@ -405,7 +405,7 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 			contents = []byte{}
 		}
 		return &ListResponse{
-			Files:    []File{{Contents: contents, FileMetadata: file.FileMetadata}},
+			Files:    []*File{{Contents: contents, FileMetadata: file.FileMetadata}},
 			HasMore:  false,
 			LastPath: file.FileMetadata.FullPath,
 		}, nil

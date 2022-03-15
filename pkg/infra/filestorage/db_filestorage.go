@@ -333,7 +333,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			return err
 		}
 
-		files := make([]File, 0)
+		files := make([]*File, 0)
 		for i := 0; i < foundLength; i++ {
 			var props map[string]string
 			path := strings.TrimSuffix(foundFiles[i].Path, Delimiter)
@@ -349,7 +349,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			} else {
 				contents = []byte{}
 			}
-			files = append(files, File{Contents: contents, FileMetadata: FileMetadata{
+			files = append(files, &File{Contents: contents, FileMetadata: FileMetadata{
 				Name:       getName(path),
 				FullPath:   path,
 				Created:    foundFiles[i].Created,
