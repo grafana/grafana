@@ -158,7 +158,10 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		savedItemsLinks := hs.buildSavedItemsNavLinks(c)
+		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c)
+		if err != nil {
+			return nil, err
+		}
 
 		navTree = append(navTree, &dtos.NavLink{
 			Text: "Saved Items",
@@ -401,22 +404,24 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 }
 
 func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
-
 	savedItemsChildNavs := []*dtos.NavLink{}
-	// query preferences table for any navbar preferences
+
+	// query preferences table for any saved items
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
-	jsonDataPref := prefsQuery.Result.JsonData
+	savedItems := prefsQuery.Result.JsonData.Navbar.SavedItems
 
-	if len(jsonDataPref.Navbar) > 0 {
-		for _, navItem := range navTree {
-			// Set any that exist in the navbar preferences to hide=false
-			for _, pref := range jsonDataPref.Navbar {
-
-				savedItemsChildNavs = append(savedItemsChildNavs, pref)
-			}
+	if len(savedItems) > 0 {
+		// Set any that exist in the navbar preferences to hide=false
+		for _, savedItem := range savedItems {
+			savedItemsChildNavs = append(savedItemsChildNavs, &dtos.NavLink{
+				Id:     savedItem.Id,
+				Text:   savedItem.Text,
+				Url:    savedItem.Url,
+				Target: savedItem.Target,
+			})
 		}
 	}
 

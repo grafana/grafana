@@ -4,9 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"time"
-
-	"github.com/grafana/grafana/pkg/api/dtos"
 )
+
+type NavLink struct {
+	Id     string `json:"id,omitempty"`
+	Text   string `json:"text,omitempty"`
+	Url    string `json:"url,omitempty"`
+	Target string `json:"target,omitempty"`
+}
 
 type Preferences struct {
 	Id              int64
@@ -41,7 +46,7 @@ func (j *PreferencesJsonData) ToDB() ([]byte, error) {
 }
 
 type NavbarPreference struct {
-	SavedItems []dtos.NavLinks
+	SavedItems []NavLink
 }
 
 type PreferencesJsonData struct {
@@ -73,11 +78,11 @@ type SavePreferencesCommand struct {
 	OrgId  int64
 	TeamId int64
 
-	HomeDashboardId int64               `json:"homeDashboardId,omitempty"`
-	Timezone        string              `json:"timezone,omitempty"`
-	WeekStart       string              `json:"weekStart,omitempty"`
-	Theme           string              `json:"theme,omitempty"`
-	Navbar          *[]NavbarPreference `json:"navbar,omitempty"`
+	HomeDashboardId int64             `json:"homeDashboardId,omitempty"`
+	Timezone        string            `json:"timezone,omitempty"`
+	WeekStart       string            `json:"weekStart,omitempty"`
+	Theme           string            `json:"theme,omitempty"`
+	Navbar          *NavbarPreference `json:"navbar,omitempty"`
 }
 
 type PatchPreferencesCommand struct {
@@ -85,9 +90,9 @@ type PatchPreferencesCommand struct {
 	OrgId  int64
 	TeamId int64
 
-	HomeDashboardId *int64              `json:"homeDashboardId,omitempty"`
-	Timezone        *string             `json:"timezone,omitempty"`
-	WeekStart       *string             `json:"weekStart,omitempty"`
-	Theme           *string             `json:"theme,omitempty"`
-	Navbar          *[]NavbarPreference `json:"navbar,omitempty"`
+	HomeDashboardId *int64            `json:"homeDashboardId,omitempty"`
+	Timezone        *string           `json:"timezone,omitempty"`
+	WeekStart       *string           `json:"weekStart,omitempty"`
+	Theme           *string           `json:"theme,omitempty"`
+	Navbar          *NavbarPreference `json:"navbar,omitempty"`
 }
