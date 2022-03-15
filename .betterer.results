@@ -44,7 +44,7 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Logs/LogRows.test.tsx:2288254498": [
       [3, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:1906163280": [
+    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:1297745712": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Slider/Slider.test.tsx:2110443485": [
@@ -230,7 +230,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/ErrorContainer.test.tsx:2082593062": [
       [2, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/Explore.test.tsx:1509039437": [
+    "public/app/features/explore/Explore.test.tsx:2684077338": [
       [11, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/ExploreDrawer.test.tsx:2094071178": [
@@ -269,7 +269,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/TimeSyncButton.test.tsx:4230066214": [
       [2, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/folders/FolderSettingsPage.test.tsx:1751147194": [
+    "public/app/features/folders/FolderSettingsPage.test.tsx:3884290298": [
       [2, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/invites/InviteesTable.test.tsx:3077684439": [
@@ -326,7 +326,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:2916632804": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/InsightsConfig.test.tsx:866257119": [
+    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/deprecated/components/InsightsConfig.test.tsx:1635510338": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:767000341": [

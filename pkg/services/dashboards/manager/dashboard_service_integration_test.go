@@ -5,15 +5,18 @@ package service
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	dashbboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -854,7 +857,11 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	res, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
+	service := ProvideDashboardService(
+		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+	)
+	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -863,7 +870,11 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	_, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
+	service := ProvideDashboardService(
+		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+	)
+	_, err := service.SaveDashboard(context.Background(), &dto, false)
 	return err
 }
 
@@ -890,7 +901,11 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	res, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
+	service := ProvideDashboardService(
+		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+	)
+	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -918,7 +933,11 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	res, err := ProvideDashboardService(dashboardStore, &dummyDashAlertExtractor{}).SaveDashboard(context.Background(), &dto, false)
+	service := ProvideDashboardService(
+		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+	)
+	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res

@@ -66,18 +66,23 @@ export const LibraryPanelsSearch = ({
             placeholder={'Search by name or description'}
             width={0}
           />
-          <HorizontalGroup
-            spacing="sm"
-            justify={(showSort && showPanelFilter) || showFolderFilter ? 'space-between' : 'flex-end'}
-          >
-            {showSort && (
-              <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />
-            )}
-            <HorizontalGroup spacing="sm" justify={showFolderFilter && showPanelFilter ? 'space-between' : 'flex-end'}>
-              {showFolderFilter && <FolderFilter onChange={onFolderFilterChange} />}
-              {showPanelFilter && <PanelTypeFilter onChange={onPanelFilterChange} />}
+          <div className={styles.buttonRow}>
+            <HorizontalGroup
+              spacing="sm"
+              justify={(showSort && showPanelFilter) || showFolderFilter ? 'space-between' : 'flex-end'}
+            >
+              {showSort && (
+                <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />
+              )}
+              <HorizontalGroup
+                spacing="sm"
+                justify={showFolderFilter && showPanelFilter ? 'space-between' : 'flex-end'}
+              >
+                {showFolderFilter && <FolderFilter onChange={onFolderFilterChange} />}
+                {showPanelFilter && <PanelTypeFilter onChange={onPanelFilterChange} />}
+              </HorizontalGroup>
             </HorizontalGroup>
-          </HorizontalGroup>
+          </div>
           <div className={styles.libraryPanelsView}>
             <LibraryPanelsView
               onClickCard={onClick}
@@ -98,7 +103,7 @@ export const LibraryPanelsSearch = ({
   return (
     <div className={styles.container}>
       <VerticalGroup spacing="xs">
-        <div className={styles.buttonRow}>
+        <div className={styles.tightButtonRow}>
           <div className={styles.tightFilter}>
             <FilterInput value={searchQuery} onChange={onFilterChange} placeholder={'Search by name'} width={0} />
           </div>
@@ -136,7 +141,13 @@ function getStyles(theme: GrafanaTheme2) {
       display: flex;
       justify-content: space-between;
       width: 100%;
-      margin-top: ${theme.spacing(1.5)}; // Clear types link
+      margin-top: ${theme.spacing(2)}; // Clear types link
+    `,
+    tightButtonRow: css`
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: ${theme.spacing(4)}; // Clear types link
     `,
     tightFilter: css`
       flex-grow: 1;

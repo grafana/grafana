@@ -23,6 +23,7 @@ type Role struct {
 	DisplayName string `json:"displayName"`
 	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
+	Hidden      bool   `json:"hidden"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -65,6 +66,7 @@ type RoleDTO struct {
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 	Delegatable *bool        `json:"delegatable,omitempty"`
+	Hidden      bool         `json:"hidden,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
@@ -82,6 +84,7 @@ func (r RoleDTO) Role() Role {
 		DisplayName: r.DisplayName,
 		Group:       r.Group,
 		Description: r.Description,
+		Hidden:      r.Hidden,
 		Updated:     r.Updated,
 		Created:     r.Created,
 	}
@@ -241,14 +244,13 @@ type SetResourcePermissionCommand struct {
 	Permission  string
 }
 
-type SQLFilter struct {
-	Where string
-	Args  []interface{}
-}
-
 const (
 	GlobalOrgID = 0
 	// Permission actions
+
+	ActionAPIKeyRead   = "apikeys:read"
+	ActionAPIKeyCreate = "apikeys:create"
+	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
 	ActionUsersRead     = "users:read"
@@ -299,6 +301,9 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
+	// APIKeys scope
+	ScopeAPIKeysAll = "apikeys:*"
+
 	// Users scope
 	ScopeUsersAll = "users:*"
 
@@ -323,17 +328,32 @@ const (
 	ScopeTeamsAll = "teams:*"
 
 	// Annotations related actions
-	ActionAnnotationsRead = "annotations:read"
-
+	ActionAnnotationsRead     = "annotations:read"
 	ActionAnnotationsTagsRead = "annotations.tags:read"
 
 	ScopeAnnotationsAll     = "annotations:*"
 	ScopeAnnotationsTagsAll = "annotations:tags:*"
+
+	// Dashboard actions
+	ActionDashboardsCreate           = "dashboards:create"
+	ActionDashboardsRead             = "dashboards:read"
+	ActionDashboardsWrite            = "dashboards:write"
+	ActionDashboardsDelete           = "dashboards:delete"
+	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
+	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
+
+	// Dashboard scopes
+	ScopeDashboardsAll = "dashboards:*"
 )
 
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	// Folder scopes
+
+	// Datasource scopes
+
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

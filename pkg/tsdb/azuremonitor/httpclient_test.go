@@ -5,6 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,18 +14,18 @@ func Test_httpCliProvider(t *testing.T) {
 	cfg := &setting.Cfg{}
 	tests := []struct {
 		name                string
-		route               azRoute
-		model               datasourceInfo
+		route               types.AzRoute
+		model               types.DatasourceInfo
 		expectedMiddlewares int
 		Err                 require.ErrorAssertionFunc
 	}{
 		{
 			name: "creates an HTTP client with a middleware due to the scope",
-			route: azRoute{
+			route: types.AzRoute{
 				URL:    "http://route",
 				Scopes: []string{"http://route/.default"},
 			},
-			model: datasourceInfo{
+			model: types.DatasourceInfo{
 				Credentials: &azcredentials.AzureClientSecretCredentials{},
 			},
 			expectedMiddlewares: 1,
@@ -31,11 +33,11 @@ func Test_httpCliProvider(t *testing.T) {
 		},
 		{
 			name: "creates an HTTP client with a middleware due to an app key",
-			route: azRoute{
-				URL:    azAppInsights.URL,
+			route: types.AzRoute{
+				URL:    deprecated.AzAppInsights.URL,
 				Scopes: []string{},
 			},
-			model: datasourceInfo{
+			model: types.DatasourceInfo{
 				Credentials: &azcredentials.AzureClientSecretCredentials{},
 				DecryptedSecureJSONData: map[string]string{
 					"appInsightsApiKey": "foo",
@@ -46,11 +48,11 @@ func Test_httpCliProvider(t *testing.T) {
 		},
 		{
 			name: "creates an HTTP client without a middleware",
-			route: azRoute{
+			route: types.AzRoute{
 				URL:    "http://route",
 				Scopes: []string{},
 			},
-			model: datasourceInfo{
+			model: types.DatasourceInfo{
 				Credentials: &azcredentials.AzureClientSecretCredentials{},
 			},
 			expectedMiddlewares: 0,

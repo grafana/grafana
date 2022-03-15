@@ -61,6 +61,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
       )}
       {...innerProps}
       aria-label="Select option"
+      title={data.title}
     >
       {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
       {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || data.value} />}

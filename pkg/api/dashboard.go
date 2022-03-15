@@ -100,6 +100,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	canEdit, _ := guardian.CanEdit()
 	canSave, _ := guardian.CanSave()
 	canAdmin, _ := guardian.CanAdmin()
+	canDelete, _ := guardian.CanDelete()
 
 	isStarred, err := hs.isDashboardStarredByUser(c, dash.Id)
 	if err != nil {
@@ -122,6 +123,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		CanSave:     canSave,
 		CanEdit:     canEdit,
 		CanAdmin:    canAdmin,
+		CanDelete:   canDelete,
 		Created:     dash.Created,
 		Updated:     dash.Updated,
 		UpdatedBy:   updater,
@@ -223,7 +225,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return rsp
 	}
 	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+	if canDelete, err := guardian.CanDelete(); err != nil || !canDelete {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -354,14 +356,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if err != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
-	}
-
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := hs.dashboardService.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
-		}
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID

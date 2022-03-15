@@ -8,7 +8,7 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 interface Props {
   label: string;
   serviceAccount: ServiceAccountDTO;
-  onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
+  onRoleChange: (role: OrgRole) => void;
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
 }
@@ -37,7 +37,7 @@ export class ServiceAccountRoleRow extends PureComponent<Props> {
               userId={serviceAccount.id}
               orgId={serviceAccount.orgId}
               builtInRole={serviceAccount.role}
-              onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+              onBuiltinRoleChange={onRoleChange}
               roleOptions={roleOptions}
               builtInRoles={builtInRoles}
               disabled={rolePickerDisabled}
@@ -47,7 +47,7 @@ export class ServiceAccountRoleRow extends PureComponent<Props> {
               aria-label="Role"
               value={serviceAccount.role}
               disabled={!canUpdateRole}
-              onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+              onChange={onRoleChange}
             />
           )}
         </td>

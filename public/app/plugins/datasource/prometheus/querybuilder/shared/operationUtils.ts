@@ -5,6 +5,7 @@ import {
   QueryBuilderOperationParamDef,
   QueryWithOperations,
 } from './types';
+import { SelectableValue } from '@grafana/data/src';
 
 export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
@@ -116,7 +117,7 @@ export function getOperationParamId(operationIndex: number, paramIndex: number) 
 }
 
 export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
-  const param = {
+  const param: QueryBuilderOperationParamDef = {
     name: 'Range',
     type: 'string',
     options: [
@@ -134,7 +135,7 @@ export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOp
   };
 
   if (withRateInterval) {
-    param.options.unshift({
+    (param.options as Array<SelectableValue<string>>).unshift({
       label: '$__rate_interval',
       value: '$__rate_interval',
       // tooltip: 'Always above 4x scrape interval',
