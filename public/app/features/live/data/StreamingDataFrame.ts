@@ -90,14 +90,17 @@ export class StreamingDataFrame implements DataFrame {
 
   serialize = (
     fieldPredicate?: (f: Field) => boolean,
-    optionsOverride?: Partial<StreamingFrameOptions>
+    optionsOverride?: Partial<StreamingFrameOptions>,
+    trimValues?: {
+      maxLength?: number;
+    }
   ): SerializedStreamingDataFrame => {
     const options = optionsOverride ? Object.assign({}, { ...this.options, ...optionsOverride }) : this.options;
     const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
 
     const numberOfItemsToRemove = getNumberOfItemsToRemove(
       dataFrameDTO.fields.map((f) => f.values) as unknown[][],
-      options.maxLength,
+      typeof trimValues?.maxLength === 'number' ? Math.min(trimValues.maxLength, options.maxLength) : options.maxLength,
       this.timeFieldIndex,
       options.maxDelta
     );
@@ -357,18 +360,37 @@ export class StreamingDataFrame implements DataFrame {
       return;
     }
 
-    this.packetInfo.action = StreamingFrameAction.Append;
+    this.packetInfo.action = this.options.action;
     this.packetInfo.number++;
     this.packetInfo.length = values[0].length;
     this.packetInfo.schemaChanged = false;
 
-    circPush(
-      this.fields.map((f) => f.values.buffer),
-      values,
-      this.options.maxLength,
-      this.timeFieldIndex,
-      this.options.maxDelta
-    );
+    if (this.options.action === StreamingFrameAction.Append) {
+      circPush(
+        this.fields.map((f) => f.values.buffer),
+        values,
+        this.options.maxLength,
+        this.timeFieldIndex,
+        this.options.maxDelta
+      );
+    } else {
+      values.forEach((v, i) => {
+        if (this.fields[i]?.values) {
+          this.fields[i].values.buffer = v;
+        }
+      });
+
+      assureValuesAreWithinLengthLimit(
+        this.fields.map((f) => f.values.buffer),
+        this.options.maxLength,
+        this.timeFieldIndex,
+        this.options.maxDelta
+      );
+    }
+    const newLength = this.fields?.[0]?.values?.buffer?.length;
+    if (newLength !== undefined) {
+      this.length = newLength;
+    }
   };
 
   resetStateCalculations = () => {

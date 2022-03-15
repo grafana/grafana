@@ -25,6 +25,15 @@ export interface SaveDashboardOptions {
   refresh?: string;
 }
 
+interface SaveDashboardResponse {
+  id: number;
+  slug: string;
+  status: string;
+  uid: string;
+  url: string;
+  version: number;
+}
+
 export class DashboardSrv {
   dashboard?: DashboardModel;
 
@@ -67,7 +76,7 @@ export class DashboardSrv {
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
     return lastValueFrom(
-      getBackendSrv().fetch({
+      getBackendSrv().fetch<SaveDashboardResponse>({
         url: '/api/dashboards/db/',
         method: 'POST',
         data: {

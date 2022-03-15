@@ -23,7 +23,16 @@ export interface CascaderProps {
   allowCustomValue?: boolean;
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
   formatCreateLabel?: (val: string) => string;
+  /** If true all levels are shown in the input by simple concatenating the labels */
   displayAllSelectedLevels?: boolean;
+  onBlur?: () => void;
+  /** When mounted focus automatically on the input */
+  autoFocus?: boolean;
+  /** Keep the dropdown open all the time, useful in case whole cascader visibility is controlled by the parent */
+  alwaysOpen?: boolean;
+  /** Don't show what is selected in the cascader input/search. Useful when input is used just as search and the
+      cascader is hidden after selection. */
+  hideActiveLevelLabel?: boolean;
 }
 
 interface CascaderState {
@@ -117,12 +126,15 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   //For rc-cascader
   onChange = (value: string[], selectedOptions: CascaderOption[]) => {
+    const activeLabel = this.props.hideActiveLevelLabel
+      ? ''
+      : this.props.displayAllSelectedLevels
+      ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
+      : selectedOptions[selectedOptions.length - 1].label;
     this.setState({
       rcValue: value,
       focusCascade: true,
-      activeLabel: this.props.displayAllSelectedLevels
-        ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
-        : selectedOptions[selectedOptions.length - 1].label,
+      activeLabel,
     });
 
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
@@ -159,28 +171,33 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
         rcValue: [],
       });
     }
+    this.props.onBlur?.();
   };
 
   onBlurCascade = () => {
     this.setState({
       focusCascade: false,
     });
+
+    this.props.onBlur?.();
   };
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (
-      e.key === 'ArrowDown' ||
-      e.key === 'ArrowUp' ||
-      e.key === 'Enter' ||
-      e.key === 'ArrowLeft' ||
-      e.key === 'ArrowRight'
-    ) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight', 'Backspace'].includes(e.key)) {
       return;
     }
     this.setState({
       focusCascade: false,
       isSearching: true,
     });
+  };
+
+  onSelectInputChange = (value: string) => {
+    if (value === '') {
+      this.setState({
+        isSearching: false,
+      });
+    }
   };
 
   render() {
@@ -203,6 +220,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onCreateOption={this.onCreateOption}
             formatCreateLabel={formatCreateLabel}
             width={width}
+            onInputChange={this.onSelectInputChange}
           />
         ) : (
           <RCCascader
@@ -212,9 +230,11 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
+            open={this.props.alwaysOpen}
           >
             <div className={disableDivFocus}>
               <Input
+                autoFocus={this.props.autoFocus}
                 width={width}
                 placeholder={placeholder}
                 onBlur={this.onBlurCascade}

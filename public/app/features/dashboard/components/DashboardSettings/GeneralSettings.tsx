@@ -151,7 +151,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
       </CollapsableSection>
 
       <div className="gf-form-button-row">
-        {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}
+        {dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}
       </div>
     </div>
   );

@@ -16,10 +16,22 @@ import {
   SuggestionsPlugin,
 } from '../../slate-plugins';
 
-import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
+import {
+  makeValue,
+  SCHEMA,
+  CompletionItemGroup,
+  TypeaheadOutput,
+  TypeaheadInput,
+  SuggestionsState,
+  Themeable2,
+} from '../..';
 import { selectors } from '@grafana/e2e-selectors';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { withTheme2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
 
-export interface QueryFieldProps {
+export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
   cleanText?: (text: string) => string;
   disabled?: boolean;
@@ -38,6 +50,7 @@ export interface QueryFieldProps {
   portalOrigin: string;
   syntax?: string;
   syntaxLoaded?: boolean;
+  theme: GrafanaTheme2;
 }
 
 export interface QueryFieldState {
@@ -54,7 +67,7 @@ export interface QueryFieldState {
  * This component can only process strings. Internally it uses Slate Value.
  * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
  */
-export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
+export class UnThemedQueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
   plugins: Plugin[];
   runOnChangeDebounced: Function;
   lastExecutedValue: Value | null = null;
@@ -197,13 +210,14 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   render() {
-    const { disabled } = this.props;
+    const { disabled, theme } = this.props;
     const wrapperClassName = classnames('slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
+    const styles = getStyles(theme);
 
     return (
-      <div className={wrapperClassName}>
+      <div className={cx(wrapperClassName, styles.wrapper)}>
         <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
           <Editor
             ref={(editor) => (this.editor = editor!)}
@@ -227,4 +241,15 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 }
 
-export default QueryField;
+export const QueryField = withTheme2(UnThemedQueryField);
+
+const getStyles = (theme: GrafanaTheme2) => {
+  const focusStyles = getFocusStyles(theme);
+  return {
+    wrapper: css`
+      &:focus-within {
+        ${focusStyles}
+      }
+    `,
+  };
+};

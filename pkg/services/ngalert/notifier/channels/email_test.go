@@ -33,7 +33,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewEmailNotifier(model, nil, tmpl)
+		_, err := NewEmailConfig(model)
 		require.Error(t, err)
 	})
 
@@ -46,14 +46,13 @@ func TestEmailNotifier(t *testing.T) {
 		require.NoError(t, err)
 
 		emailSender := mockNotificationService()
-
-		emailNotifier, err := NewEmailNotifier(&NotificationChannelConfig{
+		cfg, err := NewEmailConfig(&NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		}, emailSender, tmpl)
-
+		})
 		require.NoError(t, err)
+		emailNotifier := NewEmailNotifier(cfg, emailSender, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -90,7 +89,7 @@ func TestEmailNotifier(t *testing.T) {
 						Labels:       template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
 						Annotations:  template.KV{"runbook_url": "http://fix.me"},
 						Fingerprint:  "15a37193dce72bab",
-						SilenceURL:   "http://localhost/base/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DAlwaysFiring%2Cseverity%3Dwarning",
+						SilenceURL:   "http://localhost/base/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DAlwaysFiring&matcher=severity%3Dwarning",
 						DashboardURL: "http://localhost/base/d/abc",
 						PanelURL:     "http://localhost/base/d/abc?viewPanel=5",
 					},
@@ -284,13 +283,13 @@ func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, n
 		settingsJSON.Set("message", messageTmpl)
 	}
 	require.NoError(t, err)
-
-	emailNotifier, err := NewEmailNotifier(&NotificationChannelConfig{
+	cfg, err := NewEmailConfig(&NotificationChannelConfig{
 		Name:     "ops",
 		Type:     "email",
 		Settings: settingsJSON,
-	}, ns, emailTmpl)
+	})
 	require.NoError(t, err)
+	emailNotifier := NewEmailNotifier(cfg, ns, emailTmpl)
 
 	return emailNotifier
 }
