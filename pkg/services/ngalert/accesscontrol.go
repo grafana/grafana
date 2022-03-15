@@ -21,6 +21,10 @@ var (
 					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
+					Action: dashboards.ActionFoldersRead,
+					Scope:  dashboards.ScopeFoldersAll,
+				},
+				{
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
 					Scope:  datasources.ScopeDatasourcesAll,
 				},
