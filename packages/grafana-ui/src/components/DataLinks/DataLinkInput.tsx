@@ -80,6 +80,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
     const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
     const prevLinkUrl = usePrevious<Value>(linkUrl);
+    const [scrollTop, setScrollTop] = useState(0);
 
     // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
     const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
@@ -87,10 +88,9 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
 
     // Used to get the height of the suggestion elements in order to scroll to them.
     const activeRef = useRef<HTMLDivElement>(null);
-    const activeIndexPosition = useMemo(
-      () => getElementPosition(activeRef.current, suggestionsIndex),
-      [suggestionsIndex]
-    );
+    useEffect(() => {
+      setScrollTop(getElementPosition(activeRef.current, suggestionsIndex));
+    }, [suggestionsIndex]);
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
@@ -183,7 +183,11 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                   {({ ref, style, placement }) => {
                     return (
                       <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
-                        <CustomScrollbar scrollTop={activeIndexPosition} autoHeightMax="300px">
+                        <CustomScrollbar
+                          scrollTop={scrollTop}
+                          autoHeightMax="300px"
+                          setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+                        >
                           <DataLinkSuggestions
                             activeRef={activeRef}
                             suggestions={stateRef.current.suggestions}
