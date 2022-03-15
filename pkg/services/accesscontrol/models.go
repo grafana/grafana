@@ -307,12 +307,6 @@ const (
 	// Settings scope
 	ScopeSettingsAll = "settings:*"
 
-	// Licensing related actions
-	ActionLicensingRead        = "licensing:read"
-	ActionLicensingUpdate      = "licensing:update"
-	ActionLicensingDelete      = "licensing:delete"
-	ActionLicensingReportsRead = "licensing.reports:read"
-
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
 	ActionTeamsDelete           = "teams:delete"
@@ -346,19 +340,8 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
-
-	// Folder scopes
-
-	// Datasource scopes
-
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
 
 const FixedRolePrefix = "fixed:"
-
-// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
-var LicensingPageReaderAccess = EvalAny(
-	EvalPermission(ActionLicensingRead),
-	EvalPermission(ActionServerStatsRead),
-)
