@@ -4,6 +4,8 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { uniq } from 'lodash';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 const commonRoutes: RouteDescriptor[] = [
   {
@@ -120,12 +122,14 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/silence/new',
+    roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.AlertingInstanceCreate]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
     ),
   },
   {
     path: '/alerting/silence/:id/edit',
+    roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.AlertingInstanceUpdate]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
     ),

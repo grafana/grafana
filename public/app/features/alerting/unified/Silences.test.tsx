@@ -15,6 +15,12 @@ import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testin
 import userEvent from '@testing-library/user-event';
 
 jest.mock('./api/alertmanager');
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+    hasPermission: () => true,
+  },
+}));
 
 const TEST_TIMEOUT = 60000;
 
