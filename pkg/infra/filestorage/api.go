@@ -31,6 +31,10 @@ type File struct {
 	FileMetadata
 }
 
+func (f *File) IsFolder() bool {
+	return f.MimeType == DirectoryMimeType
+}
+
 type FileMetadata struct {
 	Name       string
 	FullPath   string
