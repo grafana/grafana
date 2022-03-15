@@ -31,6 +31,7 @@ export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   addOperationHandler: QueryBuilderAddOperationHandler<T>;
   paramChangedHandler?: QueryBuilderOnParamChangedHandler;
   explainHandler?: (op: QueryBuilderOperation, def: QueryBuilderOperationDef<T>) => string;
+  changeTypeHandler?: (op: QueryBuilderOperation, newDef: QueryBuilderOperationDef<T>) => QueryBuilderOperation;
 }
 
 export type QueryBuilderAddOperationHandler<T> = (
@@ -51,14 +52,18 @@ export type QueryBuilderOperationRenderer = (
   innerExpr: string
 ) => string;
 
-export type QueryBuilderOperationParamValue = string | number;
+export type QueryBuilderOperationParamValue = string | number | boolean;
 
 export interface QueryBuilderOperationParamDef {
   name: string;
-  type: string;
+  type: 'string' | 'number' | 'boolean';
   options?: string[] | number[] | Array<SelectableValue<string>>;
+  hideName?: boolean;
   restParam?: boolean;
   optional?: boolean;
+  placeholder?: string;
+  description?: string;
+  minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
 }
 
@@ -75,8 +80,10 @@ export interface QueryBuilderOperationEditorProps {
 export interface QueryBuilderOperationParamEditorProps {
   value?: QueryBuilderOperationParamValue;
   paramDef: QueryBuilderOperationParamDef;
+  /** Parameter index */
   index: number;
   operation: QueryBuilderOperation;
+  operationIndex: number;
   query: any;
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
@@ -84,14 +91,14 @@ export interface QueryBuilderOperationParamEditorProps {
 }
 
 export enum QueryEditorMode {
-  Builder,
-  Code,
-  Explain,
+  Code = 'code',
+  Builder = 'builder',
+  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
   getAlternativeOperations(key: string): QueryBuilderOperationDef[];
   getCategories(): string[];
-  getOperationDef(id: string): QueryBuilderOperationDef;
+  getOperationDef(id: string): QueryBuilderOperationDef | undefined;
 }

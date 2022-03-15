@@ -3,10 +3,10 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataTopic,
   dateTime,
   LoadingState,
   PanelData,
-  DataTopic,
 } from '@grafana/data';
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
@@ -109,6 +109,26 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
   });
 }
 
+function runRequestScenarioThatThrows(desc: string, fn: (ctx: ScenarioCtx) => void) {
+  describe(desc, () => {
+    const ctx = new ScenarioCtx();
+    let consoleSpy: jest.SpyInstance<any>;
+
+    beforeEach(() => {
+      consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      setEchoSrv(new Echo());
+      ctx.reset();
+      return ctx.setupFn();
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
+
+    fn(ctx);
+  });
+}
+
 describe('runRequest', () => {
   runRequestScenario('with no queries', (ctx) => {
     ctx.setup(() => {
@@ -197,7 +217,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('on thrown error', (ctx) => {
+  runRequestScenarioThatThrows('on thrown error', (ctx) => {
     ctx.setup(() => {
       ctx.error = new Error('Ohh no');
       ctx.start();

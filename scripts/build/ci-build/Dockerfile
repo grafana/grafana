@@ -110,10 +110,10 @@ RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20210208
 
-ENV GOVERSION=1.17.6 \
+ENV GOVERSION=1.17.8 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=16.13.0-1nodesource1 \
+    NODEVERSION=16.14.0-1nodesource1 \
     YARNVERSION=1.22.15-1
 
 # Use ARG so as not to persist environment variable in image

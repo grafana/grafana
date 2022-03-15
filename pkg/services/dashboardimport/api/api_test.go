@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService, nil)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService, nil, acmock.New().WithDisabled())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -42,8 +43,8 @@ func TestImportDashboardAPI(t *testing.T) {
 			cmd := &dashboardimport.ImportDashboardRequest{}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
-			resp, err := s.Send(req)
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
@@ -56,11 +57,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
@@ -72,11 +73,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -89,11 +90,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
+			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -120,7 +121,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService, nil)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService, nil, acmock.New().WithDisabled())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -131,11 +132,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
+			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -147,7 +148,7 @@ func TestImportDashboardAPI(t *testing.T) {
 	t.Run("Quota reached", func(t *testing.T) {
 		service := &serviceMock{}
 		schemaLoaderService := &schemaLoaderServiceMock{}
-		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), schemaLoaderService, nil)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), schemaLoaderService, nil, acmock.New().WithDisabled())
 
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
@@ -159,11 +160,11 @@ func TestImportDashboardAPI(t *testing.T) {
 			}
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
-			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
+			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
-			resp, err := s.Send(req)
+			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusForbidden, resp.StatusCode)

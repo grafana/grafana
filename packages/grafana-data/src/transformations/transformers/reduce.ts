@@ -192,7 +192,7 @@ export function mergeResults(data: DataFrame[]): DataFrame | undefined {
         if (isFirstField || isSameField) {
           const baseValues: any[] = baseField.values.toArray();
           const values: any[] = field.values.toArray();
-          ((baseField.values as unknown) as ArrayVector).buffer = baseValues.concat(values);
+          (baseField.values as unknown as ArrayVector).buffer = baseValues.concat(values);
         }
       }
     }

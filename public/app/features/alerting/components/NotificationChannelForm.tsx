@@ -41,7 +41,7 @@ export const NotificationChannelForm: FC<Props> = ({
 
   useEffect(() => {
     /*
-      Finds fields that have dependencies on other fields and removes duplicates.
+      Find fields that have dependencies on other fields and removes duplicates.
       Needs to be prefixed with settings.
     */
     const fieldsToWatch =

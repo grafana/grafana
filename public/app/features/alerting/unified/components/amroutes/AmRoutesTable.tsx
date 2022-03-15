@@ -44,6 +44,23 @@ export const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: str
   return filteredRoutes;
 };
 
+export const updatedRoute = (routes: FormAmRoute[], updatedRoute: FormAmRoute): FormAmRoute[] => {
+  const newRoutes = [...routes];
+  const editIndex = newRoutes.findIndex((route) => route.id === updatedRoute.id);
+
+  if (editIndex >= 0) {
+    newRoutes[editIndex] = {
+      ...newRoutes[editIndex],
+      ...updatedRoute,
+    };
+  }
+  return newRoutes;
+};
+
+export const deleteRoute = (routes: FormAmRoute[], routeToRemove: FormAmRoute): FormAmRoute[] => {
+  return routes.filter((route) => route.id !== routeToRemove.id);
+};
+
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   isAddMode,
   onCancelAdd,
@@ -92,7 +109,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
             id: 'actions',
             label: 'Actions',
             // eslint-disable-next-line react/display-name
-            renderCell: (item, index) => {
+            renderCell: (item) => {
               if (item.renderExpandedContent) {
                 return null;
               }
@@ -118,10 +135,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
                     aria-label="Delete route"
                     name="trash-alt"
                     onClick={() => {
-                      const newRoutes = [...routes];
-
-                      newRoutes.splice(index, 1);
-
+                      const newRoutes = deleteRoute(routes, item.data);
                       onChange(newRoutes);
                     }}
                     type="button"
@@ -134,21 +148,23 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         ]),
   ];
 
-  const filteredRoutes = useMemo(() => getFilteredRoutes(routes, filters?.queryString, filters?.contactPoint), [
-    routes,
-    filters,
-  ]);
+  const filteredRoutes = useMemo(
+    () => getFilteredRoutes(routes, filters?.queryString, filters?.contactPoint),
+    [routes, filters]
+  );
 
-  const dynamicTableRoutes = useMemo(() => prepareItems(isAddMode ? routes : filteredRoutes), [
-    isAddMode,
-    routes,
-    filteredRoutes,
-  ]);
+  const dynamicTableRoutes = useMemo(
+    () => prepareItems(isAddMode ? routes : filteredRoutes),
+    [isAddMode, routes, filteredRoutes]
+  );
 
-  // expand the last item when adding
+  // expand the last item when adding or reset when the length changed
   useEffect(() => {
     if (isAddMode && dynamicTableRoutes.length) {
       setExpandedId(dynamicTableRoutes[dynamicTableRoutes.length - 1].id);
+    }
+    if (!isAddMode && dynamicTableRoutes.length) {
+      setExpandedId(undefined);
     }
   }, [isAddMode, dynamicTableRoutes]);
 
@@ -169,7 +185,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       onCollapse={collapseItem}
       onExpand={expandItem}
       isExpanded={(item) => expandedId === item.id}
-      renderExpandedContent={(item: RouteTableItemProps, index) =>
+      renderExpandedContent={(item: RouteTableItemProps) =>
         isAddMode || editMode ? (
           <AmRoutesExpandedForm
             onCancel={() => {
@@ -179,12 +195,8 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               setEditMode(false);
             }}
             onSave={(data) => {
-              const newRoutes = [...routes];
+              const newRoutes = updatedRoute(routes, data);
 
-              newRoutes[index] = {
-                ...newRoutes[index],
-                ...data,
-              };
               setEditMode(false);
               onChange(newRoutes);
             }}
@@ -194,13 +206,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         ) : (
           <AmRoutesExpandedRead
             onChange={(data) => {
-              const newRoutes = [...routes];
-
-              newRoutes[index] = {
-                ...item.data,
-                ...data,
-              };
-
+              const newRoutes = updatedRoute(routes, data);
               onChange(newRoutes);
             }}
             receivers={receivers}

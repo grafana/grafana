@@ -52,20 +52,17 @@ const transactionSlice = createSlice({
 });
 
 function actionAffectsDirtyState(action: AnyAction): boolean {
-  return [
-    removeVariable.type,
-    addVariable.type,
-    changeVariableProp.type,
-    changeVariableOrder.type,
-    duplicateVariable.type,
-    changeVariableType.type,
-  ].includes(action.type);
+  return (
+    removeVariable.match(action) ||
+    addVariable.match(action) ||
+    changeVariableProp.match(action) ||
+    changeVariableOrder.match(action) ||
+    duplicateVariable.match(action) ||
+    changeVariableType.match(action)
+  );
 }
 
-export const {
-  variablesInitTransaction,
-  variablesClearTransaction,
-  variablesCompleteTransaction,
-} = transactionSlice.actions;
+export const { variablesInitTransaction, variablesClearTransaction, variablesCompleteTransaction } =
+  transactionSlice.actions;
 
 export const transactionReducer = transactionSlice.reducer;

@@ -22,6 +22,9 @@ describe('getFieldLinksForExplore', () => {
       getVariables() {
         return [];
       },
+      containsTemplate() {
+        return false;
+      },
     });
   });
 

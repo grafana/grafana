@@ -55,7 +55,7 @@ describe('PanelModel', () => {
       {
         id: 'table',
       },
-      (null as unknown) as ComponentClass<PanelProps>, // react
+      null as unknown as ComponentClass<PanelProps>, // react
       {} // angular
     );
 
@@ -194,11 +194,6 @@ describe('PanelModel', () => {
     it('getSaveModel should remove defaults', () => {
       const saveModel = model.getSaveModel();
       expect(saveModel.gridPos).toBe(undefined);
-    });
-
-    it('getSaveModel should not remove datasource default', () => {
-      const saveModel = model.getSaveModel();
-      expect(saveModel.datasource).toBe(null);
     });
 
     it('getSaveModel should remove nonPersistedProperties', () => {

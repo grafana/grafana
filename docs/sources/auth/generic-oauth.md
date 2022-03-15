@@ -27,6 +27,8 @@ Example config:
 
 ```bash
 [auth.generic_oauth]
+name = OAuth
+icon = signin
 enabled = true
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET

@@ -93,7 +93,7 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
       ...libraryPanel.model,
       gridPos: panel.gridPos,
       id: panel.id,
-      libraryPanel: toPanelModelLibraryPanel(libraryPanel.model),
+      libraryPanel: toPanelModelLibraryPanel(libraryPanel),
     });
 
     // a new library panel usually means new queries, clear any current result

@@ -175,7 +175,7 @@ export class UPlotConfigBuilder {
       mode: this.mode,
       series: [
         this.mode === 2
-          ? ((null as unknown) as Series)
+          ? (null as unknown as Series)
           : {
               value: () => '',
             },
@@ -191,18 +191,20 @@ export class UPlotConfigBuilder {
 
     config.select = this.select;
 
-    const pointColorFn = (alphaHex = '') => (u: uPlot, seriesIdx: number) => {
-      /*@ts-ignore*/
-      let s = u.series[seriesIdx].points._stroke;
+    const pointColorFn =
+      (alphaHex = '') =>
+      (u: uPlot, seriesIdx: number) => {
+        /*@ts-ignore*/
+        let s = u.series[seriesIdx].points._stroke;
 
-      // interpolate for gradients/thresholds
-      if (typeof s !== 'string') {
-        let field = this.frames![0].fields[seriesIdx];
-        s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
-      }
+        // interpolate for gradients/thresholds
+        if (typeof s !== 'string') {
+          let field = this.frames![0].fields[seriesIdx];
+          s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+        }
 
-      return s + alphaHex;
-    };
+        return s + alphaHex;
+      };
 
     config.cursor = merge(
       {},

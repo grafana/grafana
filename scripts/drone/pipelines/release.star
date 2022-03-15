@@ -16,14 +16,15 @@ load(
     'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
+    'build_frontend_package_step',
     'build_plugins_step',
     'package_step',
-    'e2e_tests_server_step',
+    'grafana_server_step',
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
     'copy_packages_for_docker_step',
-    'package_docker_images_step',
+    'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -36,7 +37,8 @@ load(
     'store_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
-    'ensure_cuetsified_step'
+    'ensure_cuetsified_step',
+    'publish_images_step'
 )
 
 load(
@@ -117,27 +119,6 @@ def release_npm_packages_step():
         ],
     }
 
-def publish_images_step(edition, mode, docker_repo):
-    if mode == 'security':
-        mode = '--{} '.format(mode)
-    else:
-        mode = ''
-    return {
-        'name': 'publish-images-{}'.format(docker_repo),
-        'image': 'google/cloud-sdk',
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-            'DOCKER_USER': from_secret('docker_username'),
-            'DOCKER_PASSWORD': from_secret('docker_password'),
-        },
-        'commands': ['./bin/grabpl artifacts docker publish {}--version-tag ${{TAG}} --dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(mode, docker_repo)],
-        'depends_on': ['fetch-images-{}'.format(edition)],
-        'volumes': [{
-            'name': 'docker',
-            'path': '/var/run/docker.sock'
-        }],
-    }
-
 def fetch_images_step(edition):
     return {
         'name': 'fetch-images-{}'.format(edition),
@@ -159,10 +140,10 @@ def publish_image_steps(version, mode, docker_repo, additional_docker_repo=""):
     steps = [
         download_grabpl_step(),
         fetch_images_step(version),
-        publish_images_step(version, mode, docker_repo),
+        publish_images_step(version, 'release', mode, docker_repo),
     ]
     if additional_docker_repo != "":
-        steps.extend([publish_images_step(version, mode, additional_docker_repo)])
+        steps.extend([publish_images_step(version, 'release', mode, additional_docker_repo)])
 
     return steps
 
@@ -199,6 +180,7 @@ def get_steps(edition, ver_mode):
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
@@ -217,16 +199,16 @@ def get_steps(edition, ver_mode):
             test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
         ])
 
     # Insert remaining steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
         copy_packages_for_docker_step(),
-        package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
-        package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
-        e2e_tests_server_step(edition=edition),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=True),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=True),
+        grafana_server_step(edition=edition),
     ])
 
     if not disable_tests:
@@ -261,7 +243,7 @@ def get_steps(edition, ver_mode):
 
     if include_enterprise2:
         publish_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64']),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:
@@ -285,7 +267,7 @@ def get_oss_pipelines(trigger, ver_mode):
     )
     pipelines = [
         pipeline(
-            name='oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -308,7 +290,7 @@ def get_oss_pipelines(trigger, ver_mode):
         ])
         deps = {
             'depends_on': [
-                'oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode),
+                'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
                 'oss-test-{}'.format(ver_mode),
                 'oss-integration-tests-{}'.format(ver_mode)
             ]

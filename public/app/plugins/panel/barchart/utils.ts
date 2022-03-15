@@ -434,10 +434,12 @@ export function prepareBarChartDisplayValues(
   return {
     aligned: frame,
     colorByField,
-    viz: {
-      length: firstField.values.length,
-      fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
-    },
+    viz: [
+      {
+        length: firstField.values.length,
+        fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
+      },
+    ],
   };
 }
 

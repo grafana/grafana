@@ -13,19 +13,16 @@ var (
 			Description: "encrypt secrets",
 			State:       FeatureStateBeta,
 		},
-
 		{
 			Name:        "httpclientprovider_azure_auth",
 			Description: "use http client for azure auth",
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "service-accounts",
-			Description:     "support service accounts",
-			State:           FeatureStateBeta,
-			RequiresLicense: true,
+			Name:        "service-accounts",
+			Description: "support service accounts",
+			State:       FeatureStateBeta,
 		},
-
 		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",
@@ -34,6 +31,16 @@ var (
 		{
 			Name:        "dashboardPreviews",
 			Description: "Create and show thumbnails for dashboard search results",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "dashboardPreviewsScheduler",
+			Description: "Schedule automatic updates to dashboard previews",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "dashboardPreviewsAdmin",
+			Description: "Manage the dashboard previews crawler process from the UI",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -59,6 +66,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "panelTitleSearch",
+			Description:     "Search for dashboards using panel title",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // only supported in dev mode right now
+		},
+		{
 			Name:         "tempoSearch",
 			Description:  "Enable searching in tempo datasources",
 			State:        FeatureStateBeta,
@@ -76,9 +89,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "fullRangeLogsVolume",
-			Description:  "Show full range logs volume in explore",
-			State:        FeatureStateBeta,
+			Name:         "lokiBackendMode",
+			Description:  "Loki datasource works as backend datasource",
+			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
@@ -90,6 +103,12 @@ var (
 			Name:        "prometheus_azure_auth",
 			Description: "Use azure authentication for prometheus datasource",
 			State:       FeatureStateBeta,
+		},
+		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "newNavigation",
@@ -112,6 +131,43 @@ var (
 			Description:     "only execute the query saved in a panel",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "lokiLive",
+			Description: "support websocket streaming for loki (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "swaggerUi",
+			Description: "Serves swagger UI",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "featureHighlights",
+			Description: "Highlight Enterprise features",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "dashboardComments",
+			Description: "Enable dashboard-wide comments",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "annotationComments",
+			Description: "Enable annotation comments",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "migrationLocking",
+			Description: "Lock database during migrations",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:            "azureMonitorResourcePickerForMetrics",
+			Description:     "New UI for Azure Monitor Metrics Query",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
 		},
 	}
 )

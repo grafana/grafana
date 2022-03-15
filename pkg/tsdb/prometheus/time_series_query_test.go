@@ -52,6 +52,30 @@ func TestPrometheus_timeSeriesQuery_formatLeged(t *testing.T) {
 
 		require.Equal(t, `{job="grafana"}`, formatLegend(metric, query))
 	})
+
+	t.Run("When legendFormat = __auto and no labels", func(t *testing.T) {
+		metric := map[p.LabelName]p.LabelValue{}
+
+		query := &PrometheusQuery{
+			LegendFormat: legendFormatAuto,
+			Expr:         `{job="grafana"}`,
+		}
+
+		require.Equal(t, `{job="grafana"}`, formatLegend(metric, query))
+	})
+
+	t.Run("When legendFormat = __auto with labels", func(t *testing.T) {
+		metric := map[p.LabelName]p.LabelValue{
+			p.LabelName("app"): p.LabelValue("backend"),
+		}
+
+		query := &PrometheusQuery{
+			LegendFormat: legendFormatAuto,
+			Expr:         `{job="grafana"}`,
+		}
+
+		require.Equal(t, "", formatLegend(metric, query))
+	})
 }
 
 func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
@@ -556,7 +580,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		// Test fields
@@ -594,7 +618,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(5, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -631,16 +655,16 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Fields[0].Len(), 4)
-		require.Equal(t, res[0].Fields[0].At(1), time.Unix(2, 0).UTC())
-		require.Equal(t, res[0].Fields[0].At(2), time.Unix(3, 0).UTC())
-		require.Equal(t, res[0].Fields[1].Len(), 4)
-		require.Nil(t, res[0].Fields[1].At(1))
-		require.Nil(t, res[0].Fields[1].At(2))
+		require.Equal(t, res[0].Fields[0].Len(), 2)
+		require.Equal(t, time.Unix(1, 0).UTC(), res[0].Fields[0].At(0))
+		require.Equal(t, time.Unix(4, 0).UTC(), res[0].Fields[0].At(1))
+		require.Equal(t, res[0].Fields[1].Len(), 2)
+		require.Equal(t, float64(1), *res[0].Fields[1].At(0).(*float64))
+		require.Equal(t, float64(4), *res[0].Fields[1].At(1).(*float64))
 	})
 
 	t.Run("matrix response with from alerting missed data points should be parsed correctly", func(t *testing.T) {
@@ -662,7 +686,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -693,7 +717,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		var nilPointer *float64
@@ -707,13 +731,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			&p.Sample{
 				Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
 				Value:     1,
-				Timestamp: 1000,
+				Timestamp: 123,
 			},
 		}
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -730,17 +754,18 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
+		require.Equal(t, int64(123), testValue.(time.Time).UnixMilli())
 	})
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
 		value := make(map[TimeSeriesQueryType]interface{})
 		value[RangeQueryType] = &p.Scalar{
 			Value:     1,
-			Timestamp: 1000,
+			Timestamp: 123,
 		}
 
 		query := &PrometheusQuery{}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -754,6 +779,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
+		require.Equal(t, int64(123), testValue.(time.Time).UnixMilli())
 	})
 }
 

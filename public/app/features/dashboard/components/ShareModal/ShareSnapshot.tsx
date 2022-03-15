@@ -127,7 +127,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     // remove annotation queries
     const annotations = dash.annotations.list.filter((annotation) => annotation.enable);
-    dash.annotations.list = annotations.map((annotation: any) => {
+    dash.annotations.list = annotations.map((annotation) => {
       return {
         name: annotation.name,
         enable: annotation.enable,
@@ -197,14 +197,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
   renderStep1() {
     const { onDismiss } = this.props;
-    const {
-      snapshotName,
-      selectedExpireOption,
-      timeoutSeconds,
-      isLoading,
-      sharingButtonText,
-      externalEnabled,
-    } = this.state;
+    const { snapshotName, selectedExpireOption, timeoutSeconds, isLoading, sharingButtonText, externalEnabled } =
+      this.state;
 
     return (
       <>

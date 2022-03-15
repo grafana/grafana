@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -61,7 +60,7 @@ func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
 	return response.Success("Organization quota updated")
 }
 
-func GetUserQuotas(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 	if !setting.Quota.Enabled {
 		return response.Error(404, "Quotas not enabled", nil)
 	}
@@ -73,14 +72,14 @@ func GetUserQuotas(c *models.ReqContext) response.Response {
 
 	query := models.GetUserQuotasQuery{UserId: id}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetUserQuotas(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get org quotas", err)
 	}
 
 	return response.JSON(200, query.Result)
 }
 
-func UpdateUserQuota(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserQuotaCmd{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -99,7 +98,7 @@ func UpdateUserQuota(c *models.ReqContext) response.Response {
 		return response.Error(404, "Invalid quota target", nil)
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.UpdateUserQuota(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update org quotas", err)
 	}
 	return response.Success("Organization quota updated")

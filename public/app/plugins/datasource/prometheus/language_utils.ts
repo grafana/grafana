@@ -152,7 +152,7 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
     return '';
   });
 
-  // Loop trough all of the label objects and add them to query.
+  // Loop through all label objects and add them to query.
   // As a starting point we have valid query without the labels.
   let result = exprBeforeRegexMatch;
   arrayOfLabelObjects.filter(Boolean).forEach((obj) => {
@@ -215,8 +215,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
     type: 'counter',
-    help:
-      'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+    help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
   return { ...baseMetadata, ...summaryMetadata, ...syntheticMetadata };

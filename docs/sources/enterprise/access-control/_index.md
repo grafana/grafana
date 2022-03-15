@@ -10,7 +10,7 @@ weight = 100
 > **Note:** Fine-grained access control is in beta, and you can expect changes in future releases.
 
 Fine-grained access control provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as users and reports.
-Fine-grained access control works alongside the current [Grafana permissions]({{< relref "../../permissions/_index.md" >}}), and it allows you granular control of users’ actions.
+Fine-grained access control works alongside the current Grafana permissions, and it allows you granular control of users’ actions. For more information about Grafana permissions, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
 
 To learn more about how fine-grained access control works, refer to [Roles]({{< relref "./roles.md" >}}) and [Permissions]({{< relref "./permissions.md" >}}).
 To use the fine-grained access control system, refer to [Fine-grained access control usage scenarios]({{< relref "./usage-scenarios.md" >}}).
@@ -28,7 +28,7 @@ Refer to [Assign roles]({{< relref "./roles.md#assign-roles" >}}) to learn about
 Fine-grained access control is available for the following capabilities:
 
 - [Use Explore mode]({{< relref "../../explore/_index.md" >}})
-- [Manage users]({{< relref "../../manage-users/_index.md" >}})
+- [Manage users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
 - [Manage LDAP authentication]({{< relref "../../auth/ldap/_index.md" >}})
 - [Manage data sources]({{< relref "../../datasources/_index.md" >}})
 - [Manage data source permissions]({{< relref "../datasource_permissions.md" >}})

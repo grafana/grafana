@@ -44,15 +44,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 
   componentDidMount() {
-    const {
-      initialized,
-      exploreId,
-      initialDatasource,
-      initialQueries,
-      initialRange,
-      originPanelId,
-      panelsState,
-    } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState } = this.props;
     const width = this.el?.offsetWidth ?? 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -64,8 +56,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         initialRange,
         width,
         this.exploreEvents,
-        panelsState,
-        originPanelId
+        panelsState
       );
     }
   }
@@ -110,7 +101,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const timeZone = getTimeZone(state.user);
   const fiscalYearStartMonth = getFiscalYearStartMonth(state.user);
 
-  const { datasource, queries, range: urlRange, originPanelId, panelsState } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, panelsState } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange
@@ -122,7 +113,6 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     initialDatasource,
     initialQueries,
     initialRange,
-    originPanelId,
     panelsState,
   };
 }

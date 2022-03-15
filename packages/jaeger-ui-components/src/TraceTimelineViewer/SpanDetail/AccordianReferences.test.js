@@ -104,7 +104,7 @@ describe('<References>', () => {
         expect(serviceName).toBe(span.process.serviceName);
         expect(endpointName).toBe(span.operationName);
       } else {
-        expect(serviceName).toBe('< span in another trace >');
+        expect(serviceName).toBe('View Linked Span ');
       }
     });
   });

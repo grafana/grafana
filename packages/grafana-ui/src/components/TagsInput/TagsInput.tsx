@@ -42,10 +42,7 @@ export const TagsInput: FC<Props> = ({
   };
 
   const onRemove = (tagToRemove: string) => {
-    if (disabled) {
-      return;
-    }
-    onChange(tags?.filter((x) => x !== tagToRemove));
+    onChange(tags.filter((x) => x !== tagToRemove));
   };
 
   const onAdd = (event?: React.MouseEvent) => {
@@ -74,7 +71,7 @@ export const TagsInput: FC<Props> = ({
     <div className={cx(styles.wrapper, className, width ? css({ width: theme.spacing(width) }) : '')}>
       <div className={tags?.length ? styles.tags : undefined}>
         {tags?.map((tag: string, index: number) => {
-          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
+          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} disabled={disabled} />;
         })}
       </div>
       <div>
