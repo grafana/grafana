@@ -293,10 +293,10 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	return updatedUser, err
 }
 
-func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) error {
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsQueryResult, error) {
 	// transacting with the db session
-	return s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query.IsServiceAccount = true
+	result := &serviceaccounts.SearchOrgServiceAccountsQueryResult{}
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
 		sess := dbSession.Table("org_user")
 		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
@@ -307,9 +307,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, query.OrgID)
 
-		// TODO: add to chore, for cleaning up after we have created
-		// service accounts table in the modelling
-		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", s.sqlStore.Dialect.Quote("user"), query.IsServiceAccount))
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", s.sqlStore.Dialect.Quote("user"), true))
 
 		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
 			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", serviceaccounts.ActionRead, query.User)
@@ -340,6 +338,8 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			// pass
 		case serviceaccounts.OnlyExpiredTokens:
 			// TODO: addddd code
+			sess.Join("OUTER", s.sqlStore.Dialect.Quote("api_key"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
+			whereConditions = append(whereConditions, "api_key.expires_at < ?")
 		default:
 			return fmt.Errorf("invalid filter: %s", query.Filter)
 		}
@@ -357,7 +357,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err := sess.Find(&serviceAccounts); err != nil {
 			return err
 		}
-		query.Result.ServiceAccounts = serviceAccounts
+		result.ServiceAccounts = serviceAccounts
 
 		// get total
 		serviceaccount := serviceaccounts.ServiceAccountDTO{}
@@ -371,9 +371,13 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		query.Result.TotalCount = count
+		result.TotalCount = count
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func contains(s []int64, e int64) bool {

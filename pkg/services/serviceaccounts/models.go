@@ -67,15 +67,13 @@ const (
 )
 
 type SearchOrgServiceAccountsQuery struct {
-	OrgID            int64
-	Query            string
-	Page             int
-	Limit            int
-	IsServiceAccount bool
-	Filter           ServiceAccountFilter
+	OrgID  int64
+	Query  string
+	Page   int
+	Limit  int
+	Filter ServiceAccountFilter
 
-	User   *models.SignedInUser
-	Result SearchOrgServiceAccountsQueryResult
+	User *models.SignedInUser
 }
 
 type SearchOrgServiceAccountsQueryResult struct {
