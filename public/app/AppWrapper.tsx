@@ -15,6 +15,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { I18nProvider } from './core/localisation';
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
@@ -91,6 +92,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
           <ErrorBoundaryAlert style="page">
             <ConfigContext.Provider value={config}>
               <ThemeProvider>
+                {config.featureToggles.commandPalette && <CommandPalette />}
                 <ModalsProvider>
                   <GlobalStyles />
                   <div className="grafana-app">

@@ -142,4 +142,8 @@ const (
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
+
+	// FlagCommandPalette
+	// Enable command palette
+	FlagCommandPalette = "commandPalette"
 )

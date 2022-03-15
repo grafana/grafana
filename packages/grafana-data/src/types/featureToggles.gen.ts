@@ -51,4 +51,5 @@ export interface FeatureToggles {
   storage?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
+  commandPalette?: boolean;
 }
