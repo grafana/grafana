@@ -342,6 +342,10 @@ const (
 	// Dashboard scopes
 	ScopeDashboardsAll = "dashboards:*"
 
+	// Alert scopes are divided into two groups. The internal (to Grafana) and the external ones.
+	// For the Grafana ones, given we have ACID control we're able to provide better granularity by defining CRUD options.
+	// For the external ones, we only have read and write permissions due to the lack of atomicity control of the external system.
+
 	// Alerting rules actions
 	ActionAlertingRuleCreate = "alert.rules:create"
 	ActionAlertingRuleRead   = "alert.rules:read"
@@ -359,17 +363,17 @@ const (
 	ActionAlertingNotificationsUpdate = "alert.notifications:update"
 	ActionAlertingNotificationsDelete = "alert.notifications:delete"
 
-	// External alerting rule actions
-	ActionAlertingRuleExternalEdit = "alert.rules.external:edit"
-	ActionAlertingRuleExternalRead = "alert.rules.external:read"
+	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
+	ActionAlertingRuleExternalRead  = "alert.rules.external:read"
 
-	// External alerting instances actions
-	ActionAlertingInstancesExternalEdit = "alert.instances.external:edit"
-	ActionAlertingInstancesExternalRead = "alert.instances.external:read"
+	// External alerting instances actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingInstancesExternalWrite = "alert.instances.external:write"
+	ActionAlertingInstancesExternalRead  = "alert.instances.external:read"
 
-	// External alerting notifications actions
-	ActionAlertingNotificationsExternalEdit = "alert.notifications.external:edit"
-	ActionAlertingNotificationsExternalRead = "alert.notifications.external:read"
+	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
+	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 )
 
 var (
