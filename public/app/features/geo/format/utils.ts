@@ -1,11 +1,6 @@
 import { ArrayVector, Field, FieldConfig, FieldType } from '@grafana/data';
-<<<<<<< HEAD
 import { getCenterPoint } from 'app/core/components/TransformersUI/spatial/utils';
-import { Geometry, LineString, Point } from 'ol/geom';
-=======
-import { getCenterPoint } from 'app/features/transformers/spatial/utils';
 import { Geometry, GeometryCollection, LineString, Point } from 'ol/geom';
->>>>>>> 4cd27a380d (Geomap: applying multiple line builders should keep each segment (#46563))
 import { fromLonLat } from 'ol/proj';
 import { Gazetteer } from '../gazetteer/gazetteer';
 import { decodeGeohash } from './geohash';
