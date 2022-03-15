@@ -412,7 +412,6 @@ func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext) ([]*dtos.Nav
 	savedItems := prefsQuery.Result.JsonData.Navbar.SavedItems
 
 	if len(savedItems) > 0 {
-		// Set any that exist in the navbar preferences to hide=false
 		for _, savedItem := range savedItems {
 			savedItemsChildNavs = append(savedItemsChildNavs, &dtos.NavLink{
 				Id:     savedItem.Id,
