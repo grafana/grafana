@@ -102,23 +102,6 @@ class DataSourceWithBackend<
     super(instanceSettings);
   }
 
-  getUrlForRequest(request: DataQueryRequest<TQuery>): string {
-    if(!config.featureToggles.validatedQueries) {
-      return '/api/ds/query';
-    }
-    
-    if (
-      !request.userCanEditDashboard &&
-      request.dashboardUid != null &&
-      request.panelId != null
-    ) {
-      // add additional params to query so we can validate on the backend.
-      return `/api/dashboards/org/${config.bootData.user.orgId}/uid/${request.dashboardUid}/panels/${request.panelId}/query`;
-    }
-
-    return '/api/ds/query';
-  }
-
   /**
    * Ideally final -- any other implementation may not work as expected
    */
@@ -183,7 +166,7 @@ class DataSourceWithBackend<
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: this.getUrlForRequest(request),
+        url: getUrlForRequest(request),
         method: 'POST',
         data: body,
         requestId,
@@ -272,6 +255,19 @@ class DataSourceWithBackend<
       throw new HealthCheckError(res.message, res.details);
     });
   }
+}
+
+function getUrlForRequest<TQuery extends DataQuery = DataQuery>(request: DataQueryRequest<TQuery>): string {
+  if (!config.featureToggles.validatedQueries) {
+    return '/api/ds/query';
+  }
+
+  if (!request.userCanEditDashboard && request.dashboardUid != null && request.panelId != null) {
+    // add additional params to query so we can validate on the backend.
+    return `/api/dashboards/org/${config.bootData.user.orgId}/uid/${request.dashboardUid}/panels/${request.panelId}/query`;
+  }
+
+  return '/api/ds/query';
 }
 
 /**
