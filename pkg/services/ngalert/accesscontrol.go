@@ -28,7 +28,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -56,7 +56,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
@@ -77,7 +77,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingInstancesExternalRead,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -100,7 +100,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingInstancesExternalWrite,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
@@ -120,7 +120,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalRead,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -146,7 +146,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
