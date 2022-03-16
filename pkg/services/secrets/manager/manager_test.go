@@ -283,7 +283,7 @@ func TestSecretsService_Run(t *testing.T) {
 		require.Len(t, svc.dataKeyCache.entries, 1)
 
 		t.Cleanup(func() { now = time.Now })
-		now = func() time.Time { return time.Now().Add(cacheTTLByDefault) }
+		now = func() time.Time { return time.Now().Add(10 * time.Second) }
 
 		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()

@@ -20,14 +20,14 @@ func (e dataKeyCacheEntry) expired() bool {
 
 type dataKeyCache struct {
 	sync.RWMutex
-	entries    map[string]dataKeyCacheEntry
-	entriesTTL time.Duration
+	entries  map[string]dataKeyCacheEntry
+	cacheTTL time.Duration
 }
 
 func newDataKeyCache(ttl time.Duration) *dataKeyCache {
 	return &dataKeyCache{
-		entries:    make(map[string]dataKeyCacheEntry),
-		entriesTTL: ttl,
+		entries:  make(map[string]dataKeyCacheEntry),
+		cacheTTL: ttl,
 	}
 }
 
@@ -49,7 +49,7 @@ func (c *dataKeyCache) add(id string, dataKey []byte) {
 
 	c.entries[id] = dataKeyCacheEntry{
 		dataKey:    dataKey,
-		expiration: now().Add(c.entriesTTL),
+		expiration: now().Add(c.cacheTTL),
 	}
 }
 

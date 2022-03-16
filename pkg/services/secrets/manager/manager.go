@@ -20,16 +20,6 @@ import (
 	"xorm.io/xorm"
 )
 
-const (
-	settingsSection = "security.encryption"
-
-	cacheTTLKey       = "data_keys_cache_ttl"
-	cacheTTLByDefault = 15 * time.Minute
-
-	cacheCleanupIntervalKey       = "data_keys_cache_cleanup_interval"
-	cacheCleanupIntervalByDefault = time.Minute
-)
-
 type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
@@ -72,7 +62,7 @@ func ProvideSecretsService(
 
 	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
-	ttl := settings.KeyValue(settingsSection, cacheTTLKey).MustDuration(cacheTTLByDefault)
+	ttl := settings.KeyValue("security.encryption", "data_keys_cache_ttl").MustDuration(15 * time.Minute)
 	cache := newDataKeyCache(ttl)
 
 	s := &SecretsService{
@@ -358,8 +348,8 @@ func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 
 func (s *SecretsService) Run(ctx context.Context) error {
 	gc := time.NewTicker(
-		s.settings.KeyValue(settingsSection, cacheCleanupIntervalKey).
-			MustDuration(cacheCleanupIntervalByDefault),
+		s.settings.KeyValue("security.encryption", "data_keys_cache_cleanup_interval").
+			MustDuration(time.Minute),
 	)
 
 	grp, gCtx := errgroup.WithContext(ctx)
