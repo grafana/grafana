@@ -181,12 +181,14 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       li {
         margin-bottom: 0;
       }
+      div:first-child {
+        flex-grow: 0.6;
+      }
     `,
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
-      position: absolute;
-      right: ${theme.spacing(0.5)};
+      margin-left: auto;
     `,
 
     tableContentWrapper: (totalColumnsWidth: number) => css`

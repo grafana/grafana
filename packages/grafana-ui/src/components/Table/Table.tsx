@@ -209,6 +209,10 @@ export const Table: FC<Props> = memo((props: Props) => {
   const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
 
   useEffect(() => {
+    // Don't update the page size if it is less than 1
+    if (pageSize <= 0) {
+      return;
+    }
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
@@ -237,6 +241,13 @@ export const Table: FC<Props> = memo((props: Props) => {
     [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles]
   );
 
+  const onNavigate = useCallback(
+    (toPage: number) => {
+      gotoPage(toPage - 1);
+    },
+    [gotoPage]
+  );
+
   const itemCount = enablePagination ? page.length : data.length;
   let paginationEl = null;
   if (enablePagination) {
@@ -247,15 +258,16 @@ export const Table: FC<Props> = memo((props: Props) => {
     }
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
-        <div className={tableStyles.paginationSummary}>
-          {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
-        </div>
         <div>
           <Pagination
             currentPage={state.pageIndex + 1}
             numberOfPages={pageOptions.length}
-            onNavigate={(toPage) => gotoPage(toPage - 1)}
+            showSmallVersion={width < 500}
+            onNavigate={onNavigate}
           />
+        </div>
+        <div className={tableStyles.paginationSummary}>
+          {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
         </div>
       </div>
     );
