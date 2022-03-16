@@ -116,6 +116,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/silences',
+    roles: () => contextSrv.evaluatePermission(() => [], [AccessControlAction.AlertingInstanceRead]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
     ),
