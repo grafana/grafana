@@ -123,7 +123,7 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagFileStoreApi
-	// Simple API for managing files
-	FlagFileStoreApi = "fileStoreApi"
+	// FlagAzureMonitorResourcePickerForMetrics
+	// New UI for Azure Monitor Metrics Query
+	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 )

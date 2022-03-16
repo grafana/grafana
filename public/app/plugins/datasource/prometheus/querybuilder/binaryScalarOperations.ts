@@ -1,4 +1,4 @@
-import { QueryBuilderOperation, QueryBuilderOperationDef } from './shared/types';
+import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromOperationId, PromVisualQueryOperationCategory } from './types';
 import { defaultAddOperationHandler } from './shared/operationUtils';
 
@@ -37,42 +37,55 @@ export const binaryScalarDefs = [
     id: PromOperationId.EqualTo,
     name: 'Equal to',
     sign: '==',
+    comparison: true,
   },
   {
     id: PromOperationId.NotEqualTo,
     name: 'Not equal to',
     sign: '!=',
+    comparison: true,
   },
   {
     id: PromOperationId.GreaterThan,
     name: 'Greater than',
     sign: '>',
+    comparison: true,
   },
   {
     id: PromOperationId.LessThan,
     name: 'Less than',
     sign: '<',
+    comparison: true,
   },
   {
     id: PromOperationId.GreaterOrEqual,
     name: 'Greater or equal to',
     sign: '>=',
+    comparison: true,
   },
   {
     id: PromOperationId.LessOrEqual,
     name: 'Less or equal to',
     sign: '<=',
+    comparison: true,
   },
 ];
 
 // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
 // both the operator and the operand in a single input
-export const binaryScalarOperations = binaryScalarDefs.map((opDef) => {
+export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDefs.map((opDef) => {
+  const params: QueryBuilderOperationParamDef[] = [{ name: 'Value', type: 'number' }];
+  const defaultParams: any[] = [2];
+  if (opDef.comparison) {
+    params.unshift({ name: 'Bool', type: 'boolean' });
+    defaultParams.unshift(false);
+  }
+
   return {
     id: opDef.id,
     name: opDef.name,
-    params: [{ name: 'Value', type: 'number' }],
-    defaultParams: [2],
+    params,
+    defaultParams,
     alternativesKey: 'binary scalar operations',
     category: PromVisualQueryOperationCategory.BinaryOps,
     renderer: getSimpleBinaryRenderer(opDef.sign),
@@ -82,6 +95,13 @@ export const binaryScalarOperations = binaryScalarDefs.map((opDef) => {
 
 function getSimpleBinaryRenderer(operator: string) {
   return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${innerExpr} ${operator} ${model.params[0]}`;
+    let param = model.params[0];
+    let bool = '';
+    if (model.params.length === 2) {
+      param = model.params[1];
+      bool = model.params[0] ? ' bool' : '';
+    }
+
+    return `${innerExpr} ${operator}${bool} ${param}`;
   };
 }

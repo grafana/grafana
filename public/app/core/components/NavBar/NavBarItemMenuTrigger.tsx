@@ -32,7 +32,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const state = useMenuTriggerState({ ...rest });
 
   // Get props for the menu trigger and menu elements
-  const ref = React.useRef<HTMLButtonElement>(null);
+  const ref = React.useRef<HTMLElement>(null);
   const { menuTriggerProps, menuProps } = useMenuTrigger({}, state, ref);
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       className={styles.element}
       {...buttonProps}
       {...keyboardProps}
-      ref={ref}
+      ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={item?.onClick}
       aria-label={label}
     >
@@ -108,7 +108,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         <Link
           {...buttonProps}
           {...keyboardProps}
-          ref={ref}
+          ref={ref as React.RefObject<HTMLAnchorElement>}
           href={item.url}
           target={item.target}
           onClick={item?.onClick}
@@ -124,7 +124,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           onClick={item?.onClick}
           {...buttonProps}
           {...keyboardProps}
-          ref={ref}
+          ref={ref as React.RefObject<HTMLAnchorElement>}
           className={styles.element}
           aria-label={label}
         >
