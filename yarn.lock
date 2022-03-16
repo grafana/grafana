@@ -20965,7 +20965,7 @@ __metadata:
     postcss-loader: 6.2.1
     postcss-reporter: 7.0.5
     postcss-scss: 4.0.3
-    prettier: 2.5.1
+    prettier: 2.6.0
     prismjs: 1.27.0
     prop-types: 15.8.1
     raw-loader: 4.0.2
@@ -29729,6 +29729,15 @@ __metadata:
   bin:
     prettier: bin-prettier.js
   checksum: 21b9408476ea1c544b0e45d51ceb94a84789ff92095abb710942d780c862d0daebdb29972d47f6b4d0f7ebbfb0ffbf56cc2cfa3e3e9d1cca54864af185b15b66
+  languageName: node
+  linkType: hard
+
+"prettier@npm:2.6.0":
+  version: 2.6.0
+  resolution: "prettier@npm:2.6.0"
+  bin:
+    prettier: bin-prettier.js
+  checksum: 3e527ad62279676778a8404d18174d7ca2365ada4caba6eebbcdd9907d1187afd3bc6ade5b4e5f5d4549bb9fb71e45ca8930d71500017635524f8fc05bc52e93
   languageName: node
   linkType: hard
 
