@@ -123,6 +123,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
             disabled={!searchValue}
             type="button"
             icon="times"
+            data-testid="trace-page-search-bar-clear-button"
             onClick={clearSearch}
             title={'Clear search'}
           />

@@ -109,4 +109,19 @@ describe('TraceViewContainer', () => {
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[2].parentNode! as HTMLElement).className
     ).toContain('rowFocused');
   });
+
+  it('clear button clears results', () => {
+    renderTraceViewContainer();
+    userEvent.type(screen.getByPlaceholderText('Find...'), 'logproto');
+    const nextResultButton = screen.getByTestId('trace-page-search-bar-next-result-button');
+    const clearButton = screen.getByTestId('trace-page-search-bar-clear-button');
+    userEvent.click(nextResultButton);
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
+    ).toContain('rowFocused');
+    userEvent.click(clearButton);
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
+    ).not.toContain('rowFocused');
+  });
 });
