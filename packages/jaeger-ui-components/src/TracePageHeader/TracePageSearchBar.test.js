@@ -18,7 +18,6 @@ import { shallow } from 'enzyme';
 import * as markers from './TracePageSearchBar.markers';
 import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
 import UiFindInput from '../common/UiFindInput';
-import { useStyles2 } from '@grafana/ui';
 
 const defaultProps = {
   forwardedRef: React.createRef(),

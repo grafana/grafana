@@ -25,7 +25,7 @@ import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 import { memo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme?: GrafanaTheme2) => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
@@ -78,14 +78,18 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const { clearSearch, navigable, nextResult, prevResult, onSearchValueChange, searchValue, searchBarSuffix } = props;
   const styles = useStyles2(getStyles);
 
-  const count = searchValue ? <span className={styles.TracePageSearchBarSuffix}>{searchBarSuffix}</span> : null;
+  const suffix = searchValue ? (
+    <span className={styles.TracePageSearchBarSuffix} data-testid="trace-page-search-bar-suffix">
+      {searchBarSuffix}
+    </span>
+  ) : null;
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
     'data-test': markers.IN_TRACE_SEARCH,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
-    suffix: count,
+    suffix: suffix,
   };
 
   return (
@@ -100,9 +104,17 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
+                data-testid="trace-page-search-bar-next-result-button"
                 onClick={nextResult}
               />
-              <Button className={btnClass} disabled={!searchValue} type="button" icon="arrow-up" onClick={prevResult} />
+              <Button
+                className={btnClass}
+                disabled={!searchValue}
+                type="button"
+                icon="arrow-up"
+                data-testid="trace-page-search-bar-prev-result-button"
+                onClick={prevResult}
+              />
             </>
           )}
           <Button

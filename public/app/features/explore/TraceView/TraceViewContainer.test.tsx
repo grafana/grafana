@@ -70,4 +70,43 @@ describe('TraceViewContainer', () => {
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[0].parentNode! as HTMLElement).className
     ).toContain('rowMatchingFilter');
   });
+
+  it('can select next/prev results', () => {
+    renderTraceViewContainer();
+    userEvent.type(screen.getByPlaceholderText('Find...'), 'logproto');
+    const nextResultButton = screen.getByTestId('trace-page-search-bar-next-result-button');
+    const prevResultButton = screen.getByTestId('trace-page-search-bar-prev-result-button');
+    const suffix = screen.getByTestId('trace-page-search-bar-suffix');
+
+    userEvent.click(nextResultButton);
+    expect(suffix.textContent).toBe('1 of 2');
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
+    ).toContain('rowFocused');
+    userEvent.click(nextResultButton);
+    expect(suffix.textContent).toBe('2 of 2');
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[2].parentNode! as HTMLElement).className
+    ).toContain('rowFocused');
+    userEvent.click(nextResultButton);
+    expect(suffix.textContent).toBe('1 of 2');
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
+    ).toContain('rowFocused');
+    userEvent.click(prevResultButton);
+    expect(suffix.textContent).toBe('2 of 2');
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[2].parentNode! as HTMLElement).className
+    ).toContain('rowFocused');
+    userEvent.click(prevResultButton);
+    expect(suffix.textContent).toBe('1 of 2');
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
+    ).toContain('rowFocused');
+    userEvent.click(prevResultButton);
+    expect(suffix.textContent).toBe('2 of 2');
+    expect(
+      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[2].parentNode! as HTMLElement).className
+    ).toContain('rowFocused');
+  });
 });
