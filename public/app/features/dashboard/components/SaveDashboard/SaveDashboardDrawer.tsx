@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { css } from '@emotion/css';
-import { CustomScrollbar, Drawer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
-import { GrafanaTheme2 } from '@grafana/data';
 import { jsonDiff } from '../VersionHistory/utils';
 import { useAsync } from 'react-use';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -14,7 +12,6 @@ import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
-  const styles = useStyles2(getStyles);
   const [options, setOptions] = useState<SaveDashboardOptions>({});
 
   const isProvisioned = dashboard.meta.provisioned;
@@ -115,28 +112,17 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       title={isCopy ? 'Save dashboard copy' : 'Save dashboard'}
       onClose={onDismiss}
       width={'40%'}
-      subtitle={
-        <>
-          <TabsBar className={styles.tabsBar}>
-            <Tab label={'Options'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-            {data.hasChanges && !isCopy && (
-              <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
-            )}
-          </TabsBar>
-        </>
+      subtitle={dashboard.title}
+      tabs={
+        <TabsBar>
+          <Tab label={'Options'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
+          <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+        </TabsBar>
       }
       expandable
+      scrollableContent
     >
-      <CustomScrollbar autoHeightMin="100%">
-        <TabContent>{renderBody()}</TabContent>
-      </CustomScrollbar>
+      {renderBody()}
     </Drawer>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  tabsBar: css`
-    padding-left: ${theme.v1.spacing.md};
-    margin: ${theme.v1.spacing.lg} -${theme.v1.spacing.sm} -${theme.v1.spacing.lg} -${theme.v1.spacing.lg};
-  `,
-});

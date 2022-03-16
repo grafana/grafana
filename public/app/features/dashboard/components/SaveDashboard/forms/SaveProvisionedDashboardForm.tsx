@@ -5,6 +5,7 @@ import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useT
 import { SaveDashboardFormProps } from '../types';
 import { GrafanaTheme } from '@grafana/data';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { Stack } from '@grafana/experimental';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const theme = useTheme();
@@ -29,7 +30,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
   const styles = getStyles(theme);
   return (
     <>
-      <div>
+      <Stack direction="column" gap={2}>
         <div>
           This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
           the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
@@ -66,7 +67,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           </ClipboardButton>
           <Button onClick={saveToFile}>Save JSON to file</Button>
         </HorizontalGroup>
-      </div>
+      </Stack>
     </>
   );
 };

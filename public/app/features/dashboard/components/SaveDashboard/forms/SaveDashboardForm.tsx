@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 
-import { Button, Checkbox, Form, HorizontalGroup, TextArea } from '@grafana/ui';
+import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardModel } from 'app/features/dashboard/state';
 import { SaveDashboardData, SaveDashboardOptions } from '../types';
+import { Stack } from '@grafana/experimental';
 
 interface FormDTO {
   message: string;
@@ -55,7 +56,7 @@ export const SaveDashboardForm = ({
       }}
     >
       {({ register, errors }) => (
-        <>
+        <Stack direction="column" gap={2}>
           {hasTimeChanged && (
             <Checkbox
               checked={options.saveTimerange}
@@ -82,13 +83,10 @@ export const SaveDashboardForm = ({
               aria-label={selectors.pages.SaveDashboardModal.saveVariables}
             />
           )}
-          {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
 
-          <div>
-            <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus rows={5} />
-          </div>
+          <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus rows={5} />
 
-          <HorizontalGroup>
+          <Stack alignItems="center">
             <Button variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
@@ -100,9 +98,9 @@ export const SaveDashboardForm = ({
             >
               {saving ? '' : 'Save'}
             </Button>
-          </HorizontalGroup>
-          {!saveModel.hasChanges && <div>No changes to save</div>}
-        </>
+            {!saveModel.hasChanges && <div>No changes to save</div>}
+          </Stack>
+        </Stack>
       )}
     </Form>
   );
