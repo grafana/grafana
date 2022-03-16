@@ -144,3 +144,7 @@ func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, s
 	s.Calls.AddServiceAccountToken = append(s.Calls.AddServiceAccountToken, []interface{}{ctx, cmd})
 	return nil
 }
+
+func (s *ServiceAccountsStoreMock) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
