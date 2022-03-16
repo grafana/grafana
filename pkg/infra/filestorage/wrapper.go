@@ -202,6 +202,10 @@ func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
 		return nil, nil
 	}
 
+	if b.rootFolder == rootedPath {
+		return nil, nil
+	}
+
 	file, err := b.wrapped.Get(ctx, rootedPath)
 	if file != nil {
 		file.FullPath = b.removeRoot(file.FullPath)
@@ -276,88 +280,39 @@ func (b wrapper) pagingOptionsWithDefaults(paging *Paging) *Paging {
 	return paging
 }
 
-func (b wrapper) listOptionsWithDefaults(options *ListOptions, folderQuery bool) *ListOptions {
+func (b wrapper) listOptionsWithDefaults(options *ListOptions) *ListOptions {
 	if options == nil {
-		options = &ListOptions{}
-		options.Recursive = folderQuery
-		options.PathFilters = b.pathFilters
-
 		return &ListOptions{
-			Recursive:   folderQuery,
-			PathFilters: b.pathFilters,
+			Recursive:    false,
+			PathFilters:  b.pathFilters,
+			WithFiles:    true,
+			WithFolders:  false,
+			WithContents: false,
 		}
 	}
 
+	withFiles := options.WithFiles
+	if !options.WithFiles && !options.WithFolders {
+		withFiles = true
+	}
 	if options.PathFilters == nil {
 		return &ListOptions{
-			Recursive:   options.Recursive,
-			PathFilters: b.pathFilters,
+			Recursive:    options.Recursive,
+			PathFilters:  b.pathFilters,
+			WithFiles:    withFiles,
+			WithFolders:  options.WithFolders,
+			WithContents: options.WithContents,
 		}
 	}
 
 	rootedFilters := addRootFolderToFilters(copyPathFilters(options.PathFilters), b.rootFolder)
 	return &ListOptions{
-		Recursive:   options.Recursive,
-		PathFilters: addPathFilters(rootedFilters, b.pathFilters),
+		Recursive:    options.Recursive,
+		PathFilters:  addPathFilters(rootedFilters, b.pathFilters),
+		WithFiles:    withFiles,
+		WithFolders:  options.WithFolders,
+		WithContents: options.WithContents,
 	}
-}
-
-func (b wrapper) ListFiles(ctx context.Context, path string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
-	if err := b.validatePath(path); err != nil {
-		return nil, err
-	}
-
-	pathWithRoot := b.addRoot(path)
-	resp, err := b.wrapped.ListFiles(ctx, pathWithRoot, b.pagingOptionsWithDefaults(paging), b.listOptionsWithDefaults(options, false))
-
-	if resp != nil && resp.Files != nil {
-		if resp.LastPath != "" {
-			resp.LastPath = b.removeRoot(resp.LastPath)
-		}
-
-		for i := 0; i < len(resp.Files); i++ {
-			resp.Files[i].FullPath = b.removeRoot(resp.Files[i].FullPath)
-		}
-	}
-
-	if err != nil {
-		return resp, err
-	}
-
-	if len(resp.Files) != 0 {
-		return resp, err
-	}
-
-	// TODO: optimize, don't fetch the contents in this case
-	file, err := b.Get(ctx, path)
-	if err != nil {
-		return resp, err
-	}
-
-	if file != nil {
-		file.FileMetadata.FullPath = b.removeRoot(file.FileMetadata.FullPath)
-		return &ListFilesResponse{
-			Files:    []FileMetadata{file.FileMetadata},
-			HasMore:  false,
-			LastPath: file.FileMetadata.FullPath,
-		}, nil
-	}
-
-	return resp, err
-}
-
-func (b wrapper) ListFolders(ctx context.Context, path string, options *ListOptions) ([]FileMetadata, error) {
-	if err := b.validatePath(path); err != nil {
-		return nil, err
-	}
-
-	folders, err := b.wrapped.ListFolders(ctx, b.addRoot(path), b.listOptionsWithDefaults(options, true))
-	if folders != nil {
-		for i := 0; i < len(folders); i++ {
-			folders[i].FullPath = b.removeRoot(folders[i].FullPath)
-		}
-	}
-	return folders, err
 }
 
 func (b wrapper) CreateFolder(ctx context.Context, path string) error {
@@ -395,24 +350,77 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 	return b.wrapped.DeleteFolder(ctx, rootedPath)
 }
 
+func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
+	if err := b.validatePath(folderPath); err != nil {
+		return nil, err
+	}
+
+	options = b.listOptionsWithDefaults(options)
+	if (!options.WithFiles && !options.WithFolders) || options.isDenyAll() {
+		return &ListResponse{
+			Files:    []*File{},
+			HasMore:  false,
+			LastPath: "",
+		}, nil
+	}
+
+	var fileChan = make(chan *File)
+	fileRetrievalCtx, cancelFileGet := context.WithCancel(ctx)
+	defer cancelFileGet()
+
+	go func() {
+		if options.WithFiles {
+			if f, err := b.Get(fileRetrievalCtx, folderPath); err == nil {
+				fileChan <- f
+				return
+			}
+		}
+		fileChan <- nil
+	}()
+
+	pathWithRoot := b.addRoot(folderPath)
+	resp, err := b.wrapped.List(ctx, pathWithRoot, b.pagingOptionsWithDefaults(paging), options)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp != nil && resp.Files != nil && len(resp.Files) > 0 {
+		if resp.LastPath != "" {
+			resp.LastPath = b.removeRoot(resp.LastPath)
+		}
+
+		for i := 0; i < len(resp.Files); i++ {
+			resp.Files[i].FullPath = b.removeRoot(resp.Files[i].FullPath)
+		}
+		return resp, err
+	}
+
+	file := <-fileChan
+	if file != nil {
+		file.FileMetadata.FullPath = b.removeRoot(file.FileMetadata.FullPath)
+		var contents []byte
+		if options.WithContents {
+			contents = file.Contents
+		} else {
+			contents = []byte{}
+		}
+		return &ListResponse{
+			Files:    []*File{{Contents: contents, FileMetadata: file.FileMetadata}},
+			HasMore:  false,
+			LastPath: file.FileMetadata.FullPath,
+		}, nil
+	}
+
+	return resp, err
+}
+
 func (b wrapper) isFolderEmpty(ctx context.Context, path string) (bool, error) {
-	filesInFolder, err := b.ListFiles(ctx, path, &Paging{First: 1}, &ListOptions{Recursive: true})
+	resp, err := b.List(ctx, path, &Paging{First: 1}, &ListOptions{Recursive: true, WithFolders: true, WithFiles: true})
 	if err != nil {
 		return false, err
 	}
 
-	if len(filesInFolder.Files) > 0 {
-		return false, nil
-	}
-
-	folders, err := b.ListFolders(ctx, path, &ListOptions{
-		Recursive: true,
-	})
-	if err != nil {
-		return false, err
-	}
-
-	if len(folders) > 0 {
+	if len(resp.Files) > 0 {
 		return false, nil
 	}
 
