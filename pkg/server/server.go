@@ -18,7 +18,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -119,7 +118,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login)
+	// login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login)
 	social.ProvideService(s.cfg)
 
 	if err := s.roleRegistry.RegisterFixedRoles(); err != nil {

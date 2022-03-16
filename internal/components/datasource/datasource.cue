@@ -8,15 +8,9 @@ seqs: [
     {
         schemas: [
             { // 0.0
-                // TODO these are all currently marked as required, but it's
-                // likely that some/many/most of them aren't. This needs careful
-                // attention!
-                //uid: string
-                //orgId: int
-                //name: string
                 type: string
                 typeLogoUrl: string
-                access: *"proxy" | "direct" // TODO are we sure this default is right?
+                access: *"proxy" | "direct"
                 url: string
                 password: string
                 user: string
@@ -26,11 +20,9 @@ seqs: [
                 basicAuthPassword: string
                 withCredentials: bool | *false
                 isDefault: bool | *false
-                jsonData?: [string]: _
+                jsonData: string
                 version: int32
                 readOnly: bool | *false
-                secureJsonFields?: [string]: bool
-                accessControl?: [string]: bool
             }
         ]
     },

@@ -40,3 +40,21 @@ make run
 # Test it:
 $ kubectl --kubeconfig=devenv/docker/blocks/intentapi/intentapi.kubeconfig api-resources
 ```
+
+### Testing with a Datasource CRD
+
+Datasource CRDs are supported and are automatically registered to apiserver when Grafana is started. In order to test the interactions through the Intent API, you can run the following commands:
+
+```sh
+# Create a new datasource.
+$ kubectl --kubeconfig=devenv/docker/blocks/intentapi/intentapi.kubeconfig apply -f devenv/intent-test-datasource.yaml
+
+# Verify that it's been created.
+$ kubectl --kubeconfig=devenv/docker/blocks/intentapi/intentapi.kubeconfig get datasources
+
+# Patch it and verify that the changes have been applied.
+$ kubectl --kubeconfig=devenv/docker/blocks/intentapi/intentapi.kubeconfig patch datasources test-datasource --type=merge -p '{"spec":{"url":"http://localhost:1111/api/prom1"}}'
+
+# Delete it.
+$ kubectl --kubeconfig=devenv/docker/blocks/intentapi/intentapi.kubeconfig delete datasource test-datasource
+```
