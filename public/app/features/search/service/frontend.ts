@@ -1,4 +1,4 @@
-import { QueryFilters } from './types';
+import { GrafanaSearcher, QueryFilters } from './types';
 
 import { ArrayVector, DataFrame, FieldType, Vector } from '@grafana/data';
 import MiniSearch from 'minisearch';
@@ -21,11 +21,13 @@ interface InputDoc {
   index: number;
 
   // Fields
+  id?: Vector<number>;
   url?: Vector<string>;
+  uid?: Vector<string>;
   name?: Vector<string>;
   description?: Vector<string>;
-  panelId?: Vector<number>;
-  panelType?: Vector<string>;
+  dashboardID?: Vector<number>;
+  type?: Vector<string>;
   tags?: Vector<string>; // JSON strings?
 }
 
@@ -34,7 +36,7 @@ interface CompositeKey {
   index: number;
 }
 
-export function getFrontendGrafanaSearcher(data: RawIndexData) {
+export function getFrontendGrafanaSearcher(data: RawIndexData): GrafanaSearcher {
   const searcher = new MiniSearch<InputDoc>({
     idField: '__id',
     fields: ['name', 'description', 'tags'], // fields to index for full-text search
@@ -82,6 +84,28 @@ export function getFrontendGrafanaSearcher(data: RawIndexData) {
     }
   }
 
+  // Construct the URL field for each panel
+  if (true) {
+    const dashboard = lookup.get('dashboard');
+    const panel = lookup.get('panel');
+    if (dashboard?.id && panel?.dashboardID && dashboard.url) {
+      const dashIDToIndex = new Map<number, number>();
+      for (let i = 0; i < dashboard.id?.length; i++) {
+        dashIDToIndex.set(dashboard.id.get(i), i);
+      }
+
+      const urls: string[] = new Array(panel.dashboardID.length);
+      for (let i = 0; i < panel.dashboardID.length; i++) {
+        const dashboardID = panel.dashboardID.get(i);
+        const index = dashIDToIndex.get(dashboardID);
+        if (index != null) {
+          urls[i] = dashboard.url.get(index) + '#' + panel.id?.get(i);
+        }
+      }
+      panel.url = new ArrayVector(urls);
+    }
+  }
+
   return {
     search: async (query: string, filter?: QueryFilters) => {
       const found = searcher.search(query);
@@ -89,6 +113,7 @@ export function getFrontendGrafanaSearcher(data: RawIndexData) {
       // frame fields
       const url: string[] = [];
       const kind: string[] = [];
+      const type: string[] = [];
       const name: string[] = [];
       const info: any[] = [];
       const score: number[] = [];
@@ -104,6 +129,7 @@ export function getFrontendGrafanaSearcher(data: RawIndexData) {
         url.push(input.url?.get(index) ?? '?');
         kind.push(key.kind);
         name.push(input.name?.get(index) ?? '?');
+        type.push(input.type?.get(index) as any);
         info.push(res.match); // ???
         score.push(res.score);
       }
@@ -113,6 +139,7 @@ export function getFrontendGrafanaSearcher(data: RawIndexData) {
             { name: 'Kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
             { name: 'Name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
             { name: 'URL', config: {}, type: FieldType.string, values: new ArrayVector(url) },
+            { name: 'type', config: {}, type: FieldType.other, values: new ArrayVector(type) },
             { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
             { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
           ],
@@ -141,6 +168,22 @@ export function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc 
       case 'url':
       case 'URL':
         input.url = field.values;
+        break;
+      case 'uid':
+      case 'UID':
+        input.uid = field.values;
+        break;
+      case 'id':
+      case 'ID':
+        input.id = field.values;
+        break;
+      case 'DashboardID':
+      case 'dashboardID':
+        input.dashboardID = field.values;
+        break;
+      case 'Type':
+      case 'type':
+        input.type = field.values;
         break;
     }
   }
