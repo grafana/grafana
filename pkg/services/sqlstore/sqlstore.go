@@ -132,7 +132,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.addTeamQueryAndCommandHandlers()
 	ss.addOrgQueryAndCommandHandlers()
 
-	bus.AddHandler("sql", ss.GetDBHealthQuery)
+	bus.SetHandler("sql", ss.GetDBHealthQuery)
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err

@@ -38,7 +38,7 @@ func TestService(t *testing.T) {
 		secretsService: secretsService,
 	}
 
-	bus.AddHandler("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
+	bus.SetHandler("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Uid: "1", OrgId: 1, Type: "test", JsonData: simplejson.New()}
 		return nil
 	})

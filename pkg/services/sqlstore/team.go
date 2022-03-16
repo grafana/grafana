@@ -14,16 +14,16 @@ import (
 )
 
 func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.UpdateTeam)
-	bus.AddHandler("sql", ss.DeleteTeam)
-	bus.AddHandler("sql", ss.SearchTeams)
-	bus.AddHandler("sql", ss.GetTeamById)
-	bus.AddHandler("sql", ss.GetTeamsByUser)
+	bus.SetHandler("sql", ss.UpdateTeam)
+	bus.SetHandler("sql", ss.DeleteTeam)
+	bus.SetHandler("sql", ss.SearchTeams)
+	bus.SetHandler("sql", ss.GetTeamById)
+	bus.SetHandler("sql", ss.GetTeamsByUser)
 
-	bus.AddHandler("sql", ss.UpdateTeamMember)
-	bus.AddHandler("sql", ss.RemoveTeamMember)
-	bus.AddHandler("sql", ss.GetTeamMembers)
-	bus.AddHandler("sql", IsAdminOfTeams)
+	bus.SetHandler("sql", ss.UpdateTeamMember)
+	bus.SetHandler("sql", ss.RemoveTeamMember)
+	bus.SetHandler("sql", ss.GetTeamMembers)
+	bus.SetHandler("sql", IsAdminOfTeams)
 }
 
 type TeamStore interface {

@@ -15,13 +15,13 @@ import (
 var timeNow = time.Now
 
 func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.HandleAlertsQuery)
-	bus.AddHandler("sql", ss.GetAlertById)
-	bus.AddHandler("sql", ss.GetAllAlertQueryHandler)
-	bus.AddHandler("sql", ss.SetAlertState)
-	bus.AddHandler("sql", ss.GetAlertStatesForDashboard)
-	bus.AddHandler("sql", ss.PauseAlert)
-	bus.AddHandler("sql", ss.PauseAllAlerts)
+	bus.SetHandler("sql", ss.HandleAlertsQuery)
+	bus.SetHandler("sql", ss.GetAlertById)
+	bus.SetHandler("sql", ss.GetAllAlertQueryHandler)
+	bus.SetHandler("sql", ss.SetAlertState)
+	bus.SetHandler("sql", ss.GetAlertStatesForDashboard)
+	bus.SetHandler("sql", ss.PauseAlert)
+	bus.SetHandler("sql", ss.PauseAllAlerts)
 }
 
 func (ss *SQLStore) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {

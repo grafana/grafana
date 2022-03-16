@@ -108,7 +108,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
+		bus.SetHandler("test", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
 			require.Equal(t, "danlee", query.LoginOrEmail)
 
 			query.Result = &models.User{

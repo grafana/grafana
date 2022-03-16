@@ -28,7 +28,7 @@ var loginLogger = log.New("login")
 var AuthenticateUserFunc = AuthenticateUser
 
 func Init() {
-	bus.AddHandler("auth", AuthenticateUser)
+	bus.SetHandler("auth", AuthenticateUser)
 }
 
 // AuthenticateUser authenticates the user via username & password

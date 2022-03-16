@@ -10,12 +10,12 @@ import (
 )
 
 func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetAdminStats)
-	bus.AddHandler("sql", ss.GetSystemUserCountStats)
-	bus.AddHandler("sql", ss.GetAlertNotifiersUsageStats)
-	bus.AddHandler("sql", ss.GetDataSourceAccessStats)
-	bus.AddHandler("sql", ss.GetDataSourceStats)
-	bus.AddHandler("sql", ss.GetSystemStats)
+	bus.SetHandler("sql", ss.GetAdminStats)
+	bus.SetHandler("sql", ss.GetSystemUserCountStats)
+	bus.SetHandler("sql", ss.GetAlertNotifiersUsageStats)
+	bus.SetHandler("sql", ss.GetDataSourceAccessStats)
+	bus.SetHandler("sql", ss.GetDataSourceStats)
+	bus.SetHandler("sql", ss.GetSystemStats)
 }
 
 const activeUserTimeLimit = time.Hour * 24 * 30

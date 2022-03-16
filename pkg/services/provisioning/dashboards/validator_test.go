@@ -23,7 +23,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
-	bus.AddHandler("test", mockGetDashboardQuery)
+	bus.SetHandler("test", mockGetDashboardQuery)
 	cfg := &config{
 		Name:    "Default",
 		Type:    "file",

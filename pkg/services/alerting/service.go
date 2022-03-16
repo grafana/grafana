@@ -28,19 +28,19 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 		NotificationService: notificationService,
 	}
 
-	s.Bus.AddHandler(s.GetAlertNotifications)
-	s.Bus.AddHandler(s.CreateAlertNotificationCommand)
-	s.Bus.AddHandler(s.UpdateAlertNotification)
-	s.Bus.AddHandler(s.DeleteAlertNotification)
-	s.Bus.AddHandler(s.GetAllAlertNotifications)
-	s.Bus.AddHandler(s.GetOrCreateAlertNotificationState)
-	s.Bus.AddHandler(s.SetAlertNotificationStateToCompleteCommand)
-	s.Bus.AddHandler(s.SetAlertNotificationStateToPendingCommand)
-	s.Bus.AddHandler(s.GetAlertNotificationsWithUid)
-	s.Bus.AddHandler(s.UpdateAlertNotificationWithUid)
-	s.Bus.AddHandler(s.DeleteAlertNotificationWithUid)
-	s.Bus.AddHandler(s.GetAlertNotificationsWithUidToSend)
-	s.Bus.AddHandler(s.HandleNotificationTestCommand)
+	s.Bus.SetHandler(s.GetAlertNotifications)
+	s.Bus.SetHandler(s.CreateAlertNotificationCommand)
+	s.Bus.SetHandler(s.UpdateAlertNotification)
+	s.Bus.SetHandler(s.DeleteAlertNotification)
+	s.Bus.SetHandler(s.GetAllAlertNotifications)
+	s.Bus.SetHandler(s.GetOrCreateAlertNotificationState)
+	s.Bus.SetHandler(s.SetAlertNotificationStateToCompleteCommand)
+	s.Bus.SetHandler(s.SetAlertNotificationStateToPendingCommand)
+	s.Bus.SetHandler(s.GetAlertNotificationsWithUid)
+	s.Bus.SetHandler(s.UpdateAlertNotificationWithUid)
+	s.Bus.SetHandler(s.DeleteAlertNotificationWithUid)
+	s.Bus.SetHandler(s.GetAlertNotificationsWithUidToSend)
+	s.Bus.SetHandler(s.HandleNotificationTestCommand)
 
 	return s
 }

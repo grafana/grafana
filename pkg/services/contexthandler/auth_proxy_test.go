@@ -50,8 +50,8 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		}
 		return nil
 	}
-	bus.AddHandler("", upsertHandler)
-	bus.AddHandler("", getUserHandler)
+	bus.SetHandler("", upsertHandler)
+	bus.SetHandler("", getUserHandler)
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
 	})

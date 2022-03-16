@@ -10,9 +10,9 @@ import (
 )
 
 func (ss *SQLStore) addDashboardVersionQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetDashboardVersion)
-	bus.AddHandler("sql", ss.GetDashboardVersions)
-	bus.AddHandler("sql", ss.DeleteExpiredVersions)
+	bus.SetHandler("sql", ss.GetDashboardVersion)
+	bus.SetHandler("sql", ss.GetDashboardVersions)
+	bus.SetHandler("sql", ss.DeleteExpiredVersions)
 }
 
 // GetDashboardVersion gets the dashboard version for the given dashboard ID and version number.

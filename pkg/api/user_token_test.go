@@ -79,7 +79,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		token := &models.UserToken{Id: 2}
 		mock := mockstore.NewSQLStoreMock()
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
+			bus.SetHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: testUserID}
 				return nil
 			})

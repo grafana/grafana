@@ -98,7 +98,7 @@ func TestDashboardFileReader(t *testing.T) {
 	defer fakeService.AssertExpectations(t)
 	setup := func() {
 		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockGetDashboardQuery)
+		bus.SetHandler("test", mockGetDashboardQuery)
 		cfg = &config{
 			Name:    configName,
 			Type:    "file",

@@ -9,12 +9,12 @@ import (
 )
 
 func (ss *SQLStore) addTempUserQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.CreateTempUser)
-	bus.AddHandler("sql", ss.GetTempUsersQuery)
-	bus.AddHandler("sql", ss.UpdateTempUserStatus)
-	bus.AddHandler("sql", ss.GetTempUserByCode)
-	bus.AddHandler("sql", ss.UpdateTempUserWithEmailSent)
-	bus.AddHandler("sql", ss.ExpireOldUserInvites)
+	bus.SetHandler("sql", ss.CreateTempUser)
+	bus.SetHandler("sql", ss.GetTempUsersQuery)
+	bus.SetHandler("sql", ss.UpdateTempUserStatus)
+	bus.SetHandler("sql", ss.GetTempUserByCode)
+	bus.SetHandler("sql", ss.UpdateTempUserWithEmailSent)
+	bus.SetHandler("sql", ss.ExpireOldUserInvites)
 }
 
 func (ss *SQLStore) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {

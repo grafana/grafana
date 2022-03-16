@@ -70,7 +70,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		mock := mockstore.NewSQLStoreMock()
 		adminLogoutUserScenario(t, "Should not be allowed when calling POST on",
 			"/api/admin/users/1/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
+				bus.SetHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					cmd.Result = &models.User{Id: testUserID}
 					return nil
 				})

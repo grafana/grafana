@@ -8,7 +8,7 @@ import (
 )
 
 func (ss *SQLStore) addDashboardACLQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetDashboardAclInfoList)
+	bus.SetHandler("sql", ss.GetDashboardAclInfoList)
 }
 
 // GetDashboardAclInfoList returns a list of permissions for a dashboard. They can be fetched from three

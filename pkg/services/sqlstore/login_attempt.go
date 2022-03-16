@@ -12,9 +12,9 @@ import (
 var getTimeNow = time.Now
 
 func (ss *SQLStore) addLoginAttemptQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.CreateLoginAttempt)
-	bus.AddHandler("sql", ss.DeleteOldLoginAttempts)
-	bus.AddHandler("sql", GetUserLoginAttemptCount)
+	bus.SetHandler("sql", ss.CreateLoginAttempt)
+	bus.SetHandler("sql", ss.DeleteOldLoginAttempts)
+	bus.SetHandler("sql", GetUserLoginAttemptCount)
 }
 
 func (ss *SQLStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {

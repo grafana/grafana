@@ -48,12 +48,12 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*Notification
 		mailer:       mailer,
 	}
 
-	ns.Bus.AddHandler(ns.SendResetPasswordEmail)
-	ns.Bus.AddHandler(ns.ValidateResetPasswordCode)
-	ns.Bus.AddHandler(ns.SendEmailCommandHandler)
+	ns.Bus.SetHandler(ns.SendResetPasswordEmail)
+	ns.Bus.SetHandler(ns.ValidateResetPasswordCode)
+	ns.Bus.SetHandler(ns.SendEmailCommandHandler)
 
-	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
-	ns.Bus.AddHandler(ns.SendWebhookSync)
+	ns.Bus.SetHandler(ns.SendEmailCommandHandlerSync)
+	ns.Bus.SetHandler(ns.SendWebhookSync)
 
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
 	ns.Bus.AddEventListener(ns.signUpCompletedHandler)

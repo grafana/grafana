@@ -8,10 +8,10 @@ import (
 )
 
 func (ss *SQLStore) addStarQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.StarDashboard)
-	bus.AddHandler("sql", ss.UnstarDashboard)
-	bus.AddHandler("sql", ss.GetUserStars)
-	bus.AddHandler("sql", ss.IsStarredByUserCtx)
+	bus.SetHandler("sql", ss.StarDashboard)
+	bus.SetHandler("sql", ss.UnstarDashboard)
+	bus.SetHandler("sql", ss.GetUserStars)
+	bus.SetHandler("sql", ss.IsStarredByUserCtx)
 }
 
 func (ss *SQLStore) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {

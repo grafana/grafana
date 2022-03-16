@@ -33,11 +33,11 @@ func ProvideAuthInfoStore(sqlStore sqlstore.Store, bus bus.Bus, secretsService s
 }
 
 func (s *AuthInfoStore) registerBusHandlers() {
-	s.bus.AddHandler(s.GetExternalUserInfoByLogin)
-	s.bus.AddHandler(s.GetAuthInfo)
-	s.bus.AddHandler(s.SetAuthInfo)
-	s.bus.AddHandler(s.UpdateAuthInfo)
-	s.bus.AddHandler(s.DeleteAuthInfo)
+	s.bus.SetHandler(s.GetExternalUserInfoByLogin)
+	s.bus.SetHandler(s.GetAuthInfo)
+	s.bus.SetHandler(s.SetAuthInfo)
+	s.bus.SetHandler(s.UpdateAuthInfo)
+	s.bus.SetHandler(s.DeleteAuthInfo)
 }
 
 func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {

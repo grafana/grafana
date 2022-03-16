@@ -52,7 +52,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
 
 		// we need it here for now for the guadian service to work
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+		bus.SetHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})

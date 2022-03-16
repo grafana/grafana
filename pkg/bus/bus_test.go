@@ -22,7 +22,7 @@ func TestDispatch(t *testing.T) {
 
 	var invoked bool
 
-	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
+	bus.SetHandler(func(ctx context.Context, query *testQuery) error {
 		invoked = true
 		return nil
 	})
@@ -45,74 +45,6 @@ func TestDispatch_NoRegisteredHandler(t *testing.T) {
 		"expected bus to return HandlerNotFound since no handler is registered")
 }
 
-func TestDispatch_ContextHandler(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	var invoked bool
-
-	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
-		invoked = true
-		return nil
-	})
-
-	err = bus.Dispatch(context.Background(), &testQuery{})
-	require.NoError(t, err)
-
-	require.True(t, invoked, "expected handler to be called")
-}
-
-func TestDispatchCtx(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	var invoked bool
-
-	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
-		invoked = true
-		return nil
-	})
-
-	err = bus.Dispatch(context.Background(), &testQuery{})
-	require.NoError(t, err)
-
-	require.True(t, invoked, "expected handler to be called")
-}
-
-func TestDispatchCtx_NoContextHandler(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	var invoked bool
-
-	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
-		invoked = true
-		return nil
-	})
-
-	err = bus.Dispatch(context.Background(), &testQuery{})
-	require.NoError(t, err)
-
-	require.True(t, invoked, "expected handler to be called")
-}
-
-func TestDispatchCtx_NoRegisteredHandler(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	err = bus.Dispatch(context.Background(), &testQuery{})
-	require.Equal(t, err, ErrHandlerNotFound,
-		"expected bus to return HandlerNotFound since no handler is registered")
-}
-
 func TestQuery(t *testing.T) {
 	bus := New()
 	tracer, err := tracing.InitializeTracerForTest()
@@ -121,7 +53,7 @@ func TestQuery(t *testing.T) {
 
 	want := "hello from handler"
 
-	bus.AddHandler(func(ctx context.Context, q *testQuery) error {
+	bus.SetHandler(func(ctx context.Context, q *testQuery) error {
 		q.Resp = want
 		return nil
 	})
@@ -140,7 +72,7 @@ func TestQuery_HandlerReturnsError(t *testing.T) {
 	require.NoError(t, err)
 	bus.tracer = tracer
 
-	bus.AddHandler(func(ctx context.Context, query *testQuery) error {
+	bus.SetHandler(func(ctx context.Context, query *testQuery) error {
 		return errors.New("handler error")
 	})
 
@@ -175,71 +107,4 @@ func TestEventPublish_NoRegisteredListener(t *testing.T) {
 
 	err = bus.Publish(context.Background(), &testQuery{})
 	require.NoError(t, err, "unable to publish event")
-}
-
-func TestEventCtxPublishCtx(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	var invoked bool
-
-	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
-		invoked = true
-		return nil
-	})
-
-	err = bus.Publish(context.Background(), &testQuery{})
-	require.NoError(t, err, "unable to publish event")
-
-	require.True(t, invoked)
-}
-
-func TestEventPublishCtx_NoRegisteredListener(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	err = bus.Publish(context.Background(), &testQuery{})
-	require.NoError(t, err, "unable to publish event")
-}
-
-func TestEventPublishCtx(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	var invoked bool
-
-	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
-		invoked = true
-		return nil
-	})
-
-	err = bus.Publish(context.Background(), &testQuery{})
-	require.NoError(t, err, "unable to publish event")
-
-	require.True(t, invoked)
-}
-
-func TestEventCtxPublish(t *testing.T) {
-	bus := New()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-	bus.tracer = tracer
-
-	var invoked bool
-
-	bus.AddEventListener(func(ctx context.Context, query *testQuery) error {
-		invoked = true
-		return nil
-	})
-
-	err = bus.Publish(context.Background(), &testQuery{})
-	require.NoError(t, err, "unable to publish event")
-
-	require.True(t, invoked)
 }

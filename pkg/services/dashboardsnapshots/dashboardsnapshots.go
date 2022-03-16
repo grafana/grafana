@@ -23,11 +23,11 @@ func ProvideService(bus bus.Bus, store sqlstore.Store, secretsService secrets.Se
 		SecretsService: secretsService,
 	}
 
-	s.Bus.AddHandler(s.CreateDashboardSnapshot)
-	s.Bus.AddHandler(s.GetDashboardSnapshot)
-	s.Bus.AddHandler(s.DeleteDashboardSnapshot)
-	s.Bus.AddHandler(s.SearchDashboardSnapshots)
-	s.Bus.AddHandler(s.DeleteExpiredSnapshots)
+	s.Bus.SetHandler(s.CreateDashboardSnapshot)
+	s.Bus.SetHandler(s.GetDashboardSnapshot)
+	s.Bus.SetHandler(s.DeleteDashboardSnapshot)
+	s.Bus.SetHandler(s.SearchDashboardSnapshots)
+	s.Bus.SetHandler(s.DeleteExpiredSnapshots)
 
 	return s
 }

@@ -22,7 +22,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 	setup := func() {
 		sqlStore = InitTestDB(t)
 		// Set up bus handlers
-		bus.AddHandler("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
+		bus.SetHandler("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
 			return sqlStore.DeleteAlertNotification(ctx, cmd)
 		})
 	}

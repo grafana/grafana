@@ -99,7 +99,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.SetHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = models.NewDashboardFolder("Folder")
 					return nil
 				})
@@ -132,7 +132,7 @@ func TestFolderService(t *testing.T) {
 				dash.Id = rand.Int63()
 				f := models.DashboardToFolder(dash)
 
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
+				bus.SetHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
 					cmd.Result = dash
 					return nil
 				})
@@ -153,12 +153,12 @@ func TestFolderService(t *testing.T) {
 				dashboardFolder.Uid = util.GenerateShortUID()
 				f := models.DashboardToFolder(dashboardFolder)
 
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.SetHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = dashboardFolder
 					return nil
 				})
 
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
+				bus.SetHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
 					cmd.Result = dashboardFolder
 					return nil
 				})
@@ -185,7 +185,7 @@ func TestFolderService(t *testing.T) {
 				f.Uid = util.GenerateShortUID()
 				store.On("GetFolderByUID", mock.Anything, orgID, f.Uid).Return(f, nil)
 				var actualCmd *models.DeleteDashboardCommand
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+				bus.SetHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 					actualCmd = cmd
 					return nil
 				})

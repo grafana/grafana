@@ -31,16 +31,16 @@ func init() {
 }
 
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetDashboard)
-	bus.AddHandler("sql", ss.GetDashboardUIDById)
-	bus.AddHandler("sql", ss.GetDashboardTags)
-	bus.AddHandler("sql", ss.SearchDashboards)
-	bus.AddHandler("sql", ss.DeleteDashboard)
-	bus.AddHandler("sql", ss.GetDashboards)
-	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
-	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", ss.GetDashboardSlugById)
-	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
+	bus.SetHandler("sql", ss.GetDashboard)
+	bus.SetHandler("sql", ss.GetDashboardUIDById)
+	bus.SetHandler("sql", ss.GetDashboardTags)
+	bus.SetHandler("sql", ss.SearchDashboards)
+	bus.SetHandler("sql", ss.DeleteDashboard)
+	bus.SetHandler("sql", ss.GetDashboards)
+	bus.SetHandler("sql", ss.HasEditPermissionInFolders)
+	bus.SetHandler("sql", ss.GetDashboardPermissionsForUser)
+	bus.SetHandler("sql", ss.GetDashboardSlugById)
+	bus.SetHandler("sql", ss.HasAdminPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUID

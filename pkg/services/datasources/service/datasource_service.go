@@ -74,13 +74,13 @@ func ProvideService(
 		permissionsService: permissionsServices.GetDataSourceService(),
 	}
 
-	s.Bus.AddHandler(s.GetDataSources)
-	s.Bus.AddHandler(s.GetDataSourcesByType)
-	s.Bus.AddHandler(s.GetDataSource)
-	s.Bus.AddHandler(s.AddDataSource)
-	s.Bus.AddHandler(s.DeleteDataSource)
-	s.Bus.AddHandler(s.UpdateDataSource)
-	s.Bus.AddHandler(s.GetDefaultDataSource)
+	s.Bus.SetHandler(s.GetDataSources)
+	s.Bus.SetHandler(s.GetDataSourcesByType)
+	s.Bus.SetHandler(s.GetDataSource)
+	s.Bus.SetHandler(s.AddDataSource)
+	s.Bus.SetHandler(s.DeleteDataSource)
+	s.Bus.SetHandler(s.UpdateDataSource)
+	s.Bus.SetHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
 	ac.RegisterAttributeScopeResolver(NewUidScopeResolver(store))

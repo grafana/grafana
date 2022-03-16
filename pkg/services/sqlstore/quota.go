@@ -16,13 +16,13 @@ const (
 )
 
 func (ss *SQLStore) addQuotaQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetOrgQuotaByTarget)
-	bus.AddHandler("sql", ss.GetOrgQuotas)
-	bus.AddHandler("sql", ss.UpdateOrgQuota)
-	bus.AddHandler("sql", ss.GetUserQuotaByTarget)
-	bus.AddHandler("sql", ss.GetUserQuotas)
-	bus.AddHandler("sql", ss.UpdateUserQuota)
-	bus.AddHandler("sql", ss.GetGlobalQuotaByTarget)
+	bus.SetHandler("sql", ss.GetOrgQuotaByTarget)
+	bus.SetHandler("sql", ss.GetOrgQuotas)
+	bus.SetHandler("sql", ss.UpdateOrgQuota)
+	bus.SetHandler("sql", ss.GetUserQuotaByTarget)
+	bus.SetHandler("sql", ss.GetUserQuotas)
+	bus.SetHandler("sql", ss.UpdateUserQuota)
+	bus.SetHandler("sql", ss.GetGlobalQuotaByTarget)
 }
 
 type targetCount struct {

@@ -16,13 +16,13 @@ import (
 const MainOrgName = "Main Org."
 
 func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetOrgById)
-	bus.AddHandler("sql", CreateOrg)
-	bus.AddHandler("sql", ss.UpdateOrg)
-	bus.AddHandler("sql", ss.UpdateOrgAddress)
-	bus.AddHandler("sql", ss.GetOrgByNameHandler)
-	bus.AddHandler("sql", ss.SearchOrgs)
-	bus.AddHandler("sql", ss.DeleteOrg)
+	bus.SetHandler("sql", ss.GetOrgById)
+	bus.SetHandler("sql", CreateOrg)
+	bus.SetHandler("sql", ss.UpdateOrg)
+	bus.SetHandler("sql", ss.UpdateOrgAddress)
+	bus.SetHandler("sql", ss.GetOrgByNameHandler)
+	bus.SetHandler("sql", ss.SearchOrgs)
+	bus.SetHandler("sql", ss.DeleteOrg)
 }
 
 func (ss *SQLStore) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {

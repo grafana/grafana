@@ -493,14 +493,14 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 
 		userSearchResult = nil
 
-		bus.AddHandler("test", func(ctx context.Context, q *models.GetExternalUserInfoByLoginQuery) error {
+		bus.SetHandler("test", func(ctx context.Context, q *models.GetExternalUserInfoByLoginQuery) error {
 			assert.Equal(t, "ldap-daniel", q.LoginOrEmail)
 			q.Result = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
 
 			return nil
 		})
 
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
+		bus.SetHandler("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
 			assert.Equal(t, 34, cmd.UserId)
 			return nil
 		})

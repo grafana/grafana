@@ -46,12 +46,12 @@ func setUp(confs ...setUpConf) *HTTPServer {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	bus.SetHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 		query.Result = aclMockResp
 		return nil
 	})
 
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+	bus.SetHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 		query.Result = []*models.TeamDTO{}
 		return nil
 	})
@@ -129,7 +129,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 }
 
 func callPauseAlert(sc *scenarioContext) {
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.PauseAlertCommand) error {
+	bus.SetHandler("test", func(ctx context.Context, cmd *models.PauseAlertCommand) error {
 		return nil
 	})
 

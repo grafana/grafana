@@ -105,7 +105,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 	t.Run("Logs in via LDAP", func(t *testing.T) {
 		const id int64 = 42
 
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
+		bus.SetHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 			cmd.Result = &models.User{
 				Id: id,
 			}
