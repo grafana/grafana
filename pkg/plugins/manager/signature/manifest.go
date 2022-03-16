@@ -15,8 +15,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/clearsign"
+	// TODO: marking these as nolint for now to satisfy the linter.
+	// We should remove this once we merge intent-api into `main`.
+	"golang.org/x/crypto/openpgp"           // nolint: staticcheck
+	"golang.org/x/crypto/openpgp/clearsign" // nolint: staticcheck
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"

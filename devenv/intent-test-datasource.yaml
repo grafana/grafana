@@ -1,0 +1,19 @@
+apiVersion: datasource.core.grafana/v1alpha1
+kind: Datasource
+metadata:
+  name: test-datasource
+spec:
+  type: prometheus
+  access: public
+  url: http://localhost:1111/api/prom
+  user: test
+  password: test
+  database: test
+  basicAuth: true
+  basicAuthUser: test
+  basicAuthPassword: test
+  withCredentials: false
+  isDefault: false
+  jsonData: ''
+  version: 1
+  readOnly: true
