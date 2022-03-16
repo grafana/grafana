@@ -101,7 +101,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
     const data: IconData = {
       path,
-      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#19730E',
+      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#CCC',
       api: cfg?.api ?? undefined,
     };
 

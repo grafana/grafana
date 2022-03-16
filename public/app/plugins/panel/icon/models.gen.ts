@@ -18,6 +18,9 @@ export const defaultPanelOptions: PanelOptions = {
         mode: ResourceDimensionMode.Fixed,
         fixed: 'img/icons/unicons/analysis.svg',
       },
+      fill: {
+        fixed: '#19730E' // 'dark-green' to match default fill color
+      }
     },
   },
 };
