@@ -5,9 +5,54 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/grafana/thema"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+// SchemaType is the type of ObjectSchema (Go / Thema / etc.).
+type SchemaType int
+
+// Known schema types.
+const (
+	SchemaTypeUnknown SchemaType = iota
+	SchemaTypeThema
+	SchemaTypeGo
+)
+
+// A ObjectSchema returns a SchemeBuilder. Produced by schema components
+// to make their schema available to things relying on k8s
+type ObjectSchema interface {
+	Name() string
+	GroupName() string
+	GroupVersion() string
+	OpenAPISchema() apiextensionsv1.JSONSchemaProps
+	RuntimeObjects() []runtime.Object
+}
+
+// CoreRegistry is a registry for Grafana core (compile-time-known)
+// k8s-compatible schemas.
+//
+// TODO we need(?) these to have distinct type identities for wire, component
+// conditions, and type aliases don't give us that
+type CoreRegistry = schemaRegistry
+
+// underlying type for all schema registries. Create type aliases as needed,
+// because referencing these in other Go code will likely trigger component
+// group condition rules
+type schemaRegistry struct {
+	M sync.Map
+}
+
+func (r *schemaRegistry) Store(sch ObjectSchema) {
+	r.M.Store(sch.Name(), sch)
+}
+
+func (r *schemaRegistry) Load(name string) (ObjectSchema, bool) {
+	if sch, ok := r.M.Load(name); ok {
+		return sch.(ObjectSchema), ok
+	}
+	return nil, false
+}
 
 // Package state backing for RegisterCoreSchema.
 var cr *CoreRegistry = &CoreRegistry{}
@@ -57,12 +102,16 @@ func LoadCoreSchema(name string) (ObjectSchema, bool) {
 	return cr.Load(name)
 }
 
-// ProvideReadOnlyCoreRegistry provides a listing of all known core ObjectSchema
+// TODO: remove after registry in components is done.
+// CoreSchemaList
+type CoreSchemaList []ObjectSchema
+
+// ProvideReadonlyCoreSchemaList provides a listing of all known core ObjectSchema
 // - those known at compile time.
 //
 // We return a (slice of) interfaces here. That's against the guidance to return
 // concrete types with wire, but we have no choice, as our inputs are interfaces.
-func ProvideReadOnlyCoreRegistry() CoreSchemaList {
+func ProvideReadonlyCoreSchemaList() CoreSchemaList {
 	// No more writes allowed
 	atomic.CompareAndSwapInt32(&regguard, 0, 1)
 
@@ -72,91 +121,4 @@ func ProvideReadOnlyCoreRegistry() CoreSchemaList {
 		return true
 	})
 	return sl
-}
-
-type CoreSchemaList []ObjectSchema
-
-// GoSchema contains a Grafana schema where the canonical schema expression is made
-// with Go types, in traditional Kubernetes style.
-type GoSchema struct {
-	Kind string
-	// TODO figure out what fields should be here
-	runtimeObjects []runtime.Object
-}
-
-func NewGoSchema(kind string, objects ...runtime.Object) GoSchema {
-	sch := GoSchema{
-		Kind: kind,
-	}
-	sch.runtimeObjects = append(sch.runtimeObjects, objects...)
-	return sch
-}
-
-// GetRuntimeObjects returns a runtime.Object for this object kind.
-func (gs *GoSchema) GetRuntimeObjects() []runtime.Object {
-	return gs.runtimeObjects
-}
-
-// Name returns the canonical string that identifies the object being schematized.
-func (gs *GoSchema) Name() string {
-	return gs.Kind
-}
-
-// Name returns the canonical string that identifies the object being schematized.
-func (ts *ThemaSchema) Name() string {
-	return ts.Lineage.Name()
-}
-
-// ThemaSchema contains a Grafana schema where the canonical schema expression
-// is made with Thema and CUE.
-type ThemaSchema struct {
-	// TODO figure out what fields should be here
-	Lineage        thema.Lineage
-	runtimeObjects []runtime.Object
-}
-
-func NewThemaSchema(lin thema.Lineage, objects ...runtime.Object) ThemaSchema {
-	sch := ThemaSchema{
-		Lineage: lin,
-	}
-	sch.runtimeObjects = append(sch.runtimeObjects, objects...)
-	return sch
-}
-
-// GetRuntimeObjects returns a runtime.Object that will accurately represent
-// the authorial intent of the Thema lineage to Kubernetes.
-func (ts *ThemaSchema) GetRuntimeObjects() []runtime.Object {
-	return ts.runtimeObjects
-}
-
-// A ObjectSchema returns a SchemeBuilder. Produced by schema components
-// to make their schema available to things relying on k8s
-type ObjectSchema interface {
-	Name() string
-	GetRuntimeObjects() []runtime.Object
-}
-
-// CoreRegistry is a registry for Grafana core (compile-time-known)
-// k8s-compatible schemas.
-//
-// TODO we need(?) these to have distinct type identities for wire, component
-// conditions, and type aliases don't give us that
-type CoreRegistry = schemaRegistry
-
-// underlying type for all schema registries. Create type aliases as needed,
-// because referencing these in other Go code will likely trigger component
-// group condition rules
-type schemaRegistry struct {
-	M sync.Map
-}
-
-func (r *schemaRegistry) Store(sch ObjectSchema) {
-	r.M.Store(sch.Name(), sch)
-}
-
-func (r *schemaRegistry) Load(name string) (ObjectSchema, bool) {
-	if sch, ok := r.M.Load(name); ok {
-		return sch.(ObjectSchema), ok
-	}
-	return nil, false
 }
