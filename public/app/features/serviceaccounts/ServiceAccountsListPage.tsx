@@ -21,6 +21,7 @@ import { contextSrv } from 'app/core/core';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 import pluralize from 'pluralize';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 interface OwnProps {}
 
@@ -96,15 +97,30 @@ const ServiceAccountsListPage = ({
             className={styles.filter}
           />
         </div>
-        {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-          <LinkButton href="org/serviceaccounts/create" variant="primary">
-            New service account
-          </LinkButton>
-        )}
-        {isLoading ? (
-          <PageLoader />
-        ) : (
+
+        {isLoading && <PageLoader />}
+        {!isLoading && serviceAccounts.length === 0 && (
           <>
+            <EmptyListCTA
+              title="You haven't created any service accounts yet."
+              buttonIcon="key-skeleton-alt"
+              buttonLink="org/serviceaccounts/new"
+              buttonTitle=" New service account"
+              buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
+              proTip="Remember, you can provide specific permissions for API access to other applications."
+              proTipLink=""
+              proTipLinkTitle=""
+              proTipTarget="_blank"
+            />
+          </>
+        )}
+        {!isLoading && serviceAccounts.length !== 0 && (
+          <>
+            {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+              <LinkButton href="org/serviceaccounts/create" variant="primary">
+                New service account
+              </LinkButton>
+            )}
             <div className={cx(styles.table, 'admin-list-table')}>
               <table className="filter-table form-inline filter-table--hover">
                 <thead>

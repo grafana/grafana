@@ -64,8 +64,8 @@ type ServiceAccountProfileDTO struct {
 type ServiceAccountFilter string // used for filtering
 
 const (
-	OnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
-	IncludeAll        ServiceAccountFilter = "all"
+	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	FilterIncludeAll        ServiceAccountFilter = "all"
 )
 
 type SearchOrgServiceAccountsQuery struct {

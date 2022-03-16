@@ -335,17 +335,20 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 			offset := limit * (page - 1)
 			sess.Limit(limit, offset)
 		}
+		fmt.Printf("here 2")
 
 		// TODO: add filtering options here for expired tokens
 		switch filter {
-		case serviceaccounts.IncludeAll:
+		case serviceaccounts.FilterIncludeAll:
 			// pass
-		case serviceaccounts.OnlyExpiredTokens:
+		case serviceaccounts.FilterOnlyExpiredTokens:
 			// TODO: addddd code
 			sess.Join("OUTER", s.sqlStore.Dialect.Quote("api_key"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
 			whereConditions = append(whereConditions, "api_key.expires_at < ?")
+			// TODO: add the date now in sec UNIX TIMESTAMP
 			whereParams = append(whereParams, orgID)
 		default:
+			fmt.Printf("here 3, filter: %v", filter)
 			return fmt.Errorf("invalid filter: %s", filter)
 		}
 

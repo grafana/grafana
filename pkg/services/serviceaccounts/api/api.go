@@ -218,7 +218,15 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if page < 1 {
 		page = 1
 	}
-	filter := serviceaccounts.ServiceAccountFilter(c.Query("filter"))
+	filterQuery := c.Query("expiredTokens")
+	onlyWithExpiredTokens, err := strconv.ParseBool(filterQuery)
+	filter := serviceaccounts.FilterIncludeAll
+	if err != nil {
+		filter = serviceaccounts.FilterIncludeAll
+	}
+	if onlyWithExpiredTokens {
+		filter = serviceaccounts.FilterOnlyExpiredTokens
+	}
 	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgId, c.Query("query"), filter, page, perPage, c.SignedInUser)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
