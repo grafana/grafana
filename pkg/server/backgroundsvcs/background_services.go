@@ -2,6 +2,7 @@ package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/internal/intentapi"
+	"github.com/grafana/grafana/internal/k8sbridge"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -30,22 +31,41 @@ import (
 )
 
 func ProvideBackgroundServiceRegistry(
-	httpServer *api.HTTPServer, intentApiServer *intentapi.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
-	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pm *manager.PluginManager,
-	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService, tracing tracing.Tracer,
-	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
-	statsCollector *statscollector.Service, grafanaUpdateChecker *updatechecker.GrafanaService,
-	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
-	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache,
-	thumbnailsService thumbs.Service, StorageService store.StorageService,
+	httpServer *api.HTTPServer,
+	ng *ngalert.AlertNG,
+	cleanup *cleanup.CleanUpService,
+	live *live.GrafanaLive,
+	pushGateway *pushhttp.Gateway,
+	notifications *notifications.NotificationService,
+	pm *manager.PluginManager,
+	rendering *rendering.RenderingService,
+	tokenService models.UserTokenBackgroundService,
+	tracing tracing.Tracer,
+	provisioning *provisioning.ProvisioningServiceImpl,
+	alerting *alerting.AlertEngine,
+	usageStats *uss.UsageStats,
+	statsCollector *statscollector.Service,
+	grafanaUpdateChecker *updatechecker.GrafanaService,
+	pluginsUpdateChecker *updatechecker.PluginsService,
+	metrics *metrics.InternalMetricsService,
+	secretsService *secretsManager.SecretsService,
+	remoteCache *remotecache.RemoteCache,
+	thumbnailsService thumbs.Service,
+	storageService store.StorageService,
+
 	// Need to make sure these are initialized, is there a better place to put them?
-	_ *dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
-	_ serviceaccounts.Service, _ *guardian.Provider,
+	_ *dashboardsnapshots.Service,
+	_ *alerting.AlertNotificationService,
+	_ serviceaccounts.Service,
+	_ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater,
+
+	// IntentAPI services
+	intentApiServer *intentapi.HTTPServer,
+	intentApiBridge *k8sbridge.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
-		intentApiServer,
 		ng,
 		cleanup,
 		live,
@@ -64,8 +84,10 @@ func ProvideBackgroundServiceRegistry(
 		tracing,
 		remoteCache,
 		secretsService,
-		StorageService,
 		thumbnailsService,
+		storageService,
+		intentApiServer,
+		intentApiBridge,
 	)
 }
 
