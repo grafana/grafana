@@ -160,6 +160,7 @@ var wireBasicSet = wire.NewSet(
 	search.ProvideService,
 	searchV2.ProvideService,
 	store.ProvideService,
+	store.ProvideHTTPService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,

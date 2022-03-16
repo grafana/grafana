@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
@@ -23,11 +21,6 @@ const RootPublicStatic = "public-static"
 
 type StorageService interface {
 	registry.BackgroundService
-
-	// HTTP API
-	Browse(c *models.ReqContext) response.Response
-	Upload(c *models.ReqContext) response.Response
-	Delete(c *models.ReqContext) response.Response
 
 	// List folder contents
 	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
@@ -82,41 +75,6 @@ func newStandardStorageService(roots []storageRuntime) *standardStorageService {
 func (s *standardStorageService) Run(ctx context.Context) error {
 	grafanaStorageLogger.Info("storage starting")
 	return nil
-}
-
-func (s *standardStorageService) Upload(c *models.ReqContext) response.Response {
-	action := "Upload"
-	scope, path := getPathAndScope(c)
-
-	return response.JSON(200, map[string]string{
-		"action": action,
-		"scope":  scope,
-		"path":   path,
-	})
-}
-
-func (s *standardStorageService) Delete(c *models.ReqContext) response.Response {
-	action := "Delete"
-	scope, path := getPathAndScope(c)
-
-	return response.JSON(200, map[string]string{
-		"action": action,
-		"scope":  scope,
-		"path":   path,
-	})
-}
-
-func (s *standardStorageService) Browse(c *models.ReqContext) response.Response {
-	params := web.Params(c.Req)
-	path := params["*"]
-	frame, err := s.List(c.Req.Context(), c.SignedInUser, path)
-	if err != nil {
-		return response.Error(400, "error reading path", err)
-	}
-	if frame == nil {
-		return response.Error(404, "not found", nil)
-	}
-	return response.JSONStreaming(200, frame)
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
