@@ -2,11 +2,13 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -34,9 +36,12 @@ type Span interface {
 }
 
 type Opentelemetry struct {
-	enabled bool
-	address string
-	log     log.Logger
+	enabled           bool
+	address           string
+	log               log.Logger
+	samplerType       string
+	samplerParam      float64
+	samplingServerURL string
 
 	tracerProvider *tracesdk.TracerProvider
 	tracer         trace.Tracer
@@ -68,10 +73,34 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 }
 
 func (ots *Opentelemetry) initTracerProvider() (*tracesdk.TracerProvider, error) {
+	var sampler tracesdk.Sampler
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
 	if err != nil {
 		return nil, err
+	}
+
+	switch ots.samplerType {
+	case "const":
+		switch ots.samplerParam {
+		case 1:
+			sampler = tracesdk.AlwaysSample()
+		case 0:
+			sampler = tracesdk.NeverSample()
+		default:
+			return &tracesdk.TracerProvider{}, errors.New("wrong sampler parameter for const sampler")
+		}
+	case "probabilistic":
+		sampler = tracesdk.TraceIDRatioBased(ots.samplerParam)
+	case "remote":
+		sampler = jaegerremote.New(
+			"grafana",
+			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.samplerParam)),
+			jaegerremote.WithSamplingServerURL(ots.samplingServerURL),
+			jaegerremote.WithMaxOperations(int(ots.samplerParam)),
+		)
+	default:
+		return &tracesdk.TracerProvider{}, errors.New("wrong sampler type")
 	}
 
 	tp := tracesdk.NewTracerProvider(
@@ -81,8 +110,8 @@ func (ots *Opentelemetry) initTracerProvider() (*tracesdk.TracerProvider, error)
 			semconv.ServiceNameKey.String("grafana"),
 			attribute.String("environment", "production"),
 		)),
+		tracesdk.WithSampler(sampler),
 	)
-
 	return tp, nil
 }
 
