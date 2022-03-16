@@ -1,17 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { ApiKey, Role, ServiceAccountDTO, ServiceAccountProfileState, ServiceAccountsState } from 'app/types';
+import {
+  ApiKey,
+  Role,
+  ServiceAccountDTO,
+  ServiceAccountFilter,
+  ServiceAccountProfileState,
+  ServiceAccountsState,
+} from 'app/types';
 
-export const initialState: ServiceAccountsState = {
-  serviceAccounts: [] as ServiceAccountDTO[],
-  searchQuery: '',
-  searchPage: 1,
-  isLoading: true,
-  builtInRoles: {},
-  roleOptions: [],
-  serviceAccountToRemove: null,
-};
-
+// serviceAccountsProfilePage
 export const initialStateProfile: ServiceAccountProfileState = {
   serviceAccount: {} as ServiceAccountDTO,
   isLoading: true,
@@ -31,19 +29,53 @@ export const serviceAccountProfileSlice = createSlice({
   },
 });
 
+export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
+export const { serviceAccountLoaded, serviceAccountTokensLoaded } = serviceAccountProfileSlice.actions;
+
+// serviceAccountsListPage
+export const initialStateList: ServiceAccountsState = {
+  serviceAccounts: [] as ServiceAccountDTO[],
+  isLoading: true,
+  builtInRoles: {},
+  roleOptions: [],
+  serviceAccountToRemove: null,
+  query: '',
+  page: 0,
+  perPage: 50,
+  totalPages: 1,
+  showPaging: false,
+  filters: [{ name: 'Expired', value: true }],
+};
+
+interface ServiceAccountsFetched {
+  serviceAccounts: ServiceAccountDTO[];
+  perPage: number;
+  page: number;
+  totalCount: number;
+}
+
 const serviceAccountsSlice = createSlice({
   name: 'serviceaccounts',
-  initialState,
+  initialState: initialStateList,
   reducers: {
-    serviceAccountsLoaded: (state, action: PayloadAction<ServiceAccountDTO[]>): ServiceAccountsState => {
-      return { ...state, isLoading: false, serviceAccounts: action.payload };
+    serviceAccountsFetched: (state, action: PayloadAction<ServiceAccountsFetched>): ServiceAccountsState => {
+      const { totalCount, perPage, ...rest } = action.payload;
+      const totalPages = Math.ceil(totalCount / perPage);
+
+      return {
+        ...state,
+        ...rest,
+        totalPages,
+        perPage,
+        showPaging: totalPages > 1,
+        isLoading: false,
+      };
     },
-    setServiceAccountsSearchQuery: (state, action: PayloadAction<string>): ServiceAccountsState => {
-      // reset searchPage otherwise search results won't appear
-      return { ...state, searchQuery: action.payload, searchPage: initialState.searchPage };
+    serviceAccountsFetchBegin: (state) => {
+      return { ...state, isLoading: true };
     },
-    setServiceAccountsSearchPage: (state, action: PayloadAction<number>): ServiceAccountsState => {
-      return { ...state, searchPage: action.payload };
+    serviceAccountsFetchEnd: (state) => {
+      return { ...state, isLoading: false };
     },
     acOptionsLoaded: (state, action: PayloadAction<Role[]>): ServiceAccountsState => {
       return { ...state, roleOptions: action.payload };
@@ -54,22 +86,46 @@ const serviceAccountsSlice = createSlice({
     serviceAccountToRemoveLoaded: (state, action: PayloadAction<ServiceAccountDTO | null>): ServiceAccountsState => {
       return { ...state, serviceAccountToRemove: action.payload };
     },
+    queryChanged: (state, action: PayloadAction<string>) => {
+      return {
+        ...state,
+        query: action.payload,
+        page: 0,
+      };
+    },
+    pageChanged: (state, action: PayloadAction<number>) => ({
+      ...state,
+      page: action.payload,
+    }),
+    filterChanged: (state, action: PayloadAction<ServiceAccountFilter>) => {
+      const { name, value } = action.payload;
+
+      if (state.filters.some((filter) => filter.name === name)) {
+        return {
+          ...state,
+          filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
+        };
+      }
+      return {
+        ...state,
+        filters: [...state.filters, action.payload],
+      };
+    },
   },
 });
+export const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
 export const {
-  setServiceAccountsSearchQuery,
-  setServiceAccountsSearchPage,
-  serviceAccountsLoaded,
+  serviceAccountsFetchBegin,
+  serviceAccountsFetchEnd,
+  serviceAccountsFetched,
   acOptionsLoaded,
   builtInRolesLoaded,
   serviceAccountToRemoveLoaded,
+  pageChanged,
+  filterChanged,
+  queryChanged,
 } = serviceAccountsSlice.actions;
-
-export const { serviceAccountLoaded, serviceAccountTokensLoaded } = serviceAccountProfileSlice.actions;
-
-export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
-export const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
 export default {
   serviceAccountProfile: serviceAccountProfileReducer,

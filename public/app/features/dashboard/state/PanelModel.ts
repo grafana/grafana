@@ -121,7 +121,6 @@ const defaults: any = {
     defaults: {},
     overrides: [],
   },
-  datasource: null,
   title: '',
 };
 
@@ -284,12 +283,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       model[property] = cloneDeep(this[property]);
     }
 
-    if (model.datasource === undefined) {
-      // This is part of defaults as defaults are removed in save model and
-      // this should not be removed in save model as exporter needs to templatize it
-      model.datasource = null;
-    }
-
     return model;
   }
 
@@ -443,12 +436,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   updateQueries(options: QueryGroupOptions) {
     const { dataSource } = options;
-    this.datasource = dataSource.default
-      ? null
-      : {
-          uid: dataSource.uid,
-          type: dataSource.type,
-        };
+    this.datasource = {
+      uid: dataSource.uid,
+      type: dataSource.type,
+    };
     this.cacheTimeout = options.cacheTimeout;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;

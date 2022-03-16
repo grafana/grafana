@@ -5,7 +5,9 @@ import {
   DataSourceApi,
   Field,
   LinkModel,
+  LoadingState,
   mapInternalLinkToExplore,
+  PanelData,
   SplitOpen,
   TraceSpanRow,
 } from '@grafana/data';
@@ -24,7 +26,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -43,6 +45,8 @@ type Props = {
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
   scrollElement?: Element;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  queryResponse: PanelData;
 };
 
 export function TraceView(props: Props) {
@@ -104,6 +108,12 @@ export function TraceView(props: Props) {
     }),
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
+
+  useEffect(() => {
+    if (props.queryResponse.state === LoadingState.Done) {
+      props.topOfExploreViewRef?.current?.scrollIntoView();
+    }
+  }, [props.queryResponse, props.topOfExploreViewRef]);
 
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
@@ -176,6 +186,7 @@ export function TraceView(props: Props) {
         scrollElement={props.scrollElement}
         focusedSpanId={focusedSpanId}
         createFocusSpanLink={createFocusSpanLink}
+        topOfExploreViewRef={props.topOfExploreViewRef}
       />
     </>
   );

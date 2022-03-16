@@ -17,6 +17,16 @@
       "type": "dashboard",
       "name": "Azure App Monitoring - Application Insights",
       "path": "dashboards/appInsights.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure VM Monitoring - VM Insights by Workspace",
+      "path": "dashboards/vMInsightsWorkspace.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure VM Monitoring - VM Insights by Resource Group",
+      "path": "dashboards/vMInsightsRG.json"
     }
   ],
 

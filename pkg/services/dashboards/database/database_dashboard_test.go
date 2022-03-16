@@ -421,7 +421,7 @@ func TestDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 		OrgId:    1,
 	}
 
-	err := sqlStore.GetDashboardsByPluginId(context.Background(), &query)
+	err := dashboardStore.GetDashboardsByPluginID(context.Background(), &query)
 	require.NoError(t, err)
 	require.Equal(t, len(query.Result), 2)
 }

@@ -376,6 +376,135 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('handles multiple binary scalar operations', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name + 1 - 1 / 1 * 1 % 1 ^ 1')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__addition',
+            params: [1],
+          },
+          {
+            id: '__subtraction',
+            params: [1],
+          },
+          {
+            id: '__divide_by',
+            params: [1],
+          },
+          {
+            id: '__multiply_by',
+            params: [1],
+          },
+          {
+            id: '__modulo',
+            params: [1],
+          },
+          {
+            id: '__exponent',
+            params: [1],
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles scalar comparison operators', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name <= 2.5')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__less_or_equal',
+            params: [false, 2.5],
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles bool with comparison operator', () => {
+    expect(buildVisualQueryFromString('cluster_namespace_slug_dialer_name <= bool 2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__less_or_equal',
+            params: [true, 2],
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles multiple binary operations', () => {
+    expect(buildVisualQueryFromString('foo{x="yy"} * metric{y="zz",a="bb"} * metric2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [{ label: 'x', op: '=', value: 'yy' }],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            query: {
+              metric: 'metric',
+              labels: [
+                { label: 'y', op: '=', value: 'zz' },
+                { label: 'a', op: '=', value: 'bb' },
+              ],
+              operations: [],
+            },
+          },
+          {
+            operator: '*',
+            query: {
+              metric: 'metric2',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles multiple binary operations and scalar', () => {
+    expect(buildVisualQueryFromString('foo{x="yy"} * metric{y="zz",a="bb"} * 2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [{ label: 'x', op: '=', value: 'yy' }],
+        operations: [
+          {
+            id: '__multiply_by',
+            params: [2],
+          },
+        ],
+        binaryQueries: [
+          {
+            operator: '*',
+            query: {
+              metric: 'metric',
+              labels: [
+                { label: 'y', op: '=', value: 'zz' },
+                { label: 'a', op: '=', value: 'bb' },
+              ],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
