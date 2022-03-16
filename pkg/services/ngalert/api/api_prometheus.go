@@ -9,17 +9,16 @@ import (
 	"strings"
 	"time"
 
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type PrometheusSrv struct {
@@ -27,6 +26,8 @@ type PrometheusSrv struct {
 	manager state.AlertInstanceManager
 	store   store.RuleStore
 }
+
+const queryIncludeInternalLabels = "includeInternalLabels"
 
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
 	alertResponse := apimodels.AlertResponse{
@@ -37,6 +38,12 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			Alerts: []*apimodels.Alert{},
 		},
 	}
+
+	var labelOptions []ngmodels.LabelOption
+	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
+	}
+
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
 		valString := ""
@@ -45,7 +52,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
-			Labels:      map[string]string(alertState.Labels),
+			Labels:      alertState.GetLabels(labelOptions...),
 			Annotations: alertState.Annotations,
 			State:       alertState.State.String(),
 			ActiveAt:    &startsAt,
@@ -71,6 +78,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		Data: apimodels.RuleDiscovery{
 			RuleGroups: []*apimodels.RuleGroup{},
 		},
+	}
+
+	var labelOptions []ngmodels.LabelOption
+	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
 	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
@@ -157,7 +169,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 		newRule := apimodels.Rule{
 			Name:           rule.Title,
-			Labels:         rule.Labels,
+			Labels:         rule.GetLabels(labelOptions...),
 			Health:         "ok",
 			Type:           apiv1.RuleTypeAlerting,
 			LastEvaluation: time.Time{},
@@ -169,8 +181,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			if alertState.State == eval.Alerting {
 				valString = alertState.LastEvaluationString
 			}
+
 			alert := &apimodels.Alert{
-				Labels:      map[string]string(alertState.Labels),
+				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
 				State:       alertState.State.String(),
 				ActiveAt:    &activeAt,
