@@ -34,7 +34,7 @@ import {
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import addLabelToQuery from './add_label_to_query';
+import { addLabelToQuery } from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
@@ -949,15 +949,15 @@ export class PrometheusDatasource
 
   enhanceExprWithAdHocFilters(expr: string) {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    let finalQuery = expr;
-    finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+
+    const finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
         value = prometheusRegularEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
-    }, finalQuery);
+    }, expr);
     return finalQuery;
   }
 

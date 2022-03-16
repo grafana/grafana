@@ -156,7 +156,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           />
         </InlineField>
         <InlineField className={styles.inline} grow={true}>
-          <>
+          <div className={styles.flexRow}>
             {(check.operation === ComparisonOperation.EQ || check.operation === ComparisonOperation.NEQ) && (
               <Select
                 menuShouldPortal
@@ -177,7 +177,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
                 onChange={onChangeNumericValue}
               />
             )}
-          </>
+          </div>
         </InlineField>
         <Button
           size="md"
@@ -221,5 +221,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   button: css`
     margin-left: 4px;
+  `,
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
   `,
 });

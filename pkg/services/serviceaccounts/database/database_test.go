@@ -13,7 +13,7 @@ import (
 )
 
 func TestStore_CreateServiceAccount(t *testing.T) {
-	sqlStore, store := setupTestDatabase(t)
+	_, store := setupTestDatabase(t)
 	t.Run("create service account", func(t *testing.T) {
 		saDTO, err := store.CreateServiceAccount(context.Background(), 1, "new Service Account")
 		require.NoError(t, err)
@@ -21,17 +21,11 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, "new Service Account", saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		query := models.GetUserByIdQuery{Id: saDTO.Id}
-		err = sqlStore.GetUserById(context.Background(), &query)
-		retrieved := query.Result
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), 1, saDTO.Id)
 		require.NoError(t, err)
 		assert.Equal(t, "sa-new-service-account", retrieved.Login)
 		assert.Equal(t, "new Service Account", retrieved.Name)
-		assert.Equal(t, "sa-new-service-account", retrieved.Email)
-		assert.Equal(t, "", retrieved.Password)
 		assert.Equal(t, 1, int(retrieved.OrgId))
-		assert.Len(t, retrieved.Salt, 10)
-		assert.Equal(t, true, retrieved.IsServiceAccount)
 	})
 }
 

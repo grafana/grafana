@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Story } from '@storybook/react';
-import { Button, Drawer } from '@grafana/ui';
+import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Drawer.mdx';
@@ -72,6 +72,7 @@ export const Global: Story<Props> = (args) => {
     </UseState>
   );
 };
+
 Global.args = {
   title: 'Drawer title',
 };
@@ -223,7 +224,31 @@ export const InLine: Story<Props> = (args) => {
     </UseState>
   );
 };
+
 InLine.args = {
   title: 'Storybook',
   inline: true,
 };
+
+export function WithTabs() {
+  const [activeTab, setActiveTab] = useState('options');
+
+  const tabs = (
+    <TabsBar>
+      <Tab label={'Options'} active={activeTab === 'options'} onChangeTab={() => setActiveTab('options')} />
+      <Tab
+        label={'Changes'}
+        active={activeTab === 'changes'}
+        onChangeTab={() => setActiveTab('changes')}
+        counter={10}
+      />
+    </TabsBar>
+  );
+
+  return (
+    <Drawer title={'Main title'} subtitle={'Sub title'} width={700} onClose={() => {}} tabs={tabs}>
+      {activeTab === 'options' && <div>Here are some options</div>}
+      {activeTab === 'changes' && <div>Here are some changes</div>}
+    </Drawer>
+  );
+}

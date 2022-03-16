@@ -40,6 +40,12 @@ type ServiceAccountDTO struct {
 	AvatarUrl     string          `json:"avatarUrl"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
+type SearchServiceAccountsResult struct {
+	TotalCount      int64                `json:"totalCount"`
+	ServiceAccounts []*ServiceAccountDTO `json:"serviceAccounts"`
+	Page            int                  `json:"page"`
+	PerPage         int                  `json:"perPage"`
+}
 
 type ServiceAccountProfileDTO struct {
 	Id            int64           `json:"id" xorm:"user_id"`
