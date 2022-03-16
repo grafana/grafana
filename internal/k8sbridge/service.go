@@ -38,7 +38,7 @@ type Service struct {
 }
 
 // ProvideService returns a new Service which registers models from list.
-// It is disabled if the intenapi flag is disabled in the feature toggles.
+// It is disabled if the intentapi flag is disabled in the feature toggles.
 func ProvideService(cfg *setting.Cfg, feat featuremgmt.FeatureToggles, list CoremodelLister) (*Service, error) {
 	enabled := feat.IsEnabled(featuremgmt.FlagIntentapi)
 	if !enabled {
