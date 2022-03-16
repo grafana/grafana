@@ -293,6 +293,28 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 			require.NoError(t, err)
 		}
+		if o.IntentAPIOpts != nil {
+			_, err := getOrCreateSection("intentapi")
+			require.NoError(t, err)
+
+			intentapiServerSection, err := getOrCreateSection("intentapi.server")
+			require.NoError(t, err)
+			serverListenAddress := "127.0.0.1:8443"
+			if o.IntentAPIOpts.ServerListenAddress != "" {
+				serverListenAddress = o.IntentAPIOpts.ServerListenAddress
+			}
+			_, err = intentapiServerSection.NewKey("listen_address", serverListenAddress)
+			require.NoError(t, err)
+			_, err = intentapiServerSection.NewKey("cert_file_path", o.IntentAPIOpts.ServerCertFilePath)
+			require.NoError(t, err)
+			_, err = intentapiServerSection.NewKey("key_file_path", o.IntentAPIOpts.ServerKeyFilePath)
+			require.NoError(t, err)
+
+			intentapiKubebridgeSection, err := getOrCreateSection("intentapi.kubebridge")
+			require.NoError(t, err)
+			_, err = intentapiKubebridgeSection.NewKey("kubeconfig_path", o.IntentAPIOpts.BridgeKubeconfigPath)
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -321,4 +343,12 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	IntentAPIOpts                         *IntentAPIOpts
+}
+
+type IntentAPIOpts struct {
+	ServerListenAddress  string
+	ServerCertFilePath   string
+	ServerKeyFilePath    string
+	BridgeKubeconfigPath string
 }
