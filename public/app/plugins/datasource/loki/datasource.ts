@@ -168,7 +168,7 @@ export class LokiDatasource
     const filteredTargets = request.targets
       .filter((target) => target.expr && !target.hide)
       .map((target) => {
-        const expr = this.addAdHocFilters(target.expr);
+        const expr = this.addAdHocFilters(target.expr).replace(/\\/g, '\\\\');
         return {
           ...target,
           expr: this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr),
