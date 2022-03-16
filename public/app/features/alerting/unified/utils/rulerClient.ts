@@ -1,11 +1,11 @@
 import { RuleIdentifier, RulerDataSourceConfig, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRulerRuleGroupDTO, RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import {
-  deleteRulerRulesGroupV2,
+  deleteRulerRulesGroup,
   fetchRulerRulesGroupV2,
-  fetchRulerRulesNamespaceV2,
-  fetchRulerRulesV2,
-  setRulerRuleGroupV2,
+  fetchRulerRulesNamespace,
+  fetchRulerRules,
+  setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormValues } from '../types/rule-form';
 import * as ruleId from '../utils/rule-id';
@@ -38,7 +38,7 @@ export function getUniqueGroupName(currentGroupName: string, existingGroups: Rul
 export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient {
   const findEditableRule = async (ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null> => {
     if (isGrafanaRuleIdentifier(ruleIdentifier)) {
-      const namespaces = await fetchRulerRulesV2(rulerConfig);
+      const namespaces = await fetchRulerRules(rulerConfig);
       // find namespace and group that contains the uid for the rule
       for (const [namespace, groups] of Object.entries(namespaces)) {
         for (const group of groups) {
@@ -93,17 +93,17 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
     // in case of GRAFANA, each group implicitly only has one rule. delete the group.
     if (isGrafanaRulesSource(ruleSourceName)) {
-      await deleteRulerRulesGroupV2(rulerConfig, namespace, group.name);
+      await deleteRulerRulesGroup(rulerConfig, namespace, group.name);
       return;
     }
     // in case of CLOUD
     // it was the last rule, delete the entire group
     if (group.rules.length === 1) {
-      await deleteRulerRulesGroupV2(rulerConfig, namespace, group.name);
+      await deleteRulerRulesGroup(rulerConfig, namespace, group.name);
       return;
     }
     // post the group with rule removed
-    await setRulerRuleGroupV2(rulerConfig, namespace, {
+    await setRulerRuleGroup(rulerConfig, namespace, {
       ...group,
       rules: group.rules.filter((r) => r !== rule),
     });
@@ -131,7 +131,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
               existingRule === freshExisting.rule ? formRule : existingRule
             ),
           };
-          await setRulerRuleGroupV2(rulerConfig, namespace, payload);
+          await setRulerRuleGroup(rulerConfig, namespace, payload);
           return ruleId.fromRulerRule(dataSourceName, namespace, group, formRule);
         }
       }
@@ -150,7 +150,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
             rules: [formRule],
           };
 
-      await setRulerRuleGroupV2(rulerConfig, namespace, payload);
+      await setRulerRuleGroup(rulerConfig, namespace, payload);
       return ruleId.fromRulerRule(dataSourceName, namespace, group, formRule);
     } else {
       throw new Error('Data source and location must be specified');
@@ -177,7 +177,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
       if (freshExisting.namespace === folder.title) {
         const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid!;
         formRule.grafana_alert.uid = uid;
-        await setRulerRuleGroupV2(rulerConfig, freshExisting.namespace, {
+        await setRulerRuleGroup(rulerConfig, freshExisting.namespace, {
           name: freshExisting.group.name,
           interval: evaluateEvery,
           rules: [formRule],
@@ -187,7 +187,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     }
 
     // if creating new rule or folder was changed, create rule in a new group
-    const targetFolderGroups = await fetchRulerRulesNamespaceV2(rulerConfig, folder.title);
+    const targetFolderGroups = await fetchRulerRulesNamespace(rulerConfig, folder.title);
 
     // set group name to rule name, but be super paranoid and check that this group does not already exist
     const groupName = getUniqueGroupName(values.name, targetFolderGroups);
@@ -198,7 +198,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
       interval: evaluateEvery,
       rules: [formRule],
     };
-    await setRulerRuleGroupV2(rulerConfig, folder.title, payload);
+    await setRulerRuleGroup(rulerConfig, folder.title, payload);
 
     // now refetch this group to get the uid, hah
     const result = await fetchRulerRulesGroupV2(rulerConfig, folder.title, groupName);

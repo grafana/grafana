@@ -45,14 +45,12 @@ import { fetchAnnotations } from '../api/annotations';
 import { fetchNotifiers } from '../api/grafana';
 import { fetchBuildInfo, FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
-  deleteNamespaceV2,
+  deleteNamespace,
   deleteRulerRulesGroup,
-  deleteRulerRulesGroupV2,
+  fetchRulerRules,
   FetchRulerRulesFilter,
   fetchRulerRulesGroup,
-  fetchRulerRulesV2,
   setRulerRuleGroup,
-  setRulerRuleGroupV2,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, isFetchError, removeMuteTimingFromRoute } from '../utils/alertmanager';
@@ -62,7 +60,6 @@ import {
   getRulesDataSource,
   getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
-  isGrafanaRulesSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
@@ -169,7 +166,7 @@ export const fetchRulerRulesAction = createAsyncThunk(
     { getState }
   ): Promise<RulerRulesConfigDTO | null> => {
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
-    return withSerializedError(fetchRulerRulesV2(rulerConfig, filter));
+    return withSerializedError(fetchRulerRules(rulerConfig, filter));
   }
 );
 
@@ -282,36 +279,17 @@ export const fetchEditableRuleAction = createAsyncThunk(
   }
 );
 
-async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
-  const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
-  // in case of GRAFANA, each group implicitly only has one rule. delete the group.
-  if (isGrafanaRulesSource(ruleSourceName)) {
-    await deleteRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group.name);
-    return;
-  }
-  // in case of CLOUD
-  // it was the last rule, delete the entire group
-  if (group.rules.length === 1) {
-    await deleteRulerRulesGroup(ruleSourceName, namespace, group.name);
-    return;
-  }
-  // post the group with rule removed
-  await setRulerRuleGroup(ruleSourceName, namespace, {
-    ...group,
-    rules: group.rules.filter((r) => r !== rule),
-  });
-}
-
 export function deleteRulesGroupAction(
   namespace: CombinedRuleNamespace,
   ruleGroup: CombinedRuleGroup
 ): ThunkResult<void> {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     withAppEvents(
       (async () => {
         const sourceName = getRulesSourceName(namespace.rulesSource);
+        const rulerConfig = getDataSourceRulerConfig(getState, sourceName);
 
-        await deleteRulerRulesGroup(sourceName, namespace.name, ruleGroup.name);
+        await deleteRulerRulesGroup(rulerConfig, namespace.name, ruleGroup.name);
         dispatch(fetchRulerRulesAction({ rulesSourceName: sourceName }));
         dispatch(fetchPromRulesAction({ rulesSourceName: sourceName }));
       })(),
@@ -332,12 +310,13 @@ export function deleteRuleAction(
     withAppEvents(
       (async () => {
         const rulerConfig = getDataSourceRulerConfig(getState, ruleIdentifier.ruleSourceName);
-        const ruleWithLocation = await getRulerClient(rulerConfig).findEditableRule(ruleIdentifier);
+        const rulerClient = getRulerClient(rulerConfig);
+        const ruleWithLocation = await rulerClient.findEditableRule(ruleIdentifier);
 
         if (!ruleWithLocation) {
           throw new Error('Rule not found.');
         }
-        await deleteRule(ruleWithLocation);
+        await rulerClient.deleteRule(ruleWithLocation);
         // refetch rules for this rules source
         dispatch(fetchRulerRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
         dispatch(fetchPromRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
@@ -579,9 +558,10 @@ export const fetchAlertGroupsAction = createAsyncThunk(
   }
 );
 
+// This needs to be changed completely
 export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk<boolean, string>(
   'unifiedalerting/checkIfLotexRuleEditingSupported',
-  async (rulesSourceName: string): Promise<boolean> =>
+  async (rulesSourceName: string, thunkAPI): Promise<boolean> =>
     withAppEvents(
       (async () => {
         try {
@@ -698,7 +678,7 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
 
           const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
           // fetch rules and perform sanity checks
-          const rulesResult = await fetchRulerRulesV2(rulerConfig);
+          const rulesResult = await fetchRulerRules(rulerConfig);
           if (!rulesResult[namespaceName]) {
             throw new Error(`Namespace "${namespaceName}" not found.`);
           }
@@ -723,7 +703,7 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           // if renaming namespace - make new copies of all groups, then delete old namespace
           if (newNamespaceName !== namespaceName) {
             for (const group of rulesResult[namespaceName]) {
-              await setRulerRuleGroupV2(
+              await setRulerRuleGroup(
                 rulerConfig,
                 newNamespaceName,
                 group.name === groupName
@@ -735,19 +715,19 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
                   : group
               );
             }
-            await deleteNamespaceV2(rulerConfig, namespaceName);
+            await deleteNamespace(rulerConfig, namespaceName);
 
             // if only modifying group...
           } else {
             // save updated group
-            await setRulerRuleGroupV2(rulerConfig, namespaceName, {
+            await setRulerRuleGroup(rulerConfig, namespaceName, {
               ...existingGroup,
               name: newGroupName,
               interval: groupInterval,
             });
             // if group name was changed, delete old group
             if (newGroupName !== groupName) {
-              await deleteRulerRulesGroupV2(rulerConfig, namespaceName, groupName);
+              await deleteRulerRulesGroup(rulerConfig, namespaceName, groupName);
             }
           }
 
