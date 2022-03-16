@@ -50,7 +50,8 @@ roles:
         scope: 'users:*'
 ```
 
-Here is an example YAML file to create a global role with a set of permissions, where the `global:true` option makes a role global:
+Here is an example YAML file to create a hidden global role with a set of permissions.
+`global:true` option makes a role global, and `hidden:true` option hides the role from the role picker:
 
 ```yaml
 # config file version
@@ -62,6 +63,7 @@ roles:
     description: 'This role allows users to list, create, or update other users within the organization.'
     version: 1
     global: true
+    hidden: true
     permissions:
       - action: 'users:read'
         scope: 'users:*'

@@ -6,6 +6,8 @@ import { SHARED_DASHBOARD_QUERY } from './types';
 import { DashboardQueryEditor } from './DashboardQueryEditor';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
 jest.mock('app/core/config', () => ({
   ...(jest.requireActual('app/core/config') as unknown as object),
@@ -20,12 +22,11 @@ jest.mock('app/core/config', () => ({
   },
 }));
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    get: () => Promise.resolve({}),
-    getInstanceSettings: () => ({}),
-  }),
-}));
+setDataSourceSrv(
+  new MockDataSourceSrv({
+    test: mockDataSource({ isDefault: true }),
+  })
+);
 
 describe('DashboardQueryEditor', () => {
   const mockOnChange = jest.fn();

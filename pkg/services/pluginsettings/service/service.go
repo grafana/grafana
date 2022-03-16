@@ -5,38 +5,31 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
+func ProvideService(store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
 	s := &Service{
-		bus:            bus,
-		sqlStore:       store,
-		secretsService: secretsService,
-		logger:         log.New("pluginsettings"),
-		pluginSettingDecryptionCache: secureJSONDecryptionCache{
+		sqlStore: store,
+		decryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
+		secretsService: secretsService,
+		logger:         log.New("pluginsettings"),
 	}
-
-	s.bus.AddHandler(s.GetPluginSettingById)
-	s.bus.AddHandler(s.UpdatePluginSetting)
-	s.bus.AddHandler(s.UpdatePluginSettingVersion)
 
 	return s
 }
 
 type Service struct {
-	bus            bus.Bus
-	sqlStore       *sqlstore.SQLStore
-	secretsService secrets.Service
+	sqlStore        *sqlstore.SQLStore
+	decryptionCache secureJSONDecryptionCache
+	secretsService  secrets.Service
 
-	logger                       log.Logger
-	pluginSettingDecryptionCache secureJSONDecryptionCache
+	logger log.Logger
 }
 
 type cachedDecryptedJSON struct {
@@ -72,10 +65,10 @@ func (s *Service) UpdatePluginSettingVersion(ctx context.Context, cmd *models.Up
 }
 
 func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
-	s.pluginSettingDecryptionCache.Lock()
-	defer s.pluginSettingDecryptionCache.Unlock()
+	s.decryptionCache.Lock()
+	defer s.decryptionCache.Unlock()
 
-	if item, present := s.pluginSettingDecryptionCache.cache[ps.Id]; present && ps.Updated.Equal(item.updated) {
+	if item, present := s.decryptionCache.cache[ps.Id]; present && ps.Updated.Equal(item.updated) {
 		return item.json
 	}
 
@@ -85,7 +78,7 @@ func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
 		return map[string]string{}
 	}
 
-	s.pluginSettingDecryptionCache.cache[ps.Id] = cachedDecryptedJSON{
+	s.decryptionCache.cache[ps.Id] = cachedDecryptedJSON{
 		updated: ps.Updated,
 		json:    json,
 	}

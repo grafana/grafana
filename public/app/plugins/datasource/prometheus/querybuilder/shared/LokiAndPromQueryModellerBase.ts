@@ -43,7 +43,10 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
 
   renderOperations(queryString: string, operations: QueryBuilderOperation[]) {
     for (const operation of operations) {
-      const def = this.operationsRegisty.get(operation.id);
+      const def = this.operationsRegisty.getIfExists(operation.id);
+      if (!def) {
+        throw new Error(`Could not find operation ${operation.id} in the registry`);
+      }
       queryString = def.renderer(operation, def, queryString);
     }
 

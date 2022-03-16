@@ -17,7 +17,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace, CombinedRule } from 'app/types/unified-alerting';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import {
   AlertmanagerAlert,

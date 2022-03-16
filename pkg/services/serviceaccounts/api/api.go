@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -16,6 +15,7 @@ import (
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -27,11 +27,6 @@ type ServiceAccountsAPI struct {
 	RouterRegister routing.RouteRegister
 	store          serviceaccounts.Store
 	log            log.Logger
-}
-
-type serviceAccountIdDTO struct {
-	Id      int64  `json:"id"`
-	Message string `json:"message"`
 }
 
 func NewServiceAccountsAPI(
@@ -60,17 +55,22 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 
 	auth := acmiddleware.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
-		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
-		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
+		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
 		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.updateServiceAccount))
-		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
-		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
+		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		// TODO:
+		// for 9.0 please reenable this with issue https://github.com/grafana/grafana-enterprise/issues/2969
+		// serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin,
+		// 	accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
+		// serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
+		// 	accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
 		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
@@ -82,24 +82,23 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 
 // POST /api/serviceaccounts
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
-	cmd := serviceaccounts.CreateServiceAccountForm{}
+	type createServiceAccountForm struct {
+		Name string `json:"name" binding:"Required"`
+	}
+	cmd := createServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
-	cmd.OrgID = c.OrgId
 
-	user, err := api.service.CreateServiceAccount(c.Req.Context(), &cmd)
+	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
-	case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-		return response.Error(http.StatusBadRequest, "Failed to create role with the provided name", err)
+	case errors.Is(err, &database.ErrSAInvalidName{}):
+		return response.Error(http.StatusBadRequest, "Invalid service account name", err)
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
-	sa := &serviceAccountIdDTO{
-		Id:      user.Id,
-		Message: "Service account created",
-	}
-	return response.JSON(http.StatusCreated, sa)
+
+	return response.JSON(http.StatusCreated, serviceAccount)
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
@@ -132,27 +131,6 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 	} else {
 		return response.Error(500, "Internal server error", err)
 	}
-}
-
-func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) response.Response {
-	serviceAccounts, err := api.store.ListServiceAccounts(c.Req.Context(), c.OrgId, -1)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to list service accounts", err)
-	}
-
-	saIDs := map[string]bool{}
-	for i := range serviceAccounts {
-		serviceAccounts[i].AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccounts[i].Name)
-		saIDs[strconv.FormatInt(serviceAccounts[i].Id, 10)] = true
-	}
-
-	metadata := api.getAccessControlMetadata(c, saIDs)
-	if len(metadata) > 0 {
-		for i := range serviceAccounts {
-			serviceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceAccounts[i].Id, 10)]
-		}
-	}
-	return response.JSON(http.StatusOK, serviceAccounts)
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
@@ -220,6 +198,11 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 		}
 	}
 
+	saIDString := strconv.FormatInt(resp.Id, 10)
+	metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
+	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault("", resp.Name)
+	resp.AccessControl = metadata[saIDString]
+
 	return response.JSON(http.StatusOK, resp)
 }
 
@@ -235,53 +218,27 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if page < 1 {
 		page = 1
 	}
-
-	// include all if no filter
-	var filter serviceaccounts.ServiceAccountFilter = serviceaccounts.IncludeAll
-	onlyExpiredTokens := c.QueryBool("expiredTokens")
-	if onlyExpiredTokens {
-		filter = serviceaccounts.OnlyExpiredTokens
-	}
-	query := &serviceaccounts.SearchOrgServiceAccountsQuery{
-		OrgID:  c.OrgId,
-		Query:  c.Query("query"),
-		Page:   page,
-		Limit:  perPage,
-		User:   c.SignedInUser,
-		Filter: filter,
-	}
-	serviceaccountsQueryResult, err := api.store.SearchOrgServiceAccounts(ctx, query)
+	filter := serviceaccounts.ServiceAccountFilter(c.Query("filter"))
+	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgId, c.Query("query"), filter, page, perPage, c.SignedInUser)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
 	}
 
 	saIDs := map[string]bool{}
-	for i := range serviceaccountsQueryResult.ServiceAccounts {
-		serviceaccountsQueryResult.ServiceAccounts[i].AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceaccountsQueryResult.ServiceAccounts[i].Name)
+	for i := range serviceAccountSearch.ServiceAccounts {
+		sa := serviceAccountSearch.ServiceAccounts[i]
+		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault("", sa.Name)
 
-		saIDString := strconv.FormatInt(serviceaccountsQueryResult.ServiceAccounts[i].Id, 10)
+		saIDString := strconv.FormatInt(sa.Id, 10)
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
-		serviceaccountsQueryResult.ServiceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceaccountsQueryResult.ServiceAccounts[i].Id, 10)]
-		tokens, err := api.store.ListTokens(ctx, serviceaccountsQueryResult.ServiceAccounts[i].OrgId, serviceaccountsQueryResult.ServiceAccounts[i].Id)
+		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
+		tokens, err := api.store.ListTokens(ctx, sa.OrgId, sa.Id)
 		if err != nil {
-			api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceaccountsQueryResult.ServiceAccounts[i].Id)
+			api.log.Warn("Failed to list tokens for service account", "serviceAccount", sa.Id)
 		}
-		serviceaccountsQueryResult.ServiceAccounts[i].Tokens = int64(len(tokens))
+		sa.Tokens = int64(len(tokens))
 	}
 
-	type searchOrgServiceAccountsQueryResult struct {
-		TotalCount      int64                                `json:"totalCount"`
-		ServiceAccounts []*serviceaccounts.ServiceAccountDTO `json:"serviceAccounts"`
-		Page            int                                  `json:"page"`
-		PerPage         int                                  `json:"perPage"`
-	}
-	result := searchOrgServiceAccountsQueryResult{
-		TotalCount:      serviceaccountsQueryResult.TotalCount,
-		ServiceAccounts: serviceaccountsQueryResult.ServiceAccounts,
-		Page:            serviceaccountsQueryResult.Page,
-		PerPage:         serviceaccountsQueryResult.PerPage,
-	}
-	fmt.Printf("result %+v\n", result)
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, serviceAccountSearch)
 }

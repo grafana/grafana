@@ -1,5 +1,7 @@
 import { QueryEditorProps } from '@grafana/data';
 import { Alert } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
 
@@ -19,6 +21,7 @@ import InsightsAnalyticsEditor from '../deprecated/components/InsightsAnalyticsE
 import { gtGrafana9 } from '../deprecated/utils';
 import LogsQueryEditor from '../LogsQueryEditor';
 import MetricsQueryEditor from '../MetricsQueryEditor';
+import NewMetricsQueryEditor from '../NewMetricsQueryEditor/MetricsQueryEditor';
 import { Space } from '../Space';
 import QueryTypeField from './QueryTypeField';
 import usePreparedQuery from './usePreparedQuery';
@@ -95,6 +98,9 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
 }) => {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
+      if (config.featureToggles.azureMonitorResourcePickerForMetrics) {
+        return <NewMetricsQueryEditor />;
+      }
       return (
         <MetricsQueryEditor
           subscriptionId={subscriptionId}

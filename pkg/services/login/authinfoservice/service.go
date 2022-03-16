@@ -52,21 +52,20 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 
 				return false, nil, nil, models.ErrUserNotFound
 			} else {
-				has, user, err := s.authInfoStore.GetUserById(authQuery.Result.UserId)
+				user, err := s.authInfoStore.GetUserById(ctx, authQuery.Result.UserId)
 				if err != nil {
-					return false, nil, nil, err
-				}
+					if errors.Is(err, models.ErrUserNotFound) {
+						// if the user has been deleted then remove the entry
+						if errDel := s.authInfoStore.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
+							UserAuth: authQuery.Result,
+						}); errDel != nil {
+							s.logger.Error("Error removing user_auth entry", "error", errDel)
+						}
 
-				if !has {
-					// if the user has been deleted then remove the entry
-					err = s.authInfoStore.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
-						UserAuth: authQuery.Result,
-					})
-					if err != nil {
-						s.logger.Error("Error removing user_auth entry", "error", err)
+						return false, nil, nil, models.ErrUserNotFound
 					}
 
-					return false, nil, nil, models.ErrUserNotFound
+					return false, nil, nil, err
 				}
 
 				return true, user, authQuery.Result, nil
@@ -77,42 +76,39 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 	return false, nil, nil, models.ErrUserNotFound
 }
 
-func (s *Implementation) LookupByOneOf(userId int64, email string, login string) (bool, *models.User, error) {
-	foundUser := false
+func (s *Implementation) LookupByOneOf(ctx context.Context, userId int64, email string, login string) (*models.User, error) {
 	var user *models.User
 	var err error
 
 	// If not found, try to find the user by id
 	if userId != 0 {
-		foundUser, user, err = s.authInfoStore.GetUserById(userId)
-		if err != nil {
-			return false, nil, err
+		user, err = s.authInfoStore.GetUserById(ctx, userId)
+		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by email address
-	if !foundUser && email != "" {
-		user = &models.User{Email: email}
-		foundUser, err = s.authInfoStore.GetUser(user)
-		if err != nil {
-			return false, nil, err
+	if user == nil && email != "" {
+		user, err = s.authInfoStore.GetUserByEmail(ctx, email)
+		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by login
-	if !foundUser && login != "" {
-		user = &models.User{Login: login}
-		foundUser, err = s.authInfoStore.GetUser(user)
-		if err != nil {
-			return false, nil, err
+	if user == nil && login != "" {
+		user, err = s.authInfoStore.GetUserByLogin(ctx, login)
+		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+			return nil, err
 		}
 	}
 
-	if !foundUser {
-		return false, nil, models.ErrUserNotFound
+	if user == nil {
+		return nil, models.ErrUserNotFound
 	}
 
-	return foundUser, user, nil
+	return user, nil
 }
 
 func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule string, authId string, userID int64) (*models.UserAuth, error) {
@@ -141,7 +137,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 
 	// 2. FindByUserDetails
 	if !foundUser {
-		_, user, err = s.LookupByOneOf(query.UserId, query.Email, query.Login)
+		user, err = s.LookupByOneOf(ctx, query.UserId, query.Email, query.Login)
 		if err != nil {
 			return nil, err
 		}

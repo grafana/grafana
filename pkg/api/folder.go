@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
@@ -73,34 +71,8 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	if err := hs.setFolderPermission(c, folder.Id); err != nil {
-		hs.log.Error("Could not make user admin", "folder", folder.Title, "user",
-			c.SignedInUser.UserId, "error", err)
-	}
-
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
-}
-
-func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64) error {
-	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		resourceID := strconv.FormatInt(folderID, 10)
-		svc := hs.permissionServices.GetFolderService()
-
-		_, err := svc.SetPermissions(c.Req.Context(), c.OrgId, resourceID, []accesscontrol.SetResourcePermissionCommand{
-			{UserID: c.UserId, Permission: models.PERMISSION_ADMIN.String()},
-			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
-		}...)
-		if err != nil {
-			return err
-		}
-	} else if hs.Cfg.EditorsCanAdmin {
-		if err := hs.folderService.MakeUserAdmin(c.Req.Context(), c.OrgId, c.UserId, folderID, true); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {

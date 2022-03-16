@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -243,7 +245,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	configNodes := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqOrgAdmin, dataSourcesConfigurationAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",
@@ -480,7 +482,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 		children = append(children, &dtos.NavLink{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new", Id: "create-dashboard"})
 	}
 
-	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(ac.ActionFoldersCreate)) {
+	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
 		children = append(children, &dtos.NavLink{
 			Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder",
 			Icon: "folder-plus", Url: hs.Cfg.AppSubURL + "/dashboards/folder/new",
@@ -553,7 +555,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			return false
 		}
 		return hasEditPermissionInFoldersQuery.Result
-	}, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(ac.ActionFoldersCreate)))
+	}, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
