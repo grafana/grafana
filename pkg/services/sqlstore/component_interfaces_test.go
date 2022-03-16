@@ -8,85 +8,88 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/grafana/internal/components"
 	"github.com/grafana/grafana/internal/components/datasource"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 func TestStoreDSStoreCRUD(t *testing.T) {
-	t.Run("Insert / Update / Delete with Gets", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
-		ctx := context.Background()
-		dsStore := datasource.Store(ProvideDataSourceSchemaStore(sqlStore))
+	ctx := context.Background()
+	sqlStore := InitTestDB(t)
+	dsStore := components.Store(ProvideDataSourceSchemaStore(sqlStore))
 
-		uid := "MySpecialUIDisDEARtoMe"
-		jd := make(map[string]interface{})
-		jd["test"] = "test"
+	uid := types.UID("MySpecialUIDisDEARtoMe")
+	name := "test-datasource"
+	jd := `{"test":"value"}`
+	nsName := types.NamespacedName{
+		Namespace: "default",
+		Name:      name,
+	}
 
-		modelToInsert := datasource.CR{
-			Spec: datasource.Model{
+	t.Run("should insert the datasource into store", func(t *testing.T) {
+		modelToInsert := datasource.Datasource{
+			Spec: datasource.DatasourceSpec{
 				JsonData: jd,
 			},
 		}
-		modelToInsert.Name = "Test"
-		modelToInsert.UID = types.UID(uid)
+		modelToInsert.Name = name
+		modelToInsert.UID = uid
+		assert.NoError(t, dsStore.Insert(ctx, &modelToInsert))
 
-		// Insert
-		err := dsStore.Insert(ctx, modelToInsert)
-		require.NoError(t, err)
+		var fetchedDS datasource.Datasource
+		assert.NoError(t, dsStore.Get(ctx, nsName, &fetchedDS))
 
-		// Get
-		fetchedDS, err := dsStore.Get(ctx, uid)
-		require.NoError(t, err)
-
-		modelToInsertWithVersionBumped := datasource.CR{
-			Spec: datasource.Model{
+		modelToInsertWithVersionBumped := datasource.Datasource{
+			Spec: datasource.DatasourceSpec{
 				JsonData: jd,
 			},
 		}
-		modelToInsertWithVersionBumped.Name = "Test"
-		modelToInsertWithVersionBumped.UID = types.UID(uid)
+		modelToInsertWithVersionBumped.Name = name
+		modelToInsertWithVersionBumped.UID = uid
 		modelToInsertWithVersionBumped.ResourceVersion = strconv.Itoa(1)
 
-		require.Equal(t, modelToInsertWithVersionBumped, fetchedDS)
+		assert.Equal(t, modelToInsertWithVersionBumped, fetchedDS)
+	})
 
-		// Update
-		modelForUpdate := datasource.CR{
-			Spec: datasource.Model{
+	t.Run("should update the datasource in store", func(t *testing.T) {
+		var fetchedDS datasource.Datasource
+		assert.NoError(t, dsStore.Get(ctx, nsName, &fetchedDS))
+
+		modelForUpdate := datasource.Datasource{
+			Spec: datasource.DatasourceSpec{
 				JsonData: jd,
 				Type:     "slothFactory",
 			},
 		}
-		modelForUpdate.Name = "Test"
-		modelForUpdate.UID = types.UID(uid)
+		modelForUpdate.Name = name
+		modelForUpdate.UID = uid
 		modelForUpdate.ResourceVersion = fetchedDS.ResourceVersion // We are manually setting version
 
-		err = dsStore.Update(ctx, modelForUpdate)
-		require.NoError(t, err)
+		assert.NoError(t, dsStore.Update(ctx, &modelForUpdate))
 
-		// Get updated
-		modelForUpdateWithVersionBump := datasource.CR{
-			Spec: datasource.Model{
+		modelForUpdateWithVersionBump := datasource.Datasource{
+			Spec: datasource.DatasourceSpec{
 				JsonData: jd,
 				Type:     "slothFactory",
 			},
 		}
-		modelForUpdateWithVersionBump.Name = "Test"
-		modelForUpdateWithVersionBump.UID = types.UID(uid)
+		modelForUpdateWithVersionBump.Name = name
+		modelForUpdateWithVersionBump.UID = uid
 		rv, err := strconv.Atoi(fetchedDS.ResourceVersion)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		modelForUpdateWithVersionBump.ResourceVersion = strconv.Itoa(rv + 1) // We are manually setting version
 
-		fetchedUpdatedDS, err := dsStore.Get(ctx, uid)
-		require.NoError(t, err)
-		require.Equal(t, modelForUpdateWithVersionBump, fetchedUpdatedDS)
+		var fetchedUpdatedDS datasource.Datasource
+		assert.NoError(t, dsStore.Get(ctx, nsName, &fetchedUpdatedDS))
+		assert.Equal(t, modelForUpdateWithVersionBump, fetchedUpdatedDS)
+	})
 
-		// Delete it
-		err = dsStore.Delete(ctx, uid)
-		require.NoError(t, err)
-
-		_, err = dsStore.Get(ctx, uid)
-		require.ErrorIs(t, err, models.ErrDataSourceNotFound)
+	t.Run("should delete the datasource from store", func(t *testing.T) {
+		var fetchedDS datasource.Datasource
+		assert.NoError(t, dsStore.Delete(ctx, nsName))
+		assert.ErrorIs(t, dsStore.Get(ctx, nsName, &fetchedDS), models.ErrDataSourceNotFound)
 	})
 }
