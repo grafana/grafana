@@ -126,4 +126,8 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
+
+	// FlagAzureMonitorResourcePickerForMetrics
+	// New UI for Azure Monitor Metrics Query
+	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 )

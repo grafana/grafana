@@ -78,8 +78,13 @@ func (s *rootStorageDisk) Sync() error {
 // with local disk user metadata and messages are lost
 func (s *rootStorageDisk) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
 	byteAray := []byte(cmd.Body)
+
+	path := cmd.Path
+	if !strings.HasPrefix(path, filestorage.Delimiter) {
+		path = filestorage.Delimiter + path
+	}
 	err := s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
-		Path:     cmd.Path,
+		Path:     path,
 		Contents: &byteAray,
 	})
 	if err != nil {
@@ -112,7 +117,7 @@ func getDevenvDashboards() *rootStorageDisk {
 		return nil
 	}
 
-	return newDiskStorage("dev-dashboards", "devenv dashboards", &StorageLocalDiskConfig{
+	return newDiskStorage("dev-dashboards", "Local disk, devenv dashboards", &StorageLocalDiskConfig{
 		Path:  filepath.Join(devenv, "dev-dashboards"),
 		Roots: roots,
 	})

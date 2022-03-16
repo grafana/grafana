@@ -50,16 +50,22 @@ export default function StoragePage() {
                 { value: 'git', label: 'Git' },
               ]}
               onChange={function (value: SelectableValue<string>): void {
-                //TODO: add storage
-                console.log(value);
+                alert('hackathon!');
               }}
             />
             <StorageButton
               buttonProps={{ variant: 'secondary', children: 'Actions', icon: '' }}
-              options={[{ value: 'export', label: 'Export instance to git', icon: 'arrow-up' }]}
+              options={[
+                { value: 'export', label: 'Export instance to git', icon: 'file-export' },
+                { value: 'import', label: 'Import from to git', icon: 'file-import' },
+              ]}
               onChange={function (value: SelectableValue<string>): void {
-                if (value.value === 'export') {
-                  setIsOpen(true);
+                switch (value.value) {
+                  case 'export':
+                    setIsOpen(true);
+                    break;
+                  default:
+                    alert('hackathon!');
                 }
               }}
             />
@@ -80,7 +86,7 @@ export default function StoragePage() {
             <StorageList storage={resources} type="res" title="Resources" />
           </div>
         )}
-        <ExportModal isOpen={isOpen} onDismiss={() => setIsOpen(false)} dashboards={dashboards} resources={resources} />
+        <ExportModal isOpen={isOpen} onDismiss={() => setIsOpen(false)} />
       </Page.Contents>
     </Page>
   );

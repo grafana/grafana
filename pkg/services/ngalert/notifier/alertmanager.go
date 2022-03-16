@@ -451,11 +451,6 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 	return integrationsMap, nil
 }
 
-type NotificationChannel interface {
-	notify.Notifier
-	notify.ResolvedSender
-}
-
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
 func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
@@ -469,7 +464,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 	return integrations, nil
 }
 
-func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (NotificationChannel, error) {
+func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (channels.NotificationChannel, error) {
 	// secure settings are already encrypted at this point
 	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
@@ -494,60 +489,28 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			Settings:              r.Settings,
 			SecureSettings:        secureSettings,
 		}
-		n   NotificationChannel
-		err error
 	)
-	switch r.Type {
-	case "email":
-		n, err = channels.NewEmailNotifier(cfg, am.NotificationService, tmpl) // Email notifier already has a default template.
-	case "pagerduty":
-		n, err = channels.NewPagerdutyNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "pushover":
-		n, err = channels.NewPushoverNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "slack":
-		n, err = channels.NewSlackNotifier(cfg, tmpl, am.decryptFn)
-	case "telegram":
-		n, err = channels.NewTelegramNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "victorops":
-		n, err = channels.NewVictoropsNotifier(cfg, am.NotificationService, tmpl)
-	case "teams":
-		n, err = channels.NewTeamsNotifier(cfg, am.NotificationService, tmpl)
-	case "dingding":
-		n, err = channels.NewDingDingNotifier(cfg, am.NotificationService, tmpl)
-	case "kafka":
-		n, err = channels.NewKafkaNotifier(cfg, am.NotificationService, tmpl)
-	case "webhook":
-		n, err = channels.NewWebHookNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "wecom":
-		n, err = channels.NewWeComNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "sensugo":
-		n, err = channels.NewSensuGoNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "discord":
-		n, err = channels.NewDiscordNotifier(cfg, am.NotificationService, tmpl)
-	case "googlechat":
-		n, err = channels.NewGoogleChatNotifier(cfg, am.NotificationService, tmpl)
-	case "LINE":
-		n, err = channels.NewLineNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "threema":
-		n, err = channels.NewThreemaNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "opsgenie":
-		n, err = channels.NewOpsgenieNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "prometheus-alertmanager":
-		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl, am.decryptFn)
-	default:
-		return nil, InvalidReceiverError{
-			Receiver: r,
-			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
-		}
-	}
-
+	factoryConfig, err := channels.NewFactoryConfig(cfg, am.NotificationService, am.decryptFn, tmpl)
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}
 	}
-
+	receiverFactory, exists := channels.Factory(r.Type)
+	if !exists {
+		return nil, InvalidReceiverError{
+			Receiver: r,
+			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
+		}
+	}
+	n, err := receiverFactory(factoryConfig)
+	if err != nil {
+		return nil, InvalidReceiverError{
+			Receiver: r,
+			Err:      err,
+		}
+	}
 	return n, nil
 }
 

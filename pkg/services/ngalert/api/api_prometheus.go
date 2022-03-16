@@ -131,10 +131,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		groupId, namespaceUID, namespace := r[0], r[1], r[2]
 
 		newGroup := &apimodels.RuleGroup{
-			Name: groupId,
-			// This doesn't make sense in our architecture
-			// so we use this field for passing to the frontend the namespace
-			File:           namespace,
+			Name:           groupId,
+			File:           namespace, // file is what Prometheus uses for provisioning, we replace it with namespace.
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
@@ -149,17 +147,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		if !ok {
 			continue
 		}
-		var queryStr string
-		encodedQuery, err := json.Marshal(rule.Data)
-		if err != nil {
-			queryStr = err.Error()
-		} else {
-			queryStr = string(encodedQuery)
-		}
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
 			Name:        rule.Title,
-			Query:       queryStr,
+			Query:       ruleToQuery(srv.log, rule),
 			Duration:    rule.For.Seconds(),
 			Annotations: rule.Annotations,
 		}
@@ -211,6 +202,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				newRule.LastError = alertState.Error.Error()
 				newRule.Health = "error"
 			}
+
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
 		}
 
@@ -219,4 +211,46 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		newGroup.Interval = float64(rule.IntervalSeconds)
 	}
 	return response.JSON(http.StatusOK, ruleResponse)
+}
+
+// ruleToQuery attempts to extract the datasource queries from the alert query model.
+// Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
+func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
+	var queryErr error
+	var queries []string
+
+	for _, q := range rule.Data {
+		q, err := q.GetQuery()
+		if err != nil {
+			// If we can't find the query simply omit it, and try the rest.
+			// Even single query alerts would have 2 `AlertQuery`, one for the query and one for the condition.
+			if errors.Is(err, ngmodels.ErrNoQuery) {
+				continue
+			}
+
+			// For any other type of error, it is unexpected abort and return the whole JSON.
+			logger.Debug("failed to parse a query", "err", err)
+			queryErr = err
+			break
+		}
+
+		queries = append(queries, q)
+	}
+
+	// If we were able to extract at least one query without failure use it.
+	if queryErr == nil && len(queries) > 0 {
+		return strings.Join(queries, " | ")
+	}
+
+	return encodedQueriesOrError(rule.Data)
+}
+
+// encodedQueriesOrError tries to encode rule query data into JSON if it fails returns the encoding error as a string.
+func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
+	encodedQueries, err := json.Marshal(rules)
+	if err == nil {
+		return string(encodedQueries)
+	}
+
+	return err.Error()
 }

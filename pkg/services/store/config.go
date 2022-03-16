@@ -25,6 +25,7 @@ type StorageGitConfig struct {
 
 	// Pull interval?
 	// Requires pull request?
+	RequirePullRequest bool `json:"requirePullRequest"`
 
 	// SECURE JSON :grimicing:
 	AccessToken string `json:"accessToken,omitempty"` // Simplest auth method for github

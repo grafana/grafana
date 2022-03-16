@@ -152,13 +152,13 @@ func TestSlackNotifier(t *testing.T) {
 			settings: `{
 				"recipient": "#testchannel"
 			}`,
-			expInitError: `failed to validate receiver "slack_testing" of type "slack": token must be specified when using the Slack chat API`,
+			expInitError: `token must be specified when using the Slack chat API`,
 		}, {
 			name: "Missing recipient",
 			settings: `{
 				"token": "1234"
 			}`,
-			expInitError: `failed to validate receiver "slack_testing" of type "slack": recipient must be specified when using the Slack chat API`,
+			expInitError: `recipient must be specified when using the Slack chat API`,
 		},
 		{
 			name: "Custom endpoint url",
@@ -213,7 +213,7 @@ func TestSlackNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewSlackNotifier(m, tmpl, decryptFn)
+			cfg, err := NewSlackConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -246,6 +246,7 @@ func TestSlackNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewSlackNotifier(cfg, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.Error(t, err)

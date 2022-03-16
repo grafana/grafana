@@ -7,12 +7,22 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"io/ioutil"
+	"net/http/httptest"
 	"os"
 	"path"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/johannesboyne/gofakes3/backend/s3mem"
+	s3blob "gocloud.dev/blob/s3blob"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/johannesboyne/gofakes3"
 	"gocloud.dev/blob"
 )
 
@@ -37,10 +47,11 @@ func runTestCase(t *testing.T, testCase fsTestCase, ctx context.Context, filesto
 
 func runTests(createCases func() []fsTestCase, t *testing.T) {
 	var testLogger log.Logger
-	//var sqlStore *sqlstore.SQLStore
+	var sqlStore *sqlstore.SQLStore
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string
+	var s3server *httptest.Server
 
 	commonSetup := func() {
 		testLogger = log.New("testStorageLogger")
@@ -49,7 +60,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	cleanUp := func() {
 		testLogger = nil
-		//sqlStore = nil
+		sqlStore = nil
 		if filestorage != nil {
 			_ = filestorage.close()
 			filestorage = nil
@@ -57,6 +68,36 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 		ctx = nil
 		_ = os.RemoveAll(tempDir)
+
+		if s3server != nil {
+			s3server.Close()
+			s3server = nil
+		}
+	}
+
+	setupFakeS3 := func() {
+		commonSetup()
+		backend := s3mem.New()
+		faker := gofakes3.New(backend)
+		s3server = httptest.NewServer(faker.Server())
+
+		s3Config := &aws.Config{
+			Credentials:      credentials.NewStaticCredentials("any-access-key", "any-secret", ""),
+			Endpoint:         aws.String(s3server.URL),
+			Region:           aws.String("eu-central-1"),
+			DisableSSL:       aws.Bool(true),
+			S3ForcePathStyle: aws.Bool(true),
+		}
+		sess := session.Must(session.NewSession(s3Config))
+
+		bucketName := "bucket"
+		if _, err := s3.New(sess).CreateBucket(&s3.CreateBucketInput{
+			Bucket: aws.String(bucketName),
+		}); err != nil {
+			t.Fatal("failed to create bucket", err)
+		}
+		bucket, _ := s3blob.OpenBucket(ctx, sess, bucketName, nil)
+		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
 	setupInMemFS := func() {
@@ -65,11 +106,17 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
-	//setupSqlFS := func() {
-	//	commonSetup()
-	//	sqlStore = sqlstore.InitTestDB(t)
-	//	filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
-	//}
+	setupSqlFS := func() {
+		commonSetup()
+		sqlStore = sqlstore.InitTestDB(t)
+		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
+	}
+
+	setupSqlFSNestedPath := func() {
+		commonSetup()
+		sqlStore = sqlstore.InitTestDB(t)
+		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/dashboards/")
+	}
 
 	setupLocalFs := func() {
 		commonSetup()
@@ -123,10 +170,18 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 			setup: setupInMemFS,
 			name:  "In-mem FS",
 		},
-		//{
-		//	setup: setupSqlFS,
-		//	name:  "SQL FS",
-		//},
+		{
+			setup: setupFakeS3,
+			name:  "Fake S3",
+		},
+		{
+			setup: setupSqlFS,
+			name:  "SQL FS",
+		},
+		{
+			setup: setupSqlFSNestedPath,
+			name:  "SQL FS with nested path",
+		},
 	}
 
 	for _, backend := range backends {
@@ -181,9 +236,26 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}},
+						list:  checks(listSize(4), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/file-inner.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+							checks(fPath("/folder1/file-inner2.jpg"), fProperties(map[string]string{})),
+							checks(fPath("/folder1/folder2"), fProperties(map[string]string{}), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folder1/folder2/file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: false}},
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 						files: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: false, WithFolders: true, WithFiles: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1")),
+						files: [][]interface{}{
+							checks(fPath("/folder1"), fProperties(map[string]string{}), fMimeType(DirectoryMimeType)),
+						},
 					},
 					queryListFiles{
 						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: false}},
@@ -194,6 +266,15 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: false, WithFolders: true, WithFiles: true}},
+						list:  checks(listSize(3), listHasMore(false), listLastPath("/folder1/folder2")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/file-inner.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+							checks(fPath("/folder1/file-inner2.jpg"), fProperties(map[string]string{})),
+							checks(fPath("/folder1/folder2"), fProperties(map[string]string{}), fMimeType(DirectoryMimeType)),
+						},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/folder1/folder2", options: &ListOptions{Recursive: false}},
 						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
 						files: [][]interface{}{
@@ -201,7 +282,19 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/folder2", options: &ListOptions{Recursive: false, WithFolders: true, WithFiles: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2/file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/folder1/folder2", options: &ListOptions{Recursive: false}, paging: &Paging{After: "/folder1/folder2/file.jpg"}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+						files: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/folder2", options: &ListOptions{Recursive: false, WithFolders: true, WithFiles: true}, paging: &Paging{After: "/folder1/folder2/file.jpg"}},
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 						files: [][]interface{}{},
 					},
@@ -242,6 +335,15 @@ func TestFsStorage(t *testing.T) {
 							checks(fPath("/ab/a/a.jpg")),
 						},
 					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/ab", options: &ListOptions{Recursive: true, WithFolders: true, WithFiles: true}},
+						list:  checks(listSize(3), listHasMore(false), listLastPath("/ab/a/a.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/ab/a.jpg")),
+							checks(fPath("/ab/a"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/ab/a/a.jpg")),
+						},
+					},
 				},
 			},
 			{
@@ -266,7 +368,15 @@ func TestFsStorage(t *testing.T) {
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jp", options: &ListOptions{Recursive: true, WithFolders: true, WithFiles: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/folder1/file-inner", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner", options: &ListOptions{Recursive: true, WithFolders: true, WithFiles: true}},
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 					},
 					queryListFiles{
@@ -277,7 +387,21 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/folder2/file.jpg", options: &ListOptions{Recursive: true, WithFolders: true, WithFiles: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2/file.jpg"), fName("file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/folder1/file-inner.jpg", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/file-inner.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/file-inner.jpg"), fName("file-inner.jpg"), fProperties(map[string]string{"prop1": "val1"})),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/file-inner.jpg", options: &ListOptions{Recursive: true, WithFolders: true, WithFiles: true}},
 						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/file-inner.jpg")),
 						files: [][]interface{}{
 							checks(fPath("/folder1/file-inner.jpg"), fName("file-inner.jpg"), fProperties(map[string]string{"prop1": "val1"})),
@@ -305,9 +429,22 @@ func TestFsStorage(t *testing.T) {
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder2"}}}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+						files: [][]interface{}{},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
 						list:  checks(listSize(1), listHasMore(false)),
 						files: [][]interface{}{
+							checks(fPath("/folder1/folder2/file.jpg")),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
+						list:  checks(listSize(2), listHasMore(false)),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2"), fMimeType("directory")),
 							checks(fPath("/folder1/folder2/file.jpg")),
 						},
 					},
@@ -342,6 +479,20 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: ""}},
+						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1")),
+						files: [][]interface{}{
+							checks(fPath("/folder1"), fMimeType(DirectoryMimeType)),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder1"}},
+						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/a")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/a")),
+						},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/a"}},
 						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/b")),
 						files: [][]interface{}{
@@ -349,7 +500,28 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder1/a"}},
+						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/b")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/b")),
+						},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/b"}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder2/c")),
+						files: [][]interface{}{
+							checks(fPath("/folder2/c")),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder1/b"}},
+						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder2")),
+						files: [][]interface{}{
+							checks(fPath("/folder2"), fMimeType(DirectoryMimeType)),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder2"}},
 						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder2/c")),
 						files: [][]interface{}{
 							checks(fPath("/folder2/c")),
@@ -365,11 +537,30 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 5, After: ""}},
+						list:  checks(listSize(5), listHasMore(false), listLastPath("/folder2/c")),
+						files: [][]interface{}{
+							checks(fPath("/folder1"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folder1/a")),
+							checks(fPath("/folder1/b")),
+							checks(fPath("/folder2"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folder2/c")),
+						},
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2"}},
 						list:  checks(listSize(1), listHasMore(false)),
 					},
 					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 5, After: "/folder2"}},
+						list:  checks(listSize(1), listHasMore(false)),
+					},
+					queryListFiles{
 						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2/c"}},
+						list:  checks(listSize(0), listHasMore(false)),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 5, After: "/folder2/c"}},
 						list:  checks(listSize(0), listHasMore(false)),
 					},
 				},
@@ -417,6 +608,18 @@ func TestFsStorage(t *testing.T) {
 							checks(fPath("/folderX/folderZ")),
 						},
 					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: false, WithFolders: true}},
+						list:  checks(listSize(6), listHasMore(false), listLastPath("/folderX/folderZ")),
+						files: [][]interface{}{
+							checks(fPath("/folder1"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folder1/folder2"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folderA"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folderA/folderB"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folderX"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folderX/folderZ"), fMimeType(DirectoryMimeType)),
+						},
+					},
 				},
 			},
 			{
@@ -452,9 +655,26 @@ func TestFsStorage(t *testing.T) {
 							checks(fPath("/folder1/folder2")),
 						},
 					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: false, WithFiles: false, WithFolders: true}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder1/folder2")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2"), fMimeType(DirectoryMimeType)),
+						},
+					},
 					queryListFolders{
 						input:  queryListFoldersInput{path: "/folderZ", options: &ListOptions{Recursive: false}},
 						checks: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folderZ", options: &ListOptions{Recursive: false, WithFiles: false, WithFolders: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+						files: [][]interface{}{},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1/folder2", options: &ListOptions{Recursive: false, WithFiles: false, WithFolders: true}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+						files: [][]interface{}{},
 					},
 					queryListFolders{
 						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: false}},
@@ -462,6 +682,15 @@ func TestFsStorage(t *testing.T) {
 							checks(fPath("/folder1")),
 							checks(fPath("/folderA")),
 							checks(fPath("/folderX")),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: false, WithFiles: false, WithFolders: true}},
+						list:  checks(listSize(3), listHasMore(false), listLastPath("/folderX")),
+						files: [][]interface{}{
+							checks(fPath("/folder1"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folderA"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folderX"), fMimeType(DirectoryMimeType)),
 						},
 					},
 				},
@@ -1044,6 +1273,31 @@ func TestFsStorage(t *testing.T) {
 							checks(fPath("/gitB/nested2/dashboard2.json")), // allowed by '/gitB/' prefix
 							checks(fPath("/gitC/nestedC/dashboardC.json")), // allowed by '/gitC/' prefix
 							checks(fPath("/s3/folder/dashboard.json")),     // allowed by '/s3/folder/' prefix
+							// /s3/folder/nested/dashboard.json is denied with '/s3/folder/nested/' prefix
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{
+							Recursive:   true,
+							PathFilters: pathFilters,
+							WithFiles:   true,
+							WithFolders: true,
+						}},
+						list: checks(listSize(10), listHasMore(false), listLastPath("/s3/folder/dashboard.json")),
+						files: [][]interface{}{
+							// /gitA/dashboard.json is not explicitly allowed
+							checks(fPath("/gitA/dashboard2.json")),         // explicitly allowed by allowedPath
+							checks(fPath("/gitB")),                         // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested")),                  // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested/dashboard.json")),   // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested2")),                 // allowed by '/gitB/' prefix
+							checks(fPath("/gitB/nested2/dashboard2.json")), // allowed by '/gitB/' prefix
+							checks(fPath("/gitC")),                         // allowed by '/gitC/' prefix
+							// /gitC/nestedC is explicitly denied
+							checks(fPath("/gitC/nestedC/dashboardC.json")), // allowed by '/gitC/' prefix
+							// /s3 is not explicitly allowed
+							checks(fPath("/s3/folder")),
+							checks(fPath("/s3/folder/dashboard.json")), // allowed by '/s3/folder/' prefix
 							// /s3/folder/nested/dashboard.json is denied with '/s3/folder/nested/' prefix
 						},
 					},

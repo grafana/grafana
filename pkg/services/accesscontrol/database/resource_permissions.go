@@ -361,14 +361,14 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 
 	initialLength := len(args)
 
-	userFilter, err := accesscontrol.Filter(context.Background(), "u.id", "users", accesscontrol.ActionOrgUsersRead, query.User)
+	userFilter, err := accesscontrol.Filter(query.User, "u.id", "users", accesscontrol.ActionOrgUsersRead)
 	if err != nil {
 		return nil, err
 	}
 	user := userSelect + userFrom + where + " AND " + userFilter.Where
 	args = append(args, userFilter.Args...)
 
-	teamFilter, err := accesscontrol.Filter(context.Background(), "t.id", "teams", accesscontrol.ActionTeamsRead, query.User)
+	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams", accesscontrol.ActionTeamsRead)
 	if err != nil {
 		return nil, err
 	}

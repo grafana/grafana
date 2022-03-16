@@ -42,22 +42,68 @@ func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query
 	return r0
 }
 
-// GetFolderByTitle provides a mock function with given fields: orgID, title
-func (_m *FakeDashboardStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
-	ret := _m.Called(orgID, title)
+// GetFolderByID provides a mock function with given fields: ctx, orgID, id
+func (_m *FakeDashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error) {
+	ret := _m.Called(ctx, orgID, id)
 
-	var r0 *models.Dashboard
-	if rf, ok := ret.Get(0).(func(int64, string) *models.Dashboard); ok {
-		r0 = rf(orgID, title)
+	var r0 *models.Folder
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *models.Folder); ok {
+		r0 = rf(ctx, orgID, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Dashboard)
+			r0 = ret.Get(0).(*models.Folder)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int64, string) error); ok {
-		r1 = rf(orgID, title)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = rf(ctx, orgID, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetFolderByTitle provides a mock function with given fields: ctx, orgID, title
+func (_m *FakeDashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error) {
+	ret := _m.Called(ctx, orgID, title)
+
+	var r0 *models.Folder
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *models.Folder); ok {
+		r0 = rf(ctx, orgID, title)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Folder)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgID, title)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetFolderByUID provides a mock function with given fields: ctx, orgID, uid
+func (_m *FakeDashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error) {
+	ret := _m.Called(ctx, orgID, uid)
+
+	var r0 *models.Folder
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *models.Folder); ok {
+		r0 = rf(ctx, orgID, uid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Folder)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgID, uid)
 	} else {
 		r1 = ret.Error(1)
 	}

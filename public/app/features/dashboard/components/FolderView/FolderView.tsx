@@ -1,6 +1,6 @@
 import { dataFrameFromJSON, DataFrameJSON, DataFrameView } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Card, CustomScrollbar, Icon } from '@grafana/ui';
+import { Card, CustomScrollbar, Icon, PageToolbar } from '@grafana/ui';
 import { Breadcrumb } from 'app/features/storage/Breadcrumb';
 import React from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -26,10 +26,13 @@ export const FolderView = ({ dashboard }: Props) => {
     return <div>Missing folder listing ¯\_(ツ)_/¯ </div>;
   }
   const view = new DataFrameView<FolderListItem>(dataFrameFromJSON(frameJSON));
+  const isRoot = location.pathname === '/g/';
 
   return (
     <div>
-      <Breadcrumb pathName={location.pathname} onPathChange={(changedPath) => history.push(changedPath)} />
+      {isRoot && <PageToolbar pageIcon={'apps'} title="Dashboard storage locations"></PageToolbar>}
+      {!isRoot && <Breadcrumb pathName={location.pathname} onPathChange={(changedPath) => history.push(changedPath)} />}
+
       <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true} updateAfterMountMs={500}>
         <div>
           {view.map((item) => {

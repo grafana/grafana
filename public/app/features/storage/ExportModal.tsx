@@ -1,28 +1,34 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Button, Checkbox, Field, Input, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Field, Input, Modal, useStyles2, Spinner } from '@grafana/ui';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RootStorageMeta } from './types';
 
 interface Props {
   isOpen: boolean;
   onDismiss: () => void;
   onCallback?: (selected?: string[]) => void;
-  dashboards?: RootStorageMeta[];
-  resources?: RootStorageMeta[];
 }
-export function ExportModal({ isOpen, onDismiss, onCallback, dashboards, resources }: Props) {
+const exportable = [
+  { label: 'Dashboards', value: 'dashboards' },
+  { label: 'Data sources (coming soon)', value: 'datasources' },
+  { label: 'Alerts (coming soon)', value: 'alerts' },
+  { label: 'Users (coming soon)', value: 'users' },
+  { label: 'Teams (coming soon)', value: 'teams' },
+];
+
+export function ExportModal({ isOpen, onDismiss, onCallback }: Props) {
   const indeterminateCheckbox = useRef<HTMLInputElement>(null);
-  const [selectedCheckboxes, setSelectedCheckboxes] = useState<string[]>([]);
+  const [selectedCheckboxes, setSelectedCheckboxes] = useState<string[]>(exportable.map((v) => v.value));
   const [url, setUrl] = useState('');
+  const [running, setRunning] = useState(false);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    if (!dashboards || !resources || !indeterminateCheckbox.current) {
+    if (!indeterminateCheckbox.current) {
       return;
     }
-    const allItemsLength = [...dashboards, ...resources].length;
+    const allItemsLength = exportable.length;
     // Everyting is selected show a check mark
     if (selectedCheckboxes.length === allItemsLength) {
       indeterminateCheckbox.current.indeterminate = false;
@@ -35,7 +41,7 @@ export function ExportModal({ isOpen, onDismiss, onCallback, dashboards, resourc
       indeterminateCheckbox.current.indeterminate = true;
       indeterminateCheckbox.current.checked = false;
     }
-  }, [dashboards, resources, selectedCheckboxes]);
+  }, [selectedCheckboxes]);
 
   const doExport = useCallback(() => {
     getBackendSrv()
@@ -64,10 +70,10 @@ export function ExportModal({ isOpen, onDismiss, onCallback, dashboards, resourc
           <Checkbox
             label="Select all"
             ref={indeterminateCheckbox}
+            defaultChecked={true}
             onChange={(event) => {
               if (event.currentTarget.checked) {
-                const allItems = [...dashboards!, ...resources!];
-                setSelectedCheckboxes(allItems.map(({ config }) => config.prefix));
+                setSelectedCheckboxes(exportable.map((v) => v.value));
               } else {
                 setSelectedCheckboxes([]);
               }
@@ -75,8 +81,17 @@ export function ExportModal({ isOpen, onDismiss, onCallback, dashboards, resourc
           />
 
           <ul>
-            {dashboards?.map((dashboard) => renderLi(dashboard))}
-            {resources?.map((resource) => renderLi(resource))}
+            {exportable.map((v) => (
+              <li key={v.value}>
+                <Checkbox
+                  label={v.label}
+                  id={v.value}
+                  onChange={handleCheckboxChange(v.value)}
+                  checked={selectedCheckboxes.includes(v.value) && v.value === 'dashboards'}
+                  disabled={v.value !== 'dashboards'}
+                />
+              </li>
+            ))}
           </ul>
         </div>
         <div />
@@ -94,28 +109,17 @@ export function ExportModal({ isOpen, onDismiss, onCallback, dashboards, resourc
         <Button
           variant="primary"
           onClick={() => {
+            setRunning(true);
             doExport();
-            onDismiss();
+            //            onDismiss();
           }}
         >
-          Export
+          {running && <Spinner />}
+          {!running && `Export`}
         </Button>
       </Modal.ButtonRow>
     </Modal>
   );
-
-  function renderLi(storage: RootStorageMeta): JSX.Element {
-    return (
-      <li key={storage.config.prefix}>
-        <Checkbox
-          label={storage.config.prefix}
-          id={storage.config.prefix}
-          onChange={handleCheckboxChange(storage.config.prefix)}
-          checked={selectedCheckboxes.includes(storage.config.prefix)}
-        />
-      </li>
-    );
-  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -88,35 +88,37 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	storage := filepath.Join(cfg.DataPath, "storage")
 	_ = os.MkdirAll(storage, 0700)
 
+	devenv := getDevenvDashboards()
 	dash := &nestedTree{
 		roots: []storageRuntime{
-			newGitStorage("it-A", "Github dashbboards A", storage, &StorageGitConfig{
-				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
-				Branch:      "main",
-				Root:        "dashboards",
-				AccessToken: "$GITHUB_AUTH_TOKEN",
+			newGitStorage("it-A", "Github dashbboards A (Require pull requests)", storage, &StorageGitConfig{
+				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-A.git",
+				Branch:             "main",
+				Root:               "dashboards",
+				AccessToken:        "$GITHUB_AUTH_TOKEN",
+				RequirePullRequest: true,
 			}),
-			newGitStorage("it-B", "Github dashbboards B", storage, &StorageGitConfig{
+			newGitStorage("it-B", "Github dashbboards B (Commit to main)", storage, &StorageGitConfig{
 				Remote:      "https://github.com/grafana/hackathon-2022-03-git-dash-B.git",
 				Branch:      "main",
 				Root:        "dashboards",
 				AccessToken: "$GITHUB_AUTH_TOKEN",
 			}),
-			newS3Storage("s3", "My dashboards in S3", &StorageS3Config{
+			newS3Storage("s3", "S3 dashboards", &StorageS3Config{
 				Bucket:    "s3-dashbucket",
 				Folder:    "dashboards",
 				SecretKey: "$STORAGE_AWS_SECRET_KEY",
 				AccessKey: "$STORAGE_AWS_ACCESS_KEY",
 				Region:    "$STORAGE_AWS_REGION",
 			}),
-			newGCSstorage("gcs", "My dashboards in GCS", &StorageGCSConfig{
+			newGCSstorage("gcs", "GCS dashboards", &StorageGCSConfig{
 				Bucket:          "git-the-things-gcs",
 				Folder:          "dashboards",
 				CredentialsFile: "$STORAGE_GCS_CREDENTIALS_FILE",
 			}),
+			newSQLStorage("sql", "SQL within grafana database", &StorageSQLConfig{}, sql, devenv),
 		},
 	}
-	devenv := getDevenvDashboards()
 	if devenv != nil {
 		dash.roots = append(dash.roots, devenv)
 	}

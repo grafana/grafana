@@ -28,6 +28,7 @@ export interface StorageGitConfig {
   branch: string;
   root: string;
   accessToken?: string;
+  requirePullRequest?: boolean;
 }
 
 export interface StorageSQLConfig {
