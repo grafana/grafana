@@ -103,8 +103,11 @@ class DataSourceWithBackend<
   }
 
   getUrlForRequest(request: DataQueryRequest<TQuery>): string {
+    if(!config.featureToggles.validatedQueries) {
+      return '/api/ds/query';
+    }
+    
     if (
-      config.featureToggles.validatedQueries &&
       !request.userCanEditDashboard &&
       request.dashboardUid != null &&
       request.panelId != null
