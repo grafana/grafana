@@ -302,7 +302,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Role:    "",
 				Groups:  []string{},
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

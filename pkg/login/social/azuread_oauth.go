@@ -71,6 +71,9 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 	}
 
 	role := extractRole(claims, s.autoAssignOrgRole, s.roleAttributeStrict)
+	if role == "" {
+		return nil, errors.New("user does not have a valid role")
+	}
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
