@@ -8,10 +8,8 @@ import (
 )
 
 type UidSolver func(ctx context.Context, orgID int64, uid string) (int64, error)
-
-// TODO: better name
-type InheritedScopesSolver func(ctx context.Context, orgID int64, resourceID string) ([]string, error)
 type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
+type InheritedScopesSolver func(ctx context.Context, orgID int64, resourceID string) ([]string, error)
 
 type Options struct {
 	// Resource is the action and scope prefix that is generated
