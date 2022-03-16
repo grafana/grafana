@@ -299,7 +299,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 	}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
 		sess := dbSession.Table("org_user")
 		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
 
@@ -345,6 +344,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 			// TODO: addddd code
 			sess.Join("OUTER", s.sqlStore.Dialect.Quote("api_key"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
 			whereConditions = append(whereConditions, "api_key.expires_at < ?")
+			whereParams = append(whereParams, orgID)
 		default:
 			return fmt.Errorf("invalid filter: %s", filter)
 		}
@@ -363,7 +363,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
 			return err
 		}
-		searchResult.ServiceAccounts = serviceAccounts
 
 		// get total
 		serviceaccount := serviceaccounts.ServiceAccountDTO{}
