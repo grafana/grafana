@@ -93,7 +93,6 @@ func (s *Service) IsDisabled() bool {
 
 // Run
 func (s *Service) Run(ctx context.Context) error {
-	fmt.Println("starting k8s service")
 	if err := s.manager.Start(ctx); err != nil {
 		return err
 	}
