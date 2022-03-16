@@ -14,9 +14,9 @@ const CortexFlavoredType: FC<Props> = ({ selected = false, disabled = false, onC
         name="Cortex or Loki alert"
         description={
           <p>
-            Use Cortex or Loki datasource
+            Use a Cortex or Loki datasource.
             <br />
-            Grafana expressions not supported
+            Grafana expressions not supported.
           </p>
         }
         image="/public/img/alerting/cortex_logo.svg"
