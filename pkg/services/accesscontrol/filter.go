@@ -69,6 +69,10 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 		}
 	}
 
+	if len(ids) == 0 {
+		return denyQuery, nil
+	}
+
 	query := strings.Builder{}
 	query.WriteRune(' ')
 	query.WriteString(sqlID)
