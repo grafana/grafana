@@ -243,32 +243,31 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		filter = serviceaccounts.OnlyExpiredTokens
 	}
 	query := &serviceaccounts.SearchOrgServiceAccountsQuery{
-		OrgID:            c.OrgId,
-		Query:            c.Query("query"),
-		Page:             page,
-		Limit:            perPage,
-		User:             c.SignedInUser,
-		Filter:           filter,
-		IsServiceAccount: true,
+		OrgID:  c.OrgId,
+		Query:  c.Query("query"),
+		Page:   page,
+		Limit:  perPage,
+		User:   c.SignedInUser,
+		Filter: filter,
 	}
-	err := api.store.SearchOrgServiceAccounts(ctx, query)
+	serviceaccountsQueryResult, err := api.store.SearchOrgServiceAccounts(ctx, query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
 	}
 
 	saIDs := map[string]bool{}
-	for i := range query.Result.ServiceAccounts {
-		query.Result.ServiceAccounts[i].AvatarUrl = dtos.GetGravatarUrlWithDefault("", query.Result.ServiceAccounts[i].Name)
+	for i := range serviceaccountsQueryResult.ServiceAccounts {
+		serviceaccountsQueryResult.ServiceAccounts[i].AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceaccountsQueryResult.ServiceAccounts[i].Name)
 
-		saIDString := strconv.FormatInt(query.Result.ServiceAccounts[i].Id, 10)
+		saIDString := strconv.FormatInt(serviceaccountsQueryResult.ServiceAccounts[i].Id, 10)
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
-		query.Result.ServiceAccounts[i].AccessControl = metadata[strconv.FormatInt(query.Result.ServiceAccounts[i].Id, 10)]
-		tokens, err := api.store.ListTokens(ctx, query.Result.ServiceAccounts[i].OrgId, query.Result.ServiceAccounts[i].Id)
+		serviceaccountsQueryResult.ServiceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceaccountsQueryResult.ServiceAccounts[i].Id, 10)]
+		tokens, err := api.store.ListTokens(ctx, serviceaccountsQueryResult.ServiceAccounts[i].OrgId, serviceaccountsQueryResult.ServiceAccounts[i].Id)
 		if err != nil {
-			api.log.Warn("Failed to list tokens for service account", "serviceAccount", query.Result.ServiceAccounts[i].Id)
+			api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceaccountsQueryResult.ServiceAccounts[i].Id)
 		}
-		query.Result.ServiceAccounts[i].Tokens = int64(len(tokens))
+		serviceaccountsQueryResult.ServiceAccounts[i].Tokens = int64(len(tokens))
 	}
 
 	type searchOrgServiceAccountsQueryResult struct {
@@ -278,10 +277,10 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		PerPage         int                                  `json:"perPage"`
 	}
 	result := searchOrgServiceAccountsQueryResult{
-		TotalCount:      query.Result.TotalCount,
-		ServiceAccounts: query.Result.ServiceAccounts,
-		Page:            query.Result.Page,
-		PerPage:         query.Result.PerPage,
+		TotalCount:      serviceaccountsQueryResult.TotalCount,
+		ServiceAccounts: serviceaccountsQueryResult.ServiceAccounts,
+		Page:            serviceaccountsQueryResult.Page,
+		PerPage:         serviceaccountsQueryResult.PerPage,
 	}
 	fmt.Printf("result %+v\n", result)
 	return response.JSON(http.StatusOK, result)
