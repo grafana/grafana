@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 const userInDbName = "user_in_db"
@@ -222,9 +223,10 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 		cfg, dashboardStore, nil,
 		features, permissionsServices,
 	)
+	ac := acmock.New()
 	s := dashboardservice.ProvideFolderService(
 		cfg, d, dashboardStore, nil,
-		features, permissionsServices,
+		features, permissionsServices, ac,
 	)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
@@ -314,12 +316,13 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			setting.NewCfg(), dashboardStore, nil,
 			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
 		)
+		ac := acmock.New()
 		service := LibraryElementService{
 			Cfg:      setting.NewCfg(),
 			SQLStore: sqlStore,
 			folderService: dashboardservice.ProvideFolderService(
 				setting.NewCfg(), dashboardService, dashboardStore, nil,
-				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac,
 			),
 		}
 

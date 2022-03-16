@@ -182,22 +182,6 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 	return response.Success("Plugin settings updated")
 }
 
-func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
-	pluginID := web.Params(c.Req)[":pluginId"]
-
-	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.Req.Context(), c.OrgId, pluginID)
-	if err != nil {
-		var notFound plugins.NotFoundError
-		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
-		}
-
-		return response.Error(500, "Failed to get plugin dashboards", err)
-	}
-
-	return response.JSON(200, list)
-}
-
 func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 	name := web.Params(c.Req)[":name"]

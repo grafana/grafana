@@ -96,11 +96,11 @@ func TestKafkaNotifier(t *testing.T) {
 		}, {
 			name:         "Endpoint missing",
 			settings:     `{"kafkaTopic": "sometopic"}`,
-			expInitError: `failed to validate receiver "kafka_testing" of type "kafka": could not find kafka rest proxy endpoint property in settings`,
+			expInitError: `could not find kafka rest proxy endpoint property in settings`,
 		}, {
 			name:         "Topic missing",
 			settings:     `{"kafkaRestProxy": "http://localhost"}`,
-			expInitError: `failed to validate receiver "kafka_testing" of type "kafka": could not find kafka topic property in settings`,
+			expInitError: `could not find kafka topic property in settings`,
 		},
 	}
 
@@ -116,7 +116,7 @@ func TestKafkaNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			pn, err := NewKafkaNotifier(m, webhookSender, tmpl)
+			cfg, err := NewKafkaConfig(m)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -126,6 +126,8 @@ func TestKafkaNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+
+			pn := NewKafkaNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

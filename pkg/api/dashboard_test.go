@@ -9,6 +9,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -30,9 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
@@ -544,7 +545,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Post dashboard response tests", func(t *testing.T) {
-		dashboardStore := &database.FakeDashboardStore{}
+		dashboardStore := &dashboards.FakeDashboardStore{}
 		defer dashboardStore.AssertExpectations(t)
 		// This tests that a valid request returns correct response
 		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
@@ -883,7 +884,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return "/tmp/grafana/dashboards"
 			}
 
-			dashboardStore := &database.FakeDashboardStore{}
+			dashboardStore := &dashboards.FakeDashboardStore{}
 			defer dashboardStore.AssertExpectations(t)
 
 			dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()

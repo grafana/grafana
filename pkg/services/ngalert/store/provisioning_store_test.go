@@ -2,9 +2,12 @@ package store_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/stretchr/testify/require"
 )
@@ -12,14 +15,14 @@ import (
 const testAlertingIntervalSeconds = 10
 
 func TestProvisioningStore(t *testing.T) {
-	_, dbstore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+	store, xact := createSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
 
 	t.Run("Default provenance of a known type is None", func(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "asdf",
 		}
 
-		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
+		provenance, err := store.GetProvenance(context.Background(), &rule)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceNone, provenance)
@@ -29,10 +32,10 @@ func TestProvisioningStore(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "123",
 		}
-		err := dbstore.SetProvenance(context.Background(), &rule, models.ProvenanceFile)
+		err := store.SetProvenance(context.Background(), &rule, models.ProvenanceFile)
 		require.NoError(t, err)
 
-		p, err := dbstore.GetProvenance(context.Background(), &rule)
+		p, err := store.GetProvenance(context.Background(), &rule)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
@@ -47,10 +50,10 @@ func TestProvisioningStore(t *testing.T) {
 			UID:   "456",
 			OrgID: 3,
 		}
-		err := dbstore.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceFile)
+		err := store.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceFile)
 		require.NoError(t, err)
 
-		p, err := dbstore.GetProvenance(context.Background(), &ruleOrg3)
+		p, err := store.GetProvenance(context.Background(), &ruleOrg3)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceNone, p)
@@ -65,19 +68,54 @@ func TestProvisioningStore(t *testing.T) {
 			UID:   "789",
 			OrgID: 3,
 		}
-		err := dbstore.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceFile)
+		err := store.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceFile)
 		require.NoError(t, err)
-		err = dbstore.SetProvenance(context.Background(), &ruleOrg3, models.ProvenanceFile)
-		require.NoError(t, err)
-
-		err = dbstore.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceApi)
+		err = store.SetProvenance(context.Background(), &ruleOrg3, models.ProvenanceFile)
 		require.NoError(t, err)
 
-		p, err := dbstore.GetProvenance(context.Background(), &ruleOrg2)
+		err = store.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceApi)
+		require.NoError(t, err)
+
+		p, err := store.GetProvenance(context.Background(), &ruleOrg2)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceApi, p)
-		p, err = dbstore.GetProvenance(context.Background(), &ruleOrg3)
+		p, err = store.GetProvenance(context.Background(), &ruleOrg3)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
 	})
+
+	t.Run("Store saves provenance type when contextual transaction is applied", func(t *testing.T) {
+		rule := models.AlertRule{
+			UID: "456",
+		}
+
+		err := xact.InTransaction(context.Background(), func(ctx context.Context) error {
+			return store.SetProvenance(ctx, &rule, models.ProvenanceFile)
+		})
+		require.NoError(t, err)
+
+		provenance, err := store.GetProvenance(context.Background(), &rule)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceFile, provenance)
+	})
+
+	t.Run("Contextual transaction which errors before saving rolls back type update", func(t *testing.T) {
+		rule := models.AlertRule{
+			UID: "789",
+		}
+
+		_ = xact.InTransaction(context.Background(), func(ctx context.Context) error {
+			err := store.SetProvenance(ctx, &rule, models.ProvenanceFile)
+			require.NoError(t, err)
+			return fmt.Errorf("something happened!")
+		})
+
+		provenance, err := store.GetProvenance(context.Background(), &rule)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceNone, provenance)
+	})
+}
+
+func createSut(_ *ngalert.AlertNG, db *store.DBstore) (store.ProvisioningStore, store.TransactionManager) {
+	return db, db
 }

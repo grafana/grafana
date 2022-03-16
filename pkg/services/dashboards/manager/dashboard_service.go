@@ -443,6 +443,10 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 }
 
+func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
+}
+
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *m.SaveDashboardDTO, dash *models.Dashboard, provisioned bool) error {
 	inFolder := dash.FolderId > 0
 	if dr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {

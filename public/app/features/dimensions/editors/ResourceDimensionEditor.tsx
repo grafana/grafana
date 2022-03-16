@@ -3,7 +3,13 @@ import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegi
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
-import { MediaType, ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
+import {
+  MediaType,
+  ResourceDimensionConfig,
+  ResourceDimensionMode,
+  ResourceDimensionOptions,
+  ResourcePickerSize,
+} from '../types';
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
 import { ResourcePicker } from './ResourcePicker';
 
@@ -102,6 +108,7 @@ export const ResourceDimensionEditor: FC<
           name={niceName(value?.fixed) ?? ''}
           mediaType={mediaType}
           folderName={folderName}
+          size={ResourcePickerSize.NORMAL}
         />
       )}
       {mode === ResourceDimensionMode.Mapping && (
