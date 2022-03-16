@@ -19,6 +19,15 @@ var datasourceRequestCounter = prometheus.NewCounterVec(
 	[]string{"datasource", "code", "method"},
 )
 
+var datasourceRequestFailuresCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Namespace: "grafana",
+		Name:      "datasource_request_failures_total",
+		Help:      "A counter for outgoing requests for a datasource which did not get a successful response",
+	},
+	[]string{"datasource", "code", "method"},
+)
+
 var datasourceRequestSummary = prometheus.NewSummaryVec(
 	prometheus.SummaryOpts{
 		Namespace:  "grafana",
@@ -49,6 +58,7 @@ var datasourceRequestsInFlight = prometheus.NewGaugeVec(
 func init() {
 	prometheus.MustRegister(datasourceRequestSummary,
 		datasourceRequestCounter,
+		datasourceRequestFailuresCounter,
 		datasourceRequestsInFlight,
 		datasourceResponseSummary)
 }
@@ -84,6 +94,7 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 func executeMiddleware(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
 	return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 		requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
+		failuresCounter := datasourceRequestFailuresCounter.MustCurryWith(datasourceLabel)
 		requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
 		requestInFlight := datasourceRequestsInFlight.With(datasourceLabel)
 		responseSizeSummary := datasourceResponseSummary.With(datasourceLabel)
@@ -92,6 +103,10 @@ func executeMiddleware(next http.RoundTripper, datasourceLabel prometheus.Labels
 			promhttp.InstrumentRoundTripperCounter(requestCounter,
 				promhttp.InstrumentRoundTripperInFlight(requestInFlight, next))).
 			RoundTrip(r)
+
+		if err != nil || res.StatusCode >= http.StatusBadRequest {
+			failuresCounter.Inc()
+		}
 		if err != nil {
 			return nil, err
 		}
