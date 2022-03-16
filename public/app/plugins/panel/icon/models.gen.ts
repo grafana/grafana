@@ -19,7 +19,7 @@ export const defaultPanelOptions: PanelOptions = {
         fixed: 'img/icons/unicons/analysis.svg',
       },
       fill: {
-        fixed: '#19730E' // 'dark-green' to match default fill color
+        fixed: 'green'
       }
     },
   },
