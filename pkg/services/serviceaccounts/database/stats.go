@@ -7,7 +7,7 @@ import (
 )
 
 func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
-	stats := map[string]interface{}{"stats.serviceaccounts.enabled.count": 1}
+	stats := map[string]interface{}{"stats.serviceaccounts.enabled.count": int64(1)}
 
 	sb := &sqlstore.SQLBuilder{}
 	dialect := s.sqlStore.Dialect
