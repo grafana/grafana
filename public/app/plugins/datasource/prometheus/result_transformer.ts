@@ -541,7 +541,14 @@ function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
   }
 
   const timeField = frames[0].fields.find((field) => field.type === FieldType.time)!;
-  const countFields = frames.map((frame) => frame.fields.find((field) => field.type === FieldType.number)!);
+  const countFields = frames.map((frame) => {
+    let field = frame.fields.find((field) => field.type === FieldType.number)!;
+
+    return {
+      ...field,
+      name: field.config.displayNameFromDS!,
+    };
+  });
 
   return [
     {
