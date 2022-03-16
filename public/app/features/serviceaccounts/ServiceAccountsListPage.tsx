@@ -181,7 +181,7 @@ const getServiceAccountsEnabledStatus = (disabled: boolean) => {
 
 const ServiceAccountListItem = memo(
   ({ serviceAccount, onRoleChange, roleOptions, builtInRoles, onSetToRemove }: ServiceAccountListItemProps) => {
-    const editUrl = `org/serviceAccounts/${serviceAccount.id}`;
+    const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
     const rolePickerDisabled = !canUpdateRole;

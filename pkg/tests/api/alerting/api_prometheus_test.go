@@ -245,7 +245,6 @@ func TestPrometheusRules(t *testing.T) {
 					"label1": "val1"
 				},
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -253,9 +252,7 @@ func TestPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
-				"labels": null,
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -300,7 +297,6 @@ func TestPrometheusRules(t *testing.T) {
 					"label1": "val1"
 				},
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -308,9 +304,7 @@ func TestPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
-				"labels": null,
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -446,9 +440,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 					"__dashboardUid__": "%s",
 					"__panelId__": "1"
 				},
-				"labels": null,
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -456,9 +448,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
-				"labels": null,
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -485,9 +475,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 					"__dashboardUid__": "%s",
 					"__panelId__": "1"
 				},
-				"labels": null,
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -694,7 +682,6 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 					"label1": "val1"
 				},
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -718,7 +705,6 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 					"label1": "val1"
 				},
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
@@ -767,7 +753,6 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 					"label1": "val1"
 				},
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0

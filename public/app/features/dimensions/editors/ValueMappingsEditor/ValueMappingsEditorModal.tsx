@@ -9,9 +9,10 @@ export interface Props {
   value: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
   onClose: () => void;
+  showIconPicker?: boolean;
 }
 
-export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
+export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPicker }: Props) {
   const styles = useStyles2(getStyles);
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
@@ -98,6 +99,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
               </th>
               <th style={{ textAlign: 'left' }}>Display text</th>
               <th style={{ width: '10%' }}>Color</th>
+              {showIconPicker && <th style={{ width: '10%' }}>Icon</th>}
               <th style={{ width: '1%' }}></th>
             </tr>
           </thead>
@@ -113,6 +115,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                       onChange={onChangeMapping}
                       onRemove={onRemoveRow}
                       onDuplicate={onDuplicateMapping}
+                      showIconPicker={showIconPicker}
                     />
                   ))}
                   {provided.placeholder}
@@ -240,38 +243,40 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
 export function buildEditRowModels(value: ValueMapping[]) {
   const editRows: ValueMappingEditRowModel[] = [];
 
-  for (const mapping of value) {
-    switch (mapping.type) {
-      case MappingType.ValueToText:
-        for (const key of Object.keys(mapping.options)) {
+  if (value) {
+    for (const mapping of value) {
+      switch (mapping.type) {
+        case MappingType.ValueToText:
+          for (const key of Object.keys(mapping.options)) {
+            editRows.push({
+              type: mapping.type,
+              result: mapping.options[key],
+              key,
+            });
+          }
+          break;
+        case MappingType.RangeToText:
           editRows.push({
             type: mapping.type,
-            result: mapping.options[key],
-            key,
+            result: mapping.options.result,
+            from: mapping.options.from ?? 0,
+            to: mapping.options.to ?? 0,
           });
-        }
-        break;
-      case MappingType.RangeToText:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          from: mapping.options.from ?? 0,
-          to: mapping.options.to ?? 0,
-        });
-        break;
-      case MappingType.RegexToText:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          pattern: mapping.options.pattern,
-        });
-        break;
-      case MappingType.SpecialValue:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          specialMatch: mapping.options.match ?? SpecialValueMatch.Null,
-        });
+          break;
+        case MappingType.RegexToText:
+          editRows.push({
+            type: mapping.type,
+            result: mapping.options.result,
+            pattern: mapping.options.pattern,
+          });
+          break;
+        case MappingType.SpecialValue:
+          editRows.push({
+            type: mapping.type,
+            result: mapping.options.result,
+            specialMatch: mapping.options.match ?? SpecialValueMatch.Null,
+          });
+      }
     }
   }
 
