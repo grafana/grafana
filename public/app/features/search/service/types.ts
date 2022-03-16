@@ -1,6 +1,4 @@
-export interface QueryResults {
-  match: QueryResult[];
-}
+import { DataFrame } from '@grafana/data';
 
 export interface QueryResult {
   kind: string; // panel, dashboard, folder
@@ -17,6 +15,10 @@ export interface QueryFilters {
   tags?: string[]; // match all tags
 }
 
+export interface QueryResponse {
+  body: DataFrame;
+}
+
 export interface GrafanaSearcher {
-  search: (query: string, filter?: QueryFilters) => Promise<QueryResults>;
+  search: (query: string, filter?: QueryFilters) => Promise<QueryResponse>;
 }

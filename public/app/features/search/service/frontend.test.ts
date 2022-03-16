@@ -16,7 +16,7 @@ describe('simple search', () => {
 
     const searcher = getFrontendGrafanaSearcher(raw);
     let results = await searcher.search('name');
-    expect(results.match.map((v) => v.name)).toMatchInlineSnapshot(`
+    expect(results.body.fields[1].values.toArray()).toMatchInlineSnapshot(`
       Array [
         "B name (panels)",
         "A name (panels)",
@@ -27,7 +27,7 @@ describe('simple search', () => {
     console.log('GOT', results);
 
     results = await searcher.search('B');
-    expect(results.match.map((v) => v.name)).toMatchInlineSnapshot(`
+    expect(results.body.fields[1].values.toArray()).toMatchInlineSnapshot(`
       Array [
         "B name (dash)",
         "B name (panels)",
@@ -60,12 +60,12 @@ describe('simple search', () => {
     console.log('XXX');
 
     const results = await searcher.search('automation');
-    expect(results.match.map((v) => v.kind + ': ' + v.name)).toMatchInlineSnapshot(`
+    expect(results.body.fields[1].values.toArray()).toMatchInlineSnapshot(`
       Array [
-        "dashboard: Home automation",
-        "panel: Panel name with automation",
-        "panel: Tides",
-        "panel: Gaps & null between every point for series B",
+        "Home automation",
+        "Panel name with automation",
+        "Tides",
+        "Gaps & null between every point for series B",
       ]
     `);
   });

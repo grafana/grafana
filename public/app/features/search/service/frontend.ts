@@ -1,6 +1,6 @@
 import { QueryFilters, QueryResult } from './types';
 
-import { DataFrame, Field } from '@grafana/data';
+import { ArrayVector, DataFrame, Field, FieldType, Vector } from '@grafana/data';
 import MiniSearch from 'minisearch';
 
 // The raw restuls from query server
@@ -17,12 +17,12 @@ interface InputDoc {
   index: number;
 
   // Fields
-  url?: Field;
-  name?: Field;
-  description?: Field;
-  panelId?: Field;
-  panelType?: Field;
-  tags?: Field;
+  url?: Vector<string>;
+  name?: Vector<string>;
+  description?: Vector<string>;
+  panelId?: Vector<number>;
+  panelType?: Vector<string>;
+  tags?: Vector<string>; // JSON strings?
 }
 
 interface CompositeKey {
@@ -59,11 +59,11 @@ export function getFrontendGrafanaSearcher(data: RawIndexData) {
           index: doc.index,
         };
       }
-      const field = (doc as any)[name] as Field;
-      if (!field) {
+      const values = (doc as any)[name] as Vector;
+      if (!values) {
         return undefined;
       }
-      return field.values.get(doc.index);
+      return values.get(doc.index);
     },
   });
 
@@ -80,22 +80,40 @@ export function getFrontendGrafanaSearcher(data: RawIndexData) {
 
   return {
     search: async (query: string, filter?: QueryFilters) => {
-      const match: QueryResult[] = [];
       const found = searcher.search(query);
+
+      // frame fields
+      const url: string[] = [];
+      const kind: string[] = [];
+      const name: string[] = [];
+      const info: any[] = [];
+      const score: number[] = [];
+
       for (const res of found) {
         const key = res.id as CompositeKey;
+        const index = key.index;
         const input = lookup.get(key.kind);
         if (!input) {
           continue;
         }
-        match.push({
-          kind: key.kind,
-          name: input.name?.values.get(key.index) ?? '?',
-          url: '?',
-        });
+
+        url.push(input.url?.get(index) ?? '?');
+        kind.push(key.kind);
+        name.push(input.name?.get(index) ?? '?');
+        info.push(res.match); // ???
+        score.push(res.score);
       }
       return {
-        match,
+        body: {
+          fields: [
+            { name: 'Kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
+            { name: 'Name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
+            { name: 'URL', config: {}, type: FieldType.string, values: new ArrayVector(url) },
+            { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
+            { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
+          ],
+          length: url.length,
+        },
       };
     },
   };
@@ -108,11 +126,17 @@ export function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc 
   };
   for (const field of frame.fields) {
     switch (field.name) {
+      case 'name':
       case 'Name':
-        input.name = field;
+        input.name = field.values;
         break;
       case 'Description':
-        input.description = field;
+      case 'Description':
+        input.description = field.values;
+        break;
+      case 'url':
+      case 'URL':
+        input.url = field.values;
         break;
     }
   }
