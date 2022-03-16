@@ -1,4 +1,11 @@
-import { DataFrame, DataFrameType, getDisplayProcessor, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  FieldType,
+  getDisplayProcessor,
+  getFieldDisplayName,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
@@ -50,7 +57,9 @@ export function prepareHeatmapData(
   let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
   if (bucketsHeatmap) {
     return {
-      yAxisValues: frames[0].fields.map((field) => getFieldDisplayName(field)),
+      yAxisValues: frames[0].fields.flatMap((field) =>
+        field.type === FieldType.number ? getFieldDisplayName(field) : []
+      ),
       ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), theme),
     };
   }
