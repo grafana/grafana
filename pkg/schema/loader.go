@@ -184,7 +184,7 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 			return err
 		}
 
-		m[filepath.Join(prefix, path)] = &fstest.MapFile{Data: []byte(b)}
+		m[filepath.Join(prefix, path)] = &fstest.MapFile{Data: b}
 		return nil
 	}))
 

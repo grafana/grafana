@@ -50,7 +50,9 @@ func (s storeDS) Get(ctx context.Context, name types.NamespacedName, into runtim
 		return err
 	}
 
-	s.oldToNew(cmd.Result, into)
+	if err := s.oldToNew(cmd.Result, into); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -74,7 +76,7 @@ func (s storeDS) Insert(ctx context.Context, obj runtime.Object) error {
 		BasicAuthPassword: ds.Spec.BasicAuthPassword,
 		WithCredentials:   ds.Spec.WithCredentials,
 		IsDefault:         ds.Spec.IsDefault,
-		JsonData:          simplejson.NewFromAny(ds.Spec.JsonData),
+		JsonData:          s.parseJSONData(ds),
 		// SecureJsonData: TODO,
 		Uid:   string(ds.UID),
 		OrgId: 1, // hardcode for now, TODO
@@ -93,13 +95,6 @@ func (s storeDS) Update(ctx context.Context, obj runtime.Object) error {
 		return err
 	}
 
-	jd := simplejson.New()
-	if d := ds.Spec.JsonData; d != "" {
-		if err := jd.UnmarshalJSON([]byte(d)); err != nil {
-			s.ss.log.Warn("error unmarshaling datasource JSON data", err)
-		}
-	}
-
 	cmd := &models.UpdateDataSourceCommand{
 		Name:              ds.Name,
 		Type:              ds.Spec.Type,
@@ -113,7 +108,7 @@ func (s storeDS) Update(ctx context.Context, obj runtime.Object) error {
 		BasicAuthPassword: ds.Spec.BasicAuthPassword,
 		WithCredentials:   ds.Spec.WithCredentials,
 		IsDefault:         ds.Spec.IsDefault,
-		JsonData:          jd,
+		JsonData:          s.parseJSONData(ds),
 		// SecureJsonData: TODO,
 		Uid:     string(ds.UID),
 		OrgId:   1, // hardcode for now, TODO
@@ -134,15 +129,15 @@ func (s storeDS) Delete(ctx context.Context, name types.NamespacedName) error {
 
 // oldToNew doesn't need to be method, but keeps things bundled
 func (s storeDS) oldToNew(ds *models.DataSource, result runtime.Object) error {
+	out, ok := result.(*datasource.Datasource)
+	if !ok {
+		return errors.New("error: expected object to be a datasource")
+	}
+
 	jd, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		jd = []byte{}
 		s.ss.log.Warn("error marshaling datasource JSON data", err)
-	}
-
-	out, ok := result.(*datasource.Datasource)
-	if !ok {
-		return errors.New("er")
 	}
 
 	out.UID = types.UID(ds.Uid)
@@ -164,4 +159,19 @@ func (s storeDS) oldToNew(ds *models.DataSource, result runtime.Object) error {
 	}
 
 	return nil
+}
+
+func (s storeDS) parseJSONData(ds *datasource.Datasource) *simplejson.Json {
+	jd := simplejson.New()
+
+	if d := ds.Spec.JsonData; d != "" {
+		if err := jd.UnmarshalJSON([]byte(ds.Spec.JsonData)); err != nil {
+			s.ss.log.Warn(
+				"error unmarshaling datasource JSON data",
+				"error", err,
+			)
+		}
+	}
+
+	return jd
 }
