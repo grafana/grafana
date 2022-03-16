@@ -199,7 +199,7 @@ async function getAfterSelectorCompletions(
     const explanation = hasLevelInExtractedLabels ? 'get detected levels in the histogram' : 'detected';
     completions.push({
       type: 'DURATION',
-      label: `logfmt (explanation)`,
+      label: `logfmt (${explanation})`,
       insertText: `${prefix}logfmt`,
     });
   }
