@@ -1,9 +1,9 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React, { FC, useState, useEffect } from 'react';
-import { HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RulesTable } from './RulesTable';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
@@ -38,6 +38,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+  const isFederated = isFederatedRuleGroup(group);
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -78,16 +79,18 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
       }
     }
   } else if (hasRuler(rulesSource)) {
-    actionIcons.push(
-      <ActionIcon
-        aria-label="edit rule group"
-        data-testid="edit-group"
-        key="edit"
-        icon="pen"
-        tooltip="edit rule group"
-        onClick={() => setIsEditingGroup(true)}
-      />
-    );
+    if (!isFederated) {
+      actionIcons.push(
+        <ActionIcon
+          aria-label="edit rule group"
+          data-testid="edit-group"
+          key="edit"
+          icon="pen"
+          tooltip="edit rule group"
+          onClick={() => setIsEditingGroup(true)}
+        />
+      );
+    }
   }
 
   const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
@@ -111,7 +114,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
             />
           </Tooltip>
         )}
-        <h6 className={styles.heading}>{groupName}</h6>
+        <h6 className={styles.heading}>
+          {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+        </h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
           <RuleStats showInactive={false} group={group} />
