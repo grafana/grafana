@@ -68,14 +68,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
     return resources.map((subscription) => ({
       name: subscription.subscriptionName,
-      id: subscription.subscriptionId,
+      id: `/subscriptions/${subscription.subscriptionId}`,
       typeLabel: 'Subscription',
       type: ResourceRowType.Subscription,
       children: [],
     }));
   }
 
-  async getResourceGroupsBySubscriptionId(subscriptionId: string) {
+  async getResourceGroupsBySubscriptionId(subscriptionURI: string) {
+    const subscriptionId = subscriptionURI.includes('/subscriptions/') ? subscriptionURI.slice(15) : subscriptionURI;
     const query = `
     resources
      | join kind=inner (
