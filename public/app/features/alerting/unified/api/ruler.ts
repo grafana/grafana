@@ -32,24 +32,8 @@ function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   };
 }
 
-// upsert a rule group. use this to update rules
+// upsert a rule group. use this to update rule
 export async function setRulerRuleGroup(
-  dataSourceName: string,
-  namespace: string,
-  group: PostableRulerRuleGroupDTO
-): Promise<void> {
-  await lastValueFrom(
-    getBackendSrv().fetch<unknown>({
-      method: 'POST',
-      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-      data: group,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-}
-
-export async function setRulerRuleGroupV2(
   rulerConfig: RulerDataSourceConfig,
   namespace: string,
   group: PostableRulerRuleGroupDTO
@@ -71,26 +55,7 @@ export interface FetchRulerRulesFilter {
 }
 
 // fetch all ruler rule namespaces and included groups
-export async function fetchRulerRules(dataSourceName: string, filter?: FetchRulerRulesFilter) {
-  if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
-  }
-
-  const params: Record<string, string> = {};
-  if (filter?.dashboardUID) {
-    params['dashboard_uid'] = filter.dashboardUID;
-    if (filter.panelId) {
-      params['panel_id'] = String(filter.panelId);
-    }
-  }
-  return rulerGetRequest<RulerRulesConfigDTO>(
-    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
-    {},
-    params
-  );
-}
-
-export async function fetchRulerRulesV2(rulerConfig: RulerDataSourceConfig, filter?: FetchRulerRulesFilter) {
+export async function fetchRulerRules(rulerConfig: RulerDataSourceConfig, filter?: FetchRulerRulesFilter) {
   if (filter?.dashboardUID && rulerConfig.dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
   }
@@ -102,20 +67,14 @@ export async function fetchRulerRulesV2(rulerConfig: RulerDataSourceConfig, filt
       params['panel_id'] = String(filter.panelId);
     }
   }
+
+  // TODO Move params creation to the rules function
   return rulerGetRequest<RulerRulesConfigDTO>(rulerUrlBuilder(rulerConfig).rules(), {}, params);
 }
 
 // fetch rule groups for a particular namespace
 // will throw with { status: 404 } if namespace does not exist
-export async function fetchRulerRulesNamespace(dataSourceName: string, namespace: string) {
-  const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
-    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-    {}
-  );
-  return result[namespace] || [];
-}
-
-export async function fetchRulerRulesNamespaceV2(rulerConfig: RulerDataSourceConfig, namespace: string) {
+export async function fetchRulerRulesNamespace(rulerConfig: RulerDataSourceConfig, namespace: string) {
   const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
     rulerUrlBuilder(rulerConfig).namespace(namespace),
     {}
@@ -146,24 +105,7 @@ export async function fetchRulerRulesGroupV2(
   return rulerGetRequest<RulerRuleGroupDTO | null>(rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group), null);
 }
 
-export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
-  await lastValueFrom(
-    getBackendSrv().fetch({
-      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
-        namespace
-      )}/${encodeURIComponent(groupName)}`,
-      method: 'DELETE',
-      showSuccessAlert: false,
-      showErrorAlert: false,
-    })
-  );
-}
-
-export async function deleteRulerRulesGroupV2(
-  rulerConfig: RulerDataSourceConfig,
-  namespace: string,
-  groupName: string
-) {
+export async function deleteRulerRulesGroup(rulerConfig: RulerDataSourceConfig, namespace: string, groupName: string) {
   await lastValueFrom(
     getBackendSrv().fetch({
       url: rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, groupName),
@@ -228,18 +170,7 @@ function isCortexErrorResponse(error: FetchResponse<ErrorResponseMessage>) {
   );
 }
 
-export async function deleteNamespace(dataSourceName: string, namespace: string): Promise<void> {
-  await lastValueFrom(
-    getBackendSrv().fetch<unknown>({
-      method: 'DELETE',
-      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-}
-
-export async function deleteNamespaceV2(rulerConfig: RulerDataSourceConfig, namespace: string): Promise<void> {
+export async function deleteNamespace(rulerConfig: RulerDataSourceConfig, namespace: string): Promise<void> {
   await lastValueFrom(
     getBackendSrv().fetch<unknown>({
       method: 'DELETE',
