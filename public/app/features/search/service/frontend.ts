@@ -1,7 +1,11 @@
-import { QueryFilters, QueryResult } from './types';
+import { QueryFilters } from './types';
 
-import { ArrayVector, DataFrame, Field, FieldType, Vector } from '@grafana/data';
+import { ArrayVector, DataFrame, FieldType, Vector } from '@grafana/data';
 import MiniSearch from 'minisearch';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { lastValueFrom } from 'rxjs';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 // The raw restuls from query server
 export interface RawIndexData {
@@ -141,4 +145,31 @@ export function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc 
     }
   }
   return input;
+}
+
+export async function getRawIndexData(): Promise<RawIndexData> {
+  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const rsp = await lastValueFrom(
+    ds.query({
+      targets: [
+        { refId: 'A', queryType: GrafanaQueryType.Search }, // gets all data
+      ],
+    } as any)
+  );
+
+  const data: RawIndexData = {};
+  for (const f of rsp.data) {
+    switch (f.name) {
+      case 'dashboards':
+        data.dashboard = f;
+        break;
+      case 'panels':
+        data.panel = f;
+        break;
+      case 'folders':
+        data.folder = f;
+        break;
+    }
+  }
+  return data;
 }
