@@ -9,7 +9,6 @@ import (
 	"testing/fstest"
 
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -106,12 +105,6 @@ func (l *ThemaSchemaLoader) LoadSchema(ctx context.Context, opts ThemaLoaderOpts
 		return nil, err
 	}
 
-	// Calling this ensures our program cannot start,
-	// if the Go DataSource.Model type is not aligned with the canonical schema version in the lineage.
-	if _, err := newJSONKernel(lin, opts.SchemaPath, opts.SchemaType); err != nil {
-		return nil, err
-	}
-
 	zsch, err := lin.Schema(opts.SchemaVersion)
 	if err != nil {
 		return nil, err
@@ -148,15 +141,6 @@ func loadThemaLineage(path string, cueFS fs.FS, lib thema.Library, opts ...thema
 	}
 
 	return lin, nil
-}
-
-func newJSONKernel(lin thema.Lineage, loaderPath string, object interface{}) (kernel.InputKernel, error) {
-	return kernel.NewInputKernel(kernel.InputKernelConfig{
-		Lineage:     lin,
-		Loader:      kernel.NewJSONDecoder(loaderPath),
-		To:          thema.SV(0, 0),
-		TypeFactory: func() interface{} { return object },
-	})
 }
 
 func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
