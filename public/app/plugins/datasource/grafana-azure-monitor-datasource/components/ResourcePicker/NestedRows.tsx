@@ -215,7 +215,13 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
 
       {isSelectable && (
         <>
-          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+          <Checkbox
+            id={checkboxId}
+            onChange={handleSelectedChanged}
+            disabled={isDisabled}
+            value={isSelected}
+            className={styles.nestedRowCheckbox}
+          />
           <Space layout="inline" h={2} />
         </>
       )}
