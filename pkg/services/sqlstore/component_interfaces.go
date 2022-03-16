@@ -2,12 +2,15 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/google/wire"
+	"github.com/grafana/grafana/internal/components"
 	"github.com/grafana/grafana/internal/components/datasource"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -23,7 +26,7 @@ Until this comment is removed, if you are wondering if you should use things in 
 
 var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
 	ProvideDataSourceSchemaStore,
-	wire.Bind(new(datasource.Store), new(*storeDS)),
+	wire.Bind(new(components.Store), new(*storeDS)),
 )
 
 func ProvideDataSourceSchemaStore(ss *SQLStore) *storeDS {
@@ -37,20 +40,29 @@ type storeDS struct {
 	ss *SQLStore
 }
 
-func (s storeDS) Get(ctx context.Context, uid string) (datasource.CR, error) {
+func (s storeDS) Get(ctx context.Context, name types.NamespacedName, into runtime.Object) error {
 	cmd := &models.GetDataSourceQuery{
 		OrgId: 1, // Hardcode for now
-		Uid:   uid,
+		Name:  name.Name,
 	}
 
 	if err := s.ss.GetDataSource(ctx, cmd); err != nil {
-		return datasource.CR{}, err
+		return err
 	}
 
-	return s.oldToNew(cmd.Result), nil
+	if err := s.oldToNew(cmd.Result, into); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s storeDS) Insert(ctx context.Context, ds datasource.CR) error {
+func (s storeDS) Insert(ctx context.Context, obj runtime.Object) error {
+	ds, ok := obj.(*datasource.Datasource)
+	if !ok {
+		return errors.New("error: expected object to be a datasource")
+	}
+
 	cmd := &models.AddDataSourceCommand{
 		Name:              ds.Name,
 		Type:              ds.Spec.Type,
@@ -64,7 +76,7 @@ func (s storeDS) Insert(ctx context.Context, ds datasource.CR) error {
 		BasicAuthPassword: ds.Spec.BasicAuthPassword,
 		WithCredentials:   ds.Spec.WithCredentials,
 		IsDefault:         ds.Spec.IsDefault,
-		JsonData:          simplejson.NewFromAny(ds.Spec.JsonData),
+		JsonData:          s.parseJSONData(ds),
 		// SecureJsonData: TODO,
 		Uid:   string(ds.UID),
 		OrgId: 1, // hardcode for now, TODO
@@ -72,11 +84,17 @@ func (s storeDS) Insert(ctx context.Context, ds datasource.CR) error {
 	return s.ss.AddDataSource(ctx, cmd)
 }
 
-func (s storeDS) Update(ctx context.Context, ds datasource.CR) error {
+func (s storeDS) Update(ctx context.Context, obj runtime.Object) error {
+	ds, ok := obj.(*datasource.Datasource)
+	if !ok {
+		return errors.New("error: expected object to be a datasource")
+	}
+
 	rv, err := strconv.Atoi(ds.ResourceVersion)
 	if err != nil {
 		return err
 	}
+
 	cmd := &models.UpdateDataSourceCommand{
 		Name:              ds.Name,
 		Type:              ds.Spec.Type,
@@ -90,7 +108,7 @@ func (s storeDS) Update(ctx context.Context, ds datasource.CR) error {
 		BasicAuthPassword: ds.Spec.BasicAuthPassword,
 		WithCredentials:   ds.Spec.WithCredentials,
 		IsDefault:         ds.Spec.IsDefault,
-		JsonData:          simplejson.NewFromAny(ds.Spec.JsonData),
+		JsonData:          s.parseJSONData(ds),
 		// SecureJsonData: TODO,
 		Uid:     string(ds.UID),
 		OrgId:   1, // hardcode for now, TODO
@@ -102,37 +120,58 @@ func (s storeDS) Update(ctx context.Context, ds datasource.CR) error {
 	return s.ss.UpdateDataSourceByUID(ctx, cmd)
 }
 
-func (s storeDS) Delete(ctx context.Context, uid string) error {
+func (s storeDS) Delete(ctx context.Context, name types.NamespacedName) error {
 	return s.ss.DeleteDataSource(ctx, &models.DeleteDataSourceCommand{
-		UID:   uid,
+		Name:  name.Name,
 		OrgID: 1, // hardcode for now, TODO
 	})
 }
 
 // oldToNew doesn't need to be method, but keeps things bundled
-func (s storeDS) oldToNew(ds *models.DataSource) datasource.CR {
-	jdMap := ds.JsonData.MustMap()
-	cr := datasource.CR{
-		Spec: datasource.Model{
-			Type:              ds.Type,
-			Access:            string(ds.Access),
-			Url:               ds.Url,
-			Password:          ds.Password,
-			Database:          ds.Database,
-			User:              ds.User,
-			BasicAuth:         ds.BasicAuth,
-			BasicAuthUser:     ds.BasicAuthUser,
-			BasicAuthPassword: ds.BasicAuthPassword,
-			WithCredentials:   ds.WithCredentials,
-			IsDefault:         ds.IsDefault,
-			JsonData:          jdMap,
-			// SecureJsonData: TODO,
-			//Version: ds.Version,
-			// Note: Not mapped is created / updated time stamps
-		},
+func (s storeDS) oldToNew(ds *models.DataSource, result runtime.Object) error {
+	out, ok := result.(*datasource.Datasource)
+	if !ok {
+		return errors.New("error: expected object to be a datasource")
 	}
-	cr.UID = types.UID(ds.Uid)
-	cr.Name = ds.Name
-	cr.ResourceVersion = strconv.Itoa(ds.Version)
-	return cr
+
+	jd, err := ds.JsonData.MarshalJSON()
+	if err != nil {
+		jd = []byte{}
+		s.ss.log.Warn("error marshaling datasource JSON data", err)
+	}
+
+	out.UID = types.UID(ds.Uid)
+	out.Name = ds.Name
+	out.ResourceVersion = strconv.Itoa(ds.Version)
+	out.Spec = datasource.DatasourceSpec{
+		Type:              ds.Type,
+		Access:            string(ds.Access),
+		Url:               ds.Url,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
+		IsDefault:         ds.IsDefault,
+		JsonData:          string(jd),
+	}
+
+	return nil
+}
+
+func (s storeDS) parseJSONData(ds *datasource.Datasource) *simplejson.Json {
+	jd := simplejson.New()
+
+	if d := ds.Spec.JsonData; d != "" {
+		if err := jd.UnmarshalJSON([]byte(ds.Spec.JsonData)); err != nil {
+			s.ss.log.Warn(
+				"error unmarshaling datasource JSON data",
+				"error", err,
+			)
+		}
+	}
+
+	return jd
 }
