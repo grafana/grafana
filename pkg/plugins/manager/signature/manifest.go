@@ -279,6 +279,11 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 			}
 		}
 
+		if info.Name() == ".DS_Store" {
+			// skip MacOS directory metadata file https://en.wikipedia.org/wiki/.DS_Store
+			return nil
+		}
+
 		// skip directories and MANIFEST.txt
 		if info.IsDir() || info.Name() == "MANIFEST.txt" {
 			return nil
