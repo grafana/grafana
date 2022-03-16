@@ -115,7 +115,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       subtitle={dashboard.title}
       tabs={
         <TabsBar>
-          <Tab label={'Options'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
+          <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
           <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
         </TabsBar>
       }
