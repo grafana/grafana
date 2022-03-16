@@ -192,6 +192,17 @@ describe('LiveDataStream', () => {
         action: StreamingFrameAction.Append,
       },
     },
+    withReplaceMode: {
+      addr: dummyLiveChannelAddress,
+      buffer: {
+        maxLength: 5,
+        maxDelta: 10,
+        action: StreamingFrameAction.Replace,
+      },
+      filter: {
+        fields: ['time', 'b'],
+      },
+    },
   };
 
   const dataFrameJsons = {
@@ -216,6 +227,11 @@ describe('LiveDataStream', () => {
         values: [[102], ['c'], [3]],
       },
     }),
+    schema1newValues2: () => ({
+      data: {
+        values: [[103], ['d'], [4]],
+      },
+    }),
     schema2: () => ({
       schema: {
         fields: [
@@ -235,7 +251,7 @@ describe('LiveDataStream', () => {
     }),
   };
 
-  describe('happy path with a single subscriber', () => {
+  describe('happy path with a single subscriber in `append` mode', () => {
     let deps: ReturnType<typeof createDeps>;
     let liveDataStream: LiveDataStream<any>;
     const valuesCollection = new ValuesCollection<DataQueryResponse>();
@@ -477,6 +493,229 @@ describe('LiveDataStream', () => {
     });
   });
 
+  describe('happy path with a single subscriber in `replace` mode', () => {
+    let deps: ReturnType<typeof createDeps>;
+    let liveDataStream: LiveDataStream<any>;
+    const valuesCollection = new ValuesCollection<DataQueryResponse>();
+
+    beforeAll(() => {
+      deps = createDeps();
+
+      expect(deps.liveEventsObservable.observed).toBeFalsy();
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      liveDataStream = new LiveDataStream(deps);
+      valuesCollection.subscribeTo(liveDataStream.get(liveDataStreamOptions.withReplaceMode, subscriptionKey));
+    });
+
+    it('should emit the first live channel message event as a serialized streamingDataFrame', async () => {
+      const valuesCount = valuesCollection.valuesCount();
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1()));
+
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount + 1, complete: false });
+      const response = valuesCollection.lastValue();
+
+      expectStreamingResponse(response, StreamingResponseDataType.FullFrame);
+      const data = response.data[0] as StreamingResponseData<StreamingResponseDataType.FullFrame>;
+
+      expect(data.frame.options).toEqual(liveDataStreamOptions.withReplaceMode.buffer);
+
+      const deserializedFrame = StreamingDataFrame.deserialize(data.frame);
+      expect(deserializedFrame.fields).toEqual([
+        {
+          config: {},
+          name: 'time',
+          type: 'time',
+          values: {
+            buffer: [100, 101],
+          },
+        },
+        {
+          config: {},
+          name: 'b',
+          type: 'number',
+          values: {
+            buffer: [1, 2],
+          },
+        },
+      ]);
+      expect(deserializedFrame.length).toEqual(dataFrameJsons.schema1().data.values[0].length);
+    });
+
+    it('should emit subsequent messages as deltas if the schema stays the same', async () => {
+      const valuesCount = valuesCollection.valuesCount();
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount + 1, complete: false });
+      const response = valuesCollection.lastValue();
+
+      expectStreamingResponse(response, StreamingResponseDataType.NewValuesSameSchema);
+      const data = response.data[0] as StreamingResponseData<StreamingResponseDataType.NewValuesSameSchema>;
+
+      expect(data.values).toEqual([[102], [3]]);
+    });
+
+    it('should emit a full frame if schema changes', async () => {
+      const valuesCount = valuesCollection.valuesCount();
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema2()));
+
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount + 1, complete: false });
+      const response = valuesCollection.lastValue();
+
+      expectStreamingResponse(response, StreamingResponseDataType.FullFrame);
+      const data = response.data[0] as StreamingResponseData<StreamingResponseDataType.FullFrame>;
+
+      expect(fieldsOf(data)).toEqual([
+        {
+          name: 'time',
+          values: [103],
+        },
+        {
+          name: 'b',
+          values: ['y'],
+        },
+      ]);
+    });
+
+    it('should emit a full frame if received a status live channel event with error', async () => {
+      const valuesCount = valuesCollection.valuesCount();
+
+      const error = new Error(`oh no!`);
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected, error));
+
+      expectValueCollectionState(valuesCollection, {
+        errors: 0,
+        values: valuesCount + 1,
+        complete: false,
+      });
+      const response = valuesCollection.lastValue();
+
+      expectErrorResponse(response, StreamingResponseDataType.FullFrame);
+    });
+
+    it('should buffer new values until subscriber is ready', async () => {
+      const valuesCount = valuesCollection.valuesCount();
+
+      deps.subscriberReadiness.next(false);
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema2newValues()));
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema2newValues()));
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema2newValues()));
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+
+      deps.subscriberReadiness.next(true);
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount + 1, complete: false });
+
+      const response = valuesCollection.lastValue();
+
+      expectStreamingResponse(response, StreamingResponseDataType.NewValuesSameSchema);
+      const data = response.data[0] as StreamingResponseData<StreamingResponseDataType.NewValuesSameSchema>;
+
+      expect(data.values).toEqual([[104], ['o']]);
+    });
+
+    it(`should reduce buffer to a full frame if schema changed at any point during subscriber's unavailability`, async () => {
+      const valuesCount = valuesCollection.valuesCount();
+
+      deps.subscriberReadiness.next(false);
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema2newValues()));
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema2newValues()));
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1()));
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+
+      deps.subscriberReadiness.next(true);
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount + 1, complete: false });
+
+      const response = valuesCollection.lastValue();
+
+      expectStreamingResponse(response, StreamingResponseDataType.FullFrame);
+      expect(fieldsOf(response.data[0])).toEqual([
+        {
+          name: 'time',
+          values: [102],
+        },
+        {
+          name: 'b',
+          values: [3],
+        },
+      ]);
+    });
+
+    it(`should reduce buffer to an empty full frame with last error if one or more errors occur during subscriber's unavailability`, async () => {
+      const firstError = new Error('first error');
+      const secondError = new Error(dummyErrorMessage);
+      const valuesCount = valuesCollection.valuesCount();
+
+      deps.subscriberReadiness.next(false);
+
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected, firstError));
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected, secondError));
+
+      deps.subscriberReadiness.next(true);
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount + 1, complete: false });
+
+      const response = valuesCollection.lastValue();
+      expectErrorResponse(response, StreamingResponseDataType.FullFrame);
+
+      const errorMessage = response?.error?.message;
+      expect(errorMessage?.includes(dummyErrorMessage)).toBeTruthy();
+
+      expect(fieldsOf(response.data[0])).toEqual([
+        {
+          name: 'time',
+          values: [],
+        },
+        {
+          name: 'b',
+          values: [],
+        },
+      ]);
+    });
+
+    it('should ignore messages without payload', async () => {
+      const valuesCount = valuesCollection.valuesCount();
+
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Connected));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Pending));
+      deps.liveEventsObservable.next(liveChannelStatusEvent(LiveChannelConnectionState.Pending));
+      deps.liveEventsObservable.next(liveChannelLeaveEvent());
+
+      expectValueCollectionState(valuesCollection, { errors: 0, values: valuesCount, complete: false });
+    });
+
+    it(`should shutdown when source observable completes`, async () => {
+      expect(deps.onShutdown).not.toHaveBeenCalled();
+      expect(deps.subscriberReadiness.observed).toBeTruthy();
+      expect(deps.liveEventsObservable.observed).toBeTruthy();
+
+      deps.liveEventsObservable.complete();
+      expectValueCollectionState(valuesCollection, {
+        errors: 0,
+        values: valuesCollection.valuesCount(),
+        complete: true,
+      });
+
+      expect(deps.subscriberReadiness.observed).toBeFalsy();
+      expect(deps.liveEventsObservable.observed).toBeFalsy();
+      expect(deps.onShutdown).toHaveBeenCalled();
+    });
+  });
+
   describe('single subscriber with initial frame', () => {
     it('should emit the initial frame right after subscribe', async () => {
       const deps = createDeps();
@@ -614,6 +853,7 @@ describe('LiveDataStream', () => {
       withTimeBFilter: new ValuesCollection<DataQueryResponse>(),
       withTimeAFilter: new ValuesCollection<DataQueryResponse>(),
       withoutFilter: new ValuesCollection<DataQueryResponse>(),
+      withReplaceMode: new ValuesCollection<DataQueryResponse>(),
     };
 
     beforeAll(() => {
@@ -637,16 +877,18 @@ describe('LiveDataStream', () => {
       valuesCollections.withoutFilter.subscribeTo(
         liveDataStream.get(liveDataStreamOptions.withoutFilter, subscriptionKey)
       );
-
-      console.log(JSON.stringify(valuesCollections.withTimeAFilter, null, 2));
+      valuesCollections.withReplaceMode.subscribeTo(
+        liveDataStream.get(liveDataStreamOptions.withReplaceMode, subscriptionKey)
+      );
 
       expectValueCollectionState(valuesCollections.withTimeAFilter, { errors: 0, values: 2, complete: false });
       expectValueCollectionState(valuesCollections.withTimeBFilter, { errors: 0, values: 1, complete: false });
       expectValueCollectionState(valuesCollections.withoutFilter, { errors: 0, values: 1, complete: false });
+      expectValueCollectionState(valuesCollections.withReplaceMode, { errors: 0, values: 1, complete: false });
     });
 
     it('should emit filtered data to each subscriber', async () => {
-      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues()));
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1newValues2()));
       expect(
         mapValues(valuesCollections, (collection) =>
           collection.values.map((response) => {
@@ -671,7 +913,7 @@ describe('LiveDataStream', () => {
             },
           ],
           [[102], ['c']],
-          [[102], ['c']],
+          [[103], ['d']],
         ],
         withTimeBFilter: [
           [
@@ -684,7 +926,7 @@ describe('LiveDataStream', () => {
               values: [2, 3],
             },
           ],
-          [[102], [3]],
+          [[103], [4]],
         ],
         withoutFilter: [
           [
@@ -701,7 +943,21 @@ describe('LiveDataStream', () => {
               values: [1, 2, 3],
             },
           ],
-          [[102], ['c'], [3]],
+          [[103], ['d'], [4]],
+        ],
+        withReplaceMode: [
+          // only last packet
+          [
+            {
+              name: 'time',
+              values: [102],
+            },
+            {
+              name: 'b',
+              values: [3],
+            },
+          ],
+          [[103], [4]],
         ],
       });
     });
@@ -714,6 +970,7 @@ describe('LiveDataStream', () => {
         withTimeAFilter: true,
         withTimeBFilter: false,
         withoutFilter: false,
+        withReplaceMode: false,
       });
       expect(deps.subscriberReadiness.observed).toBeTruthy();
       expect(deps.liveEventsObservable.observed).toBeTruthy();
@@ -727,6 +984,7 @@ describe('LiveDataStream', () => {
         withTimeAFilter: true,
         withTimeBFilter: true,
         withoutFilter: true,
+        withReplaceMode: true,
       });
       expect(deps.subscriberReadiness.observed).toBeFalsy();
       expect(deps.liveEventsObservable.observed).toBeFalsy();

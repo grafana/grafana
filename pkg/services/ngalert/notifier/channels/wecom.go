@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/prometheus/alertmanager/types"
@@ -13,28 +14,51 @@ import (
 	"github.com/prometheus/alertmanager/template"
 )
 
-// NewWeComNotifier is the constructor for WeCom notifier.
-func NewWeComNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
-	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
+type WeComConfig struct {
+	*NotificationChannelConfig
+	URL     string
+	Message string
+}
 
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook URL in settings"}
+func WeComFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewWeComConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
+	return NewWeComNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
 
+func NewWeComConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*WeComConfig, error) {
+	url := decryptFunc(context.Background(), config.SecureSettings, "url", config.Settings.Get("url").MustString())
+	if url == "" {
+		return nil, errors.New("could not find webhook URL in settings")
+	}
+	return &WeComConfig{
+		NotificationChannelConfig: config,
+		URL:                       url,
+		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+	}, nil
+}
+
+// NewWeComNotifier is the constructor for WeCom notifier.
+func NewWeComNotifier(config *WeComConfig, ns notifications.WebhookSender, t *template.Template) *WeComNotifier {
 	return &WeComNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		URL:     url,
+		URL:     config.URL,
+		Message: config.Message,
 		log:     log.New("alerting.notifier.wecom"),
 		ns:      ns,
-		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		tmpl:    t,
-	}, nil
+	}
 }
 
 // WeComNotifier is responsible for sending alert notifications to WeCom.

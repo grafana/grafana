@@ -10,17 +10,20 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 const userInDbName = "user_in_db"
@@ -197,7 +200,11 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil)
-	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore, dashAlertExtractor).SaveDashboard(context.Background(), dashItem, true)
+	service := dashboardservice.ProvideDashboardService(
+		setting.NewCfg(), dashboardStore, dashAlertExtractor,
+		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+	)
+	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -207,9 +214,20 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
+	permissionsServices := acmock.NewPermissionsServicesMock()
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	d := dashboardservice.ProvideDashboardService(dashboardStore, nil)
-	s := dashboardservice.ProvideFolderService(d, dashboardStore, nil)
+
+	d := dashboardservice.ProvideDashboardService(
+		cfg, dashboardStore, nil,
+		features, permissionsServices,
+	)
+	ac := acmock.New()
+	s := dashboardservice.ProvideFolderService(
+		cfg, d, dashboardStore, nil,
+		features, permissionsServices, ac,
+	)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
 	require.NoError(t, err)
@@ -294,11 +312,18 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
-		dashboardService := dashboardservice.ProvideDashboardService(dashboardStore, &alerting.DashAlertExtractorService{})
+		dashboardService := dashboardservice.ProvideDashboardService(
+			setting.NewCfg(), dashboardStore, nil,
+			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		)
+		ac := acmock.New()
 		service := LibraryElementService{
-			Cfg:           setting.NewCfg(),
-			SQLStore:      sqlStore,
-			folderService: dashboardservice.ProvideFolderService(dashboardService, dashboardStore, nil),
+			Cfg:      setting.NewCfg(),
+			SQLStore: sqlStore,
+			folderService: dashboardservice.ProvideFolderService(
+				setting.NewCfg(), dashboardService, dashboardStore, nil,
+				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac,
+			),
 		}
 
 		user := models.SignedInUser{

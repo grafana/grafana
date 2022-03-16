@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -19,7 +18,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		psService := ProvideService(bus.New(), nil, secretsService)
+		psService := ProvideService(nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			ctx,
@@ -57,7 +56,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		psService := ProvideService(bus.New(), nil, secretsService)
+		psService := ProvideService(nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			ctx,

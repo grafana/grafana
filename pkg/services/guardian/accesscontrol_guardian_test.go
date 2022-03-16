@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -516,7 +516,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			isFolder: true,
 			folderID: 0,
 			permissions: []*accesscontrol.Permission{
-				{Action: accesscontrol.ActionFoldersCreate},
+				{Action: dashboards.ActionFoldersCreate},
 			},
 			expected: true,
 		},
@@ -601,7 +601,7 @@ func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*a
 	require.NoError(t, err)
 
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	services, err := ossaccesscontrol.ProvidePermissionsServices(routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	services, err := ossaccesscontrol.ProvidePermissionsServices(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
 
 	return NewAccessControlDashboardGuardian(context.Background(), dashID, &models.SignedInUser{OrgId: 1}, store, ac, services)

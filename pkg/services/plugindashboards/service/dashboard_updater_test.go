@@ -1,4 +1,4 @@
-package plugindashboards
+package service
 
 import (
 	"context"
@@ -9,19 +9,21 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/stretchr/testify/require"
 )
 
-func TestService(t *testing.T) {
+func TestDashboardUpdater(t *testing.T) {
 	t.Run("updateAppDashboards", func(t *testing.T) {
 		scenario(t, "Without any stored plugin settings shouldn't delete/import any dashboards",
 			scenarioInput{}, func(ctx *scenarioContext) {
-				ctx.s.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards()
 
 				require.Len(t, ctx.pluginSettingsService.getPluginSettingsArgs, 1)
 				require.Equal(t, int64(0), ctx.pluginSettingsService.getPluginSettingsArgs[0])
-				require.Empty(t, ctx.deleteDashboardArgs)
+				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
 
@@ -33,17 +35,17 @@ func TestService(t *testing.T) {
 						Enabled:  false,
 					},
 				},
-				pluginDashboards: []*plugins.PluginDashboardInfoDTO{
+				pluginDashboards: []*plugindashboards.PluginDashboard{
 					{
-						PluginId: "test",
-						Path:     "dashboard.json",
+						PluginId:  "test",
+						Reference: "dashboard.json",
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.s.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards()
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
-				require.Empty(t, ctx.deleteDashboardArgs)
+				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
 
@@ -55,17 +57,17 @@ func TestService(t *testing.T) {
 						Enabled:  true,
 					},
 				},
-				pluginDashboards: []*plugins.PluginDashboardInfoDTO{
+				pluginDashboards: []*plugindashboards.PluginDashboard{
 					{
-						PluginId: "test",
-						Path:     "dashboard.json",
+						PluginId:  "test",
+						Reference: "dashboard.json",
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.s.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards()
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
-				require.Empty(t, ctx.deleteDashboardArgs)
+				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
 
@@ -87,17 +89,17 @@ func TestService(t *testing.T) {
 						},
 					},
 				},
-				pluginDashboards: []*plugins.PluginDashboardInfoDTO{
+				pluginDashboards: []*plugindashboards.PluginDashboard{
 					{
-						PluginId: "test",
-						Path:     "dashboard.json",
+						PluginId:  "test",
+						Reference: "dashboard.json",
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.s.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards()
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
-				require.Empty(t, ctx.deleteDashboardArgs)
+				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
 
@@ -119,20 +121,20 @@ func TestService(t *testing.T) {
 						},
 					},
 				},
-				pluginDashboards: []*plugins.PluginDashboardInfoDTO{
+				pluginDashboards: []*plugindashboards.PluginDashboard{
 					{
 						PluginId:         "test",
-						Path:             "dashboard.json",
+						Reference:        "dashboard.json",
 						Removed:          false,
 						Revision:         1,
 						ImportedRevision: 1,
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.s.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards()
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
-				require.Empty(t, ctx.deleteDashboardArgs)
+				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 				require.Empty(t, ctx.importDashboardArgs)
 			})
 
@@ -156,33 +158,33 @@ func TestService(t *testing.T) {
 						},
 					},
 				},
-				pluginDashboards: []*plugins.PluginDashboardInfoDTO{
+				pluginDashboards: []*plugindashboards.PluginDashboard{
 					{
 						DashboardId: 3,
 						PluginId:    "test",
-						Path:        "removed.json",
+						Reference:   "removed.json",
 						Removed:     true,
 					},
 					{
 						DashboardId: 4,
 						PluginId:    "test",
-						Path:        "not-updated.json",
+						Reference:   "not-updated.json",
 					},
 					{
 						DashboardId:      5,
 						PluginId:         "test",
-						Path:             "updated.json",
+						Reference:        "updated.json",
 						Revision:         1,
 						ImportedRevision: 2,
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.s.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards()
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
-				require.Len(t, ctx.deleteDashboardArgs, 1)
-				require.Equal(t, int64(2), ctx.deleteDashboardArgs[0].OrgId)
-				require.Equal(t, int64(3), ctx.deleteDashboardArgs[0].Id)
+				require.Len(t, ctx.dashboardService.deleteDashboardArgs, 1)
+				require.Equal(t, int64(2), ctx.dashboardService.deleteDashboardArgs[0].orgId)
+				require.Equal(t, int64(3), ctx.dashboardService.deleteDashboardArgs[0].dashboardId)
 
 				require.Len(t, ctx.importDashboardArgs, 1)
 				require.Equal(t, "test", ctx.importDashboardArgs[0].PluginId)
@@ -204,10 +206,10 @@ func TestService(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				require.Len(t, ctx.getDashboardsByPluginIdQueryArgs, 1)
-				require.Equal(t, int64(2), ctx.getDashboardsByPluginIdQueryArgs[0].OrgId)
-				require.Equal(t, "test", ctx.getDashboardsByPluginIdQueryArgs[0].PluginId)
-				require.Empty(t, ctx.deleteDashboardArgs)
+				require.Len(t, ctx.dashboardPluginService.args, 1)
+				require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgId)
+				require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginId)
+				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 			})
 	})
 
@@ -227,21 +229,21 @@ func TestService(t *testing.T) {
 					},
 				},
 			},
-			pluginDashboards: []*plugins.PluginDashboardInfoDTO{
+			pluginDashboards: []*plugindashboards.PluginDashboard{
 				{
 					DashboardId: 3,
 					PluginId:    "test",
-					Path:        "dashboard1.json",
+					Reference:   "dashboard1.json",
 				},
 				{
 					DashboardId: 4,
 					PluginId:    "test",
-					Path:        "dashboard2.json",
+					Reference:   "dashboard2.json",
 				},
 				{
 					DashboardId: 5,
 					PluginId:    "test",
-					Path:        "dashboard3.json",
+					Reference:   "dashboard3.json",
 				},
 			},
 		}, func(ctx *scenarioContext) {
@@ -252,10 +254,10 @@ func TestService(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, ctx.getDashboardsByPluginIdQueryArgs, 1)
-			require.Equal(t, int64(2), ctx.getDashboardsByPluginIdQueryArgs[0].OrgId)
-			require.Equal(t, "test", ctx.getDashboardsByPluginIdQueryArgs[0].PluginId)
-			require.Len(t, ctx.deleteDashboardArgs, 3)
+			require.Len(t, ctx.dashboardPluginService.args, 1)
+			require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgId)
+			require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginId)
+			require.Len(t, ctx.dashboardService.deleteDashboardArgs, 3)
 		})
 
 	scenario(t, "When app plugin is enabled, stored disabled plugin and with dashboard updates should import dashboards",
@@ -278,25 +280,25 @@ func TestService(t *testing.T) {
 					},
 				},
 			},
-			pluginDashboards: []*plugins.PluginDashboardInfoDTO{
+			pluginDashboards: []*plugindashboards.PluginDashboard{
 				{
 					DashboardId:      3,
 					PluginId:         "test",
-					Path:             "dashboard1.json",
+					Reference:        "dashboard1.json",
 					Revision:         1,
 					ImportedRevision: 0,
 				},
 				{
 					DashboardId:      4,
 					PluginId:         "test",
-					Path:             "dashboard2.json",
+					Reference:        "dashboard2.json",
 					Revision:         1,
 					ImportedRevision: 0,
 				},
 				{
 					DashboardId:      5,
 					PluginId:         "test",
-					Path:             "dashboard3.json",
+					Reference:        "dashboard3.json",
 					Revision:         1,
 					ImportedRevision: 0,
 				},
@@ -309,7 +311,7 @@ func TestService(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Empty(t, ctx.deleteDashboardArgs)
+			require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 
 			require.Len(t, ctx.importDashboardArgs, 3)
 			require.Equal(t, "test", ctx.importDashboardArgs[0].PluginId)
@@ -348,23 +350,24 @@ func (m *pluginStoreMock) Plugin(ctx context.Context, pluginID string) (plugins.
 	return plugins.PluginDTO{}, false
 }
 
-type pluginDashboardManagerMock struct {
-	plugins.PluginDashboardManager
-	getPluginDashboardsFunc func(ctx context.Context, orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error)
-	loadPluginDashboardFunc func(ctx context.Context, pluginID, path string) (*models.Dashboard, error)
+type pluginDashboardServiceMock struct {
+	listPluginDashboardsFunc func(ctx context.Context, req *plugindashboards.ListPluginDashboardsRequest) (*plugindashboards.ListPluginDashboardsResponse, error)
+	loadPluginDashboardfunc  func(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error)
 }
 
-func (m *pluginDashboardManagerMock) GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	if m.getPluginDashboardsFunc != nil {
-		return m.getPluginDashboardsFunc(ctx, orgID, pluginID)
+func (m *pluginDashboardServiceMock) ListPluginDashboards(ctx context.Context, req *plugindashboards.ListPluginDashboardsRequest) (*plugindashboards.ListPluginDashboardsResponse, error) {
+	if m.listPluginDashboardsFunc != nil {
+		return m.listPluginDashboardsFunc(ctx, req)
 	}
 
-	return []*plugins.PluginDashboardInfoDTO{}, nil
+	return &plugindashboards.ListPluginDashboardsResponse{
+		Items: []*plugindashboards.PluginDashboard{},
+	}, nil
 }
 
-func (m *pluginDashboardManagerMock) LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error) {
-	if m.loadPluginDashboardFunc != nil {
-		return m.loadPluginDashboardFunc(ctx, pluginID, path)
+func (m *pluginDashboardServiceMock) LoadPluginDashboard(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error) {
+	if m.loadPluginDashboardfunc != nil {
+		return m.loadPluginDashboardfunc(ctx, req)
 	}
 
 	return nil, nil
@@ -418,38 +421,55 @@ func (s *pluginsSettingsServiceMock) UpdatePluginSetting(_ context.Context, _ *m
 	return s.err
 }
 
+type dashboardServiceMock struct {
+	dashboards.DashboardService
+	deleteDashboardArgs []struct {
+		orgId       int64
+		dashboardId int64
+	}
+}
+
+func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId int64, orgId int64) error {
+	s.deleteDashboardArgs = append(s.deleteDashboardArgs, struct {
+		orgId       int64
+		dashboardId int64
+	}{
+		orgId:       orgId,
+		dashboardId: dashboardId,
+	})
+	return nil
+}
+
 type scenarioInput struct {
 	storedPluginSettings []*models.PluginSettingInfoDTO
 	installedPlugins     []plugins.PluginDTO
-	pluginDashboards     []*plugins.PluginDashboardInfoDTO
+	pluginDashboards     []*plugindashboards.PluginDashboard
 }
 
 type scenarioContext struct {
-	t                                *testing.T
-	bus                              bus.Bus
-	pluginSettingsService            *pluginsSettingsServiceMock
-	pluginStore                      plugins.Store
-	pluginDashboardManager           plugins.PluginDashboardManager
-	importDashboardService           dashboardimport.Service
-	importDashboardArgs              []*dashboardimport.ImportDashboardRequest
-	deleteDashboardArgs              []*models.DeleteDashboardCommand
-	getPluginSettingsByIdArgs        []*models.GetPluginSettingByIdQuery
-	updatePluginSettingVersionArgs   []*models.UpdatePluginSettingVersionCmd
-	getDashboardsByPluginIdQueryArgs []*models.GetDashboardsByPluginIdQuery
-	s                                *Service
+	t                              *testing.T
+	bus                            bus.Bus
+	pluginSettingsService          *pluginsSettingsServiceMock
+	pluginStore                    plugins.Store
+	pluginDashboardService         plugindashboards.Service
+	importDashboardService         dashboardimport.Service
+	dashboardPluginService         *dashboardPluginServiceMock
+	dashboardService               *dashboardServiceMock
+	importDashboardArgs            []*dashboardimport.ImportDashboardRequest
+	getPluginSettingsByIdArgs      []*models.GetPluginSettingByIdQuery
+	updatePluginSettingVersionArgs []*models.UpdatePluginSettingVersionCmd
+	dashboardUpdater               *DashboardUpdater
 }
 
 func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenarioContext)) {
 	t.Helper()
 
 	sCtx := &scenarioContext{
-		t:                                t,
-		bus:                              bus.New(),
-		importDashboardArgs:              []*dashboardimport.ImportDashboardRequest{},
-		deleteDashboardArgs:              []*models.DeleteDashboardCommand{},
-		getPluginSettingsByIdArgs:        []*models.GetPluginSettingByIdQuery{},
-		updatePluginSettingVersionArgs:   []*models.UpdatePluginSettingVersionCmd{},
-		getDashboardsByPluginIdQueryArgs: []*models.GetDashboardsByPluginIdQuery{},
+		t:                              t,
+		bus:                            bus.New(),
+		importDashboardArgs:            []*dashboardimport.ImportDashboardRequest{},
+		getPluginSettingsByIdArgs:      []*models.GetPluginSettingByIdQuery{},
+		updatePluginSettingVersionArgs: []*models.UpdatePluginSettingVersionCmd{},
 	}
 
 	getPlugin := func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -470,31 +490,57 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		pluginFunc: getPlugin,
 	}
 
-	getPluginDashboards := func(ctx context.Context, orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-		dashboards := []*plugins.PluginDashboardInfoDTO{}
+	pluginDashboards := map[string][]*models.Dashboard{}
+	for _, pluginDashboard := range input.pluginDashboards {
+		if _, exists := pluginDashboards[pluginDashboard.PluginId]; !exists {
+			pluginDashboards[pluginDashboard.PluginId] = []*models.Dashboard{}
+		}
+
+		pluginDashboards[pluginDashboard.PluginId] = append(pluginDashboards[pluginDashboard.PluginId], &models.Dashboard{
+			PluginId: pluginDashboard.PluginId,
+		})
+	}
+
+	sCtx.dashboardPluginService = &dashboardPluginServiceMock{
+		pluginDashboards: pluginDashboards,
+	}
+
+	sCtx.dashboardService = &dashboardServiceMock{
+		deleteDashboardArgs: []struct {
+			orgId       int64
+			dashboardId int64
+		}{},
+	}
+
+	listPluginDashboards := func(ctx context.Context, req *plugindashboards.ListPluginDashboardsRequest) (*plugindashboards.ListPluginDashboardsResponse, error) {
+		dashboards := []*plugindashboards.PluginDashboard{}
 
 		for _, d := range input.pluginDashboards {
-			if d.PluginId == pluginID {
+			if d.PluginId == req.PluginID {
 				dashboards = append(dashboards, d)
 			}
 		}
 
-		return dashboards, nil
+		return &plugindashboards.ListPluginDashboardsResponse{
+			Items: dashboards,
+		}, nil
 	}
 
-	loadPluginDashboard := func(ctx context.Context, pluginID, path string) (*models.Dashboard, error) {
+	loadPluginDashboard := func(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error) {
 		for _, d := range input.pluginDashboards {
-			if d.PluginId == pluginID && path == d.Path {
-				return &models.Dashboard{}, nil
+			if d.PluginId == req.PluginID && req.Reference == d.Reference {
+				return &plugindashboards.LoadPluginDashboardResponse{
+					Dashboard: &models.Dashboard{},
+				}, nil
 			}
 		}
 
 		return nil, fmt.Errorf("no match for loading plugin dashboard")
 	}
 
-	sCtx.pluginDashboardManager = &pluginDashboardManagerMock{
-		getPluginDashboardsFunc: getPluginDashboards,
-		loadPluginDashboardFunc: loadPluginDashboard,
+	sCtx.pluginDashboardService = &pluginDashboardServiceMock{
+		listPluginDashboardsFunc: listPluginDashboards,
+		loadPluginDashboardfunc:  loadPluginDashboard,
 	}
 
 	importDashboard := func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
@@ -509,43 +555,15 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		importDashboardFunc: importDashboard,
 	}
 
-	sCtx.bus.AddHandler(func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-		sCtx.deleteDashboardArgs = append(sCtx.deleteDashboardArgs, cmd)
-
-		return nil
-	})
-
-	sCtx.bus.AddHandler(func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-		sCtx.getDashboardsByPluginIdQueryArgs = append(sCtx.getDashboardsByPluginIdQueryArgs, query)
-		dashboards := []*models.Dashboard{}
-
-		var plugin *models.PluginSettingInfoDTO
-
-		for _, p := range input.storedPluginSettings {
-			if p.PluginId == query.PluginId {
-				plugin = p
-			}
-		}
-
-		if plugin == nil {
-			return nil
-		}
-
-		for _, d := range input.pluginDashboards {
-			if d.PluginId == plugin.PluginId {
-				dashboards = append(dashboards, &models.Dashboard{
-					Id:    d.DashboardId,
-					OrgId: plugin.OrgId,
-				})
-			}
-		}
-
-		query.Result = dashboards
-
-		return nil
-	})
-
-	sCtx.s = newService(sCtx.bus, sCtx.pluginStore, sCtx.pluginDashboardManager, sCtx.importDashboardService, sCtx.pluginSettingsService)
+	sCtx.dashboardUpdater = newDashboardUpdater(
+		sCtx.bus,
+		sCtx.pluginStore,
+		sCtx.pluginDashboardService,
+		sCtx.importDashboardService,
+		sCtx.pluginSettingsService,
+		sCtx.dashboardPluginService,
+		sCtx.dashboardService,
+	)
 
 	t.Cleanup(bus.ClearBusHandlers)
 

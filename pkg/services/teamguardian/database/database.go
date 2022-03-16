@@ -8,10 +8,10 @@ import (
 )
 
 type TeamGuardianStoreImpl struct {
-	sqlStore *sqlstore.SQLStore
+	sqlStore sqlstore.Store
 }
 
-func ProvideTeamGuardianStore(sqlStore *sqlstore.SQLStore) *TeamGuardianStoreImpl {
+func ProvideTeamGuardianStore(sqlStore sqlstore.Store) *TeamGuardianStoreImpl {
 	return &TeamGuardianStoreImpl{sqlStore: sqlStore}
 }
 

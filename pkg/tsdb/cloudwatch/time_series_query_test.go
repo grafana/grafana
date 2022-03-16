@@ -19,7 +19,7 @@ import (
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
-	executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
+	executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
 	now := time.Now()
 
 	origNewCWClient := NewCWClient
@@ -54,7 +54,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},

@@ -7,6 +7,7 @@ import { PrometheusDatasource } from '../../datasource';
 import { AutoSizeInput } from '../shared/AutoSizeInput';
 import { PromVisualQueryBinary } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
+import { binaryScalarDefs } from '../binaryScalarOperations';
 
 export interface Props {
   nestedQuery: PromVisualQueryBinary;
@@ -68,14 +69,7 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
   );
 });
 
-const operators = [
-  { label: '/', value: '/' },
-  { label: '*', value: '*' },
-  { label: '+', value: '+' },
-  { label: '==', value: '==' },
-  { label: '>', value: '>' },
-  { label: '<', value: '<' },
-];
+const operators = binaryScalarDefs.map((def) => ({ label: def.sign, value: def.sign }));
 
 NestedQuery.displayName = 'NestedQuery';
 
