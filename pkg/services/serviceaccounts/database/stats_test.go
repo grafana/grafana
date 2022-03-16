@@ -12,24 +12,24 @@ import (
 )
 
 func TestStore_UsageStats(t *testing.T) {
-	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
+	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
-	user := tests.SetupUserServiceAccount(t, db, userToCreate)
+	sa := tests.SetupUserServiceAccount(t, db, saToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(user.OrgId, keyName)
+	key, err := apikeygen.New(sa.OrgId, keyName)
 	require.NoError(t, err)
 
 	cmd := models.AddApiKeyCommand{
 		Name:          keyName,
 		Role:          "Viewer",
-		OrgId:         user.OrgId,
+		OrgId:         sa.OrgId,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,
 		Result:        &models.ApiKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), user.Id, &cmd)
+	err = store.AddServiceAccountToken(context.Background(), sa.Id, &cmd)
 	require.NoError(t, err)
 
 	stats, err := store.GetUsageMetrics(context.Background())
