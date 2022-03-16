@@ -1,5 +1,4 @@
 import React from 'react';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
   DataFrame,
@@ -19,7 +18,6 @@ import {
   getActiveThreshold,
   Threshold,
   getFieldConfigWithMinMax,
-  outerJoinDataFrames,
   ThresholdsMode,
 } from '@grafana/data';
 import {
@@ -48,15 +46,6 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
   return SeriesVisibilityChangeMode.ToggleSelection;
 }
 
-export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
-  return outerJoinDataFrames({
-    frames: data,
-    joinBy: dimFields.x,
-    keep: dimFields.y,
-    keepOriginIndices: true,
-  });
-}
-
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
@@ -70,6 +59,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   showValue,
   alignValue,
   mergeValues,
+  getValueColor,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -81,14 +71,15 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const getValueColor = (seriesIdx: number, value: any) => {
+  const getValueColorFn = (seriesIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
 
-    if (field.display) {
-      const disp = field.display(value); // will apply color modes
-      if (disp.color) {
-        return disp.color;
-      }
+    if (
+      field.state?.origin?.fieldIndex !== undefined &&
+      field.state?.origin?.frameIndex !== undefined &&
+      getValueColor
+    ) {
+      return getValueColor(field.state?.origin?.frameIndex, field.state?.origin?.fieldIndex, value);
     }
 
     return FALLBACK_COLOR;
@@ -107,7 +98,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,
-    getValueColor,
+    getValueColor: getValueColorFn,
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
@@ -310,6 +301,15 @@ export function unsetSameFutureValues(values: any[]): any[] | undefined {
   return clone;
 }
 
+function getSpanNulls(field: Field) {
+  let spanNulls = field.config.custom?.spanNulls;
+
+  // magic value for join() to leave nulls alone instead of expanding null ranges
+  // should be set to -1 when spanNulls = null|undefined|false|0, which is "retain nulls, without expanding"
+  // Infinity is not optimal here since it causes spanNulls to be more expensive than simply removing all nulls unconditionally
+  return !spanNulls ? -1 : spanNulls === true ? Infinity : spanNulls;
+}
+
 /**
  * Merge values by the threshold
  */
@@ -359,8 +359,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
       ...field.config,
       custom: {
         ...field.config.custom,
-        // magic value for join() to leave nulls alone
-        spanNulls: -1,
+        spanNulls: getSpanNulls(field),
       },
     },
     type: FieldType.string,
@@ -413,8 +412,7 @@ export function prepareTimelineFields(
               ...field.config,
               custom: {
                 ...field.config.custom,
-                // magic value for join() to leave nulls alone
-                spanNulls: -1,
+                spanNulls: getSpanNulls(field),
               },
             },
           };
@@ -546,16 +544,18 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
     return null;
   }
 
+  const startValue = field.values.get(datapointIdx);
+
   while (end === undefined) {
     if (rightPointer >= field.values.length) {
       return null;
     }
     const rightValue = field.values.get(rightPointer);
 
-    if (rightValue !== undefined) {
-      end = rightPointer;
-    } else {
+    if (rightValue === undefined || rightValue === startValue) {
       rightPointer++;
+    } else {
+      end = rightPointer;
     }
   }
 

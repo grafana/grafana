@@ -12,6 +12,7 @@ import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRuleGroup,
   GrafanaRuleIdentifier,
   PrometheusRuleIdentifier,
   PromRuleWithLocation,
@@ -50,7 +51,7 @@ export function alertInstanceKey(alert: Alert): string {
 }
 
 export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
-  return resp.error && resp.error?.message === RULER_NOT_SUPPORTED_MSG;
+  return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
 export function isGrafanaRuleIdentifier(identifier: RuleIdentifier): identifier is GrafanaRuleIdentifier {
@@ -115,4 +116,14 @@ export function getFirstActiveAt(promRule: AlertingRule) {
     }
     return prev;
   }, null as Date | null);
+}
+
+/**
+ * A rule group is "federated" when it has at least one "source_tenants" entry, federated rule groups will evaluate rules in multiple tenants
+ * Non-federated rules do not have this property
+ *
+ * see https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation
+ */
+export function isFederatedRuleGroup(group: CombinedRuleGroup) {
+  return Array.isArray(group.source_tenants);
 }

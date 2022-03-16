@@ -2,11 +2,11 @@ import React, { FC, Fragment, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { AppEvents, GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { appEvents } from 'app/core/core';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
@@ -17,6 +17,7 @@ import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { isFederatedRuleGroup } from '../../utils/rules';
 
 interface Props {
   rule: CombinedRule;
@@ -26,6 +27,7 @@ interface Props {
 export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const notifyApp = useAppNotification();
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
@@ -39,6 +41,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
 
+  const isFederated = isFederatedRuleGroup(group);
   const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
@@ -67,7 +70,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   };
 
   // explore does not support grafana rule queries atm
-  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor) {
+  // neither do "federated rules"
+  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor && !isFederated) {
     leftButtons.push(
       <LinkButton
         className={style.button}
@@ -173,7 +177,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (isEditable && rulerRule) {
+  if (isEditable && rulerRule && !isFederated) {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
@@ -189,10 +193,10 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         <ClipboardButton
           key="copy"
           onClipboardCopy={() => {
-            appEvents.emit(AppEvents.alertSuccess, ['URL copied!']);
+            notifyApp.success('URL copied!');
           }}
           onClipboardError={(e) => {
-            appEvents.emit(AppEvents.alertError, ['Error while copying URL', e.text]);
+            notifyApp.error('Error while copying URL', e.text);
           }}
           className={style.button}
           size="sm"

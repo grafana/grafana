@@ -16,6 +16,12 @@ import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './dat
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
+  // Mock the console error so that running the test suite doesnt throw the error
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
   it('returns empty response when traceId is empty', async () => {
     const ds = new TempoDatasource(defaultSettings);
     const response = await lastValueFrom(
@@ -347,7 +353,7 @@ const serviceGraphLinks = [
     title: 'Request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__interval])',
+        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval])',
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
@@ -358,7 +364,7 @@ const serviceGraphLinks = [
     title: 'Request histogram',
     internal: {
       query: {
-        expr: 'histogram_quantile(0.9, rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__interval]))',
+        expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
@@ -369,7 +375,7 @@ const serviceGraphLinks = [
     title: 'Failed request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__interval])',
+        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval])',
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',

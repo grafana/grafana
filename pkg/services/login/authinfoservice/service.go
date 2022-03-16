@@ -4,74 +4,27 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const genericOAuthModule = "oauth_generic_oauth"
 
 type Implementation struct {
-	Bus                   bus.Bus
-	SQLStore              *sqlstore.SQLStore
 	UserProtectionService login.UserProtectionService
-	SecretsService        secrets.Service
+	authInfoStore         login.Store
 	logger                log.Logger
 }
 
-type Service interface {
-	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
-}
-
-func ProvideAuthInfoService(bus bus.Bus, store *sqlstore.SQLStore, userProtectionService login.UserProtectionService,
-	secretsService secrets.Service) *Implementation {
+func ProvideAuthInfoService(userProtectionService login.UserProtectionService, authInfoStore login.Store) *Implementation {
 	s := &Implementation{
-		Bus:                   bus,
-		SQLStore:              store,
 		UserProtectionService: userProtectionService,
-		SecretsService:        secretsService,
+		authInfoStore:         authInfoStore,
 		logger:                log.New("login.authinfo"),
 	}
 
-	s.Bus.AddHandler(s.GetExternalUserInfoByLogin)
-	s.Bus.AddHandler(s.GetAuthInfo)
-	s.Bus.AddHandler(s.SetAuthInfo)
-	s.Bus.AddHandler(s.UpdateAuthInfo)
-	s.Bus.AddHandler(s.DeleteAuthInfo)
-
 	return s
-}
-
-func (s *Implementation) getUserById(id int64) (bool, *models.User, error) {
-	var (
-		has bool
-		err error
-	)
-	user := &models.User{}
-	err = s.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		has, err = sess.ID(id).Get(user)
-		return err
-	})
-	if err != nil {
-		return false, nil, err
-	}
-
-	return has, user, nil
-}
-
-func (s *Implementation) getUser(user *models.User) (bool, error) {
-	var err error
-	var has bool
-
-	err = s.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		has, err = sess.Get(user)
-		return err
-	})
-
-	return has, err
 }
 
 func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUserByAuthInfoQuery) (bool, *models.User, *models.UserAuth, error) {
@@ -82,7 +35,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 		authQuery.AuthModule = query.AuthModule
 		authQuery.AuthId = query.AuthId
 
-		err := s.GetAuthInfo(ctx, authQuery)
+		err := s.authInfoStore.GetAuthInfo(ctx, authQuery)
 		if !errors.Is(err, models.ErrUserNotFound) {
 			if err != nil {
 				return false, nil, nil, err
@@ -90,7 +43,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 
 			// if user id was specified and doesn't match the user_auth entry, remove it
 			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
-				err := s.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
+				err := s.authInfoStore.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
 				})
 				if err != nil {
@@ -99,21 +52,20 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 
 				return false, nil, nil, models.ErrUserNotFound
 			} else {
-				has, user, err := s.getUserById(authQuery.Result.UserId)
+				user, err := s.authInfoStore.GetUserById(ctx, authQuery.Result.UserId)
 				if err != nil {
-					return false, nil, nil, err
-				}
+					if errors.Is(err, models.ErrUserNotFound) {
+						// if the user has been deleted then remove the entry
+						if errDel := s.authInfoStore.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
+							UserAuth: authQuery.Result,
+						}); errDel != nil {
+							s.logger.Error("Error removing user_auth entry", "error", errDel)
+						}
 
-				if !has {
-					// if the user has been deleted then remove the entry
-					err = s.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
-						UserAuth: authQuery.Result,
-					})
-					if err != nil {
-						s.logger.Error("Error removing user_auth entry", "error", err)
+						return false, nil, nil, models.ErrUserNotFound
 					}
 
-					return false, nil, nil, models.ErrUserNotFound
+					return false, nil, nil, err
 				}
 
 				return true, user, authQuery.Result, nil
@@ -124,42 +76,39 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 	return false, nil, nil, models.ErrUserNotFound
 }
 
-func (s *Implementation) LookupByOneOf(userId int64, email string, login string) (bool, *models.User, error) {
-	foundUser := false
+func (s *Implementation) LookupByOneOf(ctx context.Context, userId int64, email string, login string) (*models.User, error) {
 	var user *models.User
 	var err error
 
 	// If not found, try to find the user by id
 	if userId != 0 {
-		foundUser, user, err = s.getUserById(userId)
-		if err != nil {
-			return false, nil, err
+		user, err = s.authInfoStore.GetUserById(ctx, userId)
+		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by email address
-	if !foundUser && email != "" {
-		user = &models.User{Email: email}
-		foundUser, err = s.getUser(user)
-		if err != nil {
-			return false, nil, err
+	if user == nil && email != "" {
+		user, err = s.authInfoStore.GetUserByEmail(ctx, email)
+		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by login
-	if !foundUser && login != "" {
-		user = &models.User{Login: login}
-		foundUser, err = s.getUser(user)
-		if err != nil {
-			return false, nil, err
+	if user == nil && login != "" {
+		user, err = s.authInfoStore.GetUserByLogin(ctx, login)
+		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+			return nil, err
 		}
 	}
 
-	if !foundUser {
-		return false, nil, models.ErrUserNotFound
+	if user == nil {
+		return nil, models.ErrUserNotFound
 	}
 
-	return foundUser, user, nil
+	return user, nil
 }
 
 func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule string, authId string, userID int64) (*models.UserAuth, error) {
@@ -168,7 +117,7 @@ func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule stri
 		authQuery.AuthModule = authModule
 		authQuery.AuthId = authId
 		authQuery.UserId = userID
-		err := s.GetAuthInfo(ctx, authQuery)
+		err := s.authInfoStore.GetAuthInfo(ctx, authQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +137,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 
 	// 2. FindByUserDetails
 	if !foundUser {
-		_, user, err = s.LookupByOneOf(query.UserId, query.Email, query.Login)
+		user, err = s.LookupByOneOf(ctx, query.UserId, query.Email, query.Login)
 		if err != nil {
 			return nil, err
 		}
@@ -215,10 +164,22 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 			AuthModule: query.AuthModule,
 			AuthId:     query.AuthId,
 		}
-		if err := s.SetAuthInfo(ctx, cmd); err != nil {
+		if err := s.authInfoStore.SetAuthInfo(ctx, cmd); err != nil {
 			return nil, err
 		}
 	}
 
 	return user, nil
+}
+
+func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+	return s.authInfoStore.GetAuthInfo(ctx, query)
+}
+
+func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	return s.authInfoStore.UpdateAuthInfo(ctx, cmd)
+}
+
+func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+	return s.authInfoStore.SetAuthInfo(ctx, cmd)
 }

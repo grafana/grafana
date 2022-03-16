@@ -93,7 +93,7 @@ If you don't want to backport you need to add a label named **no-backport** to t
 
 #### Backport
 
-If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](.github/bot.md#backport-pr) for detailed instructions.
+If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](/.github/bot.md#backport-pr) for detailed instructions.
 
 The general rule of thumb regarding what changes goes into what release is:
 

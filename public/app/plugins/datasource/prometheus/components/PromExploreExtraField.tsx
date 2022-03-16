@@ -16,16 +16,7 @@ export interface PromExploreExtraFieldProps {
 
 export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
   ({ query, datasource, onChange, onRunQuery }) => {
-    const rangeOptions = [
-      { value: 'range', label: 'Range', description: 'Run query over a range of time.' },
-      {
-        value: 'instant',
-        label: 'Instant',
-        description: 'Run query against a single point in time. For this query, the "To" time is used.',
-      },
-      { value: 'both', label: 'Both', description: 'Run an Instant query and a Range query.' },
-    ];
-
+    const rangeOptions = getQueryTypeOptions(true);
     const prevQuery = usePrevious(query);
 
     const onExemplarChange = useCallback(
@@ -53,17 +44,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
       }
     }
 
-    function onQueryTypeChange(queryType: string) {
-      let nextQuery;
-      if (queryType === 'instant') {
-        nextQuery = { ...query, instant: true, range: false };
-      } else if (queryType === 'range') {
-        nextQuery = { ...query, instant: false, range: true };
-      } else {
-        nextQuery = { ...query, instant: true, range: true };
-      }
-      onChange(nextQuery);
-    }
+    const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
     return (
       <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={testIds.extraFieldEditor}>
@@ -122,6 +103,35 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
 );
 
 PromExploreExtraField.displayName = 'PromExploreExtraField';
+
+export function getQueryTypeOptions(includeBoth: boolean) {
+  const rangeOptions = [
+    { value: 'range', label: 'Range', description: 'Run query over a range of time' },
+    {
+      value: 'instant',
+      label: 'Instant',
+      description: 'Run query against a single point in time. For this query, the "To" time is used',
+    },
+  ];
+
+  if (includeBoth) {
+    rangeOptions.push({ value: 'both', label: 'Both', description: 'Run an Instant query and a Range query' });
+  }
+
+  return rangeOptions;
+}
+
+export function getQueryTypeChangeHandler(query: PromQuery, onChange: (update: PromQuery) => void) {
+  return (queryType: string) => {
+    if (queryType === 'instant') {
+      onChange({ ...query, instant: true, range: false, exemplar: false });
+    } else if (queryType === 'range') {
+      onChange({ ...query, instant: false, range: true });
+    } else {
+      onChange({ ...query, instant: true, range: true });
+    }
+  };
+}
 
 export const testIds = {
   extraFieldEditor: 'prom-editor-extra-field',

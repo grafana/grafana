@@ -1,11 +1,12 @@
 import { dateTime } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { TemplateSrvMock } from '../../../../features/templating/template_srv.mock';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 import { CustomVariableModel } from 'app/features/variables/types';
 import { of } from 'rxjs';
+
+import { TemplateSrvMock } from '../../../../features/templating/template_srv.mock';
 import { CloudWatchDatasource } from '../datasource';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export function setupMockedDataSource({ data = [], variables }: { data?: any; variables?: any } = {}) {
   let templateService = new TemplateSrvMock({
@@ -16,6 +17,8 @@ export function setupMockedDataSource({ data = [], variables }: { data?: any; va
   if (variables) {
     templateService = new TemplateSrv();
     templateService.init(variables);
+    templateService.getVariables = jest.fn().mockReturnValue(variables);
+    templateService.getVariableName = (name: string) => name;
   }
 
   const datasource = new CloudWatchDatasource(

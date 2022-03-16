@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -10,40 +9,6 @@ import (
 
 func (ss *SQLStore) addDashboardACLQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboardAclInfoList)
-}
-
-func (ss *SQLStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
-	return ss.UpdateDashboardACLCtx(ctx, dashboardID, items)
-}
-
-func (ss *SQLStore) UpdateDashboardACLCtx(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		// delete existing items
-		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
-		if err != nil {
-			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
-		}
-
-		for _, item := range items {
-			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardAclInfoMissing
-			}
-
-			if item.DashboardID == 0 {
-				return models.ErrDashboardPermissionDashboardEmpty
-			}
-
-			sess.Nullable("user_id", "team_id")
-			if _, err := sess.Insert(item); err != nil {
-				return err
-			}
-		}
-
-		// Update dashboard HasAcl flag
-		dashboard := models.Dashboard{HasAcl: true}
-		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
-		return err
-	})
 }
 
 // GetDashboardAclInfoList returns a list of permissions for a dashboard. They can be fetched from three

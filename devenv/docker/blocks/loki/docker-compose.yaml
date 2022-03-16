@@ -7,7 +7,7 @@
   promtail:
     image: grafana/promtail:latest
     volumes:
-      - ./docker/blocks/loki/config.yaml:/etc/promtail/docker-config.yaml
+      - ./docker/blocks/loki/promtail-config.yaml:/etc/promtail/docker-config.yaml
       - /var/log:/var/log
       - ../data/log:/var/log/grafana
     command:

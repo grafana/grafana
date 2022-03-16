@@ -61,6 +61,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveConfig) {
 			addLiveChannelMigrations(mg)
 		}
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardPreviews) {
+			addDashboardThumbsMigrations(mg)
+		}
 	}
 
 	ualert.RerunDashAlertMigration(mg)
@@ -73,6 +76,15 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
 			accesscontrol.AddTeamMembershipMigrations(mg)
+			accesscontrol.AddDashboardPermissionsMigrator(mg)
+		}
+	}
+	addQueryHistoryStarMigrations(mg)
+
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardComments) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationComments) {
+			addCommentGroupMigrations(mg)
+			addCommentMigrations(mg)
 		}
 	}
 }

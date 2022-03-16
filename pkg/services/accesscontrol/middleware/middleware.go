@@ -91,7 +91,7 @@ func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
 
 type OrgIDGetter func(c *models.ReqContext) (int64, error)
 
-func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db *sqlstore.SQLStore) func(web.Handler, OrgIDGetter, accesscontrol.Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db sqlstore.Store) func(web.Handler, OrgIDGetter, accesscontrol.Evaluator) web.Handler {
 	return func(fallback web.Handler, getTargetOrg OrgIDGetter, evaluator accesscontrol.Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
@@ -156,7 +156,8 @@ func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
 			return
 		}
 
-		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser,
+			accesscontrol.Options{ReloadCache: false})
 		if err != nil {
 			c.JsonApiErr(http.StatusForbidden, "", err)
 			return

@@ -41,7 +41,7 @@ import 'app/features/all';
 import { getScrollbarWidth } from '@grafana/ui';
 import { variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
-import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 import { configureStore } from './store/configureStore';
@@ -62,7 +62,6 @@ import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer'
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { AngularApp } from './angular';
 import { ModalManager } from './core/services/ModalManager';
 import { initWindowRuntime } from './features/runtime/init';
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
@@ -89,12 +88,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
-  angularApp: AngularApp;
-
-  constructor() {
-    this.angularApp = new AngularApp();
-  }
-
   async init() {
     try {
       setBackendSrv(backendSrv);
@@ -147,9 +140,6 @@ export class GrafanaApp {
       // init modal manager
       const modalManager = new ModalManager();
       modalManager.init();
-
-      // Init angular
-      this.angularApp.init();
 
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);

@@ -212,11 +212,11 @@ func (*testLicensingService) FeatureEnabled(feature string) bool {
 }
 
 type fakeLogger struct {
-	log.MultiLoggers
+	*log.ConcreteLogger
 }
 
-func (f fakeLogger) New(_ ...interface{}) log.MultiLoggers {
-	return log.MultiLoggers{}
+func (f fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
+	return &log.ConcreteLogger{}
 }
 
 func (f fakeLogger) Warn(_ string, _ ...interface{}) {

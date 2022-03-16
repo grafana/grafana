@@ -34,7 +34,7 @@ import {
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import addLabelToQuery from './add_label_to_query';
+import { addLabelToQuery } from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
@@ -72,7 +72,7 @@ export class PrometheusDatasource
   access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache = new LRU<string, string[]>(10);
+  metricsNameCache = new LRU<string, string[]>({ max: 10 });
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
@@ -225,7 +225,7 @@ export class PrometheusDatasource
   }
 
   targetContainsTemplate(target: PromQuery) {
-    return this.templateSrv.variableExists(target.expr);
+    return this.templateSrv.containsTemplate(target.expr);
   }
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
@@ -904,11 +904,11 @@ export class PrometheusDatasource
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
-        expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
+        expression = `histogram_quantile(0.95, sum(rate(${expression}[$__rate_interval])) by (le))`;
         break;
       }
       case 'ADD_RATE': {
-        expression = `rate(${expression}[5m])`;
+        expression = `rate(${expression}[$__rate_interval])`;
         break;
       }
       case 'ADD_SUM': {
@@ -949,15 +949,15 @@ export class PrometheusDatasource
 
   enhanceExprWithAdHocFilters(expr: string) {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    let finalQuery = expr;
-    finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+
+    const finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
         value = prometheusRegularEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
-    }, finalQuery);
+    }, expr);
     return finalQuery;
   }
 
@@ -986,6 +986,14 @@ export class PrometheusDatasource
       expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
       interval: this.templateSrv.replace(target.interval, variables),
     };
+  }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
   }
 }
 

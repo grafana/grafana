@@ -12,15 +12,16 @@ load(
     'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
+    'build_frontend_package_step',
     'build_plugins_step',
     'package_step',
     'grafana_server_step',
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
-    'build_frontend_docs_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
+    'publish_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -54,6 +55,11 @@ load(
     'drone_change_template',
 )
 
+load(
+    'scripts/drone/pipelines/docs.star',
+    'docs_pipelines',
+)
+
 ver_mode = 'main'
 
 def get_steps(edition, is_downstream=False):
@@ -74,6 +80,7 @@ def get_steps(edition, is_downstream=False):
         enterprise_downstream_step(edition=edition),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
@@ -93,7 +100,7 @@ def get_steps(edition, is_downstream=False):
             test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64'], is_downstream=is_downstream),
         ])
 
     # Insert remaining steps
@@ -109,10 +116,11 @@ def get_steps(edition, is_downstream=False):
         store_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         frontend_metrics_step(edition=edition),
-        build_frontend_docs_step(edition=edition),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', ubuntu=False),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', ubuntu=True)
     ])
 
     if include_enterprise2:
@@ -127,7 +135,7 @@ def get_steps(edition, is_downstream=False):
     if include_enterprise2:
         edition2 = 'enterprise2'
         build_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64'], is_downstream=is_downstream),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64'], is_downstream=is_downstream),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode)
         ])
@@ -168,6 +176,7 @@ def main_pipelines(edition):
         integration_test_steps.append(benchmark_ldap_step())
 
     pipelines = [
+        docs_pipelines(edition, ver_mode, trigger),
         pipeline(
             name='main-test', edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,

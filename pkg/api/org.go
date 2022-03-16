@@ -18,17 +18,17 @@ import (
 )
 
 // GET /api/org
-func GetCurrentOrg(c *models.ReqContext) response.Response {
-	return getOrgHelper(c.Req.Context(), c.OrgId)
+func (hs *HTTPServer) GetCurrentOrg(c *models.ReqContext) response.Response {
+	return hs.getOrgHelper(c.Req.Context(), c.OrgId)
 }
 
 // GET /api/orgs/:orgId
-func GetOrgByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgByID(c *models.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	return getOrgHelper(c.Req.Context(), orgId)
+	return hs.getOrgHelper(c.Req.Context(), orgId)
 }
 
 // GET /api/orgs/name/:name
@@ -57,10 +57,10 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 	return response.JSON(200, &result)
 }
 
-func getOrgHelper(ctx context.Context, orgID int64) response.Response {
+func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Response {
 	query := models.GetOrgByIdQuery{Id: orgID}
 
-	if err := sqlstore.GetOrgById(ctx, &query); err != nil {
+	if err := hs.SQLStore.GetOrgById(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Organization not found", err)
 		}
@@ -207,7 +207,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 	return response.Success("Organization deleted")
 }
 
-func SearchOrgs(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgs(c *models.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -222,7 +222,7 @@ func SearchOrgs(c *models.ReqContext) response.Response {
 		Limit: perPage,
 	}
 
-	if err := sqlstore.SearchOrgs(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.SearchOrgs(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to search orgs", err)
 	}
 

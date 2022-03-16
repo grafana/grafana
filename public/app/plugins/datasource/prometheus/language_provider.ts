@@ -63,10 +63,17 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
 function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
   const item: CompletionItem = { label: metric };
   if (metadata && metadata[metric]) {
-    const { type, help } = metadata[metric];
-    item.documentation = `${type.toUpperCase()}: ${help}`;
+    item.documentation = getMetadataString(metric, metadata);
   }
   return item;
+}
+
+export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  const { type, help } = metadata[metric];
+  return `${type.toUpperCase()}: ${help}`;
 }
 
 const PREFIX_DELIMITER_REGEX =
@@ -90,7 +97,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private labelsCache = new LRU<string, Record<string, string[]>>(10);
+  private labelsCache = new LRU<string, Record<string, string[]>>({ max: 10 });
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -133,10 +140,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // TODO #33976: make those requests parallel
     await this.fetchLabels();
     this.metrics = (await this.fetchLabelValues('__name__')) || [];
-    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    await this.loadMetricsMetadata();
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
     return [];
   };
+
+  async loadMetricsMetadata() {
+    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+  }
 
   getLabelKeys(): string[] {
     return this.labelKeys;
@@ -460,7 +471,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getTimeRangeParams();
-    const url = `/api/v1/label/${key}/values`;
+    const url = `/api/v1/label/${this.datasource.interpolateString(key)}/values`;
     return await this.request(url, [], params);
   };
 
@@ -491,10 +502,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param withName
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getTimeRangeParams();
     const urlParams = {
       ...range,
-      'match[]': name,
+      'match[]': interpolatedName,
     };
     const url = `/api/v1/series`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
@@ -502,7 +514,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
     const cacheParams = new URLSearchParams({
-      'match[]': name,
+      'match[]': interpolatedName,
       start: roundSecToMin(parseInt(range.start, 10)).toString(),
       end: roundSecToMin(parseInt(range.end, 10)).toString(),
       withName: withName ? 'true' : 'false',

@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -83,11 +84,13 @@ type SessionCache interface {
 }
 
 func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
-	return &cloudWatchExecutor{
+	cwe := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
 		sessions: sessions,
 	}
+	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
+	return cwe
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -158,9 +161,58 @@ type cloudWatchExecutor struct {
 	im       instancemgmt.InstanceManager
 	cfg      *setting.Cfg
 	sessions SessionCache
+
+	resourceHandler backend.CallResourceHandler
 }
 
-func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
+func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return e.resourceHandler.CallResource(ctx, req, sender)
+}
+
+func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext) error {
+	namespace := "AWS/Billing"
+	metric := "EstimatedCharges"
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  &namespace,
+		MetricName: &metric,
+	}
+	_, err := e.listMetrics(pluginCtx, defaultRegion, params)
+	return err
+}
+
+func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx backend.PluginContext) error {
+	logsClient, err := e.getCWLogsClient(pluginCtx, defaultRegion)
+	if err != nil {
+		return err
+	}
+	_, err = e.handleDescribeLogGroups(ctx, logsClient, simplejson.NewFromAny(map[string]interface{}{"limit": "1"}))
+	return err
+}
+
+func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	status := backend.HealthStatusOk
+	metricsTest := "Successfully queried the CloudWatch metrics API."
+	logsTest := "Successfully queried the CloudWatch logs API."
+
+	err := e.checkHealthMetrics(req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		metricsTest = fmt.Sprintf("CloudWatch metrics query failed: %s", err.Error())
+	}
+
+	err = e.checkHealthLogs(ctx, req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  status,
+		Message: fmt.Sprintf("1. %s\n2. %s", metricsTest, logsTest),
+	}, nil
+}
+
+func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region string) (*session.Session, error) {
 	dsInfo, err := e.getDSInfo(pluginCtx)
 	if err != nil {
 		return nil, err
@@ -171,7 +223,8 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 	}
 
 	return e.sessions.GetSession(awsds.SessionConfig{
-		HTTPClient: dsInfo.HTTPClient,
+		// https://github.com/grafana/grafana/issues/46365
+		// HTTPClient: dsInfo.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
 			Profile:       dsInfo.profile,
 			Region:        region,
@@ -187,16 +240,16 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 	})
 }
 
-func (e *cloudWatchExecutor) getCWClient(region string, pluginCtx backend.PluginContext) (cloudwatchiface.CloudWatchAPI, error) {
-	sess, err := e.newSession(region, pluginCtx)
+func (e *cloudWatchExecutor) getCWClient(pluginCtx backend.PluginContext, region string) (cloudwatchiface.CloudWatchAPI, error) {
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
 	return NewCWClient(sess), nil
 }
 
-func (e *cloudWatchExecutor) getCWLogsClient(region string, pluginCtx backend.PluginContext) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	sess, err := e.newSession(region, pluginCtx)
+func (e *cloudWatchExecutor) getCWLogsClient(pluginCtx backend.PluginContext, region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -206,8 +259,8 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string, pluginCtx backend.Pl
 	return logsClient, nil
 }
 
-func (e *cloudWatchExecutor) getEC2Client(region string, pluginCtx backend.PluginContext) (ec2iface.EC2API, error) {
-	sess, err := e.newSession(region, pluginCtx)
+func (e *cloudWatchExecutor) getEC2Client(pluginCtx backend.PluginContext, region string) (ec2iface.EC2API, error) {
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -215,9 +268,9 @@ func (e *cloudWatchExecutor) getEC2Client(region string, pluginCtx backend.Plugi
 	return newEC2Client(sess), nil
 }
 
-func (e *cloudWatchExecutor) getRGTAClient(region string, pluginCtx backend.PluginContext) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
+func (e *cloudWatchExecutor) getRGTAClient(pluginCtx backend.PluginContext, region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
-	sess, err := e.newSession(region, pluginCtx)
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -283,10 +336,8 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 
 	var result *backend.QueryDataResponse
 	switch queryType {
-	case "metricFindQuery":
-		result, err = e.executeMetricFindQuery(ctx, model, q, req.PluginContext)
 	case "annotationQuery":
-		result, err = e.executeAnnotationQuery(ctx, model, q, req.PluginContext)
+		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, req)
 	case "timeSeriesQuery":
@@ -319,7 +370,7 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 			model.Set("region", dsInfo.region)
 		}
 
-		logsClient, err := e.getCWLogsClient(region, req.PluginContext)
+		logsClient, err := e.getCWLogsClient(req.PluginContext, region)
 		if err != nil {
 			return nil, err
 		}

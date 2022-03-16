@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -22,11 +21,7 @@ import (
 type TestingApiForkingService interface {
 	RouteEvalQueries(*models.ReqContext) response.Response
 	RouteTestRuleConfig(*models.ReqContext) response.Response
-}
-
-type TestingApiService interface {
-	RouteEvalQueries(*models.ReqContext, apimodels.EvalQueriesPayload) response.Response
-	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
+	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
 }
 
 func (f *ForkedTestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response {
@@ -45,10 +40,19 @@ func (f *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.
 	return f.forkRouteTestRuleConfig(ctx, conf)
 }
 
+func (f *ForkedTestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+	conf := apimodels.TestRulePayload{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRouteTestRuleGrafanaConfig(ctx, conf)
+}
+
 func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
+			api.authorize(http.MethodPost, "/api/v1/eval"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/eval",
@@ -58,6 +62,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 		)
 		group.Post(
 			toMacaronPath("/api/v1/rule/test/{Recipient}"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/{Recipient}"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/test/{Recipient}",
@@ -65,5 +70,15 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 				m,
 			),
 		)
-	}, middleware.ReqSignedIn)
+		group.Post(
+			toMacaronPath("/api/v1/rule/test/grafana"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/grafana"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/rule/test/grafana",
+				srv.RouteTestRuleGrafanaConfig,
+				m,
+			),
+		)
+	})
 }

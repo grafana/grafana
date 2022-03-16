@@ -269,8 +269,8 @@ Creates a new library element.
 
 JSON Body schema:
 
-- **folderId** – ID of the folder where the library element is stored.
-- **name** – Name of the library element.
+- **folderId** – Optional, the ID of the folder where the library element is stored.
+- **name** – Optional, the name of the library element.
 - **model** – The JSON model for the library element.
 - **kind** – Kind of element to create, Use `1` for library panels or `2` for library variables.
 - **uid** – Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).

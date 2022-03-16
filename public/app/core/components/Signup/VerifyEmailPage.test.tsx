@@ -1,11 +1,13 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { render } from 'test/redux-rtl';
 import userEvent from '@testing-library/user-event';
 
 import { VerifyEmailPage } from './VerifyEmailPage';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     post: postMock,
   }),
