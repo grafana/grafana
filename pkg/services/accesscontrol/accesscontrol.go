@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -191,4 +192,16 @@ func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, 
 	}
 
 	return result
+}
+
+func ManagedUserRoleName(userID int64) string {
+	return fmt.Sprintf("managed:users:%d:permissions", userID)
+}
+
+func ManagedTeamRoleName(teamID int64) string {
+	return fmt.Sprintf("managed:teams:%d:permissions", teamID)
+}
+
+func ManagedBuiltInRoleName(builtInRole string) string {
+	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
 }
