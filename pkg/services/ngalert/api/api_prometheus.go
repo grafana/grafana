@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -30,12 +29,6 @@ type PrometheusSrv struct {
 
 const queryIncludeInternalLabels = "includeInternalLabels"
 
-// grafanaLabels are labels that grafana automatically include as part of the labelset.
-var grafanaLabels = map[string]struct{}{
-	ngmodels.RuleUIDLabel:      {},
-	ngmodels.NamespaceUIDLabel: {},
-}
-
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
 	alertResponse := apimodels.AlertResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -45,6 +38,12 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			Alerts: []*apimodels.Alert{},
 		},
 	}
+
+	var labelOptions []ngmodels.LabelOption
+	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
+	}
+
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
 		valString := ""
@@ -52,12 +51,8 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			valString = alertState.LastEvaluationString
 		}
 
-		if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
-			removeGrafanaLabels(alertState.Labels)
-		}
-
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
-			Labels:      map[string]string(alertState.Labels),
+			Labels:      alertState.GetLabels(labelOptions...),
 			Annotations: alertState.Annotations,
 			State:       alertState.State.String(),
 			ActiveAt:    &startsAt,
@@ -83,6 +78,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		Data: apimodels.RuleDiscovery{
 			RuleGroups: []*apimodels.RuleGroup{},
 		},
+	}
+
+	var labelOptions []ngmodels.LabelOption
+	if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
+		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
 	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
@@ -169,7 +169,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 		newRule := apimodels.Rule{
 			Name:           rule.Title,
-			Labels:         rule.Labels,
+			Labels:         rule.GetLabels(labelOptions...),
 			Health:         "ok",
 			Type:           apiv1.RuleTypeAlerting,
 			LastEvaluation: time.Time{},
@@ -182,13 +182,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				valString = alertState.LastEvaluationString
 			}
 
-			if !c.QueryBoolWithDefault(queryIncludeInternalLabels, false) {
-				removeGrafanaLabels(map[string]string(newRule.Labels))
-				removeGrafanaLabels(alertState.Labels)
-			}
-
 			alert := &apimodels.Alert{
-				Labels:      map[string]string(alertState.Labels),
+				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
 				State:       alertState.State.String(),
 				ActiveAt:    &activeAt,
@@ -271,13 +266,4 @@ func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
 	}
 
 	return err.Error()
-}
-
-// removeGrafanaLabels removes from the label set the Grafana internal labels.
-func removeGrafanaLabels(labels data.Labels) {
-	for k := range labels {
-		if _, ok := grafanaLabels[k]; ok {
-			delete(labels, k)
-		}
-	}
 }
