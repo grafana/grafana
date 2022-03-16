@@ -23,6 +23,7 @@ type Role struct {
 	DisplayName string `json:"displayName"`
 	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
+	Hidden      bool   `json:"hidden"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -65,6 +66,7 @@ type RoleDTO struct {
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 	Delegatable *bool        `json:"delegatable,omitempty"`
+	Hidden      bool         `json:"hidden,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
@@ -82,6 +84,7 @@ func (r RoleDTO) Role() Role {
 		DisplayName: r.DisplayName,
 		Group:       r.Group,
 		Description: r.Description,
+		Hidden:      r.Hidden,
 		Updated:     r.Updated,
 		Created:     r.Created,
 	}
@@ -341,16 +344,44 @@ const (
 
 	// Dashboard scopes
 	ScopeDashboardsAll = "dashboards:*"
+
+	// Alert scopes are divided into two groups. The internal (to Grafana) and the external ones.
+	// For the Grafana ones, given we have ACID control we're able to provide better granularity by defining CRUD options.
+	// For the external ones, we only have read and write permissions due to the lack of atomicity control of the external system.
+
+	// Alerting rules actions
+	ActionAlertingRuleCreate = "alert.rules:create"
+	ActionAlertingRuleRead   = "alert.rules:read"
+	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleDelete = "alert.rules:delete"
+
+	// Alerting instances (+silences) actions
+	ActionAlertingInstanceCreate = "alert.instances:create"
+	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceRead   = "alert.instances:read"
+
+	// Alerting Notification policies actions
+	ActionAlertingNotificationsCreate = "alert.notifications:create"
+	ActionAlertingNotificationsRead   = "alert.notifications:read"
+	ActionAlertingNotificationsUpdate = "alert.notifications:update"
+	ActionAlertingNotificationsDelete = "alert.notifications:delete"
+
+	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
+	ActionAlertingRuleExternalRead  = "alert.rules.external:read"
+
+	// External alerting instances actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingInstancesExternalWrite = "alert.instances.external:write"
+	ActionAlertingInstancesExternalRead  = "alert.instances.external:read"
+
+	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
+	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 )
 
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
-
-	// Folder scopes
-
-	// Datasource scopes
-
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

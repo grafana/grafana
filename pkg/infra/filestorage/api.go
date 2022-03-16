@@ -15,6 +15,7 @@ var (
 	ErrPathInvalid           = errors.New("path is invalid")
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
 	Delimiter                = "/"
+	DirectoryMimeType        = "directory"
 	multipleDelimiters       = regexp.MustCompile(`/+`)
 )
 
@@ -30,6 +31,10 @@ type File struct {
 	FileMetadata
 }
 
+func (f *File) IsFolder() bool {
+	return f.MimeType == DirectoryMimeType
+}
+
 type FileMetadata struct {
 	Name       string
 	FullPath   string
@@ -38,12 +43,6 @@ type FileMetadata struct {
 	Created    time.Time
 	Size       int64
 	Properties map[string]string
-}
-
-type ListFilesResponse struct {
-	Files    []FileMetadata
-	HasMore  bool
-	LastPath string
 }
 
 type Paging struct {
@@ -133,8 +132,17 @@ func (f *PathFilters) IsAllowed(path string) bool {
 	return false
 }
 
+type ListResponse struct {
+	Files    []*File
+	HasMore  bool
+	LastPath string
+}
+
 type ListOptions struct {
-	Recursive bool
+	Recursive    bool
+	WithFiles    bool
+	WithFolders  bool
+	WithContents bool
 	*PathFilters
 }
 
@@ -143,8 +151,8 @@ type FileStorage interface {
 	Delete(ctx context.Context, path string) error
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
-	ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error)
-	ListFolders(ctx context.Context, folderPath string, options *ListOptions) ([]FileMetadata, error)
+	// List lists only files without content by default
+	List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error)
 
 	CreateFolder(ctx context.Context, path string) error
 	DeleteFolder(ctx context.Context, path string) error
