@@ -28,7 +28,7 @@ func (t *nestedTree) getRoot(path string) (filestorage.FileStorage, string) {
 		return nil, ""
 	}
 
-	rootKey, path := splitFirstSegment(path)
+	rootKey, path := SplitFirstSegment(path)
 	root, ok := t.lookup[rootKey]
 	if !ok || root == nil {
 		return nil, path // not found or not ready
