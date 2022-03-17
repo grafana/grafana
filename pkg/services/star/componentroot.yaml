@@ -1,0 +1,4 @@
+groups:
+  - domain
+owners:
+  - "@grafana/backend-platform"

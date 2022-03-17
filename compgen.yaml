@@ -1,0 +1,18 @@
+groups:
+  domain:
+    must:
+      ExportsServiceInterface:
+        # Require that a `type Service interface` exists within a component
+        ruletype: goident
+        name: Service
+        kind: interface
+      ProvidesService:
+        # Require that a `func ProvideService` must exist within a component
+        ruletype: goident
+        name: ProvideService
+        kind: func
+      ContainsStore:
+        # Require that a `type store interface` exists within a component
+        ruletype: goident
+        name: store
+        kind: interface
