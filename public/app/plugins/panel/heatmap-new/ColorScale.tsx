@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2, VizTooltipContainer } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 type Props = {
   colorPalette: string[];
@@ -17,17 +17,24 @@ type HoverState = {
   value: number;
 };
 
+type CursorState = {
+  xPosition: number;
+  yPosition: number;
+};
+
+const OFFSET = 8;
+
 export const ColorScale = ({ colorPalette, min, max, display }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   const [hover, setHover] = useState<HoverState>({ isShown: false, value: 0 });
-  const [cursor, setCursor] = useState({ clientX: 0, clientY: 0 });
+  const [cursor, setCursor] = useState<CursorState>({ xPosition: 0, yPosition: 0 });
 
   useEffect(() => {
     setColors(getGradientStops({ colorArray: colorPalette }));
   }, [colorPalette]);
 
   const theme = useTheme2();
-  const styles = getStyles(theme, colors);
+  const styles = getStyles(theme, colors, hover, cursor);
 
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
@@ -35,7 +42,7 @@ export const ColorScale = ({ colorPalette, min, max, display }: Props) => {
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
     setHover({ isShown: true, value: scaleValue });
-    setCursor({ clientX: event.clientX, clientY: event.clientY });
+    setCursor({ xPosition: event.clientX, yPosition: event.clientY });
   };
 
   const onScaleMouseLeave = () => {
@@ -44,21 +51,30 @@ export const ColorScale = ({ colorPalette, min, max, display }: Props) => {
 
   return (
     <div className={styles.scaleWrapper}>
-      <div>
-        <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
-          {display && hover.isShown && (
-            <VizTooltipContainer position={{ x: cursor.clientX, y: cursor.clientY }} offset={{ x: 10, y: 10 }}>
-              {display(hover.value)}
-            </VizTooltipContainer>
-          )}
-        </div>
-        {display && (
+      <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+        {display && hover.isShown && (
           <div>
-            <span>{display(min)}</span>
-            <span className={styles.maxDisplay}>{display(max)}</span>
+            <div
+              className={styles.tooltip}
+              style={{
+                display: 'block',
+                position: 'fixed',
+                top: cursor.yPosition + OFFSET,
+                left: cursor.xPosition + OFFSET,
+              }}
+            >
+              ≈{display(hover.value)}
+            </div>
+            <div className={styles.follower} />
           </div>
         )}
       </div>
+      {display && (
+        <div className={styles.count}>
+          <span>{display(min)}</span>
+          <span className={styles.maxCount}>{display(max)}</span>
+        </div>
+      )}
     </div>
   );
 };
@@ -94,20 +110,46 @@ const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; st
   return [...gradientStops];
 };
 
-const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
+const getStyles = (theme: GrafanaTheme2, colors: string[], hover: HoverState, cursor: CursorState) => ({
   scaleWrapper: css`
-    margin: 0 16px;
-    padding-top: 4px;
+    margin-left: 25px;
     width: 100%;
     max-width: 300px;
     color: #ccccdc;
     font-size: 11px;
+    opacity: 1;
   `,
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
-    height: 6px;
+    height: 12px;
+    overflow: hidden;
+    cursor: ew-resize;
   `,
-  maxDisplay: css`
+  maxCount: css`
     float: right;
+    margin-right: -3px;
+  `,
+  count: css`
+    ${hover.isShown &&
+    `
+      opacity: 0.6;
+      transition: 0.3s;
+      `}
+  `,
+  tooltip: css`
+    font-size: 11px;
+  `,
+  follower: css`
+    position: fixed;
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    pointer-events: none;
+    z-index: 10000;
+    border: 2px solid white;
+    transition: all 100ms ease-out;
+    top: ${cursor.yPosition}px;
+    left: ${cursor.xPosition}px;
   `,
 });
