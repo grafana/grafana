@@ -12,7 +12,8 @@ import (
 
 var (
 	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
-	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an Alertmanager configuration")
+	ErrNoAlertmanagerConfiguration        = fmt.Errorf("could not find an Alertmanager configuration")
+	ErrWrongAlertmanagerConfigurationHash = fmt.Errorf("the passed configuration hash does not match the latest hash")
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -64,6 +65,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+			ConfigurationHash:         cmd.ConfigurationHash,
 			ConfigurationVersion:      cmd.ConfigurationVersion,
 			Default:                   cmd.Default,
 			OrgID:                     cmd.OrgID,
@@ -77,5 +79,33 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		}
 
 		return nil
+	})
+}
+
+func (st *DBstore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		config := models.AlertConfiguration{
+			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+			ConfigurationHash:         cmd.ConfigurationHash,
+			ConfigurationVersion:      cmd.ConfigurationVersion,
+			Default:                   cmd.Default,
+			OrgID:                     cmd.OrgID,
+		}
+		rows, err := sess.Table("alert_configuration").Where(`
+			EXISTS (
+				SELECT 1 
+				FROM alert_configuration 
+				WHERE 
+					org_id = ? 
+				AND 
+					id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+				AND 
+					configuration_hash = ?
+			)`,
+			cmd.OrgID, cmd.OrgID, cmd.FetechedConfigurationHash).Insert(config)
+		if rows == 0 {
+			return ErrWrongAlertmanagerConfigurationHash
+		}
+		return err
 	})
 }

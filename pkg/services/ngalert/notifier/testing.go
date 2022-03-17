@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -65,6 +66,20 @@ func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 	}
 
 	return nil
+}
+
+func (f *FakeConfigStore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	if config, exists := f.configs[cmd.OrgID]; exists && config.ConfigurationHash == cmd.FetechedConfigurationHash {
+		f.configs[cmd.OrgID] = &models.AlertConfiguration{
+			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+			OrgID:                     cmd.OrgID,
+			ConfigurationHash:         cmd.ConfigurationHash,
+			ConfigurationVersion:      "v1",
+			Default:                   cmd.Default,
+		}
+		return nil
+	}
+	return errors.New("config not found or hash not valid")
 }
 
 type FakeOrgStore struct {
