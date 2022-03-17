@@ -8,9 +8,10 @@ import (
 
 // HTTPStorageService passes raw HTTP requests to a well typed storage service
 type HTTPStorageService interface {
-	Browse(c *models.ReqContext) response.Response
-	Upload(c *models.ReqContext) response.Response
+	List(c *models.ReqContext) response.Response
+	Read(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
+	Upload(c *models.ReqContext) response.Response
 }
 
 type httpStorage struct {
@@ -34,6 +35,17 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	})
 }
 
+func (s *httpStorage) Read(c *models.ReqContext) response.Response {
+	action := "Read"
+	scope, path := getPathAndScope(c)
+
+	return response.JSON(200, map[string]string{
+		"action": action,
+		"scope":  scope,
+		"path":   path,
+	})
+}
+
 func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
 	action := "Delete"
 	scope, path := getPathAndScope(c)
@@ -45,7 +57,7 @@ func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
 	})
 }
 
-func (s *httpStorage) Browse(c *models.ReqContext) response.Response {
+func (s *httpStorage) List(c *models.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path := params["*"]
 	frame, err := s.store.List(c.Req.Context(), c.SignedInUser, path)
