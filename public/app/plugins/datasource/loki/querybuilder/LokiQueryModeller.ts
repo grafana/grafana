@@ -27,8 +27,13 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
 
   renderQuery(query: LokiVisualQuery) {
     let queryString = `${this.renderLabels(query.labels)}`;
-    queryString = this.renderOperations(queryString, query.operations);
-    queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
+    try {
+      queryString = this.renderOperations(queryString, query.operations);
+      queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
+    } catch (err) {
+      // TODO: For now we just log it
+      console.error(err);
+    }
     return queryString;
   }
 

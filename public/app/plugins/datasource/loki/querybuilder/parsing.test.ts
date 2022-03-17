@@ -208,6 +208,69 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses quantile queries', () => {
+    expect(buildVisualQueryFromString(`quantile_over_time(0.99, {app="frontend"} [1m])`)).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: 'quantile_over_time', params: ['0.99', '1m'] }],
+      })
+    );
+  });
+
+  it('parses query with line format', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | line_format "abc"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: 'line_format', params: ['abc'] }],
+      })
+    );
+  });
+
+  it('parses query with label format', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: 'label_format', params: ['newLabel', '=', 'oldLabel'] }],
+      })
+    );
+  });
+
+  it('parses query with multiple label format', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | label_format newLabel=oldLabel, bar="baz"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'label_format', params: ['newLabel', '=', 'oldLabel'] },
+          { id: 'label_format', params: ['bar', '=', 'baz'] },
+        ],
+      })
+    );
+  });
 });
 
 function noErrors(query: LokiVisualQuery) {

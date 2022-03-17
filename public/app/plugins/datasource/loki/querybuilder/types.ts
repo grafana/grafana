@@ -48,6 +48,8 @@ export enum LokiOperationId {
   LabelFilter = '__label_filter',
   LabelFilterNoErrors = '__label_filter_no_errors',
   Unwrap = 'unwrap',
+  LineFormat = 'line_format',
+  LabelFormat = 'label_format',
 }
 
 export function getDefaultEmptyQuery(): LokiVisualQuery {

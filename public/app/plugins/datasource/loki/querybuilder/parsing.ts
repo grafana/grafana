@@ -65,6 +65,18 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    // Need to figure out JsonExpressionParser
+
+    case 'LineFormatExpr': {
+      visQuery.operations.push(getLineFormat(expr, node));
+      break;
+    }
+
+    case 'LabelFormatMatcher': {
+      visQuery.operations.push(getLabelFormat(expr, node));
+      break;
+    }
+
     case 'RangeAggregationExpr': {
       visQuery.operations.push(handleRangeAggregation(expr, node, context));
       break;
@@ -148,11 +160,10 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
     const label = filter.firstChild;
     const op = label.nextSibling;
     const value = op.nextSibling;
+    const params = [getString(expr, label), getString(expr, op), getString(expr, value).replace(/"/g, '')];
 
-    const params = [label, op, value].map((child) => getString(expr, child));
-
-    //Special case of bale filtering - no errors
-    if (params.join('') === `__error__=""`) {
+    //Special case of pipe filtering - no errors
+    if (params.join('') === `__error__=`) {
       return {
         id: '__label_filter_no_errors',
         params: [],
@@ -161,7 +172,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
 
     return {
       id,
-      params: params.map((v) => v.replace(/"/g, '')),
+      params,
     };
   }
 
@@ -178,17 +189,53 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
   }
 
   if (node.firstChild.name === 'IpLabelFilter') {
-    //currently not supported in visual editor
-    return;
+    //currently not supported in visual editor and it will throw error which will be logged in console
+    const filter = node.firstChild;
+    const label = filter.firstChild;
+    const op = label.nextSibling;
+    const ip = label.nextSibling;
+    const value = op.nextSibling;
+    return {
+      id,
+      params: [
+        getString(expr, label),
+        getString(expr, op),
+        getString(expr, ip).replace(/"/g, ''),
+        getString(expr, value).replace(/"/g, ''),
+      ],
+    };
   }
+}
+
+function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  const id = 'line_format';
+  const string = getString(expr, node.getChild('String')).replace(/"/g, '');
+
+  return {
+    id,
+    params: [string],
+  };
+}
+
+function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  const id = 'label_format';
+  const identifier = node.getChild('Identifier');
+  const op = identifier.nextSibling;
+  const value = op.nextSibling;
+
+  return {
+    id,
+    params: [getString(expr, identifier), getString(expr, op), getString(expr, value).replace(/"/g, '')],
+  };
 }
 
 function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild('RangeOp');
   const funcName = getString(expr, nameNode);
+  const number = node.getChild('Number');
+  const logExpr = node.getChild('LogRangeExpr');
+  const params = number !== null && number !== undefined ? [getString(expr, number)] : [];
 
-  const body = node.getChild('LogRangeExpr');
-  const params = [];
   let match = getString(expr, node).match(/\[(.+)\]/);
   if (match?.[1]) {
     params.push(match[1]);
@@ -199,7 +246,7 @@ function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context
     params,
   };
 
-  handleExpression(expr, body, context);
+  handleExpression(expr, logExpr, context);
 
   return op;
 }
@@ -208,10 +255,10 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const nameNode = node.getChild('VectorOp');
   let funcName = getString(expr, nameNode);
 
-  const body = node.getChild('MetricExpr');
+  const metricExpr = node.getChild('MetricExpr');
   const op: QueryBuilderOperation = { id: funcName, params: [] };
 
-  handleExpression(expr, body, context);
+  handleExpression(expr, metricExpr, context);
   return op;
 }
 
