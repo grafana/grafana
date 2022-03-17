@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import ResourcePicker from '.';
@@ -16,14 +17,6 @@ const singleResourceGroupSelectionURI = '/subscriptions/def-456/resourceGroups/d
 const singleResourceSelectionURI =
   '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
-const createResourcePickerDataMock = () => {
-  return createMockResourcePickerData({
-    getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
-    getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
-    getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
-  });
-};
-
 const noop: any = () => {};
 const defaultProps = {
   templateVariables: [],
@@ -36,7 +29,6 @@ const defaultProps = {
   onCancel: noop,
   onApply: noop,
   selectableEntryTypes: [],
-  resourcePickerData: createResourcePickerDataMock(),
 };
 
 describe('AzureMonitor ResourcePicker', () => {
@@ -119,7 +111,8 @@ describe('AzureMonitor ResourcePicker', () => {
         );
       });
 
-      screen.getByText('Primary Subscription');
+      const button = screen.getByText('Primary Subscription');
+      userEvent.click(button);
     });
   });
 });
