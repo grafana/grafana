@@ -1924,6 +1924,16 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       },
     },
     {
+      name: 'references',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [[]],
+      state: {
+        displayName: 'references',
+      },
+    },
+    {
       name: 'tags',
       type: 'other',
       config: {},

@@ -12,6 +12,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -60,6 +61,10 @@ func getAlertStatusColor(status model.AlertStatus) string {
 	return ColorAlertResolved
 }
 
+type NotificationChannel interface {
+	notify.Notifier
+	notify.ResolvedSender
+}
 type NotificationChannelConfig struct {
 	OrgID                 int64             // only used internally
 	UID                   string            `json:"uid"`

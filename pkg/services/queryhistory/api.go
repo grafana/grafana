@@ -14,7 +14,10 @@ import (
 func (s *QueryHistoryService) registerAPIEndpoints() {
 	s.RouteRegister.Group("/api/query-history", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(s.createHandler))
+		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(s.searchHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(s.deleteHandler))
+		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
+		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.patchCommentHandler))
 	})
 }
@@ -33,9 +36,27 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }
 
+func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Response {
+	query := SearchInQueryHistoryQuery{
+		DatasourceUIDs: c.QueryStrings("datasourceUid"),
+		SearchString:   c.Query("searchString"),
+		OnlyStarred:    c.QueryBoolWithDefault("onlyStarred", false),
+		Sort:           c.Query("sort"),
+		Page:           c.QueryInt("page"),
+		Limit:          c.QueryInt("limit"),
+	}
+
+	result, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get query history", err)
+	}
+
+	return response.JSON(http.StatusOK, QueryHistorySearchResponse{Result: result})
+}
+
 func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
-	if !util.IsValidShortUID(queryUID) {
+	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
@@ -52,7 +73,7 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 
 func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
-	if !util.IsValidShortUID(queryUID) {
+	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
@@ -64,6 +85,34 @@ func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response
 	query, err := s.PatchQueryCommentInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update comment of query in query history", err)
+	}
+
+	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
+}
+
+func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Response {
+	queryUID := web.Params(c.Req)[":uid"]
+	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
+		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
+	}
+
+	query, err := s.StarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to star query in query history", err)
+	}
+
+	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
+}
+
+func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Response {
+	queryUID := web.Params(c.Req)[":uid"]
+	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
+		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
+	}
+
+	query, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to unstar query in query history", err)
 	}
 
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})

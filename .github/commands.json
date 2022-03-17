@@ -209,5 +209,13 @@
     "removeFromProject":{
       "url":"https://github.com/grafana/grafana/projects/33"
     }
+  },
+  {
+    "type": "label",
+    "name": "team/grafana-partners",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/87"
+    }
   }
 ]

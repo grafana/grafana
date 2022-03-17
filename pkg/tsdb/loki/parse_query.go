@@ -1,7 +1,7 @@
 package loki
 
 import (
-	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -52,11 +52,25 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	return expr
 }
 
+func parseQueryType(jsonValue string) (QueryType, error) {
+	switch jsonValue {
+	case "instant":
+		return QueryTypeInstant, nil
+	case "range":
+		return QueryTypeRange, nil
+	case "":
+		// there are older queries stored in alerting that did not have queryType,
+		// those were range-queries
+		return QueryTypeRange, nil
+	default:
+		return QueryTypeRange, fmt.Errorf("invalid queryType: %s", jsonValue)
+	}
+}
+
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		model := &QueryModel{}
-		err := json.Unmarshal(query.JSON, model)
+		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
 		}
@@ -76,13 +90,21 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 
 		expr := interpolateVariables(model.Expr, interval, timeRange)
 
+		queryType, err := parseQueryType(model.QueryType)
+		if err != nil {
+			return nil, err
+		}
+
 		qs = append(qs, &lokiQuery{
 			Expr:         expr,
+			QueryType:    queryType,
 			Step:         step,
+			MaxLines:     model.MaxLines,
 			LegendFormat: model.LegendFormat,
 			Start:        start,
 			End:          end,
 			RefID:        query.RefID,
+			VolumeQuery:  model.VolumeQuery,
 		})
 	}
 

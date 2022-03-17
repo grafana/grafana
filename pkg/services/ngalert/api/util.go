@@ -202,6 +202,13 @@ func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.S
 	return nil
 }
 
+// conditionValidator returns a curried validateCondition that accepts only condition
+func conditionValidator(c *models.ReqContext, cache datasources.CacheService) func(ngmodels.Condition) error {
+	return func(condition ngmodels.Condition) error {
+		return validateCondition(c.Req.Context(), condition, c.SignedInUser, c.SkipCache, cache)
+	}
+}
+
 func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {

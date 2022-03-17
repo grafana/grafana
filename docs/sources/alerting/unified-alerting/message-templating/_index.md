@@ -125,7 +125,7 @@ Template to render entire notification message:
 {{ end }}
 ```
 
-### HTML in Message Templates
+### HTML in message templates
 
 HTML in alerting message templates is escaped. We do not support rendering of HTML in the resulting notification.
 

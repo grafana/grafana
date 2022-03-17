@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -14,23 +18,34 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	settings := setting.NewCfg()
+
 	folderService := &dashboards.FakeFolderService{}
 	defer folderService.AssertExpectations(t)
 
-	dashboardStore := &database.FakeDashboardStore{}
+	dashboardStore := &dashboards.FakeDashboardStore{}
 	defer dashboardStore.AssertExpectations(t)
 
-	hs := &HTTPServer{Cfg: settings, folderService: folderService, dashboardService: service.ProvideDashboardService(dashboardStore)}
+	features := featuremgmt.WithFeatures()
+	permissionsServices := accesscontrolmock.NewPermissionsServicesMock()
+
+	hs := &HTTPServer{
+		Cfg:                settings,
+		Features:           features,
+		folderService:      folderService,
+		permissionServices: permissionsServices,
+		dashboardService: service.ProvideDashboardService(
+			settings, dashboardStore, nil, features, permissionsServices,
+		),
+	}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrFolderNotFound).Twice()

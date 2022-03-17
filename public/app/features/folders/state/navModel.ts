@@ -29,6 +29,14 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     url: `${folder.url}/library-panels`,
   });
 
+  model.children.push({
+    active: false,
+    icon: 'bell',
+    id: `folder-alerting-${folder.uid}`,
+    text: 'Alert rules',
+    url: `${folder.url}/alerting`,
+  });
+
   if (folder.canAdmin) {
     model.children.push({
       active: false,
@@ -61,6 +69,7 @@ export function getLoadingNav(tabIndex: number): NavModel {
     canSave: true,
     canEdit: true,
     canAdmin: true,
+    canDelete: true,
     version: 0,
   });
 

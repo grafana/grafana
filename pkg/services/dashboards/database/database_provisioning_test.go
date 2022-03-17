@@ -5,9 +5,10 @@ package database
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -82,7 +83,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			require.NotNil(t, query.Result)
 
 			deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-			require.Nil(t, sqlStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
+			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
 			query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
 			err = sqlStore.GetDashboards(context.Background(), query)

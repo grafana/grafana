@@ -7,7 +7,9 @@ import (
 )
 
 var (
-	ErrQueryNotFound = errors.New("query in query history not found")
+	ErrQueryNotFound        = errors.New("query in query history not found")
+	ErrStarredQueryNotFound = errors.New("starred query not found")
+	ErrQueryAlreadyStarred  = errors.New("query was already starred")
 )
 
 type QueryHistory struct {
@@ -21,9 +23,24 @@ type QueryHistory struct {
 	Queries       *simplejson.Json
 }
 
+type QueryHistoryStar struct {
+	ID       int64  `xorm:"pk autoincr 'id'"`
+	QueryUID string `xorm:"query_uid"`
+	UserID   int64  `xorm:"user_id"`
+}
+
 type CreateQueryInQueryHistoryCommand struct {
 	DatasourceUID string           `json:"datasourceUid"`
 	Queries       *simplejson.Json `json:"queries"`
+}
+
+type SearchInQueryHistoryQuery struct {
+	DatasourceUIDs []string `json:"datasourceUids"`
+	SearchString   string   `json:"searchString"`
+	OnlyStarred    bool     `json:"onlyStarred"`
+	Sort           string   `json:"sort"`
+	Page           int      `json:"page"`
+	Limit          int      `json:"limit"`
 }
 
 type PatchQueryCommentInQueryHistoryCommand struct {
@@ -31,8 +48,8 @@ type PatchQueryCommentInQueryHistoryCommand struct {
 }
 
 type QueryHistoryDTO struct {
-	UID           string           `json:"uid"`
-	DatasourceUID string           `json:"datasourceUid"`
+	UID           string           `json:"uid" xorm:"uid"`
+	DatasourceUID string           `json:"datasourceUid" xorm:"datasource_uid"`
 	CreatedBy     int64            `json:"createdBy"`
 	CreatedAt     int64            `json:"createdAt"`
 	Comment       string           `json:"comment"`
@@ -43,6 +60,17 @@ type QueryHistoryDTO struct {
 // QueryHistoryResponse is a response struct for QueryHistoryDTO
 type QueryHistoryResponse struct {
 	Result QueryHistoryDTO `json:"result"`
+}
+
+type QueryHistorySearchResult struct {
+	TotalCount   int               `json:"totalCount"`
+	QueryHistory []QueryHistoryDTO `json:"queryHistory"`
+	Page         int               `json:"page"`
+	PerPage      int               `json:"perPage"`
+}
+
+type QueryHistorySearchResponse struct {
+	Result QueryHistorySearchResult `json:"result"`
 }
 
 // DeleteQueryFromQueryHistoryResponse is the response struct for deleting a query from query history

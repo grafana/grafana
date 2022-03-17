@@ -34,19 +34,41 @@ func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 
 // FakeRuleStore mocks the RuleStore of the scheduler.
 type FakeRuleStore struct {
-	t           *testing.T
-	mtx         sync.Mutex
+	t   *testing.T
+	mtx sync.Mutex
+	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64]map[string]map[string][]*models.AlertRule
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
 }
 
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
-func (f *FakeRuleStore) PutRule(_ context.Context, r *models.AlertRule) {
+func (f *FakeRuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
-		r,
+mainloop:
+	for _, r := range rules {
+		rgs, ok := f.Rules[r.OrgID]
+		if !ok {
+			f.Rules[r.OrgID] = map[string]map[string][]*models.AlertRule{}
+		}
+
+		rg, ok := rgs[r.RuleGroup]
+		if !ok {
+			f.Rules[r.OrgID][r.RuleGroup] = map[string][]*models.AlertRule{}
+		}
+
+		_, ok = rg[r.NamespaceUID]
+		if !ok {
+			f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{}
+		}
+		for idx, rulePtr := range f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] {
+			if rulePtr.UID == r.UID {
+				f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID][idx] = r
+				continue mainloop
+			}
+		}
+		f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = append(f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID], r)
 	}
 }
 
@@ -120,10 +142,25 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 
 	return nil
 }
+
 func (f *FakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
+
+	if _, ok := f.Rules[q.OrgID]; !ok {
+		return nil
+	}
+
+	var rules []*models.AlertRule
+	for ruleGroup := range f.Rules[q.OrgID] {
+		for _, storedRules := range f.Rules[q.OrgID][ruleGroup] {
+			rules = append(rules, storedRules...)
+		}
+	}
+
+	q.Result = rules
+
 	return nil
 }
 func (f *FakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.ListNamespaceAlertRulesQuery) error {
@@ -164,8 +201,24 @@ func (f *FakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.List
 
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
-	return nil, nil
+func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	namespacesMap := map[string]*models2.Folder{}
+
+	_, ok := f.Rules[orgID]
+	if !ok {
+		return namespacesMap, nil
+	}
+
+	for rg := range f.Rules[orgID] {
+		for namespace := range f.Rules[orgID][rg] {
+			namespacesMap[namespace] = &models2.Folder{}
+		}
+	}
+
+	return namespacesMap, nil
 }
 func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	return nil, nil
@@ -176,6 +229,27 @@ func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRul
 	f.RecordedOps = append(f.RecordedOps, *q)
 	if err := f.Hook(*q); err != nil {
 		return err
+	}
+
+	// If we have namespaces, we want to try and retrieve the list of rules stored.
+	if len(q.NamespaceUIDs) != 0 {
+		_, ok := f.Rules[q.OrgID]
+		if !ok {
+			return nil
+		}
+
+		var ruleGroups [][]string
+		for rg := range f.Rules[q.OrgID] {
+			for storedNamespace := range f.Rules[q.OrgID][rg] {
+				for _, namespace := range q.NamespaceUIDs {
+					if storedNamespace == namespace { // if they match, they should go in.
+						ruleGroups = append(ruleGroups, []string{rg, storedNamespace, storedNamespace})
+					}
+				}
+			}
+		}
+
+		q.Result = ruleGroups
 	}
 	return nil
 }
@@ -254,6 +328,10 @@ func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd UpdateRuleGroupCm
 
 	f.Rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = rules
 	return nil
+}
+
+func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
+	return fn(ctx)
 }
 
 type FakeInstanceStore struct {

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { RefObject } from 'react';
 import { Collapse } from '@grafana/ui';
-import { DataFrame, SplitOpen } from '@grafana/data';
+import { DataFrame, PanelData, SplitOpen } from '@grafana/data';
 import { TraceView } from './TraceView';
 import { ExploreId } from 'app/types/explore';
 
@@ -9,9 +9,11 @@ interface Props {
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
   scrollElement?: Element;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  queryResponse: PanelData;
 }
 export function TraceViewContainer(props: Props) {
-  const { dataFrames, splitOpenFn, exploreId, scrollElement } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfExploreViewRef, queryResponse } = props;
 
   return (
     <Collapse label="Trace View" isOpen>
@@ -20,6 +22,8 @@ export function TraceViewContainer(props: Props) {
         dataFrames={dataFrames}
         splitOpenFn={splitOpenFn}
         scrollElement={scrollElement}
+        topOfExploreViewRef={topOfExploreViewRef}
+        queryResponse={queryResponse}
       />
     </Collapse>
   );

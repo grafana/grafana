@@ -37,11 +37,11 @@
     "@types/lodash": "4.14.178",
     "@types/node": "16.11.22",
     "@types/uuid": "8.3.4",
-    "rollup": "2.67.1",
+    "rollup": "2.70.0",
     "rollup-plugin-copy": "3.4.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "webpack": "5.68.0"
+    "webpack": "5.70.0"
   },
   "types": "src/index.ts",
   "dependencies": {
@@ -55,7 +55,7 @@
     "blink-diff": "1.0.13",
     "chrome-remote-interface": "0.31.2",
     "commander": "8.3.0",
-    "cypress": "9.3.1",
+    "cypress": "9.5.1",
     "cypress-file-upload": "5.0.8",
     "devtools-protocol": "0.0.967529",
     "execa": "5.1.1",

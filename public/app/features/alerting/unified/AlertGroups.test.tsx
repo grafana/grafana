@@ -147,4 +147,19 @@ describe('AlertGroups', () => {
     expect(groups[0]).toHaveTextContent('No grouping');
     expect(groups[1]).toHaveTextContent('uniqueLabel=true');
   });
+
+  it('should combine multiple ungrouped groups', async () => {
+    mocks.api.fetchAlertGroups.mockImplementation(() => {
+      const groups = [
+        mockAlertGroup({ labels: {} }),
+        mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
+      ];
+      return Promise.resolve(groups);
+    });
+    renderAmNotifications();
+    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
+    const groups = ui.group.getAll();
+
+    expect(groups).toHaveLength(1);
+  });
 });

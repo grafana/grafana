@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -31,19 +30,20 @@ const (
 	serviceaccountIDTokensDetailPath = "/api/serviceaccounts/%v/tokens/%v" // #nosec G101
 )
 
-func createTokenforSA(t *testing.T, keyName string, orgID int64, saID int64, secondsToLive int64) *models.ApiKey {
+func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string, orgID int64, saID int64, secondsToLive int64) *models.ApiKey {
 	key, err := apikeygen.New(orgID, keyName)
 	require.NoError(t, err)
+
 	cmd := models.AddApiKeyCommand{
-		Name:             keyName,
-		Role:             "Viewer",
-		OrgId:            orgID,
-		Key:              key.HashedKey,
-		SecondsToLive:    secondsToLive,
-		ServiceAccountId: &saID,
-		Result:           &models.ApiKey{},
+		Name:          keyName,
+		Role:          "Viewer",
+		OrgId:         orgID,
+		Key:           key.HashedKey,
+		SecondsToLive: secondsToLive,
+		Result:        &models.ApiKey{},
 	}
-	err = bus.Dispatch(context.Background(), &cmd)
+
+	err = store.AddServiceAccountToken(context.Background(), saID, &cmd)
 	require.NoError(t, err)
 	return cmd.Result
 }
@@ -130,7 +130,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				bodyString = string(b)
 			}
 
-			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
 			actual := requestResponse(server, http.MethodPost, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -156,7 +156,8 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
-	svcmock := tests.ServiceAccountMock{}
+	svcMock := &tests.ServiceAccountMock{}
+	saStore := database.NewServiceAccountsStore(store)
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
@@ -216,11 +217,11 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			token := createTokenforSA(t, tc.keyName, sa.OrgId, sa.Id, 1)
+			token := createTokenforSA(t, saStore, tc.keyName, sa.OrgId, sa.Id, 1)
 
 			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.Id, token.Id)
 			bodyString := ""
-			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+			server, _ := setupTestServer(t, svcMock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -341,8 +342,8 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			endpoint := fmt.Sprintf(serviceaccountIDPath+"/tokens", sa.Id)
-			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, &saStoreMockTokens{saAPIKeys: tc.tokens})
+			endpoint := fmt.Sprintf(serviceAccountIDPath+"/tokens", sa.Id)
+			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, &saStoreMockTokens{saAPIKeys: tc.tokens})
 			actual := requestResponse(server, http.MethodGet, endpoint, http.NoBody)
 
 			actualCode := actual.Code

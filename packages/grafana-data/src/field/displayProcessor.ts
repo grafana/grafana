@@ -11,6 +11,7 @@ import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
+import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -168,7 +169,20 @@ function toStringProcessor(value: any): DisplayValue {
 
 export function getRawDisplayProcessor(): DisplayProcessor {
   return (value: any) => ({
-    text: `${value}`,
+    text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value, getCircularReplacer())}` : `${value}`,
     numeric: null as unknown as number,
   });
 }
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (_key: any, value: object | null) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};

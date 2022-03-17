@@ -1,7 +1,8 @@
 import { parser } from 'lezer-promql';
-import { SyntaxNode } from 'lezer-tree';
+import { SyntaxNode, TreeCursor } from '@lezer/common';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery } from './types';
+import { binaryScalarDefs } from './binaryScalarOperations';
 
 // Taken from template_srv, but copied so to not mess with the regex.index which is manipulated in the service
 /*
@@ -72,19 +73,27 @@ export function buildVisualQueryFromString(expr: string): Context {
     labels: [],
     operations: [],
   };
-  const context = {
+  const context: Context = {
     query: visQuery,
     errors: [],
   };
 
-  handleExpression(replacedExpr, node, context);
+  try {
+    handleExpression(replacedExpr, node, context);
+  } catch (err) {
+    // Not ideal to log it here, but otherwise we would lose the stack trace.
+    console.error(err);
+    context.errors.push({
+      text: err.message,
+    });
+  }
   return context;
 }
 
 interface ParsingError {
   text: string;
-  from: number;
-  to: number;
+  from?: number;
+  to?: number;
   parentType?: string;
 }
 
@@ -262,7 +271,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
-  updateFunctionArgs(expr, callArgs!, context, op);
+  updateFunctionArgs(expr, callArgs, context, op);
   // We add labels after params in the visual query editor.
   op.params.push(...labels);
 }
@@ -279,7 +288,10 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
  * @param context
  * @param op - We need the operation to add the params to as an additional context.
  */
-function updateFunctionArgs(expr: string, node: SyntaxNode, context: Context, op: QueryBuilderOperation) {
+function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Context, op: QueryBuilderOperation) {
+  if (!node) {
+    return;
+  }
   switch (node.name) {
     // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
     case 'Expr':
@@ -311,10 +323,13 @@ function updateFunctionArgs(expr: string, node: SyntaxNode, context: Context, op
   }
 }
 
-const operatorToOpName: Record<string, string> = {
-  '/': '__divide_by',
-  '*': '__multiply_by',
-};
+const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
+  acc[def.sign] = {
+    id: def.id,
+    comparison: def.comparison,
+  };
+  return acc;
+}, {} as Record<string, { id: string; comparison?: boolean }>);
 
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
@@ -327,18 +342,50 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
+  const binModifier = node.getChild('BinModifiers')?.getChild('Bool');
   const right = node.lastChild!;
 
-  const opName = operatorToOpName[op];
+  const opDef = operatorToOpName[op];
 
   const leftNumber = left.getChild('NumberLiteral');
   const rightNumber = right.getChild('NumberLiteral');
 
   if (leftNumber || rightNumber) {
     // Scalar case, just add operation.
-    const [num, query] = leftNumber ? [leftNumber, right] : [rightNumber, left];
-    visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, num), 10)] });
-    handleExpression(expr, query, context);
+    if (leftNumber) {
+      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+      //  if query starts with a number that isn't handled now.
+    } else {
+      handleExpression(expr, left, context);
+    }
+
+    if (rightNumber) {
+      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+      //  if query starts with a number that isn't handled now.
+      visQuery.operations.push(makeBinOp(opDef, expr, right, binModifier));
+    } else {
+      handleExpression(expr, right, context);
+    }
+    return;
+  }
+
+  const leftBinary = left.getChild('BinaryExpr');
+  const rightBinary = right.getChild('BinaryExpr');
+
+  if (leftBinary || rightBinary) {
+    // One of the sides is binary which means we don't really know if there is a query or just chained scalars. So
+    // we have to traverse a bit deeper to know
+    handleExpression(expr, left, context);
+
+    // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
+    // is a factor for a current binary operation. So we have to add it as an operation now.
+    const leftMostChild = getLeftMostChild(right);
+    if (leftMostChild?.name === 'NumberLiteral') {
+      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, binModifier));
+    }
+    // If we added the first number literal as operation here we still can continue and handle the rest as the first
+    // number will be just skipped.
+    handleExpression(expr, right, context);
   } else {
     // Two queries case so we create a binary query.
     visQuery.binaryQueries = visQuery.binaryQueries || [];
@@ -360,13 +407,29 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   }
 }
 
+function makeBinOp(
+  opDef: { id: string; comparison?: boolean },
+  expr: string,
+  numberNode: SyntaxNode,
+  binModifier?: SyntaxNode | null
+) {
+  const params: any[] = [parseFloat(getString(expr, numberNode))];
+  if (opDef.comparison) {
+    params.unshift(Boolean(binModifier));
+  }
+  return {
+    id: opDef.id,
+    params,
+  };
+}
+
 /**
  * Get the actual string of the expression. That is not stored in the tree so we have to get the indexes from the node
  * and then based on that get it from the expression.
  * @param expr
  * @param node
  */
-function getString(expr: string, node: SyntaxNode | null) {
+function getString(expr: string, node: SyntaxNode | TreeCursor | null) {
   if (!node) {
     return '';
   }
@@ -394,6 +457,18 @@ function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
     child = cur.childAfter(pos);
   }
   return values;
+}
+
+function getLeftMostChild(cur: SyntaxNode): SyntaxNode | null {
+  let child = cur;
+  while (true) {
+    if (child.firstChild) {
+      child = child.firstChild;
+    } else {
+      break;
+    }
+  }
+  return child;
 }
 
 // Debugging function for convenience.

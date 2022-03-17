@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -46,27 +47,71 @@ func (d *DashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard
 	return isParentFolderChanged, nil
 }
 
-func (d *DashboardStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
+func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error) {
 	if title == "" {
-		return nil, models.ErrDashboardIdentifierNotSet
+		return nil, models.ErrFolderTitleEmpty
 	}
 
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
 		}
 		if !has {
-			return models.ErrDashboardNotFound
+			return models.ErrFolderNotFound
 		}
 		dashboard.SetId(dashboard.Id)
 		dashboard.SetUid(dashboard.Uid)
 		return nil
 	})
-	return &dashboard, err
+	return models.DashboardToFolder(&dashboard), err
+}
+
+func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error) {
+	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Id: id}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return models.ErrFolderNotFound
+		}
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return models.DashboardToFolder(&dashboard), nil
+}
+
+func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error) {
+	if uid == "" {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
+	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Uid: uid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return models.ErrFolderNotFound
+		}
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return models.DashboardToFolder(&dashboard), nil
 }
 
 func (d *DashboardStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
@@ -192,6 +237,31 @@ func (d *DashboardStore) UnprovisionDashboard(ctx context.Context, id int64) err
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Where("dashboard_id = ?", id).Delete(&models.DashboardProvisioning{})
 		return err
+	})
+}
+
+func (d *DashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var result []*models.DashboardProvisioning
+
+		convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
+		for index, readerName := range cmd.ReaderNames {
+			convertedReaderNames[index] = readerName
+		}
+
+		err := sess.NotIn("name", convertedReaderNames...).Find(&result)
+		if err != nil {
+			return err
+		}
+
+		for _, deleteDashCommand := range result {
+			err := d.sqlStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+			if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
+				return err
+			}
+		}
+
+		return nil
 	})
 }
 
@@ -608,4 +678,15 @@ func EnsureTagsExist(sess *sqlstore.DBSession, tags []*models.Tag) ([]*models.Ta
 	}
 
 	return tags, nil
+}
+
+func (d *DashboardStore) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var dashboards = make([]*models.Dashboard, 0)
+		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + d.sqlStore.Dialect.BooleanStr(false)
+
+		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
+		query.Result = dashboards
+		return err
+	})
 }

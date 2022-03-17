@@ -10,6 +10,7 @@ import exploreReducers from 'app/features/explore/state/main';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
+import invitesReducers from 'app/features/invites/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
@@ -18,6 +19,7 @@ import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/s
 import panelsReducers from 'app/features/panel/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
+import searchPageReducers from 'app/features/search/page/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -31,12 +33,14 @@ const rootReducers = {
   ...usersReducers,
   ...serviceAccountsReducer,
   ...userReducers,
+  ...invitesReducers,
   ...organizationReducers,
   ...ldapReducers,
   ...importDashboardReducers,
   ...panelEditorReducers,
   ...panelsReducers,
   ...templatingReducers,
+  ...searchPageReducers,
   plugins: pluginsReducer,
 };
 

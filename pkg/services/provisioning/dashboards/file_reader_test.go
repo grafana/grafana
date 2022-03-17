@@ -91,12 +91,11 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 }
 
 func TestDashboardFileReader(t *testing.T) {
-	logger := log.New("test.logger")
+	logger := log.New("test-logger")
 	cfg := &config{}
 
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
-
 	setup := func() {
 		bus.ClearBusHandlers()
 		bus.AddHandler("test", mockGetDashboardQuery)
@@ -364,8 +363,10 @@ func TestDashboardFileReader(t *testing.T) {
 				"folder": defaultDashboards,
 			},
 		}
+		r, err := NewDashboardFileReader(cfg, logger, nil)
+		require.NoError(t, err)
 
-		_, err := getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
+		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
 		require.Equal(t, err, ErrFolderNameMissing)
 	})
 
@@ -380,9 +381,12 @@ func TestDashboardFileReader(t *testing.T) {
 				"folder": defaultDashboards,
 			},
 		}
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
 
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Once()
-		_, err := getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
+		r, err := NewDashboardFileReader(cfg, logger, nil)
+		require.NoError(t, err)
+
+		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
 		require.NoError(t, err)
 	})
 

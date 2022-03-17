@@ -70,19 +70,30 @@ func TestService(t *testing.T) {
 }
 
 type dataSourceMockRetriever struct {
-	res *models.DataSource
+	res []*models.DataSource
 }
 
 func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
-	if query.Name == d.res.Name {
-		query.Result = d.res
+	for _, datasource := range d.res {
+		nameMatch := query.Name != "" && query.Name == datasource.Name
+		uidMatch := query.Uid != "" && query.Uid == datasource.Uid
+		if nameMatch || uidMatch {
+			query.Result = datasource
 
-		return nil
+			return nil
+		}
 	}
 	return models.ErrDataSourceNotFound
 }
 
 func TestService_NameScopeResolver(t *testing.T) {
+	retriever := &dataSourceMockRetriever{[]*models.DataSource{
+		{Id: 1, Name: "test-datasource"},
+		{Id: 2, Name: "*"},
+		{Id: 3, Name: ":/*"},
+		{Id: 4, Name: ":"},
+	}}
+
 	type testCaseResolver struct {
 		desc    string
 		given   string
@@ -98,9 +109,21 @@ func TestService_NameScopeResolver(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			desc:    "correct",
+			desc:    "asterisk in name",
 			given:   "datasources:name:*",
-			want:    "datasources:id:*",
+			want:    "datasources:id:2",
+			wantErr: nil,
+		},
+		{
+			desc:    "complex name",
+			given:   "datasources:name::/*",
+			want:    "datasources:id:3",
+			wantErr: nil,
+		},
+		{
+			desc:    "colon in name",
+			given:   "datasources:name::",
+			want:    "datasources:id:4",
 			wantErr: nil,
 		},
 		{
@@ -115,11 +138,70 @@ func TestService_NameScopeResolver(t *testing.T) {
 			want:    "",
 			wantErr: accesscontrol.ErrInvalidScope,
 		},
+		{
+			desc:    "empty name scope",
+			given:   "datasources:name:",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+	}
+	prefix, resolver := NewNameScopeResolver(retriever)
+	require.Equal(t, "datasources:name:", prefix)
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			resolved, err := resolver(context.Background(), 1, tc.given)
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.wantErr, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.want, resolved)
+			}
+		})
+	}
+}
+
+func TestService_UIDScopeResolver(t *testing.T) {
+	retriever := &dataSourceMockRetriever{[]*models.DataSource{
+		{Id: 1, Uid: "NnftN9Lnz"},
+	}}
+
+	type testCaseResolver struct {
+		desc    string
+		given   string
+		want    string
+		wantErr error
 	}
 
-	testDataSource := &models.DataSource{Id: 1, Name: "test-datasource"}
-	prefix, resolver := NewNameScopeResolver(&dataSourceMockRetriever{testDataSource})
-	require.Equal(t, "datasources:name:", prefix)
+	testCases := []testCaseResolver{
+		{
+			desc:    "correct",
+			given:   "datasources:uid:NnftN9Lnz",
+			want:    "datasources:id:1",
+			wantErr: nil,
+		},
+		{
+			desc:    "unknown datasource",
+			given:   "datasources:uid:unknown",
+			want:    "",
+			wantErr: models.ErrDataSourceNotFound,
+		},
+		{
+			desc:    "malformed scope",
+			given:   "datasources:unknown",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+		{
+			desc:    "empty uid scope",
+			given:   "datasources:uid:",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+	}
+	prefix, resolver := NewUidScopeResolver(retriever)
+	require.Equal(t, "datasources:uid:", prefix)
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
