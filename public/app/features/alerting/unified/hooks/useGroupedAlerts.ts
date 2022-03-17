@@ -1,11 +1,30 @@
 import { useMemo } from 'react';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from '@grafana/data';
+import { uniqBy } from 'lodash';
 
-export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[]) => {
+export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[]): AlertmanagerGroup[] => {
   return useMemo(() => {
     if (groupBy.length === 0) {
-      return groups;
+      const emptyGroupings = groups.filter((group) => Object.keys(group.labels).length === 0);
+      if (emptyGroupings.length > 1) {
+        // Merges multiple ungrouped grouping
+        return groups.reduce((combinedGroups, group) => {
+          if (Object.keys(group.labels).length === 0) {
+            const noGroupingGroup = combinedGroups.find(({ labels }) => Object.keys(labels));
+            if (!noGroupingGroup) {
+              combinedGroups.push({ alerts: group.alerts, labels: {}, receiver: { name: 'NONE' } });
+            } else {
+              noGroupingGroup.alerts = uniqBy([...noGroupingGroup.alerts, ...group.alerts], 'labels');
+            }
+          } else {
+            combinedGroups.push(group);
+          }
+          return combinedGroups;
+        }, [] as AlertmanagerGroup[]);
+      } else {
+        return groups;
+      }
     }
     const alerts = groups.flatMap(({ alerts }) => alerts);
     return alerts.reduce((groupings, alert) => {

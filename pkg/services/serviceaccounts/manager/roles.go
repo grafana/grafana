@@ -8,7 +8,7 @@ import (
 func RegisterRoles(ac accesscontrol.AccessControl) error {
 	role := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     3,
+			Version:     4,
 			Name:        "fixed:serviceaccounts:writer",
 			DisplayName: "Service accounts writer",
 			Description: "Create, delete, read, or query service accounts.",

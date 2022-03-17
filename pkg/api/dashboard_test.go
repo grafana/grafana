@@ -9,6 +9,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -16,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -29,9 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
@@ -118,6 +120,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Cfg:         setting.NewCfg(),
 			pluginStore: &fakePluginStore{},
 			SQLStore:    mockSQLStore,
+			Features:    featuremgmt.WithFeatures(),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -213,14 +216,18 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		mockSQLStore.ExpectedDashboard = fakeDash
 
+		cfg := setting.NewCfg()
+		features := featuremgmt.WithFeatures()
 		dashboardStore := database.ProvideDashboardStore(sqlstore.InitTestDB(t))
 		hs := &HTTPServer{
-			Cfg:                   setting.NewCfg(),
+			Cfg:                   cfg,
 			Live:                  newTestLive(t),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
-			dashboardService:      service.ProvideDashboardService(dashboardStore),
 			SQLStore:              mockSQLStore,
+			dashboardService: service.ProvideDashboardService(
+				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -538,7 +545,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Post dashboard response tests", func(t *testing.T) {
-		dashboardStore := &database.FakeDashboardStore{}
+		dashboardStore := &dashboards.FakeDashboardStore{}
 		defer dashboardStore.AssertExpectations(t)
 		// This tests that a valid request returns correct response
 		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
@@ -877,7 +884,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return "/tmp/grafana/dashboards"
 			}
 
-			dashboardStore := &database.FakeDashboardStore{}
+			dashboardStore := &dashboards.FakeDashboardStore{}
 			defer dashboardStore.AssertExpectations(t)
 
 			dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
@@ -933,14 +940,18 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := mockLibraryElementService{}
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
 
 	hs := &HTTPServer{
-		Cfg:                          setting.NewCfg(),
-		LibraryPanelService:          &libraryPanelsService,
-		LibraryElementService:        &libraryElementsService,
-		ProvisioningService:          provisioningService,
-		dashboardProvisioningService: service.ProvideDashboardService(dashboardStore),
-		SQLStore:                     sc.sqlStore,
+		Cfg:                   cfg,
+		LibraryPanelService:   &libraryPanelsService,
+		LibraryElementService: &libraryElementsService,
+		SQLStore:              sc.sqlStore,
+		ProvisioningService:   provisioningService,
+		dashboardProvisioningService: service.ProvideDashboardService(
+			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+		),
 	}
 
 	hs.callGetDashboard(sc)
@@ -1026,6 +1037,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			LibraryElementService: &mockLibraryElementService{},
 			dashboardService:      dashboardService,
 			folderService:         folderService,
+			Features:              featuremgmt.WithFeatures(),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1096,6 +1108,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			LibraryElementService: &mockLibraryElementService{},
 			dashboardService:      mock,
 			SQLStore:              sqlStore,
+			Features:              featuremgmt.WithFeatures(),
 		}
 
 		sc := setupScenarioContext(t, url)

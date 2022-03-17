@@ -82,14 +82,22 @@ type resourcePermissionDTO struct {
 func (a *api) getPermissions(c *models.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
-	permissions, err := a.service.GetPermissions(c.Req.Context(), c.OrgId, resourceID)
+	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
+	if a.service.options.Assignments.BuiltInRoles && !a.service.cfg.IsEnterprise {
+		permissions = append(permissions, accesscontrol.ResourcePermission{
+			Actions:     a.service.actions,
+			Scope:       "*",
+			BuiltInRole: string(models.ROLE_ADMIN),
+		})
+	}
+
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission := a.service.mapActions(p); permission != "" {
+		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)

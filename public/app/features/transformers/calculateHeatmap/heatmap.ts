@@ -46,12 +46,28 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
 }
 
 /** Given existing buckets, create a values style frame */
+// Assumes frames have already been sorted ASC and de-accumulated.
 export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
-  frames = frames.slice();
+  // assumes all Time fields are identical
+  // TODO: handle null-filling w/ fields[0].config.interval?
+  const xField = frames[0].fields[0];
+  const xValues = xField.values.toArray();
+  const yField = frames[0].fields[1];
 
-  // sort ASC by frame.name (Prometheus bucket bound)
-  // or use frame.fields[1].config.displayNameFromDS ?
-  frames.sort((a, b) => sortAscStrInf(a.name, b.name));
+  // similar to initBins() below
+  const len = xValues.length * frames.length;
+  const xs = new Array(len);
+  const ys = new Array(len);
+  const counts2 = new Array(len);
+
+  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
+
+  // transpose
+  counts.forEach((bucketCounts, bi) => {
+    for (let i = 0; i < bucketCounts.length; i++) {
+      counts2[counts.length * i + bi] = bucketCounts[i];
+    }
+  });
 
   const bucketBounds = frames.map((frame, i) => {
     return i; // until we have y ordinal scales working for facets/scatter
@@ -68,39 +84,6 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
 
     return bound;
     */
-  });
-
-  // assumes all Time fields are identical
-  // TODO: handle null-filling w/ fields[0].config.interval?
-  const xField = frames[0].fields[0];
-  const xValues = xField.values.toArray();
-  const yField = frames[0].fields[1];
-
-  // similar to initBins() below
-  const len = xValues.length * bucketBounds.length;
-  const xs = new Array(len);
-  const ys = new Array(len);
-  const counts2 = new Array(len);
-
-  // cumulative counts
-  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
-
-  // de-accumulate
-  counts.reverse();
-  counts.forEach((bucketCounts, bi) => {
-    if (bi < counts.length - 1) {
-      for (let i = 0; i < bucketCounts.length; i++) {
-        bucketCounts[i] -= counts[bi + 1][i];
-      }
-    }
-  });
-  counts.reverse();
-
-  // transpose
-  counts.forEach((bucketCounts, bi) => {
-    for (let i = 0; i < bucketCounts.length; i++) {
-      counts2[counts.length * i + bi] = bucketCounts[i];
-    }
   });
 
   // fill flat/repeating array
@@ -142,6 +125,41 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
       },
     ],
   };
+}
+
+// Sorts frames ASC by numeric bucket name and de-accumulates values in each frame's Value field [1]
+// similar to Prometheus result_transformer.ts -> transformToHistogramOverTime()
+export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
+  frames = frames.slice();
+
+  // sort ASC by frame.name (Prometheus bucket bound)
+  // or use frame.fields[1].config.displayNameFromDS ?
+  frames.sort((a, b) => sortAscStrInf(a.name, b.name));
+
+  // cumulative counts
+  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
+
+  // de-accumulate
+  counts.reverse();
+  counts.forEach((bucketCounts, bi) => {
+    if (bi < counts.length - 1) {
+      for (let i = 0; i < bucketCounts.length; i++) {
+        bucketCounts[i] -= counts[bi + 1][i];
+      }
+    }
+  });
+  counts.reverse();
+
+  return frames.map((frame, i) => ({
+    ...frame,
+    fields: [
+      frame.fields[0],
+      {
+        ...frame.fields[1],
+        values: new ArrayVector(counts[i]),
+      },
+    ],
+  }));
 }
 
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {

@@ -4,17 +4,18 @@ import {
   functionRendererLeft,
   functionRendererRight,
   getPromAndLokiOperationDisplayName,
+  getRangeVectorParamDef,
   rangeRendererLeftWithParams,
   rangeRendererRightWithParams,
 } from './shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
   QueryWithOperations,
   VisualQueryModeller,
 } from './shared/types';
 import { PromOperationId, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { binaryScalarOperations } from './binaryScalarOperations';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
@@ -51,30 +52,46 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: defaultAddOperationHandler,
     },
     createRangeFunction(PromOperationId.Changes),
-    createRangeFunction(PromOperationId.Rate),
+    createRangeFunction(PromOperationId.Rate, true),
     createRangeFunction(PromOperationId.Irate),
-    createRangeFunction(PromOperationId.Increase),
+    createRangeFunction(PromOperationId.Increase, true),
+    createRangeFunction(PromOperationId.Idelta),
     createRangeFunction(PromOperationId.Delta),
-    // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
-    // both the operator and the operand in a single input
-    {
-      id: PromOperationId.MultiplyBy,
-      name: 'Multiply by scalar',
-      params: [{ name: 'Factor', type: 'number' }],
-      defaultParams: [2],
-      category: PromVisualQueryOperationCategory.BinaryOps,
-      renderer: getSimpleBinaryRenderer('*'),
-      addOperationHandler: defaultAddOperationHandler,
-    },
-    {
-      id: PromOperationId.DivideBy,
-      name: 'Divide by scalar',
-      params: [{ name: 'Factor', type: 'number' }],
-      defaultParams: [2],
-      category: PromVisualQueryOperationCategory.BinaryOps,
-      renderer: getSimpleBinaryRenderer('/'),
-      addOperationHandler: defaultAddOperationHandler,
-    },
+    createFunction({
+      id: PromOperationId.HoltWinters,
+      params: [
+        getRangeVectorParamDef(),
+        { name: 'Smoothing Factor', type: 'number' },
+        { name: 'Trend Factor', type: 'number' },
+      ],
+      defaultParams: ['$__interval', 0.5, 0.5],
+      alternativesKey: 'range function',
+      category: PromVisualQueryOperationCategory.RangeFunctions,
+      renderer: rangeRendererRightWithParams,
+      addOperationHandler: addOperationWithRangeVector,
+      changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
+    }),
+    createFunction({
+      id: PromOperationId.PredictLinear,
+      params: [getRangeVectorParamDef(), { name: 'Seconds from now', type: 'number' }],
+      defaultParams: ['$__interval', 60],
+      alternativesKey: 'range function',
+      category: PromVisualQueryOperationCategory.RangeFunctions,
+      renderer: rangeRendererRightWithParams,
+      addOperationHandler: addOperationWithRangeVector,
+      changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
+    }),
+    createFunction({
+      id: PromOperationId.QuantileOverTime,
+      params: [getRangeVectorParamDef(), { name: 'Quantile', type: 'number' }],
+      defaultParams: ['$__interval', 0.5],
+      alternativesKey: 'overtime function',
+      category: PromVisualQueryOperationCategory.RangeFunctions,
+      renderer: rangeRendererLeftWithParams,
+      addOperationHandler: addOperationWithRangeVector,
+      changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
+    }),
+    ...binaryScalarOperations,
     {
       id: PromOperationId.NestedQuery,
       name: 'Binary operation with query',
@@ -85,7 +102,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: addNestedQueryHandler,
     },
     createFunction({ id: PromOperationId.Absent }),
-    createRangeFunction(PromOperationId.AbsentOverTime),
     createFunction({
       id: PromOperationId.Acos,
       category: PromVisualQueryOperationCategory.Trigonometric,
@@ -163,20 +179,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({ id: PromOperationId.Exp }),
     createFunction({ id: PromOperationId.Floor }),
     createFunction({ id: PromOperationId.Group }),
-    createFunction({
-      id: PromOperationId.HoltWinters,
-      params: [
-        getRangeVectorParamDef(),
-        { name: 'Smoothing Factor', type: 'number' },
-        { name: 'Trend Factor', type: 'number' },
-      ],
-      defaultParams: ['auto', 0.5, 0.5],
-      alternativesKey: 'range function',
-      category: PromVisualQueryOperationCategory.RangeFunctions,
-      renderer: rangeRendererRightWithParams,
-    }),
     createFunction({ id: PromOperationId.Hour }),
-    createRangeFunction(PromOperationId.Idelta),
     createFunction({
       id: PromOperationId.LabelJoin,
       params: [
@@ -210,26 +213,10 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model) => `${model.id}()`,
     }),
     createFunction({
-      id: PromOperationId.PredictLinear,
-      params: [getRangeVectorParamDef(), { name: 'Seconds from now', type: 'number' }],
-      defaultParams: ['auto', 60],
-      alternativesKey: 'range function',
-      category: PromVisualQueryOperationCategory.RangeFunctions,
-      renderer: rangeRendererRightWithParams,
-    }),
-    createFunction({
       id: PromOperationId.Quantile,
       params: [{ name: 'Value', type: 'number' }],
       defaultParams: [1],
       renderer: functionRendererLeft,
-    }),
-    createFunction({
-      id: PromOperationId.QuantileOverTime,
-      params: [getRangeVectorParamDef(), { name: 'Quantile', type: 'number' }],
-      defaultParams: ['auto', 0.5],
-      alternativesKey: 'range function',
-      category: PromVisualQueryOperationCategory.RangeFunctions,
-      renderer: rangeRendererLeftWithParams,
     }),
     createFunction({ id: PromOperationId.Rad }),
     createRangeFunction(PromOperationId.Resets),
@@ -288,17 +275,32 @@ export function createFunction(definition: Partial<QueryBuilderOperationDef>): Q
   };
 }
 
-export function createRangeFunction(name: string): QueryBuilderOperationDef {
+export function createRangeFunction(name: string, withRateInterval = false): QueryBuilderOperationDef {
   return {
     id: name,
     name: getPromAndLokiOperationDisplayName(name),
-    params: [getRangeVectorParamDef()],
-    defaultParams: ['auto'],
+    params: [getRangeVectorParamDef(withRateInterval)],
+    defaultParams: [withRateInterval ? '$__rate_interval' : '$__interval'],
     alternativesKey: 'range function',
     category: PromVisualQueryOperationCategory.RangeFunctions,
     renderer: operationWithRangeVectorRenderer,
     addOperationHandler: addOperationWithRangeVector,
+    changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
   };
+}
+
+function operationTypeChangedHandlerForRangeFunction(
+  operation: QueryBuilderOperation,
+  newDef: QueryBuilderOperationDef
+) {
+  // validate current parameter
+  if (operation.params[0] === '$__rate_interval' && newDef.defaultParams[0] !== '$__rate_interval') {
+    operation.params = newDef.defaultParams;
+  } else if (operation.params[0] === '$__interval' && newDef.defaultParams[0] !== '$__interval') {
+    operation.params = newDef.defaultParams;
+  }
+
+  return operation;
 }
 
 export function operationWithRangeVectorRenderer(
@@ -306,27 +308,8 @@ export function operationWithRangeVectorRenderer(
   def: QueryBuilderOperationDef,
   innerExpr: string
 ) {
-  let rangeVector = (model.params ?? [])[0] ?? 'auto';
-
-  if (rangeVector === 'auto') {
-    rangeVector = '$__rate_interval';
-  }
-
+  let rangeVector = (model.params ?? [])[0] ?? '5m';
   return `${def.id}(${innerExpr}[${rangeVector}])`;
-}
-
-function getSimpleBinaryRenderer(operator: string) {
-  return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${innerExpr} ${operator} ${model.params[0]}`;
-  };
-}
-
-function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
-  return {
-    name: 'Range vector',
-    type: 'string',
-    options: ['auto', '$__rate_interval', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
-  };
 }
 
 /**
@@ -337,27 +320,22 @@ export function addOperationWithRangeVector(
   query: PromVisualQuery,
   modeller: VisualQueryModeller
 ) {
-  if (query.operations.length > 0) {
-    const firstOp = modeller.getOperationDef(query.operations[0].id);
-
-    if (firstOp.addOperationHandler === addOperationWithRangeVector) {
-      return {
-        ...query,
-        operations: [
-          {
-            ...query.operations[0],
-            id: def.id,
-          },
-          ...query.operations.slice(1),
-        ],
-      };
-    }
-  }
-
   const newOperation: QueryBuilderOperation = {
     id: def.id,
     params: def.defaultParams,
   };
+
+  if (query.operations.length > 0) {
+    // If operation exists it has to be in the registry so no point to check if it was found
+    const firstOp = modeller.getOperationDef(query.operations[0].id)!;
+
+    if (firstOp.addOperationHandler === addOperationWithRangeVector) {
+      return {
+        ...query,
+        operations: [newOperation, ...query.operations.slice(1)],
+      };
+    }
+  }
 
   return {
     ...query,

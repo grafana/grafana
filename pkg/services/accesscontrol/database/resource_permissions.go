@@ -56,7 +56,7 @@ func (s *AccessControlStore) setUserResourcePermission(
 	cmd types.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	permission, err := s.setResourcePermission(sess, orgID, managedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
+	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (s *AccessControlStore) setTeamResourcePermission(
 	cmd types.SetResourcePermissionCommand,
 	hook types.TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	permission, err := s.setResourcePermission(sess, orgID, managedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
+	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (s *AccessControlStore) setBuiltInResourcePermission(
 	cmd types.SetResourcePermissionCommand,
 	hook types.BuiltinResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	permission, err := s.setResourcePermission(sess, orgID, managedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
+	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -359,16 +359,28 @@ func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, o
 		args = append(args, a)
 	}
 
-	// Need args x3 due to union
 	initialLength := len(args)
-	args = append(args, args[:initialLength]...)
-	args = append(args, args[:initialLength]...)
 
-	user := userSelect + userFrom + where
-	team := teamSelect + teamFrom + where
+	userFilter, err := accesscontrol.Filter(query.User, "u.id", "users", accesscontrol.ActionOrgUsersRead)
+	if err != nil {
+		return nil, err
+	}
+	user := userSelect + userFrom + where + " AND " + userFilter.Where
+	args = append(args, userFilter.Args...)
+
+	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams", accesscontrol.ActionTeamsRead)
+	if err != nil {
+		return nil, err
+	}
+
+	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
+	args = append(args, args[:initialLength]...)
+	args = append(args, teamFilter.Args...)
+
 	builtin := builtinSelect + builtinFrom + where
-	sql := user + "UNION" + team + "UNION" + builtin
+	args = append(args, args[:initialLength]...)
 
+	sql := user + " UNION " + team + " UNION " + builtin
 	queryResults := make([]flatResourcePermission, 0)
 	if err := sess.SQL(sql, args...).Find(&queryResults); err != nil {
 		return nil, err
@@ -615,16 +627,4 @@ func managedPermission(action, resource string, resourceID string) accesscontrol
 		Action: action,
 		Scope:  accesscontrol.GetResourceScope(resource, resourceID),
 	}
-}
-
-func managedUserRoleName(userID int64) string {
-	return fmt.Sprintf("managed:users:%d:permissions", userID)
-}
-
-func managedTeamRoleName(teamID int64) string {
-	return fmt.Sprintf("managed:teams:%d:permissions", teamID)
-}
-
-func managedBuiltInRoleName(builtInRole string) string {
-	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
 }

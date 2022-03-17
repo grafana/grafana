@@ -5,19 +5,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // API related actions
 const (
 	ActionProvisioningReload = "provisioning:reload"
-
-	ActionDatasourcesRead   = "datasources:read"
-	ActionDatasourcesQuery  = "datasources:query"
-	ActionDatasourcesCreate = "datasources:create"
-	ActionDatasourcesWrite  = "datasources:write"
-	ActionDatasourcesDelete = "datasources:delete"
-	ActionDatasourcesIDRead = "datasources.id:read"
 
 	ActionOrgsRead             = "orgs:read"
 	ActionOrgsPreferencesRead  = "orgs.preferences:read"
@@ -36,11 +31,6 @@ var (
 	ScopeProvisionersPlugins       = ac.Scope("provisioners", "plugins")
 	ScopeProvisionersDatasources   = ac.Scope("provisioners", "datasources")
 	ScopeProvisionersNotifications = ac.Scope("provisioners", "notifications")
-
-	ScopeDatasourcesAll = ac.Scope("datasources", "*")
-	ScopeDatasourceID   = ac.Scope("datasources", "id", ac.Parameter(":id"))
-	ScopeDatasourceUID  = ac.Scope("datasources", "uid", ac.Parameter(":uid"))
-	ScopeDatasourceName = ac.Scope("datasources", "name", ac.Parameter(":name"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -93,12 +83,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Data sources",
 			Permissions: []ac.Permission{
 				{
-					Action: ActionDatasourcesRead,
-					Scope:  ScopeDatasourcesAll,
+					Action: datasources.ActionRead,
+					Scope:  datasources.ScopeAll,
 				},
 				{
-					Action: ActionDatasourcesQuery,
-					Scope:  ScopeDatasourcesAll,
+					Action: datasources.ActionQuery,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -114,15 +104,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Data sources",
 			Permissions: ac.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []ac.Permission{
 				{
-					Action: ActionDatasourcesWrite,
-					Scope:  ScopeDatasourcesAll,
+					Action: datasources.ActionWrite,
+					Scope:  datasources.ScopeAll,
 				},
 				{
-					Action: ActionDatasourcesCreate,
+					Action: datasources.ActionCreate,
 				},
 				{
-					Action: ActionDatasourcesDelete,
-					Scope:  ScopeDatasourcesAll,
+					Action: datasources.ActionDelete,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
@@ -138,8 +128,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Infrequently used",
 			Permissions: []ac.Permission{
 				{
-					Action: ActionDatasourcesIDRead,
-					Scope:  ScopeDatasourcesAll,
+					Action: datasources.ActionIDRead,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -154,11 +144,35 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Only used for open source compatibility. Query data sources.",
 			Group:       "Infrequently used",
 			Permissions: []ac.Permission{
-				{Action: ActionDatasourcesQuery},
-				{Action: ActionDatasourcesRead},
+				{Action: datasources.ActionQuery},
+				{Action: datasources.ActionRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
+	apikeyWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:apikeys:writer",
+			DisplayName: "APIKeys writer",
+			Description: "Gives access to add and delete api keys.",
+			Group:       "API Keys",
+			Permissions: []ac.Permission{
+				{
+					Action: ac.ActionAPIKeyCreate,
+				},
+				{
+					Action: ac.ActionAPIKeyRead,
+					Scope:  ac.ScopeAPIKeysAll,
+				},
+				{
+					Action: ac.ActionAPIKeyDelete,
+					Scope:  ac.ScopeAPIKeysAll,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
 	orgReaderRole := ac.RoleRegistration{
@@ -262,38 +276,116 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
+	dashboardsCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:creator",
+			DisplayName: "Dashboard creator",
+			Description: "Create dashboard in general folder.",
+			Group:       "Dashboards",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
+				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
+	dashboardsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:reader",
+			DisplayName: "Dashboard reader",
+			Description: "Read all dashboards.",
+			Group:       "Dashboards",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeDashboardsAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	dashboardsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:writer",
+			DisplayName: "Dashboard writer",
+			Group:       "Dashboards",
+			Description: "Create, read, write or delete all dashboards and their permissions.",
+			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
+				{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeDashboardsAll},
+				{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeDashboardsAll},
+				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionDashboardsPermissionsRead, Scope: ac.ScopeDashboardsAll},
+				{Action: ac.ActionDashboardsPermissionsWrite, Scope: ac.ScopeDashboardsAll},
+			}),
+		},
+		Grants: []string{"Admin"},
+	}
+
+	foldersCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:creator",
+			DisplayName: "Folder creator",
+			Description: "Create folders.",
+			Group:       "Folders",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionFoldersCreate},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
+	foldersReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:reader",
+			DisplayName: "Folder reader",
+			Description: "Read all folders and dashboards.",
+			Group:       "Folders",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	foldersWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:writer",
+			DisplayName: "Folder writer",
+			Description: "Create, read, write or delete all folders and dashboards and their permissions.",
+			Group:       "Folders",
+			Permissions: ac.ConcatPermissions(
+				foldersReaderRole.Role.Permissions,
+				[]ac.Permission{
+					{Action: dashboards.ActionFoldersCreate},
+					{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsDelete, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeFoldersAll},
+					{Action: ac.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeFoldersAll},
+				}),
+		},
+		Grants: []string{"Admin"},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
-		teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
+		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
 	)
 }
 
 // Evaluators
 // here is the list of complex evaluators we use in this package
-
-// dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
-var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ActionDatasourcesRead),
-	ac.EvalAny(
-		ac.EvalPermission(ActionDatasourcesCreate),
-		ac.EvalPermission(ActionDatasourcesDelete),
-		ac.EvalPermission(ActionDatasourcesWrite),
-	),
-)
-
-// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
-var dataSourcesNewAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ActionDatasourcesRead),
-	ac.EvalPermission(ActionDatasourcesCreate),
-	ac.EvalPermission(ActionDatasourcesWrite),
-)
-
-// dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
-var dataSourcesEditAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ActionDatasourcesRead),
-	ac.EvalPermission(ActionDatasourcesWrite),
-)
 
 // orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
 var orgPreferencesAccessEvaluator = ac.EvalAny(

@@ -47,7 +47,7 @@ func TestUserAuth(t *testing.T) {
 			// By ID
 			id := user.Id
 
-			_, user, err = srv.LookupByOneOf(id, "", "")
+			user, err = srv.LookupByOneOf(context.Background(), id, "", "")
 
 			require.Nil(t, err)
 			require.Equal(t, user.Id, id)
@@ -55,7 +55,7 @@ func TestUserAuth(t *testing.T) {
 			// By Email
 			email := "user1@test.com"
 
-			_, user, err = srv.LookupByOneOf(0, email, "")
+			user, err = srv.LookupByOneOf(context.Background(), 0, email, "")
 
 			require.Nil(t, err)
 			require.Equal(t, user.Email, email)
@@ -63,7 +63,7 @@ func TestUserAuth(t *testing.T) {
 			// Don't find nonexistent user
 			email = "nonexistent@test.com"
 
-			_, user, err = srv.LookupByOneOf(0, email, "")
+			user, err = srv.LookupByOneOf(context.Background(), 0, email, "")
 
 			require.Equal(t, models.ErrUserNotFound, err)
 			require.Nil(t, user)

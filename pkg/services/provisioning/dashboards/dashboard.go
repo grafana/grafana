@@ -122,7 +122,9 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*config, logger log.Logger, service dashboards.DashboardProvisioningService) ([]*FileReader, error) {
+func getFileReaders(
+	configs []*config, logger log.Logger, service dashboards.DashboardProvisioningService,
+) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {

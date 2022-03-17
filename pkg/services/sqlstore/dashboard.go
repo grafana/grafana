@@ -3,15 +3,20 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var shadowSearchCounter = prometheus.NewCounterVec(
@@ -35,7 +40,6 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboards)
 	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
 	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", ss.GetDashboardsByPluginId)
 	bus.AddHandler("sql", ss.GetDashboardSlugById)
 	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
 }
@@ -87,6 +91,13 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 			UserId:          query.SignedInUser.UserId,
 			PermissionLevel: query.Permission,
 		},
+	}
+
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		// if access control is enabled, overwrite the filters so far
+		filters = []interface{}{
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
+		}
 	}
 
 	for _, filter := range query.Sort.Filter {
@@ -270,6 +281,20 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 			}
 		}
 
+		// remove all access control permission with folder scope
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
+		}
+
+		for _, dash := range dashIds {
+			// remove all access control permission with child dashboard scopes
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dash.Id, 10)))
+			if err != nil {
+				return err
+			}
+		}
+
 		if len(dashIds) > 0 {
 			childrenDeletes := []string{
 				"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
@@ -309,6 +334,11 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 					return err
 				}
 			}
+		}
+	} else {
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
 		}
 	}
 
@@ -408,17 +438,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 			p.PermissionName = p.Permission.String()
 		}
 
-		return err
-	})
-}
-
-func (ss *SQLStore) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var dashboards = make([]*models.Dashboard, 0)
-		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
-
-		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
-		query.Result = dashboards
 		return err
 	})
 }

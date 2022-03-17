@@ -71,13 +71,6 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	if hs.Cfg.EditorsCanAdmin {
-		if err := hs.folderService.MakeUserAdmin(c.Req.Context(), c.OrgId, c.SignedInUser.UserId, folder.Id, true); err != nil {
-			hs.log.Error("Could not make user admin", "folder", folder.Title, "user",
-				c.SignedInUser.UserId, "error", err)
-		}
-	}
-
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
@@ -121,6 +114,7 @@ func (hs *HTTPServer) toFolderDto(ctx context.Context, g guardian.DashboardGuard
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
+	canDelete, _ := g.CanDelete()
 
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
@@ -140,6 +134,7 @@ func (hs *HTTPServer) toFolderDto(ctx context.Context, g guardian.DashboardGuard
 		CanSave:   canSave,
 		CanEdit:   canEdit,
 		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
 		CreatedBy: creator,
 		Created:   folder.Created,
 		UpdatedBy: updater,

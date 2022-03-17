@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { FlexItem, Stack } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import {
@@ -11,8 +11,7 @@ import {
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
 } from '../shared/types';
-import { OperationInfoButton } from './OperationInfoButton';
-import { OperationName } from './OperationName';
+import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
 import { getOperationParamId } from './operationUtils';
 
@@ -39,6 +38,9 @@ export function OperationEditor({
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
+  if (!def) {
+    return <span>Operation {operation.id} not found</span>;
+  }
 
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
     const update: QueryBuilderOperation = { ...operation, params: [...operation.params] };
@@ -67,9 +69,16 @@ export function OperationEditor({
 
     operationElements.push(
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
-        <label className={styles.paramName} htmlFor={getOperationParamId(index, paramIndex)}>
-          {paramDef.name}
-        </label>
+        {!paramDef.hideName && (
+          <div className={styles.paramName}>
+            <label htmlFor={getOperationParamId(index, paramIndex)}>{paramDef.name}</label>
+            {paramDef.description && (
+              <Tooltip placement="top" content={paramDef.description} theme="info">
+                <Icon name="info-circle" size="sm" className={styles.infoIcon} />
+              </Tooltip>
+            )}
+          </div>
+        )}
         <div className={styles.paramValue}>
           <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
             <Editor
@@ -118,27 +127,15 @@ export function OperationEditor({
           {...provided.draggableProps}
           data-testid={`operations.${index}.wrapper`}
         >
-          <div className={styles.header} {...provided.dragHandleProps}>
-            <OperationName
-              operation={operation}
-              def={def}
-              index={index}
-              onChange={onChange}
-              queryModeller={queryModeller}
-            />
-            <FlexItem grow={1} />
-            <div className={`${styles.operationHeaderButtons} operation-header-show-on-hover`}>
-              <OperationInfoButton def={def} operation={operation} />
-              <Button
-                icon="times"
-                size="sm"
-                onClick={() => onRemove(index)}
-                fill="text"
-                variant="secondary"
-                title="Remove operation"
-              />
-            </div>
-          </div>
+          <OperationHeader
+            operation={operation}
+            dragHandleProps={provided.dragHandleProps}
+            def={def}
+            index={index}
+            onChange={onChange}
+            onRemove={onRemove}
+            queryModeller={queryModeller}
+          />
           <div className={styles.body}>{operationElements}</div>
           {restParam}
           {index < query.operations.length - 1 && (
@@ -202,24 +199,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(1),
       position: 'relative',
     }),
-    header: css({
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-      padding: theme.spacing(0.5, 0.5, 0.5, 1),
-      gap: theme.spacing(1),
-      display: 'flex',
-      alignItems: 'center',
-      '&:hover .operation-header-show-on-hover': css({
-        opacity: 1,
-      }),
-    }),
     infoIcon: css({
-      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(0.5),
     }),
     body: css({
       margin: theme.spacing(1, 1, 0.5, 1),
       display: 'table',
     }),
     paramRow: css({
+      label: 'paramRow',
       display: 'table-row',
       verticalAlign: 'middle',
     }),
@@ -231,15 +219,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       verticalAlign: 'middle',
       height: '32px',
     }),
-    operationHeaderButtons: css({
-      opacity: 0,
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.short,
-      }),
-    }),
     paramValue: css({
+      label: 'paramValue',
       display: 'table-cell',
-      paddingBottom: theme.spacing(0.5),
       verticalAlign: 'middle',
     }),
     restParam: css({
