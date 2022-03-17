@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/services"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/stretchr/testify/require"
@@ -116,6 +117,6 @@ func TestProvisioningStore(t *testing.T) {
 	})
 }
 
-func createSut(_ *ngalert.AlertNG, db *store.DBstore) (store.ProvisioningStore, store.TransactionManager) {
+func createSut(_ *ngalert.AlertNG, db *store.DBstore) (services.ProvisioningStore, store.TransactionManager) {
 	return db, db
 }
