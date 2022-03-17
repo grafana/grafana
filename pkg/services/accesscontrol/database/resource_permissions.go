@@ -582,7 +582,7 @@ func (s *AccessControlStore) getResourcePermissionsByIds(sess *sqlstore.DBSessio
 	rawSql := `
 	SELECT
 		p.*,
-		? as resource_scope
+		? as resource_scope,
 		ur.user_id AS user_id,
 		u.login AS user_login,
 		u.email AS user_email,
