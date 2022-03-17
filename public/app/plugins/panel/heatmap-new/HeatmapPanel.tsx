@@ -99,9 +99,16 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
     const display = field.display ? (v: number) => formattedValueToString(field.display!(v)) : (v: number) => `${v}`;
 
+    let hoverValue: number | undefined = undefined;
+    if(hover && info.heatmap.fields) {
+      const countField = info.heatmap.fields[2];
+      const countVals = countField?.values.toArray();
+      hoverValue = countVals?.[hover.index];
+    }
+
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale data={info} hover={hover} colorPalette={palette} min={min} max={max} display={display} />
+        <ColorScale data={info} hover={hoverValue} colorPalette={palette} min={min} max={max} display={display} />
       </VizLayout.Legend>
     );
   };

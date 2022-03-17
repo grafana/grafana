@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
-import { HeatmapData } from './fields';
-import { HeatmapHoverEvent } from './utils';
 
 type Props = {
   colorPalette: string[];
@@ -12,8 +10,7 @@ type Props = {
 
   // Show a value as string -- when not defined, the raw values will not be shown
   display?: (v: number) => string;
-  data?: HeatmapData;
-  hover?: HeatmapHoverEvent | undefined;
+  hover?: number;
 };
 
 type HoverState = {
@@ -28,7 +25,7 @@ type CursorState = {
 
 const OFFSET = 8;
 
-export const ColorScale = ({ colorPalette, min, max, display, data, hover }: Props) => {
+export const ColorScale = ({ colorPalette, min, max, display, hover }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
   const [cursor, setCursor] = useState<CursorState>({ xPosition: 0, yPosition: 0 });
@@ -38,23 +35,27 @@ export const ColorScale = ({ colorPalette, min, max, display, data, hover }: Pro
   const colorScaleRef = useRef<HTMLDivElement>();
 
   const theme = useTheme2();
-  const styles = getStyles(theme, colors, scaleHover, cursor);
+  const styles = getStyles(theme, colors);
 
   useLayoutEffect(() => {
     if (colorScaleRef.current) {
       setColorScaleRect(colorScaleRef.current.getBoundingClientRect());
     }
   }, []);
+  const [percent, setPercent] = useState<number|null>(null);
 
   useEffect(() => {
     setColors(getGradientStops({ colorArray: colorPalette }));
   }, [colorPalette]);
+
 
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
     const offsetWidth = (event.target as any).offsetWidth as number;
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
+    setScaleHover({ isShown: true, value: scaleValue });
+    setPercent(normPercentage);
     setScaleHover({ isShown: true, value: scaleValue });
     setCursor({ xPosition: event.clientX, yPosition: event.clientY });
   };
@@ -63,65 +64,44 @@ export const ColorScale = ({ colorPalette, min, max, display, data, hover }: Pro
     setScaleHover({ isShown: false, value: 0 });
   };
 
-  const setPositionByCount = useCallback(
-    (count: number) => {
-      if (colorScaleRect) {
-        const left = colorScaleRect.left; // 50
-        const right = colorScaleRect.right; // 350
-
-        console.log(colorScaleRect);
-
-        const percentage = count / (max - min);
-        const x = colorScaleRect.width * percentage + left;
-
-        setCursor({ xPosition: x, yPosition: colorScaleRect.top });
-
-        console.log(cursor);
-      }
-    },
-    [colorScaleRect, cursor, max, min]
-  );
-
   useEffect(() => {
-    if (hover) {
-      const countField = data.heatmap?.fields[2];
-      const countVals = countField?.values.toArray();
-      const count = countVals?.[hover.index];
-
-      setPositionByCount(count);
-      setHoverCount(count);
+    if (hover != null) {
+      const percent = hover / (max - min);
+      setPercent(percent * 100);
     }
-  }, [hover, data, setPositionByCount]);
+  }, [hover, min, max]);
 
   return (
     <div className={styles.scaleWrapper}>
-      <div
-        className={styles.scaleGradient}
-        onMouseMove={onScaleMouseMove}
-        onMouseLeave={onScaleMouseLeave}
-        ref={colorScaleRef}
-      >
-        {display && scaleHover.isShown && (
-          <div>
-            <div
+      <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+        {display && true && (
+          <div style={{position:'relative'}}>
+            {/* <div
               className={styles.tooltip}
               style={{
                 display: 'block',
-                position: 'fixed',
-                top: cursor.yPosition + OFFSET,
-                left: cursor.xPosition + OFFSET,
+                position: 'absolute',
+                left: '20%', //cursor.xPosition + OFFSET,
               }}
             >
+<<<<<<< Updated upstream
               ≈{display(scaleHover.value)}
             </div>
             <div className={styles.follower} />
+=======
+              ≈{display(hover.value)}
+            </div> */}
+            <div className={styles.follower} style={{left:percent+'%'}} />
           </div>
         )}
       </div>
       {display && (
-        <div className={styles.count}>
-          <span>{display(min)}</span>
-          <span className={styles.maxCount}>{display(max)}</span>
+        <div style={{position:'relative'}}>
+          { percent != null && <span style={{position:'absolute', left:percent+'%'}}>AAA</span>}
+          <div className={styles.legendValues}>
+            <span>{display(min)}</span>
+            <span>{display(max)}</span>
+          </div>
         </div>
       )}
     </div>
@@ -159,7 +139,7 @@ const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; st
   return [...gradientStops];
 };
 
-const getStyles = (theme: GrafanaTheme2, colors: string[], hover: HoverState, cursor: CursorState) => ({
+const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleWrapper: css`
     margin-left: 25px;
     width: 100%;
@@ -174,22 +154,19 @@ const getStyles = (theme: GrafanaTheme2, colors: string[], hover: HoverState, cu
     overflow: hidden;
     // cursor: ew-resize;
   `,
-  maxCount: css`
-    float: right;
-    margin-right: -3px;
-  `,
+  legendValues: css`
+  justify-content: space-between;
+  display: flex;
+`,
   count: css`
-    ${hover.isShown &&
-    `
       opacity: 0.6;
       transition: 0.3s;
-      `}
   `,
   tooltip: css`
     font-size: 11px;
   `,
   follower: css`
-    position: fixed;
+    position: absolute;
     height: 10px;
     width: 10px;
     border-radius: 50%;
@@ -198,7 +175,5 @@ const getStyles = (theme: GrafanaTheme2, colors: string[], hover: HoverState, cu
     z-index: 10000;
     border: 2px solid white;
     transition: all 100ms ease-out;
-    top: ${cursor.yPosition}px;
-    left: ${cursor.xPosition}px;
   `,
 });
