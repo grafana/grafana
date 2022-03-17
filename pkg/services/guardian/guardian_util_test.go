@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -77,20 +76,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
 		store := mockstore.NewSQLStoreMock()
-		bus.ClearBusHandlers()
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-			if query.OrgID != sc.givenUser.OrgId {
-				sc.reportFailure("Invalid organization id for GetDashboardAclInfoListQuery", sc.givenUser.OrgId, query.OrgID)
-			}
-			if query.DashboardID != sc.givenDashboardID {
-				sc.reportFailure("Invalid dashboard id for GetDashboardAclInfoListQuery", sc.givenDashboardID, query.DashboardID)
-			}
-
-			query.Result = permissions
-			return nil
-		})
-
+		store.ExpectedDashboardAclInfoList = permissions
 		teams := []*models.TeamDTO{}
 
 		for _, p := range permissions {
@@ -98,18 +84,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 				teams = append(teams, &models.TeamDTO{Id: p.TeamId})
 			}
 		}
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-			if query.OrgId != sc.givenUser.OrgId {
-				sc.reportFailure("Invalid organization id for GetTeamsByUserQuery", sc.givenUser.OrgId, query.OrgId)
-			}
-			if query.UserId != sc.givenUser.UserId {
-				sc.reportFailure("Invalid user id for GetTeamsByUserQuery", sc.givenUser.UserId, query.UserId)
-			}
-
-			query.Result = teams
-			return nil
-		})
+		store.ExpectedTeamsByUser = teams
 
 		sc.permissionScenario = desc
 		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser, store)
