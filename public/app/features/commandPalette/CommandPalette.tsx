@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   KBarAnimator,
   KBarPortal,
@@ -7,20 +7,39 @@ import {
   KBarResults,
   KBarSearch,
   useMatches,
-  useRegisterActions,
+  Action,
 } from 'kbar';
+import getGlobalActions from './global.actions';
 
 /**
  * Wrap all the components from KBar here.
  * @constructor
  */
-export function CommandPalette() {
+export const CommandPalette = () => {
+  /*  useEffect(() => {
+    const useGetAllGlobalActionsHook = async () => {
+      const actions = await getGlobalActions();
+      useRegisterActions(actions);
+    }
+    useGetAllGlobalActionsHook();
+  });*/
+  console.log('render command palette');
+  const [actions, setActions] = useState<Action[]>([]);
+
+  useEffect(() => {
+    const loadActions = async () => {
+      const actionsResp = await getGlobalActions();
+      setActions(actionsResp);
+    };
+
+    loadActions();
+  }, []);
+
   return (
-    <KBarProvider>
+    <KBarProvider actions={actions}>
       <KBarPortal>
         <KBarPositioner>
           <KBarAnimator>
-            <ActionsHandler />
             <KBarSearch />
             <RenderResults />
           </KBarAnimator>
@@ -28,30 +47,7 @@ export function CommandPalette() {
       </KBarPortal>
     </KBarProvider>
   );
-}
-
-/**
- * We need to handle the actions in separate component from CommandPallete because it needs access to the KBar context
- * and so needs to be wrapped in KBarProvider.
- * @constructor
- */
-function ActionsHandler() {
-  // Get the actions from the service. This will rerender on any change to the actions list in the service.
-  //const actions = useActions();
-  // Then register them with Kbar. This also handles unregistering.
-  // TODO: may have some perf implications as we re-register all the actions on any change.
-  const actions = [
-    {
-      id: 'blog',
-      name: 'Blog',
-      shortcut: ['b'],
-      keywords: 'writing words',
-      perform: () => (window.location.pathname = 'blog'),
-    },
-  ];
-  useRegisterActions(actions, [actions]);
-  return null;
-}
+};
 
 function RenderResults() {
   const { results } = useMatches();
