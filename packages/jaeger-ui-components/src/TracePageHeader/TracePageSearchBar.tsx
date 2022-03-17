@@ -25,16 +25,22 @@ import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 import { memo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = (theme?: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
       float: right;
       position: sticky;
-      top: 0;
+      top: 8px;
+      right: 0;
       z-index: 5;
-      background: ${theme ? theme.colors.background.primary : ''};
-      margin-bottom: -32px;
+      background: ${theme.colors.background.primary};
+      margin-top: 8px;
+      margin-bottom: -48px;
+      padding: 8px;
+      margin-right: 2px;
+      border-radius: 4px;
+      box-shadow: ${theme.shadows.z2};
     `,
     TracePageSearchBarBar: css`
       label: TracePageSearchBarBar;
@@ -50,8 +56,8 @@ export const getStyles = (theme?: GrafanaTheme2) => {
     `,
     TracePageSearchBarBtn: css`
       label: TracePageSearchBarBtn;
-      border-left: none;
       transition: 0.2s;
+      margin-left: 8px;
     `,
     TracePageSearchBarBtnDisabled: css`
       label: TracePageSearchBarBtnDisabled;
@@ -67,7 +73,6 @@ export const getStyles = (theme?: GrafanaTheme2) => {
 type TracePageSearchBarProps = {
   prevResult: () => void;
   nextResult: () => void;
-  clearSearch: () => void;
   navigable: boolean;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
@@ -75,7 +80,7 @@ type TracePageSearchBarProps = {
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { clearSearch, navigable, nextResult, prevResult, onSearchValueChange, searchValue, searchBarSuffix } = props;
+  const { navigable, nextResult, prevResult, onSearchValueChange, searchValue, searchBarSuffix } = props;
   const styles = useStyles2(getStyles);
 
   const suffix = searchValue ? (
@@ -95,12 +100,18 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   return (
     <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
-        <UiFindInput onChange={onSearchValueChange} value={searchValue} inputProps={uiFindInputInputProps} />
+        <UiFindInput
+          onChange={onSearchValueChange}
+          value={searchValue}
+          inputProps={uiFindInputInputProps}
+          allowClear={true}
+        />
         <>
           {navigable && (
             <>
               <Button
                 className={btnClass}
+                variant="secondary"
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
@@ -109,6 +120,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
               />
               <Button
                 className={btnClass}
+                variant="secondary"
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-up"
@@ -117,16 +129,6 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
               />
             </>
           )}
-          <Button
-            variant={'secondary'}
-            fill={'text'}
-            disabled={!searchValue}
-            type="button"
-            icon="times"
-            data-testid="trace-page-search-bar-clear-button"
-            onClick={clearSearch}
-            title={'Clear search'}
-          />
         </>
       </span>
     </div>
