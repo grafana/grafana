@@ -310,8 +310,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return ds.getTagValues!({ key });
   }
 
+  // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
   getLokiSearchDS = (): string | undefined => {
-    // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
     const legacyLogsDatasourceUid =
       this.tracesToLogs?.lokiSearch !== false && this.lokiSearch === undefined
         ? this.tracesToLogs?.datasourceUid
