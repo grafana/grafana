@@ -293,15 +293,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
-			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "",
-				Groups:  []string{},
-			},
+			want:    nil,
 			wantErr: true,
 		},
 	}
