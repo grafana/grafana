@@ -497,7 +497,7 @@ func (o byOrgName) Less(i, j int) bool {
 func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = make([]*models.UserOrgDTO, 0)
-		sess := x.Table("org_user")
+		sess := dbSess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
