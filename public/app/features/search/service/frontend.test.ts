@@ -20,10 +20,10 @@ describe('simple search', () => {
     let results = await searcher.search('name');
     expect(results.body.fields[1].values.toArray()).toMatchInlineSnapshot(`
       Array [
-        "B name (panels)",
-        "A name (panels)",
-        "B name (dash)",
         "A name (dash)",
+        "B name (dash)",
+        "A name (panels)",
+        "B name (panels)",
       ]
     `);
 
