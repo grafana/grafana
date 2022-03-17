@@ -49,13 +49,15 @@ export function getFrontendGrafanaSearcher(data: RawIndexData): GrafanaSearcher 
       boostDocument: (documentId: any, term: string) => {
         const kind = documentId.kind;
         if (kind === 'dashboard') {
-          return 3;
+          return 1.4;
         }
         if (kind === 'folder') {
-          return 2;
+          return 1.2;
         }
         return 1;
       },
+      prefix: true, // (term) => term.length > 3,
+      fuzzy: (term) => (term.length > 4 ? 0.2 : false),
     },
     extractField: (doc, name) => {
       // return a composite key for the id

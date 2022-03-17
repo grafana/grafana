@@ -20947,7 +20947,7 @@ __metadata:
     lru-cache: 7.5.1
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
-    minisearch: ^4.0.3
+    minisearch: 5.0.0-beta1
     moment: 2.29.1
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
@@ -26361,10 +26361,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minisearch@npm:^4.0.3":
-  version: 4.0.3
-  resolution: "minisearch@npm:4.0.3"
-  checksum: 9730af234b69c5e37408b4eee54031300ff19b0b0c38877d8d69bf3957ad8ebe1113285a9f63b202db93115483b5bfb729884363db967a45b1c0f172a41d2c9e
+"minisearch@npm:5.0.0-beta1":
+  version: 5.0.0-beta1
+  resolution: "minisearch@npm:5.0.0-beta1"
+  checksum: 7c5ba8b2d1b52df0724e69183306b4204ae4cdc0102813da7f12a8f90a7b4efe7add4c54814ec1bb63f8bd5be599373af9055e0d68ceeef3d225f0a2c7637699
   languageName: node
   linkType: hard
 
