@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +37,8 @@ func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenari
 			OrgId:   orgID,
 			OrgRole: role,
 		}
-		guard := New(context.Background(), dashboardID, orgID, user)
+		store := mockstore.NewSQLStoreMock()
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 
 		sc := &scenarioContext{
 			t:                t,
@@ -57,7 +59,8 @@ func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenario
 			OrgRole:  role,
 			ApiKeyId: 10,
 		}
-		guard := New(context.Background(), dashboardID, orgID, user)
+		store := mockstore.NewSQLStoreMock()
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -73,6 +76,7 @@ func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenario
 func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
+		store := mockstore.NewSQLStoreMock()
 		bus.ClearBusHandlers()
 
 		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
@@ -108,7 +112,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		})
 
 		sc.permissionScenario = desc
-		sc.g = New(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser)
+		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser, store)
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams

@@ -17,6 +17,10 @@ func ProvideService(store *sqlstore.SQLStore, ac accesscontrol.AccessControl, pe
 		New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 			return NewAccessControlDashboardGuardian(ctx, dashId, user, store, ac, permissionsServices)
 		}
+	} else {
+		New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+			return newDashboardGuardian(ctx, dashId, orgId, user, store)
+		}
 	}
 	return &Provider{}
 }

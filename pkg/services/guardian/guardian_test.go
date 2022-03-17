@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -702,7 +703,8 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				UserId: 1,
 				Login:  "user1",
 			}
-			g := New(context.Background(), dashboardID, orgID, user)
+			store := mockstore.NewSQLStoreMock()
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -718,7 +720,8 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
-			g := New(context.Background(), dashboardID, orgID, user)
+			store := mockstore.NewSQLStoreMock()
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -752,7 +755,8 @@ func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 				UserId: 1,
 				Login:  "user1",
 			}
-			g := New(context.Background(), dashboardID, orgID, user)
+			store := mockstore.NewSQLStoreMock()
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 
 			acl, err := g.GetACLWithoutDuplicates()
 			require.NoError(t, err)
