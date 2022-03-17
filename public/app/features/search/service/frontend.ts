@@ -35,7 +35,9 @@ interface CompositeKey {
   index: number;
 }
 
-const generateResults = (rawResults: SearchResult[], lookup: Map<keyof RawIndexData, InputDoc>): DataFrame => {
+type Lookup = Map<SearchResultKind, InputDoc>;
+
+const generateResults = (rawResults: SearchResult[], lookup: Lookup): DataFrame => {
   // frame fields
   const url: string[] = [];
   const kind: string[] = [];
@@ -131,7 +133,7 @@ export function getFrontendGrafanaSearcher(data: RawIndexData): GrafanaSearcher 
     },
   });
 
-  const lookup = new Map<SearchResultKind, InputDoc>();
+  const lookup: Lookup = new Map<SearchResultKind, InputDoc>();
   for (const [key, frame] of Object.entries(data)) {
     const kind = key as SearchResultKind;
     const input = getInputDoc(kind, frame);
