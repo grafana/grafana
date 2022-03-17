@@ -178,7 +178,7 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 
 	acl := make([]*models.DashboardAclInfoDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if !p.IsManaged() {
+		if !p.IsManaged {
 			continue
 		}
 
