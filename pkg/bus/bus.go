@@ -1,3 +1,6 @@
+// Package bus provides a generic message bus that can be used to decouple dispatchers and publishers from handlers and listeners.
+//
+// Deprecated: Bus is being slowly phased out from Grafana. Do not use this package in new code.
 package bus
 
 import (
@@ -47,6 +50,8 @@ type TransactionManager interface {
 // functions like an Event in common event buses. Publish processes listeners
 // serially and returns the first non-nil error from a listener. If any
 // listener errors, subsequent listeners will not be called.
+//
+// Deprecated: Bus is being phased out of Grafana. Do not use this package in new code.
 type Bus interface {
 	Dispatch(ctx context.Context, msg Msg) error
 
