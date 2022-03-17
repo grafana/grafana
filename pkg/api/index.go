@@ -172,15 +172,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Section:    dtos.NavSectionCore,
 			Children:   savedItemsLinks,
 		})
-
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Home",
-			Id:         "home",
-			Icon:       "home-alt",
-			Url:        hs.Cfg.AppSubURL + "/",
-			Section:    dtos.NavSectionCore,
-			SortWeight: dtos.WeightHome,
-		})
 	}
 
 	if hasEditPerm && !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
