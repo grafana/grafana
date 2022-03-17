@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
+import { HeatmapData } from './fields';
+import { HeatmapHoverEvent } from './utils';
 
 type Props = {
   colorPalette: string[];
@@ -10,6 +12,8 @@ type Props = {
 
   // Show a value as string -- when not defined, the raw values will not be shown
   display?: (v: number) => string;
+  data?: HeatmapData;
+  hover?: HeatmapHoverEvent | undefined;
 };
 
 type HoverState = {
@@ -24,35 +28,80 @@ type CursorState = {
 
 const OFFSET = 8;
 
-export const ColorScale = ({ colorPalette, min, max, display }: Props) => {
+export const ColorScale = ({ colorPalette, min, max, display, data, hover }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
-  const [hover, setHover] = useState<HoverState>({ isShown: false, value: 0 });
+  const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
   const [cursor, setCursor] = useState<CursorState>({ xPosition: 0, yPosition: 0 });
+  const [hoverCount, setHoverCount] = useState<number | undefined>(undefined);
+  const [colorScaleRect, setColorScaleRect] = useState<DOMRect>();
+
+  const colorScaleRef = useRef<HTMLDivElement>();
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, colors, scaleHover, cursor);
+
+  useLayoutEffect(() => {
+    if (colorScaleRef.current) {
+      setColorScaleRect(colorScaleRef.current.getBoundingClientRect());
+    }
+  }, []);
 
   useEffect(() => {
     setColors(getGradientStops({ colorArray: colorPalette }));
   }, [colorPalette]);
-
-  const theme = useTheme2();
-  const styles = getStyles(theme, colors, hover, cursor);
 
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
     const offsetWidth = (event.target as any).offsetWidth as number;
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
-    setHover({ isShown: true, value: scaleValue });
+    setScaleHover({ isShown: true, value: scaleValue });
     setCursor({ xPosition: event.clientX, yPosition: event.clientY });
   };
 
   const onScaleMouseLeave = () => {
-    setHover({ isShown: false, value: 0 });
+    setScaleHover({ isShown: false, value: 0 });
   };
+
+  const setPositionByCount = useCallback(
+    (count: number) => {
+      if (colorScaleRect) {
+        const left = colorScaleRect.left; // 50
+        const right = colorScaleRect.right; // 350
+
+        console.log(colorScaleRect);
+
+        const percentage = count / (max - min);
+        const x = colorScaleRect.width * percentage + left;
+
+        setCursor({ xPosition: x, yPosition: colorScaleRect.top });
+
+        console.log(cursor);
+      }
+    },
+    [colorScaleRect, cursor, max, min]
+  );
+
+  useEffect(() => {
+    if (hover) {
+      const countField = data.heatmap?.fields[2];
+      const countVals = countField?.values.toArray();
+      const count = countVals?.[hover.index];
+
+      setPositionByCount(count);
+      setHoverCount(count);
+    }
+  }, [hover, data, setPositionByCount]);
 
   return (
     <div className={styles.scaleWrapper}>
-      <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
-        {display && hover.isShown && (
+      <div
+        className={styles.scaleGradient}
+        onMouseMove={onScaleMouseMove}
+        onMouseLeave={onScaleMouseLeave}
+        ref={colorScaleRef}
+      >
+        {display && scaleHover.isShown && (
           <div>
             <div
               className={styles.tooltip}
@@ -63,7 +112,7 @@ export const ColorScale = ({ colorPalette, min, max, display }: Props) => {
                 left: cursor.xPosition + OFFSET,
               }}
             >
-              ≈{display(hover.value)}
+              ≈{display(scaleHover.value)}
             </div>
             <div className={styles.follower} />
           </div>
@@ -123,7 +172,7 @@ const getStyles = (theme: GrafanaTheme2, colors: string[], hover: HoverState, cu
     background: linear-gradient(90deg, ${colors.join()});
     height: 12px;
     overflow: hidden;
-    cursor: ew-resize;
+    // cursor: ew-resize;
   `,
   maxCount: css`
     float: right;
