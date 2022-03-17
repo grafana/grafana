@@ -97,14 +97,13 @@ const ServiceAccountsListPage = ({
             className={styles.filter}
           />
         </div>
-
         {isLoading && <PageLoader />}
         {!isLoading && serviceAccounts.length === 0 && (
           <>
             <EmptyListCTA
               title="You haven't created any service accounts yet."
               buttonIcon="key-skeleton-alt"
-              buttonLink="org/serviceaccounts/new"
+              buttonLink="org/serviceaccounts/create"
               buttonTitle=" New service account"
               buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
               proTip="Remember, you can provide specific permissions for API access to other applications."
