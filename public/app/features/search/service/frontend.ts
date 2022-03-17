@@ -101,7 +101,7 @@ export function getFrontendGrafanaSearcher(data: RawIndexData): GrafanaSearcher 
         const dashboardID = panel.dashboardID.get(i);
         const index = dashIDToIndex.get(dashboardID);
         if (index != null) {
-          urls[i] = dashboard.url.get(index) + '#' + panel.id?.get(i);
+          urls[i] = dashboard.url.get(index) + '?viewPanel=' + panel.id?.get(i);
         }
       }
       panel.url = new ArrayVector(urls);
@@ -140,7 +140,26 @@ export function getFrontendGrafanaSearcher(data: RawIndexData): GrafanaSearcher 
           fields: [
             { name: 'Kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
             { name: 'Name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
-            { name: 'URL', config: {}, type: FieldType.string, values: new ArrayVector(url) },
+            {
+              name: 'URL',
+              config: {
+                links: [
+                  {
+                    title: 'view',
+                    url: '?',
+                    onClick: (evt) => {
+                      const { field, rowIndex } = evt.origin;
+                      if (field && rowIndex != null) {
+                        const url = field.values.get(rowIndex) as string;
+                        window.location.href = url; // HACK!
+                      }
+                    },
+                  },
+                ],
+              },
+              type: FieldType.string,
+              values: new ArrayVector(url),
+            },
             { name: 'type', config: {}, type: FieldType.other, values: new ArrayVector(type) },
             { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
             { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
