@@ -32,7 +32,7 @@ type StorageService interface {
 	// List folder contents
 	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
 
-	// Called from the UI when a dashboard is saved
+	// Read raw file contents out of the store
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
 }
 

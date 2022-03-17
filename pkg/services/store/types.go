@@ -29,10 +29,7 @@ type WriteValueResponse struct {
 }
 
 type storageTree interface {
-	// Called from the UI when a dashboard is saved
 	GetFile(ctx context.Context, path string) (*filestorage.File, error)
-
-	// Get a single dashboard
 	ListFolder(ctx context.Context, path string) (*data.Frame, error)
 }
 
