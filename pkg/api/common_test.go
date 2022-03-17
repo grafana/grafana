@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	permissionservices "github.com/grafana/grafana/pkg/services/accesscontrol/services"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -389,7 +391,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 			acmock = acmock.WithDisabled()
 		}
 		hs.AccessControl = acmock
-		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, acmock, database.ProvideService(db))
+		teamPermissionService, err := permissionservices.ProvideTeamPermissions(cfg, routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
@@ -401,7 +403,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		require.NoError(t, err)
 		err = ac.RegisterFixedRoles()
 		require.NoError(t, err)
-		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db))
+		teamPermissionService, err := permissionservices.ProvideTeamPermissions(cfg, routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	}

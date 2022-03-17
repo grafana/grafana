@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/services"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -600,8 +601,10 @@ func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*a
 	require.NoError(t, err)
 
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	services, err := ossaccesscontrol.ProvidePermissionsServices(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	folderPermissions, err := services.ProvideFolderPermissions(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
-
-	return NewAccessControlDashboardGuardian(context.Background(), dashID, &models.SignedInUser{OrgId: 1}, store, ac, services)
+	dashboardPermissions, err := services.ProvideDashboardPermissions(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	require.NoError(t, err)
+	svc := ossaccesscontrol.ProvidePermissionsServices(nil, folderPermissions, dashboardPermissions, nil)
+	return NewAccessControlDashboardGuardian(context.Background(), dashID, &models.SignedInUser{OrgId: 1}, store, ac, svc)
 }
