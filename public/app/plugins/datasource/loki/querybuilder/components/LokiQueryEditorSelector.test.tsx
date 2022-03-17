@@ -78,6 +78,13 @@ describe('LokiQueryEditorSelector', () => {
       refId: 'A',
       expr: defaultQuery.expr,
       editorMode: QueryEditorMode.Builder,
+      visualQuery: {
+        labels: [
+          { label: 'label1', op: '=', value: 'foo' },
+          { label: 'label2', op: '=', value: 'bar' },
+        ],
+        operations: [],
+      },
     });
   });
 
@@ -148,6 +155,28 @@ describe('LokiQueryEditorSelector', () => {
   //   expect(screen.getByText('Rate')).toBeInTheDocument();
   //   expect(screen.getByText('$__interval')).toBeInTheDocument();
   // });
+  it('parses query when changing to builder mode', async () => {
+    const { rerender } = renderWithProps({
+      refId: 'A',
+      expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
+      editorMode: QueryEditorMode.Code,
+    });
+    switchToMode(QueryEditorMode.Builder);
+    rerender(
+      <LokiQueryEditorSelector
+        {...defaultProps}
+        query={{
+          refId: 'A',
+          expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
+          editorMode: QueryEditorMode.Builder,
+        }}
+      />
+    );
+
+    await screen.findByText('host.docker.internal:3000');
+    expect(screen.getByText('Rate')).toBeInTheDocument();
+    expect(screen.getByText('$__interval')).toBeInTheDocument();
+  });
 });
 
 function renderWithMode(mode: QueryEditorMode) {
