@@ -225,7 +225,6 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	if err := g.store.GetDashboardAclInfoList(g.ctx, &query); err != nil {
 		return nil, err
 	}
-
 	g.acl = query.Result
 	return g.acl, nil
 }
