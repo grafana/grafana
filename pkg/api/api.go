@@ -211,6 +211,17 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
+		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
+				orgRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
+
+				orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+			})
+		}
+
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
