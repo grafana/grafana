@@ -1,37 +1,27 @@
-import { DataFrameView } from '@grafana/data';
-
+import { reduceField } from '@grafana/data';
 import { ThunkResult } from 'app/types';
-import { getDashboardData, filterDataFrame } from '../data';
-import { DashboardResult } from '../types';
+import { getRawIndexData, getFrontendGrafanaSearcher } from '../../service/frontend';
 import { fetchResults } from './reducers';
 
 export const loadResults = (query: string): ThunkResult<void> => {
   return async (dispatch) => {
-    const data = await getDashboardData();
-
-    if (!data.dashboards || !data.panels) {
+    const data = await getRawIndexData();
+    if (!data.dashboard) {
       return;
     }
 
-    if (!data.dashboards.length || !query.length) {
-      return dispatch(
-        fetchResults({
-          data: {
-            dashboards: new DataFrameView<DashboardResult>(data.dashboards),
-            panels: data.panels,
-          },
-        })
-      );
-    }
+    const searcher = getFrontendGrafanaSearcher(data);
+    const results = await searcher.search(query);
 
-    const dashboards = filterDataFrame(query, data.dashboards, 'Name', 'Description', 'Tags');
-    const panels = filterDataFrame(query, data.panels, 'Name', 'Description', 'Type');
+    // HACK avoid redux error!
+    results.body.fields.forEach((f) => {
+      reduceField({ field: f, reducers: ['min', 'max'] });
+    });
 
     return dispatch(
       fetchResults({
         data: {
-          dashboards: new DataFrameView<DashboardResult>(dashboards),
-          panels: panels,
+          results,
         },
       })
     );

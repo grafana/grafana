@@ -1,19 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataFrame, DataFrameView } from '@grafana/data';
 
-import { DashboardResult } from '../types';
+import { QueryResponse } from '../../service/types';
 
 export interface SearchPageState {
   data: {
-    dashboards: DataFrameView<DashboardResult> | null;
-    panels: DataFrame | null;
+    results?: QueryResponse;
   };
 }
 
 export const initialState: SearchPageState = {
   data: {
-    dashboards: null,
-    panels: null,
+    results: undefined,
   },
 };
 
