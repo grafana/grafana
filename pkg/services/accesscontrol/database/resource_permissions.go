@@ -13,10 +13,12 @@ import (
 )
 
 type flatResourcePermission struct {
-	ID            int64 `xorm:"id"`
-	RoleName      string
-	Action        string
-	Scope         string
+	ID       int64 `xorm:"id"`
+	RoleName string
+	Action   string
+	// Scope is what is stored in the database
+	Scope string
+	// ResourceScope is what we ask for
 	ResourceScope string
 	UserId        int64
 	UserLogin     string
