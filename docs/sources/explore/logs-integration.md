@@ -97,6 +97,16 @@ You can change the order of received logs from the default descending order (new
 
 Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
+### Escaping newlines
+
+> **Note:** Available in Grafana 7.5 and later versions.
+
+Explore can automatically detect and attempt to fix incorrectly escaped sequences in log lines, such as newlines (`\n`, `\r`) or tabs (`\t`). This feature appears only when Explore detects incorrectly escaped sequences.
+
+1. Click the "Escape newlines" button to fix incorrectly escaped sequences.
+2. Manually review the replacements to confirm that the detection and replacement were correct.
+3. To revert the replacements, click "Remove escaping".
+
 #### Derived fields links
 
 By using Derived fields, you can turn any part of a log message into an internal or external link. The created link is visible as a button next to the Detected field in the Log details view.
