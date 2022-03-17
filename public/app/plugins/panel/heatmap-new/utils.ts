@@ -60,6 +60,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       });
     });
     u.over.addEventListener('click', onclick);
+    console.log('we got an init hook', u);
   });
 
   // rect of .u-over (grid area)

@@ -21,14 +21,17 @@ interface ExemplarsPluginProps {
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
   const plotInstance = useRef<uPlot>();
-
+  console.log('in exemplars plugin', exemplars);
   useLayoutEffect(() => {
-    config.addHook('init', (u) => {
+    console.log('useLayoutEffect', config);
+    config.addHook('init', (u: uPlot) => {
+      console.log('init instance', u);
       plotInstance.current = u;
     });
   }, [config]);
 
   const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+    console.log('mapExemplarToXYCoords', dataFrame, dataFrameFieldIndex);
     const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
     const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
@@ -61,6 +64,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      console.log('rendering marker', dataFrame, dataFrameFieldIndex);
       return (
         <ExemplarMarker
           timeZone={timeZone}
@@ -74,10 +78,11 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
     [config, timeZone, getFieldLinks]
   );
 
+  console.log('We have exemplars', exemplars, config);
   return (
     <EventsCanvas
       config={config}
-      id="exemplars"
+      id="heatmap-exemplars"
       events={exemplars}
       renderEventMarker={renderMarker}
       mapEventToXYCoords={mapExemplarToXYCoords}

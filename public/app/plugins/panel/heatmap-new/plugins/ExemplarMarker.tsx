@@ -94,6 +94,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
               <table className={styles.exemplarsTable}>
                 <tbody>
                   {dataFrame.fields.map((field, i) => {
+                    console.log('field', field);
                     const value = field.values.get(dataFrameFieldIndex.fieldIndex);
                     const links = field.config.links?.length
                       ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)

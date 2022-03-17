@@ -17,7 +17,6 @@ import {
   VizLayout,
   VizTooltipContainer,
   LegendDisplayMode,
-  UPlotConfigBuilder,
 } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
@@ -126,6 +125,17 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
             {/*children ? children(config, alignedFrame) : null*/}
+            {data.annotations && (
+              <ExemplarsPlugin
+                config={builder}
+                exemplars={data.annotations}
+                timeZone={timeZone}
+                getFieldLinks={(field: Field, rowIndex: number): Array<LinkModel<Field>> => {
+                  console.log('getFieldLinks Called', field, rowIndex);
+                  return [];
+                }}
+              />
+            )}
           </UPlotChart>
         )}
       </VizLayout>
@@ -143,17 +153,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
               </>
             )}
             <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
-            {data.annotations && (
-              <ExemplarsPlugin
-                config={{} as UPlotConfigBuilder}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                getFieldLinks={(field: Field, rowIndex: number): Array<LinkModel<Field>> => {
-                  console.log('getFieldLinks Called', field, rowIndex);
-                  return [];
-                }}
-              />
-            )}
           </VizTooltipContainer>
         )}
       </Portal>
