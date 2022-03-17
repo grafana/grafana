@@ -18,16 +18,16 @@ apk add --no-cache curl npm yarn build-base openssh git-lfs perl-utils coreutils
 # apk add --no-cache xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
-filename="go1.17.8.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "980e65a863377e69fd9b67df9d8395fd8e93858e7a24c9f55803421e453f4f99"
+filename="go1.18.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "e85278e98f57cdb150fe8409e6e5df5343ecb13cebf03a5d5ff12bd55a80264f"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-GOLANGCILINT_VERSION=1.37.1
+GOLANGCILINT_VERSION=1.44.2
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
     "/tmp/$filename.tar.gz" \
-    "1929425d7733d136b342395c77f171d459aa89b198933465ec4c854aa34c41a2"
+    "461e238f83e2b3deb48665be15d835fd3eab75a9a0138074ca2ad81315e0c3aa"
 untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
@@ -43,7 +43,7 @@ get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-l
     "e1be1930379bd169d3a8e82135cf57216ad52ecfaf520b5804f269721e4dcc3d"
 chmod 755 /usr/local/bin/cc-test-reporter
 
-curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/grabpl"
+curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.27/grabpl"
 
 apk add --no-cache git
 # Install Mage
@@ -52,7 +52,7 @@ git clone https://github.com/magefile/mage.git /tmp/mage
 cd /tmp/mage && go run bootstrap.go
 mv $HOME/go/bin/mage /usr/local/bin
 
-wget -O - -q https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b /usr/local/bin v2.2.0
+wget -O - -q https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b /usr/local/bin v2.10.0
 
 source "/etc/profile"
 sh -l -c "go get -u github.com/mgechev/revive"
@@ -65,8 +65,8 @@ current_dir=$PWD
 cd /usr/local/grafana-toolkit && yarn install && cd $current_dir
 ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
 
-GOOGLE_SDK_VERSION=365.0.1
-GOOGLE_SDK_CHECKSUM=17003cdba67a868c2518ac16efa60dc6175533b7a9fb87304459784308e30fb0
+GOOGLE_SDK_VERSION=377.0.0
+GOOGLE_SDK_CHECKSUM=46d80d1fbf3ca52c606b5ce931f7ea77311b3c10df9e5677dae5ba9db85c0578
 
 curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz
 echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status
