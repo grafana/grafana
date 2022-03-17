@@ -189,7 +189,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
   }
 
   if (node.firstChild.name === 'IpLabelFilter') {
-    //currently not supported in visual editor and it will throw error which will be logged in console
+    // Not implemented in visual query builder yet
     const filter = node.firstChild;
     const label = filter.firstChild;
     const op = label.nextSibling;
@@ -208,6 +208,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  // Not implemented in visual query builder yet
   const id = 'line_format';
   const string = getString(expr, node.getChild('String')).replace(/"/g, '');
 
@@ -218,6 +219,7 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  // Not implemented in visual query builder yet
   const id = 'label_format';
   const identifier = node.getChild('Identifier');
   const op = identifier.nextSibling;
