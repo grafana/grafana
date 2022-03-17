@@ -1,0 +1,17 @@
+import React, { FC, ReactChild } from 'react';
+import { AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+
+type Props = {
+  actions: AccessControlAction[];
+  fallback?: boolean;
+  children: ReactChild;
+};
+
+export const Authorize: FC<Props> = ({ actions, children, fallback = false }) => {
+  if (actions.some((action) => contextSrv.hasAccess(action, fallback))) {
+    return <>{children}</>;
+  } else {
+    return null;
+  }
+};
