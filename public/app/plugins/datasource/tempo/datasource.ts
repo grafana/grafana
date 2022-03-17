@@ -107,12 +107,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return of({ data: [], state: LoadingState.Done });
     }
 
-    // Get linked logs datasource. Fall back to legacy loki search/trace to logs config
-    const legacyLogsDatasourceUid =
-      this.tracesToLogs?.lokiSearch !== false && this.lokiSearch === undefined
-        ? this.tracesToLogs?.datasourceUid
-        : undefined;
-    const logsDatasourceUid = this.lokiSearch?.datasourceUid ?? legacyLogsDatasourceUid;
+    const logsDatasourceUid = this.getLokiSearchDS();
 
     // Run search queries on linked datasource
     if (logsDatasourceUid && targets.search?.length > 0) {
@@ -314,6 +309,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
     return ds.getTagValues!({ key });
   }
+
+  getLokiSearchDS = (): string | undefined => {
+    // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
+    const legacyLogsDatasourceUid =
+      this.tracesToLogs?.lokiSearch !== false && this.lokiSearch === undefined
+        ? this.tracesToLogs?.datasourceUid
+        : undefined;
+    return this.lokiSearch?.datasourceUid ?? legacyLogsDatasourceUid;
+  };
 }
 
 function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {

@@ -61,7 +61,7 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 This is a configuration for the Loki search query type.
 
--- **Data source -** Loki instance used when searching for traces. The Loki instance must have derived fields configured.
+-- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
 
 ## Query traces
 

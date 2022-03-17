@@ -66,12 +66,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
   render() {
     const { query, onChange, datasource } = this.props;
 
-    // Get linked logs datasource. Fall back to legacy loki search/trace to logs config
-    const legacyLogsDatasourceUid =
-      datasource.tracesToLogs?.lokiSearch !== false && datasource.lokiSearch === undefined
-        ? datasource.tracesToLogs?.datasourceUid
-        : undefined;
-    const logsDatasourceUid = datasource.lokiSearch?.datasourceUid ?? legacyLogsDatasourceUid;
+    const logsDatasourceUid = datasource.getLokiSearchDS();
 
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
