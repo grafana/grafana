@@ -1,7 +1,7 @@
 import { AnnotationEvent, DataFrame, DataQuery, FieldType, QueryResultMeta } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
-import { each, flatten, groupBy, includes, isArray } from 'lodash';
+import { each, flatten, groupBy, isArray } from 'lodash';
 import { InfluxQuery } from './types';
 
 export default class ResponseParser {
