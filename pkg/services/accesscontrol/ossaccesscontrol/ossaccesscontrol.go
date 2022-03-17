@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/services"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -115,7 +117,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 		OrgID:   user.OrgId,
 		UserID:  user.UserId,
 		Roles:   ac.GetUserBuiltInRoles(user),
-		Actions: append(TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...),
+		Actions: append(services.TeamAdminActions, append(services.DashboardAdminActions, services.FolderAdminActions...)...),
 	})
 	if err != nil {
 		return nil, err

@@ -60,6 +60,22 @@ type PermissionsService interface {
 	MapActions(permission ResourcePermission) string
 }
 
+type TeamPermissions interface {
+	PermissionsService
+}
+
+type FolderPermissions interface {
+	PermissionsService
+}
+
+type DashboardPermissions interface {
+	PermissionsService
+}
+
+type DatasourcePermissions interface {
+	PermissionsService
+}
+
 type User struct {
 	ID         int64
 	IsExternal bool

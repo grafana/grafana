@@ -27,6 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	permissionservices "github.com/grafana/grafana/pkg/services/accesscontrol/services"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -223,6 +226,14 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
+	permissionservices.ProvideTeamPermissions,
+	wire.Bind(new(accesscontrol.TeamPermissions), new(*permissionservices.TeamPermissions)),
+	permissionservices.ProvideFolderPermissions,
+	wire.Bind(new(accesscontrol.FolderPermissions), new(*permissionservices.FolderPermissions)),
+	permissionservices.ProvideDashboardPermissions,
+	wire.Bind(new(accesscontrol.DashboardPermissions), new(*permissionservices.DashboardPermissions)),
+	ossaccesscontrol.ProvidePermissionsServices,
+	wire.Bind(new(accesscontrol.PermissionsServices), new(*ossaccesscontrol.PermissionsServices)),
 )
 
 var wireSet = wire.NewSet(
