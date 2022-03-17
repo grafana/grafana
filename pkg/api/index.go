@@ -482,8 +482,12 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 
 func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg bool) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	alertChildNavs := []*dtos.NavLink{
-		{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
+	alertChildNavs := []*dtos.NavLink{}
+
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionAlertingRuleRead)) {
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+			Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+		})
 	}
 
 	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(ac.ActionAlertingNotificationsRead)) {
