@@ -107,11 +107,11 @@ export default class ResponseParser {
           titleCol = index;
           return;
         }
-        if (includes((options.annotation.tagsColumn || '').replace(' ', '').split(','), column.text)) {
+        if (colContainsTag(column.text, options.annotation.tagsColumn)) {
           tagsCol.push(index);
           return;
         }
-        if (column.text === options.annotation.textColumn) {
+        if (column.text.includes(options.annotation.textColumn)) {
           textCol = index;
           return;
         }
@@ -151,6 +151,16 @@ export default class ResponseParser {
     }
     return [];
   }
+}
+
+function colContainsTag(colText: string, tagsColumn: string): boolean {
+  const tags = (tagsColumn || '').replace(' ', '').split(',');
+  for (var tag of tags) {
+    if (colText.includes(tag)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery): TableModel {

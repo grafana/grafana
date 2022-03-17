@@ -27,7 +27,6 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
-  CoreApp,
   AnnotationQueryRequest,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
