@@ -1,4 +1,4 @@
-import { HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { isEmpty } from 'lodash';
 import React, { FC } from 'react';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
@@ -8,6 +8,7 @@ import { CortexFlavoredType } from './CortexFlavor';
 import { RecordingRuleType } from './RecordingRule';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data/src';
+import { Stack } from '@grafana/experimental';
 
 interface RuleTypePickerProps {
   onChange: (value: RuleFormType) => void;
@@ -21,8 +22,8 @@ const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div>
-      <HorizontalGroup spacing="md">
+    <>
+      <Stack direction="row" gap={2}>
         <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={onChange} />
         <CortexFlavoredType
           selected={selected === RuleFormType.cloudAlerting}
@@ -34,11 +35,11 @@ const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
           onClick={onChange}
           disabled={!hasLotexDatasources}
         />
-      </HorizontalGroup>
+      </Stack>
       <small className={styles.meta}>
         Select &ldquo;Grafana managed&rdquo; unless you have a Cortex or Loki data source with the Ruler API enabled.
       </small>
-    </div>
+    </>
   );
 };
 

@@ -39,6 +39,28 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   return (
     <RuleEditorSection stepNo={1} title="Rule type">
       <Field
+        disabled={editingExistingRule}
+        error={errors.type?.message}
+        invalid={!!errors.type?.message}
+        data-testid="alert-type-picker"
+      >
+        <InputControl
+          render={({ field: { onChange } }) => (
+            <RuleTypePicker
+              aria-label="Rule type"
+              selected={getValues('type') ?? RuleFormType.grafana}
+              onChange={onChange}
+            />
+          )}
+          name="type"
+          control={control}
+          rules={{
+            required: { value: true, message: 'Please select alert type' },
+          }}
+        />
+      </Field>
+
+      <Field
         className={styles.formInput}
         label="Rule name"
         error={errors?.name?.message}
@@ -63,31 +85,6 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           autoFocus={true}
         />
       </Field>
-      <div className={styles.flexRow}>
-        <Field
-          disabled={editingExistingRule}
-          label="Rule type"
-          error={errors.type?.message}
-          invalid={!!errors.type?.message}
-          data-testid="alert-type-picker"
-          className={styles.fullWidthField}
-        >
-          <InputControl
-            render={({ field: { onChange } }) => (
-              <RuleTypePicker
-                aria-label="Rule type"
-                selected={getValues('type') ?? RuleFormType.grafana}
-                onChange={onChange}
-              />
-            )}
-            name="type"
-            control={control}
-            rules={{
-              required: { value: true, message: 'Please select alert type' },
-            }}
-          />
-        </Field>
-      </div>
       <div className={styles.flexRow}>
         {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
           <Field
@@ -157,8 +154,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-  `,
-  fullWidthField: css`
-    flex: 1;
   `,
 });

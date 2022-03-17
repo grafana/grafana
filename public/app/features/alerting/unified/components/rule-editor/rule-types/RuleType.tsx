@@ -38,9 +38,9 @@ const RuleType: FC<Props> = (props) => {
   );
 };
 
-const getStyles = (_theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    max-width: 360px;
+    width: 380px;
     cursor: pointer;
     user-select: none;
   `,
