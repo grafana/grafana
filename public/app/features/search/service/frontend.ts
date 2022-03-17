@@ -1,13 +1,12 @@
-import { GrafanaSearcher, QueryFilters } from './types';
-
-import { ArrayVector, DataFrame, FieldType, Vector } from '@grafana/data';
-import MiniSearch from 'minisearch';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import MiniSearch, { SearchResult } from 'minisearch';
 import { lastValueFrom } from 'rxjs';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { ArrayVector, DataFrame, FieldType, Vector } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 
-// The raw restuls from query server
+import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
+
 export interface RawIndexData {
   dashboard?: DataFrame;
   panel?: DataFrame;
@@ -35,6 +34,63 @@ interface CompositeKey {
   kind: SearchResultKind;
   index: number;
 }
+
+const generateResults = (rawResults: SearchResult[], lookup: Map<keyof RawIndexData, InputDoc>): DataFrame => {
+  // frame fields
+  const url: string[] = [];
+  const kind: string[] = [];
+  const type: string[] = [];
+  const name: string[] = [];
+  const info: any[] = [];
+  const score: number[] = [];
+
+  for (const res of rawResults) {
+    const key = res.id as CompositeKey;
+    const index = key.index;
+    const input = lookup.get(key.kind);
+    if (!input) {
+      continue;
+    }
+
+    url.push(input.url?.get(index) ?? '?');
+    kind.push(key.kind);
+    name.push(input.name?.get(index) ?? '?');
+    type.push(input.type?.get(index) as any);
+    info.push(res.match); // ???
+    score.push(res.score);
+  }
+
+  return {
+    fields: [
+      { name: 'Kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
+      { name: 'Name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
+      {
+        name: 'URL',
+        config: {
+          links: [
+            {
+              title: 'view',
+              url: '?',
+              onClick: (evt) => {
+                const { field, rowIndex } = evt.origin;
+                if (field && rowIndex != null) {
+                  const url = field.values.get(rowIndex) as string;
+                  window.location.href = url; // HACK!
+                }
+              },
+            },
+          ],
+        },
+        type: FieldType.string,
+        values: new ArrayVector(url),
+      },
+      { name: 'type', config: {}, type: FieldType.other, values: new ArrayVector(type) },
+      { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
+      { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
+    ],
+    length: url.length,
+  };
+};
 
 export function getFrontendGrafanaSearcher(data: RawIndexData): GrafanaSearcher {
   const searcher = new MiniSearch<InputDoc>({
@@ -112,61 +168,13 @@ export function getFrontendGrafanaSearcher(data: RawIndexData): GrafanaSearcher 
     search: async (query: string, filter?: QueryFilters) => {
       const found = searcher.search(query);
 
-      // frame fields
-      const url: string[] = [];
-      const kind: string[] = [];
-      const type: string[] = [];
-      const name: string[] = [];
-      const info: any[] = [];
-      const score: number[] = [];
+      const results = generateResults(found, lookup);
 
-      for (const res of found) {
-        const key = res.id as CompositeKey;
-        const index = key.index;
-        const input = lookup.get(key.kind);
-        if (!input) {
-          continue;
-        }
-
-        url.push(input.url?.get(index) ?? '?');
-        kind.push(key.kind);
-        name.push(input.name?.get(index) ?? '?');
-        type.push(input.type?.get(index) as any);
-        info.push(res.match); // ???
-        score.push(res.score);
-      }
-      return {
-        body: {
-          fields: [
-            { name: 'Kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
-            { name: 'Name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
-            {
-              name: 'URL',
-              config: {
-                links: [
-                  {
-                    title: 'view',
-                    url: '?',
-                    onClick: (evt) => {
-                      const { field, rowIndex } = evt.origin;
-                      if (field && rowIndex != null) {
-                        const url = field.values.get(rowIndex) as string;
-                        window.location.href = url; // HACK!
-                      }
-                    },
-                  },
-                ],
-              },
-              type: FieldType.string,
-              values: new ArrayVector(url),
-            },
-            { name: 'type', config: {}, type: FieldType.other, values: new ArrayVector(type) },
-            { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
-            { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
-          ],
-          length: url.length,
-        },
+      const searchResult: QueryResponse = {
+        body: results,
       };
+
+      return searchResult;
     },
   };
 }
