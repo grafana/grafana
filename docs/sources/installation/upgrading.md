@@ -389,10 +389,9 @@ If you need to know the uid for a data source you have created in the UI you can
 
 ## Upgrading to 8.5
 
-The concept of a `default` data source has existed in Grafana since the start. But the meaning and behavior might not have been clear. The default data source was not just the starting data source
-for new panels but also saved using a special value (null). This was to make it possible to change the default data source to another and have that change impact all dashboards that used the default data source.
-This behavior is not very intutive and has caused many issues to users thinking that changing default should not impact existing dashboards.
+The concept of a `default` data source existed in Grafana since the beginning. However, the meaning and behavior were not clear. The default data source was not just the starting data source for new panels but it was also saved using a special value (null). This made it possible to change the default data source to another and have that change impact all dashboards that used the default data source.
 
-This is why we are changing this in 8.5. From now on the default data source will not be a persisted property but just the starting data source for new panels and queries.
-Existing dashboards that still have panels with a `datasource` set to null will be migrated on opening the dashboard. The migration will set the datasource property to the **current** default
-data source.
+This behavior was not very intuitive and created issues for users who changing default should not impact existing dashboards.
+		
+That is why we are changing the behavior in 8.5. From now on, the `default` data source will not be a persisted property but just the starting data source for new panels and queries.
+Existing dashboards that still have panels with a `datasource` set to null will be migrated when the dashboard opens. The migration will set the data source property to the **current** default data source.
