@@ -7,11 +7,11 @@ const GrafanaManagedRuleType: FC<SharedProps> = ({ selected = false, disabled, o
     <RuleType
       name="Grafana managed alert"
       description={
-        <div>
+        <span>
           Supports multiple data sources of any kind.
           <br />
           Transform data with expressions.
-        </div>
+        </span>
       }
       image="/public/img/grafana_icon.svg"
       selected={selected}

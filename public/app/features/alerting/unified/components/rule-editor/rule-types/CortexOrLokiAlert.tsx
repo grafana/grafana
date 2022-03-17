@@ -13,11 +13,11 @@ const CortexFlavoredType: FC<Props> = ({ selected = false, disabled = false, onC
       <RuleType
         name="Cortex or Loki alert"
         description={
-          <div>
+          <span>
             Use a Cortex or Loki datasource.
             <br />
             Grafana expressions not supported.
-          </div>
+          </span>
         }
         image="/public/img/alerting/cortex_logo.svg"
         selected={selected}
