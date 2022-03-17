@@ -213,11 +213,11 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 			// FGAC handled within the storage engine
 			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
-				orgRoute.Get("/path/", routing.Wrap(hs.StorageService.Browse))
-				orgRoute.Get("/path/*", routing.Wrap(hs.StorageService.Browse))
-				orgRoute.Delete("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+				orgRoute.Get("/path/", routing.Wrap(hs.BrowseStorage))
+				orgRoute.Get("/path/*", routing.Wrap(hs.BrowseStorage))
+				orgRoute.Delete("/path/*", reqSignedIn, routing.Wrap(hs.DeleteStorage))
 
-				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.UploadStorage))
 			})
 		}
 

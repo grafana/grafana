@@ -7,19 +7,19 @@ import (
 )
 
 func TestUtils(t *testing.T) {
-	a, b := splitFirstSegment("")
+	a, b := SplitFirstSegment("")
 	require.Equal(t, "", a)
 	require.Equal(t, "", b)
 
-	a, b = splitFirstSegment("hello")
+	a, b = SplitFirstSegment("hello")
 	require.Equal(t, "hello", a)
 	require.Equal(t, "", b)
 
-	a, b = splitFirstSegment("hello/world")
+	a, b = SplitFirstSegment("hello/world")
 	require.Equal(t, "hello", a)
 	require.Equal(t, "world", b)
 
-	a, b = splitFirstSegment("/hello/world") // strip leading slash
+	a, b = SplitFirstSegment("/hello/world") // strip leading slash
 	require.Equal(t, "hello", a)
 	require.Equal(t, "world", b)
 }
