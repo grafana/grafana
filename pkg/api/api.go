@@ -213,11 +213,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
-				orgRoute.Get("/path/", routing.Wrap(hs.StorageService.List))
-				orgRoute.Get("/path/*", routing.Wrap(hs.StorageService.List))
-				orgRoute.Get("/get/*", routing.Wrap(hs.StorageService.Read))
+				orgRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
 
-				orgRoute.Delete("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+				orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
 				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
 			})
 		}
