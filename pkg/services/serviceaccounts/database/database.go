@@ -328,28 +328,26 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 		}
 
+		switch filter {
+		case serviceaccounts.FilterIncludeAll:
+			// pass
+		case serviceaccounts.FilterOnlyExpiredTokens:
+			now := time.Now().Unix()
+			// we do a subquery to remove duplicates coming from joining in api_keys, if we find more than one api key that has expired
+			whereConditions = append(
+				whereConditions,
+				"(SELECT count(*) FROM api_key WHERE api_key.service_account_id = org_user.user_id AND api_key.expires < ?) > 0")
+			whereParams = append(whereParams, now)
+		default:
+			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
+		}
+
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 		}
 		if limit > 0 {
 			offset := limit * (page - 1)
 			sess.Limit(limit, offset)
-		}
-		fmt.Printf("here 2")
-
-		// TODO: add filtering options here for expired tokens
-		switch filter {
-		case serviceaccounts.FilterIncludeAll:
-			// pass
-		case serviceaccounts.FilterOnlyExpiredTokens:
-			// TODO: addddd code
-			sess.Join("OUTER", s.sqlStore.Dialect.Quote("api_key"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
-			whereConditions = append(whereConditions, "api_key.expires_at < ?")
-			// TODO: add the date now in sec UNIX TIMESTAMP
-			whereParams = append(whereParams, orgID)
-		default:
-			fmt.Printf("here 3, filter: %v", filter)
-			return fmt.Errorf("invalid filter: %s", filter)
 		}
 
 		sess.Cols(
