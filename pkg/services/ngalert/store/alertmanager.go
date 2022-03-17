@@ -12,8 +12,10 @@ import (
 
 var (
 	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
-	ErrNoAlertmanagerConfiguration        = fmt.Errorf("could not find an Alertmanager configuration")
-	ErrWrongAlertmanagerConfigurationHash = fmt.Errorf("the passed configuration hash does not match the latest hash")
+	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an Alertmanager configuration")
+	// ErrVersionLockedObjectNotFound is returned when an object is not
+	// found using the current hash.
+	ErrVersionLockedObjectNotFound = fmt.Errorf("could not find object using provided id and hash")
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -104,7 +106,7 @@ func (st *DBstore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerC
 			)`,
 			cmd.OrgID, cmd.OrgID, cmd.FetchedConfigurationHash).Insert(config)
 		if rows == 0 {
-			return ErrWrongAlertmanagerConfigurationHash
+			return ErrVersionLockedObjectNotFound
 		}
 		return err
 	})
