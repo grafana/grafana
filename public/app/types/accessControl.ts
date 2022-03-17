@@ -97,6 +97,18 @@ export enum AccessControlAction {
   AlertingNotificationsRead = 'alert.notifications:read',
   AlertingNotificationsUpdate = 'alert.notifications:update',
   AlertingNotificationsDelete = 'alert.notifications:delete',
+
+  // External alerting rule actions.
+  AlertingRuleExternalWrite = 'alert.rules.external:write',
+  AlertingRuleExternalRead = 'alert.rules.external:read',
+
+  // External alerting instances actions.
+  AlertingInstancesExternalWrite = 'alert.instances.external:write',
+  AlertingInstancesExternalRead = 'alert.instances.external:read',
+
+  // External alerting notifications actions.
+  AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
+  AlertingNotificationsExternalRead = 'alert.notifications.external:read',
 }
 
 export interface Role {
