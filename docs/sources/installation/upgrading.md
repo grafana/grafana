@@ -381,11 +381,9 @@ To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade 
 
 ## Upgrading to 8.3
 
-In 8.3 Grafana dashboards queries now reference to data sources using and object with an `uid` and `type` property, instead of the
-data source name property used before. A schema migration will applied when opening an existing dashboard. If you provision dashboards to multiple
-Grafana instances we recommend that you also provision data sources as you can then specify the uid to be the same for data sources across your instances.
-
-If you need to know the uid for a data source you have created in the UI you can find that out by checking the URL when visiting the data source settings page. The url follows the pattern ` /datasources/edit/${uid}`, meaning the last part is the uid. In Grafana v8.5 we will make it possible to view and edit the uid directly from the UI.
+In 8.3, Grafana dashboards now query reference data sources using an object with `uid` and `type` properties instead of the data source name property. A schema migration is applied when existing dashboards open. If you provision dashboards to multiple Grafana instances, then we recommend that you also provision data sources. You can specify the `uid` to be the same for data sources across your instances.
+		
+If you need to find the `uid` for a data source created in the UI, check the URL of the data source settings page. The URL follows the pattern ` /data source/edit/${uid}`, meaning the last part is the `uid`. In Grafana v8.5 we will make it possible to view and edit the `uid` directly from the UI.
 
 ## Upgrading to 8.5
 
