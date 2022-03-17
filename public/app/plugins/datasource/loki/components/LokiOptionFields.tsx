@@ -18,7 +18,7 @@ export interface LokiOptionFieldsProps {
   runOnBlur?: boolean;
 }
 
-const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
+export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   { value: LokiQueryType.Range, label: 'Range', description: 'Run query over a range of time.' },
   {
     value: LokiQueryType.Instant,
@@ -40,7 +40,7 @@ export const DEFAULT_RESOLUTION: SelectableValue<number> = {
   label: '1/1',
 };
 
-const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].concat(
+export const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].concat(
   map([2, 3, 4, 5, 10], (value: number) => ({
     value,
     label: '1/' + value,
