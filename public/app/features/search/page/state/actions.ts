@@ -1,4 +1,3 @@
-import { reduceField } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import { fetchResults } from './reducers';
 
