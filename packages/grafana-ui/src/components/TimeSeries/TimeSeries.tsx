@@ -9,7 +9,7 @@ import { withTheme2 } from '../../themes/ThemeContext';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
-const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'timeZone'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
