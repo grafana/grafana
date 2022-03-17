@@ -62,7 +62,15 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if canSave, err := canSaveByDashboardID(c, cmd.DashboardId, true); err != nil || !canSave {
+
+	var canSave bool
+	var err error
+	if cmd.DashboardId != 0 {
+		canSave, err = canSaveLocalAnnotation(c, cmd.DashboardId)
+	} else {
+		canSave = canSaveGlobalAnnotation(c)
+	}
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -181,7 +189,15 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId, !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol)); err != nil || !canSave {
+	var canSave bool
+	if annotation.GetType() == annotations.Local {
+		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
+	} else {
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveGlobalAnnotation(c)
+		}
+	}
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -219,7 +235,15 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId, !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol)); err != nil || !canSave {
+	var canSave bool
+	if annotation.GetType() == annotations.Local {
+		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
+	} else {
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveGlobalAnnotation(c)
+		}
+	}
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -290,7 +314,13 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 		return resp
 	}
 
-	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId, true); err != nil || !canSave {
+	var canSave bool
+	if annotation.GetType() == annotations.Local {
+		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
+	} else {
+		canSave = canSaveGlobalAnnotation(c)
+	}
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -305,20 +335,24 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 	return response.Success("Annotation deleted")
 }
 
-func canSaveByDashboardID(c *models.ReqContext, dashboardID int64, checkGlobalAnnotations bool) (bool, error) {
-	if dashboardID == 0 && checkGlobalAnnotations && !c.SignedInUser.HasRole(models.ROLE_EDITOR) {
-		return false, nil
-	}
 
-	if dashboardID != 0 {
-		guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
-		if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
-			return false, err
-		}
+
+func canSaveLocalAnnotation(c *models.ReqContext, dashboardID int64) (bool, error) {
+	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
+		return false, err
 	}
 
 	return true, nil
 }
+
+func canSaveGlobalAnnotation(c *models.ReqContext) bool {
+	if !c.SignedInUser.HasRole(models.ROLE_EDITOR) {
+		return false
+	}
+	return true
+}
+
 
 func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
@@ -366,15 +400,15 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		ann, resp := findAnnotationByID(annotations.GetRepository(), int64(annotationId), orgID)
+		annotation, resp := findAnnotationByID(annotations.GetRepository(), int64(annotationId), orgID)
 		if resp != nil {
 			return "", err
 		}
 
-		if ann.DashboardId != 0 {
-			return accesscontrol.ScopeAnnotationsTypeLocal, nil
-		} else {
+		if annotation.GetType() == annotations.Global {
 			return accesscontrol.ScopeAnnotationsTypeGlobal, nil
+		} else {
+			return accesscontrol.ScopeAnnotationsTypeLocal, nil
 		}
 	}
 	return accesscontrol.ScopeAnnotationsProvider.GetResourceScope(""), annotationTypeResolver

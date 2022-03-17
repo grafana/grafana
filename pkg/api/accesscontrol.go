@@ -290,7 +290,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
-	globalAnnotationsWriterRole := ac.RoleRegistration{
+	annotationsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:annotations:writer",
 			DisplayName: "Annotation writer",
@@ -407,7 +407,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
-		annotationsReaderRole, localAnnotationsWriterRole, globalAnnotationsWriterRole,
+		annotationsReaderRole, localAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
 	)
