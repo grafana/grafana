@@ -102,7 +102,7 @@ func (st *DBstore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerC
 				AND 
 					configuration_hash = ?
 			)`,
-			cmd.OrgID, cmd.OrgID, cmd.FetechedConfigurationHash).Insert(config)
+			cmd.OrgID, cmd.OrgID, cmd.FetchedConfigurationHash).Insert(config)
 		if rows == 0 {
 			return ErrWrongAlertmanagerConfigurationHash
 		}

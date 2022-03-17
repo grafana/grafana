@@ -56,7 +56,7 @@ func TestAlertManagerHash(t *testing.T) {
 		newConfig, newConfigMD5 := "my-config-new", fmt.Sprintf("%x", md5.Sum([]byte("my-config-new")))
 		err = store.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: newConfig,
-			FetechedConfigurationHash: configMD5,
+			FetchedConfigurationHash:  configMD5,
 			ConfigurationHash:         newConfigMD5,
 			ConfigurationVersion:      "v1",
 			Default:                   false,
@@ -87,7 +87,7 @@ func TestAlertManagerHash(t *testing.T) {
 		require.Equal(t, configMD5, req.Result.ConfigurationHash)
 		err = store.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: config,
-			FetechedConfigurationHash: "the-wrong-hash",
+			FetchedConfigurationHash:  "the-wrong-hash",
 			ConfigurationHash:         configMD5,
 			ConfigurationVersion:      "v1",
 			Default:                   false,

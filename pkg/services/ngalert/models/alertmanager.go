@@ -23,7 +23,7 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 // SaveAlertmanagerConfigurationCmd is the command to save an alertmanager configuration.
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
-	FetechedConfigurationHash string
+	FetchedConfigurationHash  string
 	ConfigurationHash         string
 	ConfigurationVersion      string
 	Default                   bool
