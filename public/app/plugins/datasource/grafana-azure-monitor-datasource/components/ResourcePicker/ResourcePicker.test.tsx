@@ -8,6 +8,7 @@ import {
   createMockSubscriptions,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+import { ResourceRowType } from './types';
 
 const noResourceURI = '';
 const singleSubscriptionSelectionURI = '/subscriptions/def-456';
@@ -27,6 +28,11 @@ const noop: any = () => {};
 const defaultProps = {
   templateVariables: [],
   resourceURI: noResourceURI,
+  resourcePickerData: createMockResourcePickerData({
+    getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
+    getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
+    getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
+  }),
   onCancel: noop,
   onApply: noop,
   selectableEntryTypes: [],
@@ -100,5 +106,20 @@ describe('AzureMonitor ResourcePicker', () => {
 
     expect(onApply).toBeCalledTimes(1);
     expect(onApply).toBeCalledWith('$workspace');
+  });
+
+  describe('when rendering resource picker without any selectable entry types', () => {
+    it('renders no checkboxes', async () => {
+      await act(async () => {
+        render(
+          <ResourcePicker
+            {...defaultProps}
+            selectableEntryTypes={[ResourceRowType.ResourceGroup, ResourceRowType.Resource]}
+          />
+        );
+      });
+
+      screen.getByText('Primary Subscription');
+    });
   });
 });
