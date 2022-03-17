@@ -5,13 +5,13 @@ import { RuleFormType } from '../../../types/rule-form';
 const GrafanaManagedRuleType: FC<SharedProps> = ({ selected = false, disabled, onClick }) => {
   return (
     <RuleType
-      name="Grafana managed"
+      name="Grafana managed alert rule"
       description={
-        <p>
+        <div>
           Use any data source.
           <br />
           Transform data with expressions.
-        </p>
+        </div>
       }
       image="/public/img/grafana_icon.svg"
       selected={selected}

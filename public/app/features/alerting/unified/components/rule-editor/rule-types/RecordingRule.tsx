@@ -9,11 +9,11 @@ const RecordingRuleType: FC<SharedProps> = ({ selected = false, disabled = false
       <RuleType
         name="Cortex or Loki recording rule"
         description={
-          <p>
+          <div>
             Precompute expressions.
             <br />
             Should be combined with an alert rule.
-          </p>
+          </div>
         }
         image="/public/img/alerting/cortex_logo_recording.svg"
         selected={selected}
