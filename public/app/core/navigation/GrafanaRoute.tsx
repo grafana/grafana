@@ -65,7 +65,7 @@ export class GrafanaRoute extends React.Component<Props> {
   render() {
     const { props } = this;
     navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
-
+    console.log('grafana route render');
     const RouteComponent = props.route.component;
 
     return <RouteComponent {...props} queryParams={locationSearchToObject(props.location.search)} />;
