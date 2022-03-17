@@ -433,7 +433,7 @@ function makeBinOp(
 ) {
   const params: any[] = [parseFloat(getString(expr, numberNode))];
   if (opDef.comparison) {
-    params.unshift(hasBool);
+    params.push(hasBool);
   }
   return {
     id: opDef.id,
