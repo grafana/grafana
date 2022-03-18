@@ -218,9 +218,8 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if page < 1 {
 		page = 1
 	}
-	expiredTokensFilterQuery := c.Query("expiredTokens")
 	// its okay that it fails, it is only filtering that might be weird, but to safe quard against any weird incoming query param
-	onlyWithExpiredTokens, _ := strconv.ParseBool(expiredTokensFilterQuery)
+	onlyWithExpiredTokens := c.QueryBool("expiredTokens")
 	filter := serviceaccounts.FilterIncludeAll
 	if onlyWithExpiredTokens {
 		filter = serviceaccounts.FilterOnlyExpiredTokens
