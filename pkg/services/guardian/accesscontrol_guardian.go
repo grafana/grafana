@@ -22,7 +22,7 @@ var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, dashboardId int64, user *models.SignedInUser,
-	store *sqlstore.SQLStore, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	store sqlstore.Store, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *AccessControlDashboardGuardian {
 	return &AccessControlDashboardGuardian{
 		ctx:                ctx,
@@ -41,7 +41,7 @@ type AccessControlDashboardGuardian struct {
 	dashboardID        int64
 	dashboard          *models.Dashboard
 	user               *models.SignedInUser
-	store              *sqlstore.SQLStore
+	store              sqlstore.Store
 	ac                 accesscontrol.AccessControl
 	permissionServices accesscontrol.PermissionsServices
 }
