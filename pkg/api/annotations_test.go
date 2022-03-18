@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -430,14 +430,8 @@ func setUpACL() {
 		{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 		{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 	}
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-		query.Result = aclMockResp
-		return nil
-	})
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-		query.Result = []*models.TeamDTO{}
-		return nil
-	})
+	store := mockstore.NewSQLStoreMock()
+	store.ExpectedDashboardAclInfoList = aclMockResp
+	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	guardian.InitGuardianWithStore(store)
 }
