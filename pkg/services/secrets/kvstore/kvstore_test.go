@@ -87,8 +87,8 @@ func TestKVStore(t *testing.T) {
 		tcs := []*TestCase{
 			{
 				OrgId:     0,
-				Namespace: "namespace1",
-				Type:      "testing1",
+				Namespace: "namespace3",
+				Type:      "testing3",
 			},
 			{
 				OrgId:     1,
@@ -96,9 +96,9 @@ func TestKVStore(t *testing.T) {
 				Type:      "testing2",
 			},
 			{
-				OrgId:     1,
-				Namespace: "namespace3",
-				Type:      "testing3",
+				OrgId:     2,
+				Namespace: "namespace1",
+				Type:      "testing1",
 			},
 		}
 
@@ -129,10 +129,11 @@ func TestKVStore(t *testing.T) {
 		assert.Equal(t, tc.Value(), value)
 	})
 
-	t.Run("use typed client", func(t *testing.T) {
+	t.Run("use fixed client", func(t *testing.T) {
 		tc := testCases[0]
 
 		client := With(kv, tc.OrgId, tc.Namespace, tc.Type)
+		fmt.Println(client.Namespace, client.OrgId, client.Type)
 
 		value, ok, err := client.Get(ctx)
 		require.NoError(t, err)
@@ -182,22 +183,22 @@ func TestKVStore(t *testing.T) {
 			{
 				OrgId:     1,
 				Type:      typ,
-				Namespace: namespace + "_1",
+				Namespace: namespace,
 			},
 			{
 				OrgId:     2,
 				Type:      typ,
-				Namespace: namespace + "_2",
+				Namespace: namespace,
 			},
 			{
 				OrgId:     3,
 				Type:      typ,
-				Namespace: namespace + "_3",
+				Namespace: namespace,
 			},
 			{
 				OrgId:     4,
 				Type:      typ,
-				Namespace: namespace + "_4",
+				Namespace: namespace,
 			},
 			{
 				OrgId:     1,
@@ -232,9 +233,9 @@ func TestKVStore(t *testing.T) {
 			}
 		}
 
-		require.Equal(t, 4, found, "querying with the wildcard should return 4 records")
+		require.Equal(t, 4, found, "querying for all orgs should return 4 records")
 
-		keys, err = kv.Keys(ctx, 1, namespace[0:6], typ)
+		keys, err = kv.Keys(ctx, 1, namespace, typ)
 
 		require.NoError(t, err)
 		require.Len(t, keys, 1, "querying for a specific org should return 1 record")

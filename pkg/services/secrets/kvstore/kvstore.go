@@ -32,9 +32,10 @@ type SecretsKVStore interface {
 // WithType returns a kvstore wrapper with fixed orgId and type.
 func With(kv SecretsKVStore, orgId int64, namespace string, typ string) *FixedKVStore {
 	return &FixedKVStore{
-		kvStore: kv,
-		OrgId:   orgId,
-		Type:    typ,
+		kvStore:   kv,
+		OrgId:     orgId,
+		Namespace: namespace,
+		Type:      typ,
 	}
 }
 
