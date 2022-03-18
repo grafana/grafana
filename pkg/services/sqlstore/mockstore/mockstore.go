@@ -659,3 +659,7 @@ func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query
 func (m *SQLStoreMock) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
+	return m.ExpectedError
+}
