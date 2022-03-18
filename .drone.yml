@@ -83,7 +83,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -682,7 +683,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -1725,7 +1727,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -2377,7 +2380,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -2428,7 +2432,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -3513,7 +3518,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -4131,7 +4137,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -4182,7 +4189,8 @@ steps:
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
-  - cd /drone/src/devenv && docker-compose ps
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
+    cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
@@ -4570,6 +4578,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 47414f9e4f38557ffb91bc68f6df9bede78e92b0ef473ce399fc9fb60b28f2c0
+hmac: ff9aaf69e5a551a91b542757313a6cf4af4c109c61b7b8b275458cf10bf04a97
 
 ...
