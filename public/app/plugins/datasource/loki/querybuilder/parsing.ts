@@ -1,6 +1,6 @@
 import { parser } from '@grafana/lezer-logql';
-import { SyntaxNode, TreeCursor } from 'lezer-tree';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
+import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
 import { LokiVisualQuery } from './types';
 
 // This is used for error type
@@ -112,7 +112,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   const labelNode = node.getChild('Identifier');
   const label = getString(expr, labelNode);
-  const op = getString(expr, labelNode.nextSibling);
+  const op = getString(expr, labelNode!.nextSibling);
   const value = getString(expr, node.getChild('String')).replace(/"/g, '');
 
   return {
@@ -153,13 +153,40 @@ function getLabelParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
 function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const id = '__label_filter';
 
-  const filterTypes = ['Matcher', 'NumberFilter'];
+  if (node.firstChild!.name === 'UnitFilter') {
+    const filter = node.firstChild!.firstChild;
+    const label = filter!.firstChild;
+    const op = label!.nextSibling;
+    const value = op!.nextSibling;
 
-  if (filterTypes.includes(node.firstChild.name)) {
+    return {
+      id,
+      params: [label, op, value].map((child) => getString(expr, child).replace(/"/g, '')),
+    };
+  }
+
+  if (node.firstChild!.name === 'IpLabelFilter') {
+    // Not implemented in visual query builder yet
+    const filter = node.firstChild!;
+    const label = filter.firstChild!;
+    const op = label.nextSibling!;
+    const ip = label.nextSibling;
+    const value = op.nextSibling!;
+    return {
+      id,
+      params: [
+        getString(expr, label),
+        getString(expr, op),
+        getString(expr, ip).replace(/"/g, ''),
+        getString(expr, value).replace(/"/g, ''),
+      ],
+    };
+  } else {
+    // In this case it is Matcher or NumberFilter
     const filter = node.firstChild;
-    const label = filter.firstChild;
-    const op = label.nextSibling;
-    const value = op.nextSibling;
+    const label = filter!.firstChild;
+    const op = label!.nextSibling;
+    const value = op!.nextSibling;
     const params = [getString(expr, label), getString(expr, op), getString(expr, value).replace(/"/g, '')];
 
     //Special case of pipe filtering - no errors
@@ -173,36 +200,6 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
     return {
       id,
       params,
-    };
-  }
-
-  if (node.firstChild.name === 'UnitFilter') {
-    const filter = node.firstChild.firstChild;
-    const label = filter.firstChild;
-    const op = label.nextSibling;
-    const value = op.nextSibling;
-
-    return {
-      id,
-      params: [label, op, value].map((child) => getString(expr, child).replace(/"/g, '')),
-    };
-  }
-
-  if (node.firstChild.name === 'IpLabelFilter') {
-    // Not implemented in visual query builder yet
-    const filter = node.firstChild;
-    const label = filter.firstChild;
-    const op = label.nextSibling;
-    const ip = label.nextSibling;
-    const value = op.nextSibling;
-    return {
-      id,
-      params: [
-        getString(expr, label),
-        getString(expr, op),
-        getString(expr, ip).replace(/"/g, ''),
-        getString(expr, value).replace(/"/g, ''),
-      ],
     };
   }
 }
@@ -222,8 +219,8 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   // Not implemented in visual query builder yet
   const id = 'label_format';
   const identifier = node.getChild('Identifier');
-  const op = identifier.nextSibling;
-  const value = op.nextSibling;
+  const op = identifier!.nextSibling;
+  const value = op!.nextSibling;
 
   return {
     id,
@@ -248,7 +245,9 @@ function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context
     params,
   };
 
-  handleExpression(expr, logExpr, context);
+  if (logExpr) {
+    handleExpression(expr, logExpr, context);
+  }
 
   return op;
 }
@@ -260,7 +259,10 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const metricExpr = node.getChild('MetricExpr');
   const op: QueryBuilderOperation = { id: funcName, params: [] };
 
-  handleExpression(expr, metricExpr, context);
+  if (metricExpr) {
+    handleExpression(expr, metricExpr, context);
+  }
+
   return op;
 }
 
@@ -281,26 +283,11 @@ function makeError(expr: string, node: SyntaxNode) {
   };
 }
 
-function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
-  if (cur.name === type) {
-    return [getString(expr, cur)];
-  }
-  const values: string[] = [];
-  let pos = 0;
-  let child = cur.childAfter(pos);
-  while (child) {
-    values.push(...getAllByType(expr, child, type));
-    pos = child.to;
-    child = cur.childAfter(pos);
-  }
-  return values;
-}
-
 function isIntervalVariableError(node: SyntaxNode) {
-  return node.parent.name === 'Range';
+  return node?.parent?.name === 'Range';
 }
 
-// Templating
+// Template variables
 // Taken from template_srv, but copied so to not mess with the regex.index which is manipulated in the service
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
