@@ -164,26 +164,27 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, resource string, ids map[string]bool) map[string]Metadata {
+func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, resource, resourceAttribute string, resourceIDs map[string]bool) map[string]Metadata {
 	allScope := GetResourceAllScope(resource)
-	allIDScope := GetResourceAllIDScope(resource)
+	allAttributeScope := Scope(resource, resourceAttribute, "*")
 
 	// prefix of ID based scopes (resource:id)
-	idPrefix := Scope(resource, "id")
+	scopePrefix := Scope(resource, resourceAttribute)
 	// index of the ID in the scope
-	idIndex := len(idPrefix) + 1
+	idIndex := len(scopePrefix) + 1
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
+
 	for action, scopes := range permissions {
 		for _, scope := range scopes {
-			if scope == "*" || scope == allScope || scope == allIDScope {
+			if scope == "*" || scope == allScope || scope == allAttributeScope {
 				// Add global action to all resources
-				for id := range ids {
+				for id := range resourceIDs {
 					result = addActionToMetadata(result, action, id)
 				}
 			} else {
-				if len(scope) > idIndex && strings.HasPrefix(scope, idPrefix) && ids[scope[idIndex:]] {
+				if len(scope) > idIndex && strings.HasPrefix(scope, scopePrefix) && resourceIDs[scope[idIndex:]] {
 					// Add action to a specific resource
 					result = addActionToMetadata(result, action, scope[idIndex:])
 				}

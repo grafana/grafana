@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -434,15 +432,13 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
-func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, resource string, id int64) ac.Metadata {
-	key := fmt.Sprintf("%d", id)
-	ids := map[string]bool{key: true}
-
-	return hs.getMultiAccessControlMetadata(c, resource, ids)[key]
+func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, resource, resourceAttribute, resourceID string) ac.Metadata {
+	ids := map[string]bool{resource: true}
+	return hs.getMultiAccessControlMetadata(c, resource, resourceAttribute, ids)[resourceID]
 }
 
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
-func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resource string, ids map[string]bool) map[string]ac.Metadata {
+func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resource string, resourceAttribute string, resourceIDs map[string]bool) map[string]ac.Metadata {
 	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}
 	}
@@ -456,5 +452,5 @@ func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resour
 		return map[string]ac.Metadata{}
 	}
 
-	return ac.GetResourcesMetadata(c.Req.Context(), permissions, resource, ids)
+	return ac.GetResourcesMetadata(c.Req.Context(), permissions, resource, resourceAttribute, resourceIDs)
 }

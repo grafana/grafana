@@ -100,7 +100,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
+	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", "id", strconv.FormatInt(dto.Id, 10))
 
 	return response.JSON(200, &dto)
 }
@@ -159,8 +159,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
-
+	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", "id", strconv.FormatInt(dto.Id, 10))
 	return response.JSON(200, &dto)
 }
 
