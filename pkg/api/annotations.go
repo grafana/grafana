@@ -205,6 +205,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 			canSave = canSaveGlobalAnnotation(c)
 		}
 	}
+
 	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -356,10 +357,7 @@ func canSaveLocalAnnotation(c *models.ReqContext, dashboardID int64) (bool, erro
 }
 
 func canSaveGlobalAnnotation(c *models.ReqContext) bool {
-	if !c.SignedInUser.HasRole(models.ROLE_EDITOR) {
-		return false
-	}
-	return true
+	return c.SignedInUser.HasRole(models.ROLE_EDITOR)
 }
 
 func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {

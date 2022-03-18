@@ -714,13 +714,13 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 		{
 			desc:    "correctly resolves local annotations",
 			given:   "annotations:id:1",
-			want:    "annotations:type:local",
+			want:    accesscontrol.ScopeAnnotationsTypeLocal,
 			wantErr: nil,
 		},
 		{
 			desc:    "correctly resolves global annotations",
 			given:   "annotations:id:2",
-			want:    "annotations:type:global",
+			want:    accesscontrol.ScopeAnnotationsTypeGlobal,
 			wantErr: nil,
 		},
 		{

@@ -14,7 +14,7 @@ type Service interface {
 
 type Store interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, name string) (*ServiceAccountDTO, error)
-	SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, page int, limit int,
+	SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, filter ServiceAccountFilter, page int, limit int,
 		signedInUser *models.SignedInUser) (*SearchServiceAccountsResult, error)
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
