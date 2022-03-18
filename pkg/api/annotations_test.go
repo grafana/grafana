@@ -430,6 +430,13 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		Tags: []string{"tag1", "tag2"},
 	}
 
+	postGraphiteCmd := dtos.PostGraphiteAnnotationsCmd{
+		When: 1000,
+		What: "annotation text",
+		Data: "Deploy",
+		Tags: []string{"tag1", "tag2"},
+	}
+
 	type args struct {
 		permissions []*accesscontrol.Permission
 		url         string
@@ -504,7 +511,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl update global annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
 				method: http.MethodPut,
@@ -550,7 +557,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl patch global annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
 				method: http.MethodPatch,
@@ -596,7 +603,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl create global annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations",
 				method: http.MethodPost,
@@ -640,7 +647,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl delete global annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
 				method: http.MethodDelete,
@@ -655,6 +662,30 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 				}},
 				url:    "/api/annotations/2",
 				method: http.MethodDelete,
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl create graphite annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
+				}},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body:   mockRequestBody(postGraphiteCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl create global annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body:   mockRequestBody(postGraphiteCmd),
 			},
 			want: http.StatusForbidden,
 		},
