@@ -505,7 +505,7 @@ func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
 
 	return nil
 }
-func (repo *FakeAnnotationsRepo) Update(item *annotations.Item) error {
+func (repo *FakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
 	return nil
 }
 

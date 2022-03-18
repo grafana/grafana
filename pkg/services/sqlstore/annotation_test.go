@@ -190,7 +190,7 @@ func TestAnnotations(t *testing.T) {
 			require.NoError(t, err)
 
 			annotationId := items[0].Id
-			err = repo.Update(&annotations.Item{
+			err = repo.Update(context.Background(), &annotations.Item{
 				Id:    annotationId,
 				OrgId: 1,
 				Text:  "something new",
@@ -217,7 +217,7 @@ func TestAnnotations(t *testing.T) {
 			require.NoError(t, err)
 
 			annotationId := items[0].Id
-			err = repo.Update(&annotations.Item{
+			err = repo.Update(context.Background(), &annotations.Item{
 				Id:    annotationId,
 				OrgId: 1,
 				Text:  "something new",

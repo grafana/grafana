@@ -66,8 +66,8 @@ func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
 	})
 }
 
-func (r *SQLAnnotationRepo) Update(item *annotations.Item) error {
-	return inTransaction(func(sess *DBSession) error {
+func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) error {
+	return r.sql.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var (
 			isExist bool
 			err     error

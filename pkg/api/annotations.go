@@ -211,7 +211,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		Tags:     cmd.Tags,
 	}
 
-	if err := repo.Update(&item); err != nil {
+	if err := repo.Update(c.Req.Context(), &item); err != nil {
 		return response.Error(500, "Failed to update annotation", err)
 	}
 
@@ -273,7 +273,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		existing.EpochEnd = cmd.TimeEnd
 	}
 
-	if err := repo.Update(&existing); err != nil {
+	if err := repo.Update(context.Background(), &existing); err != nil {
 		return response.Error(500, "Failed to update annotation", err)
 	}
 
