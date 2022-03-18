@@ -4,6 +4,7 @@ groups:
       DefinesCoremodel:
         ruletype: goident
         name: Coremodel
+        kind: struct
         implements:
           - "github.com/grafana/grafana/internal/components.Coremodel"
       ProvidesCoremodel:
@@ -12,4 +13,3 @@ groups:
         kind: func
         implements:
           - "github.com/grafana/grafana/internal/components.CoremodelProvider"
-        # TODO would be really lovely to enforce some type uniformity here
