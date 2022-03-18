@@ -23,6 +23,15 @@ func (t *nestedTree) init() {
 	}
 }
 
+func (t *nestedTree) getRootPrefix(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	rootKey, _ := splitFirstSegment(path)
+	return filestorage.Join(rootKey)
+}
+
 func (t *nestedTree) getRoot(path string) (filestorage.FileStorage, string) {
 	if path == "" {
 		return nil, ""
@@ -48,7 +57,7 @@ func (t *nestedTree) GetFile(ctx context.Context, path string) (*filestorage.Fil
 	return root.Get(ctx, path)
 }
 
-func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, error) {
+func (t *nestedTree) ListFolder(ctx context.Context, path string, filters *filestorage.PathFilters) (*data.Frame, error) {
 	if path == "" || path == "/" {
 		count := len(t.roots)
 		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -74,8 +83,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, path string) (*data.Frame, 
 		return nil, nil // not found (or not ready)
 	}
 
-	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{Recursive: false, WithFolders: true, WithFiles: true})
-
+	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{Recursive: false, WithFolders: true, WithFiles: true, PathFilters: filters})
 	if err != nil {
 		return nil, err
 	}
