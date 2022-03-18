@@ -45,6 +45,10 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     if start_kube_apiserver:
         common_cmds += [
             'apt-get update',
+            'apt-get install -y apt-transport-https ca-certificates curl',
+            'curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg',
+            'echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list',
+            'apt-get update',
             'apt-get install -yq kubectl',
             'make -C devenv/docker/blocks/intentapi',
             'make devenv sources=intentapi',
