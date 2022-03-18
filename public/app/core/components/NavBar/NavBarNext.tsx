@@ -71,7 +71,7 @@ export const NavBarNext = React.memo(() => {
       <NavBarSection>
         <NavBarItemWithoutMenu
           isActive={isMatchOrChildMatch(homeLink, activeItem)}
-          label="Main menu"
+          label="Home"
           className={styles.grafanaLogo}
           url={homeUrl}
         >
