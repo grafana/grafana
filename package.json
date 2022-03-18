@@ -385,7 +385,8 @@
     "@rushstack/node-core-library": "3.45.0",
     "@rushstack/rig-package": "0.3.7",
     "@rushstack/ts-command-line": "4.10.6",
-    "@storybook/react/webpack": "5.70.0"
+    "@storybook/react/webpack": "5.70.0",
+    "node-fetch": "2.6.7"
   },
   "workspaces": {
     "packages": [
