@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -90,6 +91,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password" //nolint:goconst
 
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -130,7 +132,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/v4/some/method", cfg, httpClientProvider,
 				&oauthtoken.Service{}, dsService, tracer, secretsService)
 			require.NoError(t, err)
@@ -143,7 +145,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has dynamic url", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/common/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 			require.NoError(t, err)
 			proxy.matchedRoute = routes[3]
@@ -155,7 +157,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path with no url", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 			require.NoError(t, err)
 			proxy.matchedRoute = routes[4]
@@ -166,7 +168,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
 			ctx, req := setUp()
-			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/body", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 			require.NoError(t, err)
 			proxy.matchedRoute = routes[5]
@@ -180,7 +182,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("Validating request", func(t *testing.T) {
 			t.Run("plugin route with valid role", func(t *testing.T) {
 				ctx, _ := setUp()
-				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/v4/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 				require.NoError(t, err)
 				err = proxy.validateRequest()
@@ -189,7 +191,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("plugin route with admin role and user is editor", func(t *testing.T) {
 				ctx, _ := setUp()
-				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 				require.NoError(t, err)
 				err = proxy.validateRequest()
@@ -199,7 +201,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			t.Run("plugin route with admin role and user is admin", func(t *testing.T) {
 				ctx, _ := setUp()
 				ctx.SignedInUser.OrgRole = models.ROLE_ADMIN
-				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 				require.NoError(t, err)
 				err = proxy.validateRequest()
@@ -244,6 +246,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -290,7 +293,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					},
 				}
 
-				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+				dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 				require.NoError(t, err)
 				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, cfg)
@@ -306,7 +309,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 					require.NoError(t, err)
 					client = newFakeHTTPClient(t, json2)
-					dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+					dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 					proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken2", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 					require.NoError(t, err)
 					ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[1], dsInfo, cfg)
@@ -323,7 +326,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 						require.NoError(t, err)
 
 						client = newFakeHTTPClient(t, []byte{})
-						dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+						dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 						proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 						require.NoError(t, err)
 						ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, cfg)
@@ -344,8 +347,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ds := &models.DataSource{Url: "htttp://graphite:8080", Type: models.DS_GRAPHITE}
 		ctx := &models.ReqContext{}
 
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{BuildVersion: "5.3.0"}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -370,8 +374,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -394,8 +399,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -422,8 +428,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ctx := &models.ReqContext{}
 		var pluginRoutes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, pluginRoutes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -445,8 +452,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -509,8 +517,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &mockAuthToken, dsService, tracer, secretsService)
 		require.NoError(t, err)
 		req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -642,8 +651,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
 		ctx, ds := setUp(t)
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -660,8 +670,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			},
 		})
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -674,8 +685,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 	t.Run("When response should set Content-Security-Policy header", func(t *testing.T) {
 		ctx, ds := setUp(t)
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -696,8 +708,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			},
 		})
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -721,8 +734,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -745,8 +759,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
 		var routes []*plugins.Route
+		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer, secretsService)
 		require.NoError(t, err)
 
@@ -770,8 +785,9 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	var routes []*plugins.Route
+	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.Error(t, err)
 	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
@@ -791,8 +807,9 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	require.NoError(t, err)
 
 	var routes []*plugins.Route
+	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 
 	require.NoError(t, err)
@@ -834,8 +851,9 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 			}
 
 			var routes []*plugins.Route
+			secretsStore := kvstore.SetupTestService(t)
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 			p, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 			if tc.err == nil {
 				require.NoError(t, err)
@@ -861,8 +879,9 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *sett
 	require.NoError(t, err)
 
 	var routes []*plugins.Route
+	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -916,8 +935,6 @@ const (
 )
 
 func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string, url string, authType string, authCheck string, useSecureJsonData bool) *testCase {
-	ctx := context.Background()
-
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
@@ -935,11 +952,9 @@ func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string,
 		message = fmt.Sprintf("%v should add username and password", dsType)
 		test.datasource.User = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData, err = secretsService.EncryptJsonData(
-				ctx,
-				map[string]string{
-					"password": "password",
-				}, secrets.WithoutScope())
+			test.datasource.SecureJsonData = map[string][]byte{
+				"password": []byte("password"),
+			}
 		} else {
 			test.datasource.Password = "password"
 		}
@@ -948,11 +963,9 @@ func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string,
 		test.datasource.BasicAuth = true
 		test.datasource.BasicAuthUser = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData, err = secretsService.EncryptJsonData(
-				ctx,
-				map[string]string{
-					"basicAuthPassword": "password",
-				}, secrets.WithoutScope())
+			test.datasource.SecureJsonData = map[string][]byte{
+				"basicAuthPassword": []byte("password"),
+			}
 		} else {
 			test.datasource.BasicAuthPassword = "password"
 		}
@@ -986,7 +999,8 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, test *t
 	require.NoError(t, err)
 
 	var routes []*plugins.Route
-	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+	secretsStore := kvstore.SetupTestService(t)
+	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.NoError(t, err)
 
@@ -1027,8 +1041,9 @@ func Test_PathCheck(t *testing.T) {
 		return ctx, req
 	}
 	ctx, _ := setUp()
+	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
 	proxy, err := NewDataSourceProxy(&models.DataSource{}, routes, ctx, "b", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.NoError(t, err)
 
