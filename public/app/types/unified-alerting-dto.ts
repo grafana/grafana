@@ -29,15 +29,18 @@ export enum PromApplication {
 }
 
 export interface PromBuildInfoResponse {
-  application?: string;
-  version: string;
-  revision: string;
-  features?: {
-    ruler_config_app?: 'true' | 'false';
-    alertmanager_config_api?: 'true' | 'false';
-    query_sharding?: 'true' | 'false';
-    federated_rules?: 'true' | 'false';
+  data: {
+    application?: string;
+    version: string;
+    revision: string;
+    features?: {
+      ruler_config_app?: 'true' | 'false';
+      alertmanager_config_api?: 'true' | 'false';
+      query_sharding?: 'true' | 'false';
+      federated_rules?: 'true' | 'false';
+    };
   };
+  status: 'success';
 }
 
 export interface PromBuildInfo {

@@ -25,14 +25,14 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   const dispatch = useDispatch();
   const { isEditable } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), result?.rule);
 
-  useAsync(async () => {
+  const { loading: loadingDataSouce } = useAsync(async () => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
     if (!dispatched) {
       await dispatch(fetchEditableRuleAction(identifier));
     }
   }, [dispatched, dispatch, identifier]);
 
-  if (loading || isEditable === undefined) {
+  if (loading || loadingDataSouce || isEditable === undefined) {
     return (
       <Page.Contents>
         <LoadingPlaceholder text="Loading rule..." />
