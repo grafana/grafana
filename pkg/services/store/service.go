@@ -2,6 +2,9 @@ package store
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"mime/multipart"
 	"os"
 	"path/filepath"
 
@@ -27,6 +30,8 @@ type StorageService interface {
 
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
+
+	Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) error
 }
 
 type standardStorageService struct {
@@ -85,4 +90,58 @@ func (s *standardStorageService) List(ctx context.Context, user *models.SignedIn
 func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
 	// TODO: permission check!
 	return s.tree.GetFile(ctx, path)
+}
+
+func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) error {
+	upload, _ := s.tree.getRoot("upload")
+	grafanaStorageLogger.Info("upload", "upload", s.tree.lookup)
+	if upload == nil {
+		return fmt.Errorf("upload feature is not enabled")
+	}
+	// Get a reference to the fileHeaders.
+	// They are accessible only after ParseMultipartForm is called
+	files := form.File["file"]
+	// c.Req.ParseMultipartForm(0)
+	// path := c.Req.FormValue("path")
+	contents := []byte{}
+	for _, fileHeader := range files {
+		// Restrict the size of each uploaded file to 1MB.
+		// TODO: To prevent the aggregate size from exceeding
+		// a specified value, use the http.MaxBytesReader() method
+		// before calling ParseMultipartForm()
+		// if fileHeader.Size > MAX_UPLOAD_SIZE {
+		//     return response.Respond(400, "The uploaded image is too big: %s. Please use an image less than 1MB in size")
+		// }
+		// Open the file
+		file, err := fileHeader.Open()
+		if err != nil {
+			return err
+		}
+
+		// read file in chunks
+		buff := make([]byte, 512)
+		for {
+			_, err := file.Read(buff)
+			if err != nil {
+				if err != io.EOF {
+					grafanaStorageLogger.Error("error in reading file in chunks")
+				}
+				break
+			}
+			// create contents to send to upsert
+			contents = append(contents, buff...)
+		}
+
+		if err != nil {
+			return err
+		}
+		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
+			Path:     "aaa",
+			Contents: &contents,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
