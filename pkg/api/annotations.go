@@ -63,7 +63,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	canSave := true
+	var canSave bool
 	var err error
 	if cmd.DashboardId != 0 {
 		canSave, err = canSaveDashboardAnnotation(c, cmd.DashboardId)
