@@ -60,3 +60,10 @@ type ServiceAccountProfileDTO struct {
 	Teams         []string        `json:"teams" xorm:"-"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
+
+type ServiceAccountFilter string // used for filtering
+
+const (
+	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	FilterIncludeAll        ServiceAccountFilter = "all"
+)
