@@ -51,9 +51,3 @@ type StorageGCSConfig struct {
 
 	CredentialsFile string `json:"credentialsFile"`
 }
-
-type StorageConfig struct {
-	Dashboard  []RootStorageConfig `json:"dashboard"`
-	Datasource []RootStorageConfig `json:"datasource"`
-	Resource   []RootStorageConfig `json:"resource"`
-}

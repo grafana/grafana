@@ -6,6 +6,7 @@ import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { config } from '@grafana/runtime';
 import { SearchSettings } from './SearchSettings';
 import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
+import { LokiSearchSettings } from './LokiSearchSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -34,6 +35,9 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
       )}
       <div className="gf-form-group">
         <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
+      <div className="gf-form-group">
+        <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
       </div>
     </>
   );

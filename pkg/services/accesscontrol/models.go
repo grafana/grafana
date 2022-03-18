@@ -195,7 +195,6 @@ type ScopeParams struct {
 // can perform against specific resource.
 type ResourcePermission struct {
 	ID          int64
-	ResourceID  string
 	RoleName    string
 	Actions     []string
 	Scope       string
@@ -206,12 +205,9 @@ type ResourcePermission struct {
 	TeamEmail   string
 	Team        string
 	BuiltInRole string
+	IsManaged   bool
 	Created     time.Time
 	Updated     time.Time
-}
-
-func (p *ResourcePermission) IsManaged() bool {
-	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
@@ -310,12 +306,6 @@ const (
 	// Settings scope
 	ScopeSettingsAll = "settings:*"
 
-	// Licensing related actions
-	ActionLicensingRead        = "licensing:read"
-	ActionLicensingUpdate      = "licensing:update"
-	ActionLicensingDelete      = "licensing:delete"
-	ActionLicensingReportsRead = "licensing.reports:read"
-
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
 	ActionTeamsDelete           = "teams:delete"
@@ -329,10 +319,8 @@ const (
 
 	// Annotations related actions
 	ActionAnnotationsRead     = "annotations:read"
+	ActionAnnotationsWrite    = "annotations:write"
 	ActionAnnotationsTagsRead = "annotations.tags:read"
-
-	ScopeAnnotationsAll     = "annotations:*"
-	ScopeAnnotationsTagsAll = "annotations:tags:*"
 
 	// Dashboard actions
 	ActionDashboardsCreate           = "dashboards:create"
@@ -345,32 +333,56 @@ const (
 	// Dashboard scopes
 	ScopeDashboardsAll = "dashboards:*"
 
-	// File actions
-	ActionFilesCreate = "files:create"
-	ActionFilesRead   = "files:read"
-	ActionFilesWrite  = "files:write"
-	ActionFilesDelete = "files:delete"
+	// Alert scopes are divided into two groups. The internal (to Grafana) and the external ones.
+	// For the Grafana ones, given we have ACID control we're able to provide better granularity by defining CRUD options.
+	// For the external ones, we only have read and write permissions due to the lack of atomicity control of the external system.
 
-	// File scopes
-	ScopeFilesAll = "files:path:/*"
+	// Alerting rules actions
+	ActionAlertingRuleCreate = "alert.rules:create"
+	ActionAlertingRuleRead   = "alert.rules:read"
+	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleDelete = "alert.rules:delete"
+
+	// Alerting instances (+silences) actions
+	ActionAlertingInstanceCreate = "alert.instances:create"
+	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceRead   = "alert.instances:read"
+
+	// Alerting Notification policies actions
+	ActionAlertingNotificationsCreate = "alert.notifications:create"
+	ActionAlertingNotificationsRead   = "alert.notifications:read"
+	ActionAlertingNotificationsUpdate = "alert.notifications:update"
+	ActionAlertingNotificationsDelete = "alert.notifications:delete"
+
+	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
+	ActionAlertingRuleExternalRead  = "alert.rules.external:read"
+
+	// External alerting instances actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingInstancesExternalWrite = "alert.instances.external:write"
+	ActionAlertingInstancesExternalRead  = "alert.instances.external:read"
+
+	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
+	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
+	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 )
 
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 
-	// Folder scopes
+	// Annotation scopes
+	ScopeAnnotationsRoot       = "annotations"
+	ScopeAnnotationsProvider   = NewScopeProvider(ScopeAnnotationsRoot)
+	ScopeAnnotationsAll        = ScopeAnnotationsProvider.GetResourceAllScope()
+	ScopeAnnotationsID         = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
+	ScopeAnnotationsTypeLocal  = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
+	ScopeAnnotationsTypeGlobal = ScopeAnnotationsProvider.GetResourceScopeType("organization")
 
-	// Datasource scopes
-
+	// Annotation tag scopes
+	ScopeAnnotationsTagsAll = "annotations:tags:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
 
 const FixedRolePrefix = "fixed:"
-
-// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
-var LicensingPageReaderAccess = EvalAny(
-	EvalPermission(ActionLicensingRead),
-	EvalPermission(ActionServerStatsRead),
-)

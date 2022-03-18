@@ -27,7 +27,7 @@ describe('Unified Alerting matchers', () => {
       expect(matchers[1].value).toBe('YNZBpGJnk');
     });
 
-    it('Should create one matcher, using the first occurence when duplicated labels exists', () => {
+    it('Should create one matcher, using the first occurrence when duplicated labels exists', () => {
       const matchers = parseQueryParamMatchers(['alertname=TestData 1', 'alertname=TestData 2']);
 
       expect(matchers).toHaveLength(1);

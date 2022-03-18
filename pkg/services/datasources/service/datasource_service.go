@@ -97,7 +97,7 @@ type DataSourceRetriever interface {
 // NewNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an id based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
-	prefix := datasources.ScopeDatasourcesProvider.GetResourceScopeName("")
+	prefix := datasources.ScopeProvider.GetResourceScopeName("")
 	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
@@ -113,7 +113,7 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", err
 		}
 
-		return datasources.ScopeDatasourcesProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
+		return datasources.ScopeProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
 	}
 
 	return prefix, dsNameResolver
@@ -122,7 +122,7 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 // NewUidScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:uid:" into an id based scope.
 func NewUidScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
-	prefix := datasources.ScopeDatasourcesProvider.GetResourceScopeUID("")
+	prefix := datasources.ScopeProvider.GetResourceScopeUID("")
 	dsUIDResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
@@ -138,7 +138,7 @@ func NewUidScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribut
 			return "", err
 		}
 
-		return datasources.ScopeDatasourcesProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
+		return datasources.ScopeProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
 	}
 
 	return prefix, dsUIDResolver

@@ -117,6 +117,30 @@ func TestFilter_Datasources(t *testing.T) {
 			expectedDataSources: []string{"ds:3", "ds:7", "ds:8"},
 			expectErr:           false,
 		},
+		{
+			desc:    "expect no data sources when scopes does not match",
+			sqlID:   "data_source.id",
+			prefix:  "datasources",
+			actions: []string{"datasources:read", "datasources:write"},
+			permissions: map[string][]string{
+				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
+				"datasources:write": {"datasources:id:10"},
+			},
+			expectedDataSources: []string{},
+			expectErr:           false,
+		},
+		{
+			desc:    "expect to not crash if duplicates in the scope",
+			sqlID:   "data_source.id",
+			prefix:  "datasources",
+			actions: []string{"datasources:read", "datasources:write"},
+			permissions: map[string][]string{
+				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8", "datasources:id:3", "datasources:id:8"},
+				"datasources:write": {"datasources:id:3", "datasources:id:7"},
+			},
+			expectedDataSources: []string{"ds:3", "ds:7"},
+			expectErr:           false,
+		},
 	}
 
 	// set sqlIDAcceptList before running tests
