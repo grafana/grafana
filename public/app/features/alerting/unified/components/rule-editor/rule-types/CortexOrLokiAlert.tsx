@@ -16,7 +16,7 @@ const CortexFlavoredType: FC<Props> = ({ selected = false, disabled = false, onC
           <span>
             Use a Cortex or Loki datasource.
             <br />
-            Grafana expressions not supported.
+            Expressions are not supported.
           </span>
         }
         image="/public/img/alerting/cortex_logo.svg"
