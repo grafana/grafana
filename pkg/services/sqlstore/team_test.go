@@ -302,12 +302,12 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 
 				query := &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[0]}}
-				err = IsAdminOfTeams(context.Background(), query)
+				err = sqlStore.IsAdminOfTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.False(t, query.Result)
 
 				query = &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[1]}}
-				err = IsAdminOfTeams(context.Background(), query)
+				err = sqlStore.IsAdminOfTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.True(t, query.Result)
 			})
