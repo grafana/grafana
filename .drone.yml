@@ -28,6 +28,8 @@ steps:
     kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
   - apt-get update
   - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -4435,6 +4437,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 38f5ca427727dd6de51923f10fa0fe94831f83705b2feed7286415bfa62bf3b0
+hmac: d8ac45ed57461a98e6dce4297b2beba69aec6a5b3c886188c9c6c130a74b4605
 
 ...
