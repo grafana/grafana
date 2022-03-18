@@ -195,7 +195,6 @@ type ScopeParams struct {
 // can perform against specific resource.
 type ResourcePermission struct {
 	ID          int64
-	ResourceID  string
 	RoleName    string
 	Actions     []string
 	Scope       string
@@ -206,12 +205,9 @@ type ResourcePermission struct {
 	TeamEmail   string
 	Team        string
 	BuiltInRole string
+	IsManaged   bool
 	Created     time.Time
 	Updated     time.Time
-}
-
-func (p *ResourcePermission) IsManaged() bool {
-	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
