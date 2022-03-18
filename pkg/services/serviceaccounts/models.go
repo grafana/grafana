@@ -67,4 +67,3 @@ const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
 	FilterIncludeAll        ServiceAccountFilter = "all"
 )
-
