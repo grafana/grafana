@@ -63,7 +63,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	var canSave bool
+	canSave := true
 	var err error
 	if cmd.DashboardId != 0 {
 		canSave, err = canSaveLocalAnnotation(c, cmd.DashboardId)
@@ -189,7 +189,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	var canSave bool
+	canSave := true
 	if annotation.GetType() == annotations.Local {
 		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
 	} else {
@@ -235,7 +235,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	var canSave bool
+	canSave := true
 	if annotation.GetType() == annotations.Local {
 		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
 	} else {
@@ -314,7 +314,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 		return resp
 	}
 
-	var canSave bool
+	canSave := true
 	if annotation.GetType() == annotations.Local {
 		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
 	} else {
