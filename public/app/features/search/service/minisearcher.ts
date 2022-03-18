@@ -1,9 +1,9 @@
-import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
-
-import { ArrayVector, DataFrame, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import MiniSearch from 'minisearch';
-import { getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
+import { ArrayVector, DataFrame, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
+import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
+import { getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
 
 export type SearchResultKind = keyof RawIndexData;
 
@@ -59,7 +59,7 @@ export class MiniSearcher implements GrafanaSearcher {
           }
           return 1;
         },
-        prefix: true, // (term) => term.length > 3,
+        prefix: true,
         fuzzy: (term) => (term.length > 4 ? 0.2 : false),
       },
       extractField: (doc, name) => {
@@ -114,7 +114,6 @@ export class MiniSearcher implements GrafanaSearcher {
     this.lookup = lookup;
   }
 
-  //
   async search(query: string, filter?: QueryFilters): Promise<QueryResponse> {
     if (!this.index) {
       await this.initIndex();
