@@ -42,8 +42,8 @@ type Store interface {
 		hooks types.ResourceHooks,
 	) ([]accesscontrol.ResourcePermission, error)
 
-	// GetResourcesPermissions will return all permission for all supplied resource ids
-	GetResourcesPermissions(ctx context.Context, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error)
+	// GetResourcePermissions will return all permission for supplied resource id
+	GetResourcePermissions(ctx context.Context, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 }
 
 func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore) (*Service, error) {
@@ -101,12 +101,22 @@ type Service struct {
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
-	return s.store.GetResourcesPermissions(ctx, user.OrgId, types.GetResourcesPermissionsQuery{
-		User:        user,
-		Actions:     s.actions,
-		Resource:    s.options.Resource,
-		ResourceIDs: []string{resourceID},
-		OnlyManaged: s.options.OnlyManaged,
+	var inheritedScopes []string
+	if s.options.InheritedScopesSolver != nil {
+		var err error
+		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgId, resourceID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return s.store.GetResourcePermissions(ctx, user.OrgId, types.GetResourcePermissionsQuery{
+		User:            user,
+		Actions:         s.actions,
+		Resource:        s.options.Resource,
+		ResourceID:      resourceID,
+		InheritedScopes: inheritedScopes,
+		OnlyManaged:     s.options.OnlyManaged,
 	})
 }
 

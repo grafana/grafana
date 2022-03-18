@@ -195,7 +195,6 @@ type ScopeParams struct {
 // can perform against specific resource.
 type ResourcePermission struct {
 	ID          int64
-	ResourceID  string
 	RoleName    string
 	Actions     []string
 	Scope       string
@@ -206,12 +205,9 @@ type ResourcePermission struct {
 	TeamEmail   string
 	Team        string
 	BuiltInRole string
+	IsManaged   bool
 	Created     time.Time
 	Updated     time.Time
-}
-
-func (p *ResourcePermission) IsManaged() bool {
-	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
@@ -310,12 +306,6 @@ const (
 	// Settings scope
 	ScopeSettingsAll = "settings:*"
 
-	// Licensing related actions
-	ActionLicensingRead        = "licensing:read"
-	ActionLicensingUpdate      = "licensing:update"
-	ActionLicensingDelete      = "licensing:delete"
-	ActionLicensingReportsRead = "licensing.reports:read"
-
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
 	ActionTeamsDelete           = "teams:delete"
@@ -387,9 +377,3 @@ var (
 const RoleGrafanaAdmin = "Grafana Admin"
 
 const FixedRolePrefix = "fixed:"
-
-// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
-var LicensingPageReaderAccess = EvalAny(
-	EvalPermission(ActionLicensingRead),
-	EvalPermission(ActionServerStatsRead),
-)

@@ -17,8 +17,9 @@ import (
 
 type SocialAzureAD struct {
 	*SocialBase
-	allowedGroups     []string
-	autoAssignOrgRole string
+	allowedGroups       []string
+	autoAssignOrgRole   string
+	roleAttributeStrict bool
 }
 
 type azureClaims struct {
@@ -69,7 +70,10 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, errors.New("error getting user info: no email found in access token")
 	}
 
-	role := extractRole(claims, s.autoAssignOrgRole)
+	role := extractRole(claims, s.autoAssignOrgRole, s.roleAttributeStrict)
+	if role == "" {
+		return nil, errors.New("user does not have a valid role")
+	}
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
@@ -118,7 +122,7 @@ func extractEmail(claims azureClaims) string {
 	return claims.Email
 }
 
-func extractRole(claims azureClaims, autoAssignRole string) models.RoleType {
+func extractRole(claims azureClaims, autoAssignRole string, strictMode bool) models.RoleType {
 	if len(claims.Roles) == 0 {
 		return models.RoleType(autoAssignRole)
 	}
@@ -133,6 +137,10 @@ func extractRole(claims azureClaims, autoAssignRole string) models.RoleType {
 		if found := hasRole(claims.Roles, role); found {
 			return role
 		}
+	}
+
+	if strictMode {
+		return models.RoleType("")
 	}
 
 	return models.ROLE_VIEWER
