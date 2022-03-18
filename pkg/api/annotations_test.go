@@ -395,20 +395,40 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
 
-	repo := annotations.GetRepository()
+	localAnnotation := annotations.ItemDTO{Id: 1, DashboardId: 1}
+	globalAnnotation := annotations.ItemDTO{Id: 2, DashboardId: 0}
 
-	localAnnotation := annotations.Item{
-		OrgId:       sc.initCtx.OrgId,
+	fakeAnnoRepo = &fakeAnnotationsRepo{
+		annotations: map[int64]annotations.ItemDTO{1: localAnnotation, 2: globalAnnotation},
+	}
+	annotations.SetRepository(fakeAnnoRepo)
+
+	postGlobalCmd := dtos.PostAnnotationsCmd{
+		Time:    1000,
+		Text:    "annotation text",
+		Tags:    []string{"tag1", "tag2"},
+		PanelId: 1,
+	}
+
+	postLocalCmd := dtos.PostAnnotationsCmd{
+		Time:        1000,
+		Text:        "annotation text",
+		Tags:        []string{"tag1", "tag2"},
 		DashboardId: 1,
-	}
-	globalAnnotation := annotations.Item{
-		OrgId: sc.initCtx.OrgId,
+		PanelId:     1,
 	}
 
-	err = repo.Save(&localAnnotation)
-	require.NoError(t, err)
-	err = repo.Save(&globalAnnotation)
-	require.NoError(t, err)
+	updateCmd := dtos.UpdateAnnotationsCmd{
+		Time: 1000,
+		Text: "annotation text",
+		Tags: []string{"tag1", "tag2"},
+	}
+
+	patchCmd := dtos.PatchAnnotationsCmd{
+		Time: 1000,
+		Text: "annotation text",
+		Tags: []string{"tag1", "tag2"},
+	}
 
 	type args struct {
 		permissions []*accesscontrol.Permission
@@ -458,10 +478,193 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			},
 			want: http.StatusForbidden,
 		},
+		{
+			name: "AccessControl update local annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPut,
+				body:   mockRequestBody(updateCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl update local annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPut,
+				body:        mockRequestBody(updateCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl update global annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPut,
+				body:   mockRequestBody(updateCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl update global annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPut,
+				body:   mockRequestBody(updateCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl patch local annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPatch,
+				body:   mockRequestBody(patchCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl patch local annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPatch,
+				body:        mockRequestBody(patchCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl patch global annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPatch,
+				body:   mockRequestBody(patchCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl patch global annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPatch,
+				body:   mockRequestBody(patchCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl create local annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postLocalCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl create local annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations",
+				method:      http.MethodPost,
+				body:        mockRequestBody(postLocalCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl create global annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postGlobalCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl create global annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postGlobalCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl delete local annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodDelete,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl delete local annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodDelete,
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl delete global annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeGlobal,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodDelete,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl create global annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeLocal,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodDelete,
+			},
+			want: http.StatusForbidden,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setUpACL()
+			sc.acmock.RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
 		})

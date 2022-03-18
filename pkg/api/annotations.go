@@ -67,9 +67,17 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	var err error
 	if cmd.DashboardId != 0 {
 		canSave, err = canSaveLocalAnnotation(c, cmd.DashboardId)
-	} else {
-		canSave = canSaveGlobalAnnotation(c)
+	} else { // global annotations
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveGlobalAnnotation(c)
+		} else {
+			// This is an additional validation needed only for FGAC Global Annotations.
+			// It is not possible to do it in the middleware because we need to look
+			// into the request to determine if this is a Global annotation or not
+			canSave, err = hs.canCreateGlobalAnnotations(c)
+		}
 	}
+
 	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -318,8 +326,11 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 	if annotation.GetType() == annotations.Local {
 		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
 	} else {
-		canSave = canSaveGlobalAnnotation(c)
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveGlobalAnnotation(c)
+		}
 	}
+
 	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -334,8 +345,6 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 
 	return response.Success("Annotation deleted")
 }
-
-
 
 func canSaveLocalAnnotation(c *models.ReqContext, dashboardID int64) (bool, error) {
 	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
@@ -352,7 +361,6 @@ func canSaveGlobalAnnotation(c *models.ReqContext) bool {
 	}
 	return true
 }
-
 
 func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
@@ -412,4 +420,9 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 		}
 	}
 	return accesscontrol.ScopeAnnotationsProvider.GetResourceScope(""), annotationTypeResolver
+}
+
+func (hs *HTTPServer) canCreateGlobalAnnotations(c *models.ReqContext) (bool, error) {
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, accesscontrol.ScopeAnnotationsTypeGlobal)
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }
