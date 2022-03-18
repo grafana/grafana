@@ -147,6 +147,10 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
+	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+		return err
+	}
+
 	secret, err := json.Marshal(cmd.SecureJsonData)
 	if err != nil {
 		return err
@@ -154,10 +158,6 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 
 	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 	if err != nil {
-		return err
-	}
-
-	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
 		return err
 	}
 
@@ -177,11 +177,11 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
-	err := s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, "datasource")
+	err := s.SQLStore.DeleteDataSource(ctx, cmd)
 	if err != nil {
 		return err
 	}
-	return s.SQLStore.DeleteDataSource(ctx, cmd)
+	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, "datasource")
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
@@ -191,12 +191,12 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		return err
 	}
 
-	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+	err = s.SQLStore.UpdateDataSource(ctx, cmd)
 	if err != nil {
 		return err
 	}
 
-	return s.SQLStore.UpdateDataSource(ctx, cmd)
+	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 }
 
 func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
