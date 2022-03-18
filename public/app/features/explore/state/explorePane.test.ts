@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
     init: jest.fn(),
+    timeRange: jest.fn().mockReturnValue({}),
   }),
 }));
 
@@ -42,6 +43,13 @@ const defaultInitialState = {
     },
   },
 };
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    updateTimeRange: jest.fn(),
+  }),
+}));
 
 function setupStore(state?: any) {
   return configureStore({
