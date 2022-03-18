@@ -253,6 +253,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('and tags response is invalid', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       fetchMock.mockImplementation((options: any) => {
         return of(createFetchResponse('zzzzzzz'));
       });
@@ -260,6 +261,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
       expect(results).toEqual([]);
+      expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/Unable to get annotations/));
     });
   });
 

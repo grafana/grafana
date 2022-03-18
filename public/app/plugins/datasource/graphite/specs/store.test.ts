@@ -277,15 +277,15 @@ describe('Graphite actions', () => {
       );
     });
 
-    it('getTagsSelectables should handle autocomplete errors', async () => {
-      await expect(async () => {
+    it('getTagsSelectables should handle autocomplete errors', () => {
+      expect(async () => {
         await getTagsSelectables(ctx.state, 0, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
             type: 'appNotifications/notifyApp',
           })
         );
-      }).not.toThrow();
+      }).resolves.not.toThrow();
     });
 
     it('getTagsSelectables should display the error message only once', async () => {
