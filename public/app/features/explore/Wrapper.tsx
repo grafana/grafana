@@ -1,8 +1,10 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ErrorBoundaryAlert, withTheme2 } from '@grafana/ui';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
 import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
@@ -14,7 +16,26 @@ import { StoreState } from 'app/types';
 import { locationService } from '@grafana/runtime';
 
 interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
-interface OwnProps {}
+interface OwnProps {
+  theme: GrafanaTheme2;
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  rzHandle: css`
+    background: ${theme.colors.secondary.main};
+    transition: 0.3s background ease-in-out;
+    position: relative;
+    width: 7px !important;
+    height: 20% !important;
+    top: calc(50% - 10%) !important;
+    left: -4px !important;
+    cursor: grab;
+    border-radius: 4px;
+    &:hover {
+      background: ${theme.colors.secondary.shade};
+    }
+  `,
+});
 
 const mapStateToProps = (state: StoreState) => {
   return {
@@ -70,8 +91,10 @@ class WrapperUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { left, right } = this.props.queryParams;
+    const { queryParams, theme } = this.props;
+    const { left, right } = queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
+    const styles = getStyles(theme);
 
     return (
       <div className="page-scrollbar-wrapper">
@@ -83,6 +106,7 @@ class WrapperUnconnected extends PureComponent<Props> {
             <ErrorBoundaryAlert style="page">
               <Resizable
                 defaultSize={{ width: '50%', height: '100%' }}
+                handleClasses={{ left: styles.rzHandle }}
                 enable={{
                   top: false,
                   right: false,
@@ -106,6 +130,6 @@ class WrapperUnconnected extends PureComponent<Props> {
   }
 }
 
-const Wrapper = connector(WrapperUnconnected);
+const Wrapper = connector(withTheme2(WrapperUnconnected));
 
 export default Wrapper;
