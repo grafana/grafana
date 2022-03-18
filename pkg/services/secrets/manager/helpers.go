@@ -22,7 +22,11 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 	}
 	raw, err := ini.Load([]byte(`
 		[security]
-		secret_key = ` + defaultKey))
+		secret_key = ` + defaultKey + `
+
+		[security.encryption]
+		data_keys_cache_ttl = 5m
+		data_keys_cache_cleanup_interval = 1ns`))
 	require.NoError(tb, err)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)

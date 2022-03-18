@@ -391,7 +391,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 	hasMore := false
 	if len(files) > pageSize {
 		hasMore = true
-		files = files[:len(files)-pageSize]
+		files = files[:pageSize]
 	}
 
 	lastPath := ""

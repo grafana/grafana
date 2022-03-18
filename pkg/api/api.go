@@ -167,6 +167,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
+			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
 
 			userRoute.Get("/auth-tokens", routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", routing.Wrap(hs.RevokeUserAuthToken))
@@ -210,6 +211,17 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
+		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
+				orgRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
+
+				orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+			})
+		}
+
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
@@ -229,6 +241,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// prefs
 			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead)), routing.Wrap(hs.GetOrgPreferences))
 			orgRoute.Put("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.UpdateOrgPreferences))
+			orgRoute.Patch("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.PatchOrgPreferences))
 		})
 
 		// current org without requirement of user to be org admin
