@@ -51,6 +51,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'apt-get update',
             'apt-get install -yq kubectl',
             'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
+            'chmod +x /usr/local/bin/docker-compose',
             'make -C devenv/docker/blocks/intentapi',
             'make devenv sources=intentapi',
         ]
