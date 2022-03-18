@@ -21,6 +21,8 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
+  - apt-get update
+  - apt-get install -yq kubectl
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -4428,6 +4430,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: fe47755d55f7e8f125bbe5535429eda1bd5ea63a12118afdadb4fb244c91bc2c
+hmac: b17d277caafe51252b630e8146655a0a1c83befe7c680ec64ae09c350c431786
 
 ...
