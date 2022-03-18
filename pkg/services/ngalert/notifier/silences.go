@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/silence"
@@ -75,6 +76,14 @@ func (am *Alertmanager) GetSilence(silenceID string) (apimodels.GettableSilence,
 
 // CreateSilence persists the provided silence and returns the silence ID if successful.
 func (am *Alertmanager) CreateSilence(ps *apimodels.PostableSilence) (string, error) {
+	// Validate our silence to avoid segfaults
+	// TODO: do we care about the format registry? Should we reinitialize it each time?
+	err := ps.Validate(strfmt.NewFormats())
+	if err != nil {
+		am.logger.Error("argument failed validation", "err", err)
+		return "", fmt.Errorf("%s: failed to convert API silence to internal silence: %w",
+			ErrCreateSilenceBadPayload.Error(), err)
+	}
 	sil, err := v2.PostableSilenceToProto(ps)
 	if err != nil {
 		am.logger.Error("marshaling to protobuf failed", "err", err)
