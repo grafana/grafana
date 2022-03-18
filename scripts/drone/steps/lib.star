@@ -24,7 +24,7 @@ def slack_step(channel, template, secret):
     }
 
 
-def initialize_step(edition, platform, ver_mode, is_downstream=False, install_deps=True):
+def initialize_step(edition, platform, ver_mode, is_downstream=False, install_deps=True, start_kube_apiserver=False):
     if platform == 'windows':
         return [
             {
@@ -41,6 +41,12 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         # TODO: Install Wire in Docker image instead
         'make gen-go',
     ]
+
+    if start_kube_apiserver:
+        common_cmds += [
+            'make -C devenv/docker/blocks/intentapi',
+            'make devenv sources=intentapi',
+        ]
 
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
@@ -496,6 +502,12 @@ def test_backend_step(edition):
         'depends_on': [
             'initialize',
         ],
+        'environment': {
+            'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH':'devenv/docker/blocks/intentapi/certs/intentapi.pem',
+            'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH':'devenv/docker/blocks/intentapi/certs/intentapi-key.pem',
+            'GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH':'devenv/docker/blocks/intentapi/apiserver.kubeconfig',
+            'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH':'devenv/docker/blocks/intentapi/intentapi.kubeconfig',
+        },
         'commands': [
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],

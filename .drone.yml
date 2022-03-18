@@ -21,6 +21,8 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.5.3
@@ -74,6 +76,11 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -650,6 +657,11 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -1670,6 +1682,11 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -2299,6 +2316,11 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -2327,6 +2349,11 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
@@ -3389,6 +3416,11 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -3984,6 +4016,11 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -4012,6 +4049,11 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
+  environment:
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
@@ -4386,6 +4428,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: cb8fa80d5e883fcbd5a9f01a481b9b609e6d7e019a7a53290293a06351c7d472
+hmac: fe47755d55f7e8f125bbe5535429eda1bd5ea63a12118afdadb4fb244c91bc2c
 
 ...
