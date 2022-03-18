@@ -287,15 +287,11 @@ func (m *SQLStoreMock) SavePreferences(ctx context.Context, cmd *models.SavePref
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error) {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error) {
 	return nil, m.ExpectedError
 }
 
