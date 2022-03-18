@@ -17,8 +17,10 @@ describe('ErrorContainer', () => {
       },
     };
     render(<ErrorContainer {...props} />);
-    expect(screen.getByText('Query error')).toBeInTheDocument();
-    expect(screen.getByText('Error message')).toBeInTheDocument();
+    const alertEl = screen.getByRole('alert');
+    expect(alertEl).toBeInTheDocument();
+    expect(alertEl).toHaveTextContent(/query error/i);
+    expect(alertEl).toHaveTextContent('Error message');
   });
 
   it('should render component and show message if message is in data only', () => {
@@ -34,13 +36,19 @@ describe('ErrorContainer', () => {
       },
     };
     render(<ErrorContainer {...props} />);
-    expect(screen.getByText('Query error')).toBeInTheDocument();
-    expect(screen.getByText('Error data message')).toBeInTheDocument();
+
+    const alertEl = screen.getByRole('alert');
+    expect(alertEl).toBeInTheDocument();
+    expect(alertEl).toHaveTextContent(/query error/i);
+    expect(alertEl).toHaveTextContent('Error data message');
   });
 
-  it('should show unknown error if prop is not passed in', () => {
+  it('should have hidden unknown error if prop is not passed in', () => {
     const props: ErrorContainerProps = {};
     render(<ErrorContainer {...props} />);
-    expect(screen.getByText('Unknown error')).toBeInTheDocument();
+
+    const alertEl = screen.getByRole('alert', { hidden: true });
+    expect(alertEl).toBeInTheDocument();
+    expect(alertEl).toHaveTextContent('Unknown error');
   });
 });

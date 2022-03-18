@@ -13,8 +13,8 @@ describe('MetaInfoText', () => {
     expect(screen.getAllByTestId('meta-info-text-item')).toHaveLength(2);
     expect(screen.getByText('label:')).toBeInTheDocument();
     expect(screen.getByText('label2:')).toBeInTheDocument();
-    expect(screen.getByText('value')).toBeInTheDocument();
-    expect(screen.getByText('value2')).toBeInTheDocument();
+    expect(screen.getByText(/^value$/)).toBeInTheDocument();
+    expect(screen.getByText(/^value2$/)).toBeInTheDocument();
   });
 
   it('should render component with no items when the array is empty', () => {
