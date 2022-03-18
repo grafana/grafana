@@ -39,6 +39,9 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl verify-drone
   depends_on:
@@ -4440,6 +4443,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 78ecddad0b3682fd1828ef0f6621dbbf39951bbe866b3c49a99f5fc6a87605dd
+hmac: 39e396e1487fb30f7a8746e35e34467f8b28ef39776ae6b8370b7c3123c649af
 
 ...

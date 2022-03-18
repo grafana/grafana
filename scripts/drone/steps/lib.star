@@ -42,6 +42,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         'make gen-go',
     ]
 
+    volumes = []
     if start_kube_apiserver:
         common_cmds += [
             'apt-get update',
@@ -57,6 +58,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'make -C devenv/docker/blocks/intentapi',
             'make devenv sources=intentapi',
         ]
+        volumes += [ { 'name': 'docker', 'path': '/var/run/docker.sock'} ]
 
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
@@ -94,10 +96,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 source_commit = ' $${SOURCE_COMMIT}'
             committish = '${DRONE_COMMIT}'
             token = ""
-        steps = [
-            identify_runner,
-            clone_enterprise(committish),
-            {
+        additional_step = {
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
@@ -113,18 +112,27 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
                             ] + common_cmds,
-            },
+            }
+        if volumes:
+            additional_step['volumes'] = volumes
+        steps = [
+            identify_runner,
+            clone_enterprise(committish),
+            additional_step,
         ]
 
         return steps
 
+    additional_step = {
+        'name': 'initialize',
+        'image': build_image,
+        'commands': common_cmds,
+    }
+    if volumes:
+        additional_step['volumes'] = volumes
     steps = [
         identify_runner,
-        {
-            'name': 'initialize',
-            'image': build_image,
-            'commands': common_cmds,
-        },
+        additional_step,
     ]
 
     return steps
