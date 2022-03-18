@@ -11,7 +11,7 @@ func (ss *SQLStore) GetPluginSettings(ctx context.Context, orgID int64) ([]*mode
 	var rslt = make([]*models.PluginSetting, 0)
 	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
 		if orgID != 0 {
-			sess.In("org_id", orgID)
+			sess.Where("org_id", orgID)
 		}
 
 		err := sess.Find(&rslt)
