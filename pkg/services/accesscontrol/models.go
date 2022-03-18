@@ -365,6 +365,15 @@ const (
 	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
+
+	// File actions
+	ActionFilesCreate = "files:create"
+	ActionFilesRead   = "files:read"
+	ActionFilesWrite  = "files:write"
+	ActionFilesDelete = "files:delete"
+
+	// File scopes
+	ScopeFilesAll = "files:path:/*"
 )
 
 var (

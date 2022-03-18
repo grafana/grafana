@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	storeauth "github.com/grafana/grafana/pkg/services/store/auth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -78,11 +80,17 @@ func (s *standardStorageService) Run(ctx context.Context) error {
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
-	// apply access control here
-	return s.tree.ListFolder(ctx, path)
+	guardian := storeauth.NewGuardian(ctx, user, s.tree.getRootPrefix(path))
+	return s.tree.ListFolder(ctx, path, guardian.GetViewPathFilters())
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
-	// TODO: permission check!
+	rootPrefix := s.tree.getRootPrefix(path)
+	guardian := storeauth.NewGuardian(ctx, user, rootPrefix)
+	allowed := guardian.CanView(path)
+	if !allowed {
+		grafanaStorageLogger.Warn("read access denied", "path", path, "rootPrefix", rootPrefix)
+		return nil, errors.New("not found")
+	}
 	return s.tree.GetFile(ctx, path)
 }
