@@ -35,7 +35,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	items, err := repo.Find(query)
+	items, err := repo.Find(context.TODO(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get annotations", err)
 	}
@@ -349,7 +349,7 @@ func canSaveGlobalAnnotation(c *models.ReqContext) bool {
 }
 
 func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
-	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
+	items, err := repo.Find(context.TODO(), &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
 
 	if err != nil {
 		return nil, response.Error(500, "Failed to find annotation", err)

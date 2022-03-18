@@ -15,7 +15,7 @@ var (
 type Repository interface {
 	Save(item *Item) error
 	Update(item *Item) error
-	Find(query *ItemQuery) ([]*ItemDTO, error)
+	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
 	Delete(params *DeleteParams) error
 	FindTags(query *TagsQuery) (FindTagsResult, error)
 }

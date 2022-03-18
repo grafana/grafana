@@ -509,7 +509,7 @@ func (repo *FakeAnnotationsRepo) Update(item *annotations.Item) error {
 	return nil
 }
 
-func (repo *FakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	annotations := []*annotations.ItemDTO{{Id: 1}}
 	return annotations, nil
 }
