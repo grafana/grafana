@@ -2,6 +2,7 @@ package storeauth
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -48,7 +49,6 @@ func (a allowAllAuthGuardian) CanView(path string) bool {
 
 func (a allowAllAuthGuardian) CanSave(path string) bool {
 	return true
-
 }
 
 func (a allowAllAuthGuardian) GetViewPathFilters() *filestorage.PathFilters {
