@@ -7,28 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	"github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
-
-func createTestableKVStore(t *testing.T) SecretsKVStore {
-	t.Helper()
-
-	sqlStore := sqlstore.InitTestDB(t)
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := manager.SetupTestService(t, store)
-
-	kv := &secretsKVStoreSQL{
-		sqlStore:       sqlStore,
-		log:            log.New("secrets.kvstore"),
-		secretsService: secretsService,
-	}
-
-	return kv
-}
 
 type TestCase struct {
 	OrgId     int64
@@ -42,7 +21,7 @@ func (t *TestCase) Value() string {
 }
 
 func TestKVStore(t *testing.T) {
-	kv := createTestableKVStore(t)
+	kv := SetupTestService(t)
 
 	ctx := context.Background()
 
@@ -173,7 +152,7 @@ func TestKVStore(t *testing.T) {
 	})
 
 	t.Run("listing existing keys", func(t *testing.T) {
-		kv := createTestableKVStore(t)
+		kv := SetupTestService(t)
 
 		ctx := context.Background()
 
