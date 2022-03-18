@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
 import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
-import { CloudWatchJsonData, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
 
 const setup = () => {
   const instanceSettings = {
@@ -149,7 +149,10 @@ describe('QueryEditor', () => {
     it('when metric query type is metric search and editor mode is raw', async () => {
       await act(async () => {
         const props = setup();
-        (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Code;
+        if (props.query.queryMode !== 'Metrics') {
+          fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
+        }
+        props.query.metricEditorMode = MetricEditorMode.Code;
         render(<MetricsQueryEditor {...props} />);
 
         expect(screen.getByText('Metric Search')).toBeInTheDocument();
@@ -161,8 +164,11 @@ describe('QueryEditor', () => {
     it('when metric query type is metric query and editor mode is builder', async () => {
       await act(async () => {
         const props = setup();
-        (props.query as CloudWatchMetricsQuery).metricQueryType = MetricQueryType.Query;
-        (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Builder;
+        if (props.query.queryMode !== 'Metrics') {
+          fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
+        }
+        props.query.metricQueryType = MetricQueryType.Query;
+        props.query.metricEditorMode = MetricEditorMode.Builder;
         render(<MetricsQueryEditor {...props} />);
 
         expect(screen.getByText('Metric Query')).toBeInTheDocument();
@@ -174,8 +180,11 @@ describe('QueryEditor', () => {
     it('when metric query type is metric query and editor mode is raw', async () => {
       await act(async () => {
         const props = setup();
-        (props.query as CloudWatchMetricsQuery).metricQueryType = MetricQueryType.Query;
-        (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Code;
+        if (props.query.queryMode !== 'Metrics') {
+          fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
+        }
+        props.query.metricQueryType = MetricQueryType.Query;
+        props.query.metricEditorMode = MetricEditorMode.Code;
         render(<MetricsQueryEditor {...props} />);
 
         expect(screen.getByText('Metric Query')).toBeInTheDocument();
@@ -194,10 +203,14 @@ describe('QueryEditor', () => {
 
     it('shoud display wildcard option in dimension value dropdown', async () => {
       const props = setup();
+      if (props.query.queryMode !== 'Metrics') {
+        fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
+      }
       props.datasource.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
-      (props.query as CloudWatchMetricsQuery).metricQueryType = MetricQueryType.Search;
-      (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Builder;
-      (props.query as CloudWatchMetricsQuery).dimensions = { instanceId: 'instance-123' };
+      props.query.metricQueryType = MetricQueryType.Search;
+      props.query.metricEditorMode = MetricEditorMode.Builder;
+      props.query.dimensions = { instanceId: 'instance-123' };
+
       render(<MetricsQueryEditor {...props} />);
 
       expect(screen.getByText('Match exact')).toBeInTheDocument();
