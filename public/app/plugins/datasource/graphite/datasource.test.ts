@@ -183,6 +183,15 @@ describe('graphiteDatasource', () => {
 
   describe('when fetching Graphite Events as annotations', () => {
     let results: any;
+    let errorSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    });
+
+    afterEach(() => {
+      errorSpy.mockRestore();
+    });
 
     const options = {
       annotation: {
@@ -253,7 +262,6 @@ describe('graphiteDatasource', () => {
     });
 
     it('and tags response is invalid', async () => {
-      jest.spyOn(console, 'error').mockImplementation();
       fetchMock.mockImplementation((options: any) => {
         return of(createFetchResponse('zzzzzzz'));
       });
