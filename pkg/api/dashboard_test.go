@@ -134,7 +134,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 			}
 			mockSQLStore.ExpectedDashboardAclInfoList = aclMockResp
-			guardian.InitGuardianWithStore(mockSQLStore)
+			guardian.InitLegacyGuardian(mockSQLStore)
 		}
 
 		// This tests two scenarios:
@@ -245,7 +245,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 
 			mockSQLStore.ExpectedDashboardAclInfoList = aclMockResp
-			guardian.InitGuardianWithStore(mockSQLStore)
+			guardian.InitLegacyGuardian(mockSQLStore)
 		}
 
 		// This tests six scenarios:

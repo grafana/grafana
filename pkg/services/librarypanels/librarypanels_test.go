@@ -1480,7 +1480,7 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	store := mockstore.NewSQLStoreMock()
-	guardian.InitGuardianWithStore(store)
+	guardian.InitLegacyGuardian(store)
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {

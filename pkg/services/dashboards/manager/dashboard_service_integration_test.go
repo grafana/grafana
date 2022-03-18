@@ -812,7 +812,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 
 	t.Run(desc, func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		guardian.InitGuardianWithStore(sqlStore)
+		guardian.InitLegacyGuardian(sqlStore)
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)

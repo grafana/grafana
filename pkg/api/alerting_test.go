@@ -49,7 +49,7 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	}
 	store.ExpectedDashboardAclInfoList = aclMockResp
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	guardian.InitGuardianWithStore(store)
+	guardian.InitLegacyGuardian(store)
 	return hs
 }
 

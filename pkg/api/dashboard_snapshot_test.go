@@ -71,7 +71,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				})
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
-				guardian.InitGuardianWithStore(sc.sqlStore)
+				guardian.InitLegacyGuardian(sc.sqlStore)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)

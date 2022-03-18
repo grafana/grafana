@@ -433,5 +433,5 @@ func setUpACL() {
 	store := mockstore.NewSQLStoreMock()
 	store.ExpectedDashboardAclInfoList = aclMockResp
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	guardian.InitGuardianWithStore(store)
+	guardian.InitLegacyGuardian(store)
 }
