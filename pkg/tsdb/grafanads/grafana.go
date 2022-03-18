@@ -107,9 +107,7 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 		return response
 	}
 
-	// Match existing behavior
-	path := "res/public/" + q.Path
-
+	path := store.RootPublicStatic + "/" + q.Path
 	frame, err := s.store.List(ctx, nil, path)
 	response.Error = err
 	if frame != nil {
@@ -119,7 +117,7 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 }
 
 func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) backend.DataResponse {
-	q := &listQueryModel{}
+	q := &readQueryModel{}
 	response := backend.DataResponse{}
 	err := json.Unmarshal(query.JSON, &q)
 	if err != nil {
@@ -132,9 +130,7 @@ func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) back
 		return response
 	}
 
-	// Match existing behavior
-	path := "res/public/" + q.Path
-
+	path := store.RootPublicStatic + "/" + q.Path
 	file, err := s.store.Read(ctx, nil, path)
 	if err != nil {
 		response.Error = err

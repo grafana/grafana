@@ -551,11 +551,11 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 		{
 			desc: "should only return permissions containing hidden users",
 			permissions: []accesscontrol.ResourcePermission{
-				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1"},
-				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1"},
-				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2"},
-				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3"},
-				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4"},
+				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1", IsManaged: true},
+				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1", IsManaged: true},
+				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2", IsManaged: true},
+				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3", IsManaged: true},
+				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4", IsManaged: true},
 			},
 			hiddenUsers: map[string]struct{}{"user2": {}, "user3": {}},
 		},
@@ -564,7 +564,6 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			guardian := setupAccessControlGuardianTest(t, 1, nil)
-			guardian.permissionServices.GetDashboardService()
 
 			mocked := accesscontrolmock.NewPermissionsServicesMock()
 			guardian.permissionServices = mocked

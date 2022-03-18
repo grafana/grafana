@@ -47,5 +47,6 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
+  storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
 }

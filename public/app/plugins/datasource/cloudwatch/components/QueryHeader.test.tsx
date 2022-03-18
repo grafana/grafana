@@ -1,6 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { CloudWatchLogsQuery, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 import QueryHeader from './QueryHeader';
@@ -74,9 +73,9 @@ describe('QueryHeader', () => {
       />
     );
 
-    const builderElement = screen.queryByLabelText('Builder');
-    expect(builderElement).toBeNull();
-    const codeElement = screen.queryByLabelText('Code');
-    expect(codeElement).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Builder')).toBeNull();
+      expect(screen.queryByLabelText('Code')).toBeNull();
+    });
   });
 });

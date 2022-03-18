@@ -23,6 +23,16 @@ import "github.com/grafana/grafana/pkg/api/dtos"
 // 401: unauthorisedError
 // 500: internalServerError
 
+// swagger:route PATCH /user/preferences user_preferences patchUserPreferences
+//
+// Patch user preferences.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 500: internalServerError
+
 // swagger:parameters updateUserPreferences updateOrgPreferences updateTeamPreferences
 type UpdateUserPreferencesParam struct {
 	// in:body
@@ -34,4 +44,11 @@ type UpdateUserPreferencesParam struct {
 type GetPreferencesResponse struct {
 	// in:body
 	Body dtos.Prefs `json:"body"`
+}
+
+// swagger:parameters patchUserPreferences patchOrgPreferences patchTeamPreferences
+type PatchUserPreferencesParam struct {
+	// in:body
+	// required:true
+	Body dtos.PatchPrefsCmd `json:"body"`
 }
