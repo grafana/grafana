@@ -1,7 +1,7 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import { render, screen, waitFor } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
+import { render, screen, act } from '@testing-library/react';
+import selectEvent from 'react-select-event';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
@@ -186,10 +186,10 @@ describe('QueryEditor', () => {
   });
 
   describe('should handle expression options correctly', () => {
-    it('should display match exact switch', () => {
+    it('should display match exact switch', async () => {
       const props = setup();
       render(<MetricsQueryEditor {...props} />);
-      expect(screen.getByText('Match exact')).toBeInTheDocument();
+      expect(await screen.findByText('Match exact')).toBeInTheDocument();
     });
 
     it('shoud display wildcard option in dimension value dropdown', async () => {
@@ -199,17 +199,12 @@ describe('QueryEditor', () => {
       (props.query as CloudWatchMetricsQuery).metricEditorMode = MetricEditorMode.Builder;
       (props.query as CloudWatchMetricsQuery).dimensions = { instanceId: 'instance-123' };
       render(<MetricsQueryEditor {...props} />);
-      expect(screen.getByText('Match exact')).toBeInTheDocument();
 
-      const valueElement = screen.getByText('instance-123');
-      expect(valueElement).toBeInTheDocument();
+      expect(screen.getByText('Match exact')).toBeInTheDocument();
+      expect(screen.getByText('instance-123')).toBeInTheDocument();
       expect(screen.queryByText('*')).toBeNull();
-      act(async () => {
-        await valueElement.click();
-        await waitFor(() => {
-          expect(screen.getByText('*')).toBeInTheDocument();
-        });
-      });
+      selectEvent.openMenu(screen.getByLabelText('Dimensions filter value'));
+      expect(await screen.findByText('*')).toBeInTheDocument();
     });
   });
 });
