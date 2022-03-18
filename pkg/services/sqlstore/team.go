@@ -532,7 +532,7 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
 	// If the signed in user is not set no member will be returned
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		sqlID := fmt.Sprintf("%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id"))
+		sqlID := fmt.Sprintf("%s.%s", ss.engine.Dialect().Quote("user"), ss.engine.Dialect().Quote("id"))
 		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users", ac.ActionOrgUsersRead)
 		if err != nil {
 			return err
@@ -547,8 +547,8 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = make([]*models.TeamMemberDTO, 0)
 		sess := dbSess.Table("team_member")
-		sess.Join("INNER", x.Dialect().Quote("user"),
-			fmt.Sprintf("team_member.user_id=%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id")),
+		sess.Join("INNER", ss.engine.Dialect().Quote("user"),
+			fmt.Sprintf("team_member.user_id=%s.%s", ss.engine.Dialect().Quote("user"), ss.engine.Dialect().Quote("id")),
 		)
 
 		if acUserFilter != nil {
