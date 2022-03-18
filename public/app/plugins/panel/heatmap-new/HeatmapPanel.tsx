@@ -102,8 +102,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let hoverValue: number | undefined = undefined;
     if (hover && info.heatmap.fields) {
       const countField = info.heatmap.fields[2];
-      const countVals = countField?.values.toArray();
-      hoverValue = countVals?.[hover.index];
+      hoverValue = countField?.values.get(hover.index);
     }
 
     return (

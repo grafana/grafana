@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -22,7 +22,6 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
   const [colors, setColors] = useState<string[]>([]);
   const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
   const [percent, setPercent] = useState<number | null>(null);
-  const [eventOffsetWidth, setEventOffsetWidth] = useState<number>(0);
 
   const theme = useTheme2();
   const styles = getStyles(theme, colors);
@@ -31,11 +30,9 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
     setColors(getGradientStops({ colorArray: colorPalette }));
   }, [colorPalette]);
 
-  const offsetWidth = useMemo(() => eventOffsetWidth, [eventOffsetWidth]);
-
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    setEventOffsetWidth((event.target as any).offsetWidth as number);
     const divOffset = event.nativeEvent.offsetX;
+    const offsetWidth = (event.target as any).offsetWidth as number;
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
 
@@ -64,10 +61,10 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
         )}
       </div>
       {display && (
-        <div style={{ position: 'relative' }}>
+        <div className={styles.followerContainer}>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
-            <span style={{ position: 'absolute', left: percent - 2 + '%', paddingTop: '5px' }}>
-              ≈{display(hoverValue || scaleHover.value)}
+            <span className={styles.hoverValue} style={{ left: percent - 2 + '%' }}>
+              {display(hoverValue || scaleHover.value)}
             </span>
           )}
           <div className={styles.legendValues} style={{ opacity: scaleHover.isShown || hoverValue ? 0.3 : 1 }}>
@@ -128,6 +125,10 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     display: flex;
     justify-content: space-between;
   `,
+  hoverValue: css`
+    position: absolute;
+    padding-top: 5px;
+  `,
   followerContainer: css`
     position: relative;
   `,
@@ -138,7 +139,7 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     border-radius: 50%;
     transform: translateX(-50%) translateY(-50%);
     pointer-events: none;
-    border: 2px solid white;
+    border: 2px solid ${theme.colors.text.primary};
     margin-top: 5px;
   `,
 });
