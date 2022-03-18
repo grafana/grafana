@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	ttl           = 30 * time.Second
-	cleanInterval = 2 * time.Minute
+	ttl            = 30 * time.Second
+	cleanInterval  = 2 * time.Minute
+	maxPrefixParts = 3
 )
 
 func GetResourceScope(resource string, resourceID string) string {
@@ -138,25 +139,39 @@ func (s *ScopeResolver) GetResolveAttributeScopeMutator(orgID int64) ScopeMutato
 		var err error
 		// By default the scope remains unchanged
 		resolvedScope := scope
-		prefix := scopePrefix(scope)
-		if fn, ok := s.attributeResolvers[prefix]; ok {
-			resolvedScope, err = fn(ctx, orgID, scope)
-			if err != nil {
-				return "", fmt.Errorf("could not resolve %v: %w", scope, err)
+		prefixes := scopePrefixes(scope)
+		for _, prefix := range prefixes {
+			if fn, ok := s.attributeResolvers[prefix]; ok {
+				resolvedScope, err = fn(ctx, orgID, scope)
+				if err != nil {
+					return "", fmt.Errorf("could not resolve %v: %w", scope, err)
+				}
+				// Cache result
+				s.cache.Set(getCacheKey(orgID, scope), resolvedScope, ttl)
+				s.log.Debug("resolved '%v' to '%v'", scope, resolvedScope)
+				return resolvedScope, nil
 			}
-			// Cache result
-			s.cache.Set(getCacheKey(orgID, scope), resolvedScope, ttl)
-			s.log.Debug("resolved '%v' to '%v'", scope, resolvedScope)
 		}
 		return resolvedScope, nil
 	}
 }
 
-func scopePrefix(scope string) string {
+// scopePrefixes returns the prefixes associated to a given scope
+// we assume a maximum number of parts for a prefix defined in const maxPrefixParts
+// ex: "datasources:name:test" returns {"datasources:name:", "datasources:"}
+func scopePrefixes(scope string) []string {
+	prefixes := []string{}
 	parts := strings.Split(scope, ":")
 	n := len(parts) - 1
-	parts[n] = ""
-	return strings.Join(parts, ":")
+	// We assume prefixes won't have more that maxPrefixParts parts
+	if n > maxPrefixParts {
+		n = maxPrefixParts
+	}
+	for ; n > 0; n-- {
+		parts[n] = ""
+		prefixes = append(prefixes, strings.Join(parts[:n+1], ":"))
+	}
+	return prefixes
 }
 
 //Inject params into the evaluator's templated scopes. e.g. "settings:" + eval.Parameters(":id")

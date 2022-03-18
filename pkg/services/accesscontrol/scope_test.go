@@ -66,6 +66,10 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 			return Scope("datasources", "id", "1"), nil
 		} else if initialScope == "datasources:name:testds2" {
 			return Scope("datasources", "id", "2"), nil
+		} else if initialScope == "datasources:name:test:ds4" {
+			return Scope("datasources", "id", "4"), nil
+		} else if initialScope == "datasources:name:testds5*" {
+			return Scope("datasources", "id", "5"), nil
 		} else {
 			return "", models.ErrDataSourceNotFound
 		}
@@ -118,6 +122,20 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 			),
 			wantCalls: 2,
 		},
+		{
+			name:          "should resolve name with colon",
+			orgID:         1,
+			evaluator:     EvalPermission("datasources:read", Scope("datasources", "name", "test:ds4")),
+			wantEvaluator: EvalPermission("datasources:read", Scope("datasources", "id", "4")),
+			wantCalls:     1,
+		},
+		{
+			name:          "should resolve names with '*'",
+			orgID:         1,
+			evaluator:     EvalPermission("datasources:read", Scope("datasources", "name", "testds5*")),
+			wantEvaluator: EvalPermission("datasources:read", Scope("datasources", "id", "5")),
+			wantCalls:     1,
+		},
 	}
 	for _, tt := range tests {
 		resolver := NewScopeResolver()
@@ -141,36 +159,46 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 	}
 }
 
-func Test_scopePrefix(t *testing.T) {
+func Test_scopePrefixes(t *testing.T) {
 	tests := []struct {
 		name  string
 		scope string
-		want  string
+		want  []string
 	}{
 		{
 			name:  "empty",
 			scope: "",
-			want:  "",
+			want:  []string{},
 		},
 		{
 			name:  "minimal",
 			scope: ":",
-			want:  ":",
+			want:  []string{":"},
 		},
 		{
 			name:  "datasources",
 			scope: "datasources:",
-			want:  "datasources:",
+			want:  []string{"datasources:"},
 		},
 		{
 			name:  "datasources name",
 			scope: "datasources:name:testds",
-			want:  "datasources:name:",
+			want:  []string{"datasources:name:", "datasources:"},
+		},
+		{
+			name:  "global user name",
+			scope: "global:user:name:testds",
+			want:  []string{"global:user:name:", "global:user:", "global:"},
+		},
+		{
+			name:  "datasources with colons in name",
+			scope: "datasources:name:test:a::ds",
+			want:  []string{"datasources:name:test:", "datasources:name:", "datasources:"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prefix := scopePrefix(tt.scope)
+			prefix := scopePrefixes(tt.scope)
 
 			assert.Equal(t, tt.want, prefix)
 		})
