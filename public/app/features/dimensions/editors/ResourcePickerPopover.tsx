@@ -11,7 +11,7 @@ import { MediaType, PickerTabType, ResourceFolderName } from '../types';
 
 import { FolderPickerTab } from './FolderPickerTab';
 import { URLPickerTab } from './URLPickerTab';
-
+import { FileUploader } from './FileUploader';
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
@@ -49,13 +49,15 @@ export const ResourcePickerPopover = (props: Props) => {
   );
 
   const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
-
+  const renderUploader = () => <FileUploader />;
   const renderPicker = () => {
     switch (activePicker) {
       case PickerTabType.Folder:
         return renderFolderPicker();
       case PickerTabType.URL:
         return renderURLPicker();
+      case PickerTabType.Upload:
+        return renderUploader();
       default:
         return renderFolderPicker();
     }
@@ -74,6 +76,12 @@ export const ResourcePickerPopover = (props: Props) => {
             </button>
             <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
               URL
+            </button>
+            <button
+              className={getTabClassName(PickerTabType.Upload)}
+              onClick={() => setActivePicker(PickerTabType.Upload)}
+            >
+              Upload
             </button>
           </div>
           <div className={styles.resourcePickerPopoverContent}>
