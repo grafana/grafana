@@ -19,6 +19,9 @@ type Coremodel interface {
 	RegisterController(ctrl.Manager) error
 }
 
+// CoremodelProvider is a wire-friendly func that provides a coremodel.
+type CoremodelProvider func(store Store, loader SchemaLoader) (*Coremodel, error)
+
 // SchemaLoader is a generic schema loader, that can load different schema types.
 type SchemaLoader interface {
 	LoadSchema(
