@@ -15,6 +15,14 @@ type NotificationPolicyService struct {
 	log             log.Logger
 }
 
+func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore, log log.Logger) *NotificationPolicyService {
+	return &NotificationPolicyService{
+		amStore:         am,
+		provenanceStore: prov,
+		log:             log,
+	}
+}
+
 func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
