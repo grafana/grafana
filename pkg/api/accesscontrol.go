@@ -433,7 +433,7 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
 func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, resource, resourceAttribute, resourceID string) ac.Metadata {
-	ids := map[string]bool{resource: true}
+	ids := map[string]bool{resourceID: true}
 	return hs.getMultiAccessControlMetadata(c, resource, resourceAttribute, ids)[resourceID]
 }
 
