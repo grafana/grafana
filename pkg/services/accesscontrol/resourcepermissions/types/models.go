@@ -20,10 +20,11 @@ type SetResourcePermissionsCommand struct {
 	SetResourcePermissionCommand
 }
 
-type GetResourcesPermissionsQuery struct {
-	Actions     []string
-	Resource    string
-	ResourceIDs []string
-	OnlyManaged bool
-	User        *models.SignedInUser
+type GetResourcePermissionsQuery struct {
+	Actions         []string
+	Resource        string
+	ResourceID      string
+	OnlyManaged     bool
+	InheritedScopes []string
+	User            *models.SignedInUser
 }

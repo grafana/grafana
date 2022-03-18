@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 
 import { IconPanel } from './IconPanel';
 import { defaultPanelOptions, PanelOptions } from './models.gen';
@@ -8,7 +8,15 @@ import { CanvasElementOptions } from 'app/features/canvas';
 
 export const plugin = new PanelPlugin<PanelOptions>(IconPanel)
   .setNoPadding() // extend to panel edges
-  .useFieldConfig()
+  .useFieldConfig({
+    standardOptions: {
+      [FieldConfigProperty.Mappings]: {
+        settings: {
+          icon: true,
+        },
+      },
+    },
+  })
   .setPanelOptions((builder) => {
     builder.addNestedOptions<CanvasElementOptions<IconConfig>>({
       category: ['Icon'],

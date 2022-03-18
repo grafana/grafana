@@ -34,10 +34,17 @@ type ServiceAccountDTO struct {
 	Name          string          `json:"name" xorm:"name"`
 	Login         string          `json:"login" xorm:"login"`
 	OrgId         int64           `json:"orgId" xorm:"org_id"`
+	IsDisabled    bool            `json:"isDisabled" xorm:"is_disabled"`
 	Role          string          `json:"role" xorm:"role"`
 	Tokens        int64           `json:"tokens"`
 	AvatarUrl     string          `json:"avatarUrl"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
+}
+type SearchServiceAccountsResult struct {
+	TotalCount      int64                `json:"totalCount"`
+	ServiceAccounts []*ServiceAccountDTO `json:"serviceAccounts"`
+	Page            int                  `json:"page"`
+	PerPage         int                  `json:"perPage"`
 }
 
 type ServiceAccountProfileDTO struct {
