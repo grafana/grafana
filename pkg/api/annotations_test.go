@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -14,12 +17,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAnnotationsAPIEndpoint(t *testing.T) {
+	hs := setupSimpleHTTPServer(nil)
+	store := sqlstore.InitTestDB(t)
+	store.Cfg = hs.Cfg
+	hs.SQLStore = store
+
 	t.Run("Given an annotation without a dashboard ID", func(t *testing.T) {
 		cmd := dtos.PostAnnotationsCmd{
 			Time: 1000,
@@ -65,7 +72,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					}, mock)
@@ -95,7 +102,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					}, mock)
@@ -157,7 +164,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						setUpACL()
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					}, mock)
@@ -190,7 +197,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						setUpACL()
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					}, mock)
@@ -230,6 +237,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 }
 
 type fakeAnnotationsRepo struct {
+	annotations map[int64]annotations.ItemDTO
 }
 
 func (repo *fakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
@@ -243,6 +251,9 @@ func (repo *fakeAnnotationsRepo) Update(item *annotations.Item) error {
 	return nil
 }
 func (repo *fakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	if annotation, has := repo.annotations[query.AnnotationId]; has {
+		return []*annotations.ItemDTO{&annotation}, nil
+	}
 	annotations := []*annotations.ItemDTO{{Id: 1}}
 	return annotations, nil
 }
@@ -260,6 +271,11 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		hs := setupSimpleHTTPServer(nil)
+		store := sqlstore.InitTestDB(t)
+		store.Cfg = hs.Cfg
+		hs.SQLStore = store
+
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -269,7 +285,7 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PostAnnotation(c)
+			return hs.PostAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -286,6 +302,11 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		hs := setupSimpleHTTPServer(nil)
+		store := sqlstore.InitTestDB(t)
+		store.Cfg = hs.Cfg
+		hs.SQLStore = store
+
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -295,7 +316,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return UpdateAnnotation(c)
+			return hs.UpdateAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -311,6 +332,11 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		hs := setupSimpleHTTPServer(nil)
+		store := sqlstore.InitTestDB(t)
+		store.Cfg = hs.Cfg
+		hs.SQLStore = store
+
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -320,7 +346,7 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PatchAnnotation(c)
+			return hs.PatchAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -337,6 +363,11 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		hs := setupSimpleHTTPServer(nil)
+		store := sqlstore.InitTestDB(t)
+		store.Cfg = hs.Cfg
+		hs.SQLStore = store
+
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -346,7 +377,7 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return DeleteAnnotations(c)
+			return hs.DeleteAnnotations(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -362,6 +393,21 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInEditor(sc.initCtx)
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	require.NoError(t, err)
+
+	repo := annotations.GetRepository()
+
+	localAnnotation := annotations.Item{
+		OrgId:       sc.initCtx.OrgId,
+		DashboardId: 1,
+	}
+	globalAnnotation := annotations.Item{
+		OrgId: sc.initCtx.OrgId,
+	}
+
+	err = repo.Save(&localAnnotation)
+	require.NoError(t, err)
+	err = repo.Save(&globalAnnotation)
 	require.NoError(t, err)
 
 	type args struct {
@@ -383,7 +429,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 				url:         "/api/annotations",
 				method:      http.MethodGet,
 			},
-			want: 200,
+			want: http.StatusOK,
 		},
 		{
 			name: "AccessControl getting annotations without permissions is forbidden",
@@ -392,7 +438,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 				url:         "/api/annotations",
 				method:      http.MethodGet,
 			},
-			want: 403,
+			want: http.StatusForbidden,
 		},
 		{
 			name: "AccessControl getting tags for annotations with correct permissions is allowed",
@@ -401,7 +447,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
-			want: 200,
+			want: http.StatusOK,
 		},
 		{
 			name: "AccessControl getting tags for annotations without correct permissions is forbidden",
@@ -410,7 +456,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
-			want: 403,
+			want: http.StatusForbidden,
 		},
 	}
 	for _, tt := range tests {
@@ -418,6 +464,66 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
+		})
+	}
+}
+
+func TestService_AnnotationTypeScopeResolver(t *testing.T) {
+	type testCaseResolver struct {
+		desc    string
+		given   string
+		want    string
+		wantErr error
+	}
+
+	testCases := []testCaseResolver{
+		{
+			desc:    "correctly resolves local annotations",
+			given:   "annotations:id:1",
+			want:    accesscontrol.ScopeAnnotationsTypeLocal,
+			wantErr: nil,
+		},
+		{
+			desc:    "correctly resolves global annotations",
+			given:   "annotations:id:2",
+			want:    accesscontrol.ScopeAnnotationsTypeGlobal,
+			wantErr: nil,
+		},
+		{
+			desc:    "invalid annotation ID",
+			given:   "annotations:id:123abc",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+		{
+			desc:    "malformed scope",
+			given:   "annotations:1",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+	}
+
+	localAnnotation := annotations.ItemDTO{Id: 1, DashboardId: 1}
+	globalAnnotation := annotations.ItemDTO{Id: 2}
+
+	fakeAnnoRepo = &fakeAnnotationsRepo{
+		annotations: map[int64]annotations.ItemDTO{1: localAnnotation, 2: globalAnnotation},
+	}
+	annotations.SetRepository(fakeAnnoRepo)
+
+	prefix, resolver := AnnotationTypeScopeResolver()
+	require.Equal(t, "annotations:id:", prefix)
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			resolved, err := resolver(context.Background(), 1, tc.given)
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.wantErr, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.want, resolved)
+			}
 		})
 	}
 }

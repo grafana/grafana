@@ -46,7 +46,7 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
           <InlineSwitch value={annotation.enable} onChange={() => onEnabledChanged(annotation)} disabled={loading} />
         </InlineField>
         <div className={styles.indicator}>
-          <LoadingIndicator loading={true} onCancel={onCancel} />
+          <LoadingIndicator loading={loading} onCancel={onCancel} />
         </div>
       </InlineFieldRow>
     </div>
