@@ -99,7 +99,7 @@ export const fetchPromRulesAction = createAsyncThunk(
     const dsConfig = getDataSourceConfig(thunkAPI.getState, rulesSourceName);
     const customRulerEnabled = dsConfig.rulerConfig?.customRulerEnabled ?? false;
 
-    return withSerializedError(fetchRules(rulesSourceName, filter, customRulerEnabled));
+    return await withSerializedError(fetchRules(rulesSourceName, filter, customRulerEnabled));
   }
 );
 
@@ -168,9 +168,19 @@ export const fetchRulerRulesAction = createAsyncThunk(
   ): Promise<RulerRulesConfigDTO | null> => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
-    return withSerializedError(fetchRulerRules(rulerConfig, filter));
+    return await withSerializedError(fetchRulerRules(rulerConfig, filter));
   }
 );
+
+export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceName: string }): ThunkResult<void> {
+  return async (dispatch) => {
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
+    await Promise.allSettled([
+      dispatch(fetchPromRulesAction({ rulesSourceName })),
+      dispatch(fetchRulerRulesAction({ rulesSourceName })),
+    ]);
+  };
+}
 
 export const fetchSilencesAction = createAsyncThunk(
   'unifiedalerting/fetchSilences',
@@ -242,11 +252,8 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
     condition: ({ rulesSourceName }, { getState }) => {
       const dataSources: AsyncRequestMapSlice<PromBasedDataSource> = (getState() as StoreState).unifiedAlerting
         .dataSources;
-
       const hasLoaded = Boolean(dataSources[rulesSourceName]?.result);
-      const loadingInProgress: boolean =
-        dataSources[rulesSourceName]?.dispatched || dataSources[rulesSourceName]?.loading;
-      return !(hasLoaded || loadingInProgress);
+      return !hasLoaded;
     },
   }
 );
@@ -303,8 +310,7 @@ export function deleteRulesGroupAction(
         const rulerConfig = getDataSourceRulerConfig(getState, sourceName);
 
         await deleteRulerRulesGroup(rulerConfig, namespace.name, ruleGroup.name);
-        dispatch(fetchRulerRulesAction({ rulesSourceName: sourceName }));
-        dispatch(fetchPromRulesAction({ rulesSourceName: sourceName }));
+        await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: sourceName }));
       })(),
       { successMessage: 'Group deleted' }
     );
@@ -331,8 +337,7 @@ export function deleteRuleAction(
         }
         await rulerClient.deleteRule(ruleWithLocation);
         // refetch rules for this rules source
-        dispatch(fetchRulerRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
-        dispatch(fetchPromRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
+        await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
 
         if (options.navigateTo) {
           locationService.replace(options.navigateTo);
