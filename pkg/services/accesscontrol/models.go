@@ -380,8 +380,8 @@ var (
 	ScopeAnnotationsProvider   = NewScopeProvider(ScopeAnnotationsRoot)
 	ScopeAnnotationsAll        = ScopeAnnotationsProvider.GetResourceAllScope()
 	ScopeAnnotationsID         = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
-	ScopeAnnotationsTypeLocal  = ScopeAnnotationsProvider.GetResourceScopeType("local")
-	ScopeAnnotationsTypeGlobal = ScopeAnnotationsProvider.GetResourceScopeType("global")
+	ScopeAnnotationsTypeLocal  = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
+	ScopeAnnotationsTypeGlobal = ScopeAnnotationsProvider.GetResourceScopeType("organization")
 
 	// Annotation tag scopes
 	ScopeAnnotationsTagsAll = "annotations:tags:*"
