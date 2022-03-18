@@ -1,0 +1,15 @@
+groups:
+  coremodel:
+    must:
+      DefinesCoremodel:
+        ruletype: goident
+        name: Coremodel
+        kind: struct
+        implements:
+          - "github.com/grafana/grafana/internal/components.Coremodel"
+      ProvidesCoremodel:
+        ruletype: goident
+        name: ProvideCoremodel
+        kind: func
+        implements:
+          - "github.com/grafana/grafana/internal/components.CoremodelProvider"
