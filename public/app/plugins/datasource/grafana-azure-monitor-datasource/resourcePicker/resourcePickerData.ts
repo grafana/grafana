@@ -227,4 +227,24 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       throw error;
     }
   }
+<<<<<<< HEAD
+=======
+
+  transformVariablesToRow(templateVariables: string[]): ResourceRow {
+    return {
+      id: ResourcePickerData.templateVariableGroupID,
+      uri: ResourcePickerData.templateVariableGroupID,
+      name: 'Template variables',
+      type: ResourceRowType.VariableGroup,
+      typeLabel: 'Variables',
+      children: templateVariables.map((v) => ({
+        id: v,
+        uri: v,
+        name: v,
+        type: ResourceRowType.Variable,
+        typeLabel: 'Variable',
+      })),
+    };
+  }
+>>>>>>> 53da586443 (Some refactoring to separate out uri from id after CR, needs tests still)
 }
