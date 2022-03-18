@@ -44,6 +44,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if start_kube_apiserver:
         common_cmds += [
+            'apt-get update',
+            'apt-get install -yq kubectl',
             'make -C devenv/docker/blocks/intentapi',
             'make devenv sources=intentapi',
         ]
