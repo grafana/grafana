@@ -519,12 +519,13 @@ def test_backend_step(edition):
             'initialize',
         ],
         'environment': {
-            'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH':'devenv/docker/blocks/intentapi/certs/intentapi.pem',
-            'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH':'devenv/docker/blocks/intentapi/certs/intentapi-key.pem',
-            'GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH':'devenv/docker/blocks/intentapi/apiserver.kubeconfig',
-            'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH':'devenv/docker/blocks/intentapi/intentapi.kubeconfig',
+            'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH':'./devenv/docker/blocks/intentapi/certs/intentapi.pem',
+            'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH':'./devenv/docker/blocks/intentapi/certs/intentapi-key.pem',
+            'GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH':'./devenv/docker/blocks/intentapi/apiserver.kubeconfig',
+            'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH':'./devenv/docker/blocks/intentapi/intentapi.kubeconfig',
         },
         'commands': [
+            'ls -l ./devenv/',
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],
     }
