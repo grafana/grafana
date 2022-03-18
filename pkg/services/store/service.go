@@ -49,6 +49,7 @@ type StorageService interface {
 	ListDashboardsToBuildSearchIndex(ctx context.Context, orgId int64) DashboardBodyIterator
 
 	getDashRoot() *nestedTree
+	getResRoot() *nestedTree
 }
 
 const RootPublicStatic = "public-static"
@@ -376,4 +377,8 @@ func (s *standardStorageService) ListDashboardsToBuildSearchIndex(ctx context.Co
 
 func (s *standardStorageService) getDashRoot() *nestedTree {
 	return s.dash
+}
+
+func (s *standardStorageService) getResRoot() *nestedTree {
+	return s.res
 }

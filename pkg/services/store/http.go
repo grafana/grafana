@@ -100,17 +100,17 @@ func (s *httpStorage) HandleExportSystem(c *models.ReqContext) response.Response
 func (s *httpStorage) Status(c *models.ReqContext) response.Response {
 	status := make(map[string][]RootStorageMeta)
 
-	// meta := make([]RootStorageMeta, 0)
-	// for _, root := range s.store.res.roots {
-	// 	meta = append(meta, root.Meta())
-	// }
-	// status["resources"] = meta
+	meta := make([]RootStorageMeta, 0)
+	for _, root := range s.store.getResRoot().roots {
+		meta = append(meta, root.Meta())
+	}
+	status["resources"] = meta
 
-	// meta = make([]RootStorageMeta, 0)
-	// for _, root := range s.store.dash.roots {
-	// 	meta = append(meta, root.Meta())
-	// }
-	// status["dashboards"] = meta
+	meta = make([]RootStorageMeta, 0)
+	for _, root := range s.store.getDashRoot().roots {
+		meta = append(meta, root.Meta())
+	}
+	status["dashboards"] = meta
 
 	return response.JSON(200, status)
 }
