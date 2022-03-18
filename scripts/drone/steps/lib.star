@@ -24,7 +24,7 @@ def slack_step(channel, template, secret):
     }
 
 
-def initialize_step(edition, platform, ver_mode, is_downstream=False, install_deps=True, start_kube_apiserver=False):
+def initialize_step(edition, platform, ver_mode, is_downstream=False, install_deps=True):
     if platform == 'windows':
         return [
             {
@@ -41,22 +41,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         # TODO: Install Wire in Docker image instead
         'make gen-go',
     ]
-
-    volumes = []
-    if start_kube_apiserver:
-        common_cmds += [
-            'apt-get update',
-            'apt-get install -y apt-transport-https ca-certificates curl',
-            'curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg',
-            'echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list',
-            'apt-get update',
-            'apt-get install -yq kubectl',
-            'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
-            'chmod +x /usr/local/bin/docker-compose',
-            'make -C devenv/docker/blocks/intentapi',
-            'make devenv sources=intentapi',
-        ]
-        volumes += [ { 'name': 'docker', 'path': '/var/run/docker.sock'} ]
 
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
@@ -94,7 +78,10 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 source_commit = ' $${SOURCE_COMMIT}'
             committish = '${DRONE_COMMIT}'
             token = ""
-        additional_step = {
+        steps = [
+            identify_runner,
+            clone_enterprise(committish),
+            {
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
@@ -110,27 +97,18 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
                             ] + common_cmds,
-            }
-        if volumes:
-            additional_step['volumes'] = volumes
-        steps = [
-            identify_runner,
-            clone_enterprise(committish),
-            additional_step,
+            },
         ]
 
         return steps
 
-    additional_step = {
-        'name': 'initialize',
-        'image': build_image,
-        'commands': common_cmds,
-    }
-    if volumes:
-        additional_step['volumes'] = volumes
     steps = [
         identify_runner,
-        additional_step,
+        {
+            'name': 'initialize',
+            'image': build_image,
+            'commands': common_cmds,
+        },
     ]
 
     return steps
@@ -518,16 +496,26 @@ def test_backend_step(edition):
         'depends_on': [
             'initialize',
         ],
-        'environment': {
-            'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH':'/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem',
-            'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH':'/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem',
-            'GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH':'/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig',
-            'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH':'/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig',
-        },
         'commands': [
+            'apt-get update',
+            'apt-get install -y apt-transport-https ca-certificates curl',
+            'curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg',
+            'echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list',
+            'apt-get update',
+            'apt-get install -yq kubectl',
+            'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
+            'chmod +x /usr/local/bin/docker-compose',
+            'make -C devenv/docker/blocks/intentapi',
+            'make devenv sources=intentapi',
+            'kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig api-resources',
             'ls -l /drone/src/devenv/docker/blocks/intentapi',
+            'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
+            'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem ' +
+            'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig ' +
+            'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig ' +
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],
+        'volumes': [ { 'name': 'docker', 'path': '/var/run/docker.sock'} ]
     }
 
 

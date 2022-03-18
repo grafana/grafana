@@ -21,25 +21,10 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - apt-get update
-  - apt-get install -y apt-transport-https ca-certificates curl
-  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
-    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
-  - apt-get update
-  - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
-  - make -C devenv/docker/blocks/intentapi
-  - make devenv sources=intentapi
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl verify-drone
   depends_on:
@@ -86,17 +71,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition oss
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -668,17 +669,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition oss
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -1694,17 +1711,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition oss
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -2329,17 +2362,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition enterprise
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -2363,17 +2412,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition enterprise2
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -3431,17 +3496,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition oss
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -4032,17 +4113,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition enterprise
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -4066,17 +4163,33 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
+  - apt-get update
+  - apt-get install -y apt-transport-https ca-certificates curl
+  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
+    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - make -C devenv/docker/blocks/intentapi
+  - make devenv sources=intentapi
+  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    api-resources
   - ls -l /drone/src/devenv/docker/blocks/intentapi
-  - ./bin/grabpl test-backend --edition enterprise2
+  - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
-  environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -4449,6 +4562,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6efcb572e1fc7c8a71b389ecd9d326fc9d1d6ac92cae9e9b984ca67c34de6f8a
+hmac: b5fcb71d66de57a1508dca053b0abd315a0819eed667ac934d3808361abd4b75
 
 ...
