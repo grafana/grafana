@@ -403,13 +403,46 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	filesWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:files:writer",
+			DisplayName: "Files writer",
+			Description: "Create, read, write or delete all files.",
+			Group:       "Files",
+			Permissions: ac.ConcatPermissions(
+				[]ac.Permission{
+					{Action: ac.ActionFilesRead, Scope: ac.ScopeFilesAll},
+					{Action: ac.ActionFilesWrite, Scope: ac.ScopeFilesAll},
+					{Action: ac.ActionFilesDelete, Scope: ac.ScopeFilesAll},
+					{Action: ac.ActionFilesCreate, Scope: ac.ScopeFilesAll},
+				}),
+		},
+		Grants: []string{string(models.ROLE_VIEWER), string(models.ROLE_EDITOR)},
+	}
+
+	filesReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:files:reader",
+			DisplayName: "Files reader",
+			Description: "Read all files.",
+			Group:       "Files",
+			Permissions: ac.ConcatPermissions(
+				[]ac.Permission{
+					{Action: ac.ActionFilesRead, Scope: ac.ScopeFilesAll},
+				}),
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, localAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole, filesReaderRole, filesWriterRole,
 	)
 }
 
