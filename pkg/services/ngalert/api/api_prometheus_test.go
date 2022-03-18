@@ -21,19 +21,14 @@ import (
 )
 
 func TestRouteGetAlertStatuses(t *testing.T) {
-	fakeStore := store.NewFakeRuleStore(t)
-	fakeAlertInstanceManager := NewFakeAlertInstanceManager(t)
 	orgID := int64(1)
 
-	api := PrometheusSrv{
-		log:     log.NewNopLogger(),
-		manager: fakeAlertInstanceManager,
-		store:   fakeStore,
-	}
-
-	c := &models.ReqContext{SignedInUser: &models.SignedInUser{OrgId: orgID}}
-
 	t.Run("with no alerts", func(t *testing.T) {
+		_, _, api := setupAPI(t)
+		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
+		require.NoError(t, err)
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
 		require.JSONEq(t, `
@@ -47,7 +42,54 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	})
 
 	t.Run("with two alerts", func(t *testing.T) {
-		fakeAlertInstanceManager.GenerateAlertInstances(1, util.GenerateShortUID(), 2)
+		_, fakeAIM, api := setupAPI(t)
+		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2)
+		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
+		require.NoError(t, err)
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+
+		r := api.RouteGetAlertStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		require.JSONEq(t, `
+{
+	"status": "success",
+	"data": {
+		"alerts": [{
+			"labels": {
+				"alertname": "test_title_0",
+				"instance_label": "test",
+				"label": "test"
+			},
+			"annotations": {
+				"annotation": "test"
+			},
+			"state": "Normal",
+			"activeAt": "0001-01-01T00:00:00Z",
+			"value": ""
+		}, {
+			"labels": {
+				"alertname": "test_title_1",
+				"instance_label": "test",
+				"label": "test"
+			},
+			"annotations": {
+				"annotation": "test"
+			},
+			"state": "Normal",
+			"activeAt": "0001-01-01T00:00:00Z",
+			"value": ""
+		}]
+	}
+}`, string(r.Body()))
+	})
+
+	t.Run("with the inclusion of internal labels", func(t *testing.T) {
+		_, fakeAIM, api := setupAPI(t)
+		fakeAIM.GenerateAlertInstances(orgID, util.GenerateShortUID(), 2)
+		req, err := http.NewRequest("GET", "/api/v1/alerts?includeInternalLabels=true", nil)
+		require.NoError(t, err)
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
 		require.JSONEq(t, `
@@ -138,9 +180,63 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"activeAt": "0001-01-01T00:00:00Z",
 					"value": ""
 				}],
-				"labels": null,
+				"labels": {
+					"__a_private_label_on_the_rule__": "a_value"
+				},
 				"health": "ok",
-				"lastError": "",
+				"type": "alerting",
+				"lastEvaluation": "2022-03-10T14:01:00Z",
+				"duration": 180,
+				"evaluationTime": 60
+			}],
+			"interval": 60,
+			"lastEvaluation": "2022-03-10T14:01:00Z",
+			"evaluationTime": 0
+		}]
+	}
+}
+`, string(r.Body()))
+	})
+
+	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+
+		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
+		require.NoError(t, err)
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		require.JSONEq(t, `
+{
+	"status": "success",
+	"data": {
+		"groups": [{
+			"name": "rule-group",
+			"file": "namespaceUID",
+			"rules": [{
+				"state": "inactive",
+				"name": "AlwaysFiring",
+				"query": "vector(1)",
+				"alerts": [{
+					"labels": {
+						"job": "prometheus",
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__": "test_alert_rule_uid_0"
+					},
+					"annotations": {
+						"severity": "critical"
+					},
+					"state": "Normal",
+					"activeAt": "0001-01-01T00:00:00Z",
+					"value": ""
+				}],
+				"labels": {
+					"__a_private_label_on_the_rule__": "a_value",
+					"__alert_rule_uid__": "RuleUID"
+				},
+				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -183,9 +279,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"activeAt": "0001-01-01T00:00:00Z",
 					"value": ""
 				}],
-				"labels": null,
+				"labels": {
+					"__a_private_label_on_the_rule__": "a_value"
+				},
 				"health": "ok",
-				"lastError": "",
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -219,7 +316,11 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 	rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), asFixture(), query))
 
 	fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, func(s *state.State) *state.State {
-		s.Labels = data.Labels{"job": "prometheus"}
+		s.Labels = data.Labels{
+			"job":                      "prometheus",
+			ngmodels.NamespaceUIDLabel: "test_namespace_uid",
+			ngmodels.RuleUIDLabel:      "test_alert_rule_uid_0",
+		}
 		s.Annotations = data.Labels{"severity": "critical"}
 		return s
 	})
@@ -237,7 +338,10 @@ func asFixture() func(r *ngmodels.AlertRule) {
 		r.NamespaceUID = "namespaceUID"
 		r.RuleGroup = "rule-group"
 		r.UID = "RuleUID"
-		r.Labels = nil
+		r.Labels = map[string]string{
+			"__a_private_label_on_the_rule__": "a_value",
+			ngmodels.RuleUIDLabel:             "RuleUID",
+		}
 		r.Annotations = nil
 		r.IntervalSeconds = 60
 		r.For = 180 * time.Second

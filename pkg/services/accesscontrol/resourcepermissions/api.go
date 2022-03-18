@@ -65,7 +65,6 @@ func (a *api) getDescription(c *models.ReqContext) response.Response {
 
 type resourcePermissionDTO struct {
 	ID            int64    `json:"id"`
-	ResourceID    string   `json:"resourceId"`
 	RoleName      string   `json:"roleName"`
 	IsManaged     bool     `json:"isManaged"`
 	UserID        int64    `json:"userId,omitempty"`
@@ -105,9 +104,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 
 			dto = append(dto, resourcePermissionDTO{
 				ID:            p.ID,
-				ResourceID:    p.ResourceID,
 				RoleName:      p.RoleName,
-				IsManaged:     p.IsManaged(),
 				UserID:        p.UserId,
 				UserLogin:     p.UserLogin,
 				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
@@ -117,6 +114,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 				BuiltInRole:   p.BuiltInRole,
 				Actions:       p.Actions,
 				Permission:    permission,
+				IsManaged:     p.IsManaged,
 			})
 		}
 	}

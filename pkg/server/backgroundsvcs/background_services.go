@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 )
@@ -48,6 +49,7 @@ func ProvideBackgroundServiceRegistry(
 	secretsService *secretsManager.SecretsService,
 	remoteCache *remotecache.RemoteCache,
 	thumbnailsService thumbs.Service,
+	storageService store.StorageService,
 
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *dashboardsnapshots.Service,
@@ -80,6 +82,7 @@ func ProvideBackgroundServiceRegistry(
 		remoteCache,
 		secretsService,
 		thumbnailsService,
+		storageService,
 		intentApiServer,
 		intentApiBridge,
 	)

@@ -3,6 +3,7 @@ import { mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { SaveDashboardForm } from './SaveDashboardForm';
+import { SaveDashboardOptions } from '../types';
 
 const prepareDashboardMock = (
   timeChanged: boolean,
@@ -36,6 +37,16 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
         submitSpy(jsonModel);
         return { status: 'success' };
       }}
+      saveModel={{
+        clone: dashboard,
+        diff: {},
+        diffCount: 0,
+        hasChanges: true,
+      }}
+      options={{}}
+      onOptionsChange={(opts: SaveDashboardOptions) => {
+        return;
+      }}
     />
   );
 
@@ -55,6 +66,16 @@ describe('SaveDashboardAsForm', () => {
           onSuccess={() => {}}
           onSubmit={async () => {
             return {};
+          }}
+          saveModel={{
+            clone: prepareDashboardMock(true, true, jest.fn(), jest.fn()) as any,
+            diff: {},
+            diffCount: 0,
+            hasChanges: true,
+          }}
+          options={{}}
+          onOptionsChange={(opts: SaveDashboardOptions) => {
+            return;
           }}
         />
       );

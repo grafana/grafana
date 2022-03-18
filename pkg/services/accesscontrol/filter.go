@@ -51,7 +51,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 		if len(ids) == 0 {
 			return denyQuery, nil
 		}
-		for _, id := range ids {
+		for id := range ids {
 			result[id] += 1
 		}
 	}
@@ -69,6 +69,10 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 		}
 	}
 
+	if len(ids) == 0 {
+		return denyQuery, nil
+	}
+
 	query := strings.Builder{}
 	query.WriteRune(' ')
 	query.WriteString(sqlID)
@@ -80,14 +84,15 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	return SQLFilter{query.String(), ids}, nil
 }
 
-func parseScopes(prefix string, scopes []string) (ids []int64, hasWildcard bool) {
+func parseScopes(prefix string, scopes []string) (ids map[int64]struct{}, hasWildcard bool) {
+	ids = make(map[int64]struct{})
 	for _, scope := range scopes {
 		if strings.HasPrefix(scope, prefix) || scope == "*" {
 			if id := strings.TrimPrefix(scope, prefix); id == "*" || id == ":*" || id == ":id:*" {
 				return nil, true
 			}
 			if id, err := parseScopeID(scope); err == nil {
-				ids = append(ids, id)
+				ids[id] = struct{}{}
 			}
 		}
 	}
