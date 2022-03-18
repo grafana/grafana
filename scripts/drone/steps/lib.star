@@ -507,13 +507,8 @@ def test_backend_step(edition):
             'chmod +x /usr/local/bin/docker-compose',
             'make -C devenv/docker/blocks/intentapi',
             'make devenv sources=intentapi',
-            'apt-get install ca-certificates curl gnupg lsb-release',
-            'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg',
-            'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null',
-            'apt-get update',
-            'apt-get install docker-ce docker-ce-cli containerd.io',
-            'docker ps',
-            'kubectl --kubeconfig=devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources',
+            'cd /drone/src/devenv && docker-compose ps',
+            'kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources',
             'ls -l /drone/src/devenv/docker/blocks/intentapi',
             'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
             'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem ' +
