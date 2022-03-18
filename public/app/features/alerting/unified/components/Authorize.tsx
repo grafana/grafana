@@ -1,11 +1,10 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC } from 'react';
 import { AccessControlAction } from 'app/types';
 import { contextSrv } from 'app/core/services/context_srv';
 
 type Props = {
   actions: AccessControlAction[];
   fallback?: boolean;
-  children: ReactNode;
 };
 
 export const Authorize: FC<Props> = ({ actions, children, fallback = true }) => {

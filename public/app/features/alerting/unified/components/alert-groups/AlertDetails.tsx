@@ -4,6 +4,7 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import React, { FC } from 'react';
+import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { Authorize } from '../Authorize';
@@ -15,10 +16,17 @@ interface AmNotificationsAlertDetailsProps {
 
 export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, alertManagerSourceName }) => {
   const styles = useStyles2(getStyles);
+  const isExternalAM = !isGrafanaRulesSource(alertManagerSourceName);
   return (
     <>
       <div className={styles.actionsRow}>
-        <Authorize actions={[AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingInstanceUpdate]}>
+        <Authorize
+          actions={
+            isExternalAM
+              ? [AccessControlAction.AlertingInstancesExternalWrite]
+              : [AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingInstanceUpdate]
+          }
+        >
           {alert.status.state === AlertState.Suppressed && (
             <LinkButton
               href={`${makeAMLink(
@@ -43,7 +51,11 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
             </LinkButton>
           )}
         </Authorize>
-        <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
+        <Authorize
+          actions={
+            isExternalAM ? [AccessControlAction.DataSourcesExplore] : [AccessControlAction.AlertingInstanceUpdate]
+          }
+        >
           {alert.generatorURL && (
             <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
               See source
