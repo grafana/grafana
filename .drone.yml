@@ -86,16 +86,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -669,16 +668,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -1696,16 +1694,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -2332,16 +2329,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -2367,16 +2363,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
@@ -3436,16 +3431,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -4038,16 +4032,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -4073,16 +4066,15 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
-  - ls -l ./devenv/docker/blocks/intentapi
-  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
+  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
   environment:
-    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: ./devenv/docker/blocks/intentapi/intentapi.kubeconfig
-    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi.pem
-    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: ./devenv/docker/blocks/intentapi/certs/intentapi-key.pem
+    GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
+    GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH: /drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
+    GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
+    GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH: /drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
@@ -4457,6 +4449,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: e61409d38e94fcf1ae8bd26ba4c87b2dc50cadec0d0a5deb565f4dd23eec32d9
+hmac: 6efcb572e1fc7c8a71b389ecd9d326fc9d1d6ac92cae9e9b984ca67c34de6f8a
 
 ...
