@@ -38,9 +38,9 @@ func BenchmarkDSPermissions100_1000(b *testing.B) { benchmarkDSPermissions(b, 10
 
 func BenchmarkDSPermissions1000_10(b *testing.B) { benchmarkDSPermissions(b, 1000, 10) }
 
-//func BenchmarkDSPermissions1000_100(b *testing.B) { benchmarkDSPermissions(b, 1000, 100) }
+func BenchmarkDSPermissions1000_100(b *testing.B) { benchmarkDSPermissions(b, 1000, 100) }
 
-//func BenchmarkDSPermissions1000_1000(b *testing.B) { benchmarkDSPermissions(b, 1000, 1000) }
+func BenchmarkDSPermissions1000_1000(b *testing.B) { benchmarkDSPermissions(b, 1000, 1000) }
 
 func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	ac, dataSources := setupResourceBenchmark(b, dsNum, usersNum)
