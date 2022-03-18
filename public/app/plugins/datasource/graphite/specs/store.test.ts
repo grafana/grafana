@@ -1,7 +1,6 @@
 import { dispatch } from 'app/store/store';
 import gfunc from '../gfunc';
 import { TemplateSrvStub } from 'test/specs/helpers';
-import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
 import { actions } from '../state/actions';
 import {
   getAltSegmentsSelectables,
@@ -236,7 +235,6 @@ describe('Graphite actions', () => {
   });
 
   describe('when autocomplete for metric names is not available', () => {
-    silenceConsoleOutput();
     beforeEach(() => {
       ctx.state.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve([]));
       ctx.state.datasource.metricFindQuery = jest.fn().mockReturnValue(
@@ -267,7 +265,6 @@ describe('Graphite actions', () => {
   });
 
   describe('when autocomplete for tags is not available', () => {
-    silenceConsoleOutput();
     beforeEach(() => {
       ctx.datasource.metricFindQuery = jest.fn().mockReturnValue(Promise.resolve([]));
       ctx.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(

@@ -64,7 +64,7 @@ type Store interface {
 	GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error
 	SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error
 	PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error
-	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error)
+	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error)
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error

@@ -173,15 +173,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Section:    dtos.NavSectionCore,
 			Children:   savedItemsLinks,
 		})
-
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Home",
-			Id:         "home",
-			Icon:       "home-alt",
-			Url:        hs.Cfg.AppSubURL + "/",
-			Section:    dtos.NavSectionCore,
-			SortWeight: dtos.WeightHome,
-		})
 	}
 
 	if hasEditPerm && !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
@@ -239,10 +230,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
 	if setting.AlertingEnabled != nil && *setting.AlertingEnabled || uaVisibleForOrg {
-		alerting := hs.buildAlertNavLinks(c, uaVisibleForOrg)
-		if alerting != nil {
-			navTree = append(navTree, alerting)
-		}
+		navTree = append(navTree, hs.buildAlertNavLinks(c, uaVisibleForOrg)...)
 	}
 
 	appLinks, err := hs.getAppLinks(c)
@@ -474,7 +462,8 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	return dashboardChildNavs
 }
 
-func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg bool) *dtos.NavLink {
+
+func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg bool) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	var alertChildNavs []*dtos.NavLink
 
@@ -512,15 +501,17 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg b
 	}
 
 	if len(alertChildNavs) > 0 {
-		return &dtos.NavLink{
-			Text:       "Alerting",
-			SubTitle:   "Alert rules and notifications",
-			Id:         "alerting",
-			Icon:       "bell",
-			Url:        hs.Cfg.AppSubURL + "/alerting/list",
-			Children:   alertChildNavs,
-			Section:    dtos.NavSectionCore,
-			SortWeight: dtos.WeightAlerting,
+		return []*dtos.NavLink{
+			{
+				Text:       "Alerting",
+				SubTitle:   "Alert rules and notifications",
+				Id:         "alerting",
+				Icon:       "bell",
+				Url:        hs.Cfg.AppSubURL + "/alerting/list",
+				Children:   alertChildNavs,
+				Section:    dtos.NavSectionCore,
+				SortWeight: dtos.WeightAlerting,
+			},
 		}
 	}
 	return nil

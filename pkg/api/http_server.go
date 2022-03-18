@@ -253,6 +253,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	}
 	hs.registerRoutes()
 
+	// Register access control scope resolver for annotations
+	hs.AccessControl.RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
+
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
 	}
