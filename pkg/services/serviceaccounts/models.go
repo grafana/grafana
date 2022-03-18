@@ -68,19 +68,3 @@ const (
 	FilterIncludeAll        ServiceAccountFilter = "all"
 )
 
-type SearchOrgServiceAccountsQuery struct {
-	OrgID  int64
-	Query  string
-	Page   int
-	Limit  int
-	Filter ServiceAccountFilter
-
-	User *models.SignedInUser
-}
-
-type SearchOrgServiceAccountsQueryResult struct {
-	TotalCount      int64                `json:"totalCount"`
-	ServiceAccounts []*ServiceAccountDTO `json:"orgServiceAccounts"`
-	Page            int                  `json:"page"`
-	PerPage         int                  `json:"perPage"`
-}
