@@ -169,6 +169,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
+			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
 
 			userRoute.Get("/auth-tokens", routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", routing.Wrap(hs.RevokeUserAuthToken))
@@ -213,18 +214,19 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-			// FGAC handled withing the storage engine
 			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
+				orgRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
+
+				orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+
+				// git-the-things HACK
 				orgRoute.Get("/status", reqOrgAdmin, routing.Wrap(hs.StorageService.Status))
 				orgRoute.Get("/root/:key", reqOrgAdmin, routing.Wrap(hs.StorageService.HandleRootRequest))
 				orgRoute.Post("/root/:key", reqOrgAdmin, routing.Wrap(hs.StorageService.HandleRootRequest))
 				orgRoute.Post("/export", reqOrgAdmin, hs.StorageService.HandleExportSystem)
-
-				// Paths to individual objects
-				orgRoute.Get("/path/", routing.Wrap(hs.StorageService.Browse))
-				orgRoute.Get("/path/*", routing.Wrap(hs.StorageService.Browse))
-				orgRoute.Post("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Upsert))
-				orgRoute.Delete("/path/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
 			})
 		}
 
@@ -247,6 +249,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// prefs
 			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead)), routing.Wrap(hs.GetOrgPreferences))
 			orgRoute.Put("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.UpdateOrgPreferences))
+			orgRoute.Patch("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.PatchOrgPreferences))
 		})
 
 		// current org without requirement of user to be org admin

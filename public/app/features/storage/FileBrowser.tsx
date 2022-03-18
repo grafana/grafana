@@ -17,7 +17,7 @@ export function FileBrowser({ path, prefix, onPathChange }: Props) {
   const styles = useStyles2(getStyles);
 
   const folder = useAsync(async () => {
-    const rsp = (await getBackendSrv().get(`api/storage/path/${prefix}/${path}`)) as DataFrameJSON;
+    const rsp = (await getBackendSrv().get(`api/storage/list/${prefix}/${path}`)) as DataFrameJSON;
     if (rsp && rsp.data) {
       const frame = dataFrameFromJSON(rsp);
       const name = frame.fields[0];
