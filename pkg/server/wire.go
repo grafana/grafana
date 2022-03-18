@@ -69,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
@@ -226,6 +227,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
+	secretsStore.ProvideService,
 )
 
 var wireSet = wire.NewSet(

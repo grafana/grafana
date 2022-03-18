@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -19,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -28,12 +29,11 @@ import (
 type Service struct {
 	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
-	SecretsService     secrets.Service
+	SecretsStore       kvstore.SecretsKVStore
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
 
-	ptc               proxyTransportCache
-	dsDecryptionCache secureJSONDecryptionCache
+	ptc proxyTransportCache
 }
 
 type proxyTransportCache struct {
@@ -46,29 +46,16 @@ type cachedRoundTripper struct {
 	roundTripper http.RoundTripper
 }
 
-type secureJSONDecryptionCache struct {
-	cache map[int64]cachedDecryptedJSON
-	sync.Mutex
-}
-
-type cachedDecryptedJSON struct {
-	updated time.Time
-	json    map[string]string
-}
-
 func ProvideService(
-	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
+	bus bus.Bus, store *sqlstore.SQLStore, secretsStore kvstore.SecretsKVStore, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
-		Bus:            bus,
-		SQLStore:       store,
-		SecretsService: secretsService,
+		Bus:          bus,
+		SQLStore:     store,
+		SecretsStore: secretsStore,
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
-		},
-		dsDecryptionCache: secureJSONDecryptionCache{
-			cache: make(map[int64]cachedDecryptedJSON),
 		},
 		features:           features,
 		permissionsService: permissionsServices.GetDataSourceService(),
@@ -93,6 +80,8 @@ type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 }
+
+const secretType = "datasource"
 
 // NewNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an id based scope.
@@ -158,7 +147,12 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	secret, err := json.Marshal(cmd.SecureJsonData)
+	if err != nil {
+		return err
+	}
+
+	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 	if err != nil {
 		return err
 	}
@@ -183,12 +177,21 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+	err := s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, "datasource")
+	if err != nil {
+		return err
+	}
 	return s.SQLStore.DeleteDataSource(ctx, cmd)
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	secret, err := json.Marshal(cmd.SecureJsonData)
+	if err != nil {
+		return err
+	}
+
+	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 	if err != nil {
 		return err
 	}
@@ -197,7 +200,25 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 }
 
 func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
-	return s.SQLStore.GetDefaultDataSource(ctx, query)
+	err := s.SQLStore.GetDefaultDataSource(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	secret, exist, err := s.SecretsStore.Get(ctx, query.OrgId, query.Result.Name, "datasource")
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		var secureData map[string][]byte
+		err := json.Unmarshal([]byte(secret), &secureData)
+		if err != nil {
+			return err
+		}
+		query.Result.SecureJsonData = secureData
+	}
+	return err
 }
 
 func (s *Service) GetHTTPClient(ds *models.DataSource, provider httpclient.Provider) (*http.Client, error) {
@@ -248,26 +269,12 @@ func (s *Service) GetTLSConfig(ds *models.DataSource, httpClientProvider httpcli
 	}
 	return httpClientProvider.GetTLSConfig(*opts)
 }
-
 func (s *Service) DecryptedValues(ds *models.DataSource) map[string]string {
-	s.dsDecryptionCache.Lock()
-	defer s.dsDecryptionCache.Unlock()
-
-	if item, present := s.dsDecryptionCache.cache[ds.Id]; present && ds.Updated.Equal(item.updated) {
-		return item.json
+	decryptedValues := make(map[string]string)
+	for k, v := range ds.SecureJsonData {
+		decryptedValues[k] = string(v)
 	}
-
-	json, err := s.SecretsService.DecryptJsonData(context.Background(), ds.SecureJsonData)
-	if err != nil {
-		return map[string]string{}
-	}
-
-	s.dsDecryptionCache.cache[ds.Id] = cachedDecryptedJSON{
-		updated: ds.Updated,
-		json:    json,
-	}
-
-	return json
+	return decryptedValues
 }
 
 func (s *Service) DecryptedValue(ds *models.DataSource, key string) (string, bool) {
