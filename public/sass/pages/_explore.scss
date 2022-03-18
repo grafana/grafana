@@ -21,7 +21,6 @@
 
 .explore-wrapper {
   display: flex;
-  height: 100%;
 
   > .explore-split:nth-child(1) {
     width: 30%; // Must correspond to Resizable's minWidth in Wrapper.tsx
