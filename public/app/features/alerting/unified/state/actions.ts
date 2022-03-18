@@ -63,7 +63,7 @@ import {
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
-import { withAppEvents, withSerializedError } from '../utils/redux';
+import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
 import { isRulerNotSupportedResponse } from '../utils/rules';
@@ -91,10 +91,11 @@ function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: stri
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
-  (
+  async (
     { rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
+    await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(thunkAPI.getState, rulesSourceName);
     const customRulerEnabled = dsConfig.rulerConfig?.customRulerEnabled ?? false;
 
@@ -155,7 +156,7 @@ export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
 
 export const fetchRulerRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRulerRules',
-  (
+  async (
     {
       rulesSourceName,
       filter,
@@ -163,8 +164,9 @@ export const fetchRulerRulesAction = createAsyncThunk(
       rulesSourceName: string;
       filter?: FetchRulerRulesFilter;
     },
-    { getState }
+    { dispatch, getState }
   ): Promise<RulerRulesConfigDTO | null> => {
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
     return withSerializedError(fetchRulerRules(rulerConfig, filter));
   }
@@ -222,7 +224,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
     const buildInfo = await fetchBuildInfo(name);
     const customRulerConfig = (jsonData as AlertingDataSourceJsonData).ruler;
 
-    const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerConfigApp
+    const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerConfigApi
       ? {
           dataSourceName: name,
           customRulerEnabled: Boolean(customRulerConfig?.url),
@@ -235,6 +237,17 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
       id: id,
       rulerConfig,
     };
+  },
+  {
+    condition: ({ rulesSourceName }, { getState }) => {
+      const dataSources: AsyncRequestMapSlice<PromBasedDataSource> = (getState() as StoreState).unifiedAlerting
+        .dataSources;
+
+      const hasLoaded = Boolean(dataSources[rulesSourceName]?.result);
+      const loadingInProgress: boolean =
+        dataSources[rulesSourceName]?.dispatched || dataSources[rulesSourceName]?.loading;
+      return !(hasLoaded || loadingInProgress);
+    },
   }
 );
 

@@ -109,7 +109,7 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
     return {
       application: PromApplication.Cortex,
       features: {
-        rulerConfigApp: true,
+        rulerConfigApi: true,
         alertManagerConfigApi: false,
         querySharding: false,
         federatedRules: false,
@@ -117,12 +117,12 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
     };
   }
 
-  const { application, features } = response.data;
+  const { application, features } = response.data.data;
 
   return {
     application: PromApplication.Prometheus,
     features: {
-      rulerConfigApp: features?.ruler_config_app === 'true',
+      rulerConfigApi: features?.ruler_config_api === 'true',
       alertManagerConfigApi: features?.alertmanager_config_api === 'true',
       querySharding: features?.query_sharding === 'true',
       federatedRules: features?.federated_rules === 'true',
