@@ -121,13 +121,13 @@ func TestSensuGoNotifier(t *testing.T) {
 			settings: `{
 				"apikey": "<apikey>"
 			}`,
-			expInitError: `failed to validate receiver "Sensu Go" of type "sensugo": could not find URL property in settings`,
+			expInitError: `could not find URL property in settings`,
 		}, {
 			name: "Error in initing: missing API key",
 			settings: `{
 				"url": "http://sensu-api.local:8080"
 			}`,
-			expInitError: `failed to validate receiver "Sensu Go" of type "sensugo": could not find the API key property in settings`,
+			expInitError: `could not find the API key property in settings`,
 		},
 	}
 
@@ -147,7 +147,7 @@ func TestSensuGoNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			sn, err := NewSensuGoNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewSensuGoConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -157,6 +157,7 @@ func TestSensuGoNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			sn := NewSensuGoNotifier(cfg, webhookSender, tmpl)
 			ok, err := sn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

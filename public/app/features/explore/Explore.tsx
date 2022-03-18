@@ -307,6 +307,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={splitOpen}
           scrollElement={this.scrollElement}
           topOfExploreViewRef={this.topOfExploreViewRef}
+          queryResponse={queryResponse}
         />
       )
     );
