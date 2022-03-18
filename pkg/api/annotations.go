@@ -63,7 +63,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	canSave := true
+	var canSave bool
 	var err error
 	if cmd.DashboardId != 0 {
 		canSave, err = canSaveLocalAnnotation(c, cmd.DashboardId)
@@ -314,7 +314,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 		return resp
 	}
 
-	canSave := true
+	var canSave bool
 	if annotation.GetType() == annotations.Local {
 		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
 	} else {
@@ -335,8 +335,6 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 	return response.Success("Annotation deleted")
 }
 
-
-
 func canSaveLocalAnnotation(c *models.ReqContext, dashboardID int64) (bool, error) {
 	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
@@ -347,12 +345,8 @@ func canSaveLocalAnnotation(c *models.ReqContext, dashboardID int64) (bool, erro
 }
 
 func canSaveGlobalAnnotation(c *models.ReqContext) bool {
-	if !c.SignedInUser.HasRole(models.ROLE_EDITOR) {
-		return false
-	}
-	return true
+	return c.SignedInUser.HasRole(models.ROLE_EDITOR)
 }
-
 
 func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
