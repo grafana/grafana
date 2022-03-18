@@ -153,7 +153,7 @@ const (
 	Local
 )
 
-func(annotation *ItemDTO) GetType() annotationType {
+func (annotation *ItemDTO) GetType() annotationType {
 	if annotation.DashboardId != 0 {
 		return Local
 	}
