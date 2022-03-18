@@ -65,24 +65,24 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 
 		has, err := dbSession.Get(&item)
 		if err != nil {
-			kv.log.Debug("error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "value", encryptedValue, "err", err)
+			kv.log.Debug("error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			return err
 		}
 
 		if has && item.Value == value {
-			kv.log.Debug("secret value not changed", "orgId", orgId, "type", typ, "namespace", namespace, "value", encryptedValue)
+			kv.log.Debug("secret value not changed", "orgId", orgId, "type", typ, "namespace", namespace)
 			return nil
 		}
 
-		item.Value = value
+		item.Value = string(encryptedValue)
 		item.Updated = time.Now()
 
 		if has {
 			_, err = dbSession.ID(item.Id).Update(&item)
 			if err != nil {
-				kv.log.Debug("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "value", encryptedValue, "err", err)
+				kv.log.Debug("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
-				kv.log.Debug("secret value updated", "orgId", orgId, "type", typ, "namespace", namespace, "value", encryptedValue)
+				kv.log.Debug("secret value updated", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
 			return err
 		}
@@ -90,9 +90,9 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 		item.Created = item.Updated
 		_, err = dbSession.Insert(&item)
 		if err != nil {
-			kv.log.Debug("error inserting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "value", encryptedValue, "err", err)
+			kv.log.Debug("error inserting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 		} else {
-			kv.log.Debug("secret value inserted", "orgId", orgId, "type", typ, "namespace", namespace, "value", encryptedValue)
+			kv.log.Debug("secret value inserted", "orgId", orgId, "type", typ, "namespace", namespace)
 		}
 		return err
 	})
@@ -101,6 +101,7 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 // Del deletes an item from the store.
 func (kv *secretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		kv.log.Debug("deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace)
 		query := fmt.Sprintf("DELETE FROM secrets WHERE org_id=? and type=? and %s=?", kv.sqlStore.Quote("namespace"))
 		_, err := dbSession.Exec(query, orgId, typ, namespace)
 		return err
