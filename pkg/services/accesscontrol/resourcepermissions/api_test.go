@@ -517,7 +517,8 @@ func contextProvider(tc *testContext) web.Handler {
 }
 
 var testOptions = Options{
-	Resource: "dashboards",
+	Resource:          "dashboards",
+	ResourceAttribute: "id",
 	Assignments: Assignments{
 		Users:        true,
 		Teams:        true,
