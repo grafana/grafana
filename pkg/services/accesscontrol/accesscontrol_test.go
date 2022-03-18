@@ -92,7 +92,7 @@ func TestGetResourcesMetadata(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			metadata := GetResourcesMetadata(context.Background(), tt.permissions, tt.resource, tt.resourcesIDs)
+			metadata := GetResourcesMetadata(context.Background(), tt.permissions, tt.resource, "id", tt.resourcesIDs)
 			assert.EqualValues(t, tt.expected, metadata)
 		})
 	}
