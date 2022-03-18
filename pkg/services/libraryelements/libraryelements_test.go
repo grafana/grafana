@@ -315,6 +315,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
+		guardian.InitGuardianWithStore(sqlStore)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
 		dashboardService := dashboardservice.ProvideDashboardService(
 			setting.NewCfg(), dashboardStore, nil,
