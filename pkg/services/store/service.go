@@ -58,9 +58,14 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	_ = os.MkdirAll(storage, 0700)
 
 	if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
+		upload := filepath.Join(storage, "upload")
+		_ = os.MkdirAll(upload, 0700)
 		roots = append(roots, newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
-			Path: filepath.Join(storage, "upload"),
-		}))
+			Path: upload,
+			Roots: []string{
+				"/",
+			},
+		}).setBuiltin(true))
 	}
 	s := newStandardStorageService(roots)
 	s.sql = sql
@@ -136,7 +141,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 			return err
 		}
 		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
-			Path:     "aaa",
+			Path:     "/" + fileHeader.Filename,
 			Contents: &contents,
 		})
 		if err != nil {
