@@ -159,6 +159,7 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 		}
 
 		f, err := inputfs.Open(path)
+		defer f.Close()
 		if err != nil {
 			return err
 		}
