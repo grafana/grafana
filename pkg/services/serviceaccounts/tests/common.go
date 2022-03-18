@@ -123,7 +123,13 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 	return nil, nil
 }
 
-func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, page int, limit int,
+func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(
+	ctx context.Context,
+	orgID int64,
+	query string,
+	filter serviceaccounts.ServiceAccountFilter,
+	page int,
+	limit int,
 	user *models.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
 	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, orgID, query, page, limit, user})
 	return nil, nil
