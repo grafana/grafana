@@ -64,7 +64,8 @@ describe('AzureMonitor NestedResourceTable', () => {
 
     expect(requestNestedRows).toBeCalledWith(
       expect.objectContaining({
-        id: '/subscriptions/def-456',
+        id: 'def-456',
+        uri: '/subscriptions/def-456',
         name: 'Dev Subscription',
         typeLabel: 'Subscription',
       })
