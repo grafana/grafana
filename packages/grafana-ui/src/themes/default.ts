@@ -23,6 +23,10 @@ export const commonColorsPalette = {
 
   // New reds palette used by next-gen form elements
   red88: '#e02f44',
+
+  // Fork: NI-specific colors
+  niGreenLight: '#26A97C',
+  niGreenDark: '#009B65',
 };
 
 const SPACING_BASE = 8;

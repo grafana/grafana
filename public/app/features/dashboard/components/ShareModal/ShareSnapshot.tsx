@@ -92,6 +92,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       name: dash.title,
       expires: snapshotExpires,
       external: external,
+      // Fork: Use iframe parent location for snapshot URL
+      appUrl: window.parent.location.href.split('/d/')[0],
     };
 
     try {

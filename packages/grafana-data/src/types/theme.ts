@@ -184,6 +184,10 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     online: string;
     warn: string;
     critical: string;
+
+    // Fork: NI-specific colors
+    niGreenLight: string;
+    niGreenDark: string;
   };
   colors: {
     bg1: string;

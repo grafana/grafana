@@ -18,7 +18,8 @@ export const SnapshotListTable: FC = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
   const currentPath = locationService.getLocation().pathname;
-  const fullUrl = window.location.href;
+  // Fork: Use iframe parent location for snapshot URL
+  const fullUrl = window.parent.location.href;
   const baseUrl = fullUrl.substr(0, fullUrl.indexOf(currentPath));
 
   useAsync(async () => {
@@ -57,19 +58,22 @@ export const SnapshotListTable: FC = () => {
         </thead>
         <tbody>
           {snapshots.map((snapshot) => {
-            const url = snapshot.externalUrl || snapshot.url;
             const fullUrl = snapshot.externalUrl || `${baseUrl}${snapshot.url}`;
             return (
               <tr key={snapshot.key}>
                 <td>
-                  <a href={url}>{snapshot.name}</a>
+                  <a href={fullUrl} target="_blank" rel="noreferrer">
+                    {snapshot.name}
+                  </a>
                 </td>
                 <td>
-                  <a href={url}>{fullUrl}</a>
+                  <a href={fullUrl} target="_blank" rel="noreferrer">
+                    {fullUrl}
+                  </a>
                 </td>
                 <td>{snapshot.external && <span className="query-keyword">External</span>}</td>
                 <td className="text-center">
-                  <LinkButton href={url} variant="secondary" size="sm" icon="eye">
+                  <LinkButton href={fullUrl} target="_blank" rel="noreferrer" variant="secondary" size="sm" icon="eye">
                     View
                   </LinkButton>
                 </td>

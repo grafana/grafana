@@ -28,6 +28,19 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
     return null;
   }
 
+  // Fork: Use iframe location for links
+  const getCorrectedHref = function (href: string) {
+    try {
+      // If absolute URL, return
+      new URL(href);
+      return href;
+    } catch {
+      // If relative URL, build in context of iframe location
+      const split = window.parent.location.href.split('/d/');
+      return `${split[0]}/${href}`;
+    }
+  };
+
   return (
     <>
       {links.map((link: DashboardLink, index: number) => {
@@ -41,7 +54,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
         const linkElement = (
           <a
             className="gf-form-label gf-form-label--dashlink"
-            href={sanitizeUrl(linkInfo.href)}
+            href={sanitizeUrl(getCorrectedHref(linkInfo.href))}
             target={link.targetBlank ? '_blank' : undefined}
             rel="noreferrer"
             data-testid={selectors.components.DashboardLinks.link}

@@ -109,8 +109,11 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+// Fork: NI-specific colors
+$brand-gradient-horizontal: linear-gradient(to right, ${theme.v1.palette.niGreenDark} 30%, ${
+    theme.v1.palette.niGreenLight
+  } 99%);
+$brand-gradient-vertical: linear-gradient(${theme.v1.palette.niGreenDark} 30%, ${theme.v1.palette.niGreenLight} 99%);
 
 // Links
 // -------------------------

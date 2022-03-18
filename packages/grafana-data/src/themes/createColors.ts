@@ -162,6 +162,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'light';
 
   blackBase = '36, 41, 46';
+  // Fork: NI-specific colors
+  niGreenLight = '#26A97C';
+  niGreenDark = '#009B65';
 
   primary = {
     main: palette.blueLightMain,
@@ -229,8 +232,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   gradients = {
-    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
-    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
+    // Fork: NI-specific colors
+    brandHorizontal: `linear-gradient(90deg, ${this.niGreenLight} 0%, ${this.niGreenDark} 100%);`,
+    brandVertical: `linear-gradient(0.01deg, ${this.niGreenDark} -31.2%, ${this.niGreenLight} 113.07%);`,
   };
 
   contrastThreshold = 3;
