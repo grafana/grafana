@@ -2578,7 +2578,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": ""
         },
         "refresh": 1,
         "regex": "",
@@ -2647,6 +2647,6 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Azure VM Monitoring - VM Insights by Workspace link",
+  "title": "Azure VM Monitoring - VM Insights by Workspace",
   "version": 21
 }
