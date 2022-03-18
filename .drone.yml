@@ -87,6 +87,7 @@ steps:
   name: lint-frontend
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -669,6 +670,7 @@ steps:
   name: lint-frontend
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -1695,6 +1697,7 @@ steps:
   name: lint-frontend
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -2330,6 +2333,7 @@ steps:
   name: lint-frontend
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
@@ -2364,6 +2368,7 @@ steps:
   name: lint-backend-enterprise2
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
@@ -3432,6 +3437,7 @@ steps:
   name: lint-frontend
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -4033,6 +4039,7 @@ steps:
   name: lint-frontend
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
@@ -4067,6 +4074,7 @@ steps:
   name: lint-backend-enterprise2
 - commands:
   - ls -l ./devenv/docker/blocks/intentapi
+  - pwd && echo $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH && ls -l $GRAFANA_TEST_INTENTAPI_KUBEBRIDGE_KUBECONFIG_PATH
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
@@ -4449,6 +4457,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 7a3adb6b66f7c4a5c0f8737f01d7c03078b02cb907a763f6075838946e1ef612
+hmac: e61409d38e94fcf1ae8bd26ba4c87b2dc50cadec0d0a5deb565f4dd23eec32d9
 
 ...
