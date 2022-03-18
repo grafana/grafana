@@ -238,24 +238,24 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 			groupChanges := testCase.changes()
 
-			err := authorizeRuleChanges(namespace, groupChanges, func(evaluator ac.Evaluator) (bool, error) {
+			err := authorizeRuleChanges(namespace, groupChanges, func(evaluator ac.Evaluator) bool {
 				response, err := evaluator.Evaluate(make(map[string][]string))
 				require.False(t, response)
 				require.NoError(t, err)
 				executed = true
-				return false, nil
+				return false
 			})
 			require.Error(t, err)
 			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
 
 			permissions := testCase.permissions(groupChanges)
 			executed = false
-			err = authorizeRuleChanges(namespace, groupChanges, func(evaluator ac.Evaluator) (bool, error) {
+			err = authorizeRuleChanges(namespace, groupChanges, func(evaluator ac.Evaluator) bool {
 				response, err := evaluator.Evaluate(permissions)
 				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", testCase.permissions, evaluator.GoString())
 				require.NoError(t, err)
 				executed = true
-				return true, nil
+				return true
 			})
 			require.NoError(t, err)
 			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")

@@ -264,6 +264,8 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
 	var groupChanges *changes = nil
+	hasAccess := accesscontrol.HasAccess(srv.ac, c)
+
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		var err error
 		groupChanges, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
@@ -276,8 +278,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return nil
 		}
 
-		err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) (bool, error) {
-			return srv.ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator) // use request context instead of transaction context to make sure that nothing authz related is locked on db side
+		err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+			return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 		})
 		if err != nil {
 			return err
