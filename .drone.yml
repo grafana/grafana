@@ -31,8 +31,6 @@ steps:
   - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
-  - ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-  - docker-compose --version
   - make -C devenv/docker/blocks/intentapi
   - make devenv sources=intentapi
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -4443,6 +4441,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 39e396e1487fb30f7a8746e35e34467f8b28ef39776ae6b8370b7c3123c649af
+hmac: a1c0a940affc955599d4f4d52ac91feddfe3f33f11294f23d5fc81f14fe2b8fe
 
 ...
