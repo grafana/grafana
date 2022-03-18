@@ -4,6 +4,7 @@ import { refreshExplore } from './explorePane';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from '../../../store/configureStore';
 import { of } from 'rxjs';
+import { createDefaultInitialState } from './helpers';
 
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -12,37 +13,7 @@ jest.mock('../../dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-const t = toUtc();
-const testRange = {
-  from: t,
-  to: t,
-  raw: {
-    from: t,
-    to: t,
-  },
-};
-
-const defaultInitialState = {
-  user: {
-    orgId: '1',
-    timeZone: DefaultTimeZone,
-  },
-  explore: {
-    [ExploreId.left]: {
-      initialized: true,
-      containerWidth: 1920,
-      eventBridge: {} as EventBusExtended,
-      queries: [] as DataQuery[],
-      range: testRange,
-      history: [],
-      refreshInterval: {
-        label: 'Off',
-        value: 0,
-      },
-      cache: [],
-    },
-  },
-};
+const { testRange, defaultInitialState } = createDefaultInitialState();
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
