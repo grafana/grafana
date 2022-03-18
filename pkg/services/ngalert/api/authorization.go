@@ -198,7 +198,8 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 		}
 	}
 
-	// check that the user can create alerts in
+	var addAuthorized, updateAuthorized bool
+
 	if len(changes.New) > 0 {
 		allowed, err := evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
 		if err != nil {
@@ -207,11 +208,34 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 		if !allowed {
 			return fmt.Errorf("%w user cannot create alert rules in the folder %s", ErrAuthorization, namespace.Title)
 		}
+		addAuthorized = allowed
+
+		for _, rule := range changes.New {
+			dsAllowed, err := evaluator(getEvaluatorForAlertRule(rule))
+			if err != nil {
+				return fmt.Errorf("failed to perform user authorization: %w", err)
+			}
+			if !dsAllowed {
+				return fmt.Errorf("%w to create a new alert rule '%s' because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Title)
+			}
+		}
 	}
 
-	updateChecked := false
-
 	for _, rule := range changes.Update {
+		// If data is not changed, skip authorization. Effectively, this give users
+		// that do not have access to query data sources used by the rule
+		// limited access to some of the rule's settings like the interval, for, labels, annotations.
+		if len(rule.Diff.GetDiffsForField("Data")) > 0 {
+			dsAllowed, err := evaluator(getEvaluatorForAlertRule(rule.New))
+			if err != nil {
+				return fmt.Errorf("failed to perform user authorization: %w", err)
+			}
+			if !dsAllowed {
+				return fmt.Errorf("%w to update alert rule '%s' (UID: %s) because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Existing.Title, rule.Existing.UID)
+			}
+		}
+
+		// Check if the rule is moved from one folder to the current. If yes, then user must have authorization to delete rules from source folder and add rules to the target folder
 		if rule.Existing.NamespaceUID != rule.New.NamespaceUID {
 			allowed, err := evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID))))
 			if err != nil {
@@ -220,14 +244,21 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 			if !allowed {
 				return fmt.Errorf("%w to delete alert rules from folder UID %s", ErrAuthorization, rule.Existing.NamespaceUID)
 			}
-			allowed, err = evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
-			if err != nil {
-				return fmt.Errorf("failed to perform user authorization: %w", err)
+
+			if !addAuthorized {
+				allowed, err = evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
+				if err != nil {
+					return fmt.Errorf("failed to perform user authorization: %w", err)
+				}
+				if !allowed {
+					return fmt.Errorf("%w to create alert rules in the folder '%s'", ErrAuthorization, namespace.Title)
+				}
+				addAuthorized = true
 			}
-			if !allowed {
-				return fmt.Errorf("%w to create alert rules in the folder '%s'", ErrAuthorization, namespace.Title)
-			}
-		} else if !updateChecked {
+			continue
+		}
+
+		if !updateAuthorized { // if it is false then the authorization was not checked. If it is true then the user is authorized to update rules
 			allowed, err := evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleUpdate, namespaceScope)))
 			if err != nil {
 				return fmt.Errorf("failed to perform user authorization: %w", err)
@@ -235,25 +266,7 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 			if !allowed {
 				return fmt.Errorf("%w to update alert rules that belong to folder %s", ErrAuthorization, namespace.Title)
 			}
-			updateChecked = true
-		}
-
-		// if data were not changed, skip authorization. Effectively, this will let users without read access for
-		// data sources limited set of settings, like interval, for, labels, annotations.
-		if len(rule.Diff.GetDiffsForField("Data")) > 0 {
-			dsAllowed, err := evaluator(getEvaluatorForAlertRule(rule.New))
-			if err != nil {
-				return fmt.Errorf("failed to perform user authorization: %w", err)
-			}
-			if !dsAllowed {
-				action := "create"
-				title := rule.New.Title
-				if rule.Existing != nil {
-					action = "update"
-					title = fmt.Sprintf("%s (UID: %s)", rule.Existing.Title, rule.Existing.UID)
-				}
-				return fmt.Errorf("%w to %s alert rule %s because the does not have read permissions for one or many datasources the rule uses", ErrAuthorization, action, title)
-			}
+			updateAuthorized = true
 		}
 	}
 	return nil

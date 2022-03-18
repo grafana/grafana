@@ -98,7 +98,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "if there are rules to add it should check create action ",
+			name: "if there are rules to add it should check create action and query for datasource",
 			changes: func() *changes {
 				return &changes{
 					New:    models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace))),
@@ -107,15 +107,22 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
+				var scopes []string
+				for _, rule := range c.New {
+					for _, query := range rule.Data {
+						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+					}
+				}
 				return map[string][]string{
 					ac.ActionAlertingRuleCreate: {
 						namespaceIdScope,
 					},
+					datasources.ActionQuery: scopes,
 				}
 			},
 		},
 		{
-			name: "if there are rules to update within the same namespace it should check update action ",
+			name: "if there are rules to update within the same namespace it should check update action",
 			changes: func() *changes {
 				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace)))
 				updates := make([]ruleUpdate, 0, len(rules))
@@ -143,7 +150,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "if there are rules that are moved between namespaces it should check update action ",
+			name: "if there are rules that are moved between namespaces it should check update action",
 			changes: func() *changes {
 				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace)))
 				updates := make([]ruleUpdate, 0, len(rules))
@@ -190,7 +197,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					}
 					updates = append(updates, ruleUpdate{
 						Existing: rule,
-						New:      rule,
+						New:      newRule,
 						Diff: []cmputil.Diff{
 							{
 								Path:  "Data",
@@ -208,18 +215,18 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
+				var scopes []string
+				for _, update := range c.Update {
+					for _, query := range update.New.Data {
+						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+					}
+				}
 				p := map[string][]string{
 					ac.ActionAlertingRuleUpdate: {
 						namespaceIdScope,
 					},
+					datasources.ActionQuery: scopes,
 				}
-				var ds []string
-				for _, update := range c.Update {
-					for _, query := range update.New.Data {
-						ds = append(ds, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
-					}
-				}
-				p[datasources.ActionQuery] = ds
 				return p
 			},
 		},
