@@ -241,8 +241,8 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodPut,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesWrite,
-						Scope:  datasources.ScopeDatasourcesAll,
+						Action: datasources.ActionWrite,
+						Scope:  datasources.ScopeAll,
 					},
 				},
 			},
@@ -254,7 +254,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGet should return 200 for user with correct permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: datasources.ActionDatasourcesRead, Scope: datasources.ScopeDatasourcesAll}},
+				permissions:  []*ac.Permission{{Action: datasources.ActionRead, Scope: datasources.ScopeAll}},
 			},
 		},
 		{
@@ -273,7 +273,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPost should return 200 for user with correct permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodPost,
-				permissions:  []*ac.Permission{{Action: datasources.ActionDatasourcesCreate}},
+				permissions:  []*ac.Permission{{Action: datasources.ActionCreate}},
 			},
 			expectedDS: &testDatasource,
 		},
@@ -295,7 +295,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodPut,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesWrite,
+						Action: datasources.ActionWrite,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
 					},
 				},
@@ -320,7 +320,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodPut,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesWrite,
+						Action: datasources.ActionWrite,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasourceReadOnly.Id),
 					},
 				},
@@ -335,7 +335,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodDelete,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesDelete,
+						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
 					},
 				},
@@ -359,7 +359,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodDelete,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesDelete,
+						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
 					},
 				},
@@ -383,7 +383,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodDelete,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesDelete,
+						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
 					},
 				},
@@ -407,7 +407,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodGet,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesRead,
+						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
 					},
 				},
@@ -431,7 +431,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodGet,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesRead,
+						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
 					},
 				},
@@ -455,7 +455,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodGet,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesRead,
+						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
 					},
 				},
@@ -480,7 +480,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodGet,
 				permissions: []*ac.Permission{
 					{
-						Action: datasources.ActionDatasourcesIDRead,
+						Action: datasources.ActionIDRead,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
 					},
 				},

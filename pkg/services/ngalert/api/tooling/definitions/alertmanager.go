@@ -297,14 +297,6 @@ type GetSilencesParams struct {
 	Filter []string `json:"filter"`
 }
 
-// swagger:parameters RouteGetRuleStatuses RouteGetGrafanaRuleStatuses
-type GetRuleStatusesParams struct {
-	// in: query
-	DashboardUID string
-	// in: query
-	PanelID int64
-}
-
 // swagger:model
 type GettableStatus struct {
 	// cluster

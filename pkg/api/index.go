@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -158,13 +159,18 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c)
+		if err != nil {
+			return nil, err
+		}
+
 		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Home",
-			Id:         "home",
-			Icon:       "home-alt",
-			Url:        hs.Cfg.AppSubURL + "/",
+			Text:       "Saved Items",
+			Id:         "saved-items",
+			Icon:       "heart",
+			SortWeight: dtos.WeightSavedItems,
 			Section:    dtos.NavSectionCore,
-			SortWeight: dtos.WeightHome,
+			Children:   savedItemsLinks,
 		})
 	}
 
@@ -244,7 +250,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	configNodes := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqOrgAdmin, dataSourcesConfigurationAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",
@@ -385,6 +391,30 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	})
 
 	return navTree, nil
+}
+
+func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	savedItemsChildNavs := []*dtos.NavLink{}
+
+	// query preferences table for any saved items
+	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
+		return nil, err
+	}
+	savedItems := prefsQuery.Result.JsonData.Navbar.SavedItems
+
+	if len(savedItems) > 0 {
+		for _, savedItem := range savedItems {
+			savedItemsChildNavs = append(savedItemsChildNavs, &dtos.NavLink{
+				Id:     savedItem.Id,
+				Text:   savedItem.Text,
+				Url:    savedItem.Url,
+				Target: savedItem.Target,
+			})
+		}
+	}
+
+	return savedItemsChildNavs, nil
 }
 
 func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {

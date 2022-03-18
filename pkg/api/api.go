@@ -53,9 +53,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/profile/switch-org/:id", reqSignedInNoAnonymous, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", authorize(reqOrgAdmin, orgPreferencesAccessEvaluator), hs.Index)
 	r.Get("/org/new", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, orgsCreateAccessEvaluator), hs.Index)
-	r.Get("/datasources/", authorize(reqOrgAdmin, dataSourcesConfigurationAccessEvaluator), hs.Index)
-	r.Get("/datasources/new", authorize(reqOrgAdmin, dataSourcesNewAccessEvaluator), hs.Index)
-	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, dataSourcesEditAccessEvaluator), hs.Index)
+	r.Get("/datasources/", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
+	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
@@ -167,6 +167,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
+			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
 
 			userRoute.Get("/auth-tokens", routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", routing.Wrap(hs.RevokeUserAuthToken))
@@ -210,6 +211,17 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
+		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+			apiRoute.Group("/storage", func(orgRoute routing.RouteRegister) {
+				orgRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
+				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
+
+				orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+			})
+		}
+
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
@@ -229,6 +241,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// prefs
 			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead)), routing.Wrap(hs.GetOrgPreferences))
 			orgRoute.Put("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.UpdateOrgPreferences))
+			orgRoute.Patch("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesWrite)), routing.Wrap(hs.PatchOrgPreferences))
 		})
 
 		// current org without requirement of user to be org admin
@@ -275,18 +288,18 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesRead)), routing.Wrap(hs.GetDataSources))
-			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesCreate)), quota("data_source"), routing.Wrap(hs.AddDataSource))
-			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.UpdateDataSource))
-			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesDelete, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.DeleteDataSourceById))
-			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesDelete, datasources.ScopeDatasourcesProvider.GetResourceScopeUID(ac.Parameter(":uid")))), routing.Wrap(hs.DeleteDataSourceByUID))
-			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesDelete, datasources.ScopeDatasourcesProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByName))
+			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSources))
+			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionCreate)), quota("data_source"), routing.Wrap(hs.AddDataSource))
+			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.UpdateDataSource))
+			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.DeleteDataSourceById))
+			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid")))), routing.Wrap(hs.DeleteDataSourceByUID))
+			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.DeleteDataSourceByName))
+			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByUID))
+			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByName))
 		})
 
-		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesIDRead, datasources.ScopeDatasourcesProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.GetDataSourceIdByName))
+		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.GetDataSourceIdByName))
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
@@ -308,11 +321,11 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqOrgAdmin)
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
-		apiRoute.Any("/datasources/proxy/:id/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), hs.ProxyDataSourceRequest)
-		apiRoute.Any("/datasources/proxy/:id", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), hs.ProxyDataSourceRequest)
-		apiRoute.Any("/datasources/:id/resources", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), hs.CallDatasourceResource)
-		apiRoute.Any("/datasources/:id/resources/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), hs.CallDatasourceResource)
-		apiRoute.Any("/datasources/:id/health", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), routing.Wrap(hs.CheckDatasourceHealth))
+		apiRoute.Any("/datasources/proxy/:id/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/:id", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/:id/resources", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/:id/resources/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/:id/health", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
@@ -386,13 +399,13 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/search/", routing.Wrap(hs.Search))
 
 		// metrics
-		apiRoute.Post("/tsdb/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), routing.Wrap(hs.QueryMetrics))
+		apiRoute.Post("/tsdb/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetrics))
 
 		// DataSource w/ expressions
-		apiRoute.Post("/ds/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), routing.Wrap(hs.QueryMetricsV2))
+		apiRoute.Post("/ds/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsV2))
 
 		// Validated query
-		apiRoute.Post("/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionDatasourcesQuery)), routing.Wrap(hs.QueryMetricsFromDashboard))
+		apiRoute.Post("/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsFromDashboard))
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
