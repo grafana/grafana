@@ -130,7 +130,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return the first page of users and a total count
 		query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3}
-		err := SearchUsers(context.Background(), &query)
+		err := ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 3)
@@ -138,7 +138,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return the second page of users and a total count
 		query = models.SearchUsersQuery{Query: "", Page: 2, Limit: 3}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 2)
@@ -146,28 +146,28 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return list of users matching query on user name
 		query = models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 3)
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
 		query = models.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
 		query = models.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
 		query = models.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 0)
@@ -175,7 +175,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return list of users matching query on email
 		query = models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
@@ -183,7 +183,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return list of users matching query on login name
 		query = models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
@@ -203,7 +203,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		isDisabled := false
 		query := models.SearchUsersQuery{IsDisabled: &isDisabled}
-		err := SearchUsers(context.Background(), &query)
+		err := ss.SearchUsers(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Len(t, query.Result.Users, 2)
@@ -330,7 +330,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		isDisabled = true
 		query5 := &models.SearchUsersQuery{IsDisabled: &isDisabled}
-		err = SearchUsers(context.Background(), query5)
+		err = ss.SearchUsers(context.Background(), query5)
 
 		require.Nil(t, err)
 		require.EqualValues(t, query5.Result.TotalCount, 5)
@@ -383,7 +383,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		isDisabled := false
 		query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
-		err = SearchUsers(context.Background(), query)
+		err = ss.SearchUsers(context.Background(), query)
 
 		require.Nil(t, err)
 		require.EqualValues(t, query.Result.TotalCount, 5)
@@ -414,7 +414,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query := models.SearchUsersQuery{}
-		err = SearchUsers(context.Background(), &query)
+		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.EqualValues(t, query.Result.TotalCount, 5)

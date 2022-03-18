@@ -146,21 +146,29 @@ var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFol
 
 func provideDashboardService(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
-	accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store,
+	ac accesscontrol.AccessControl, store resourcepermissions.Store,
 ) (*resourcepermissions.Service, error) {
+	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
+		id, err := strconv.ParseInt(resourceID, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		query := &models.GetDashboardQuery{Id: id, OrgId: orgID}
+		if err := sql.GetDashboard(ctx, query); err != nil {
+			return nil, err
+		}
+		return query.Result, nil
+	}
+
 	options := resourcepermissions.Options{
 		Resource: "dashboards",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
-			id, err := strconv.ParseInt(resourceID, 10, 64)
+			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return err
 			}
-			query := &models.GetDashboardQuery{Id: id, OrgId: orgID}
-			if err := sql.GetDashboard(ctx, query); err != nil {
-				return err
-			}
 
-			if query.Result.IsFolder {
+			if dashboard.IsFolder {
 				return errors.New("not found")
 			}
 
@@ -175,6 +183,16 @@ func provideDashboardService(
 				return 0, err
 			}
 			return query.Result.Id, nil
+		},
+		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			dashboard, err := getDashboard(ctx, orgID, resourceID)
+			if err != nil {
+				return nil, err
+			}
+			if dashboard.FolderId > 0 {
+				return []string{accesscontrol.GetResourceScope("folders", strconv.FormatInt(dashboard.FolderId, 10))}, nil
+			}
+			return []string{}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:        true,
@@ -191,7 +209,7 @@ func provideDashboardService(
 		RoleGroup:      "Dashboards",
 	}
 
-	return resourcepermissions.New(options, cfg, router, accesscontrol, store, sql)
+	return resourcepermissions.New(options, cfg, router, ac, store, sql)
 }
 
 func provideFolderService(

@@ -20945,9 +20945,10 @@ __metadata:
     lint-staged: 12.3.3
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: 7.5.1
+    lru-cache: 7.7.1
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
+    minisearch: 5.0.0-beta1
     moment: 2.29.1
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
@@ -25583,10 +25584,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:7.5.1":
-  version: 7.5.1
-  resolution: "lru-cache@npm:7.5.1"
-  checksum: f6980281c6ae4e58254d68b2d7878d7abb21c366a7ee527687f4a27bcbf7576f923517285d2fbd4b6a45b5eebdc66b4c565b55a8b49d5dc1babd65a912c26367
+"lru-cache@npm:7.7.1":
+  version: 7.7.1
+  resolution: "lru-cache@npm:7.7.1"
+  checksum: f362c5a2cfa8ad6fe557ec43dc1b7a9695cce84a5652a43ff813609f782f5da576631e7dfad41878bf19a7a69438f38375178635ee80de269aa314280ca2f59e
   languageName: node
   linkType: hard
 
@@ -26367,6 +26368,13 @@ __metadata:
   dependencies:
     yallist: ^4.0.0
   checksum: 8b410b9a5bd99ceb9d63c895891d1c30511791fdc7b717da4cf9403ca2419bc57af63b8485ffdaa421ef6cff56f63ae0b2f5135f8df502d21296e8c91460ebf9
+  languageName: node
+  linkType: hard
+
+"minisearch@npm:5.0.0-beta1":
+  version: 5.0.0-beta1
+  resolution: "minisearch@npm:5.0.0-beta1"
+  checksum: 7c5ba8b2d1b52df0724e69183306b4204ae4cdc0102813da7f12a8f90a7b4efe7add4c54814ec1bb63f8bd5be599373af9055e0d68ceeef3d225f0a2c7637699
   languageName: node
   linkType: hard
 
