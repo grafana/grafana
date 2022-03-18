@@ -43,7 +43,7 @@ const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
   const { label, value } = props;
 
   return (
-    <div className={style.metaItem}>
+    <div data-testid="meta-info-text-item" className={style.metaItem}>
       {label && <span className={style.metaLabel}>{label}:</span>}
       <span className={style.metaValue}>{value}</span>
     </div>
@@ -59,7 +59,7 @@ export const MetaInfoText = memo(function MetaInfoText(props: MetaInfoTextProps)
   const { metaItems } = props;
 
   return (
-    <div className={style.metaContainer}>
+    <div className={style.metaContainer} data-testid="meta-info-text">
       {metaItems.map((item, index) => (
         <MetaInfoItem key={`${index}-${item.label}`} label={item.label} value={item.value} />
       ))}
