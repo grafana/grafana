@@ -525,7 +525,7 @@ def test_backend_step(edition):
             'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH':'./devenv/docker/blocks/intentapi/intentapi.kubeconfig',
         },
         'commands': [
-            'ls -l ./devenv/',
+            'ls -l ./devenv/docker/blocks/intentapi',
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],
     }

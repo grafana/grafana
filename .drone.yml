@@ -86,7 +86,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -668,7 +668,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -1694,7 +1694,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -2329,7 +2329,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
@@ -2363,7 +2363,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
@@ -3431,7 +3431,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - initialize
@@ -4032,7 +4032,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-frontend
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - initialize
@@ -4066,7 +4066,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
-  - ls -l ./devenv/
+  - ls -l ./devenv/docker/blocks/intentapi
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - initialize
@@ -4449,6 +4449,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 743f611f100b4e1bc9ab7cb8d27889d6700a74f29856d5b49bb4bf423db61abc
+hmac: 7a3adb6b66f7c4a5c0f8737f01d7c03078b02cb907a763f6075838946e1ef612
 
 ...
