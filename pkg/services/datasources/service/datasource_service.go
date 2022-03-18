@@ -169,7 +169,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), accesscontrol.SetResourcePermissionCommand{
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, accesscontrol.SetResourcePermissionCommand{
 			BuiltinRole: "Viewer",
 			Permission:  "Query",
 		}, accesscontrol.SetResourcePermissionCommand{
