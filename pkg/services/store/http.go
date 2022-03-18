@@ -1,6 +1,8 @@
 package store
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/web"
@@ -31,19 +33,15 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		grafanaStorageLogger.Error("error in parsing form", err)
 		return response.Error(400, "error parsing form", err)
 	}
-	if err := s.store.Upload(c.Req.Context(), c.SignedInUser, c.Req.MultipartForm); err != nil {
+	cmd, err := s.store.Upload(c.Req.Context(), c.SignedInUser, c.Req.MultipartForm)
+
+	if err != nil {
 		return response.Error(400, "cannot call upload", err)
 	}
 
-<<<<<<< HEAD
-	return response.JSON(http.StatusOK, map[string]string{
-		"action": action,
-		// "scope":  scope,
-		"path": path,
-=======
 	return response.JSON(200, map[string]string{
-		"action": "hello world",
->>>>>>> f232470905 (update upload func)
+		"action": "upload",
+		"path":   cmd.Path,
 	})
 }
 
