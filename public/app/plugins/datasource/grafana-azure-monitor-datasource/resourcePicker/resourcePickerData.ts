@@ -68,15 +68,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
     return resources.map((subscription) => ({
       name: subscription.subscriptionName,
-      id: `/subscriptions/${subscription.subscriptionId}`,
+      id: subscription.subscriptionId,
+      uri: `/subscriptions/${subscription.subscriptionId}`, // usually the id is the uri, but for subscriptions it's the opposite
       typeLabel: 'Subscription',
       type: ResourceRowType.Subscription,
       children: [],
     }));
   }
 
-  async getResourceGroupsBySubscriptionId(subscriptionURI: string) {
-    const subscriptionId = subscriptionURI.includes('/subscriptions/') ? subscriptionURI.slice(15) : subscriptionURI;
+  async getResourceGroupsBySubscriptionId(subscriptionId: string): Promise<ResourceRowGroup> {
     const query = `
     resources
      | join kind=inner (
@@ -90,7 +90,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
      | summarize count() by resourceGroupName, resourceGroupURI
      | order by resourceGroupURI asc`;
 
-    let resources: RawAzureResourceGroupItem[] = [];
+    let resourceGroups: RawAzureResourceGroupItem[] = [];
     let allFetched = false;
     let $skipToken = undefined;
     while (!allFetched) {
@@ -103,32 +103,54 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       }
       const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, options);
       if (!resourceResponse.data.length) {
-        throw new Error('unable to fetch resource details');
+        throw new Error('unable to fetch resource groups');
       }
-      resources = resources.concat(resourceResponse.data);
+      resourceGroups = resourceGroups.concat(resourceResponse.data);
       $skipToken = resourceResponse.$skipToken;
       allFetched = !$skipToken;
     }
 
-    return resources.map((r) => ({
-      name: r.resourceGroupName,
-      id: r.resourceGroupURI,
-      type: ResourceRowType.ResourceGroup,
-      typeLabel: 'Resource Group',
-      children: [],
-    }));
+    return resourceGroups.map((r) => {
+      const parsedUri = parseResourceURI(r.resourceGroupURI);
+      if (!parsedUri || !parsedUri.resourceGroup) {
+        throw new Error('unable to fetch resource groups');
+      }
+      return {
+        name: r.resourceGroupName,
+        uri: r.resourceGroupURI,
+        id: parsedUri.resourceGroup,
+        type: ResourceRowType.ResourceGroup,
+        typeLabel: 'Resource Group',
+        children: [],
+      };
+    });
   }
 
-  async getResourcesForResourceGroup(resourceGroupId: string) {
+  async getResourcesForResourceGroup(resourceGroupId: string): Promise<ResourceRowGroup> {
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroupId}"
       | where type in (${logsSupportedResourceTypesKusto}) and location in (${logsSupportedLocationsKusto})
     `);
 
-    return formatResourceGroupChildren(response);
+    return response.map((item) => {
+      const parsedUri = parseResourceURI(item.id);
+      if (!parsedUri || !parsedUri.resource) {
+        throw new Error('unable to fetch resource details');
+      }
+      return {
+        name: item.name,
+        id: parsedUri.resource,
+        uri: item.id,
+        resourceGroupName: item.resourceGroup,
+        type: ResourceRowType.Resource,
+        typeLabel: resourceTypeDisplayNames[item.type] || item.type,
+        location: locationDisplayNames[item.location] || item.location,
+      };
+    });
   }
 
+  // used to make the select resource button that launches the resource picker show a nicer file path to users
   async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
     const { subscriptionID, resourceGroup } = parseResourceURI(resourceURI) ?? {};
 
@@ -211,26 +233,17 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
   transformVariablesToRow(templateVariables: string[]): ResourceRow {
     return {
       id: ResourcePickerData.templateVariableGroupID,
+      uri: ResourcePickerData.templateVariableGroupID,
       name: 'Template variables',
       type: ResourceRowType.VariableGroup,
       typeLabel: 'Variables',
       children: templateVariables.map((v) => ({
         id: v,
+        uri: v,
         name: v,
         type: ResourceRowType.Variable,
         typeLabel: 'Variable',
       })),
     };
   }
-}
-
-function formatResourceGroupChildren(rawData: RawAzureResourceItem[]): ResourceRowGroup {
-  return rawData.map((item) => ({
-    name: item.name,
-    id: item.id,
-    resourceGroupName: item.resourceGroup,
-    type: ResourceRowType.Resource,
-    typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-    location: locationDisplayNames[item.location] || item.location,
-  }));
 }

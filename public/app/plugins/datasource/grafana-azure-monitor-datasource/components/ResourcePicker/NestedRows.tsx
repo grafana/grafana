@@ -67,8 +67,7 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
   useEffect(() => {
     // Assuming we don't have multi-select yet
     const selectedRow = selectedRows[0];
-
-    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.id);
+    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.uri);
 
     if (containsChild) {
       setRowStatus('open');
