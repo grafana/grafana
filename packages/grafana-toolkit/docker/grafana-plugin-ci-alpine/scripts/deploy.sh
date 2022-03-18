@@ -23,11 +23,11 @@ get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "e85278e98f57cdb1
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-GOLANGCILINT_VERSION=1.44.2
+GOLANGCILINT_VERSION=1.45.0
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
     "/tmp/$filename.tar.gz" \
-    "461e238f83e2b3deb48665be15d835fd3eab75a9a0138074ca2ad81315e0c3aa"
+    "ca06a2b170f41a9e1e34d40ca88b15b8fed2d7e37310f0c08b7fc244c34292a9"
 untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
@@ -65,8 +65,8 @@ current_dir=$PWD
 cd /usr/local/grafana-toolkit && yarn install && cd $current_dir
 ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
 
-GOOGLE_SDK_VERSION=377.0.0
-GOOGLE_SDK_CHECKSUM=46d80d1fbf3ca52c606b5ce931f7ea77311b3c10df9e5677dae5ba9db85c0578
+GOOGLE_SDK_VERSION=365.0.1
+GOOGLE_SDK_CHECKSUM=17003cdba67a868c2518ac16efa60dc6175533b7a9fb87304459784308e30fb0
 
 curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz
 echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status
