@@ -427,17 +427,19 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: ""}},
-						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/a")),
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 2, After: ""}},
+						list:  checks(listSize(2), listHasMore(true), listLastPath("/folder1/b")),
 						files: [][]interface{}{
 							checks(fPath("/folder1/a")),
+							checks(fPath("/folder1/b")),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: ""}},
-						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1")),
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 2, After: ""}},
+						list:  checks(listSize(2), listHasMore(true), listLastPath("/folder1/a")),
 						files: [][]interface{}{
 							checks(fPath("/folder1"), fMimeType(DirectoryMimeType)),
+							checks(fPath("/folder1/a")),
 						},
 					},
 					queryListFiles{

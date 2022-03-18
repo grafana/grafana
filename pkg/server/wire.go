@@ -75,6 +75,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -158,6 +159,8 @@ var wireBasicSet = wire.NewSet(
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
+	store.ProvideService,
+	store.ProvideHTTPService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,

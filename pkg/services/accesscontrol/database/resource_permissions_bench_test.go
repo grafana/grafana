@@ -55,10 +55,10 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int64) {
 	dsId := dataSources[0]
 
-	permissions, err := store.GetResourcesPermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcesPermissionsQuery{
-		Actions:     []string{dsAction},
-		Resource:    dsResource,
-		ResourceIDs: []string{strconv.Itoa(int(dsId))},
+	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcePermissionsQuery{
+		Actions:    []string{dsAction},
+		Resource:   dsResource,
+		ResourceID: strconv.Itoa(int(dsId)),
 	})
 	require.NoError(b, err)
 	assert.GreaterOrEqual(b, len(permissions), 2)
