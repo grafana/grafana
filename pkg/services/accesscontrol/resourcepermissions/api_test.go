@@ -482,7 +482,7 @@ func TestApi_UidSolver(t *testing.T) {
 	}
 }
 
-func withSolver(options Options, solver uidSolver) Options {
+func withSolver(options Options, solver UidSolver) Options {
 	options.UidSolver = solver
 	return options
 }

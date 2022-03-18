@@ -54,25 +54,25 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Lotex Paths
 	case http.MethodDelete + "/api/ruler/{Recipient}/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodDelete + "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/ruler/{Recipient}/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/ruler/{Recipient}/api/v1/rules":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodPost + "/api/ruler/{Recipient}/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Lotex Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/{Recipient}/api/v1/rules":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Lotex Rules testing
 	case http.MethodPost + "/api/v1/rule/test/{Recipient}":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Alert Instances and Silences
 
@@ -101,25 +101,25 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Silences. External AM.
 	case http.MethodDelete + "/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodPost + "/api/alertmanager/{Recipient}/api/v2/silences":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/alertmanager/{Recipient}/api/v2/silences":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Alert instances. External AM.
 	case http.MethodGet + "/api/alertmanager/{Recipient}/api/v2/alerts/groups":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/alertmanager/{Recipient}/api/v2/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodPost + "/api/alertmanager/{Recipient}/api/v2/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/{Recipient}/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Notification Policies, Contact Points and Templates
 
@@ -138,15 +138,15 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// External Alertmanager Paths
 	case http.MethodDelete + "/api/alertmanager/{Recipient}/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsDelete, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsDelete, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/alertmanager/{Recipient}/api/v2/status":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodGet + "/api/alertmanager/{Recipient}/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodPost + "/api/alertmanager/{Recipient}/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 	case http.MethodPost + "/api/alertmanager/{Recipient}/config/api/v1/receivers/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeDatasourcesProvider.GetResourceScope(ac.Parameter(":Recipient")))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Raw Alertmanager Config Paths
 	case http.MethodDelete + "/api/v1/ngalert/admin_config",

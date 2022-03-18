@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import {
@@ -70,9 +70,14 @@ export function OperationEditor({
     operationElements.push(
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
         {!paramDef.hideName && (
-          <label className={styles.paramName} htmlFor={getOperationParamId(index, paramIndex)}>
-            {paramDef.name}
-          </label>
+          <div className={styles.paramName}>
+            <label htmlFor={getOperationParamId(index, paramIndex)}>{paramDef.name}</label>
+            {paramDef.description && (
+              <Tooltip placement="top" content={paramDef.description} theme="info">
+                <Icon name="info-circle" size="sm" className={styles.infoIcon} />
+              </Tooltip>
+            )}
+          </div>
         )}
         <div className={styles.paramValue}>
           <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
@@ -195,13 +200,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     infoIcon: css({
-      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(0.5),
     }),
     body: css({
       margin: theme.spacing(1, 1, 0.5, 1),
       display: 'table',
     }),
     paramRow: css({
+      label: 'paramRow',
       display: 'table-row',
       verticalAlign: 'middle',
     }),
@@ -214,8 +220,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '32px',
     }),
     paramValue: css({
+      label: 'paramValue',
       display: 'table-cell',
-      paddingBottom: theme.spacing(0.5),
       verticalAlign: 'middle',
     }),
     restParam: css({

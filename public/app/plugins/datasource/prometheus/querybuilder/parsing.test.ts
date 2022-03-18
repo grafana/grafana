@@ -505,6 +505,42 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('handles binary operation with vector matchers', () => {
+    expect(buildVisualQueryFromString('foo * on(foo, bar) metric')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            vectorMatches: 'foo, bar',
+            vectorMatchesType: 'on',
+            query: { metric: 'metric', labels: [], operations: [] },
+          },
+        ],
+      },
+    });
+
+    expect(buildVisualQueryFromString('foo * ignoring(foo) metric')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            vectorMatches: 'foo',
+            vectorMatchesType: 'ignoring',
+            query: { metric: 'metric', labels: [], operations: [] },
+          },
+        ],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
