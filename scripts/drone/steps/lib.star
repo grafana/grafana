@@ -507,7 +507,7 @@ def test_backend_step(edition):
             'chmod +x /usr/local/bin/docker-compose',
             'make -C devenv/docker/blocks/intentapi',
             'make devenv sources=intentapi',
-            'kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig api-resources',
+            'kubectl --kubeconfig=devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources',
             'ls -l /drone/src/devenv/docker/blocks/intentapi',
             'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
             'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem ' +
