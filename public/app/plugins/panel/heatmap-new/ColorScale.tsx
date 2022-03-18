@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -22,6 +22,7 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
   const [colors, setColors] = useState<string[]>([]);
   const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
   const [percent, setPercent] = useState<number | null>(null);
+  const [eventOffsetWidth, setEventOffsetWidth] = useState<number>(0);
 
   const theme = useTheme2();
   const styles = getStyles(theme, colors);
@@ -30,11 +31,14 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
     setColors(getGradientStops({ colorArray: colorPalette }));
   }, [colorPalette]);
 
+  const offsetWidth = useMemo(() => eventOffsetWidth, [eventOffsetWidth]);
+
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    setEventOffsetWidth((event.target as any).offsetWidth as number);
     const divOffset = event.nativeEvent.offsetX;
-    const offsetWidth = (event.target as any).offsetWidth as number;
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
+
     setScaleHover({ isShown: true, value: scaleValue });
     setPercent(normPercentage);
   };
@@ -62,7 +66,7 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
       {display && (
         <div style={{ position: 'relative' }}>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
-            <span style={{ position: 'absolute', left: percent - 2 + '%' }}>
+            <span style={{ position: 'absolute', left: percent - 2 + '%', paddingTop: '5px' }}>
               ≈{display(hoverValue || scaleHover.value)}
             </span>
           )}
@@ -112,14 +116,13 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     width: 100%;
     max-width: 300px;
     margin-left: 25px;
-    margin-top: 10px;
+    padding: 10px 0;
     font-size: 11px;
     opacity: 1;
-    cursor: ew-resize;
   `,
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
-    height: 12px;
+    height: 10px;
   `,
   legendValues: css`
     display: flex;
@@ -127,17 +130,15 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   `,
   followerContainer: css`
     position: relative;
-    display: flex;
   `,
   follower: css`
     position: absolute;
-    height: 9px;
-    width: 9px;
+    height: 14px;
+    width: 14px;
     border-radius: 50%;
     transform: translateX(-50%) translateY(-50%);
     pointer-events: none;
     border: 2px solid white;
-    transition: all 150ms ease-out;
-    margin-top: 6px;
+    margin-top: 5px;
   `,
 });
