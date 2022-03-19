@@ -86,6 +86,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix, attribute string, actions 
 
 func parseScopes(prefix, attribute string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
 	ids = make(map[interface{}]struct{})
+	scopePrefix := Scope(prefix, attribute)
 	parser, ok := scopeParsers[attribute]
 
 	for _, scope := range scopes {
@@ -94,7 +95,7 @@ func parseScopes(prefix, attribute string, scopes []string) (ids map[interface{}
 				return nil, true
 			}
 
-			if !ok {
+			if !ok || !strings.HasPrefix(scope, scopePrefix) {
 				continue
 			}
 
