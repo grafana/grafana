@@ -11,7 +11,7 @@ import { useDispatch } from 'react-redux';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchEditableRuleAction, fetchRulesSourceBuildInfoAction } from './state/actions';
+import { fetchAllPromBuildInfoAction, fetchEditableRuleAction, fetchRulesSourceBuildInfoAction } from './state/actions';
 import * as ruleId from './utils/rule-id';
 import { useAsync } from 'react-use';
 
@@ -25,14 +25,13 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   const dispatch = useDispatch();
   const { isEditable } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), result?.rule);
 
-  const { loading: loadingDataSouce } = useAsync(async () => {
-    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
+  useEffect(() => {
     if (!dispatched) {
-      await dispatch(fetchEditableRuleAction(identifier));
+      dispatch(fetchEditableRuleAction(identifier));
     }
   }, [dispatched, dispatch, identifier]);
 
-  if (loading || loadingDataSouce || isEditable === undefined) {
+  if (loading || isEditable === undefined) {
     return (
       <Page.Contents>
         <LoadingPlaceholder text="Loading rule..." />
@@ -60,15 +59,30 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
 type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
 
 const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
+  const dispatch = useDispatch();
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
+
+  const { loading } = useAsync(async () => {
+    await dispatch(fetchAllPromBuildInfoAction());
+  }, [dispatch]);
+
+  if (!(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor)) {
+    return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
+  }
+
+  if (loading) {
+    return (
+      <Page.Contents>
+        <LoadingPlaceholder text="Loading..." />
+      </Page.Contents>
+    );
+  }
 
   if (identifier) {
     return <ExistingRuleEditor key={id} identifier={identifier} />;
   }
-  if (!(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor)) {
-    return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
-  }
+
   return <AlertRuleForm />;
 };
 

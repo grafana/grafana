@@ -34,7 +34,7 @@ export interface PromBuildInfoResponse {
     version: string;
     revision: string;
     features?: {
-      ruler_config_app?: 'true' | 'false';
+      ruler_config_api?: 'true' | 'false';
       alertmanager_config_api?: 'true' | 'false';
       query_sharding?: 'true' | 'false';
       federated_rules?: 'true' | 'false';
@@ -46,7 +46,7 @@ export interface PromBuildInfoResponse {
 export interface PromBuildInfo {
   application?: PromApplication;
   features: {
-    rulerConfigApp: boolean;
+    rulerConfigApi: boolean;
     alertManagerConfigApi: boolean;
     querySharding: boolean;
     federatedRules: boolean;
