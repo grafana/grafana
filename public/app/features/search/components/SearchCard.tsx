@@ -64,7 +64,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     if (item.uid && !lastUpdated) {
       const dashboard = await backendSrv.getDashboardByUid(item.uid);
       const { updated } = dashboard.meta;
-      setLastUpdated(new Date(updated).toLocaleString());
+      setLastUpdated(new Date(updated!).toLocaleString());
     }
   };
 

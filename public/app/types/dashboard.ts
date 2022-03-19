@@ -39,6 +39,7 @@ export interface DashboardMeta {
 
 export interface DashboardDataDTO {
   title: string;
+  uid: string;
 }
 
 export enum DashboardRoutes {
