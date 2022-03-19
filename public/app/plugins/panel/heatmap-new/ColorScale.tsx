@@ -18,6 +18,8 @@ type HoverState = {
   value: number;
 };
 
+const LEFT_OFFSET = 2;
+
 export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
@@ -56,14 +58,14 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
       <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
         {display && (scaleHover.isShown || hoverValue !== undefined) && (
           <div className={styles.followerContainer}>
-            <div className={styles.follower} style={{ left: percent + '%' }} />
+            <div className={styles.follower} style={{ left: `${percent}%` }} />
           </div>
         )}
       </div>
       {display && (
         <div className={styles.followerContainer}>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
-            <span className={styles.hoverValue} style={{ left: percent - 2 + '%' }}>
+            <span className={styles.hoverValue} style={{ left: `${percent - LEFT_OFFSET}%` }}>
               {display(hoverValue || scaleHover.value)}
             </span>
           )}
