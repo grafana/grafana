@@ -22,9 +22,9 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
   });
 
   if (!response?.data.data) {
-    // TODO As a fallback add checking whether ruler is available
     const rulerSupported = await hasRulerSupport(dataSourceName);
 
+    // TODO Add checking if Prom ruler API is supported. Maybe this is a Cortex without ruler Enabled
     if (!rulerSupported) {
       throw new Error(`Cannot fetch data from ${dataSourceName}. Please verify the data source configuration.`);
     }

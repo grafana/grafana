@@ -42,20 +42,18 @@ import {
   updateAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchAnnotations } from '../api/annotations';
+import { fetchBuildInfo } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
-import { fetchBuildInfo } from '../api/buildInfo';
 import {
   deleteNamespace,
   deleteRulerRulesGroup,
   fetchRulerRules,
   FetchRulerRulesFilter,
-  fetchRulerRulesGroup,
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import { addDefaultsToAlertmanagerConfig, isFetchError, removeMuteTimingFromRoute } from '../utils/alertmanager';
-import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
+import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
   getAllRulesSourceNames,
   getRulesDataSource,
@@ -575,34 +573,6 @@ export const fetchAlertGroupsAction = createAsyncThunk(
   (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
     return withSerializedError(fetchAlertGroups(alertManagerSourceName));
   }
-);
-
-// This needs to be changed completely
-export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk<boolean, string>(
-  'unifiedalerting/checkIfLotexRuleEditingSupported',
-  async (rulesSourceName: string, thunkAPI): Promise<boolean> =>
-    withAppEvents(
-      (async () => {
-        try {
-          await fetchRulerRulesGroup(rulesSourceName, 'test', 'test');
-          return true;
-        } catch (e) {
-          if (
-            (isFetchError(e) &&
-              (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
-                e.data.message?.includes('page not found'))) || // ruler api disabled
-            e.message?.includes('404 from rules config endpoint') || // ruler api disabled
-            e.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
-          ) {
-            return false;
-          }
-          throw e;
-        }
-      })(),
-      {
-        errorMessage: `Failed to determine if "${rulesSourceName}" allows editing rules`,
-      }
-    )
 );
 
 export const deleteAlertManagerConfigAction = createAsyncThunk(

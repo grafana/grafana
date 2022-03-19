@@ -523,6 +523,44 @@ describe('RuleEditor', () => {
       ),
     };
 
+    mocks.api.fetchBuildInfo.mockImplementation(async (dataSourceName) => {
+      if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
+        return {
+          application: PromApplication.Cortex,
+          features: {
+            rulerConfigApi: true,
+            alertManagerConfigApi: false,
+            federatedRules: false,
+            querySharding: false,
+          },
+        };
+      }
+      if (dataSourceName === 'loki with local rule store') {
+        return {
+          application: PromApplication.Cortex,
+          features: {
+            rulerConfigApi: false,
+            alertManagerConfigApi: false,
+            federatedRules: false,
+            querySharding: false,
+          },
+        };
+      }
+      if (dataSourceName === 'cortex without ruler api') {
+        return {
+          application: PromApplication.Cortex,
+          features: {
+            rulerConfigApi: false,
+            alertManagerConfigApi: false,
+            federatedRules: false,
+            querySharding: false,
+          },
+        };
+      }
+
+      throw new Error(`${dataSourceName} not handled`);
+    });
+
     mocks.api.fetchRulerRulesGroup.mockImplementation(async (dataSourceName: string) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return null;
@@ -543,24 +581,12 @@ describe('RuleEditor', () => {
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    mocks.api.fetchBuildInfo.mockResolvedValue({
-      application: PromApplication.Prometheus,
-      features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: true,
-        federatedRules: false,
-        querySharding: false,
-      },
-    });
 
     // render rule editor, select cortex/loki managed alerts
     await renderRuleEditor();
     await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
     await ui.inputs.name.find();
     await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
-
-    // wait for ui theck each datasource if it supports rule editing
-    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalledTimes(4));
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
