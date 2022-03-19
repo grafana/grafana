@@ -43,7 +43,8 @@ import {
 } from '../api/alertmanager';
 import { fetchAnnotations } from '../api/annotations';
 import { fetchNotifiers } from '../api/grafana';
-import { fetchBuildInfo, FetchPromRulesFilter, fetchRules } from '../api/prometheus';
+import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
+import { fetchBuildInfo } from '../api/buildInfo';
 import {
   deleteNamespace,
   deleteRulerRulesGroup,

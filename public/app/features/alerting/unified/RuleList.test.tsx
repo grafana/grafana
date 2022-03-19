@@ -5,7 +5,8 @@ import { Provider } from 'react-redux';
 import RuleList from './RuleList';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import { getAllDataSources } from './utils/config';
-import { fetchBuildInfo, fetchRules } from './api/prometheus';
+import { fetchRules } from './api/prometheus';
+import { fetchBuildInfo } from './api/buildInfo';
 import { fetchRulerRules, deleteRulerRulesGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
 import {
   mockDataSource,
@@ -25,6 +26,7 @@ import userEvent from '@testing-library/user-event';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { Router } from 'react-router-dom';
 
+jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
 jest.mock('./utils/config');

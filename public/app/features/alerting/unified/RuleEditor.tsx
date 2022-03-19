@@ -2,18 +2,18 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/services/context_srv';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useAsync } from 'react-use';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAllPromBuildInfoAction, fetchEditableRuleAction, fetchRulesSourceBuildInfoAction } from './state/actions';
+import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
 import * as ruleId from './utils/rule-id';
-import { useAsync } from 'react-use';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
