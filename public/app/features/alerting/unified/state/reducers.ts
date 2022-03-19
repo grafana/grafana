@@ -1,26 +1,25 @@
 import { combineReducers } from 'redux';
 import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
+  createOrUpdateSilenceAction,
+  deleteAlertManagerConfigAction,
+  fetchAlertGroupsAction,
   fetchAlertManagerConfigAction,
   fetchAmAlertsAction,
   fetchEditableRuleAction,
+  fetchExternalAlertmanagersAction,
+  fetchExternalAlertmanagersConfigAction,
+  fetchFolderAction,
+  fetchGrafanaAnnotationsAction,
   fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
+  fetchRulesSourceBuildInfoAction,
   fetchSilencesAction,
   saveRuleFormAction,
-  updateAlertManagerConfigAction,
-  createOrUpdateSilenceAction,
-  fetchFolderAction,
-  fetchAlertGroupsAction,
-  checkIfLotexSupportsEditingRulesAction,
-  deleteAlertManagerConfigAction,
   testReceiversAction,
+  updateAlertManagerConfigAction,
   updateLotexNamespaceAndGroupAction,
-  fetchExternalAlertmanagersAction,
-  fetchExternalAlertmanagersConfigAction,
-  fetchGrafanaAnnotationsAction,
-  fetchRulesSourceBuildInfoAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -54,11 +53,6 @@ export const reducer = combineReducers({
     'amAlertGroups',
     fetchAlertGroupsAction,
     (alertManagerSourceName) => alertManagerSourceName
-  ).reducer,
-  lotexSupportsRuleEditing: createAsyncMapSlice(
-    'lotexSupportsRuleEditing',
-    checkIfLotexSupportsEditingRulesAction,
-    (source) => source
   ).reducer,
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
   updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)

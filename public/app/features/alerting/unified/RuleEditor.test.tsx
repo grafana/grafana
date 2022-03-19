@@ -556,6 +556,44 @@ describe('RuleEditor', () => {
       ),
     };
 
+    mocks.api.fetchBuildInfo.mockImplementation(async (dataSourceName) => {
+      if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
+        return {
+          application: PromApplication.Cortex,
+          features: {
+            rulerConfigApi: true,
+            alertManagerConfigApi: false,
+            federatedRules: false,
+            querySharding: false,
+          },
+        };
+      }
+      if (dataSourceName === 'loki with local rule store') {
+        return {
+          application: PromApplication.Cortex,
+          features: {
+            rulerConfigApi: false,
+            alertManagerConfigApi: false,
+            federatedRules: false,
+            querySharding: false,
+          },
+        };
+      }
+      if (dataSourceName === 'cortex without ruler api') {
+        return {
+          application: PromApplication.Cortex,
+          features: {
+            rulerConfigApi: false,
+            alertManagerConfigApi: false,
+            federatedRules: false,
+            querySharding: false,
+          },
+        };
+      }
+
+      throw new Error(`${dataSourceName} not handled`);
+    });
+
     mocks.api.fetchRulerRulesGroup.mockImplementation(async (dataSourceName: string) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return null;
@@ -594,9 +632,6 @@ describe('RuleEditor', () => {
 
     // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
-    await ui.inputs.name.find();
-    await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
-
     await ui.inputs.name.find();
     userEvent.click(await ui.buttons.lotexAlert.get());
 
