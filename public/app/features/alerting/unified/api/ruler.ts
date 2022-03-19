@@ -25,7 +25,19 @@ function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   }
 
   return {
-    rules: () => `${basePath}?${rulerSearchParams.toString()}`,
+    rules: (filter?: FetchRulerRulesFilter) => {
+      if (filter?.dashboardUID) {
+        rulerSearchParams.set('dashboard_uid', filter.dashboardUID);
+        if (filter.panelId) {
+          rulerSearchParams.set('panel_id', String(filter.panelId));
+        }
+      }
+
+      return {
+        url: `${basePath}`,
+        params: Object.fromEntries(rulerSearchParams),
+      };
+    },
     namespace: (namespace: string) => `${basePath}/${encodeURIComponent(namespace)}?${rulerSearchParams.toString()}`,
     namespaceGroup: (namespace: string, group: string) =>
       `${basePath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}?${rulerSearchParams.toString()}`,
@@ -60,16 +72,9 @@ export async function fetchRulerRules(rulerConfig: RulerDataSourceConfig, filter
     throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
   }
 
-  const params: Record<string, string> = {};
-  if (filter?.dashboardUID) {
-    params['dashboard_uid'] = filter.dashboardUID;
-    if (filter.panelId) {
-      params['panel_id'] = String(filter.panelId);
-    }
-  }
-
   // TODO Move params creation to the rules function
-  return rulerGetRequest<RulerRulesConfigDTO>(rulerUrlBuilder(rulerConfig).rules(), {}, params);
+  const { url, params } = rulerUrlBuilder(rulerConfig).rules(filter);
+  return rulerGetRequest<RulerRulesConfigDTO>(url, {}, params);
 }
 
 // fetch rule groups for a particular namespace
