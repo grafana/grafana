@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import RuleList from './RuleList';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import { getAllDataSources } from './utils/config';
-import { fetchRules } from './api/prometheus';
+import { fetchBuildInfo, fetchRules } from './api/prometheus';
 import { fetchRulerRules, deleteRulerRulesGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
 import {
   mockDataSource,
@@ -20,7 +20,7 @@ import {
 } from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 import userEvent from '@testing-library/user-event';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { Router } from 'react-router-dom';
@@ -41,6 +41,7 @@ const mocks = {
   getAllDataSourcesMock: jest.mocked(getAllDataSources),
 
   api: {
+    fetchBuildInfo: jest.mocked(fetchBuildInfo),
     fetchRules: jest.mocked(fetchRules),
     fetchRulerRules: jest.mocked(fetchRulerRules),
     deleteGroup: jest.mocked(deleteRulerRulesGroup),
@@ -114,6 +115,16 @@ describe('RuleList', () => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
+
+    mocks.api.fetchBuildInfo.mockResolvedValue({
+      application: PromApplication.Prometheus,
+      features: {
+        rulerConfigApi: true,
+        alertManagerConfigApi: true,
+        federatedRules: false,
+        querySharding: false,
+      },
+    });
 
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === dataSources.prom.name) {
@@ -198,7 +209,18 @@ describe('RuleList', () => {
 
   it('expand rule group, rule and alert details', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+    mocks.api.fetchBuildInfo.mockResolvedValue({
+      application: PromApplication.Cortex,
+      features: {
+        rulerConfigApi: true,
+        alertManagerConfigApi: true,
+        federatedRules: false,
+        querySharding: false,
+      },
+    });
+
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         return Promise.resolve([]);
@@ -333,6 +355,17 @@ describe('RuleList', () => {
   it('filters rules and alerts by labels', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+
+    mocks.api.fetchBuildInfo.mockResolvedValue({
+      application: PromApplication.Cortex,
+      features: {
+        rulerConfigApi: true,
+        alertManagerConfigApi: true,
+        federatedRules: false,
+        querySharding: false,
+      },
+    });
+
     mocks.api.fetchRulerRules.mockResolvedValue({});
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
@@ -470,11 +503,22 @@ describe('RuleList', () => {
       it(name, async () => {
         mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
         setDataSourceSrv(new MockDataSourceSrv(testDatasources));
+
+        mocks.api.fetchBuildInfo.mockResolvedValue({
+          application: PromApplication.Cortex,
+          features: {
+            rulerConfigApi: true,
+            alertManagerConfigApi: true,
+            federatedRules: false,
+            querySharding: false,
+          },
+        });
+
         mocks.api.fetchRules.mockImplementation((sourceName) =>
           Promise.resolve(sourceName === testDatasources.prom.name ? somePromRules() : [])
         );
-        mocks.api.fetchRulerRules.mockImplementation((sourceName) =>
-          Promise.resolve(sourceName === testDatasources.prom.name ? someRulerRules : {})
+        mocks.api.fetchRulerRules.mockImplementation(({ dataSourceName }) =>
+          Promise.resolve(dataSourceName === testDatasources.prom.name ? someRulerRules : {})
         );
         mocks.api.setRulerRuleGroup.mockResolvedValue();
         mocks.api.deleteNamespace.mockResolvedValue();
@@ -514,18 +558,26 @@ describe('RuleList', () => {
       expect(mocks.api.deleteNamespace).toHaveBeenCalledTimes(1);
       expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
       expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
-      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'super namespace', {
-        ...someRulerRules['namespace1'][0],
-        name: 'super group',
-        interval: '5m',
-      });
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
+        1,
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
+        'super namespace',
+        {
+          ...someRulerRules['namespace1'][0],
+          name: 'super group',
+          interval: '5m',
+        }
+      );
       expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
         2,
-        testDatasources.prom.name,
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
         'super namespace',
         someRulerRules['namespace1'][1]
       );
-      expect(mocks.api.deleteNamespace).toHaveBeenLastCalledWith('Prometheus', 'namespace1');
+      expect(mocks.api.deleteNamespace).toHaveBeenLastCalledWith(
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
+        'namespace1'
+      );
     });
 
     testCase('rename just the lotex group', async () => {
@@ -543,12 +595,21 @@ describe('RuleList', () => {
       expect(mocks.api.deleteGroup).toHaveBeenCalledTimes(1);
       expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
       expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
-      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
-        ...someRulerRules['namespace1'][0],
-        name: 'super group',
-        interval: '5m',
-      });
-      expect(mocks.api.deleteGroup).toHaveBeenLastCalledWith('Prometheus', 'namespace1', 'group1');
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
+        1,
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
+        'namespace1',
+        {
+          ...someRulerRules['namespace1'][0],
+          name: 'super group',
+          interval: '5m',
+        }
+      );
+      expect(mocks.api.deleteGroup).toHaveBeenLastCalledWith(
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
+        'namespace1',
+        'group1'
+      );
     });
 
     testCase('edit lotex group eval interval, no renaming', async () => {
@@ -564,10 +625,15 @@ describe('RuleList', () => {
       expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
       expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
       expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
-      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
-        ...someRulerRules['namespace1'][0],
-        interval: '5m',
-      });
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
+        1,
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
+        'namespace1',
+        {
+          ...someRulerRules['namespace1'][0],
+          interval: '5m',
+        }
+      );
     });
   });
 });
