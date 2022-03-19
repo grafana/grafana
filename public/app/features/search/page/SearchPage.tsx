@@ -37,7 +37,7 @@ export default function SearchPage() {
         {results.loading && <Spinner />}
         {results.value?.body && (
           <div>
-            <AutoSizer style={{ width: '100%', height: '1000px' }}>
+            <AutoSizer style={{ width: '100%', height: '550px' }}>
               {({ width }) => {
                 return <Table data={results.value!.body} width={width} />;
               }}

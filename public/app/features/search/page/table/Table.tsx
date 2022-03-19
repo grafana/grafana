@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
-import { DataFrame, Field, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName, GrafanaTheme2, Vector } from '@grafana/data';
 import { css } from '@emotion/css';
-import { TableFieldOptions, useStyles2 } from '@grafana/ui';
+import { Icon, TableFieldOptions, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
@@ -17,10 +17,10 @@ type TableColumn = Column & {
   field: Field;
 };
 
+const SEARCH_COLUMNS = ['Name'];
+
 const generateColumns = (data: DataFrame, availableWidth: number): TableColumn[] => {
   const columns: TableColumn[] = [];
-
-  const SEARCH_COLUMNS = ['Name', 'type'];
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     if (SEARCH_COLUMNS.includes(getFieldDisplayName(field, data))) {
@@ -67,49 +67,103 @@ export const Table = ({ data, width }: Props) => {
     [memoizedColumns, memoizedData]
   );
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, totalColumnsWidth, prepareRow } = useTable(
-    options,
-    useBlockLayout
-  );
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useBlockLayout);
 
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       const row = rows[rowIndex];
       prepareRow(row);
+
+      let nameField: Field<any, Vector<any>> | undefined = undefined;
+      let kindField: Field<any, Vector<any>> | undefined = undefined;
+      let urlField: Field<any, Vector<any>> | undefined = undefined;
+      for (const [_, field] of data.fields.entries()) {
+        const fieldDisplayName = field.name;
+        if (SEARCH_COLUMNS.includes(fieldDisplayName)) {
+          nameField = field;
+        }
+
+        if (fieldDisplayName === 'Kind') {
+          kindField = field;
+        }
+
+        if (fieldDisplayName === 'URL') {
+          urlField = field;
+        }
+
+        if (nameField && kindField && urlField) {
+          break;
+        }
+      }
+
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {row.cells.map((cell: Cell, index: number) => {
+            const valueIndex = nameField?.values.toArray().findIndex((value: Vector<any>, index) => {
+              if (value === cell.value) {
+                return index;
+              }
+              return;
+            });
+
+            const kind = kindField?.values.get(valueIndex!);
+            const url = urlField?.values.get(valueIndex!);
+
+            const icon = kind === 'dashboard' ? kind : kind === 'panel' ? 'graph-bar' : 'question-circle';
+
             return (
-              <TableCell
-                key={index}
-                tableStyles={tableStyles}
-                cell={cell}
-                columnIndex={index}
-                columnCount={row.cells.length}
-              />
+              <>
+                {kind && (
+                  <div className={styles.cellIcon}>
+                    <Icon name={icon} size={'xl'} />
+                  </div>
+                )}
+                <TableCell
+                  key={index}
+                  tableStyles={tableStyles}
+                  cell={cell}
+                  columnIndex={index}
+                  columnCount={row.cells.length}
+                />
+              </>
             );
           })}
         </div>
       );
     },
-    [prepareRow, rows, tableStyles]
+    [prepareRow, rows, tableStyles, data, styles.cellIcon]
   );
 
   return (
     <div {...getTableProps()} style={{ width }} aria-label={'Search result table'} role="table">
       <div>
-        {headerGroups.map((headerGroup, index) => (
-          <div key={index} className={styles.headerCell}>
-            {headerGroup.headers.map((column, idx) => (
-              <div key={idx}>{column.render('Header')}</div>
-            ))}
-          </div>
-        ))}
+        {headerGroups.map((headerGroup) => {
+          const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
+
+          return (
+            <div key={key} {...headerGroupProps}>
+              {headerGroup.headers.map((column) => {
+                const { key, ...headerProps } = column.getHeaderProps();
+                return (
+                  <div key={key} {...headerProps} role="columnheader" className={tableStyles.headerCell}>
+                    {column.render('Header')}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
 
       <div {...getTableBodyProps()}>
         {rows.length > 0 ? (
-          <FixedSizeList height={500} itemCount={rows.length} itemSize={35} width={totalColumnsWidth}>
+          <FixedSizeList
+            height={500}
+            itemCount={rows.length}
+            itemSize={tableStyles.rowHeight}
+            width={'100%'}
+            className={styles.tableBody}
+          >
             {RenderRow}
           </FixedSizeList>
         ) : (
@@ -131,5 +185,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   table: css`
     width: 100%;
   `,
-  headerCell: css``,
+  tableBody: css`
+    overflow: 'hidden auto';
+  `,
+  cellIcon: css`
+    display: flex;
+    align-items: center;
+  `,
 });
