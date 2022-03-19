@@ -112,26 +112,28 @@ export const Table = ({ data, width }: Props) => {
             const icon = kind === 'dashboard' ? kind : kind === 'panel' ? 'graph-bar' : 'question-circle';
 
             return (
-              <>
+              <div key={index} className={styles.cellWrapper}>
                 {kind && (
                   <div className={styles.cellIcon}>
                     <Icon name={icon} size={'xl'} />
                   </div>
                 )}
-                <TableCell
-                  key={index}
-                  tableStyles={tableStyles}
-                  cell={cell}
-                  columnIndex={index}
-                  columnCount={row.cells.length}
-                />
-              </>
+                <a href={url}>
+                  <TableCell
+                    key={index}
+                    tableStyles={tableStyles}
+                    cell={cell}
+                    columnIndex={index}
+                    columnCount={row.cells.length}
+                  />
+                </a>
+              </div>
             );
           })}
         </div>
       );
     },
-    [prepareRow, rows, tableStyles, data, styles.cellIcon]
+    [prepareRow, rows, tableStyles, data, styles.cellIcon, styles.cellWrapper]
   );
 
   return (
@@ -191,5 +193,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   cellIcon: css`
     display: flex;
     align-items: center;
+  `,
+  cellWrapper: css`
+    display: flex;
   `,
 });
