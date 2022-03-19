@@ -66,7 +66,13 @@ describe('Add to Dashboard Button', () => {
 
   beforeEach(() => {
     jest.spyOn(dashboardApi, 'searchFolders').mockReturnValue(searchFoldersResponse);
-    addToDashboardMock = jest.spyOn(api, 'addToDashboard').mockResolvedValue('/some/redirect/url');
+    // TODO: name should be the same passed to `addToDashboard`
+    addToDashboardMock = jest.spyOn(api, 'addToDashboard').mockImplementation((data) =>
+      Promise.resolve({
+        name: data.saveTarget === 'new_dashboard' ? data.dashboardName : 'Some Existing Dashboard Name',
+        url: '/some/redirect/url',
+      })
+    );
   });
 
   afterEach(() => {
@@ -115,7 +121,7 @@ describe('Add to Dashboard Button', () => {
     });
   });
 
-  it('Correct datasource ref is useed', async () => {
+  it('Correct datasource ref is used', async () => {
     setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
 
     await openModal();

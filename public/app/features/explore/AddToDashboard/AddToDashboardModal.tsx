@@ -1,42 +1,56 @@
 import React, { useState } from 'react';
-import { Alert, Button, Field, Input, InputControl, Modal } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { useForm } from 'react-hook-form';
-import { SaveToNewDashboardDTO } from './addToDashboard';
-
-export interface ErrorResponse {
-  status: string;
-  message?: string;
-}
+import { Alert, Button, InputControl, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { FormProvider, useForm } from 'react-hook-form';
+import { SaveToNewDashboard } from './Forms/SaveToNewDashboard';
+import { SaveToExistingDashboard } from './Forms/SaveToExistingDashboard';
+import { SelectableValue } from '@grafana/data';
+import { ErrorResponse, FormDTO, SaveTarget } from './types';
+import { css } from '@emotion/css';
 
 const ERRORS = {
   NAME_REQUIRED: 'Dashboard name is required.',
   NAME_EXISTS: 'A dashboard with the same name already exists in this folder.',
+  NAME_MATCH: "Dashboard name cannot be the same as its folder's name.",
   INVALID_FIELD: 'This field is invalid.',
   UNKNOWN_ERROR: 'An unknown error occurred while saving the dashboard. Please try again.',
-  INVALID_FOLDER: 'Select a valid folder to save your dashboard in.',
 };
 
-type FormDTO = SaveToNewDashboardDTO;
+const SAVE_TARGETS: Array<SelectableValue<SaveTarget>> = [
+  {
+    label: 'New Dashboard',
+    value: 'new_dashboard',
+  },
+  {
+    label: 'Existing Dashboard',
+    value: 'existing_dashboard',
+  },
+];
+
+function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}, redirect: boolean) {
+  return async (...args: T) => fn(redirect, ...args);
+}
 
 interface Props {
   onClose: () => void;
   onSave: (data: FormDTO, redirect: boolean) => Promise<void | ErrorResponse>;
 }
 
-function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}, redirect: boolean) {
-  return async (...args: T) => fn(redirect, ...args);
-}
-
 export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
   const [submissionError, setSubmissionError] = useState<string>();
+  const methods = useForm<FormDTO>({ defaultValues: { saveTarget: 'new_dashboard' } });
   const {
-    register,
     handleSubmit,
+    formState: { isSubmitting },
     control,
-    formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormDTO>();
+    watch,
+  } = methods;
+  const FormComponent = watch('saveTarget') === 'new_dashboard' ? SaveToNewDashboard : SaveToExistingDashboard;
+  const radioGroupStyles = useStyles2(
+    (theme) => css`
+      margin-bottom: ${theme.spacing(2)};
+    `
+  );
 
   const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
@@ -45,8 +59,7 @@ export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
     if (error) {
       switch (error.status) {
         case 'name-match':
-          // error.message should always be defined here
-          setError('dashboardName', { message: error.message ?? ERRORS.INVALID_FIELD });
+          setError('dashboardName', { message: ERRORS.NAME_MATCH });
           break;
         case 'empty-name':
           setError('dashboardName', { message: ERRORS.NAME_REQUIRED });
@@ -63,46 +76,18 @@ export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
   return (
     <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
       <form>
-        <p>Create a new dashboard and add a panel with the explored queries.</p>
+        <InputControl
+          render={({ field: { ref, ...field } }) => (
+            <RadioButtonGroup options={SAVE_TARGETS} {...field} className={radioGroupStyles} />
+          )}
+          control={control}
+          name="saveTarget"
+          shouldUnregister
+        />
 
-        <Field
-          label="Dashboard name"
-          description="Choose a name for the new dashboard."
-          error={errors.dashboardName?.message}
-          invalid={!!errors.dashboardName}
-        >
-          <Input
-            id="dashboard_name"
-            {...register('dashboardName', {
-              shouldUnregister: true,
-              required: { value: true, message: ERRORS.NAME_REQUIRED },
-              setValueAs(value: string) {
-                return value.trim();
-              },
-            })}
-            // we set default value here instead of in useForm because this input will be unregistered when switching
-            // to "Existing Dashboard" and default values are not populated with manually registered
-            // inputs (ie. when switching back to "New Dashboard")
-            defaultValue="New dashboard (Explore)"
-          />
-        </Field>
-
-        <Field
-          label="Folder"
-          description="Select where the dashboard will be created."
-          error={errors.folderId?.message}
-          invalid={!!errors.folderId}
-        >
-          <InputControl
-            render={({ field: { ref, onChange, ...field } }) => (
-              <FolderPicker onChange={(e) => onChange(e.id)} {...field} enableCreateNew inputId="folder" />
-            )}
-            control={control}
-            name="folderId"
-            shouldUnregister
-            rules={{ required: { value: true, message: ERRORS.INVALID_FOLDER } }}
-          />
-        </Field>
+        <FormProvider {...methods}>
+          <FormComponent />
+        </FormProvider>
 
         {submissionError && (
           <Alert severity="error" title="Unknown error">

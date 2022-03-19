@@ -3,12 +3,13 @@ import { DataFrame, DataQuery } from '@grafana/data';
 import { ExploreId, StoreState } from 'app/types';
 import { useSelector, useDispatch } from 'react-redux';
 import { getExploreItemSelector } from '../state/selectors';
-import { addToDashboard, SaveToNewDashboardDTO } from './addToDashboard';
+import { addToDashboard } from './addToDashboard';
 import { locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { ToolbarButton } from '@grafana/ui';
-import { AddToDashboardModal, ErrorResponse } from './AddToDashboardModal';
+import { AddToDashboardModal } from './AddToDashboardModal';
+import { FormDTO, ErrorResponse } from './types';
 
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
@@ -59,18 +60,18 @@ export const AddToDashboard = ({ exploreId }: Props) => {
     };
   });
 
-  const handleSave = async (data: SaveToNewDashboardDTO, redirect: boolean): Promise<void | ErrorResponse> => {
+  const handleSave = async (data: FormDTO, redirect: boolean): Promise<void | ErrorResponse> => {
     try {
-      const redirectURL = await addToDashboard(data, {
+      const { name, url } = await addToDashboard(data, {
         queries,
         datasource,
         panel,
       });
 
       if (redirect) {
-        locationService.push(redirectURL);
+        locationService.push(url);
       } else {
-        dispatch(notifyApp(createSuccessNotification(`Panel saved to ${data.dashboardName}`)));
+        dispatch(notifyApp(createSuccessNotification(`Panel saved to ${name}`)));
         setIsOpen(false);
       }
       return;
