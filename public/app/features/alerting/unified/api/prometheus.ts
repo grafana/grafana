@@ -2,12 +2,7 @@ import { lastValueFrom } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { RuleNamespace } from 'app/types/unified-alerting';
-import {
-  PromApplication,
-  PromBuildInfo,
-  PromBuildInfoResponse,
-  PromRulesResponse,
-} from 'app/types/unified-alerting-dto';
+import { PromRulesResponse } from 'app/types/unified-alerting-dto';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 export interface FetchPromRulesFilter {
@@ -87,45 +82,4 @@ export async function fetchRules(
   });
 
   return Object.values(nsMap);
-}
-
-export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildInfo> {
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<PromBuildInfoResponse>({
-      url: `/api/datasources/proxy/${getDatasourceAPIId(dataSourceName)}/api/v1/status/buildinfo`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  ).catch((e) => {
-    if ('status' in e && e.status === 404) {
-      return null; // Cortex does not support buildinfo endpoint
-    }
-
-    throw e;
-  });
-
-  if (!response || !response) {
-    // TODO As a fallback add checking whether ruler is available
-    return {
-      application: PromApplication.Cortex,
-      features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: false,
-        querySharding: false,
-        federatedRules: false,
-      },
-    };
-  }
-
-  const { application, features } = response.data.data;
-
-  return {
-    application: PromApplication.Prometheus,
-    features: {
-      rulerConfigApi: features?.ruler_config_api === 'true',
-      alertManagerConfigApi: features?.alertmanager_config_api === 'true',
-      querySharding: features?.query_sharding === 'true',
-      federatedRules: features?.federated_rules === 'true',
-    },
-  };
 }

@@ -19,7 +19,7 @@ import { getDefaultQueries } from './utils/rule-form';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import * as api from 'app/features/manage-dashboards/state/actions';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
-import { fetchBuildInfo } from './api/prometheus';
+import { fetchBuildInfo } from './api/buildInfo';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -28,7 +28,7 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ),
 }));
 
-jest.mock('./api/prometheus');
+jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('./utils/config');
 
