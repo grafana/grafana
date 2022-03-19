@@ -17,6 +17,7 @@ type filterDatasourcesTestCase struct {
 	desc        string
 	sqlID       string
 	prefix      string
+	attribute   string
 	actions     []string
 	permissions map[string][]string
 
@@ -27,30 +28,33 @@ type filterDatasourcesTestCase struct {
 func TestFilter_Datasources(t *testing.T) {
 	tests := []filterDatasourcesTestCase{
 		{
-			desc:    "expect all data sources to be returned",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read"},
+			desc:      "expect all data sources to be returned",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read"},
 			permissions: map[string][]string{
 				"datasources:read": {"datasources:*"},
 			},
 			expectedDataSources: []string{"ds:1", "ds:2", "ds:3", "ds:4", "ds:5", "ds:6", "ds:7", "ds:8", "ds:9", "ds:10"},
 		},
 		{
-			desc:    "expect all data sources for wildcard id scope to be returned",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read"},
+			desc:      "expect all data sources for wildcard id scope to be returned",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read"},
 			permissions: map[string][]string{
 				"datasources:read": {"datasources:id:*"},
 			},
 			expectedDataSources: []string{"ds:1", "ds:2", "ds:3", "ds:4", "ds:5", "ds:6", "ds:7", "ds:8", "ds:9", "ds:10"},
 		},
 		{
-			desc:    "expect all data sources for wildcard scope to be returned",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read"},
+			desc:      "expect all data sources for wildcard scope to be returned",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read"},
 			permissions: map[string][]string{
 				"datasources:read": {"*"},
 			},
@@ -60,15 +64,17 @@ func TestFilter_Datasources(t *testing.T) {
 			desc:                "expect no data sources to be returned",
 			sqlID:               "data_source.id",
 			prefix:              "datasources",
+			attribute:           accesscontrol.ScopeAttributeID,
 			actions:             []string{"datasources:read"},
 			permissions:         map[string][]string{},
 			expectedDataSources: []string{},
 		},
 		{
-			desc:    "expect data sources with id 3, 7 and 8 to be returned",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read"},
+			desc:      "expect data sources with id 3, 7 and 8 to be returned",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read"},
 			permissions: map[string][]string{
 				"datasources:read": {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
 			},
@@ -84,20 +90,22 @@ func TestFilter_Datasources(t *testing.T) {
 			},
 		},
 		{
-			desc:    "expect error if sqlID is not in the accept list",
-			sqlID:   "other.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read"},
+			desc:      "expect error if sqlID is not in the accept list",
+			sqlID:     "other.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read"},
 			permissions: map[string][]string{
 				"datasources:read": {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
 			},
 			expectErr: true,
 		},
 		{
-			desc:    "expect data sources that users has several actions for",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read", "datasources:write"},
+			desc:      "expect data sources that users has several actions for",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read", "datasources:write"},
 			permissions: map[string][]string{
 				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
 				"datasources:write": {"datasources:id:3", "datasources:id:8"},
@@ -106,10 +114,11 @@ func TestFilter_Datasources(t *testing.T) {
 			expectErr:           false,
 		},
 		{
-			desc:    "expect data sources that users has several actions for",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read", "datasources:write"},
+			desc:      "expect data sources that users has several actions for",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read", "datasources:write"},
 			permissions: map[string][]string{
 				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
 				"datasources:write": {"datasources:*", "datasources:id:8"},
@@ -118,10 +127,11 @@ func TestFilter_Datasources(t *testing.T) {
 			expectErr:           false,
 		},
 		{
-			desc:    "expect no data sources when scopes does not match",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read", "datasources:write"},
+			desc:      "expect no data sources when scopes does not match",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read", "datasources:write"},
 			permissions: map[string][]string{
 				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8"},
 				"datasources:write": {"datasources:id:10"},
@@ -130,10 +140,11 @@ func TestFilter_Datasources(t *testing.T) {
 			expectErr:           false,
 		},
 		{
-			desc:    "expect to not crash if duplicates in the scope",
-			sqlID:   "data_source.id",
-			prefix:  "datasources",
-			actions: []string{"datasources:read", "datasources:write"},
+			desc:      "expect to not crash if duplicates in the scope",
+			sqlID:     "data_source.id",
+			prefix:    "datasources",
+			attribute: accesscontrol.ScopeAttributeID,
+			actions:   []string{"datasources:read", "datasources:write"},
 			permissions: map[string][]string{
 				"datasources:read":  {"datasources:id:3", "datasources:id:7", "datasources:id:8", "datasources:id:3", "datasources:id:8"},
 				"datasources:write": {"datasources:id:3", "datasources:id:7"},
@@ -170,6 +181,7 @@ func TestFilter_Datasources(t *testing.T) {
 				},
 				tt.sqlID,
 				tt.prefix,
+				"id",
 				tt.actions...,
 			)
 

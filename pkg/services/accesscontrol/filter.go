@@ -32,7 +32,7 @@ type SQLFilter struct {
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes that exists for all actions will be parsed and compared against the supplied sqlID
-func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
+func Filter(user *models.SignedInUser, sqlID, prefix, attribute string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}
@@ -41,9 +41,9 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	}
 
 	wildcards := 0
-	result := make(map[int64]int)
+	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := parseScopes(prefix, user.Permissions[user.OrgId][a])
+		ids, hasWildcard := parseScopes(prefix, attribute, user.Permissions[user.OrgId][a])
 		if hasWildcard {
 			wildcards += 1
 			continue
@@ -84,14 +84,21 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	return SQLFilter{query.String(), ids}, nil
 }
 
-func parseScopes(prefix string, scopes []string) (ids map[int64]struct{}, hasWildcard bool) {
-	ids = make(map[int64]struct{})
+func parseScopes(prefix, attribute string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
+	ids = make(map[interface{}]struct{})
+	parser, ok := scopeParsers[attribute]
+
 	for _, scope := range scopes {
 		if strings.HasPrefix(scope, prefix) || scope == "*" {
-			if id := strings.TrimPrefix(scope, prefix); id == "*" || id == ":*" || id == ":id:*" {
+			if id := strings.TrimPrefix(scope, prefix+":"); id == "*" || id == attribute+":*" {
 				return nil, true
 			}
-			if id, err := parseScopeID(scope); err == nil {
+
+			if !ok {
+				continue
+			}
+
+			if id, err := parser(scope); err == nil {
 				ids[id] = struct{}{}
 			}
 		}
@@ -99,8 +106,19 @@ func parseScopes(prefix string, scopes []string) (ids map[int64]struct{}, hasWil
 	return ids, false
 }
 
-func parseScopeID(scope string) (int64, error) {
+type scopeParser func(scope string) (interface{}, error)
+
+var scopeParsers = map[string]scopeParser{
+	"id":  parseScopeID,
+	"uid": parseScopeUID,
+}
+
+func parseScopeID(scope string) (interface{}, error) {
 	return strconv.ParseInt(scope[strings.LastIndex(scope, ":")+1:], 10, 64)
+}
+
+func parseScopeUID(scope string) (interface{}, error) {
+	return scope[strings.LastIndex(scope, ":")+1:], nil
 }
 
 // SetAcceptListForTest allow us to mutate the list for blackbox testing
