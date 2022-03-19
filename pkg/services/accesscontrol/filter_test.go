@@ -181,7 +181,7 @@ func TestFilter_Datasources(t *testing.T) {
 				},
 				tt.sqlID,
 				tt.prefix,
-				"id",
+				tt.attribute,
 				tt.actions...,
 			)
 
