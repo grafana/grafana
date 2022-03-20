@@ -43,7 +43,16 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				assert.Equal(t, "Complete", aggregatedResponse[idA].StatusCode)
 			})
 			t.Run("should have exceeded request limit", func(t *testing.T) {
-				assert.True(t, aggregatedResponse[idA].RequestExceededMaxLimit)
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMetricsExceeded"])
+			})
+			t.Run("should have exceeded query time range", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryTimeRangeExceeded"])
+			})
+			t.Run("should have exceeded max query results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryResultsExceeded"])
+			})
+			t.Run("should have exceeded max matching results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMatchingResultsExceeded"])
 			})
 		})
 		t.Run("response for id b", func(t *testing.T) {
