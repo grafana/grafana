@@ -13,6 +13,7 @@ const ERRORS = {
   NAME_MATCH: "Dashboard name cannot be the same as its folder's name.",
   INVALID_FIELD: 'This field is invalid.',
   UNKNOWN_ERROR: 'An unknown error occurred while saving the dashboard. Please try again.',
+  PROVISIONED_DASHBOARD: "Can't save a provisioned dashboard",
 };
 
 const SAVE_TARGETS: Array<SelectableValue<SaveTarget>> = [
@@ -66,6 +67,9 @@ export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
           break;
         case 'name-exists':
           setError('dashboardName', { message: ERRORS.NAME_EXISTS });
+          break;
+        case 'cannot-save-provisioned-dashboard':
+          setError('dashboard', { message: ERRORS.PROVISIONED_DASHBOARD });
           break;
         default:
           setSubmissionError(error.message ?? ERRORS.UNKNOWN_ERROR);

@@ -102,6 +102,7 @@ var (
 	ErrDashboardCannotSaveProvisionedDashboard = DashboardErr{
 		Reason:     "Cannot save provisioned dashboard",
 		StatusCode: 400,
+		Status:     "cannot-save-provisioned-dashboard",
 	}
 	ErrDashboardRefreshIntervalTooShort = DashboardErr{
 		Reason:     "Dashboard refresh interval is too low",

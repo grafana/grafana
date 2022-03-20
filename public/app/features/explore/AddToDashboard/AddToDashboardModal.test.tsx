@@ -230,6 +230,29 @@ describe('Add to Dashboard Modal', () => {
         );
       });
 
+      it('Correctly handles cannot-save-provisioned-dashboard error', async () => {
+        // cannot-save-provisioned-dashboard is triggered when trying to save a dashboard that
+        // has been provisioned, therefore being read-only
+        const saveMock = jest.fn().mockResolvedValue({ status: 'cannot-save-provisioned-dashboard' });
+
+        render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
+        await waitForSearchFolderResponse();
+
+        // Switching to "Existing Dashboard" form
+        userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
+
+        // Open and click on the first select item
+        userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
+        await waitFor(() => {
+          expect(screen.getByLabelText('Select option')).toBeInTheDocument();
+        });
+        userEvent.click(screen.getByLabelText('Select option'));
+
+        userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent("Can't save a provisioned dashboard");
+      });
+
       it('Correctly handles unknown API errors that return descriptive messages', async () => {
         const saveMock = jest.fn().mockResolvedValueOnce({ status: 'unknown-error', message: 'unknown error' });
 

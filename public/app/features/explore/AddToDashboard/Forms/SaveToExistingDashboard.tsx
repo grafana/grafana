@@ -35,7 +35,6 @@ export const SaveToExistingDashboard = () => {
               value={value?.uid}
               inputId="e2d-dashboard-picker"
               defaultOptions
-              aria-label="Save target"
             />
           </Field>
         )}
