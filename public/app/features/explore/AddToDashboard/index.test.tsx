@@ -13,7 +13,7 @@ import * as dashboardApi from 'app/features/manage-dashboards/state/actions';
 import * as appNotification from 'app/core/copy/appNotification';
 import { AddToDashboard } from '.';
 
-const setup = (children: JSX.Element, queries: DataQuery[] = [], queryResponse?: ExplorePanelData) => {
+const setup = (queries: DataQuery[] = [], queryResponse?: ExplorePanelData) => {
   const store = configureStore({
     explore: {
       left: {
@@ -27,7 +27,11 @@ const setup = (children: JSX.Element, queries: DataQuery[] = [], queryResponse?:
     } as ExploreState,
   });
 
-  return render(<Provider store={store}>{children}</Provider>);
+  return render(
+    <Provider store={store}>
+      <AddToDashboard exploreId={ExploreId.left} />
+    </Provider>
+  );
 };
 
 const createFolder = (title: string, id: number): DashboardSearchHit => ({
@@ -77,7 +81,7 @@ describe('Add to Dashboard Button', () => {
   });
 
   it('Opens and closes the modal correctly', async () => {
-    setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+    setup([{ refId: 'A' }]);
 
     await openModal();
 
@@ -106,7 +110,7 @@ describe('Add to Dashboard Button', () => {
         .spyOn(appNotification, 'useAppNotification')
         .mockReturnValue({ success: successMock, error: jest.fn(), warning: jest.fn() });
 
-      setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+      setup([{ refId: 'A' }]);
 
       await openModal();
 
@@ -123,7 +127,7 @@ describe('Add to Dashboard Button', () => {
     it('Navigates to dashboard when clicking on "Save and go to dashboard"', async () => {
       locationService.push = jest.fn();
 
-      setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+      setup([{ refId: 'A' }]);
 
       await openModal();
 
@@ -154,7 +158,7 @@ describe('Add to Dashboard Button', () => {
     it.each(cases)('Handles errors in the form of %o', async (error) => {
       addToDashboardMock.mockImplementationOnce(() => Promise.reject(error));
 
-      setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+      setup([{ refId: 'A' }]);
 
       await openModal();
 
@@ -170,7 +174,7 @@ describe('Add to Dashboard Button', () => {
   });
 
   it('Correct datasource ref is used', async () => {
-    setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+    setup([{ refId: 'A' }]);
 
     await openModal();
 
@@ -191,7 +195,7 @@ describe('Add to Dashboard Button', () => {
 
   it('All queries are correctly passed through', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries);
+    setup(queries);
 
     await openModal();
 
@@ -227,7 +231,7 @@ describe('Add to Dashboard Button', () => {
       ];
 
       it.each(cases)('%s', async (_, queries, queryResponse) => {
-        setup(<AddToDashboard exploreId={ExploreId.left} />, queries, queryResponse);
+        setup(queries, queryResponse);
 
         await openModal();
 
@@ -265,7 +269,7 @@ describe('Add to Dashboard Button', () => {
             ...createEmptyQueryResponse(),
             [framesType]: [new MutableDataFrame({ refId: 'A', fields: [] })],
           };
-          setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }], queryResponse);
+          setup([{ refId: 'A' }], queryResponse);
 
           await openModal();
 
@@ -285,7 +289,7 @@ describe('Add to Dashboard Button', () => {
 
     it('Filters out hidden queries when selecting visualization', async () => {
       const queries: DataQuery[] = [{ refId: 'A', hide: true }, { refId: 'B' }];
-      setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
+      setup(queries, {
         ...createEmptyQueryResponse(),
         graphFrames: [new MutableDataFrame({ refId: 'B', fields: [] })],
         logsFrames: [new MutableDataFrame({ refId: 'A', fields: [] })],
