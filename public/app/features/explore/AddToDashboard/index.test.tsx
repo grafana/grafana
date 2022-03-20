@@ -10,13 +10,10 @@ import { locationService } from '@grafana/runtime';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import * as api from './addToDashboard';
 import * as dashboardApi from 'app/features/manage-dashboards/state/actions';
+import * as appNotification from 'app/core/copy/appNotification';
 import { AddToDashboard } from '.';
 
-const setup = (
-  children: JSX.Element,
-  queries: DataQuery[] = [],
-  queryResponse: ExplorePanelData = createEmptyQueryResponse()
-) => {
+const setup = (children: JSX.Element, queries: DataQuery[] = [], queryResponse?: ExplorePanelData) => {
   const store = configureStore({
     explore: {
       left: {
@@ -66,10 +63,10 @@ describe('Add to Dashboard Button', () => {
 
   beforeEach(() => {
     jest.spyOn(dashboardApi, 'searchFolders').mockReturnValue(searchFoldersResponse);
-    // TODO: name should be the same passed to `addToDashboard`
+
     addToDashboardMock = jest.spyOn(api, 'addToDashboard').mockImplementation((data) =>
       Promise.resolve({
-        name: data.saveTarget === 'new_dashboard' ? data.dashboardName : 'Some Existing Dashboard Name',
+        name: data.saveTarget === 'new_dashboard' ? data.dashboardName : data.dashboard.title,
         url: '/some/redirect/url',
       })
     );
@@ -89,23 +86,25 @@ describe('Add to Dashboard Button', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  describe('navigation', () => {
-    it('Navigates to dashboard when clicking on "Save and go to dashboard"', async () => {
-      locationService.push = jest.fn();
+  describe('Navigation & success notifications', () => {
+    const successMock = jest.fn();
 
-      setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+    beforeEach(() => {
+      jest
+        .spyOn(appNotification, 'useAppNotification')
+        .mockReturnValue({ success: successMock, error: jest.fn(), warning: jest.fn() });
+    });
 
-      await openModal();
-
-      userEvent.click(screen.getByRole('button', { name: /save and go to dashboard/i }));
-
-      await waitForSearchFolderResponse();
-
-      expect(locationService.push).toHaveBeenCalledWith(redirectURL);
+    afterEach(() => {
+      jest.resetAllMocks();
     });
 
     it('Does NOT navigate to dashboard when clicking on "Save and keep exploring"', async () => {
       locationService.push = jest.fn();
+      const successMock = jest.fn();
+      jest
+        .spyOn(appNotification, 'useAppNotification')
+        .mockReturnValue({ success: successMock, error: jest.fn(), warning: jest.fn() });
 
       setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
 
@@ -118,6 +117,55 @@ describe('Add to Dashboard Button', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
       expect(locationService.push).not.toHaveBeenCalled();
+      expect(successMock).toHaveBeenCalledWith('Panel saved to New dashboard (Explore)');
+    });
+
+    it('Navigates to dashboard when clicking on "Save and go to dashboard"', async () => {
+      locationService.push = jest.fn();
+
+      setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+
+      await openModal();
+
+      userEvent.click(screen.getByRole('button', { name: /save and go to dashboard/i }));
+
+      await waitForSearchFolderResponse();
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(locationService.push).toHaveBeenCalledWith(redirectURL);
+      expect(successMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Error handling', () => {
+    const successMock = jest.fn();
+
+    beforeEach(() => {
+      jest
+        .spyOn(appNotification, 'useAppNotification')
+        .mockReturnValue({ success: successMock, error: jest.fn(), warning: jest.fn() });
+    });
+
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+
+    const cases = [undefined, {}, { data: {} }, { data: { status: 'some-status' } }];
+    it.each(cases)('Handles errors in the form of %o', async (error) => {
+      addToDashboardMock.mockImplementationOnce(() => Promise.reject(error));
+
+      setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }]);
+
+      await openModal();
+
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+
+      await waitForSearchFolderResponse();
+
+      expect(screen.queryByRole('dialog')).toBeInTheDocument();
+
+      expect(locationService.push).not.toHaveBeenCalled();
+      expect(successMock).not.toHaveBeenCalled();
     });
   });
 
@@ -154,154 +202,109 @@ describe('Add to Dashboard Button', () => {
     expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        queries: queries,
+        queries,
       })
     );
   });
 
-  it('Defaults to table if no response is available', async () => {
-    const queries: DataQuery[] = [{ refId: 'A' }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, createEmptyQueryResponse());
+  describe('Setting visualization type', () => {
+    describe('Defaults to table', () => {
+      const cases: Array<[string, DataQuery[], ExplorePanelData | undefined]> = [
+        ['If no response is available', [{ refId: 'A' }], undefined],
+        ['If response is empty', [{ refId: 'A' }], createEmptyQueryResponse()],
+        ['If no query is active', [{ refId: 'A', hide: true }], undefined],
+        [
+          'If no query is active, even when there is a response from a previous execution',
+          [{ refId: 'A', hide: true }],
+          { ...createEmptyQueryResponse(), logsFrames: [new MutableDataFrame({ refId: 'A', fields: [] })] },
+        ],
+        [
+          // trace view is not supported in dashboards, we expect to fallback to table panel
+          'If there are trace frames',
+          [{ refId: 'A' }],
+          { ...createEmptyQueryResponse(), traceFrames: [new MutableDataFrame({ refId: 'A', fields: [] })] },
+        ],
+      ];
 
-    await openModal();
+      it.each(cases)('%s', async (_, queries, queryResponse) => {
+        setup(<AddToDashboard exploreId={ExploreId.left} />, queries, queryResponse);
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+        await openModal();
 
-    await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
+        userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
-    expect(addToDashboardMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        panel: 'table',
-      })
-    );
-  });
+        await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
-  it('Defaults to table if no query is active', async () => {
-    const queries: DataQuery[] = [{ refId: 'A', hide: true }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries);
-
-    await openModal();
-
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
-
-    await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
-
-    expect(addToDashboardMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        panel: 'table',
-      })
-    );
-  });
-
-  it('Filters out hidden queries when selecting visualization', async () => {
-    const queries: DataQuery[] = [{ refId: 'A', hide: true }, { refId: 'B' }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
-      ...createEmptyQueryResponse(),
-      graphFrames: [new MutableDataFrame({ refId: 'B', fields: [] })],
-      logsFrames: [new MutableDataFrame({ refId: 'A', fields: [] })],
+        expect(addToDashboardMock).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            panel: 'table',
+          })
+        );
+      });
     });
 
-    await openModal();
+    describe('Correctly set visualization based on response', () => {
+      type TestArgs = {
+        framesType: string;
+        expectedPanel: string;
+      };
+      // Note: traceFrames test is "duplicated" in "Defaults to table" tests.
+      // This is intentional as a way to enforce explicit tests for that case whenever in the future we'll
+      // add support for creating traceview panels
+      it.each`
+        framesType           | expectedPanel
+        ${'logsFrames'}      | ${'logs'}
+        ${'graphFrames'}     | ${'timeseries'}
+        ${'nodeGraphFrames'} | ${'nodeGraph'}
+        ${'traceFrames'}     | ${'table'}
+      `(
+        'Sets visualization to $expectedPanel if there are $frameType frames',
+        async ({ framesType, expectedPanel }: TestArgs) => {
+          const queryResponse: ExplorePanelData = {
+            ...createEmptyQueryResponse(),
+            [framesType]: [new MutableDataFrame({ refId: 'A', fields: [] })],
+          };
+          setup(<AddToDashboard exploreId={ExploreId.left} />, [{ refId: 'A' }], queryResponse);
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+          await openModal();
 
-    await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
+          userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
-    // Query A comes before B, but it's hidden. visualization will be picked according to frames generated by B
-    expect(addToDashboardMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        queries: queries,
-        panel: 'timeseries',
-      })
-    );
-  });
+          await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
-  it('Sets visualization to logs if there are log frames', async () => {
-    const queries: DataQuery[] = [{ refId: 'A' }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
-      ...createEmptyQueryResponse(),
-      logsFrames: [new MutableDataFrame({ refId: 'A', fields: [] })],
+          expect(addToDashboardMock).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+              panel: expectedPanel,
+            })
+          );
+        }
+      );
     });
 
-    await openModal();
+    it('Filters out hidden queries when selecting visualization', async () => {
+      const queries: DataQuery[] = [{ refId: 'A', hide: true }, { refId: 'B' }];
+      setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
+        ...createEmptyQueryResponse(),
+        graphFrames: [new MutableDataFrame({ refId: 'B', fields: [] })],
+        logsFrames: [new MutableDataFrame({ refId: 'A', fields: [] })],
+      });
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await openModal();
 
-    await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
-    // Query A comes before B, but it's hidden. visualization will be picked according to frames generated by B
-    expect(addToDashboardMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        panel: 'logs',
-      })
-    );
-  });
+      await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
-  it('Sets visualization to timeseries if there are graph frames', async () => {
-    const queries: DataQuery[] = [{ refId: 'A' }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
-      ...createEmptyQueryResponse(),
-      graphFrames: [new MutableDataFrame({ refId: 'A', fields: [] })],
+      // Query A comes before B, but it's hidden. visualization will be picked according to frames generated by B
+      expect(addToDashboardMock).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          queries: queries,
+          panel: 'timeseries',
+        })
+      );
     });
-
-    await openModal();
-
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
-
-    await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
-
-    expect(addToDashboardMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        panel: 'timeseries',
-      })
-    );
-  });
-
-  it('Sets visualization to nodeGraph if there are node graph frames', async () => {
-    const queries: DataQuery[] = [{ refId: 'A' }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
-      ...createEmptyQueryResponse(),
-      nodeGraphFrames: [new MutableDataFrame({ refId: 'A', fields: [] })],
-    });
-
-    await openModal();
-
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
-
-    await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
-
-    expect(addToDashboardMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        panel: 'nodeGraph',
-      })
-    );
-  });
-
-  // trace view is not supported in dashboards, defaulting to table
-  it('Sets visualization to table if there are trace frames', async () => {
-    const queries: DataQuery[] = [{ refId: 'A' }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
-      ...createEmptyQueryResponse(),
-      traceFrames: [new MutableDataFrame({ refId: 'A', fields: [] })],
-    });
-
-    await openModal();
-
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
-
-    await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
-
-    expect(addToDashboardMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        panel: 'table',
-      })
-    );
   });
 });

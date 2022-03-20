@@ -178,12 +178,12 @@ describe('Add to Dashboard Modal', () => {
       });
     });
 
-    describe('Handling API errors', () => {
+    describe('Error handling', () => {
       beforeEach(() => jest.spyOn(dashboardApi, 'searchFolders').mockReturnValue(searchFoldersResponse));
 
       afterEach(() => jest.restoreAllMocks());
 
-      it('Correctly handles name-exist API Error', async () => {
+      it('Correctly handles name-exist error', async () => {
         // name-exists is triggered when trying to create a dashboard in a folder that already has a dashboard with the same name
         const saveMock = jest.fn().mockResolvedValue({ status: 'name-exists' });
 
@@ -197,7 +197,7 @@ describe('Add to Dashboard Modal', () => {
         );
       });
 
-      it('Correctly handles empty name API Error', async () => {
+      it('Correctly handles empty-name error', async () => {
         // empty-name is triggered when trying to create a dashboard having an empty name.
         // FE validation usually avoids this scenario, plus the input is automatically trimmed before validation.
         // leaving it here for completeness.
@@ -214,7 +214,7 @@ describe('Add to Dashboard Modal', () => {
         expect(await screen.findByRole('alert')).toHaveTextContent('Dashboard name is required.');
       });
 
-      it('Correctly handles name match API Error', async () => {
+      it('Correctly handles name-match error', async () => {
         // name-match, triggered when trying to create a dashboard in a folder that has the same name.
         // it doesn't seem to ever be triggered, but matches the error in
         // https://github.com/grafana/grafana/blob/44f1e381cbc7a5e236b543bc6bd06b00e3152d7f/pkg/models/dashboards.go#L71
@@ -253,7 +253,7 @@ describe('Add to Dashboard Modal', () => {
         expect(await screen.findByRole('alert')).toHaveTextContent("Can't save a provisioned dashboard");
       });
 
-      it('Correctly handles unknown API errors that return descriptive messages', async () => {
+      it('Correctly handles unknown errors with descriptive messages', async () => {
         const saveMock = jest.fn().mockResolvedValueOnce({ status: 'unknown-error', message: 'unknown error' });
 
         render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
@@ -264,7 +264,7 @@ describe('Add to Dashboard Modal', () => {
         expect(await screen.findByRole('alert')).toHaveTextContent('unknown error');
       });
 
-      it('Correctly handles unknown API', async () => {
+      it('Correctly handles unknown errors without descriptive messages', async () => {
         const saveMock = jest.fn().mockResolvedValueOnce({ status: 'unknown-error' });
 
         render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
