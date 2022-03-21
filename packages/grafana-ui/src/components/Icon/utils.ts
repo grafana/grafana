@@ -17,7 +17,7 @@ export function getIconSubDir(name: IconName, type: string): string {
 }
 
 /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
-export const getSvgSize = (size: IconSize) => {
+export function getSvgSize(size: IconSize) {
   switch (size) {
     case 'xs':
       return 12;
@@ -34,4 +34,4 @@ export const getSvgSize = (size: IconSize) => {
     case 'xxxl':
       return 48;
   }
-};
+}
