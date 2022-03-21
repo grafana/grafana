@@ -1,6 +1,6 @@
 import { getIconSubDir } from './utils';
 
-describe('Icon', () => {
+describe('Icon utils', () => {
   describe('getIconSubDir', () => {
     it.each`
       name          | type         | expected
