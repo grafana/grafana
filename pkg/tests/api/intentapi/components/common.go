@@ -69,7 +69,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 			res := zeroObjectOfType(t, postBody)
 			err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
 			condition := testCase.postAssertFunc(t, res)
-			t.Log("after POST:", "error: ", err.Error(), "condition:", condition)
+			t.Log("after POST:", "error: ", err, "condition:", condition)
 			return err == nil && condition
 		}, 10*time.Second, 250*time.Millisecond, "unexpected object state after POST")
 
@@ -99,7 +99,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 				res := zeroObjectOfType(t, postBody)
 				err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
 				condition := testCase.putAssertFunc(t, res)
-				t.Log("after PUT:", "error: ", err.Error(), "condition:", condition)
+				t.Log("after PUT:", "error: ", err, "condition:", condition)
 				return err == nil && condition
 			}, 10*time.Second, 250*time.Millisecond, "unexpected object state after PUT")
 		})
@@ -118,7 +118,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 				// make sure that the object is deleted from the store
 				res := zeroObjectOfType(t, postBody)
 				err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
-				t.Log("after PUT", "error: ", err.Error())
+				t.Log("after PUT", "error: ", err)
 				return err != nil
 			}, 10*time.Second, 10*time.Millisecond, "unexpected object state after DELETE")
 		})
