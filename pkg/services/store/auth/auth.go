@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 var (
@@ -45,8 +45,12 @@ func createPathFilters(prefix string, action string, user *models.SignedInUser, 
 	for _, scope := range user.Permissions[user.OrgId][action] {
 		path := parsePath(scope)
 
-		if path == "/*" {
-			allowedPrefixes = append(allowedPrefixes, "/")
+		if path == ac.ScopeFilesAllowAll {
+			allowedPrefixes = append(allowedPrefixes, filestorage.Delimiter)
+		}
+
+		if path == ac.ScopeFilesDenyAll {
+			allowedPrefixes = append(allowedPrefixes, filestorage.Delimiter)
 		}
 
 		if strings.HasPrefix(scope, denyScope) {
@@ -99,8 +103,8 @@ func (a *storageAuthService) createPathFilters(ctx context.Context, action strin
 }
 
 func (a *storageAuthService) NewGuardian(ctx context.Context, user *models.SignedInUser, storagePrefix string) FilesGuardian {
-	readFilters := a.createPathFilters(ctx, accesscontrol.ActionFilesRead, user, storagePrefix)
-	writeFilters := a.createPathFilters(ctx, accesscontrol.ActionFilesWrite, user, storagePrefix)
+	readFilters := a.createPathFilters(ctx, ac.ActionFilesRead, user, storagePrefix)
+	writeFilters := a.createPathFilters(ctx, ac.ActionFilesWrite, user, storagePrefix)
 	return &filesGuardian{
 		ctx:           ctx,
 		user:          user,
@@ -115,7 +119,7 @@ type filesGuardian struct {
 	ctx           context.Context
 	user          *models.SignedInUser
 	storagePrefix string
-	ac            accesscontrol.AccessControl
+	ac            ac.AccessControl
 	readFilters   *filestorage.PathFilters
 	writeFilters  *filestorage.PathFilters
 	log           log.Logger
@@ -140,13 +144,13 @@ func (a *filesGuardian) CanView(path string) bool {
 func (a *filesGuardian) can(action string, path string) bool {
 	var allow bool
 	switch action {
-	case accesscontrol.ActionFilesCreate:
+	case ac.ActionFilesCreate:
 		fallthrough
-	case accesscontrol.ActionFilesWrite:
+	case ac.ActionFilesWrite:
 		fallthrough
-	case accesscontrol.ActionFilesDelete:
+	case ac.ActionFilesDelete:
 		allow = a.CanSave(path)
-	case accesscontrol.ActionFilesRead:
+	case ac.ActionFilesRead:
 		allow = a.CanView(path)
 	default:
 		storeAuthMainLogger.Warn("Unsupported action", "action", action, "path", path)
@@ -160,11 +164,11 @@ func (a *filesGuardian) can(action string, path string) bool {
 }
 
 func allowFileScope(path string) string {
-	return accesscontrol.Scope("files", "path", path)
+	return ac.Scope("files", "path", path)
 }
 
 func denyFileScope(path string) string {
-	return accesscontrol.Scope("files", "path", "!"+path)
+	return ac.Scope("files", "path", "!"+path)
 }
 
 func isDenyFileScope(scope string) bool {
@@ -181,5 +185,5 @@ func addPrefixToFileScope(scope string, prefix string) string {
 }
 
 func fileScope(path string) string {
-	return accesscontrol.Scope("files", "path", path)
+	return ac.Scope("files", "path", path)
 }

@@ -27,12 +27,8 @@ func TestAuth(t *testing.T) {
 		name    string
 	}{
 		{
-			service: NewRadixTreeStorageAuthService(),
-			name:    "radixTree",
-		},
-		{
 			service: NewStorageAuthService(),
-			name:    "arrays",
+			name:    "authService",
 		},
 	}
 

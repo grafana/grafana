@@ -97,6 +97,7 @@ func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
 		}
 	}
 
+	base.initializeTrees()
 	return base
 }
 

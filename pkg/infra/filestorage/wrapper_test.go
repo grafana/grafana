@@ -135,7 +135,12 @@ func TestWrapper_addPathFilters(t *testing.T) {
 	}
 
 	for _, tt := range testcases {
-		require.Equal(t, tt.expected, addPathFilters(tt.base, tt.toAdd))
+		expected := tt.expected
+		added := addPathFilters(tt.base, tt.toAdd)
+
+		expected.trees = nil
+		added.trees = nil
+		require.Equal(t, expected, added)
 	}
 
 	t.Run("should not reuse arrays allocations from the second arg", func(t *testing.T) {

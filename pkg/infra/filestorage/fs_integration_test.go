@@ -380,23 +380,23 @@ func TestFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder2"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: NewPathFilters([]string{"/folder2"}, nil, nil, nil)}},
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder2"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true, PathFilters: NewPathFilters([]string{"/folder2"}, nil, nil, nil)}},
 						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
 						files: [][]interface{}{},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: NewPathFilters([]string{"/folder1/folder"}, nil, nil, nil)}},
 						list:  checks(listSize(1), listHasMore(false)),
 						files: [][]interface{}{
 							checks(fPath("/folder1/folder2/file.jpg")),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true, PathFilters: &PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true, PathFilters: NewPathFilters([]string{"/folder1/folder"}, nil, nil, nil)}},
 						list:  checks(listSize(2), listHasMore(false)),
 						files: [][]interface{}{
 							checks(fPath("/folder1/folder2"), fMimeType("directory")),
