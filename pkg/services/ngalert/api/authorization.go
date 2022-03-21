@@ -221,7 +221,7 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 			}
 		}
 
-		// Check if the rule is moved from one folder to the current. If yes, then user must have authorization to delete rules from source folder and add rules to the target folder
+		// Check if the rule is moved from one folder to the current. If yes, then the user must have the authorization to delete rules from the source folder and add rules to the target folder.
 		if rule.Existing.NamespaceUID != rule.New.NamespaceUID {
 			allowed := evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID))))
 			if !allowed {
