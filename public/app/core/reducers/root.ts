@@ -19,7 +19,6 @@ import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/s
 import panelsReducers from 'app/features/panel/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
-import searchPageReducers from 'app/features/search/page/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -40,7 +39,6 @@ const rootReducers = {
   ...panelEditorReducers,
   ...panelsReducers,
   ...templatingReducers,
-  ...searchPageReducers,
   plugins: pluginsReducer,
 };
 

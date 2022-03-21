@@ -291,7 +291,7 @@ func (m *SQLStoreMock) PatchPreferences(ctx context.Context, cmd *models.PatchPr
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error) {
 	return nil, m.ExpectedError
 }
 
@@ -380,6 +380,7 @@ func (m *SQLStoreMock) DeleteExpiredVersions(ctx context.Context, cmd *models.De
 }
 
 func (m SQLStoreMock) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	query.Result = m.ExpectedDashboardAclInfoList
 	return m.ExpectedError
 }
 

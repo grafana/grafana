@@ -100,7 +100,7 @@ func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 
 	for _, scope := range scopes {
 		if strings.HasPrefix(scope, rootPrefix) || scope == "*" {
-			if id := strings.TrimPrefix(scope, rootPrefix); id == "*" || id == attributePrefix+"*" {
+			if id := strings.TrimPrefix(scope, rootPrefix); id == "*" || id == strings.TrimPrefix(attributePrefix, rootPrefix)+"*" {
 				return nil, true
 			}
 
@@ -115,8 +115,6 @@ func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 	}
 	return ids, false
 }
-
-type attributeParser func(scope string) (interface{}, error)
 
 func parseIntAttribute(scope string) (interface{}, error) {
 	return strconv.ParseInt(scope[strings.LastIndex(scope, ":")+1:], 10, 64)
