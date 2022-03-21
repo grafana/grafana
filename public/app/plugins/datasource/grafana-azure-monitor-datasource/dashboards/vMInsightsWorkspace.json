@@ -1,4 +1,44 @@
 {
+  "__inputs": [],
+  "__elements": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.4.3"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-azure-monitor-datasource",
+      "name": "Azure Monitor",
+      "version": "0.3.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -21,15 +61,13 @@
   "description": "This dashboard shows the performance and health of Azure Virtual Machines via different metrics collected by Azure Monitor VM Insights.",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1645666162409,
+  "iteration": 1647619109724,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": null,
       "gridPos": {
         "h": 5,
         "w": 24,
@@ -41,13 +79,12 @@
         "content": "<div style=\"padding: 1em; text-align: center\">\n    <p>Welcome to the Azure Monitor data source for Grafana. To learn more about it, visit our <a href=\"https://grafana.com/docs/grafana/latest/datasources/azuremonitor/\" target=\"__blank\">docs</a>.  </p>\n  <p>  Choose the resource group(s) with VMs enabled with Azure Monitor VM Insights and related Workspace to get started.</p>\n</div>",
         "mode": "markdown"
       },
-      "pluginVersion": "8.2.7.1",
+      "pluginVersion": "8.4.3",
       "title": "How to activate this dashboard",
       "type": "text"
     },
     {
       "collapsed": false,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -60,7 +97,9 @@
       "type": "row"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -129,7 +168,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -207,7 +247,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -236,12 +279,78 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "list_TrendPoint"
+              "options": "Computer"
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "basic"
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "https://ms.portal.azure.com/#@${__data.fields[\"Tenant ID\"]}/resource/subscriptions/﻿${sub}﻿/resourcegroups/${__data.fields[\"Resource Group\"]}/providers/microsoft.compute/﻿${__data.fields.Type}﻿/${__data.fields[\"Resource Name\"]}/infrainsights"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Average"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 76
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P50th"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 77
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P90th"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 75
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P95th"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 72
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 78
               }
             ]
           }
@@ -255,62 +364,120 @@
       },
       "id": 26,
       "options": {
-        "showHeader": true
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "frameIndex": 1,
+        "showHeader": true,
+        "sortBy": []
       },
-      "pluginVersion": "8.2.7.1",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 500;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')    \r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        let NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;let trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n| project ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by ComputerId, Computer;\r\nsummaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| project Average, P50th, P90th, P95th, Max, Computer\r\n",
+            "query": "\r\nlet startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')  \r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resourceGroup '/p(.+)' *\t\r\n| where resourceGroup in~ ($rg)  \r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey = ComputerId Average = round(avg(Val), 2), Max = max(Val), percentiles(Val, 5, 10, 50, 80, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P80th = percentile_Val_80, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName), strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''), AzureScaleSetNodeIdentity = iif(isnotempty\r\n(AzureVmScaleSetName), strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''), ComputerProps = pack('type', 'StandAloneNode', 'name', DisplayName, 'mappingResourceId', \r\nResourceId, 'subscriptionId', AzureSubscriptionId, 'resourceGroup', AzureResourceGroup, 'azureResourceId', _ResourceId), AzureCloudServiceNodeProps =  pack('type', 'AzureCloudServiceNode',\r\n'cloudServiceInstanceId', AzureCloudServiceInstanceId, 'cloudServiceRoleName', AzureCloudServiceRoleName, 'cloudServiceDeploymentId', AzureCloudServiceDeployment, 'fullDisplayName', FullDisplayName,'cloudServiceName', AzureCloudServiceName, 'mappingResourceId', ResourceId), AzureScaleSetNodeProps = pack('type', 'AzureScaleSetNode', 'scaleSetInstanceId', AzureResourceName, 'vmScaleSetDeploymentId', \r\nAzureVmScaleSetDeployment, 'vmScaleSetName', AzureVmScaleSetName, 'serviceFabricClusterName', AzureServiceFabricClusterName, 'vmScaleSetResourceId', AzureVmScaleSetResourceId, 'resourceGroupName', \r\nAzureResourceGroup, 'subscriptionId', AzureSubscriptionId, 'fullDisplayName', FullDisplayName, 'mappingResourceId', ResourceId)        \r\n| project   ComputerId, Computer, NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity, isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity,\r\nComputer), NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps, isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps), Priority = 2;\r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps\r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| project ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by ComputerId, Computer;\r\nsummaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| parse tolower(ResourceId) with * \"virtualmachinescalesets/\" scaleSetName \"/virtualmachines/\" vmNameScale\r\n| parse tolower(ResourceId) with * \"virtualmachines/\" vmName\r\n| parse tolower(ResourceId) with * \"resourcegroups/\" resourceGroup \"/providers/microsoft.compute/\" typeVM \"/\" nameVM\r\n| parse tolower(ResourceId) with * \"microsoft.compute/\" typeScale \"/\" nameScale \"/virtualmachines\" remaining\r\n| project resourceGroup, Average, P50th, P90th, P95th, Max, Computer, Type = iff(isnotempty(typeScale), typeScale, typeVM), Name = iff(isnotempty(nameScale), nameScale, nameVM)",
             "resource": "$ws",
             "resultFormat": "table"
           },
           "azureMonitor": {
             "timeGrain": "auto"
           },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "hide": false,
           "queryType": "Azure Log Analytics",
           "refId": "A",
           "subscription": ""
+        },
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where tolower(type) contains \"virtualmachines\" and resourceGroup in~ ($rg) \r\n| project Name = tolower(name), tenantId, resourceGroup"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "hide": false,
+          "queryType": "Azure Resource Graph",
+          "refId": "B",
+          "subscription": "",
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "CPU Utilization % Statistics",
       "transformations": [
         {
+          "id": "merge",
+          "options": {}
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
               "Max": false,
-              "NodeId": true,
-              "NodeProps": true,
+              "NodeId": false,
+              "NodeProps": false,
               "P50th": false,
-              "ResourceId": true
+              "ResourceId": false,
+              "name 2": true
             },
             "indexByName": {
-              "Average": 1,
+              "Average": 2,
               "Computer": 0,
-              "Max": 9,
-              "NodeId": 7,
-              "NodeProps": 8,
-              "P10th": 3,
-              "P50th": 4,
-              "P5th": 2,
-              "P90th": 5,
-              "P95th": 6,
-              "ResourceId": 12,
-              "UseRelativeScale": 11,
-              "list_TrendPoint": 10
+              "Max": 6,
+              "Name": 8,
+              "P50th": 3,
+              "P90th": 4,
+              "P95th": 5,
+              "Type": 7,
+              "resourceGroup": 1,
+              "tenantId": 9
             },
             "renameByName": {
+              "Column1": "Computer",
+              "Name": "Resource Name",
+              "ResourceId": "Resource ID",
               "UseRelativeScale": "",
-              "list_TrendPoint": "95th Trend"
+              "list_TrendPoint": "95th Trend",
+              "resGroup": "Resource Group",
+              "resourceGroup": "Resource Group",
+              "tenantId": "Tenant ID",
+              "typeName": "Type/Name"
             }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "isNotNull",
+                  "options": {}
+                },
+                "fieldName": "Computer"
+              }
+            ],
+            "match": "all",
+            "type": "include"
           }
         }
       ],
       "type": "table"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -354,16 +521,20 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.7.1",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = (endDateTime - startDateTime)/100;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachine`alesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n | extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n | where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n | extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n | summarize arg_max(TimeGenerated, *) by Machine        \r\n | extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName), strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''), AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName), strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''), ComputerProps = pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n | project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\n let NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n | summarize arg_max(Priority, *) by ComputerId;\r\n summary\r\n | join (InsightsMetrics    \r\n | where TimeGenerated between (startDateTime .. endDateTime)    \r\n | where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')    \r\n | extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)    \r\n | where ComputerId in (computerList)    \r\n | summarize P95th = round(percentile(Val, 95), 2) by bin(TimeGenerated, trendBinSize), ComputerId   \r\n | sort by TimeGenerated asc) on ComputerId",
+            "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = (endDateTime - startDateTime)/100;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachine`alesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n | extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n | where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n | extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n | summarize arg_max(TimeGenerated, *) by Machine        \r\n | extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName), strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''), AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName), strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''), ComputerProps = pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n | project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\n let NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n | summarize arg_max(Priority, *) by ComputerId;\r\n summary\r\n | join (InsightsMetrics    \r\n | where TimeGenerated between (startDateTime .. endDateTime)    \r\n | where Origin == 'vm.azm.ms' and (Namespace == 'Processor' and Name == 'UtilizationPercentage')    \r\n | extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)    \r\n | where ComputerId in (computerList)    \r\n | summarize Max = max(Val) by bin(TimeGenerated, trendBinSize), ComputerId  \r\n | sort by TimeGenerated asc) on ComputerId",
             "resource": "$ws",
             "resultFormat": "table"
           },
           "azureMonitor": {
             "timeGrain": "auto"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -411,7 +582,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -421,7 +591,9 @@
       "id": 30,
       "panels": [
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -462,8 +634,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -479,7 +650,7 @@
             "h": 10,
             "w": 24,
             "x": 0,
-            "y": 2
+            "y": 7
           },
           "id": 8,
           "options": {
@@ -489,7 +660,8 @@
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
@@ -559,7 +731,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -574,8 +749,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -584,36 +758,147 @@
                 ]
               }
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Min"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 81
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P5th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 99
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P10th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 77
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P50th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 91
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Average"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 78
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Computer"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "targetBlank": true,
+                        "title": "",
+                        "url": "https://ms.portal.azure.com/#@${__data.fields[\"Tenant ID\"]}/resource/subscriptions/${sub}﻿/resourcegroups/${__data.fields[\"Resource Group\"]}/providers/microsoft.compute/﻿${__data.fields.Type}/${__data.fields[\"Resource Name\"]}﻿/infrainsights"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 12,
             "w": 14,
             "x": 0,
-            "y": 12
+            "y": 17
           },
           "id": 32,
           "options": {
-            "showHeader": true
+            "footer": {
+              "fields": "",
+              "reducer": ["sum"],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": []
           },
-          "pluginVersion": "8.2.7.1",
+          "pluginVersion": "8.4.3",
           "targets": [
             {
               "azureLogAnalytics": {
-                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey = ComputerId Average = round(avg(Val), 2), Min = min(Val), percentiles(Val, 5, 10, 50, 80, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Min, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P80th = percentile_Val_80,\r\nP90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| project ComputerId, Computer;\r\nsummaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| project Computer, Min, Average, P5th, P10th, P50th\r\n",
+                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey = ComputerId Average = round(avg(Val), 2), Min = min(Val), percentiles(Val, 5, 10, 50, 80, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Min, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P80th = percentile_Val_80,\r\nP90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| project ComputerId, Computer;\r\nsummaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| parse tolower(ResourceId) with * \"virtualmachinescalesets/\" scaleSetName \"/virtualmachines/\" vmNameScale\r\n| parse tolower(ResourceId) with * \"virtualmachines/\" vmName\r\n| parse tolower(ResourceId) with * \"resourcegroups/\" resourceGroup \"/providers/microsoft.compute/\" typeVM \"/\" nameVM\r\n| parse tolower(ResourceId) with * \"microsoft.compute/\" typeScale \"/\" nameScale \"/virtualmachines\" remaining\r\n| project resourceGroup, Min, Average, P5th, P10th, P50th, Computer, Type = iff(isnotempty(typeScale), typeScale, typeVM), Name = iff(isnotempty(nameScale), nameScale, nameVM)\r\n",
                 "resource": "$ws",
                 "resultFormat": "table"
               },
               "azureMonitor": {
                 "timeGrain": "auto"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
+              },
               "queryType": "Azure Log Analytics",
               "refId": "A",
               "subscription": ""
+            },
+            {
+              "azureMonitor": {
+                "dimensionFilters": [],
+                "timeGrain": "auto"
+              },
+              "azureResourceGraph": {
+                "query": "resources\r\n| where tolower(type) contains \"virtualmachines\" and resourceGroup in~ ($rg) \r\n| project Name = tolower(name), tenantId, resourceGroup"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
+              },
+              "hide": false,
+              "queryType": "Azure Resource Graph",
+              "refId": "B",
+              "subscription": "",
+              "subscriptions": ["$sub"]
             }
           ],
           "title": "Available Memory Statistics",
           "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
             {
               "id": "organize",
               "options": {
@@ -625,28 +910,51 @@
                   "list_TrendPoint": true
                 },
                 "indexByName": {
-                  "Average": 5,
+                  "Average": 6,
                   "Computer": 0,
-                  "Min": 1,
-                  "NodeId": 9,
-                  "NodeProps": 10,
-                  "P10th": 3,
-                  "P50th": 4,
-                  "P5th": 2,
-                  "ResourceId": 8,
-                  "UseRelativeScale": 7,
-                  "list_TrendPoint": 6
+                  "Min": 2,
+                  "Name": 8,
+                  "P10th": 4,
+                  "P50th": 5,
+                  "P5th": 3,
+                  "Type": 7,
+                  "resourceGroup": 1,
+                  "tenantId": 9
                 },
                 "renameByName": {
-                  "list_TrendPoint": "P5th Trend"
+                  "Name": "Resource Name",
+                  "list_TrendPoint": "P5th Trend",
+                  "resGroup": "Resource Group",
+                  "resourceGroup": "Resource Group",
+                  "tenantId": "Tenant ID",
+                  "typeName": "Type/Name"
                 }
+              }
+            },
+            {
+              "id": "filterByValue",
+              "options": {
+                "filters": [
+                  {
+                    "config": {
+                      "id": "isNotNull",
+                      "options": {}
+                    },
+                    "fieldName": "Computer"
+                  }
+                ],
+                "match": "all",
+                "type": "include"
               }
             }
           ],
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -658,8 +966,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -674,7 +981,7 @@
             "h": 12,
             "w": 10,
             "x": 14,
-            "y": 12
+            "y": 17
           },
           "id": 44,
           "options": {
@@ -690,16 +997,20 @@
             "text": {},
             "textMode": "value_and_name"
           },
-          "pluginVersion": "8.2.7.1",
+          "pluginVersion": "8.4.3",
           "targets": [
             {
               "azureLogAnalytics": {
-                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize =  (endDateTime - startDateTime)/100;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n|where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true  EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nsummary\r\n| join (InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize P5th = round(percentile(Val, 5), 2) by bin(TimeGenerated, trendBinSize), ComputerId\r\n| sort by TimeGenerated asc) on ComputerId\r\n",
+                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize =  (endDateTime - startDateTime)/100;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n|where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true  EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nsummary\r\n| join (InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Memory' and Name == 'AvailableMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Min = min(Val) by bin(TimeGenerated, trendBinSize), ComputerId\r\n| sort by TimeGenerated asc) on ComputerId\r\n",
                 "resource": "$ws",
                 "resultFormat": "table"
               },
               "azureMonitor": {
                 "timeGrain": "auto"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
               },
               "queryType": "Azure Log Analytics",
               "refId": "A"
@@ -748,7 +1059,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -758,7 +1068,9 @@
       "id": 22,
       "panels": [
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -799,8 +1111,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -816,7 +1127,7 @@
             "h": 11,
             "w": 24,
             "x": 0,
-            "y": 3
+            "y": 8
           },
           "id": 12,
           "options": {
@@ -826,7 +1137,8 @@
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
@@ -897,7 +1209,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -912,8 +1227,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -922,36 +1236,147 @@
                 ]
               }
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Computer"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "targetBlank": true,
+                        "title": "",
+                        "url": "https://ms.portal.azure.com/#@${__data.fields[\"Tenant ID\"]}/resource/subscriptions/${sub}/resourcegroups/${__data.fields[\"Resource Group\"]}/providers/microsoft.compute/${__data.fields.Type}/${__data.fields[\"Resource Name\"]}/infrainsights"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Average"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 94
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P50th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 86
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P90th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 101
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P95th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 97
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Max"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 131
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 12,
             "w": 14,
             "x": 0,
-            "y": 14
+            "y": 19
           },
           "id": 34,
           "options": {
-            "showHeader": true
+            "footer": {
+              "fields": "",
+              "reducer": ["sum"],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": []
           },
-          "pluginVersion": "8.2.7.1",
+          "pluginVersion": "8.4.3",
           "targets": [
             {
               "azureLogAnalytics": {
-                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n| project ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by ComputerId, Computer;\r\nsummaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| project Average, P50th, P90th, P95th, Max, Computer\r\n",
+                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n| project ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by ComputerId, Computer;\r\nsummaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| parse tolower(ResourceId) with * \"virtualmachinescalesets/\" scaleSetName \"/virtualmachines/\" vmNameScale\r\n| parse tolower(ResourceId) with * \"virtualmachines/\" vmName\r\n| parse tolower(ResourceId) with * \"resourcegroups/\" resourceGroup \"/providers/microsoft.compute/\" typeVM \"/\" nameVM\r\n| parse tolower(ResourceId) with * \"microsoft.compute/\" typeScale \"/\" nameScale \"/virtualmachines\" remaining\r\n| project resourceGroup, Average, P50th, P90th, P95th, Max, Computer, Type = iff(isnotempty(typeScale), typeScale, typeVM), Name = iff(isnotempty(nameScale), nameScale, nameVM)\r\n",
                 "resource": "$ws",
                 "resultFormat": "table"
               },
               "azureMonitor": {
                 "timeGrain": "auto"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
+              },
               "queryType": "Azure Log Analytics",
               "refId": "A",
               "subscription": ""
+            },
+            {
+              "azureMonitor": {
+                "dimensionFilters": [],
+                "timeGrain": "auto"
+              },
+              "azureResourceGraph": {
+                "query": "resources\r\n| where tolower(type) contains \"virtualmachines\" and resourceGroup in~ ($rg) \r\n| project Name = tolower(name), tenantId, resourceGroup"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
+              },
+              "hide": false,
+              "queryType": "Azure Resource Graph",
+              "refId": "B",
+              "subscription": "",
+              "subscriptions": ["$sub"]
             }
           ],
           "title": "Available Bytes Sent Statistics",
           "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
             {
               "id": "organize",
               "options": {
@@ -962,28 +1387,51 @@
                   "UseRelativeScale": true
                 },
                 "indexByName": {
-                  "Average": 1,
+                  "Average": 2,
                   "Computer": 0,
-                  "Max": 5,
-                  "NodeId": 9,
-                  "NodeProps": 10,
-                  "P50th": 2,
-                  "P90th": 3,
-                  "P95th": 4,
-                  "ResourceId": 8,
-                  "UseRelativeScale": 7,
-                  "list_TrendPoint": 6
+                  "Max": 6,
+                  "Name": 8,
+                  "P50th": 3,
+                  "P90th": 4,
+                  "P95th": 5,
+                  "Type": 7,
+                  "resourceGroup": 1,
+                  "tenantId": 9
                 },
                 "renameByName": {
-                  "list_TrendPoint": "Trend 95th"
+                  "Name": "Resource Name",
+                  "list_TrendPoint": "Trend 95th",
+                  "resGroup": "Resource Group",
+                  "resourceGroup": "Resource Group",
+                  "tenantId": "Tenant ID",
+                  "typeName": "Type/Name"
                 }
+              }
+            },
+            {
+              "id": "filterByValue",
+              "options": {
+                "filters": [
+                  {
+                    "config": {
+                      "id": "isNotNull",
+                      "options": {}
+                    },
+                    "fieldName": "Computer"
+                  }
+                ],
+                "match": "all",
+                "type": "include"
               }
             }
           ],
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -995,8 +1443,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1011,7 +1458,7 @@
             "h": 12,
             "w": 10,
             "x": 14,
-            "y": 14
+            "y": 19
           },
           "id": 48,
           "options": {
@@ -1027,16 +1474,20 @@
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.2.7.1",
+          "pluginVersion": "8.4.3",
           "targets": [
             {
               "azureLogAnalytics": {
-                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = (endDateTime - startDateTime)/100;\r\nlet MaxListSize = 1000;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, Computer\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        let ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        let NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;summary\r\n| join (InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, Computer\r\n| summarize P95th = round(percentile(Val, 95), 2) by bin(TimeGenerated, trendBinSize), ComputerId\r\n| sort by TimeGenerated asc) on ComputerId\r\n",
+                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = (endDateTime - startDateTime)/100;\r\nlet MaxListSize = 1000;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, Computer\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        let ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        let NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;summary\r\n| join (InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'WriteBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, Computer\r\n| summarize Max = max(Val) by bin(TimeGenerated, trendBinSize), ComputerId\r\n| sort by TimeGenerated asc) on ComputerId\r\n",
                 "resource": "$ws",
                 "resultFormat": "table"
               },
               "azureMonitor": {
                 "timeGrain": "auto"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
               },
               "queryType": "Azure Log Analytics",
               "refId": "A",
@@ -1086,7 +1537,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1096,7 +1546,9 @@
       "id": 36,
       "panels": [
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1137,8 +1589,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1154,7 +1605,7 @@
             "h": 11,
             "w": 24,
             "x": 0,
-            "y": 4
+            "y": 9
           },
           "id": 16,
           "options": {
@@ -1164,7 +1615,8 @@
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
@@ -1233,7 +1685,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1248,8 +1703,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1258,36 +1712,147 @@
                 ]
               }
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Computer"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "targetBlank": true,
+                        "title": "",
+                        "url": "https://ms.portal.azure.com/#@${__data.fields[\"Tenant ID\"]}/resource/subscriptions/${sub}/resourcegroups/${__data.fields[\"Resource Group\"]}/providers/microsoft.compute/${__data.fields.Type}/${__data.fields[\"Resource Name\"]}/infrainsights"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Average"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 97
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P50th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 82
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P90th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 99
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P95th"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 89
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Max"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 93
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 12,
             "w": 14,
             "x": 0,
-            "y": 15
+            "y": 20
           },
           "id": 38,
           "options": {
-            "showHeader": true
+            "footer": {
+              "fields": "",
+              "reducer": ["sum"],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": []
           },
-          "pluginVersion": "8.2.7.1",
+          "pluginVersion": "8.4.3",
           "targets": [
             {
               "azureLogAnalytics": {
-                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime) \r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n| project ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by ComputerId, Computer;summaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| project Average, P50th, P90th, P95th, Max, Computer\r\n",
+                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime) \r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by ComputerId, Computer, _ResourceId\r\n| project ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, 1m), ComputerId, Computer, _ResourceId\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n| project ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by ComputerId, Computer;summaryPerComputer\r\n| join ( trend ) on ComputerId\r\n| join ( NodeIdentityAndProps ) on ComputerId\r\n| parse tolower(ResourceId) with * \"virtualmachinescalesets/\" scaleSetName \"/virtualmachines/\" vmNameScale\r\n| parse tolower(ResourceId) with * \"virtualmachines/\" vmName\r\n| parse tolower(ResourceId) with * \"resourcegroups/\" resourceGroup \"/providers/microsoft.compute/\" typeVM \"/\" nameVM\r\n| parse tolower(ResourceId) with * \"microsoft.compute/\" typeScale \"/\" nameScale \"/virtualmachines\" remaining\r\n| project resourceGroup, Average, P50th, P90th, P95th, Max, Computer, Type = iff(isnotempty(typeScale), typeScale, typeVM), Name = iff(isnotempty(nameScale), nameScale, nameVM)\r\n",
                 "resource": "$ws",
                 "resultFormat": "table"
               },
               "azureMonitor": {
                 "timeGrain": "auto"
               },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
+              },
               "queryType": "Azure Log Analytics",
               "refId": "A",
               "subscription": ""
+            },
+            {
+              "azureMonitor": {
+                "dimensionFilters": [],
+                "timeGrain": "auto"
+              },
+              "azureResourceGraph": {
+                "query": "resources\r\n| where tolower(type) contains \"virtualmachines\" and resourceGroup in~ ($rg) \r\n| project Name = tolower(name), tenantId, resourceGroup"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
+              },
+              "hide": false,
+              "queryType": "Azure Resource Graph",
+              "refId": "B",
+              "subscription": "",
+              "subscriptions": ["$sub"]
             }
           ],
           "title": "Available Bytes Received Statistics",
           "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
             {
               "id": "organize",
               "options": {
@@ -1298,28 +1863,51 @@
                   "UseRelativeScale": true
                 },
                 "indexByName": {
-                  "Average": 1,
+                  "Average": 2,
                   "Computer": 0,
-                  "Max": 5,
-                  "NodeId": 9,
-                  "NodeProps": 10,
-                  "P50th": 2,
-                  "P90th": 3,
-                  "P95th": 4,
-                  "ResourceId": 8,
-                  "UseRelativeScale": 7,
-                  "list_TrendPoint": 6
+                  "Max": 6,
+                  "Name": 8,
+                  "P50th": 3,
+                  "P90th": 4,
+                  "P95th": 5,
+                  "Type": 7,
+                  "resourceGroup": 1,
+                  "tenantId": 9
                 },
                 "renameByName": {
-                  "list_TrendPoint": "Trend 95th"
+                  "Name": "Resource Name",
+                  "list_TrendPoint": "Trend 95th",
+                  "resGroup": "Resource Group",
+                  "resourceGroup": "Resource Group",
+                  "tenantId": "Tenant ID",
+                  "typeName": "Type/Name"
                 }
+              }
+            },
+            {
+              "id": "filterByValue",
+              "options": {
+                "filters": [
+                  {
+                    "config": {
+                      "id": "isNotNull",
+                      "options": {}
+                    },
+                    "fieldName": "Computer"
+                  }
+                ],
+                "match": "all",
+                "type": "include"
               }
             }
           ],
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1331,8 +1919,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1347,7 +1934,7 @@
             "h": 12,
             "w": 10,
             "x": 14,
-            "y": 15
+            "y": 20
           },
           "id": 50,
           "options": {
@@ -1363,16 +1950,20 @@
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.2.7.1",
+          "pluginVersion": "8.4.3",
           "targets": [
             {
               "azureLogAnalytics": {
-                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = (endDateTime - startDateTime)/100;\r\nlet MaxListSize = 1000;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, Computer\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        let OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)        \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        let NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nsummary\r\n| join (InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, \r\nComputer\r\n| summarize P95th = round(percentile(Val, 95), 2) by bin(TimeGenerated, trendBinSize), ComputerId\r\n| sort by TimeGenerated asc) on ComputerId\r\n",
+                "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = (endDateTime - startDateTime)/100;\r\nlet MaxListSize = 1000;\r\nlet summary = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resGroup '/p(.+)' *\r\n| where resGroup in~ ($rg)\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, Computer\r\n| summarize hint.shufflekey=ComputerId Average = avg(Val), Min = min(Val),P5th = round(percentile(Val, 5), 2), P10th = round(percentile(Val, 10), 2), \r\nP50th = round(percentile(Val, 50), 2), P80th = round(percentile(Val, 80), 2),\r\nP90th = round(percentile(Val, 90), 2), P95th = round(percentile(Val, 95), 2) by ComputerId, Computer\r\n| top 10 by ${agg:text};\r\nlet computerList=(summary\r\n| project ComputerId, Computer);\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        let OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)        \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'', replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)', @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))\r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        let NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nsummary\r\n| join (InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'Network' and Name == 'ReadBytesPerSecond')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)\r\n| summarize Val = sum(Val) by bin(TimeGenerated, trendBinSize), ComputerId, \r\nComputer\r\n| summarize Max = max(Val) by bin(TimeGenerated, trendBinSize), ComputerId\r\n| sort by TimeGenerated asc) on ComputerId\r\n",
                 "resource": "$ws",
                 "resultFormat": "table"
               },
               "azureMonitor": {
                 "timeGrain": "auto"
+              },
+              "datasource": {
+                "type": "grafana-azure-monitor-datasource",
+                "uid": "${ds}"
               },
               "queryType": "Azure Log Analytics",
               "refId": "A",
@@ -1422,7 +2013,6 @@
     },
     {
       "collapsed": false,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1435,7 +2025,9 @@
       "type": "row"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1504,7 +2096,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -1573,7 +2166,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1598,7 +2194,90 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Computer"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "https://ms.portal.azure.com/#@${__data.fields[\"Tenant ID\"]}/resource/subscriptions/${sub}/resourcegroups/${__data.fields[\"Resource Group\"]}/providers/microsoft.compute/${__data.fields.Type}/${__data.fields[\"Resource Name\"]}/infrainsights"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 193
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Average"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 89
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P50th"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 86
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P90th"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P95th"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 87
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 77
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 12,
@@ -1608,26 +2287,58 @@
       },
       "id": 42,
       "options": {
-        "showHeader": true
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
       },
-      "pluginVersion": "8.2.7.1",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by MountId, ComputerId, Computer, _ResourceId\r\n| project MountId, ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by MountId, ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n| project MountId, ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by MountId, ComputerId, Computer;summaryPerComputer\r\n| join kind=leftouter ( trend ) on ComputerId, MountId\r\n| join kind=leftouter ( NodeIdentityAndProps ) on ComputerId\r\n| extend VolumeId = strcat(MountId, '|', NodeId), VolumeProps = pack('type', 'NodeVolume', 'volumeName', MountId, 'node', NodeProps)\r\n| project Average, P50th, P90th, P95th, Max, Computer\r\n",
+            "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by MountId, ComputerId, Computer, _ResourceId\r\n| project MountId, ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nlet trend = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by MountId, ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n| project MountId, ComputerId, Computer\r\n| summarize hint.shufflekey = ComputerId by MountId, ComputerId, Computer;summaryPerComputer\r\n| join kind=leftouter ( trend ) on ComputerId, MountId\r\n| join kind=leftouter ( NodeIdentityAndProps ) on ComputerId\r\n| extend VolumeId = strcat(MountId, '|', NodeId), VolumeProps = pack('type', 'NodeVolume', 'volumeName', MountId, 'node', NodeProps)\r\n| parse tolower(ResourceId) with * \"virtualmachinescalesets/\" scaleSetName \"/virtualmachines/\" vmNameScale\r\n| parse tolower(ResourceId) with * \"virtualmachines/\" vmName\r\n| parse tolower(ResourceId) with * \"resourcegroups/\" resourceGroup \"/providers/microsoft.compute/\" typeVM \"/\" nameVM\r\n| parse tolower(ResourceId) with * \"microsoft.compute/\" typeScale \"/\" nameScale \"/virtualmachines\" remaining\r\n| project resourceGroup, Average, P50th, P90th, P95th, Max, Computer,  Type = iff(isnotempty(typeScale), typeScale, typeVM), Name = iff(isnotempty(nameScale), nameScale, nameVM)\r\n",
             "resource": "$ws",
             "resultFormat": "table"
           },
           "azureMonitor": {
             "timeGrain": "auto"
           },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "queryType": "Azure Log Analytics",
           "refId": "A",
           "subscription": ""
+        },
+        {
+          "azureMonitor": {
+            "dimensionFilters": [],
+            "timeGrain": "auto"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where tolower(type) contains \"virtualmachines\" and resourceGroup in~ ($rg) \r\n| project Name = tolower(name), tenantId, resourceGroup"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "hide": false,
+          "queryType": "Azure Resource Graph",
+          "refId": "B",
+          "subscription": "",
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "Available Logical Space Disk Used % Statistics",
       "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
         {
           "id": "organize",
           "options": {
@@ -1638,28 +2349,51 @@
               "VolumeProps": true
             },
             "indexByName": {
-              "Average": 1,
+              "Average": 2,
               "Computer": 0,
-              "Max": 5,
-              "P50th": 2,
-              "P90th": 3,
-              "P95th": 4,
-              "ResourceId": 8,
-              "UseRelativeScale": 7,
-              "VolumeId": 9,
-              "VolumeProps": 10,
-              "list_TrendPoint": 6
+              "Max": 6,
+              "Name": 8,
+              "P50th": 3,
+              "P90th": 4,
+              "P95th": 5,
+              "Type": 7,
+              "resourceGroup": 1,
+              "tenantId": 9
             },
             "renameByName": {
-              "list_TrendPoint": "Trend 95th"
+              "Name": "Resource Name",
+              "list_TrendPoint": "Trend 95th",
+              "resGroup": "Resource Group",
+              "resourceGroup": "Resource Group",
+              "tenantId": "Tenant ID",
+              "typeName": "Type/Name"
             }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "isNotNull",
+                  "options": {}
+                },
+                "fieldName": "Computer"
+              }
+            ],
+            "match": "all",
+            "type": "include"
           }
         }
       ],
       "type": "table"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1703,16 +2437,20 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.7.1",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by MountId, ComputerId, Computer, _ResourceId\r\n| project MountId, ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nInsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId TrendValue = percentile(Val, 95) by MountId, ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n",
+            "query": "let startDateTime = $__timeFrom;\r\nlet endDateTime = $__timeTo;\r\nlet trendBinSize = 5m;\r\nlet maxResultCount = 10;\r\nlet summaryPerComputer = InsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId Average = avg(Val), Max = max(Val), percentiles(Val, 5, 10, 50, 90, 95) by MountId, ComputerId, Computer, _ResourceId\r\n| project MountId, ComputerId, Computer, Average, Max, P5th = percentile_Val_5, P10th = percentile_Val_10, P50th = percentile_Val_50, P90th = percentile_Val_90, P95th = percentile_Val_95, ResourceId = _ResourceId\r\n| top 10 by ${agg:text};\r\nlet computerList = summaryPerComputer\r\n| summarize by ComputerId, Computer;\r\nlet EmptyNodeIdentityAndProps = datatable(ComputerId: string, Computer:string, NodeId:string, NodeProps:dynamic, Priority: long) [];        \r\nlet OmsNodeIdentityAndProps = computerList        \r\n| extend NodeId = ComputerId        \r\n| extend Priority = 1        \r\n| extend NodeProps = pack('type', 'StandAloneNode', 'name', Computer);        \r\nlet ServiceMapNodeIdentityAndProps = VMComputer        \r\n| where TimeGenerated >= startDateTime        \r\n| where TimeGenerated < endDateTime        \r\n| extend ResourceId = strcat('machines/', Machine)         \r\n| extend tempComputerId=iff(isempty(_ResourceId), Computer, _ResourceId) \r\n| extend laResourceId = iff(isempty(_ResourceId),'',     replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',     @'virtualmachinescalesets/\\\\1/virtualmachines/\\\\1_\\\\2', _ResourceId))    \r\n| extend oldLaResourceId=iff(isempty(_ResourceId),'',replace(@'virtualmachinescalesets/(.+)/virtualmachines/(\\\\d+)',@'virtualmachines/\\\\1_\\\\2', _ResourceId))        \r\n| where tempComputerId in~ (computerList) or laResourceId in (computerList) or oldLaResourceId in (computerList) \r\n| extend ComputerId = iff(laResourceId in (computerList), laResourceId, iff(oldLaResourceId in (computerList), oldLaResourceId, tempComputerId))        \r\n| summarize arg_max(TimeGenerated, *) by Machine        \r\n| extend                  AzureCloudServiceNodeIdentity = iif(isnotempty(AzureCloudServiceName),                      strcat(AzureCloudServiceInstanceId, '|', AzureCloudServiceDeployment), ''),                  AzureScaleSetNodeIdentity = iif(isnotempty(AzureVmScaleSetName),                      strcat(AzureVmScaleSetInstanceId, '|', AzureVmScaleSetDeployment), ''),                  ComputerProps =                      pack('type', 'StandAloneNode',                           'name', DisplayName,                           'mappingResourceId', ResourceId,                           'subscriptionId', AzureSubscriptionId,                           'resourceGroup', AzureResourceGroup,                           'azureResourceId', _ResourceId),                  AzureCloudServiceNodeProps =                      pack('type', 'AzureCloudServiceNode',                           'cloudServiceInstanceId', AzureCloudServiceInstanceId,                           'cloudServiceRoleName', AzureCloudServiceRoleName,                           'cloudServiceDeploymentId', AzureCloudServiceDeployment,                           'fullDisplayName', FullDisplayName,                           'cloudServiceName', AzureCloudServiceName,                           'mappingResourceId', ResourceId),                  AzureScaleSetNodeProps =                       pack('type', 'AzureScaleSetNode',                           'scaleSetInstanceId', AzureResourceName,                           'vmScaleSetDeploymentId', AzureVmScaleSetDeployment,                           'vmScaleSetName', AzureVmScaleSetName,                           'serviceFabricClusterName', AzureServiceFabricClusterName,                           'vmScaleSetResourceId', AzureVmScaleSetResourceId,                           'resourceGroupName', AzureResourceGroup,                           'subscriptionId', AzureSubscriptionId,                           'fullDisplayName', FullDisplayName,                           'mappingResourceId', ResourceId)        \r\n| project   ComputerId,                    Computer,                    NodeId = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeIdentity,                               isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeIdentity, Computer),                    NodeProps = case(isnotempty(AzureCloudServiceNodeIdentity), AzureCloudServiceNodeProps,                                  isnotempty(AzureScaleSetNodeIdentity), AzureScaleSetNodeProps, ComputerProps),                    Priority = 2;        \r\nlet NodeIdentityAndProps = union kind=inner isfuzzy = true                                          EmptyNodeIdentityAndProps, OmsNodeIdentityAndProps, ServiceMapNodeIdentityAndProps                                    \r\n| summarize arg_max(Priority, *) by ComputerId;\r\nInsightsMetrics\r\n| where TimeGenerated between (startDateTime .. endDateTime)\r\n| where Origin == 'vm.azm.ms' and (Namespace == 'LogicalDisk' and Name == 'FreeSpaceMB')\r\n| extend ComputerId = iff(isempty(_ResourceId), Computer, _ResourceId)\r\n| where ComputerId in (computerList)| extend Tags = todynamic(Tags)\r\n| extend Total = todouble(Tags['vm.azm.ms/diskSizeMB']), MountId = tostring(Tags['vm.azm.ms/mountId'])\r\n| extend Val = (100.0 - (Val * 100.0)/Total)\r\n| summarize hint.shufflekey = ComputerId TrendValue = max(Val) by MountId, ComputerId, Computer, bin(TimeGenerated, trendBinSize)\r\n",
             "resource": "$ws",
             "resultFormat": "table"
           },
           "azureMonitor": {
             "timeGrain": "auto"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -1758,16 +2496,18 @@
       "type": "stat"
     }
   ],
-  "refresh": "",
-  "schemaVersion": 32,
+  "refresh": false,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "current": {},
-        "description": null,
-        "error": null,
+        "current": {
+          "selected": false,
+          "text": "Azure Monitor-Contoso",
+          "value": "Azure Monitor-Contoso"
+        },
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",
@@ -1782,12 +2522,11 @@
         "type": "datasource"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${ds}",
+        "datasource": {
+          "uid": "${ds}"
+        },
         "definition": "Subscriptions()",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Subscriptions",
@@ -1802,35 +2541,13 @@
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${ds}",
-        "definition": "ResourceGroups($sub)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource Group",
-        "multi": true,
-        "name": "rg",
-        "options": [],
-        "query": "ResourceGroups($sub)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {},
-        "datasource": "${ds}",
+        "datasource": {
+          "uid": "${ds}"
+        },
         "definition": "Workspaces($sub)",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": null,
         "multi": false,
         "name": "ws",
         "options": [],
@@ -1842,14 +2559,39 @@
         "type": "query"
       },
       {
-        "allValue": null,
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource Groups",
+        "multi": true,
+        "name": "rg",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "InsightsMetrics\r\n| where Origin == 'vm.azm.ms'\r\n| parse kind=regex tolower(_ResourceId) with 'resourcegroups/' resourceGroup '/p(.+)' *\r\n| project resourceGroup\r\n| distinct resourceGroup",
+            "resource": "$ws"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "Average",
           "value": "score = round(avg(Val), 2)"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Aggregate",
@@ -1906,5 +2648,5 @@
   "timepicker": {},
   "timezone": "",
   "title": "Azure VM Monitoring - VM Insights by Workspace",
-  "version": 37
+  "version": 21
 }
