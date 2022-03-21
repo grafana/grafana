@@ -4,6 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { isFetchError } from '../utils/alertmanager';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { getDatasourceAPIId } from '../utils/datasource';
+import { fetchRules } from './prometheus';
 import { fetchRulerRulesGroup } from './ruler';
 
 export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildInfo> {
@@ -22,17 +23,17 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
   });
 
   if (!response?.data.data) {
+    const promRulesSupported = await hasPromRulesSupport(dataSourceName);
     const rulerSupported = await hasRulerSupport(dataSourceName);
 
-    // TODO Add checking if Prom ruler API is supported. Maybe this is a Cortex without ruler Enabled
-    if (!rulerSupported) {
-      throw new Error(`Cannot fetch data from ${dataSourceName}. Please verify the data source configuration.`);
+    if (!promRulesSupported) {
+      throw new Error(`Unable to fetch alert rules. Is the ${dataSourceName} data source properly configured?`);
     }
 
     return {
       application: PromApplication.Cortex,
       features: {
-        rulerConfigApi: true,
+        rulerConfigApi: rulerSupported,
         alertManagerConfigApi: false,
         querySharding: false,
         federatedRules: false,
@@ -51,6 +52,15 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
       federatedRules: features?.federated_rules === 'true',
     },
   };
+}
+
+async function hasPromRulesSupport(dataSourceName: string) {
+  try {
+    await fetchRules(dataSourceName);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function hasRulerSupport(dataSourceName: string) {
