@@ -29,10 +29,6 @@ type Service interface {
 	EmailSender
 }
 
-type Store interface {
-	GetUserByLogin(context.Context, *models.GetUserByLoginQuery) error
-}
-
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
