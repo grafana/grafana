@@ -268,9 +268,9 @@ export const DashNav = React.memo<Props>((props) => {
 
   const { isFullscreen, title, folderTitle } = props;
   // this ensures the component rerenders when the location changes
-  useLocation();
-  const titleHref = locationUtil.updateSearchParams(window.location.href, '?search=open');
-  const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
+  const location = useLocation();
+  const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
+  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
   const onGoBack = isFullscreen ? onClose : undefined;
 
   return (
