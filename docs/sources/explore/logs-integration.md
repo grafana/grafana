@@ -99,8 +99,6 @@ Each log row has an extendable area with its labels and detected fields, for mor
 
 ### Escaping newlines
 
-> **Note:** Available in Grafana 7.5 and later versions.
-
 Explore automatically detects some incorrectly escaped sequences in log lines, such as newlines (`\n`, `\r`) or tabs (`\t`). When it detects such sequences, Explore provides an "Escape newlines" option.
 
 To automatically fix detected incorrectly escaped sequences:
