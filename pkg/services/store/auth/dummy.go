@@ -29,6 +29,10 @@ func (d denyAllAuthGuardian) GetSavePathFilters() *filestorage.PathFilters {
 	return denyAllFilters
 }
 
+func (d denyAllAuthGuardian) can(action string, path string) bool {
+	return false
+}
+
 func (d denyAllAuthService) NewGuardian(ctx context.Context, user *models.SignedInUser, path string) FilesGuardian {
 	return &denyAllAuthGuardian{}
 }
@@ -48,6 +52,10 @@ func (a allowAllAuthGuardian) CanView(path string) bool {
 }
 
 func (a allowAllAuthGuardian) CanSave(path string) bool {
+	return true
+}
+
+func (a allowAllAuthGuardian) can(action string, path string) bool {
 	return true
 }
 

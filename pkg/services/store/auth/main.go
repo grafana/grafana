@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -21,10 +20,10 @@ var NewGuardian = func(ctx context.Context, user *models.SignedInUser, path stri
 	return denyAllService.NewGuardian(ctx, user, path)
 }
 
-func ProvideService(ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices, features featuremgmt.FeatureToggles) *Provider {
+func ProvideService(features featuremgmt.FeatureToggles) *Provider {
 	if features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		storeAuthMainLogger.Info("Initializing real storage auth service")
-		storageAuthService := NewStorageAuthService(ac, permissionsServices)
+		storageAuthService := NewStorageAuthService()
 		NewGuardian = func(ctx context.Context, user *models.SignedInUser, path string) FilesGuardian {
 			storeAuthMainLogger.Debug("Returning deny all file guardian")
 			return storageAuthService.NewGuardian(ctx, user, path)

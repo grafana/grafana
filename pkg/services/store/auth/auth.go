@@ -78,33 +78,30 @@ func parsePath(scope string) string {
 }
 
 type StorageAuthService interface {
-	NewGuardian(ctx context.Context, user *models.SignedInUser, path string) FilesGuardian
+	NewGuardian(ctx context.Context, user *models.SignedInUser, prefix string) FilesGuardian
 }
 
 type FilesGuardian interface {
 	CanView(path string) bool
 	CanSave(path string) bool
+	can(action string, path string) bool
 
 	GetViewPathFilters() *filestorage.PathFilters
 	GetSavePathFilters() *filestorage.PathFilters
 }
 
-func NewStorageAuthService(ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices) StorageAuthService {
+func NewStorageAuthService() StorageAuthService {
 	return &storageAuthService{
-		log:                 log.New("storageAuthService"),
-		ac:                  ac,
-		permissionsServices: permissionsServices,
+		log: log.New("storageAuthService"),
 	}
 }
 
 type storageAuthService struct {
-	log                 log.Logger
-	ac                  accesscontrol.AccessControl
-	permissionsServices accesscontrol.PermissionsServices
+	log log.Logger
 }
 
 func (a *storageAuthService) createPathFilters(ctx context.Context, action string, user *models.SignedInUser, path string) *filestorage.PathFilters {
-	p, err := createPathFilters(path, action, user, fileScope(path), fileScope("!"+path))
+	p, err := createPathFilters(path, action, user, allowFileScope(path), denyFileScope(path))
 
 	if err != nil {
 		a.log.Error("Error when creating sql filters", "error", err)
@@ -118,24 +115,23 @@ func (a *storageAuthService) NewGuardian(ctx context.Context, user *models.Signe
 	readFilters := a.createPathFilters(ctx, accesscontrol.ActionFilesRead, user, storagePrefix)
 	writeFilters := a.createPathFilters(ctx, accesscontrol.ActionFilesWrite, user, storagePrefix)
 	return &filesGuardian{
-		ctx:                ctx,
-		user:               user,
-		ac:                 a.ac,
-		storagePrefix:      strings.TrimPrefix(storagePrefix, filestorage.Delimiter),
-		permissionServices: a.permissionsServices,
-		readFilters:        readFilters,
-		writeFilters:       writeFilters,
+		ctx:           ctx,
+		user:          user,
+		log:           a.log,
+		storagePrefix: strings.TrimPrefix(storagePrefix, filestorage.Delimiter),
+		readFilters:   readFilters,
+		writeFilters:  writeFilters,
 	}
 }
 
 type filesGuardian struct {
-	ctx                context.Context
-	user               *models.SignedInUser
-	storagePrefix      string
-	ac                 accesscontrol.AccessControl
-	permissionServices accesscontrol.PermissionsServices
-	readFilters        *filestorage.PathFilters
-	writeFilters       *filestorage.PathFilters
+	ctx           context.Context
+	user          *models.SignedInUser
+	storagePrefix string
+	ac            accesscontrol.AccessControl
+	readFilters   *filestorage.PathFilters
+	writeFilters  *filestorage.PathFilters
+	log           log.Logger
 }
 
 func (a *filesGuardian) GetSavePathFilters() *filestorage.PathFilters {
@@ -152,6 +148,49 @@ func (a *filesGuardian) CanSave(path string) bool {
 
 func (a *filesGuardian) CanView(path string) bool {
 	return a.readFilters.IsAllowed(strings.TrimPrefix(path, a.storagePrefix))
+}
+
+func (a *filesGuardian) can(action string, path string) bool {
+	var allow bool
+	switch action {
+	case accesscontrol.ActionFilesCreate:
+		fallthrough
+	case accesscontrol.ActionFilesWrite:
+		fallthrough
+	case accesscontrol.ActionFilesDelete:
+		allow = a.CanSave(path)
+	case accesscontrol.ActionFilesRead:
+		allow = a.CanView(path)
+	default:
+		storeAuthMainLogger.Warn("Unsupported action", "action", action, "path", path)
+		allow = false
+	}
+
+	if !allow {
+		a.log.Warn("denying", "action", action, "path", path)
+	}
+	return allow
+}
+
+func allowFileScope(path string) string {
+	return accesscontrol.Scope("files", "path", path)
+}
+
+func denyFileScope(path string) string {
+	return accesscontrol.Scope("files", "path", "!"+path)
+}
+
+func isDenyFileScope(scope string) bool {
+	return strings.HasPrefix(scope, "files:path:!")
+}
+
+func addPrefixToFileScope(scope string, prefix string) string {
+	path := parsePath(scope)
+	if isDenyFileScope(scope) {
+		return denyFileScope(filestorage.Join(prefix, strings.TrimPrefix(path, "!")))
+	}
+
+	return allowFileScope(filestorage.Join(prefix, path))
 }
 
 func fileScope(path string) string {
