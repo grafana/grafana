@@ -1,6 +1,6 @@
 import React from 'react';
 import { SQLBuilderEditor } from '..';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../expressions';
@@ -72,41 +72,6 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     expect(screen.getByText('AWS/EC2')).toBeInTheDocument();
     expect(screen.getByLabelText('With schema')).toBeChecked();
     expect(screen.getByText('Schema labels')).toBeInTheDocument();
-  });
-
-  it('Uses dimension filter when loading dimension keys', async () => {
-    const query = makeSQLQuery({
-      from: {
-        type: QueryEditorExpressionType.Function,
-        name: 'SCHEMA',
-        parameters: [
-          {
-            type: QueryEditorExpressionType.FunctionParameter,
-            name: 'AWS/EC2',
-          },
-          {
-            type: QueryEditorExpressionType.FunctionParameter,
-            name: 'InstanceId',
-          },
-        ],
-      },
-    });
-
-    render(<SQLBuilderEditor {...baseProps} query={query} />);
-
-    act(async () => {
-      expect(screen.getByText('AWS/EC2')).toBeInTheDocument();
-      expect(screen.getByLabelText('With schema')).toBeChecked();
-      expect(screen.getByText('Schema labels')).toBeInTheDocument();
-      await waitFor(() =>
-        expect(datasource.getDimensionKeys).toHaveBeenCalledWith(
-          query.namespace,
-          query.region,
-          { InstanceId: null },
-          undefined
-        )
-      );
-    });
   });
 
   it('Displays the SELECT correctly', async () => {
