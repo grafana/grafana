@@ -174,7 +174,7 @@ func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, 
 	allAttributeScope := Scope(strings.TrimSuffix(attributePrefix, ":"), "*")
 
 	// index of the attribute in the scope
-	attributeIndex := len(attributePrefix) + 1
+	attributeIndex := len(attributePrefix)
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
