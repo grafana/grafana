@@ -34,7 +34,7 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-function getIconSubDir(name: IconName, type: string): string {
+export function getIconSubDir(name: IconName, type: string): string {
   if (name?.startsWith('gf-')) {
     return 'custom';
   } else if (alwaysMonoIcons.includes(name)) {
