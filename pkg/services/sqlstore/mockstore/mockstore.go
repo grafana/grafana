@@ -39,6 +39,7 @@ type SQLStoreMock struct {
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedUserStars              map[int64]bool
 	ExpectedError                  error
 }
 
@@ -324,6 +325,7 @@ func (m *SQLStoreMock) UnstarDashboard(ctx context.Context, cmd *models.UnstarDa
 }
 
 func (m *SQLStoreMock) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
+	query.Result = m.ExpectedUserStars
 	return m.ExpectedError
 }
 

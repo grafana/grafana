@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	stars "github.com/grafana/grafana/pkg/services/stars/starstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,12 +20,9 @@ func TestSearch_SortedResults(t *testing.T) {
 		&models.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
 	}
 	ms.ExpectedSignedInUser = &models.SignedInUser{IsGrafanaAdmin: true}
-
-	fstars := stars.NewStarsServiceFake()
-	fstars.ExpectedUserStars = map[int64]bool{10: true, 12: true}
+	ms.ExpectedUserStars = map[int64]bool{10: true, 12: true}
 	svc := &SearchService{
-		sqlstore:    ms,
-		starManager: fstars,
+		sqlstore: ms,
 	}
 
 	query := &Query{
