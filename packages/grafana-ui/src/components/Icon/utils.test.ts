@@ -1,4 +1,4 @@
-import { getIconSubDir } from './Icon';
+import { getIconSubDir } from './utils';
 
 describe('Icon', () => {
   describe('getIconSubDir', () => {
