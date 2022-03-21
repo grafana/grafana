@@ -276,6 +276,34 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
+	localAnnotationsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:annotations.local:writer",
+			DisplayName: "Local annotation writer",
+			Description: "Update annotations associated with dashboards.",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []ac.Permission{
+				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeLocal},
+			},
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
+	annotationsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:annotations:writer",
+			DisplayName: "Annotation writer",
+			Description: "Update all annotations.",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []ac.Permission{
+				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
+			},
+		},
+		Grants: []string{string(models.ROLE_EDITOR)},
+	}
+
 	dashboardsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     1,
@@ -378,7 +406,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
+		annotationsReaderRole, localAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
 	)

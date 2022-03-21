@@ -7,6 +7,7 @@ import { transformDataFrame } from '../transformDataFrame';
 import { CalculateFieldMode, calculateFieldTransformer, ReduceOptions } from './calculateField';
 import { DataFrameView } from '../../dataframe';
 import { BinaryOperationID } from '../../utils';
+import { ScopedVars } from '../../types';
 
 const seriesA = toDataFrame({
   fields: [
@@ -213,6 +214,65 @@ describe('calculateField transformer w/ timeseries', () => {
           },
           Object {
             "E * 1": 0,
+            "TheTime": 2000,
+          },
+        ]
+      `);
+    });
+  });
+
+  it('uses template variable substituion', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        alias: '$var1',
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: 'A',
+          operator: BinaryOperationID.Add,
+          right: '$var2',
+        },
+        replaceFields: true,
+      },
+      replace: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
+        if (!target) {
+          return '';
+        }
+        const variables: ScopedVars = {
+          var1: {
+            value: 'Test',
+            text: 'Test',
+          },
+          var2: {
+            value: 5,
+            text: '5',
+          },
+          __interval: {
+            value: 10000,
+            text: '10000',
+          },
+        };
+        for (const key of Object.keys(variables)) {
+          if (target === `$${key}`) {
+            return variables[key].value + '';
+          }
+        }
+        return target;
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "Test": 6,
+            "TheTime": 1000,
+          },
+          Object {
+            "Test": 105,
             "TheTime": 2000,
           },
         ]

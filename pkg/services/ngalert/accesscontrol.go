@@ -60,7 +60,6 @@ var (
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
 	}
 
 	instancesReaderRole = accesscontrol.RoleRegistration{
@@ -81,7 +80,6 @@ var (
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
 	instancesEditorRole = accesscontrol.RoleRegistration{
@@ -104,7 +102,6 @@ var (
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
 	}
 
 	notificationsReaderRole = accesscontrol.RoleRegistration{
@@ -124,7 +121,6 @@ var (
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
 	notificationsEditorRole = accesscontrol.RoleRegistration{
@@ -150,7 +146,6 @@ var (
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
 	}
 
 	alertingReaderRole = accesscontrol.RoleRegistration{
