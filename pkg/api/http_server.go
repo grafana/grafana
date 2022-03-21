@@ -28,13 +28,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -46,6 +48,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -58,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -97,7 +102,7 @@ type HTTPServer struct {
 	PluginRequestValidator       models.PluginRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
-	pluginDashboardManager       plugins.PluginDashboardManager
+	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
 	SearchService                search.Service
@@ -106,6 +111,7 @@ type HTTPServer struct {
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
 	ThumbService                 thumbs.Service
+	StorageService               store.HTTPStorageService
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
@@ -128,9 +134,17 @@ type HTTPServer struct {
 	queryDataService             *query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	TeamPermissionsService       *resourcepermissions.Service
+	teamPermissionsService       accesscontrol.PermissionsService
+	permissionServices           accesscontrol.PermissionsServices
 	NotificationService          *notifications.NotificationService
-	DatasourcePermissionsService DatasourcePermissionsService
+	dashboardService             dashboards.DashboardService
+	dashboardProvisioningService dashboards.DashboardProvisioningService
+	folderService                dashboards.FolderService
+	DatasourcePermissionsService permissions.DatasourcePermissionsService
+	commentsService              *comments.Service
+	AlertNotificationService     *alerting.AlertNotificationService
+	DashboardsnapshotsService    *dashboardsnapshots.Service
+	PluginSettings               *pluginSettings.Service
 }
 
 type ServerOptions struct {
@@ -141,7 +155,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
-	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store, pluginClient plugins.Client,
+	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
@@ -157,8 +171,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
-	notificationService *notifications.NotificationService, datasourcePermissionsService DatasourcePermissionsService) (*HTTPServer, error) {
+	authInfoService login.AuthInfoService, permissionsServices accesscontrol.PermissionsServices, storageService store.HTTPStorageService,
+	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
+	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
+	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
+) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -176,7 +194,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
-		pluginDashboardManager:       pluginDashboardManager,
+		pluginDashboardService:       pluginDashboardService,
 		pluginErrorResolver:          pluginErrorResolver,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
 		pluginsUpdateChecker:         pluginsUpdateChecker,
@@ -188,6 +206,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryHistoryService:          queryHistoryService,
 		Features:                     features,
 		ThumbService:                 thumbService,
+		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
 		Login:                        loginService,
@@ -217,14 +236,25 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
-		TeamPermissionsService:       resourcePermissionServices.GetTeamService(),
 		NotificationService:          notificationService,
+		dashboardService:             dashboardService,
+		dashboardProvisioningService: dashboardProvisioningService,
+		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
+		commentsService:              commentsService,
+		teamPermissionsService:       permissionsServices.GetTeamService(),
+		AlertNotificationService:     alertNotificationService,
+		DashboardsnapshotsService:    dashboardsnapshotsService,
+		PluginSettings:               pluginSettings,
+		permissionServices:           permissionsServices,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
 	}
 	hs.registerRoutes()
+
+	// Register access control scope resolver for annotations
+	hs.AccessControl.RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
@@ -360,8 +390,7 @@ func (hs *HTTPServer) configureHttps() error {
 	}
 
 	tlsCfg := &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
+		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -401,8 +430,7 @@ func (hs *HTTPServer) configureHttp2() error {
 	}
 
 	tlsCfg := &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
+		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 			tls.TLS_AES_128_GCM_SHA256,
@@ -446,7 +474,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName))
+	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName, hs.log))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")

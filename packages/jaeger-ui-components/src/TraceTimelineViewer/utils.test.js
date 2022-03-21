@@ -20,6 +20,7 @@ import {
   isServerSpan,
   spanContainsErredSpan,
   spanHasTag,
+  formatNumber,
 } from './utils';
 
 import traceGenerator from '../demo/trace-generators';

@@ -7,14 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
-
-func init() {
-	bus.AddHandler("sql", GetSystemUserCountStats)
-}
 
 func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetAdminStats)
+	bus.AddHandler("sql", ss.GetSystemUserCountStats)
 	bus.AddHandler("sql", ss.GetAlertNotifiersUsageStats)
 	bus.AddHandler("sql", ss.GetDataSourceAccessStats)
 	bus.AddHandler("sql", ss.GetDataSourceStats)
@@ -25,50 +23,65 @@ const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
 func (ss *SQLStore) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-	var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
-	query.Result = make([]*models.NotifierUsageStats, 0)
-	err := x.SQL(rawSQL).Find(&query.Result)
-	return err
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
+		query.Result = make([]*models.NotifierUsageStats, 0)
+		err := dbSession.SQL(rawSQL).Find(&query.Result)
+		return err
+	})
 }
 
 func (ss *SQLStore) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
-	var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("data_source") + ` GROUP BY type`
-	query.Result = make([]*models.DataSourceStats, 0)
-	err := x.SQL(rawSQL).Find(&query.Result)
-	return err
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("data_source") + ` GROUP BY type`
+		query.Result = make([]*models.DataSourceStats, 0)
+		err := dbSession.SQL(rawSQL).Find(&query.Result)
+		return err
+	})
 }
 
 func (ss *SQLStore) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
-	var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
-	query.Result = make([]*models.DataSourceAccessStats, 0)
-	err := x.SQL(rawSQL).Find(&query.Result)
-	return err
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
+		query.Result = make([]*models.DataSourceAccessStats, 0)
+		err := dbSession.SQL(rawSQL).Find(&query.Result)
+		return err
+	})
+}
+
+func notServiceAccount(dialect migrator.Dialect) string {
+	return `is_service_account = ` +
+		dialect.BooleanStr(false)
 }
 
 func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
-	sb := &SQLBuilder{}
-	sb.Write("SELECT ")
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sb := &SQLBuilder{}
+		sb.Write("SELECT ")
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
 
-	now := time.Now()
-	activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
-	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
+		now := time.Now()
+		activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
+		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+			notServiceAccount(dialect)+` AND last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
 
-	dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
-	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
+		dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
+		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+			notServiceAccount(dialect)+` AND last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
 
-	monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
+		monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
 
-	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
-	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
+		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
+		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
 
-	sb.Write(`(
+		sb.Write(`(
 		SELECT COUNT(acl.id)
 		FROM `+dialect.Quote("dashboard_acl")+` AS acl
 			INNER JOIN `+dialect.Quote("dashboard")+` AS d
@@ -76,7 +89,7 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		WHERE d.is_folder = ?
 	) AS dashboard_permissions,`, dialect.BooleanStr(false))
 
-	sb.Write(`(
+		sb.Write(`(
 		SELECT COUNT(acl.id)
 		FROM `+dialect.Quote("dashboard_acl")+` AS acl
 			INNER JOIN `+dialect.Quote("dashboard")+` AS d
@@ -84,40 +97,41 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		WHERE d.is_folder = ?
 	) AS folder_permissions,`, dialect.BooleanStr(true))
 
-	sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_edit", false, models.PERMISSION_EDIT))
-	sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_admin", false, models.PERMISSION_ADMIN))
-	sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_edit", true, models.PERMISSION_EDIT))
-	sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_admin", true, models.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_edit", false, models.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_admin", false, models.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_edit", true, models.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_admin", true, models.PERMISSION_ADMIN))
 
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `) AS api_keys,`)
-	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
-	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
+		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
+		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
 
-	sb.Write(roleCounterSQL(ctx))
+		sb.Write(ss.roleCounterSQL(ctx))
 
-	var stats models.SystemStats
-	_, err := x.SQL(sb.GetSQLString(), sb.params...).Get(&stats)
-	if err != nil {
-		return err
-	}
+		var stats models.SystemStats
+		_, err := dbSession.SQL(sb.GetSQLString(), sb.params...).Get(&stats)
+		if err != nil {
+			return err
+		}
 
-	query.Result = &stats
+		query.Result = &stats
 
-	return nil
+		return nil
+	})
 }
 
-func roleCounterSQL(ctx context.Context) string {
+func (ss *SQLStore) roleCounterSQL(ctx context.Context) string {
 	const roleCounterTimeout = 20 * time.Second
 	ctx, cancel := context.WithTimeout(ctx, roleCounterTimeout)
 	defer cancel()
-	_ = updateUserRoleCountsIfNecessary(ctx, false)
+	_ = ss.updateUserRoleCountsIfNecessary(ctx, false)
 	sqlQuery :=
 		strconv.FormatInt(userStatsCache.total.Admins, 10) + ` AS admins, ` +
 			strconv.FormatInt(userStatsCache.total.Editors, 10) + ` AS editors, ` +
@@ -145,12 +159,13 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 }
 
 func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
-	now := time.Now()
-	activeEndDate := now.Add(-activeUserTimeLimit)
-	dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
-	monthlyActiveEndDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		now := time.Now()
+		activeEndDate := now.Add(-activeUserTimeLimit)
+		dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
+		monthlyActiveEndDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 
-	var rawSQL = `SELECT
+		var rawSQL = `SELECT
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("org") + `
@@ -185,21 +200,21 @@ func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminSta
 		) AS alerts,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + `
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `
 		) AS users,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + ` AND last_seen_at > ?
 		) AS active_users,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + ` AND last_seen_at > ?
 		) AS daily_active_users,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + ` AND last_seen_at > ?
 		) AS monthly_active_users,
-		` + roleCounterSQL(ctx) + `,
+		` + ss.roleCounterSQL(ctx) + `,
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user_auth_token") + ` WHERE rotated_at > ?
@@ -209,18 +224,19 @@ func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminSta
 			FROM ` + dialect.Quote("user_auth_token") + ` WHERE rotated_at > ?
 		) AS daily_active_sessions`
 
-	var stats models.AdminStats
-	_, err := x.SQL(rawSQL, activeEndDate, dailyActiveEndDate, monthlyActiveEndDate, activeEndDate.Unix(), dailyActiveEndDate.Unix()).Get(&stats)
-	if err != nil {
-		return err
-	}
+		var stats models.AdminStats
+		_, err := dbSession.SQL(rawSQL, activeEndDate, dailyActiveEndDate, monthlyActiveEndDate, activeEndDate.Unix(), dailyActiveEndDate.Unix()).Get(&stats)
+		if err != nil {
+			return err
+		}
 
-	query.Result = &stats
-	return nil
+		query.Result = &stats
+		return nil
+	})
 }
 
-func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCountStatsQuery) error {
-	return withDbSession(ctx, x, func(sess *DBSession) error {
+func (ss *SQLStore) GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCountStatsQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var rawSQL = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
 		var stats models.SystemUserCountStats
 		_, err := sess.SQL(rawSQL).Get(&stats)
@@ -234,10 +250,10 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 	})
 }
 
-func updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {
+func (ss *SQLStore) updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {
 	memoizationPeriod := time.Now().Add(-userStatsCacheLimetime)
 	if forced || userStatsCache.memoized.Before(memoizationPeriod) {
-		err := updateUserRoleCounts(ctx)
+		err := ss.updateUserRoleCounts(ctx)
 		if err != nil {
 			return err
 		}
@@ -258,8 +274,9 @@ var (
 	userStatsCacheLimetime = 5 * time.Minute
 )
 
-func updateUserRoleCounts(ctx context.Context) error {
-	query := `
+func (ss *SQLStore) updateUserRoleCounts(ctx context.Context) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		query := `
 SELECT role AS bitrole, active, COUNT(role) AS count FROM
   (SELECT last_seen_at>? AS active, last_seen_at>? AS daily_active, SUM(role) AS role
    FROM (SELECT
@@ -275,42 +292,43 @@ SELECT role AS bitrole, active, COUNT(role) AS count FROM
   GROUP BY id, last_seen_at) AS t1
 GROUP BY active, daily_active, role;`
 
-	activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
-	dailyActiveUserDeadline := time.Now().Add(-dailyActiveUserTimeLimit)
+		activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
+		dailyActiveUserDeadline := time.Now().Add(-dailyActiveUserTimeLimit)
 
-	type rolebitmap struct {
-		Active      bool
-		DailyActive bool
-		Bitrole     int64
-		Count       int64
-	}
-
-	bitmap := []rolebitmap{}
-	err := x.Context(ctx).SQL(query, activeUserDeadline, dailyActiveUserDeadline).Find(&bitmap)
-	if err != nil {
-		return err
-	}
-
-	memo := memoUserStats{memoized: time.Now()}
-	for _, role := range bitmap {
-		roletype := models.ROLE_VIEWER
-		if role.Bitrole&0b100 != 0 {
-			roletype = models.ROLE_ADMIN
-		} else if role.Bitrole&0b10 != 0 {
-			roletype = models.ROLE_EDITOR
+		type rolebitmap struct {
+			Active      bool
+			DailyActive bool
+			Bitrole     int64
+			Count       int64
 		}
 
-		memo.total = addToStats(memo.total, roletype, role.Count)
-		if role.Active {
-			memo.active = addToStats(memo.active, roletype, role.Count)
+		bitmap := []rolebitmap{}
+		err := dbSession.Context(ctx).SQL(query, activeUserDeadline, dailyActiveUserDeadline).Find(&bitmap)
+		if err != nil {
+			return err
 		}
-		if role.DailyActive {
-			memo.dailyActive = addToStats(memo.dailyActive, roletype, role.Count)
-		}
-	}
 
-	userStatsCache = memo
-	return nil
+		memo := memoUserStats{memoized: time.Now()}
+		for _, role := range bitmap {
+			roletype := models.ROLE_VIEWER
+			if role.Bitrole&0b100 != 0 {
+				roletype = models.ROLE_ADMIN
+			} else if role.Bitrole&0b10 != 0 {
+				roletype = models.ROLE_EDITOR
+			}
+
+			memo.total = addToStats(memo.total, roletype, role.Count)
+			if role.Active {
+				memo.active = addToStats(memo.active, roletype, role.Count)
+			}
+			if role.DailyActive {
+				memo.dailyActive = addToStats(memo.dailyActive, roletype, role.Count)
+			}
+		}
+
+		userStatsCache = memo
+		return nil
+	})
 }
 
 func addToStats(base models.UserStats, role models.RoleType, count int64) models.UserStats {

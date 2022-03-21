@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -142,15 +143,18 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Pinned = plugin.AutoEnabled
 	}
 
-	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := hs.SQLStore.GetPluginSettingById(c.Req.Context(), &query); err != nil {
+	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+		PluginID: pluginID,
+		OrgID:    c.OrgId,
+	})
+	if err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
-			return response.Error(500, "Failed to get login settings", nil)
+			return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", nil)
 		}
 	} else {
-		dto.Enabled = query.Result.Enabled
-		dto.Pinned = query.Result.Pinned
-		dto.JsonData = query.Result.JsonData
+		dto.Enabled = ps.Enabled
+		dto.Pinned = ps.Pinned
+		dto.JsonData = ps.JSONData
 	}
 
 	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
@@ -175,27 +179,20 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
-	if err := hs.SQLStore.UpdatePluginSetting(c.Req.Context(), &cmd); err != nil {
+	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
+		Enabled:                 cmd.Enabled,
+		Pinned:                  cmd.Pinned,
+		JSONData:                cmd.JsonData,
+		SecureJSONData:          cmd.SecureJsonData,
+		PluginVersion:           cmd.PluginVersion,
+		PluginID:                cmd.PluginId,
+		OrgID:                   cmd.OrgId,
+		EncryptedSecureJSONData: cmd.EncryptedSecureJsonData,
+	}); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
 	return response.Success("Plugin settings updated")
-}
-
-func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
-	pluginID := web.Params(c.Req)[":pluginId"]
-
-	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.Req.Context(), c.OrgId, pluginID)
-	if err != nil {
-		var notFound plugins.NotFoundError
-		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
-		}
-
-		return response.Error(500, "Failed to get plugin dashboards", err)
-	}
-
-	return response.JSON(200, list)
 }
 
 func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {

@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +35,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	editorRole := models.ROLE_EDITOR
 	sqlmock := mockstore.NewSQLStoreMock()
 	aclMockResp := []*models.DashboardAclInfoDTO{}
-	hs := &HTTPServer{SQLStore: sqlmock}
+	hs := &HTTPServer{DashboardsnapshotsService: &dashboardsnapshots.Service{SQLStore: sqlmock}}
 
 	setUpSnapshotTest := func(t *testing.T) *models.DashboardSnapshot {
 		t.Helper()
@@ -69,6 +71,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				})
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
+				guardian.InitLegacyGuardian(sc.sqlStore)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)

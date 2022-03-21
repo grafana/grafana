@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -25,7 +24,6 @@ const (
 
 var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
-var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 

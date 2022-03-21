@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
 import { Draggable } from 'react-beautiful-dnd';
 import { css } from '@emotion/css';
-import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, LinkButton, Input } from '@grafana/ui';
+import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, Input, Button } from '@grafana/ui';
+import { ResourcePicker } from '../ResourcePicker';
+import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
@@ -21,9 +23,10 @@ interface Props {
   onChange: (index: number, mapping: ValueMappingEditRowModel) => void;
   onRemove: (index: number) => void;
   onDuplicate: (index: number) => void;
+  showIconPicker?: boolean;
 }
 
-export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate: onDuplicate }: Props) {
+export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate, showIconPicker }: Props) {
   const { key, result } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -60,6 +63,18 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   const onClearColor = () => {
     update((mapping) => {
       mapping.result.color = undefined;
+    });
+  };
+
+  const onChangeIcon = (icon?: string) => {
+    update((mapping) => {
+      mapping.result.icon = icon;
+    });
+  };
+
+  const onClearIcon = () => {
+    update((mapping) => {
+      mapping.result.icon = undefined;
     });
   };
 
@@ -176,13 +191,31 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             {!result.color && (
               <ColorPicker color={'gray'} onChange={onChangeColor} enableNamedColors={true}>
                 {(props) => (
-                  <LinkButton variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
+                  <Button variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
                     Set color
-                  </LinkButton>
+                  </Button>
                 )}
               </ColorPicker>
             )}
           </td>
+          {showIconPicker && (
+            <td className={styles.textAlignCenter}>
+              <HorizontalGroup spacing="sm" justify="center">
+                <ResourcePicker
+                  onChange={onChangeIcon}
+                  onClear={onClearIcon}
+                  value={result.icon}
+                  size={ResourcePickerSize.SMALL}
+                  folderName={ResourceFolderName.Icon}
+                  mediaType={MediaType.Icon}
+                  color={result.color}
+                />
+                {result.icon && (
+                  <IconButton name="times" onClick={onClearIcon} tooltip="Remove icon" tooltipPlacement="top" />
+                )}
+              </HorizontalGroup>
+            </td>
+          )}
           <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">
               <IconButton name="copy" onClick={() => onDuplicate(index)} data-testid="duplicate-value-mapping" />

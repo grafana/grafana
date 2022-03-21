@@ -5,21 +5,28 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var ResendDelay = 30 * time.Second
+
+// AlertInstanceManager defines the interface for querying the current alert instances.
+type AlertInstanceManager interface {
+	GetAll(orgID int64) []*State
+	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State
+}
 
 type Manager struct {
 	log     log.Logger
@@ -188,7 +195,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.createAlertAnnotation(ctx, currentState.State, alertRule, result, oldState)
+		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
 	}
 	return currentState
 }
@@ -236,18 +243,19 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
-	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String(), "oldState", oldState.String())
+func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state eval.State, previousState eval.State) {
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", state.String(), "oldState", previousState.String())
 
-	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, result.Instance.String(), new.String())
+	labels = removePrivateLabels(labels)
+	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), state.String())
 
 	item := &annotations.Item{
 		AlertId:   alertRule.ID,
 		OrgId:     alertRule.OrgID,
-		PrevState: oldState.String(),
-		NewState:  new.String(),
+		PrevState: previousState.String(),
+		NewState:  state.String(),
 		Text:      annotationText,
-		Epoch:     result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
+		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
 
 	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
@@ -298,10 +306,24 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
+
+			if s.State == eval.Alerting {
+				st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
+			}
 		}
 	}
 }
 
 func isItStale(lastEval time.Time, intervalSeconds int64) bool {
 	return lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).Before(time.Now())
+}
+
+func removePrivateLabels(labels data.Labels) data.Labels {
+	result := make(data.Labels)
+	for k, v := range labels {
+		if !strings.HasPrefix(k, "__") && !strings.HasSuffix(k, "__") {
+			result[k] = v
+		}
+	}
+	return result
 }

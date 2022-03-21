@@ -24,15 +24,10 @@ type Store interface {
 	UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error
 	UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error
 	DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error
-	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
-	GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
-	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
-	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
+	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
+	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
-	CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error)
-	CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error)
 	CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error)
 	GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error
 	GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error
@@ -45,6 +40,7 @@ type Store interface {
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
+	SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error
 	DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error
 	BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error
 	DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error
@@ -67,7 +63,8 @@ type Store interface {
 	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error
 	GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error
 	SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error
-	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error)
+	PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error
+	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error)
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
@@ -87,8 +84,6 @@ type Store interface {
 	GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error
 	GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error
 	DeleteExpiredVersions(ctx context.Context, cmd *models.DeleteExpiredVersionsCommand) error
-	UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error
-	UpdateDashboardACLCtx(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error
 	GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
@@ -99,7 +94,6 @@ type Store interface {
 	GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error
 	GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error
 	HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error
-	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 	SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error
 	PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error
 	PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error
@@ -109,15 +103,12 @@ type Store interface {
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
-	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
-	GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error)
 	SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
-	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
 	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error
@@ -125,7 +116,7 @@ type Store interface {
 	DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error
 	AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error
 	UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error
-	Migrate() error
+	Migrate(bool) error
 	Sync() error
 	Reset() error
 	Quote(value string) string
@@ -143,10 +134,9 @@ type Store interface {
 	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
 	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
 	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetNonServiceAccountAPIKeys(ctx context.Context) []*models.ApiKey
+	GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey
 	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
-	UpdateApikeyServiceAccount(ctx context.Context, apikeyId int64, saccountId int64) error
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
 	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
@@ -157,4 +147,7 @@ type Store interface {
 	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
+	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
+	GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error
+	GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error
 }

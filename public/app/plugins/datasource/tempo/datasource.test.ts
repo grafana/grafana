@@ -16,6 +16,12 @@ import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './dat
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
+  // Mock the console error so that running the test suite doesnt throw the error
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
   it('returns empty response when traceId is empty', async () => {
     const ds = new TempoDatasource(defaultSettings);
     const response = await lastValueFrom(
@@ -216,6 +222,55 @@ describe('Tempo data source', () => {
     expect(result).toBe(
       'Service Name: frontend, Span Name: /config, Search: root.http.status_code=500, Min Duration: 1ms, Max Duration: 100s, Limit: 10'
     );
+  });
+
+  it('should get loki search datasource', () => {
+    // 1. Get lokiSearch.datasource if present
+    const ds1 = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        lokiSearch: {
+          datasourceUid: 'loki-1',
+        },
+      },
+    });
+    const lokiDS1 = ds1.getLokiSearchDS();
+    expect(lokiDS1).toBe('loki-1');
+
+    // 2. Get traceToLogs.datasource
+    const ds2 = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        tracesToLogs: {
+          lokiSearch: true,
+          datasourceUid: 'loki-2',
+        },
+      },
+    });
+    const lokiDS2 = ds2.getLokiSearchDS();
+    expect(lokiDS2).toBe('loki-2');
+
+    // 3. Return undefined if neither is available
+    const ds3 = new TempoDatasource(defaultSettings);
+    const lokiDS3 = ds3.getLokiSearchDS();
+    expect(lokiDS3).toBe(undefined);
+
+    // 4. Return undefined if lokiSearch is undefined, even if traceToLogs is present
+    // since this indicates the user cleared the fallback setting
+    const ds4 = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        tracesToLogs: {
+          lokiSearch: true,
+          datasourceUid: 'loki-2',
+        },
+        lokiSearch: {
+          datasourceUid: undefined,
+        },
+      },
+    });
+    const lokiDS4 = ds4.getLokiSearchDS();
+    expect(lokiDS4).toBe(undefined);
   });
 });
 

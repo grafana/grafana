@@ -63,10 +63,17 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
 function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
   const item: CompletionItem = { label: metric };
   if (metadata && metadata[metric]) {
-    const { type, help } = metadata[metric];
-    item.documentation = `${type.toUpperCase()}: ${help}`;
+    item.documentation = getMetadataString(metric, metadata);
   }
   return item;
+}
+
+export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  const { type, help } = metadata[metric];
+  return `${type.toUpperCase()}: ${help}`;
 }
 
 const PREFIX_DELIMITER_REGEX =
@@ -90,7 +97,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private labelsCache = new LRU<string, Record<string, string[]>>(10);
+  private labelsCache = new LRU<string, Record<string, string[]>>({ max: 10 });
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -133,10 +140,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // TODO #33976: make those requests parallel
     await this.fetchLabels();
     this.metrics = (await this.fetchLabelValues('__name__')) || [];
-    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    await this.loadMetricsMetadata();
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
     return [];
   };
+
+  async loadMetricsMetadata() {
+    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+  }
 
   getLabelKeys(): string[] {
     return this.labelKeys;

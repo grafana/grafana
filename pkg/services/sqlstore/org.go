@@ -16,11 +16,11 @@ import (
 const MainOrgName = "Main Org."
 
 func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
-	bus.AddHandler("sql", GetOrgById)
+	bus.AddHandler("sql", ss.GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
 	bus.AddHandler("sql", ss.UpdateOrg)
 	bus.AddHandler("sql", ss.UpdateOrgAddress)
-	bus.AddHandler("sql", GetOrgByName)
+	bus.AddHandler("sql", ss.GetOrgByNameHandler)
 	bus.AddHandler("sql", ss.SearchOrgs)
 	bus.AddHandler("sql", ss.DeleteOrg)
 }
@@ -48,7 +48,7 @@ func (ss *SQLStore) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuer
 	return err
 }
 
-func GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
+func (ss *SQLStore) GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
 	var org models.Org
 	exists, err := x.Id(query.Id).Get(&org)
 	if err != nil {
@@ -63,7 +63,7 @@ func GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
 	return nil
 }
 
-func GetOrgByName(ctx context.Context, query *models.GetOrgByNameQuery) error {
+func (ss *SQLStore) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
 	var org models.Org
 	exists, err := x.Where("name=?", query.Name).Get(&org)
 	if err != nil {

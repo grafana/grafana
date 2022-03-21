@@ -49,7 +49,7 @@ func TestTeamsNotifier(t *testing.T) {
 				"sections": []map[string]interface{}{
 					{
 						"title": "Details",
-						"text":  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						"text":  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					},
 				},
 				"potentialAction": []map[string]interface{}{
@@ -106,7 +106,7 @@ func TestTeamsNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "teams_testing" of type "teams": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
 		},
 	}
 
@@ -122,7 +122,7 @@ func TestTeamsNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			pn, err := NewTeamsNotifier(m, webhookSender, tmpl)
+			cfg, err := NewTeamsConfig(m)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -132,6 +132,7 @@ func TestTeamsNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewTeamsNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

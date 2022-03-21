@@ -254,7 +254,8 @@ type Cfg struct {
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
-	CSPTemplate string
+	CSPTemplate           string
+	AngularSupportEnabled bool
 
 	TempDataLifetime                 time.Duration
 	PluginsEnableAlpha               bool
@@ -305,6 +306,7 @@ type Cfg struct {
 	AuthProxyEnableLoginToken bool
 	AuthProxyWhitelist        string
 	AuthProxyHeaders          map[string]string
+	AuthProxyHeadersEncoded   bool
 	AuthProxySyncTTL          int
 
 	// OAuth
@@ -393,9 +395,10 @@ type Cfg struct {
 	DefaultTheme string
 	HomePage     string
 
-	AutoAssignOrg     bool
-	AutoAssignOrgId   int
-	AutoAssignOrgRole string
+	AutoAssignOrg              bool
+	AutoAssignOrgId            int
+	AutoAssignOrgRole          string
+	OAuthSkipOrgRoleUpdateSync bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
@@ -1191,6 +1194,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
+	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(true)
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
@@ -1250,6 +1254,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
 
 	// SigV4
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
@@ -1312,6 +1317,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 			cfg.AuthProxyHeaders[split[0]] = split[1]
 		}
 	}
+
+	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
 	return nil
 }

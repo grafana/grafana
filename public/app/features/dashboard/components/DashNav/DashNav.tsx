@@ -14,10 +14,12 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { DashboardModel } from '../../state';
 import { KioskMode } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
+import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import config from 'app/core/config';
 
 const mapDispatchToProps = {
   updateTimeZoneForSession,
@@ -150,6 +152,26 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
+    if (dashboard.uid && config.featureToggles.dashboardComments) {
+      buttons.push(
+        <ModalsController key="button-dashboard-comments">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip="Show dashboard comments"
+              icon="comment-alt-message"
+              iconSize="lg"
+              onClick={() => {
+                showModal(DashboardCommentsModal, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
+
     this.addCustomContent(customLeftActions, buttons);
     return buttons;
   }
@@ -178,7 +200,7 @@ class DashNav extends PureComponent<Props> {
 
   renderRightActionsButton() {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = this.props;
-    const { canEdit, showSettings } = dashboard.meta;
+    const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
@@ -196,6 +218,9 @@ class DashNav extends PureComponent<Props> {
 
     if (canEdit && !isFullscreen) {
       buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
+    }
+
+    if (canSave && !isFullscreen) {
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
@@ -203,7 +228,7 @@ class DashNav extends PureComponent<Props> {
               tooltip="Save dashboard"
               icon="save"
               onClick={() => {
-                showModal(SaveDashboardModalProxy, {
+                showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,
                 });

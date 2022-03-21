@@ -1,6 +1,9 @@
 package types
 
-import "github.com/grafana/grafana/pkg/services/accesscontrol"
+import (
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+)
 
 type SetResourcePermissionCommand struct {
 	Actions    []string
@@ -17,9 +20,11 @@ type SetResourcePermissionsCommand struct {
 	SetResourcePermissionCommand
 }
 
-type GetResourcesPermissionsQuery struct {
-	Actions     []string
-	Resource    string
-	ResourceIDs []string
-	OnlyManaged bool
+type GetResourcePermissionsQuery struct {
+	Actions         []string
+	Resource        string
+	ResourceID      string
+	OnlyManaged     bool
+	InheritedScopes []string
+	User            *models.SignedInUser
 }

@@ -154,3 +154,27 @@ export const Full: Story<Props> = ({ disabled }) => {
     </Card>
   );
 };
+
+export const Selected: Story<Props> = () => {
+  return (
+    <Card isSelected>
+      <Card.Heading>Spaces</Card.Heading>
+      <Card.Description>Spaces are the superior form of indenting code.</Card.Description>
+      <Card.Figure>
+        <img src={logo} alt="Grafana Logo" width="40" height="40" />
+      </Card.Figure>
+    </Card>
+  );
+};
+
+export const NotSelected: Story<Props> = () => {
+  return (
+    <Card isSelected={false}>
+      <Card.Heading>Tabs</Card.Heading>
+      <Card.Description>Tabs are the preferred way of indentation.</Card.Description>
+      <Card.Figure>
+        <img src={logo} alt="Grafana Logo" width="40" height="40" />
+      </Card.Figure>
+    </Card>
+  );
+};

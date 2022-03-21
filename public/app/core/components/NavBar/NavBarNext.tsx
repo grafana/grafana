@@ -6,6 +6,7 @@ import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import config from 'app/core/config';
 import { KioskMode, StoreState } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
@@ -14,7 +15,7 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { Branding } from '../Branding/Branding';
-import { connect, ConnectedProps } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -27,17 +28,9 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  navBarTree: state.navBarTree,
-});
-
-const mapDispatchToProps = {};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export interface Props extends ConnectedProps<typeof connector> {}
-
-export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
+export const NavBarNext = React.memo(() => {
+  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
+  const homeUrl = config.appSubUrl || '/';
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -47,6 +40,14 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
     setShowSwitcherModal(!showSwitcherModal);
   };
   const navTree = cloneDeep(navBarTree);
+
+  // Here we need to hack in a "home" NavModelItem since this is constructed in the frontend
+  const homeLink: NavModelItem = {
+    text: 'Home',
+    url: config.appSubUrl || '/',
+  };
+  navTree.unshift(homeLink);
+
   const coreItems = navTree.filter((item) => item.section === NavSection.Core);
   const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
   const configItems = enrichConfigItems(
@@ -68,7 +69,12 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
       </div>
 
       <NavBarSection>
-        <NavBarItemWithoutMenu label="Main menu" className={styles.grafanaLogo} onClick={() => setMenuOpen(!menuOpen)}>
+        <NavBarItemWithoutMenu
+          isActive={isMatchOrChildMatch(homeLink, activeItem)}
+          label="Home"
+          className={styles.grafanaLogo}
+          url={homeUrl}
+        >
           <Branding.MenuLogo />
         </NavBarItemWithoutMenu>
         <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
@@ -89,16 +95,14 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
         ))}
       </NavBarSection>
 
-      {pluginItems.length > 0 && (
-        <NavBarSection>
-          {pluginItems.map((link, index) => (
-            <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-            </NavBarItem>
-          ))}
-        </NavBarSection>
-      )}
+      <NavBarSection>
+        {pluginItems.map((link, index) => (
+          <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
 
       <div className={styles.spacer} />
 
@@ -128,9 +132,7 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   );
 });
 
-NavBarNextUnconnected.displayName = 'NavBarNext';
-
-export const NavBarNext = connector(NavBarNextUnconnected);
+NavBarNext.displayName = 'NavBarNext';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`
@@ -148,9 +150,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     z-index: ${theme.zIndex.sidemenu};
 
     ${theme.breakpoints.up('md')} {
-      gap: ${theme.spacing(1)};
-      margin-left: ${theme.spacing(1)};
-      padding: ${theme.spacing(1)} 0;
+      background: ${theme.colors.background.primary};
+      border-right: 1px solid ${theme.components.panel.borderColor};
       position: relative;
       width: ${theme.components.sidemenu.width}px;
     }

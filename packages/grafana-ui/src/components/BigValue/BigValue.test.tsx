@@ -1,6 +1,6 @@
 import React from 'react';
-import { shallow } from 'enzyme';
-import { BigValue, Props, BigValueColorMode, BigValueGraphMode } from './BigValue';
+import { render, screen } from '@testing-library/react';
+import { BigValue, BigValueColorMode, BigValueGraphMode, Props } from './BigValue';
 import { createTheme } from '@grafana/data';
 
 function getProps(propOverrides?: Partial<Props>): Props {
@@ -21,22 +21,12 @@ function getProps(propOverrides?: Partial<Props>): Props {
   return props;
 }
 
-const setup = (propOverrides?: object) => {
-  const props = getProps(propOverrides);
-  const wrapper = shallow(<BigValue {...props} />);
-  const instance = wrapper.instance() as BigValue;
-
-  return {
-    instance,
-    wrapper,
-  };
-};
-
 describe('BigValue', () => {
   describe('Render with basic options', () => {
     it('should render', () => {
-      const { wrapper } = setup();
-      expect(wrapper).toMatchSnapshot();
+      render(<BigValue {...getProps()} />);
+
+      expect(screen.getByText('25')).toBeInTheDocument();
     });
   });
 });

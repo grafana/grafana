@@ -460,7 +460,7 @@ describe('getRawDisplayProcessor', () => {
     ${'a string'}                     | ${'a string'}
     ${null}                           | ${'null'}
     ${undefined}                      | ${'undefined'}
-    ${{ value: 0, label: 'a label' }} | ${'[object Object]'}
+    ${{ value: 0, label: 'a label' }} | ${'{"value":0,"label":"a label"}'}
   `('when called with value:{$value}', ({ value, expected }) => {
     const result = processor(value);
 

@@ -197,7 +197,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 export interface AddResultsToCachePayload {
   exploreId: ExploreId;
   cacheKey: string;
-  queryResponse: PanelData;
+  queryResponse: ExplorePanelData;
 }
 export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
 
@@ -497,7 +497,11 @@ export const runQueries = (
         );
         dispatch(cleanLogsVolumeAction({ exploreId }));
       } else if (hasLogsVolumeSupport(datasourceInstance)) {
-        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
+        const sourceRequest = {
+          ...transaction.request,
+          requestId: transaction.request.requestId + '_log_volume',
+        };
+        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
         dispatch(
           storeLogsVolumeDataProviderAction({
             exploreId,

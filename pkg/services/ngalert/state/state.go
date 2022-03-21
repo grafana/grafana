@@ -47,7 +47,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func (a *State) resultNormal(alertRule *ngModels.AlertRule, result eval.Result) {
+func (a *State) resultNormal(_ *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error // should be nil since state is not error
 
 	if a.State != eval.Normal {
@@ -64,7 +64,7 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 	case eval.Alerting:
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
-		if result.EvaluatedAt.Sub(a.StartsAt) > alertRule.For {
+		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
 			a.State = eval.Alerting
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
@@ -176,4 +176,14 @@ func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
 	}
 
 	a.EndsAt = result.EvaluatedAt.Add(ends * 3)
+}
+
+func (a *State) GetLabels(opts ...ngModels.LabelOption) map[string]string {
+	labels := a.Labels.Copy()
+
+	for _, opt := range opts {
+		opt(labels)
+	}
+
+	return labels
 }

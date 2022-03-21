@@ -1,36 +1,61 @@
-import React, { MouseEvent, PureComponent } from 'react';
-import { Icon, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import { StoreState } from '../../../types';
-import { VariableEditorEditor } from './VariableEditorEditor';
+import { Button, Icon } from '@grafana/ui';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import React, { MouseEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { getEditorVariables } from '../state/selectors';
-import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
-import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
-import { VariableEditorList } from './VariableEditorList';
-import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
+import { bindActionCreators } from 'redux';
+
+import { StoreState, ThunkDispatch } from '../../../types';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
+import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getEditorVariables, getVariablesState } from '../state/selectors';
+import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
+import { KeyedVariableIdentifier } from '../state/types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
+import { VariableEditorEditor } from './VariableEditorEditor';
+import { VariableEditorList } from './VariableEditorList';
 
-const mapStateToProps = (state: StoreState) => ({
-  variables: getEditorVariables(state),
-  idInEditor: state.templating.editor.id,
-  dashboard: state.dashboard.getModel(),
-  usagesNetwork: state.templating.inspect.usagesNetwork,
-  usages: state.templating.inspect.usages,
-});
-
-const mapDispatchToProps = {
-  changeVariableOrder,
-  duplicateVariable,
-  removeVariable,
-  switchToNewMode,
-  switchToEditMode,
-  switchToListMode,
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const { uid } = ownProps.dashboard;
+  const templatingState = getVariablesState(uid, state);
+  return {
+    variables: getEditorVariables(uid, state),
+    idInEditor: templatingState.editor.id,
+    usagesNetwork: templatingState.inspect.usagesNetwork,
+    usages: templatingState.inspect.usages,
+  };
 };
 
-interface OwnProps {}
+const mapDispatchToProps = (dispatch: ThunkDispatch) => {
+  return {
+    ...bindActionCreators({ switchToNewMode, switchToEditMode, switchToListMode }, dispatch),
+    changeVariableOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) =>
+      dispatch(
+        toKeyedAction(
+          identifier.rootStateKey,
+          changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex }))
+        )
+      ),
+    duplicateVariable: (identifier: KeyedVariableIdentifier) =>
+      dispatch(
+        toKeyedAction(
+          identifier.rootStateKey,
+          duplicateVariable(toVariablePayload(identifier, { newId: undefined as unknown as string }))
+        )
+      ),
+    removeVariable: (identifier: KeyedVariableIdentifier) => {
+      dispatch(
+        toKeyedAction(identifier.rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: true })))
+      );
+    },
+  };
+};
+
+interface OwnProps {
+  dashboard: DashboardModel;
+}
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
@@ -38,32 +63,32 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
   componentDidMount(): void {
-    this.props.switchToListMode();
+    this.props.switchToListMode(this.props.dashboard.uid);
   }
 
   onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.switchToListMode();
+    this.props.switchToListMode(this.props.dashboard.uid);
   };
 
-  onEditVariable = (identifier: VariableIdentifier) => {
+  onEditVariable = (identifier: KeyedVariableIdentifier) => {
     this.props.switchToEditMode(identifier);
   };
 
   onNewVariable = () => {
-    this.props.switchToNewMode();
+    this.props.switchToNewMode(this.props.dashboard.uid);
   };
 
-  onChangeVariableOrder = (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => {
-    this.props.changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex }));
+  onChangeVariableOrder = (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) => {
+    this.props.changeVariableOrder(identifier, fromIndex, toIndex);
   };
 
-  onDuplicateVariable = (identifier: VariableIdentifier) => {
-    this.props.duplicateVariable(toVariablePayload(identifier, { newId: undefined as unknown as string }));
+  onDuplicateVariable = (identifier: KeyedVariableIdentifier) => {
+    this.props.duplicateVariable(identifier);
   };
 
-  onRemoveVariable = (identifier: VariableIdentifier) => {
-    this.props.removeVariable(toVariablePayload(identifier, { reIndex: true }));
+  onRemoveVariable = (identifier: KeyedVariableIdentifier) => {
+    this.props.removeVariable(identifier);
   };
 
   render() {
@@ -91,13 +116,13 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           {this.props.variables.length > 0 && variableToEdit === null && (
             <>
               <VariablesDependenciesButton variables={this.props.variables} />
-              <LinkButton
+              <Button
                 type="button"
                 onClick={this.onNewVariable}
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
               >
                 New
-              </LinkButton>
+              </Button>
             </>
           )}
         </div>
@@ -117,7 +142,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
         {!variableToEdit && this.props.variables.length > 0 && (
           <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
         )}
-        {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}
+        {variableToEdit && <VariableEditorEditor identifier={toKeyedVariableIdentifier(variableToEdit)} />}
       </div>
     );
   }
