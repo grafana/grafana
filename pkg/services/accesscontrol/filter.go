@@ -116,8 +116,6 @@ func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 	return ids, false
 }
 
-type attributeParser func(scope string) (interface{}, error)
-
 func parseIntAttribute(scope string) (interface{}, error) {
 	return strconv.ParseInt(scope[strings.LastIndex(scope, ":")+1:], 10, 64)
 }
