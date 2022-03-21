@@ -35,13 +35,17 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 function getIconSubDir(name: IconName, type: string): string {
-  return name?.startsWith('gf-')
-    ? 'custom'
-    : alwaysMonoIcons.includes(name)
-    ? 'mono'
-    : type === 'default'
-    ? 'unicons'
-    : 'mono';
+  if (name?.startsWith('gf-')) {
+    return 'custom';
+  } else if (alwaysMonoIcons.includes(name)) {
+    return 'mono';
+  } else if (type === 'default') {
+    return 'unicons';
+  } else if (type === 'solid') {
+    return 'solid';
+  } else {
+    return 'mono';
+  }
 }
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
