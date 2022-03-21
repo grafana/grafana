@@ -89,6 +89,7 @@ type AddDataSourceCommand struct {
 	Uid               string            `json:"uid"`
 
 	OrgId                   int64             `json:"-"`
+	UserId                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 

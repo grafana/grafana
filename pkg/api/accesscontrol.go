@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -276,15 +274,17 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
-	localAnnotationsWriterRole := ac.RoleRegistration{
+	dashboardAnnotationsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:annotations.local:writer",
-			DisplayName: "Local annotation writer",
+			Name:        "fixed:annotations.dashboard:writer",
+			DisplayName: "Dashboard annotation writer",
 			Description: "Update annotations associated with dashboards.",
 			Group:       "Annotations",
-			Version:     1,
+			Version:     2,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeLocal},
+				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
+				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -298,6 +298,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Annotations",
 			Version:     1,
 			Permissions: []ac.Permission{
+				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
 			},
 		},
@@ -407,7 +409,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
-		annotationsReaderRole, localAnnotationsWriterRole, annotationsWriterRole,
+		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
 	)
@@ -463,15 +465,13 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
-func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, resource string, id int64) ac.Metadata {
-	key := fmt.Sprintf("%d", id)
-	ids := map[string]bool{key: true}
-
-	return hs.getMultiAccessControlMetadata(c, resource, ids)[key]
+func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, prefix string, resourceID string) ac.Metadata {
+	ids := map[string]bool{resourceID: true}
+	return hs.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }
 
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
-func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resource string, ids map[string]bool) map[string]ac.Metadata {
+func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
 	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}
 	}
@@ -485,5 +485,5 @@ func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resour
 		return map[string]ac.Metadata{}
 	}
 
-	return ac.GetResourcesMetadata(c.Req.Context(), permissions, resource, ids)
+	return ac.GetResourcesMetadata(c.Req.Context(), permissions, prefix, resourceIDs)
 }
