@@ -53,6 +53,7 @@ load(
     'notify_pipeline',
     'failure_template',
     'drone_change_template',
+    'tests_volumes',
 )
 
 load(
@@ -180,7 +181,7 @@ def main_pipelines(edition):
         pipeline(
             name='main-test', edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,
-            volumes=[],
+            volumes=tests_volumes(),
         ),
         pipeline(
             name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],

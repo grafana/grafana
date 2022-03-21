@@ -44,6 +44,7 @@ load(
     'pipeline',
     'failure_template',
     'drone_change_template',
+    'tests_volumes',
 )
 
 load(
@@ -134,6 +135,7 @@ def pr_pipelines(edition):
         pipeline(
             name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + test_steps,
+                volumes=tests_volumes(),
         ), pipeline(
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + build_steps,

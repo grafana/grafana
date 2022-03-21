@@ -82,4 +82,12 @@ def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None, 
         'depends_on': depends_on,
     }
 
+def tests_volumes():
+    return [{
+            'name': 'intentapi_certs',
+            'host': {
+                'path': ' /drone/src/devenv/docker/blocks/intentapi/certs',
+            }
+    }]
+
 

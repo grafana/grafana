@@ -516,7 +516,12 @@ def test_backend_step(edition):
             'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig ' +
             './bin/grabpl test-backend --edition {}'.format(edition),
         ],
-        'volumes': [ { 'name': 'docker', 'path': '/var/run/docker.sock'} ]
+        'volumes': [ {
+                'name': 'docker', 'path': '/var/run/docker.sock'
+            }, {
+                'name': 'intentapi-certs', 'path': '/var/lib/kubernetes'
+            },
+        ]
     }
 
 

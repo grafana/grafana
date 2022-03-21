@@ -101,6 +101,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -126,6 +128,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- host:
+    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
+  name: intentapi_certs
 ---
 depends_on: []
 kind: pipeline
@@ -702,6 +707,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -725,6 +732,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- host:
+    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
+  name: intentapi_certs
 ---
 depends_on: []
 kind: pipeline
@@ -1747,6 +1757,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -1775,6 +1787,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- host:
+    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
+  name: intentapi_certs
 ---
 depends_on: []
 kind: pipeline
@@ -2401,6 +2416,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -2454,6 +2471,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -3541,6 +3560,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -3563,6 +3584,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- host:
+    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
+  name: intentapi_certs
 ---
 depends_on: []
 kind: pipeline
@@ -4161,6 +4185,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -4214,6 +4240,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: intentapi-certs
+    path: /var/lib/kubernetes
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -4586,6 +4614,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f4b3b38372f1e6a2b2b83d9aa38bce65dc6ec842ef8b049538b368e16636c386
+hmac: 4be7244c2ee8bed51f33fff4b4f3a2151018a2f6cbeac80f3fedef62a1984ffb
 
 ...

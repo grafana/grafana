@@ -54,6 +54,7 @@ load(
     'notify_pipeline',
     'failure_template',
     'drone_change_template',
+    'tests_volumes',
 )
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
@@ -279,7 +280,7 @@ def get_oss_pipelines(trigger, ver_mode):
                 name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
                 steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   test_steps,
-                volumes=[],
+                volumes=tests_volumes(),
             ),
             pipeline(
                 name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
