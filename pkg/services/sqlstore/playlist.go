@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 func (ss *SQLStore) addPlaylistQueryAndCommandHandlers() {
@@ -49,7 +50,7 @@ func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlayli
 
 func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		playlist := models.Playlist{
+		playlist := playlist.Playlist{
 			Id:       cmd.Id,
 			OrgId:    cmd.OrgId,
 			Name:     cmd.Name,
