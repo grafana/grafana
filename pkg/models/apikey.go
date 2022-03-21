@@ -13,15 +13,15 @@ var (
 )
 
 type ApiKey struct {
-	Id               int64
-	OrgId            int64
-	Name             string
-	Key              string
-	Role             RoleType
-	Created          time.Time
-	Updated          time.Time
-	Expires          *int64
-	ServiceAccountId *int64
+	Id      int64
+	OrgId   int64
+	Name    string
+	Key     string
+	Role    RoleType
+	Created time.Time
+	Updated time.Time
+	Expires *int64
+	UserId  *int64
 }
 
 // ---------------------

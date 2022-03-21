@@ -147,7 +147,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				err = store.GetApiKeyByName(context.Background(), &query)
 				require.NoError(t, err)
 
-				assert.Equal(t, sa.Id, *query.Result.ServiceAccountId)
+				assert.Equal(t, sa.Id, *query.Result.UserId)
 				assert.Equal(t, sa.OrgId, query.Result.OrgId)
 			}
 		})
@@ -272,11 +272,11 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		{
 			desc: "should be able to list serviceaccount with no expiration date",
 			tokens: []*models.ApiKey{{
-				Id:               1,
-				OrgId:            1,
-				ServiceAccountId: &saId,
-				Expires:          nil,
-				Name:             "Test1",
+				Id:      1,
+				OrgId:   1,
+				UserId:  &saId,
+				Expires: nil,
+				Name:    "Test1",
 			}},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
@@ -292,11 +292,11 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		{
 			desc: "should be able to list serviceaccount with secondsUntilExpiration",
 			tokens: []*models.ApiKey{{
-				Id:               1,
-				OrgId:            1,
-				ServiceAccountId: &saId,
-				Expires:          &timeInFuture,
-				Name:             "Test2",
+				Id:      1,
+				OrgId:   1,
+				UserId:  &saId,
+				Expires: &timeInFuture,
+				Name:    "Test2",
 			}},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
@@ -312,11 +312,11 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		{
 			desc: "should be able to list serviceaccount with expired token",
 			tokens: []*models.ApiKey{{
-				Id:               1,
-				OrgId:            1,
-				ServiceAccountId: &saId,
-				Expires:          &timeInPast,
-				Name:             "Test3",
+				Id:      1,
+				OrgId:   1,
+				UserId:  &saId,
+				Expires: &timeInPast,
+				Name:    "Test3",
 			}},
 			acmock: tests.SetupMockAccesscontrol(
 				t,

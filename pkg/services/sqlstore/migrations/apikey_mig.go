@@ -97,5 +97,4 @@ func addApiKeyMigrations(mg *Migrator) {
 	mg.AddMigration("Add service account foreign key for user_id", NewAddColumnMigration(apiKeyV2, &Column{
 		Name: "user_id", Type: DB_BigInt, Nullable: true, Default: "0",
 	}))
-
 }

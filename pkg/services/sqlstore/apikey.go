@@ -95,14 +95,14 @@ func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 		}
 
 		t := models.ApiKey{
-			OrgId:            cmd.OrgId,
-			Name:             cmd.Name,
-			Role:             cmd.Role,
-			Key:              cmd.Key,
-			Created:          updated,
-			Updated:          updated,
-			Expires:          expires,
-			ServiceAccountId: nil,
+			OrgId:   cmd.OrgId,
+			Name:    cmd.Name,
+			Role:    cmd.Role,
+			Key:     cmd.Key,
+			Created: updated,
+			Updated: updated,
+			Expires: expires,
+			UserId:  nil,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {

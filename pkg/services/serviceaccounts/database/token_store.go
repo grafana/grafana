@@ -26,14 +26,14 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		}
 
 		t := models.ApiKey{
-			OrgId:            cmd.OrgId,
-			Name:             cmd.Name,
-			Role:             cmd.Role,
-			Key:              cmd.Key,
-			Created:          updated,
-			Updated:          updated,
-			Expires:          expires,
-			ServiceAccountId: &saID,
+			OrgId:   cmd.OrgId,
+			Name:    cmd.Name,
+			Role:    cmd.Role,
+			Key:     cmd.Key,
+			Created: updated,
+			Updated: updated,
+			Expires: expires,
+			UserId:  &saID,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
@@ -75,7 +75,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(ctx context.Cont
 			s.log.Warn("API key not found", "err", err)
 			return models.ErrApiKeyNotFound
 		}
-		key.ServiceAccountId = &saccountId
+		key.UserId = &saccountId
 
 		if _, err := sess.ID(key.Id).Update(&key); err != nil {
 			s.log.Warn("Could not update api key", "err", err)
