@@ -9,6 +9,7 @@ import Page from 'app/core/components/Page/Page';
 import { useAsync } from 'react-use';
 import { getGrafanaSearcher } from '../service';
 import { Table } from './table/Table';
+import { RawResultsView } from './RawResultsView';
 
 const node: NavModelItem = {
   id: 'search',
@@ -37,9 +38,15 @@ export default function SearchPage() {
         {results.loading && <Spinner />}
         {results.value?.body && (
           <div>
-            <AutoSizer style={{ width: '100%', height: '550px' }}>
+            <AutoSizer style={{ width: '100%', height: '2000px' }}>
               {({ width }) => {
-                return <Table data={results.value!.body} width={width} />;
+                return (
+                  <>
+                    <Table data={results.value!.body} width={width} />
+                    <br />
+                    <RawResultsView width={width} frame={results.value!.body} />
+                  </>
+                );
               }}
             </AutoSizer>
           </div>

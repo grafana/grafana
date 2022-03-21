@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
-import { DataFrame, Field, getFieldDisplayName, GrafanaTheme2, Vector } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Icon, TableFieldOptions, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
-import { getCellComponent } from '@grafana/ui/src/components/Table/utils';
+import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
 type Props = {
   data: DataFrame;
@@ -17,27 +17,63 @@ type TableColumn = Column & {
   field: Field;
 };
 
-const SEARCH_COLUMNS = ['Name'];
-
 const generateColumns = (data: DataFrame, availableWidth: number): TableColumn[] => {
   const columns: TableColumn[] = [];
 
-  for (const [fieldIndex, field] of data.fields.entries()) {
-    if (SEARCH_COLUMNS.includes(getFieldDisplayName(field, data))) {
-      const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
-      const Cell = getCellComponent(fieldTableOptions.displayMode, field);
-      columns.push({
-        Cell: Cell,
-        id: fieldIndex.toString(),
-        field: field,
-        Header: getFieldDisplayName(field, data),
-        accessor: (row: any, i: number) => {
-          return field.values.get(i);
-        },
-        width: fieldTableOptions.width,
-      });
-    }
-  }
+  const access = getFieldAccess(data);
+  columns.push({
+    Cell: DefaultCell,
+    id: `column-name`,
+    field: access.name!,
+    Header: 'Name',
+    accessor: (row: any, i: number) => {
+      return access.name!.values.get(i);
+    },
+    width: undefined,
+  });
+
+  // The type column
+  columns.push({
+    Cell: DefaultCell,
+    id: `column-type`,
+    field: access.kind ?? access.url!,
+    Header: 'Type',
+    accessor: (row: any, i: number) => {
+      let icon = 'question';
+      let txt = access.kind?.values.get(i);
+      switch (txt) {
+        case 'dashboard':
+          icon = 'apps';
+          break;
+        case 'folder':
+          icon = 'folder';
+          break;
+        case 'panel':
+          icon = 'graph-bar';
+          txt = access.type?.values.get(i) ?? txt;
+      }
+      return (
+        <div>
+          <Icon name={icon as any} />
+          &nbsp;
+          {txt}
+        </div>
+      );
+    },
+    width: undefined,
+  });
+
+  columns.push({
+    Cell: DefaultCell,
+    id: `column-url`,
+    field: access.url!,
+    Header: 'URL',
+    accessor: (row: any, i: number) => {
+      const url = access.url!.values.get(i);
+      return <a href={url}>{url}</a>;
+    },
+    width: undefined,
+  });
 
   return columns;
 };
@@ -74,66 +110,25 @@ export const Table = ({ data, width }: Props) => {
       const row = rows[rowIndex];
       prepareRow(row);
 
-      let nameField: Field<any, Vector<any>> | undefined = undefined;
-      let kindField: Field<any, Vector<any>> | undefined = undefined;
-      let urlField: Field<any, Vector<any>> | undefined = undefined;
-      for (const [_, field] of data.fields.entries()) {
-        const fieldDisplayName = field.name;
-        if (SEARCH_COLUMNS.includes(fieldDisplayName)) {
-          nameField = field;
-        }
-
-        if (fieldDisplayName === 'Kind') {
-          kindField = field;
-        }
-
-        if (fieldDisplayName === 'URL') {
-          urlField = field;
-        }
-
-        if (nameField && kindField && urlField) {
-          break;
-        }
-      }
-
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {row.cells.map((cell: Cell, index: number) => {
-            const valueIndex = nameField?.values.toArray().findIndex((value: Vector<any>, index) => {
-              if (value === cell.value) {
-                return index;
-              }
-              return;
-            });
-
-            const kind = kindField?.values.get(valueIndex!);
-            const url = urlField?.values.get(valueIndex!);
-
-            const icon = kind === 'dashboard' ? kind : kind === 'panel' ? 'graph-bar' : 'question-circle';
-
             return (
               <div key={index} className={styles.cellWrapper}>
-                {kind && (
-                  <div className={styles.cellIcon}>
-                    <Icon name={icon} size={'xl'} />
-                  </div>
-                )}
-                <a href={url}>
-                  <TableCell
-                    key={index}
-                    tableStyles={tableStyles}
-                    cell={cell}
-                    columnIndex={index}
-                    columnCount={row.cells.length}
-                  />
-                </a>
+                <TableCell
+                  key={index}
+                  tableStyles={tableStyles}
+                  cell={cell}
+                  columnIndex={index}
+                  columnCount={row.cells.length}
+                />
               </div>
             );
           })}
         </div>
       );
     },
-    [prepareRow, rows, tableStyles, data, styles.cellIcon, styles.cellWrapper]
+    [prepareRow, rows, tableStyles, styles.cellWrapper]
   );
 
   return (
@@ -198,3 +193,38 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
   `,
 });
+
+interface FieldAccess {
+  kind?: Field<string>; // panel, dashboard, folder
+  name?: Field<string>;
+  description?: Field<string>;
+  url?: Field<string>; // link to value (unique)
+  type?: Field<string>; // graph
+  tags?: Field<any>;
+  location?: Field<string>; // the folder name
+  score?: Field<number>;
+}
+
+function getFieldAccess(frame: DataFrame): FieldAccess {
+  const a: FieldAccess = {};
+  for (const f of frame.fields) {
+    switch (f.name.toLowerCase()) {
+      case 'name':
+        a.name = f;
+        break;
+      case 'kind':
+        a.kind = f;
+        break;
+      case 'location':
+        a.location = f;
+        break;
+      case 'type':
+        a.type = f;
+        break;
+      case 'url':
+        a.url = f;
+        break;
+    }
+  }
+  return a;
+}
