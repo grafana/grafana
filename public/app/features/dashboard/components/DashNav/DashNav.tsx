@@ -57,7 +57,7 @@ export function addCustomRightAction(content: DashNavButtonModel) {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export const DashNav: FC<Props> = (props) => {
+export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
 
   const onStarDashboard = () => {
@@ -286,6 +286,8 @@ export const DashNav: FC<Props> = (props) => {
       {renderRightActionsButton()}
     </PageToolbar>
   );
-};
+});
+
+DashNav.displayName = 'DashNav';
 
 export default connector(DashNav);
