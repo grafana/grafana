@@ -104,6 +104,8 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 		filters = append(filters, filter)
 	}
 
+	filters = append(filters, query.Filters...)
+
 	if query.OrgId != 0 {
 		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
 	} else if query.SignedInUser.OrgId != 0 {
