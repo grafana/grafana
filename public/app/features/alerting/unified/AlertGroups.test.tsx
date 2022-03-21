@@ -12,7 +12,12 @@ import { DataSourceType } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
 
 jest.mock('./api/alertmanager');
-
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    isEditor: true,
+    hasAccess: () => true,
+  },
+}));
 const mocks = {
   api: {
     fetchAlertGroups: jest.mocked(fetchAlertGroups),
