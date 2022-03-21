@@ -185,7 +185,7 @@ func getEvaluatorForAlertRule(rule *ngmodels.AlertRule) ac.Evaluator {
 }
 
 // authorizeRuleChanges analyzes changes in the rule group, determines what actions the user is trying to perform and check whether those actions are authorized.
-// If the user is not authorized to perform the changes the function returns ErrAuthorization with description of what action is not authorized. If evaluator function returns error, the function returns it
+// If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized. If the evaluator function returns an error, the function returns it.
 func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator func(evaluator ac.Evaluator) bool) error {
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(namespace.Id, 10))
 	if len(changes.Delete) > 0 {
