@@ -216,6 +216,6 @@ func extractPrefixes(prefix string) (string, string, bool) {
 		return "", "", false
 	}
 	rootPrefix := parts[0] + ":"
-	attributePredix := rootPrefix + parts[1] + ":"
-	return rootPrefix, attributePredix, true
+	attributePrefix := rootPrefix + parts[1] + ":"
+	return rootPrefix, attributePrefix, true
 }
