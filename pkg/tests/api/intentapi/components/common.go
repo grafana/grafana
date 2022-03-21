@@ -68,8 +68,10 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 			// make sure that the object exists in the store
 			res := zeroObjectOfType(t, postBody)
 			err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
-			return err == nil && testCase.postAssertFunc(t, res)
-		}, 10*time.Second, 250*time.Millisecond)
+			condition := testCase.postAssertFunc(t, res)
+			t.Log("after POST:", "error: ", err.Error(), "condition:", condition)
+			return err == nil && condition
+		}, 10*time.Second, 250*time.Millisecond, "unexpected object state after POST")
 
 		var getResult rest.Result
 		t.Run("test getting resource object", func(t *testing.T) {
@@ -96,8 +98,10 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 				// make sure that the object is updated in the store
 				res := zeroObjectOfType(t, postBody)
 				err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
-				return err == nil && testCase.putAssertFunc(t, res)
-			}, 10*time.Second, 250*time.Millisecond)
+				condition := testCase.putAssertFunc(t, res)
+				t.Log("after PUT:", "error: ", err.Error(), "condition:", condition)
+				return err == nil && condition
+			}, 10*time.Second, 250*time.Millisecond, "unexpected object state after PUT")
 		})
 
 		t.Run("test deleting resource object", func(t *testing.T) {
@@ -114,8 +118,9 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 				// make sure that the object is deleted from the store
 				res := zeroObjectOfType(t, postBody)
 				err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
+				t.Log("after PUT", "error: ", err.Error())
 				return err != nil
-			}, 10*time.Second, 10*time.Millisecond)
+			}, 10*time.Second, 10*time.Millisecond, "unexpected object state after DELETE")
 		})
 	})
 }
