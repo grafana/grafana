@@ -421,6 +421,6 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 }
 
 func (hs *HTTPServer) canCreateOrganizationAnnotation(c *models.ReqContext) (bool, error) {
-	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, accesscontrol.ScopeAnnotationsTypeOrganization)
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }

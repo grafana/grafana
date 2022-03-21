@@ -318,6 +318,8 @@ const (
 	ScopeTeamsAll = "teams:*"
 
 	// Annotations related actions
+	ActionAnnotationsCreate   = "annotations:create"
+	ActionAnnotationsDelete   = "annotations:delete"
 	ActionAnnotationsRead     = "annotations:read"
 	ActionAnnotationsWrite    = "annotations:write"
 	ActionAnnotationsTagsRead = "annotations.tags:read"

@@ -581,7 +581,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl create dashboard annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations",
 				method: http.MethodPost,
@@ -603,7 +603,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl create organization annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations",
 				method: http.MethodPost,
@@ -615,7 +615,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl create organization annotation without permissions is forbidden",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations",
 				method: http.MethodPost,
@@ -627,7 +627,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl delete dashboard annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/1",
 				method: http.MethodDelete,
@@ -647,7 +647,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl delete organization annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
 				method: http.MethodDelete,
@@ -655,10 +655,10 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			want: http.StatusOK,
 		},
 		{
-			name: "AccessControl create organization annotation without permissions is forbidden",
+			name: "AccessControl delete organization annotation without permissions is forbidden",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/2",
 				method: http.MethodDelete,
@@ -669,7 +669,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl create graphite annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/graphite",
 				method: http.MethodPost,
@@ -681,7 +681,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			name: "AccessControl create organization annotation without permissions is forbidden",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
-					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/graphite",
 				method: http.MethodPost,
