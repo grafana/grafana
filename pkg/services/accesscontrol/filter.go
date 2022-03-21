@@ -32,8 +32,8 @@ type SQLFilter struct {
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes that exists for all actions will be parsed and compared against the supplied sqlID
-// The attribute parameter determines how the scope will be parsed, currently supported attributes is "id" and "uid"
-func Filter(user *models.SignedInUser, sqlID, prefix, attribute string, actions ...string) (SQLFilter, error) {
+// Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")
+func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}
@@ -44,7 +44,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix, attribute string, actions 
 	wildcards := 0
 	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := parseScopes(prefix, attribute, user.Permissions[user.OrgId][a])
+		ids, hasWildcard := parseScopes(prefix, user.Permissions[user.OrgId][a])
 		if hasWildcard {
 			wildcards += 1
 			continue
@@ -85,18 +85,26 @@ func Filter(user *models.SignedInUser, sqlID, prefix, attribute string, actions 
 	return SQLFilter{query.String(), ids}, nil
 }
 
-func parseScopes(prefix, attribute string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
+func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
 	ids = make(map[interface{}]struct{})
-	scopePrefix := Scope(prefix, attribute)
-	parser, ok := scopeParsers[attribute]
+
+	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
+	if !ok {
+		return nil, false
+	}
+
+	parser := parseStringAttribute
+	if strings.HasSuffix(prefix, "id:") {
+		parser = parseIntAttribute
+	}
 
 	for _, scope := range scopes {
-		if strings.HasPrefix(scope, prefix) || scope == "*" {
-			if id := strings.TrimPrefix(scope, prefix+":"); id == "*" || id == attribute+":*" {
+		if strings.HasPrefix(scope, rootPrefix) || scope == "*" {
+			if id := strings.TrimPrefix(scope, rootPrefix); id == "*" || id == attributePrefix+"*" {
 				return nil, true
 			}
 
-			if !ok || !strings.HasPrefix(scope, scopePrefix) {
+			if !ok || !strings.HasPrefix(scope, prefix) {
 				continue
 			}
 
@@ -108,18 +116,21 @@ func parseScopes(prefix, attribute string, scopes []string) (ids map[interface{}
 	return ids, false
 }
 
-type scopeParser func(scope string) (interface{}, error)
-
-var scopeParsers = map[string]scopeParser{
-	"id":  parseScopeID,
-	"uid": parseScopeUID,
+func extractPrefixes(prefix string) (string, string, bool) {
+	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	return parts[0] + ":", parts[1] + ":", true
 }
 
-func parseScopeID(scope string) (interface{}, error) {
+type attributeParser func(scope string) (interface{}, error)
+
+func parseIntAttribute(scope string) (interface{}, error) {
 	return strconv.ParseInt(scope[strings.LastIndex(scope, ":")+1:], 10, 64)
 }
 
-func parseScopeUID(scope string) (interface{}, error) {
+func parseStringAttribute(scope string) (interface{}, error) {
 	return scope[strings.LastIndex(scope, ":")+1:], nil
 }
 
