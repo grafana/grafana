@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,7 +33,7 @@ func ProvideFolderService(
 	ac accesscontrol.AccessControl,
 ) *FolderServiceImpl {
 	ac.RegisterAttributeScopeResolver(dashboards.NewNameScopeResolver(dashboardStore))
-	ac.RegisterAttributeScopeResolver(dashboards.NewUidScopeResolver(dashboardStore))
+	ac.RegisterAttributeScopeResolver(dashboards.NewIDScopeResolver(dashboardStore))
 
 	return &FolderServiceImpl{
 		cfg:              cfg,
@@ -166,8 +165,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 	var permissionErr error
 	if f.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		resourceID := strconv.FormatInt(folder.Id, 10)
-		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, resourceID, []accesscontrol.SetResourcePermissionCommand{
+		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, folder.Uid, []accesscontrol.SetResourcePermissionCommand{
 			{UserID: userID, Permission: models.PERMISSION_ADMIN.String()},
 			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},

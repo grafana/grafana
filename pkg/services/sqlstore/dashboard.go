@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -269,9 +268,10 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
 
 		dashIds := []struct {
-			Id int64
+			Id  int64
+			Uid string
 		}{}
-		err := sess.SQL("SELECT id FROM dashboard WHERE folder_id = ?", dashboard.Id).Find(&dashIds)
+		err := sess.SQL("SELECT id, uid FROM dashboard WHERE folder_id = ?", dashboard.Id).Find(&dashIds)
 		if err != nil {
 			return err
 		}
@@ -283,14 +283,14 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		}
 
 		// remove all access control permission with folder scope
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(dashboard.Id, 10)))
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.Uid))
 		if err != nil {
 			return err
 		}
 
 		for _, dash := range dashIds {
 			// remove all access control permission with child dashboard scopes
-			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dash.Id, 10)))
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dash.Uid))
 			if err != nil {
 				return err
 			}
@@ -337,7 +337,7 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 			}
 		}
 	} else {
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10)))
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dashboard.Uid))
 		if err != nil {
 			return err
 		}
