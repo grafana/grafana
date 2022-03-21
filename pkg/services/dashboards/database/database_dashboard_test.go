@@ -11,14 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardDataAccess(t *testing.T) {
@@ -429,27 +430,62 @@ func TestDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 func TestDashboard_SortingOptions(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
-	// insertTestDashboard uses GoConvey's assertions. Workaround.
-	t.Run("test with multiple sorting options", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
-		dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
-		dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
-		assert.NotZero(t, dashA.Id)
-		assert.Less(t, dashB.Id, dashA.Id)
-		q := &search.FindPersistedDashboardsQuery{
-			SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
-			// adding two sorting options (silly no-op example, but it'll complicate the query)
-			Filters: []interface{}{
-				searchstore.TitleSorter{},
+
+	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
+	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
+	assert.NotZero(t, dashA.Id)
+	assert.Less(t, dashB.Id, dashA.Id)
+	qNoSort := &search.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+	}
+	dashboards, err := sqlStore.FindDashboards(context.Background(), qNoSort)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 2)
+	assert.Equal(t, dashA.Id, dashboards[0].ID)
+	assert.Equal(t, dashB.Id, dashboards[1].ID)
+
+	qSort := &search.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		Sort: search.SortOption{
+			Filter: []search.SortOptionFilter{
 				searchstore.TitleSorter{Descending: true},
 			},
-		}
-		dashboards, err := sqlStore.FindDashboards(context.Background(), q)
-		require.NoError(t, err)
-		require.Len(t, dashboards, 2)
-		assert.Equal(t, dashA.Id, dashboards[0].ID)
-		assert.Equal(t, dashB.Id, dashboards[1].ID)
-	})
+		},
+	}
+	dashboards, err = sqlStore.FindDashboards(context.Background(), qSort)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 2)
+	assert.Equal(t, dashB.Id, dashboards[0].ID)
+	assert.Equal(t, dashA.Id, dashboards[1].ID)
+
+}
+
+func TestDashboard_Filter(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := ProvideDashboardStore(sqlStore)
+	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
+	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
+	qNoFilter := &search.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+	}
+	dashboards, err := sqlStore.FindDashboards(context.Background(), qNoFilter)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 2)
+
+	qFilter := &search.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		Filters: []interface{}{
+			searchstore.TitleFilter{
+				Dialect: sqlStore.Dialect,
+				Title:   "Beta",
+			},
+		},
+	}
+	dashboards, err = sqlStore.FindDashboards(context.Background(), qFilter)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 1)
+	assert.Equal(t, dashB.Id, dashboards[0].ID)
+
 }
 
 func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
