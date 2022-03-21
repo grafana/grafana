@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import React, { FC } from 'react';
@@ -26,6 +27,7 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
               ? [AccessControlAction.AlertingInstancesExternalWrite]
               : [AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingInstanceUpdate]
           }
+          fallback={contextSrv.isEditor}
         >
           {alert.status.state === AlertState.Suppressed && (
             <LinkButton
@@ -52,9 +54,7 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
           )}
         </Authorize>
         <Authorize
-          actions={
-            isExternalAM ? [AccessControlAction.DataSourcesExplore] : [AccessControlAction.AlertingInstanceUpdate]
-          }
+          actions={isExternalAM ? [AccessControlAction.DataSourcesExplore] : [AccessControlAction.AlertingInstanceRead]}
         >
           {alert.generatorURL && (
             <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
