@@ -93,7 +93,7 @@ func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 	}
 
 	parser := parseStringAttribute
-	if strings.HasSuffix(prefix, "id:") {
+	if strings.HasSuffix(prefix, ":id:") {
 		parser = parseIntAttribute
 	}
 
