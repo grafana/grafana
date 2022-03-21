@@ -70,6 +70,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "allowStale": false,
           "disposeAfter": null,
           "disposed": null,
+          "fetchMethod": null,
           "free": Stack {
             "heap": Uint8Array [
               0,
@@ -154,6 +155,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "allowStale": false,
           "disposeAfter": null,
           "disposed": null,
+          "fetchMethod": null,
           "free": Stack {
             "heap": Uint8Array [
               0,

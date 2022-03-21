@@ -30,6 +30,10 @@ func GetResourceScopeName(resource string, resourceID string) string {
 	return Scope(resource, "name", resourceID)
 }
 
+func GetResourceScopeType(resource string, typeName string) string {
+	return Scope(resource, "type", typeName)
+}
+
 func GetResourceAllScope(resource string) string {
 	return Scope(resource, "*")
 }
@@ -179,6 +183,7 @@ type ScopeProvider interface {
 	GetResourceScope(resourceID string) string
 	GetResourceScopeUID(resourceID string) string
 	GetResourceScopeName(resourceID string) string
+	GetResourceScopeType(typeName string) string
 	GetResourceAllScope() string
 	GetResourceAllIDScope() string
 }
@@ -207,6 +212,11 @@ func (s scopeProviderImpl) GetResourceScopeUID(resourceID string) string {
 // GetResourceScopeName returns scope that has the format "<rootScope>:name:<resourceID>"
 func (s scopeProviderImpl) GetResourceScopeName(resourceID string) string {
 	return GetResourceScopeName(s.root, resourceID)
+}
+
+// GetResourceScopeType returns scope that has the format "<rootScope>:type:<typeName>"
+func (s scopeProviderImpl) GetResourceScopeType(typeName string) string {
+	return GetResourceScopeType(s.root, typeName)
 }
 
 // GetResourceAllScope returns scope that has the format "<rootScope>:*"

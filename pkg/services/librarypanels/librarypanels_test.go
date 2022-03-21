@@ -19,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1477,6 +1479,8 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 }
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	store := mockstore.NewSQLStoreMock()
+	guardian.InitLegacyGuardian(store)
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {

@@ -145,3 +145,17 @@ type ItemDTO struct {
 	AvatarUrl   string           `json:"avatarUrl"`
 	Data        *simplejson.Json `json:"data"`
 }
+
+type annotationType int
+
+const (
+	Global annotationType = iota
+	Local
+)
+
+func (annotation *ItemDTO) GetType() annotationType {
+	if annotation.DashboardId != 0 {
+		return Local
+	}
+	return Global
+}

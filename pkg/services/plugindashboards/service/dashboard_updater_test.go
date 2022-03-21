@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/stretchr/testify/require"
 )
@@ -29,9 +30,9 @@ func TestDashboardUpdater(t *testing.T) {
 
 		scenario(t, "Without any stored enabled plugin shouldn't delete/import any dashboards",
 			scenarioInput{
-				storedPluginSettings: []*models.PluginSettingInfoDTO{
+				storedPluginSettings: []*pluginsettings.DTO{
 					{
-						PluginId: "test",
+						PluginID: "test",
 						Enabled:  false,
 					},
 				},
@@ -51,9 +52,9 @@ func TestDashboardUpdater(t *testing.T) {
 
 		scenario(t, "With stored enabled plugin, but not installed shouldn't delete/import any dashboards",
 			scenarioInput{
-				storedPluginSettings: []*models.PluginSettingInfoDTO{
+				storedPluginSettings: []*pluginsettings.DTO{
 					{
-						PluginId: "test",
+						PluginID: "test",
 						Enabled:  true,
 					},
 				},
@@ -73,9 +74,9 @@ func TestDashboardUpdater(t *testing.T) {
 
 		scenario(t, "With stored enabled plugin and installed with same version shouldn't delete/import any dashboards",
 			scenarioInput{
-				storedPluginSettings: []*models.PluginSettingInfoDTO{
+				storedPluginSettings: []*pluginsettings.DTO{
 					{
-						PluginId:      "test",
+						PluginID:      "test",
 						Enabled:       true,
 						PluginVersion: "1.0.0",
 					},
@@ -105,9 +106,9 @@ func TestDashboardUpdater(t *testing.T) {
 
 		scenario(t, "With stored enabled plugin and installed with different versions, but no dashboard updates shouldn't delete/import dashboards",
 			scenarioInput{
-				storedPluginSettings: []*models.PluginSettingInfoDTO{
+				storedPluginSettings: []*pluginsettings.DTO{
 					{
-						PluginId:      "test",
+						PluginID:      "test",
 						Enabled:       true,
 						PluginVersion: "1.0.0",
 					},
@@ -140,12 +141,12 @@ func TestDashboardUpdater(t *testing.T) {
 
 		scenario(t, "With stored enabled plugin and installed with different versions and with dashboard updates should delete/import dashboards",
 			scenarioInput{
-				storedPluginSettings: []*models.PluginSettingInfoDTO{
+				storedPluginSettings: []*pluginsettings.DTO{
 					{
-						PluginId:      "test",
+						PluginID:      "test",
 						Enabled:       true,
 						PluginVersion: "1.0.0",
-						OrgId:         2,
+						OrgID:         2,
 					},
 				},
 				installedPlugins: []plugins.PluginDTO{
@@ -215,11 +216,11 @@ func TestDashboardUpdater(t *testing.T) {
 
 	scenario(t, "When app plugin is disabled that have imported dashboards should delete them",
 		scenarioInput{
-			storedPluginSettings: []*models.PluginSettingInfoDTO{
+			storedPluginSettings: []*pluginsettings.DTO{
 				{
-					PluginId: "test",
+					PluginID: "test",
 					Enabled:  true,
-					OrgId:    2,
+					OrgID:    2,
 				},
 			},
 			installedPlugins: []plugins.PluginDTO{
@@ -262,11 +263,11 @@ func TestDashboardUpdater(t *testing.T) {
 
 	scenario(t, "When app plugin is enabled, stored disabled plugin and with dashboard updates should import dashboards",
 		scenarioInput{
-			storedPluginSettings: []*models.PluginSettingInfoDTO{
+			storedPluginSettings: []*pluginsettings.DTO{
 				{
-					PluginId:      "test",
+					PluginID:      "test",
 					Enabled:       false,
-					OrgId:         2,
+					OrgID:         2,
 					PluginVersion: "1.0.0",
 				},
 			},
@@ -389,36 +390,39 @@ func (m *importDashboardServiceMock) ImportDashboard(ctx context.Context, req *d
 type pluginsSettingsServiceMock struct {
 	service.Service
 
-	storedPluginSettings  []*models.PluginSettingInfoDTO
+	storedPluginSettings  []*pluginsettings.DTO
 	getPluginSettingsArgs []int64
 	err                   error
 }
 
-func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
-	s.getPluginSettingsArgs = append(s.getPluginSettingsArgs, orgID)
+func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
+	s.getPluginSettingsArgs = append(s.getPluginSettingsArgs, args.OrgID)
 	return s.storedPluginSettings, s.err
 }
 
-func (s *pluginsSettingsServiceMock) GetPluginSettingById(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
+func (s *pluginsSettingsServiceMock) GetPluginSettingByPluginID(_ context.Context, args *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
 	for _, setting := range s.storedPluginSettings {
-		if setting.PluginId == query.PluginId {
-			query.Result = &models.PluginSetting{
-				PluginId: query.PluginId,
-				OrgId:    query.OrgId,
-			}
-			break
+		if setting.PluginID == args.PluginID {
+			return &pluginsettings.DTO{
+				PluginID: args.PluginID,
+				OrgID:    args.OrgID,
+			}, nil
 		}
 	}
 
+	return nil, s.err
+}
+
+func (s *pluginsSettingsServiceMock) UpdatePluginSettingPluginVersion(_ context.Context, _ *pluginsettings.UpdatePluginVersionArgs) error {
 	return s.err
 }
 
-func (s *pluginsSettingsServiceMock) UpdatePluginSettingVersion(_ context.Context, _ *models.UpdatePluginSettingVersionCmd) error {
+func (s *pluginsSettingsServiceMock) UpdatePluginSetting(_ context.Context, _ *pluginsettings.UpdateArgs) error {
 	return s.err
 }
 
-func (s *pluginsSettingsServiceMock) UpdatePluginSetting(_ context.Context, _ *models.UpdatePluginSettingCmd) error {
-	return s.err
+func (s *pluginsSettingsServiceMock) DecryptedValues(_ *pluginsettings.DTO) map[string]string {
+	return nil
 }
 
 type dashboardServiceMock struct {
@@ -441,7 +445,7 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 }
 
 type scenarioInput struct {
-	storedPluginSettings []*models.PluginSettingInfoDTO
+	storedPluginSettings []*pluginsettings.DTO
 	installedPlugins     []plugins.PluginDTO
 	pluginDashboards     []*plugindashboards.PluginDashboard
 }

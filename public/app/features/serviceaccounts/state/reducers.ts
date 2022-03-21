@@ -44,7 +44,7 @@ export const initialStateList: ServiceAccountsState = {
   perPage: 50,
   totalPages: 1,
   showPaging: false,
-  filters: [{ name: 'Expired', value: true }],
+  filters: [{ name: 'expiredTokens', value: false }],
 };
 
 interface ServiceAccountsFetched {
