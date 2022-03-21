@@ -116,14 +116,6 @@ func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 	return ids, false
 }
 
-func extractPrefixes(prefix string) (string, string, bool) {
-	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
-	if len(parts) != 2 {
-		return "", "", false
-	}
-	return parts[0] + ":", parts[1] + ":", true
-}
-
 type attributeParser func(scope string) (interface{}, error)
 
 func parseIntAttribute(scope string) (interface{}, error) {

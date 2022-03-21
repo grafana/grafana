@@ -164,12 +164,15 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, resource, resourceAttribute string, resourceIDs map[string]bool) map[string]Metadata {
-	allScope := GetResourceAllScope(resource)
-	allAttributeScope := Scope(resource, resourceAttribute, "*")
+func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, prefix string, resourceIDs map[string]bool) map[string]Metadata {
+	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
+	if !ok {
+		return map[string]Metadata{}
+	}
 
-	// prefix of scope based on attribute (e.g. resource:id or resource:uid)
-	attributePrefix := Scope(resource, resourceAttribute)
+	allScope := GetResourceAllScope(strings.TrimSuffix(rootPrefix, ":"))
+	allAttributeScope := Scope(strings.TrimSuffix(attributePrefix, ":"), "*")
+
 	// index of the attribute in the scope
 	attributeIndex := len(attributePrefix) + 1
 
@@ -205,4 +208,14 @@ func ManagedTeamRoleName(teamID int64) string {
 
 func ManagedBuiltInRoleName(builtInRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
+}
+
+func extractPrefixes(prefix string) (string, string, bool) {
+	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	rootPrefix := parts[0] + ":"
+	attributePredix := rootPrefix + parts[1] + ":"
+	return rootPrefix, attributePredix, true
 }
