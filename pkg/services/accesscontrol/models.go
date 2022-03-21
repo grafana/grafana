@@ -195,7 +195,6 @@ type ScopeParams struct {
 // can perform against specific resource.
 type ResourcePermission struct {
 	ID          int64
-	ResourceID  string
 	RoleName    string
 	Actions     []string
 	Scope       string
@@ -206,12 +205,9 @@ type ResourcePermission struct {
 	TeamEmail   string
 	Team        string
 	BuiltInRole string
+	IsManaged   bool
 	Created     time.Time
 	Updated     time.Time
-}
-
-func (p *ResourcePermission) IsManaged() bool {
-	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
@@ -323,10 +319,8 @@ const (
 
 	// Annotations related actions
 	ActionAnnotationsRead     = "annotations:read"
+	ActionAnnotationsWrite    = "annotations:write"
 	ActionAnnotationsTagsRead = "annotations.tags:read"
-
-	ScopeAnnotationsAll     = "annotations:*"
-	ScopeAnnotationsTagsAll = "annotations:tags:*"
 
 	// Dashboard actions
 	ActionDashboardsCreate           = "dashboards:create"
@@ -376,6 +370,17 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	// Annotation scopes
+	ScopeAnnotationsRoot       = "annotations"
+	ScopeAnnotationsProvider   = NewScopeProvider(ScopeAnnotationsRoot)
+	ScopeAnnotationsAll        = ScopeAnnotationsProvider.GetResourceAllScope()
+	ScopeAnnotationsID         = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
+	ScopeAnnotationsTypeLocal  = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
+	ScopeAnnotationsTypeGlobal = ScopeAnnotationsProvider.GetResourceScopeType("organization")
+
+	// Annotation tag scopes
+	ScopeAnnotationsTagsAll = "annotations:tags:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

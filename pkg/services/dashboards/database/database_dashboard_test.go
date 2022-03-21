@@ -11,14 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardDataAccess(t *testing.T) {
@@ -210,7 +210,7 @@ func TestDashboardDataAccess(t *testing.T) {
 		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			FolderIds:    []int64{savedFolder.Id},
 			SignedInUser: &models.SignedInUser{},
@@ -277,7 +277,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to search for dashboard folder", func(t *testing.T) {
 		setup()
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			Title:        "1 test dash folder",
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
@@ -288,14 +288,14 @@ func TestDashboardDataAccess(t *testing.T) {
 
 		require.Equal(t, len(query.Result), 1)
 		hit := query.Result[0]
-		require.Equal(t, hit.Type, search.DashHitFolder)
+		require.Equal(t, hit.Type, models.DashHitFolder)
 		require.Equal(t, hit.URL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
 		require.Equal(t, hit.FolderTitle, "")
 	})
 
 	t.Run("Should be able to limit search", func(t *testing.T) {
 		setup()
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			Limit:        1,
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
@@ -310,7 +310,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to search beyond limit using paging", func(t *testing.T) {
 		setup()
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			Limit:        1,
 			Page:         2,
@@ -326,7 +326,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to filter by tag and type", func(t *testing.T) {
 		setup()
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			Type:         "dash-db",
 			Tags:         []string{"prod"},
@@ -342,7 +342,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to search for a dashboard folder's children", func(t *testing.T) {
 		setup()
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			FolderIds:    []int64{savedFolder.Id},
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
@@ -363,7 +363,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to search for dashboard by dashboard ids", func(t *testing.T) {
 		setup()
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{savedDash.Id, savedDash2.Id},
 			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 		}
@@ -395,7 +395,7 @@ func TestDashboardDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		query := search.FindPersistedDashboardsQuery{
+		query := models.FindPersistedDashboardsQuery{
 			SignedInUser: &models.SignedInUser{UserId: 10, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 			IsStarred:    true,
 		}
@@ -429,27 +429,62 @@ func TestDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 func TestDashboard_SortingOptions(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
-	// insertTestDashboard uses GoConvey's assertions. Workaround.
-	t.Run("test with multiple sorting options", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
-		dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
-		dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
-		assert.NotZero(t, dashA.Id)
-		assert.Less(t, dashB.Id, dashA.Id)
-		q := &search.FindPersistedDashboardsQuery{
-			SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
-			// adding two sorting options (silly no-op example, but it'll complicate the query)
-			Filters: []interface{}{
-				searchstore.TitleSorter{},
+
+	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
+	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
+	assert.NotZero(t, dashA.Id)
+	assert.Less(t, dashB.Id, dashA.Id)
+	qNoSort := &models.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+	}
+	dashboards, err := sqlStore.FindDashboards(context.Background(), qNoSort)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 2)
+	assert.Equal(t, dashA.Id, dashboards[0].ID)
+	assert.Equal(t, dashB.Id, dashboards[1].ID)
+
+	qSort := &models.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		Sort: models.SortOption{
+			Filter: []models.SortOptionFilter{
 				searchstore.TitleSorter{Descending: true},
 			},
-		}
-		dashboards, err := sqlStore.FindDashboards(context.Background(), q)
-		require.NoError(t, err)
-		require.Len(t, dashboards, 2)
-		assert.Equal(t, dashA.Id, dashboards[0].ID)
-		assert.Equal(t, dashB.Id, dashboards[1].ID)
-	})
+		},
+	}
+	dashboards, err = sqlStore.FindDashboards(context.Background(), qSort)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 2)
+	assert.Equal(t, dashB.Id, dashboards[0].ID)
+	assert.Equal(t, dashA.Id, dashboards[1].ID)
+
+}
+
+func TestDashboard_Filter(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := ProvideDashboardStore(sqlStore)
+	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
+	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
+	qNoFilter := &models.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+	}
+	dashboards, err := sqlStore.FindDashboards(context.Background(), qNoFilter)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 2)
+
+	qFilter := &models.FindPersistedDashboardsQuery{
+		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		Filters: []interface{}{
+			searchstore.TitleFilter{
+				Dialect: sqlStore.Dialect,
+				Title:   "Beta",
+			},
+		},
+	}
+	dashboards, err = sqlStore.FindDashboards(context.Background(), qFilter)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 1)
+	assert.Equal(t, dashB.Id, dashboards[0].ID)
+
 }
 
 func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
