@@ -22,7 +22,7 @@ type DashboardGuardian interface {
 	CanView() (bool, error)
 	CanAdmin() (bool, error)
 	CanDelete() (bool, error)
-	CanCreate(folderUID string, isFolder bool) (bool, error)
+	CanCreate(folderID int64, isFolder bool) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
 
 	// GetAcl returns ACL.
@@ -88,7 +88,7 @@ func (g *dashboardGuardianImpl) CanDelete() (bool, error) {
 	return g.CanSave()
 }
 
-func (g *dashboardGuardianImpl) CanCreate(_ string, _ bool) (bool, error) {
+func (g *dashboardGuardianImpl) CanCreate(_ int64, _ bool) (bool, error) {
 	// when using dashboard guardian without access control a user can create a dashboard if they can save it
 	return g.CanSave()
 }
@@ -345,7 +345,7 @@ func (g *FakeDashboardGuardian) CanDelete() (bool, error) {
 	return g.CanSaveValue, nil
 }
 
-func (g *FakeDashboardGuardian) CanCreate(_ string, _ bool) (bool, error) {
+func (g *FakeDashboardGuardian) CanCreate(_ int64, _ bool) (bool, error) {
 	return g.CanSaveValue, nil
 }
 

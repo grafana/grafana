@@ -473,7 +473,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 type accessControlGuardianCanCreateTestCase struct {
 	desc        string
 	isFolder    bool
-	folderUID   string
+	folderID    int64
 	permissions []*accesscontrol.Permission
 	expected    bool
 }
@@ -481,18 +481,18 @@ type accessControlGuardianCanCreateTestCase struct {
 func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 	tests := []accessControlGuardianCanCreateTestCase{
 		{
-			desc:      "should be able to create dashboard in general folder",
-			isFolder:  false,
-			folderUID: "general",
+			desc:     "should be able to create dashboard in general folder",
+			isFolder: false,
+			folderID: 0,
 			permissions: []*accesscontrol.Permission{
 				{Action: accesscontrol.ActionDashboardsCreate, Scope: "folders:uid:general"},
 			},
 			expected: true,
 		},
 		{
-			desc:      "should be able to create dashboard in any folder",
-			isFolder:  false,
-			folderUID: "uid",
+			desc:     "should be able to create dashboard in any folder",
+			isFolder: false,
+			folderID: 0,
 			permissions: []*accesscontrol.Permission{
 				{Action: accesscontrol.ActionDashboardsCreate, Scope: "folders:*"},
 			},
@@ -501,14 +501,14 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 		{
 			desc:        "should not be able to create dashboard without permissions",
 			isFolder:    false,
-			folderUID:   "uid",
+			folderID:    0,
 			permissions: []*accesscontrol.Permission{},
 			expected:    false,
 		},
 		{
-			desc:      "should be able to create folder with correct permissions",
-			isFolder:  true,
-			folderUID: "uid",
+			desc:     "should be able to create folder with correct permissions",
+			isFolder: true,
+			folderID: 0,
 			permissions: []*accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersCreate},
 			},
@@ -517,7 +517,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 		{
 			desc:        "should not be able to create folders without permissions",
 			isFolder:    true,
-			folderUID:   "uid",
+			folderID:    0,
 			permissions: []*accesscontrol.Permission{},
 			expected:    false,
 		},
@@ -527,7 +527,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			guardian, _ := setupAccessControlGuardianTest(t, "0", tt.permissions)
 
-			can, err := guardian.CanCreate(tt.folderUID, tt.isFolder)
+			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
 		})

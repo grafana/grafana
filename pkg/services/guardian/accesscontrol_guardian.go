@@ -134,11 +134,15 @@ func (a *AccessControlDashboardGuardian) CanDelete() (bool, error) {
 	))
 }
 
-func (a *AccessControlDashboardGuardian) CanCreate(folderUID string, isFolder bool) (bool, error) {
+func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool) (bool, error) {
 	if isFolder {
 		return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate))
 	}
-	return a.evaluate(accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate, folderScope(folderUID)))
+	folder, err := a.loadParentFolder(folderID)
+	if err != nil {
+		return false, err
+	}
+	return a.evaluate(accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate, folderScope(folder.Uid)))
 }
 
 func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
@@ -258,20 +262,27 @@ func (a *AccessControlDashboardGuardian) loadDashboard() error {
 			return err
 		}
 		if !query.Result.IsFolder {
-			if query.Result.FolderId == 0 {
-				// TODO: do we need a reserved uid for folder 0
-				a.parentFolder = &models.Dashboard{Uid: "general"}
-			} else {
-				folderQuery := &models.GetDashboardQuery{Id: query.Result.FolderId, OrgId: a.user.OrgId}
-				if err := a.store.GetDashboard(a.ctx, folderQuery); err != nil {
-					return err
-				}
-				a.parentFolder = folderQuery.Result
+			folder, err := a.loadParentFolder(query.Result.FolderId)
+			if err != nil {
+				return err
 			}
+			a.parentFolder = folder
 		}
 		a.dashboard = query.Result
 	}
 	return nil
+}
+
+func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*models.Dashboard, error) {
+	if folderID == 0 {
+		// TODO: do we need a reserved uid for folder 0
+		return &models.Dashboard{Uid: "general"}, nil
+	}
+	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
+	if err := a.store.GetDashboard(a.ctx, folderQuery); err != nil {
+		return nil, err
+	}
+	return folderQuery.Result, nil
 }
 
 func dashboardScope(uid string) string {
