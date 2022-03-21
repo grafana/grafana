@@ -508,7 +508,7 @@ def test_backend_step(edition):
             'make -C devenv/docker/blocks/intentapi',
             'ls -l /drone/src/devenv/docker/blocks/intentapi/certs',
             'make devenv sources=intentapi',
-            'cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver && docker inspect devenv_apiserver_1 && cd -',
+            'cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver && docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa && cd -',
             'kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources',
             'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
             'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem ' +
