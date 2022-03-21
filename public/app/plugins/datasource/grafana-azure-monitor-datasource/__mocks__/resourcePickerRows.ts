@@ -166,7 +166,7 @@ export const createMockResourceGroupsBySubscription = (): ResourceRowGroup => [
   {
     id: 'dev-3',
     uri: '/subscriptions/def-456/resourceGroups/dev-3',
-    name: 'Development',
+    name: 'A Great Resource Group',
     type: ResourceRowType.ResourceGroup,
     typeLabel: 'Resource Group',
     children: [],
@@ -192,7 +192,7 @@ export const createMockResourceGroupsBySubscription = (): ResourceRowGroup => [
 export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
   {
     id: 'web-server',
-    uri: 'Microsoft.Compute/virtualMachines/web-server',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/web-server',
     name: 'web-server',
     typeLabel: 'Microsoft.Compute/virtualMachines',
     type: ResourceRowType.Resource,
@@ -200,7 +200,7 @@ export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
   },
   {
     id: 'web-server_DataDisk',
-    uri: 'Microsoft.Compute/disks/web-server_DataDisk',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/disks/web-server_DataDisk',
     name: 'web-server_DataDisk',
     typeLabel: 'Microsoft.Compute/disks',
     type: ResourceRowType.Resource,
@@ -209,7 +209,7 @@ export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
 
   {
     id: 'db-server',
-    uri: 'Microsoft.Compute/virtualMachines/db-server',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server',
     name: 'db-server',
     typeLabel: 'Microsoft.Compute/virtualMachines',
     type: ResourceRowType.Resource,
@@ -218,7 +218,7 @@ export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
 
   {
     id: 'db-server_DataDisk',
-    uri: 'Microsoft.Compute/disks/db-server_DataDisk',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/disks/db-server_DataDisk',
     name: 'db-server_DataDisk',
     typeLabel: 'Microsoft.Compute/disks',
     type: ResourceRowType.Resource,

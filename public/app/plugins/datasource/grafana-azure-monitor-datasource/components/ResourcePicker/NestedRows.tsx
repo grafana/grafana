@@ -202,7 +202,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
         <IconButton
           className={styles.collapseButton}
           name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-label={isOpen ? 'Collapse' : 'Expand'}
+          aria-label={isOpen ? `Collapse ${entry.name}` : `Expand ${entry.name}`}
           onClick={handleToggleCollapse}
           id={entry.id}
         />
