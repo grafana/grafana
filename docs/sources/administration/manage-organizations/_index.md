@@ -27,7 +27,7 @@ Complete this task when you want to view a list of existing organizations.
 
 ### Before you begin
 
-- Ensure that you have Grafana Server Admininstrator permissions
+- Ensure that you have Grafana Server Administrator permissions
 
 **To view a list of organizations:**
 
@@ -44,7 +44,7 @@ Create an organization when you want to segment dashboards among Grafana users.
 
 ### Before you begin
 
-- Ensure that you have Grafana Server Admininstrator permissions
+- Ensure that you have Grafana Server Administrator permissions
 
 **To create an organization:**
 
@@ -69,7 +69,7 @@ This action permanently removes an organization from your Grafana server.
 
 ### Before you begin
 
-- Ensure that you have Grafana Server Admininstrator permissions
+- Ensure that you have Grafana Server Administrator permissions
 - Because the delete action removes all teams and dashboards associated with the organization, ensure that the users who rely on the organization dashboards are aware of the change
 
 **To delete an organization:**
@@ -85,7 +85,7 @@ Edit an organization when you want to change its name.
 
 ### Before you begin
 
-- Ensure that you have Grafana Server Admininstrator permissions
+- Ensure that you have Grafana Server Administrator permissions
 
 **To edit an organization:**
 
