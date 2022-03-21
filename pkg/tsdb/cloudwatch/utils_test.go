@@ -217,10 +217,13 @@ func newTestConfig() *setting.Cfg {
 }
 
 type fakeSessionCache struct {
-	getSession func(c awsds.SessionConfig) (*session.Session, error)
+	getSession    func(c awsds.SessionConfig) (*session.Session, error)
+	calledRegions []string
 }
 
-func (s fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, error) {
+func (s *fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, error) {
+	s.calledRegions = append(s.calledRegions, c.Settings.Region)
+
 	if s.getSession != nil {
 		return s.getSession(c)
 	}

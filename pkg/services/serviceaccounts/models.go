@@ -29,20 +29,22 @@ type UpdateServiceAccountForm struct {
 	IsDisabled *bool            `json:"isDisabled"`
 }
 
-type CreateServiceAccountForm struct {
-	OrgID int64  `json:"-"`
-	Name  string `json:"name" binding:"Required"`
-}
-
 type ServiceAccountDTO struct {
-	Id            int64           `json:"id"`
-	Name          string          `json:"name"`
-	Login         string          `json:"login"`
-	OrgId         int64           `json:"orgId"`
+	Id            int64           `json:"id" xorm:"user_id"`
+	Name          string          `json:"name" xorm:"name"`
+	Login         string          `json:"login" xorm:"login"`
+	OrgId         int64           `json:"orgId" xorm:"org_id"`
+	IsDisabled    bool            `json:"isDisabled" xorm:"is_disabled"`
+	Role          string          `json:"role" xorm:"role"`
 	Tokens        int64           `json:"tokens"`
-	Role          string          `json:"role"`
 	AvatarUrl     string          `json:"avatarUrl"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
+}
+type SearchServiceAccountsResult struct {
+	TotalCount      int64                `json:"totalCount"`
+	ServiceAccounts []*ServiceAccountDTO `json:"serviceAccounts"`
+	Page            int                  `json:"page"`
+	PerPage         int                  `json:"perPage"`
 }
 
 type ServiceAccountProfileDTO struct {
@@ -58,3 +60,10 @@ type ServiceAccountProfileDTO struct {
 	Teams         []string        `json:"teams" xorm:"-"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
+
+type ServiceAccountFilter string // used for filtering
+
+const (
+	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	FilterIncludeAll        ServiceAccountFilter = "all"
+)

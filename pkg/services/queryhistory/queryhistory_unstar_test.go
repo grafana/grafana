@@ -1,7 +1,9 @@
+//go:build integration
+// +build integration
+
 package queryhistory
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/web"
@@ -20,7 +22,6 @@ func TestUnstarQueryInQueryHistory(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.service.starHandler(sc.reqContext)
 			resp := sc.service.unstarHandler(sc.reqContext)
-			fmt.Println(resp)
 			require.Equal(t, 200, resp.Status())
 		})
 

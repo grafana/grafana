@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -516,7 +516,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			isFolder: true,
 			folderID: 0,
 			permissions: []*accesscontrol.Permission{
-				{Action: accesscontrol.ActionFoldersCreate},
+				{Action: dashboards.ActionFoldersCreate},
 			},
 			expected: true,
 		},
@@ -551,11 +551,11 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 		{
 			desc: "should only return permissions containing hidden users",
 			permissions: []accesscontrol.ResourcePermission{
-				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1"},
-				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1"},
-				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2"},
-				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3"},
-				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4"},
+				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1", IsManaged: true},
+				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1", IsManaged: true},
+				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2", IsManaged: true},
+				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3", IsManaged: true},
+				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4", IsManaged: true},
 			},
 			hiddenUsers: map[string]struct{}{"user2": {}, "user3": {}},
 		},
@@ -564,7 +564,6 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			guardian := setupAccessControlGuardianTest(t, 1, nil)
-			guardian.permissionServices.GetDashboardService()
 
 			mocked := accesscontrolmock.NewPermissionsServicesMock()
 			guardian.permissionServices = mocked
@@ -601,7 +600,7 @@ func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*a
 	require.NoError(t, err)
 
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	services, err := ossaccesscontrol.ProvidePermissionsServices(routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	services, err := ossaccesscontrol.ProvidePermissionsServices(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
 
 	return NewAccessControlDashboardGuardian(context.Background(), dashID, &models.SignedInUser{OrgId: 1}, store, ac, services)

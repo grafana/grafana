@@ -11,7 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -38,7 +39,6 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboards)
 	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
 	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", ss.GetDashboardsByPluginId)
 	bus.AddHandler("sql", ss.GetDashboardSlugById)
 	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
 }
@@ -81,7 +81,7 @@ type DashboardSearchProjection struct {
 	SortMeta    int64
 }
 
-func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+func (ss *SQLStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
@@ -92,15 +92,18 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 		},
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
-			permissions.AccessControlDashboardPermissionFilter{User: query.SignedInUser},
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
 		}
 	}
 
 	for _, filter := range query.Sort.Filter {
 		filters = append(filters, filter)
 	}
+
+	filters = append(filters, query.Filters...)
 
 	if query.OrgId != 0 {
 		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
@@ -158,7 +161,7 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 	return res, nil
 }
 
-func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
+func (ss *SQLStore) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
 	res, err := ss.FindDashboards(ctx, query)
 	if err != nil {
 		return err
@@ -169,25 +172,25 @@ func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPers
 	return nil
 }
 
-func getHitType(item DashboardSearchProjection) search.HitType {
-	var hitType search.HitType
+func getHitType(item DashboardSearchProjection) models.HitType {
+	var hitType models.HitType
 	if item.IsFolder {
-		hitType = search.DashHitFolder
+		hitType = models.DashHitFolder
 	} else {
-		hitType = search.DashHitDB
+		hitType = models.DashHitDB
 	}
 
 	return hitType
 }
 
-func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
-	query.Result = make([]*search.Hit, 0)
-	hits := make(map[int64]*search.Hit)
+func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
+	query.Result = make([]*models.Hit, 0)
+	hits := make(map[int64]*models.Hit)
 
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			hit = &search.Hit{
+			hit = &models.Hit{
 				ID:          item.ID,
 				UID:         item.UID,
 				Title:       item.Title,
@@ -280,7 +283,7 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		}
 
 		// remove all access control permission with folder scope
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("folders", "id", strconv.FormatInt(dashboard.Id, 10)))
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(dashboard.Id, 10)))
 		if err != nil {
 			return err
 		}
@@ -436,17 +439,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 			p.PermissionName = p.Permission.String()
 		}
 
-		return err
-	})
-}
-
-func (ss *SQLStore) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var dashboards = make([]*models.Dashboard, 0)
-		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
-
-		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
-		query.Result = dashboards
 		return err
 	})
 }

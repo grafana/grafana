@@ -115,7 +115,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} />}
+      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly checked={isSelected} />}
     </h2>
   );
 };
@@ -261,6 +261,7 @@ const getMetaStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(0.5, 0, 0),
     lineHeight: theme.typography.bodySmall.lineHeight,
     overflowWrap: 'anywhere',
+    zIndex: 0,
   }),
   separator: css({
     margin: `0 ${theme.spacing(1)}`,

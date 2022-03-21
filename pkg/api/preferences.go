@@ -51,6 +51,10 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 		WeekStart:       prefsQuery.Result.WeekStart,
 	}
 
+	if prefsQuery.Result.JsonData != nil {
+		dto.Navbar = prefsQuery.Result.JsonData.Navbar
+	}
+
 	return response.JSON(200, &dto)
 }
 
@@ -84,6 +88,37 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	return response.Success("Preferences updated")
 }
 
+// PATCH /api/user/preferences
+func (hs *HTTPServer) PatchUserPreferences(c *models.ReqContext) response.Response {
+	dtoCmd := dtos.PatchPrefsCmd{}
+	if err := web.Bind(c.Req, &dtoCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return hs.patchPreferencesFor(c.Req.Context(), c.OrgId, c.UserId, 0, &dtoCmd)
+}
+
+func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
+	if dtoCmd.Theme != nil && *dtoCmd.Theme != lightTheme && *dtoCmd.Theme != darkTheme && *dtoCmd.Theme != defaultTheme {
+		return response.Error(400, "Invalid theme", nil)
+	}
+	patchCmd := models.PatchPreferencesCommand{
+		UserId:          userID,
+		OrgId:           orgID,
+		TeamId:          teamId,
+		Theme:           dtoCmd.Theme,
+		Timezone:        dtoCmd.Timezone,
+		WeekStart:       dtoCmd.WeekStart,
+		HomeDashboardId: dtoCmd.HomeDashboardID,
+		Navbar:          dtoCmd.Navbar,
+	}
+
+	if err := hs.SQLStore.PatchPreferences(ctx, &patchCmd); err != nil {
+		return response.Error(500, "Failed to save preferences", err)
+	}
+
+	return response.Success("Preferences updated")
+}
+
 // GET /api/org/preferences
 func (hs *HTTPServer) GetOrgPreferences(c *models.ReqContext) response.Response {
 	return hs.getPreferencesFor(c.Req.Context(), c.OrgId, 0, 0)
@@ -96,4 +131,13 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return hs.updatePreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
+}
+
+// PATCH /api/org/preferences
+func (hs *HTTPServer) PatchOrgPreferences(c *models.ReqContext) response.Response {
+	dtoCmd := dtos.PatchPrefsCmd{}
+	if err := web.Bind(c.Req, &dtoCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return hs.patchPreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
 }

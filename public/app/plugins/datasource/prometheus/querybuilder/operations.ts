@@ -15,6 +15,7 @@ import {
   VisualQueryModeller,
 } from './shared/types';
 import { PromOperationId, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { binaryScalarOperations } from './binaryScalarOperations';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
@@ -90,26 +91,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: addOperationWithRangeVector,
       changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
     }),
-    // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
-    // both the operator and the operand in a single input
-    {
-      id: PromOperationId.MultiplyBy,
-      name: 'Multiply by scalar',
-      params: [{ name: 'Factor', type: 'number' }],
-      defaultParams: [2],
-      category: PromVisualQueryOperationCategory.BinaryOps,
-      renderer: getSimpleBinaryRenderer('*'),
-      addOperationHandler: defaultAddOperationHandler,
-    },
-    {
-      id: PromOperationId.DivideBy,
-      name: 'Divide by scalar',
-      params: [{ name: 'Factor', type: 'number' }],
-      defaultParams: [2],
-      category: PromVisualQueryOperationCategory.BinaryOps,
-      renderer: getSimpleBinaryRenderer('/'),
-      addOperationHandler: defaultAddOperationHandler,
-    },
+    ...binaryScalarOperations,
     {
       id: PromOperationId.NestedQuery,
       name: 'Binary operation with query',
@@ -328,12 +310,6 @@ export function operationWithRangeVectorRenderer(
 ) {
   let rangeVector = (model.params ?? [])[0] ?? '5m';
   return `${def.id}(${innerExpr}[${rangeVector}])`;
-}
-
-function getSimpleBinaryRenderer(operator: string) {
-  return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${innerExpr} ${operator} ${model.params[0]}`;
-  };
 }
 
 /**

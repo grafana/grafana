@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -9,13 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetAnnotations(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 	query := &annotations.ItemQuery{
 		From:        c.QueryInt64("from"),
 		To:          c.QueryInt64("to"),
@@ -54,12 +57,28 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.PostAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if canSave, err := canSaveByDashboardID(c, cmd.DashboardId); err != nil || !canSave {
+
+	var canSave bool
+	var err error
+	if cmd.DashboardId != 0 {
+		canSave, err = canSaveDashboardAnnotation(c, cmd.DashboardId)
+	} else { // organization annotations
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveOrganizationAnnotation(c)
+		} else {
+			// This is an additional validation needed only for FGAC Organization Annotations.
+			// It is not possible to do it in the middleware because we need to look
+			// into the request to determine if this is a Organization annotation or not
+			canSave, err = hs.canCreateOrganizationAnnotation(c)
+		}
+	}
+
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -105,7 +124,7 @@ func formatGraphiteAnnotation(what string, data string) string {
 	return text
 }
 
-func PostGraphiteAnnotation(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.PostGraphiteAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -160,7 +179,7 @@ func PostGraphiteAnnotation(c *models.ReqContext) response.Response {
 	})
 }
 
-func UpdateAnnotation(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.UpdateAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -178,7 +197,16 @@ func UpdateAnnotation(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId); err != nil || !canSave {
+	canSave := true
+	if annotation.GetType() == annotations.Dashboard {
+		canSave, err = canSaveDashboardAnnotation(c, annotation.DashboardId)
+	} else {
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveOrganizationAnnotation(c)
+		}
+	}
+
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -199,7 +227,7 @@ func UpdateAnnotation(c *models.ReqContext) response.Response {
 	return response.Success("Annotation updated")
 }
 
-func PatchAnnotation(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.PatchAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -216,7 +244,15 @@ func PatchAnnotation(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId); err != nil || !canSave {
+	canSave := true
+	if annotation.GetType() == annotations.Dashboard {
+		canSave, err = canSaveDashboardAnnotation(c, annotation.DashboardId)
+	} else {
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveOrganizationAnnotation(c)
+		}
+	}
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -253,7 +289,7 @@ func PatchAnnotation(c *models.ReqContext) response.Response {
 	return response.Success("Annotation patched")
 }
 
-func DeleteAnnotations(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAnnotations(c *models.ReqContext) response.Response {
 	cmd := dtos.DeleteAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -274,7 +310,7 @@ func DeleteAnnotations(c *models.ReqContext) response.Response {
 	return response.Success("Annotations deleted")
 }
 
-func DeleteAnnotationByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Response {
 	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
@@ -287,7 +323,16 @@ func DeleteAnnotationByID(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId); err != nil || !canSave {
+	canSave := true
+	if annotation.GetType() == annotations.Dashboard {
+		canSave, err = canSaveDashboardAnnotation(c, annotation.DashboardId)
+	} else {
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveOrganizationAnnotation(c)
+		}
+	}
+
+	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -302,19 +347,17 @@ func DeleteAnnotationByID(c *models.ReqContext) response.Response {
 	return response.Success("Annotation deleted")
 }
 
-func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error) {
-	if dashboardID == 0 && !c.SignedInUser.HasRole(models.ROLE_EDITOR) {
-		return false, nil
-	}
-
-	if dashboardID != 0 {
-		guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
-		if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
-			return false, err
-		}
+func canSaveDashboardAnnotation(c *models.ReqContext, dashboardID int64) (bool, error) {
+	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
+		return false, err
 	}
 
 	return true, nil
+}
+
+func canSaveOrganizationAnnotation(c *models.ReqContext) bool {
+	return c.SignedInUser.HasRole(models.ROLE_EDITOR)
 }
 
 func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
@@ -331,7 +374,7 @@ func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID i
 	return items[0], nil
 }
 
-func GetAnnotationTags(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response {
 	query := &annotations.TagsQuery{
 		OrgID: c.OrgId,
 		Tag:   c.Query("tag"),
@@ -345,4 +388,39 @@ func GetAnnotationTags(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(200, annotations.GetAnnotationTagsResponse{Result: result})
+}
+
+// AnnotationTypeScopeResolver provides an AttributeScopeResolver able to
+// resolve annotation types. Scope "annotations:id:<id>" will be translated to "annotations:type:<type>,
+// where <type> is the type of annotation with id <id>.
+func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveFunc) {
+	annotationTypeResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		scopeParts := strings.Split(initialScope, ":")
+		if scopeParts[0] != accesscontrol.ScopeAnnotationsRoot || len(scopeParts) != 3 {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		annotationIdStr := scopeParts[2]
+		annotationId, err := strconv.Atoi(annotationIdStr)
+		if err != nil {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		annotation, resp := findAnnotationByID(annotations.GetRepository(), int64(annotationId), orgID)
+		if resp != nil {
+			return "", err
+		}
+
+		if annotation.GetType() == annotations.Organization {
+			return accesscontrol.ScopeAnnotationsTypeOrganization, nil
+		} else {
+			return accesscontrol.ScopeAnnotationsTypeDashboard, nil
+		}
+	}
+	return accesscontrol.ScopeAnnotationsProvider.GetResourceScope(""), annotationTypeResolver
+}
+
+func (hs *HTTPServer) canCreateOrganizationAnnotation(c *models.ReqContext) (bool, error) {
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }

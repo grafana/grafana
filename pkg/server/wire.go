@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -58,6 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -75,6 +75,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -126,8 +127,8 @@ var wireBasicSet = wire.NewSet(
 	manager.ProvideService,
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.PluginDashboardManager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
@@ -149,7 +150,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)),
 	quota.ProvideService,
 	remotecache.ProvideService,
-	filestorage.ProvideService,
 	loginservice.ProvideService,
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
@@ -159,6 +159,8 @@ var wireBasicSet = wire.NewSet(
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
+	store.ProvideService,
+	store.ProvideHTTPService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
@@ -212,11 +214,14 @@ var wireBasicSet = wire.NewSet(
 	dashboardstore.ProvideDashboardStore,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
+	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.FolderService), new(*dashboardservice.FolderServiceImpl)),
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
-	plugindashboards.ProvideService,
+	plugindashboardsservice.ProvideService,
+	wire.Bind(new(plugindashboards.Service), new(*plugindashboardsservice.Service)),
+	plugindashboardsservice.ProvideDashboardUpdater,
 	alerting.ProvideDashAlertExtractorService,
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
