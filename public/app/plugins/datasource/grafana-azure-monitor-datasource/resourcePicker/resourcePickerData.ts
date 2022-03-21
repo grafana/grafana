@@ -1,4 +1,4 @@
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { DataSourceInstanceSettings } from '../../../../../../packages/grafana-data/src';
 import {
@@ -19,7 +19,7 @@ import {
   RawAzureResourceItem,
   RawAzureSubscriptionItem,
 } from '../types';
-import { routeNames } from '../utils/common';
+import { interpolateVariable, routeNames } from '../utils/common';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
@@ -101,7 +101,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       }
       const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, options);
       if (!resourceResponse.data.length) {
-        throw new Error('unable to fetch resource groups');
+        throw new Error('unable to fetch resource group details');
       }
       resourceGroups = resourceGroups.concat(resourceResponse.data);
       $skipToken = resourceResponse.$skipToken;
@@ -212,8 +212,9 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     reqOptions?: Partial<AzureResourceGraphOptions>
   ): Promise<AzureGraphResponse<T>> {
     try {
+      const interpolatedQuery = getTemplateSrv().replace(query, {}, interpolateVariable);
       return await this.postResource(this.resourcePath + RESOURCE_GRAPH_URL, {
-        query: query,
+        query: interpolatedQuery,
         options: {
           resultFormat: 'objectArray',
           ...reqOptions,

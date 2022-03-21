@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
@@ -14,7 +14,6 @@ const TEMPLATE_VARIABLE_GROUP_ID = '$$grafana-templateVariables$$';
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
-  templateVariables: string[];
   selectableEntryTypes: ResourceRowType[];
 
   onApply: (resourceURI: string | undefined) => void;
@@ -24,7 +23,6 @@ interface ResourcePickerProps {
 const ResourcePicker = ({
   resourcePickerData,
   resourceURI,
-  templateVariables,
   onApply,
   onCancel,
   selectableEntryTypes,
@@ -85,14 +83,10 @@ const ResourcePicker = ({
     }
   }, [resourcePickerData, internalSelectedURI, azureRows, loadingStatus]);
 
-  const rows = useMemo(() => {
-    const templateVariableRow = transformVariablesToRow(templateVariables);
-    return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
-  }, [azureRows, templateVariables]);
-
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
-    const found = internalSelectedURI && findRow(rows, internalSelectedURI);
+    const found = internalSelectedURI && findRow(azureRows, internalSelectedURI);
+
     return found
       ? [
           {
@@ -101,7 +95,7 @@ const ResourcePicker = ({
           },
         ]
       : [];
-  }, [internalSelectedURI, rows]);
+  }, [internalSelectedURI, azureRows]);
 
   // Request resources for a expanded resource group
   const requestNestedRows = useCallback(
@@ -152,7 +146,7 @@ const ResourcePicker = ({
       ) : (
         <>
           <NestedResourceTable
-            rows={rows}
+            rows={azureRows}
             requestNestedRows={requestNestedRows}
             onRowSelectedChange={handleSelectionChanged}
             selectedRows={selectedResourceRows}
@@ -160,27 +154,44 @@ const ResourcePicker = ({
           />
 
           <div className={styles.selectionFooter}>
-            {selectedResourceRows.length > 0 && (
-              <>
-                <Space v={2} />
-                <h5>Selection</h5>
-                <NestedResourceTable
-                  rows={selectedResourceRows}
-                  requestNestedRows={requestNestedRows}
-                  onRowSelectedChange={handleSelectionChanged}
-                  selectedRows={selectedResourceRows}
-                  noHeader={true}
-                  selectableEntryTypes={selectableEntryTypes}
-                />
-              </>
-            )}
+            <h5>
+              Selected Scope{' '}
+              <Tooltip
+                content={
+                  <>
+                    <p>
+                      Select a resource above or type in the{' '}
+                      <a
+                        href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        resource id (also referred to as a resource uri)
+                      </a>{' '}
+                      below. Grafana supports template variable interpolation like so:
+                    </p>
+                    <p>/subscriptions/$subId</p>
+                  </>
+                }
+                placement="right"
+                interactive={true}
+              >
+                <Icon name="info-circle" />
+              </Tooltip>
+            </h5>
+            <Input
+              value={internalSelectedURI}
+              onChange={(event) => setInternalSelectedURI(event.currentTarget.value)}
+            />
 
             <Space v={2} />
 
             <Button disabled={!!errorMessage} onClick={handleApply}>
               Apply
             </Button>
+
             <Space layout="inline" h={1} />
+
             <Button onClick={onCancel} variant="secondary">
               Cancel
             </Button>
@@ -215,20 +226,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
 });
-
-function transformVariablesToRow(templateVariables: string[]): ResourceRow {
-  return {
-    id: TEMPLATE_VARIABLE_GROUP_ID,
-    uri: TEMPLATE_VARIABLE_GROUP_ID,
-    name: 'Template variables',
-    type: ResourceRowType.VariableGroup,
-    typeLabel: 'Variables',
-    children: templateVariables.map((v) => ({
-      id: v,
-      uri: v,
-      name: v,
-      type: ResourceRowType.Variable,
-      typeLabel: 'Variable',
-    })),
-  };
-}
