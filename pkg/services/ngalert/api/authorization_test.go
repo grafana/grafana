@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 func TestAuthorize(t *testing.T) {
@@ -81,7 +79,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		permissions func(c *changes) map[string][]string
 	}{
 		{
-			name: "if there are rules to delete it should check delete action",
+			name: "if there are rules to delete it should check delete action and access to data sources",
 			changes: func() *changes {
 				return &changes{
 					New:    nil,
@@ -142,10 +140,18 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
+				var scopes []string
+				for _, update := range c.Update {
+					for _, query := range update.New.Data {
+						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+					}
+				}
+
 				return map[string][]string{
 					ac.ActionAlertingRuleUpdate: {
 						namespaceIdScope,
 					},
+					datasources.ActionQuery: scopes,
 				}
 			},
 		},
@@ -172,6 +178,12 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
+				var scopes []string
+				for _, update := range c.Update {
+					for _, query := range update.New.Data {
+						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+					}
+				}
 				return map[string][]string{
 					ac.ActionAlertingRuleDelete: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(namespace.Uid + "other"),
@@ -179,55 +191,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ac.ActionAlertingRuleCreate: {
 						namespaceIdScope,
 					},
-				}
-			},
-		},
-		{
-			name: "should check access to datasource if Data is updated",
-			changes: func() *changes {
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace), func(rule *models.AlertRule) {
-					rule.Data = nil
-				}))
-				updates := make([]ruleUpdate, 0, len(rules))
-
-				for _, rule := range rules {
-					newRule := models.CopyRule(rule)
-					newRule.Data = []models.AlertQuery{
-						models.GenerateAlertQuery(),
-					}
-					updates = append(updates, ruleUpdate{
-						Existing: rule,
-						New:      newRule,
-						Diff: []cmputil.Diff{
-							{
-								Path:  "Data",
-								Left:  reflect.ValueOf(nil), // these fields are ignored for now. only path matters
-								Right: reflect.ValueOf(nil),
-							},
-						},
-					})
-				}
-
-				return &changes{
-					New:    nil,
-					Update: updates,
-					Delete: nil,
-				}
-			},
-			permissions: func(c *changes) map[string][]string {
-				var scopes []string
-				for _, update := range c.Update {
-					for _, query := range update.New.Data {
-						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
-					}
-				}
-				p := map[string][]string{
-					ac.ActionAlertingRuleUpdate: {
-						namespaceIdScope,
-					},
 					datasources.ActionQuery: scopes,
 				}
-				return p
 			},
 		},
 	}

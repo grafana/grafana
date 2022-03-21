@@ -211,14 +211,9 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 	}
 
 	for _, rule := range changes.Update {
-		// If data is not changed, skip authorization. Effectively, this give users
-		// that do not have access to query data sources used by the rule
-		// limited access to some of the rule's settings like the interval, for, labels, annotations.
-		if len(rule.Diff.GetDiffsForField("Data")) > 0 {
-			dsAllowed := evaluator(getEvaluatorForAlertRule(rule.New))
-			if !dsAllowed {
-				return fmt.Errorf("%w to update alert rule '%s' (UID: %s) because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Existing.Title, rule.Existing.UID)
-			}
+		dsAllowed := evaluator(getEvaluatorForAlertRule(rule.New))
+		if !dsAllowed {
+			return fmt.Errorf("%w to update alert rule '%s' (UID: %s) because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Existing.Title, rule.Existing.UID)
 		}
 
 		// Check if the rule is moved from one folder to the current. If yes, then the user must have the authorization to delete rules from the source folder and add rules to the target folder.
