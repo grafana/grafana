@@ -4459,7 +4459,7 @@ __metadata:
     prismjs: 1.27.0
     process: ^0.11.10
     raw-loader: 4.0.2
-    rc-cascader: 3.3.1
+    rc-cascader: 3.4.1
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: ^3.7.3
@@ -20970,7 +20970,7 @@ __metadata:
     prismjs: 1.27.0
     prop-types: 15.8.1
     raw-loader: 4.0.2
-    rc-cascader: 3.3.1
+    rc-cascader: 3.4.1
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
@@ -30392,20 +30392,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.3.1":
-  version: 3.3.1
-  resolution: "rc-cascader@npm:3.3.1"
+"rc-cascader@npm:3.4.1":
+  version: 3.4.1
+  resolution: "rc-cascader@npm:3.4.1"
   dependencies:
     "@babel/runtime": ^7.12.5
     array-tree-filter: ^2.1.0
     classnames: ^2.3.1
     rc-select: ~14.0.0-alpha.23
-    rc-tree: ~5.4.3
+    rc-tree: ~5.5.0
     rc-util: ^5.6.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 8b691bce0d82a881dbba0ee738faf2f8ba9a4286f1eaeda8b1b1f9960ec3d388ddb65e726a50651a441213324340bf00ccbb38a8d81c59151158ff8e4436be5e
+  checksum: 1d043d0ec2932382ce3fdcae257971f9e3f699326dddd65e146ca76eea55292712a97c7e406d1a29aae2d8c91c40f94dbc8e998e8e80fe1f7ab742a88687e12a
   languageName: node
   linkType: hard
 
@@ -30528,19 +30528,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:~5.4.3":
-  version: 5.4.3
-  resolution: "rc-tree@npm:5.4.3"
+"rc-tree@npm:~5.5.0":
+  version: 5.5.0
+  resolution: "rc-tree@npm:5.5.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
     rc-motion: ^2.0.1
     rc-util: ^5.16.1
-    rc-virtual-list: ^3.4.1
+    rc-virtual-list: ^3.4.2
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: bf86dd216f53d1886234f07e765e0831906ca84e333d2bc757198b10ace1d6a256f8a1aa818ab545680375c13a8ab855667eb768eabcd6ad12eccfa99f6d6dab
+  checksum: 5ea172eef6530b0741697dbaccddeb959d8e183e89a64c61774c82f5f92a686ad7e050d38ad11dab7d5595cd391ae5428251b9624a74040b268a22a457c39c2d
   languageName: node
   linkType: hard
 
@@ -30616,7 +30616,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-virtual-list@npm:^3.2.0, rc-virtual-list@npm:^3.4.1":
+"rc-virtual-list@npm:^3.2.0":
   version: 3.4.2
   resolution: "rc-virtual-list@npm:3.4.2"
   dependencies:
@@ -30627,6 +30627,20 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: ed0954c6a0263de9fda48c213a38f20852851ce9292c413ce982f45b50ea837841aafa7ab81d06ad7fc8b11289ca56552c69ff01c7967d941ab2cafee41ffaff
+  languageName: node
+  linkType: hard
+
+"rc-virtual-list@npm:^3.4.2":
+  version: 3.4.4
+  resolution: "rc-virtual-list@npm:3.4.4"
+  dependencies:
+    classnames: ^2.2.6
+    rc-resize-observer: ^1.0.0
+    rc-util: ^5.0.7
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: d80c212e1f670afd3ccb876ac47b6b1b242c99b41a7777504af867f26a7be840129ecc9ef4ed6de356c8f2391fc495750597da418d06ea760740e30292d7ffec
   languageName: node
   linkType: hard
 
