@@ -45,7 +45,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 }
 
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error {
-	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id=?"
+	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and user_id=?"
 
 	return s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		result, err := sess.Exec(rawSQL, tokenID, orgID, serviceAccountID)

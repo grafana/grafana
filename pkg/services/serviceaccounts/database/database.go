@@ -56,7 +56,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 }
 func ServiceAccountDeletions() []string {
 	deletes := []string{
-		"DELETE FROM api_key WHERE service_account_id = ?",
+		"DELETE FROM api_key WHERE user_id = ?",
 	}
 	deletes = append(deletes, sqlstore.UserDeletions()...)
 	return deletes
@@ -155,7 +155,7 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 
 		quotedUser := s.sqlStore.Dialect.Quote("user")
 		sess = dbSession.
-			Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
+			Join("inner", quotedUser, quotedUser+".id = api_key.user_id").
 			Where(quotedUser+".org_id=? AND "+quotedUser+".id=?", orgID, serviceAccountID).
 			Asc("name")
 
@@ -336,7 +336,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 			// we do a subquery to remove duplicates coming from joining in api_keys, if we find more than one api key that has expired
 			whereConditions = append(
 				whereConditions,
-				"(SELECT count(*) FROM api_key WHERE api_key.service_account_id = org_user.user_id AND api_key.expires < ?) > 0")
+				"(SELECT count(*) FROM api_key WHERE api_key.user_id = org_user.user_id AND api_key.expires < ?) > 0")
 			whereParams = append(whereParams, now)
 		default:
 			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)

@@ -91,4 +91,11 @@ func addApiKeyMigrations(mg *Migrator) {
 
 	mg.AddMigration("set service account foreign key to nil if 0", NewRawSQLMigration(
 		"UPDATE api_key SET service_account_id = NULL WHERE service_account_id = 0;"))
+
+	// adding the user_id reference
+	// TODO: need to add a delete migration for the service_account_id column
+	mg.AddMigration("Add service account foreign key for user_id", NewAddColumnMigration(apiKeyV2, &Column{
+		Name: "user_id", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
+
 }
