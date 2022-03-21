@@ -10,6 +10,7 @@ import NestedResourceTable from './NestedResourceTable';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { addResources, findRow, parseResourceURI } from './utils';
 
+const TEMPLATE_VARIABLE_GROUP_ID = '$$grafana-templateVariables$$';
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
@@ -110,7 +111,7 @@ const ResourcePicker = ({
       // template variable group, though that shouldn't happen in practice
       if (
         resourceGroupOrSubscription.children?.length ||
-        resourceGroupOrSubscription.uri === ResourcePickerData.templateVariableGroupID
+        resourceGroupOrSubscription.uri === TEMPLATE_VARIABLE_GROUP_ID
       ) {
         return;
       }
@@ -210,8 +211,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
 });
-
-const TEMPLATE_VARIABLE_GROUP_ID = '$$grafana-templateVariables$$';
 
 function transformVariablesToRow(templateVariables: string[]): ResourceRow {
   return {
