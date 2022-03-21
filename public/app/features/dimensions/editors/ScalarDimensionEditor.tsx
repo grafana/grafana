@@ -3,7 +3,7 @@ import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '
 import { ScalarDimensionConfig, ScalarDimensionMode, ScalarDimensionOptions } from '../types';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
-import { NumberInput } from './NumberInput';
+import { NumberInput } from '@grafana/ui/src/components/NumberInput/NumberInput';
 import { css } from '@emotion/css';
 
 const fixedValueOption: SelectableValue<string> = {

@@ -11,7 +11,7 @@ import { useObservable } from 'react-use';
 import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { FeatureLike } from 'ol/Feature';
 import { getSelectionInfo } from '../utils/selection';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { NumberInput } from '@grafana/ui/src/components/NumberInput/NumberInput';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;

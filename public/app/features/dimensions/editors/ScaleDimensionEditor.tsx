@@ -6,7 +6,7 @@ import {
   useFieldDisplayNames,
   useSelectOptions,
 } from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
-import { NumberInput } from './NumberInput';
+import { NumberInput } from '@grafana/ui/src/components/NumberInput/NumberInput';
 import { css } from '@emotion/css';
 import { validateScaleOptions, validateScaleConfig } from '../scale';
 

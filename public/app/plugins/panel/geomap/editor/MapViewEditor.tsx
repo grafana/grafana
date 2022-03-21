@@ -3,7 +3,7 @@ import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { GeomapPanelOptions, MapViewConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { NumberInput } from '@grafana/ui/src/components/NumberInput/NumberInput';
 import { toLonLat } from 'ol/proj';
 import { GeomapInstanceState } from '../GeomapPanel';
 
