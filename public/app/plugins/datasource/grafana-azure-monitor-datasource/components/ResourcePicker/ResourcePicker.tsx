@@ -83,9 +83,9 @@ const ResourcePicker = ({
   }, [resourcePickerData, internalSelectedURI, azureRows, loadingStatus]);
 
   const rows = useMemo(() => {
-    const templateVariableRow = resourcePickerData.transformVariablesToRow(templateVariables);
+    const templateVariableRow = transformVariablesToRow(templateVariables);
     return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
-  }, [resourcePickerData, azureRows, templateVariables]);
+  }, [azureRows, templateVariables]);
 
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
@@ -210,3 +210,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
 });
+
+const TEMPLATE_VARIABLE_GROUP_ID = '$$grafana-templateVariables$$';
+
+function transformVariablesToRow(templateVariables: string[]): ResourceRow {
+  return {
+    id: TEMPLATE_VARIABLE_GROUP_ID,
+    uri: TEMPLATE_VARIABLE_GROUP_ID,
+    name: 'Template variables',
+    type: ResourceRowType.VariableGroup,
+    typeLabel: 'Variables',
+    children: templateVariables.map((v) => ({
+      id: v,
+      uri: v,
+      name: v,
+      type: ResourceRowType.Variable,
+      typeLabel: 'Variable',
+    })),
+  };
+}

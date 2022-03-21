@@ -124,4 +124,29 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(onApply).toBeCalledTimes(1);
     expect(onApply).toBeCalledWith('/subscriptions/def-123');
   });
+
+  it('should call onApply with a template variable when a user selects it', async () => {
+    const onApply = jest.fn();
+    render(
+      <ResourcePicker
+        templateVariables={['$workspace']}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={noResourceURI}
+        onCancel={noop}
+        onApply={onApply}
+      />
+    );
+
+    const expandButton = await screen.findByLabelText('Expand Template variables');
+    expandButton.click();
+
+    const workSpaceCheckbox = await screen.findByLabelText('$workspace');
+    workSpaceCheckbox.click();
+
+    const applyButton = screen.getByRole('button', { name: 'Apply' });
+    applyButton.click();
+
+    expect(onApply).toBeCalledTimes(1);
+    expect(onApply).toBeCalledWith('$workspace');
+  });
 });

@@ -7,7 +7,7 @@ import {
   logsSupportedResourceTypesKusto,
   resourceTypeDisplayNames,
 } from '../azureMetadata';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
+import { ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import { parseResourceURI } from '../components/ResourcePicker/utils';
 import {
   AzureDataSourceJsonData,
@@ -30,8 +30,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     super(instanceSettings);
     this.resourcePath = `${routeNames.resourceGraph}`;
   }
-
-  static readonly templateVariableGroupID = '$$grafana-templateVariables$$';
 
   async getSubscriptions(): Promise<ResourceRowGroup> {
     const query = `
@@ -228,22 +226,5 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
       throw error;
     }
-  }
-
-  transformVariablesToRow(templateVariables: string[]): ResourceRow {
-    return {
-      id: ResourcePickerData.templateVariableGroupID,
-      uri: ResourcePickerData.templateVariableGroupID,
-      name: 'Template variables',
-      type: ResourceRowType.VariableGroup,
-      typeLabel: 'Variables',
-      children: templateVariables.map((v) => ({
-        id: v,
-        uri: v,
-        name: v,
-        type: ResourceRowType.Variable,
-        typeLabel: 'Variable',
-      })),
-    };
   }
 }
