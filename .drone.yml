@@ -85,7 +85,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -102,7 +101,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -691,7 +690,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -708,7 +706,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -1741,7 +1739,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -1758,7 +1755,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -2400,7 +2397,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -2417,7 +2413,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -2455,7 +2451,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -2472,7 +2467,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -3544,7 +3539,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -3561,7 +3555,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -4169,7 +4163,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -4186,7 +4179,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -4224,7 +4217,6 @@ steps:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    docker-compose cp apiserver:/var/lib/kubernetes /tmp/aaa && ls -l /tmp/aaa &&
     cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
@@ -4241,7 +4233,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: intentapi-certs
-    path: /var/lib/kubernetes
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -4614,6 +4606,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 4be7244c2ee8bed51f33fff4b4f3a2151018a2f6cbeac80f3fedef62a1984ffb
+hmac: fb6bc91757746983ddf94dc96399848dda4b625d6d6625f93624d9e6efca9685
 
 ...
