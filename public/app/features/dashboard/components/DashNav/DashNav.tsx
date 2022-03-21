@@ -20,6 +20,7 @@ import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import config from 'app/core/config';
+import { UnregisterCallback } from 'history';
 
 const mapDispatchToProps = {
   updateTimeZoneForSession,
@@ -43,6 +44,11 @@ interface DashNavButtonModel {
   index?: number | 'end';
 }
 
+interface DashNavState {
+  parentHref: string;
+  titleHref: string;
+}
+
 const customLeftActions: DashNavButtonModel[] = [];
 const customRightActions: DashNavButtonModel[] = [];
 
@@ -57,8 +63,30 @@ export function addCustomRightAction(content: DashNavButtonModel) {
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class DashNav extends PureComponent<Props> {
+  unlisten: UnregisterCallback | undefined;
+  state: DashNavState;
+
   constructor(props: Props) {
     super(props);
+    this.state = {
+      parentHref: locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current'),
+      titleHref: locationUtil.updateSearchParams(window.location.href, '?search=open'),
+    };
+  }
+
+  componentDidMount() {
+    this.unlisten = locationService.getHistory().listen(() => {
+      this.setState({
+        titleHref: locationUtil.updateSearchParams(window.location.href, '?search=open'),
+        parentHref: locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current'),
+      });
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.unlisten) {
+      this.unlisten();
+    }
   }
 
   onClose = () => {
@@ -269,10 +297,8 @@ class DashNav extends PureComponent<Props> {
 
   render() {
     const { isFullscreen, title, folderTitle } = this.props;
+    const { parentHref, titleHref } = this.state;
     const onGoBack = isFullscreen ? this.onClose : undefined;
-
-    const titleHref = locationUtil.updateSearchParams(window.location.href, '?search=open');
-    const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
 
     return (
       <PageToolbar
