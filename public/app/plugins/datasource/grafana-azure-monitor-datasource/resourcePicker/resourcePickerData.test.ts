@@ -53,7 +53,7 @@ describe('AzureMonitor resourcePickerData', () => {
     });
   });
 
-  describe('getResourcesForResourceGroup', () => {
+  describe('getResourceGroupsBySubscriptionId', () => {
     beforeEach(() => {
       postResource = jest.fn().mockResolvedValue(createMockARGResourceGroupsResponse());
       resourcePickerData.postResource = postResource;
@@ -119,7 +119,7 @@ describe('AzureMonitor resourcePickerData', () => {
     it('returns formatted resources', async () => {
       const results = await resourcePickerData.getResourcesForResourceGroup(resourceRow.id);
 
-      expect(results.map((v) => v.id)).toEqual([
+      expect(results.map((v) => v.uri)).toEqual([
         '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
         '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/disks/web-server_DataDisk',
         '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/db-server',
