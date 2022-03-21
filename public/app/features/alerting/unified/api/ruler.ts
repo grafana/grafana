@@ -11,11 +11,16 @@ interface ErrorResponseMessage {
   error?: string;
 }
 
-function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
-  const grafanaPath = `/api/ruler/${getDatasourceAPIId(rulerConfig.dataSourceName)}`;
+export interface RulerRequestUrl {
+  path: string;
+  params?: Record<string, string>;
+}
+
+export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
+  const grafanaServerPath = `/api/ruler/${getDatasourceAPIId(rulerConfig.dataSourceName)}`;
   const rulerPath = rulerConfig.apiVersion === 'config' ? '/config/v1/rules' : '/api/v1/rules';
 
-  const basePath = `${grafanaPath}${rulerPath}`;
+  const basePath = `${grafanaServerPath}${rulerPath}`;
   const rulerSearchParams = new URLSearchParams();
   if (rulerConfig.customRulerEnabled) {
     rulerSearchParams.set('source', 'ruler');
@@ -25,7 +30,7 @@ function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   }
 
   return {
-    rules: (filter?: FetchRulerRulesFilter) => {
+    rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => {
       if (filter?.dashboardUID) {
         rulerSearchParams.set('dashboard_uid', filter.dashboardUID);
         if (filter.panelId) {
@@ -34,13 +39,18 @@ function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
       }
 
       return {
-        url: `${basePath}`,
+        path: `${basePath}`,
         params: Object.fromEntries(rulerSearchParams),
       };
     },
-    namespace: (namespace: string) => `${basePath}/${encodeURIComponent(namespace)}?${rulerSearchParams.toString()}`,
-    namespaceGroup: (namespace: string, group: string) =>
-      `${basePath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}?${rulerSearchParams.toString()}`,
+    namespace: (namespace: string): RulerRequestUrl => ({
+      path: `${basePath}/${encodeURIComponent(namespace)}`,
+      params: Object.fromEntries(rulerSearchParams),
+    }),
+    namespaceGroup: (namespace: string, group: string): RulerRequestUrl => ({
+      path: `${basePath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`,
+      params: Object.fromEntries(rulerSearchParams),
+    }),
   };
 }
 
@@ -50,13 +60,15 @@ export async function setRulerRuleGroup(
   namespace: string,
   group: PostableRulerRuleGroupDTO
 ): Promise<void> {
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
   await lastValueFrom(
     getBackendSrv().fetch<unknown>({
       method: 'POST',
-      url: rulerUrlBuilder(rulerConfig).namespace(namespace),
+      url: path,
       data: group,
       showErrorAlert: false,
       showSuccessAlert: false,
+      params,
     })
   );
 }
@@ -73,17 +85,15 @@ export async function fetchRulerRules(rulerConfig: RulerDataSourceConfig, filter
   }
 
   // TODO Move params creation to the rules function
-  const { url, params } = rulerUrlBuilder(rulerConfig).rules(filter);
+  const { path: url, params } = rulerUrlBuilder(rulerConfig).rules(filter);
   return rulerGetRequest<RulerRulesConfigDTO>(url, {}, params);
 }
 
 // fetch rule groups for a particular namespace
 // will throw with { status: 404 } if namespace does not exist
 export async function fetchRulerRulesNamespace(rulerConfig: RulerDataSourceConfig, namespace: string) {
-  const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
-    rulerUrlBuilder(rulerConfig).namespace(namespace),
-    {}
-  );
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+  const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(path, {}, params);
   return result[namespace] || [];
 }
 
@@ -107,16 +117,19 @@ export async function fetchRulerRulesGroupV2(
   namespace: string,
   group: string
 ): Promise<RulerRuleGroupDTO | null> {
-  return rulerGetRequest<RulerRuleGroupDTO | null>(rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group), null);
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+  return rulerGetRequest<RulerRuleGroupDTO | null>(path, null, params);
 }
 
 export async function deleteRulerRulesGroup(rulerConfig: RulerDataSourceConfig, namespace: string, groupName: string) {
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, groupName);
   await lastValueFrom(
     getBackendSrv().fetch({
-      url: rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, groupName),
+      url: path,
       method: 'DELETE',
       showSuccessAlert: false,
       showErrorAlert: false,
+      params,
     })
   );
 }
@@ -176,12 +189,14 @@ function isCortexErrorResponse(error: FetchResponse<ErrorResponseMessage>) {
 }
 
 export async function deleteNamespace(rulerConfig: RulerDataSourceConfig, namespace: string): Promise<void> {
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
   await lastValueFrom(
     getBackendSrv().fetch<unknown>({
       method: 'DELETE',
-      url: rulerUrlBuilder(rulerConfig).namespace(namespace),
+      url: path,
       showErrorAlert: false,
       showSuccessAlert: false,
+      params,
     })
   );
 }
