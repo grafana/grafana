@@ -56,7 +56,7 @@ func TestAnnotations(t *testing.T) {
 		assert.Equal(t, int64(20), annotation2.Epoch)
 		assert.Equal(t, int64(21), annotation2.EpochEnd)
 
-		globalAnnotation1 := &annotations.Item{
+		organizationAnnotation1 := &annotations.Item{
 			OrgId:  1,
 			UserId: 1,
 			Text:   "deploy",
@@ -64,9 +64,9 @@ func TestAnnotations(t *testing.T) {
 			Epoch:  15,
 			Tags:   []string{"deploy"},
 		}
-		err = repo.Save(globalAnnotation1)
+		err = repo.Save(organizationAnnotation1)
 		require.NoError(t, err)
-		assert.Greater(t, globalAnnotation1.Id, int64(0))
+		assert.Greater(t, organizationAnnotation1.Id, int64(0))
 
 		globalAnnotation2 := &annotations.Item{
 			OrgId:  1,

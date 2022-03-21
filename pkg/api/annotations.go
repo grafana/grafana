@@ -66,10 +66,18 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	var canSave bool
 	var err error
 	if cmd.DashboardId != 0 {
-		canSave, err = canSaveLocalAnnotation(c, cmd.DashboardId)
-	} else {
-		canSave = canSaveGlobalAnnotation(c)
+		canSave, err = canSaveDashboardAnnotation(c, cmd.DashboardId)
+	} else { // organization annotations
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveOrganizationAnnotation(c)
+		} else {
+			// This is an additional validation needed only for FGAC Organization Annotations.
+			// It is not possible to do it in the middleware because we need to look
+			// into the request to determine if this is a Organization annotation or not
+			canSave, err = hs.canCreateOrganizationAnnotation(c)
+		}
 	}
+
 	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -190,13 +198,14 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 	}
 
 	canSave := true
-	if annotation.GetType() == annotations.Local {
-		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
+	if annotation.GetType() == annotations.Dashboard {
+		canSave, err = canSaveDashboardAnnotation(c, annotation.DashboardId)
 	} else {
 		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-			canSave = canSaveGlobalAnnotation(c)
+			canSave = canSaveOrganizationAnnotation(c)
 		}
 	}
+
 	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -236,11 +245,11 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 	}
 
 	canSave := true
-	if annotation.GetType() == annotations.Local {
-		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
+	if annotation.GetType() == annotations.Dashboard {
+		canSave, err = canSaveDashboardAnnotation(c, annotation.DashboardId)
 	} else {
 		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-			canSave = canSaveGlobalAnnotation(c)
+			canSave = canSaveOrganizationAnnotation(c)
 		}
 	}
 	if err != nil || !canSave {
@@ -314,12 +323,15 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 		return resp
 	}
 
-	var canSave bool
-	if annotation.GetType() == annotations.Local {
-		canSave, err = canSaveLocalAnnotation(c, annotation.DashboardId)
+	canSave := true
+	if annotation.GetType() == annotations.Dashboard {
+		canSave, err = canSaveDashboardAnnotation(c, annotation.DashboardId)
 	} else {
-		canSave = canSaveGlobalAnnotation(c)
+		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			canSave = canSaveOrganizationAnnotation(c)
+		}
 	}
+
 	if err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -335,7 +347,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 	return response.Success("Annotation deleted")
 }
 
-func canSaveLocalAnnotation(c *models.ReqContext, dashboardID int64) (bool, error) {
+func canSaveDashboardAnnotation(c *models.ReqContext, dashboardID int64) (bool, error) {
 	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 		return false, err
@@ -344,7 +356,7 @@ func canSaveLocalAnnotation(c *models.ReqContext, dashboardID int64) (bool, erro
 	return true, nil
 }
 
-func canSaveGlobalAnnotation(c *models.ReqContext) bool {
+func canSaveOrganizationAnnotation(c *models.ReqContext) bool {
 	return c.SignedInUser.HasRole(models.ROLE_EDITOR)
 }
 
@@ -399,11 +411,16 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 			return "", err
 		}
 
-		if annotation.GetType() == annotations.Global {
-			return accesscontrol.ScopeAnnotationsTypeGlobal, nil
+		if annotation.GetType() == annotations.Organization {
+			return accesscontrol.ScopeAnnotationsTypeOrganization, nil
 		} else {
-			return accesscontrol.ScopeAnnotationsTypeLocal, nil
+			return accesscontrol.ScopeAnnotationsTypeDashboard, nil
 		}
 	}
 	return accesscontrol.ScopeAnnotationsProvider.GetResourceScope(""), annotationTypeResolver
+}
+
+func (hs *HTTPServer) canCreateOrganizationAnnotation(c *models.ReqContext) (bool, error) {
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }

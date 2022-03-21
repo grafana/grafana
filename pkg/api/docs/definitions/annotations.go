@@ -141,7 +141,7 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	Limit int64 `json:"limit"`
-	// Use this to filter global annotations. Global annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
+	// Use this to filter global annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
 	// in:query
 	// required:false
 	// type: array

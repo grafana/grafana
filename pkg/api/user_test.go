@@ -34,7 +34,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
-		AccessControl: &acmock.Mock{},
+		AccessControl: acmock.New(),
 	}
 
 	mockResult := models.SearchUserQueryResult{

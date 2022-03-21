@@ -274,15 +274,17 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
-	localAnnotationsWriterRole := ac.RoleRegistration{
+	dashboardAnnotationsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:annotations.local:writer",
-			DisplayName: "Local annotation writer",
+			Name:        "fixed:annotations.dashboard:writer",
+			DisplayName: "Dashboard annotation writer",
 			Description: "Update annotations associated with dashboards.",
 			Group:       "Annotations",
-			Version:     1,
+			Version:     2,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeLocal},
+				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
+				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -296,6 +298,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Annotations",
 			Version:     1,
 			Permissions: []ac.Permission{
+				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
 			},
 		},
@@ -405,7 +409,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
-		annotationsReaderRole, localAnnotationsWriterRole, annotationsWriterRole,
+		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
 	)
