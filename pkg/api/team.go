@@ -141,7 +141,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		teamIDs[strconv.FormatInt(team.Id, 10)] = true
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, "teams", "id", teamIDs)
+	metadata := hs.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
 	if len(metadata) > 0 {
 		for _, team := range query.Result.Teams {
 			team.AccessControl = metadata[strconv.FormatInt(team.Id, 10)]
