@@ -1,0 +1,27 @@
+import { ArgsTable } from '@storybook/addon-docs/blocks';
+import { DatePickerWithEmptyWithInput } from './DatePickerWithEmptyWithInput';
+
+# DatePickerWithEmptyWithInput
+
+An input with a calendar view, used to select a date also with possible empty value and and input field. Value is optional.
+
+### Usage
+
+```tsx
+import React, { useState } from 'react';
+import { DatePickerWithEmptyWithInput } from '@grafana/ui';
+
+const [date, setDate] = useState<Date | string>(new Date());
+return (
+  <DatePickerWithEmptyWithInput
+    value={date}
+    isDateInput={true}
+    returnValue={'start'}
+    onChange={(newDate) => setDate(newDate)}
+  />
+);
+```
+
+### Props
+
+<ArgsTable of={DatePickerWithEmptyWithInput} />

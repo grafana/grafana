@@ -1,6 +1,6 @@
 import { variableAdapters } from '../adapters';
 import { createDateTimeVariableAdapter } from './adapter';
-import { textboxBuilder } from '../shared/testing/builders';
+// import { textboxBuilder } from '../shared/testing/builders';
 import { DateTimeVariableModel, initialVariableModelState, VariableHide } from '../types';
 
 variableAdapters.setInit(() => [createDateTimeVariableAdapter()]);

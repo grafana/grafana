@@ -13,16 +13,10 @@ import { DatePickerWithEmpty } from '@grafana/ui';
 
 const [date, setDate] = useState<Date | string>(new Date());
 return (
-  <DatePickerWithEmpty
-    width={40}
-    value={date}
-    isDateInput={true}
-    onClose={() => {}}
-    onChange={(newDate) => setDate(newDate)}
-  />
+  <DatePickerWithEmpty value={date} isDateInput={true} onClose={() => {}} onChange={(newDate) => setDate(newDate)} />
 );
 ```
 
 ### Props
 
-<ArgsTable of={DatePickerWithInput} />
+<ArgsTable of={DatePickerWithEmpty} />

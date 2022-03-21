@@ -20,12 +20,6 @@ export const dateTimeVariableSlice = createSlice({
       const option = { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false };
       instanceState.current = option;
       instanceState.options = [option];
-
-      // if (instanceState.returnValue === 'end') {
-      //   instanceState.options = [option];
-      // } else {
-      //   instanceState.options = [];
-      // }
     },
   },
 });

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { DatePickerWithEmpty } from './DatePickerWithEmpty';
+import { DatePickerWithEmptyWithInput } from './DatePickerWithEmptyWithInput';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
-import mdx from './DatePickerWithEmpty.mdx';
+import mdx from './DatePickerWithEmptyWithInput.mdx';
 
 export default {
-  title: 'Pickers and Editors/TimePickers/DatePickerWithEmpty',
-  component: DatePickerWithEmpty,
+  title: 'Pickers and Editors/TimePickers/DatePickerWithEmptyWithInput',
+  component: DatePickerWithEmptyWithInput,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -15,19 +15,18 @@ export default {
 };
 
 export const Basic = () => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | string>(new Date());
   const [dateInput, setDateInput] = useState<boolean>(true);
 
   return (
-    <DatePickerWithEmpty
-      onClose={() => {}}
+    <DatePickerWithEmptyWithInput
       isDateInput={dateInput}
-      isOpen={true}
       value={date}
       onChange={(newDate, dateInput) => {
         setDate(newDate);
         setDateInput(dateInput);
       }}
+      returnValue={'start'}
     />
   );
 };
