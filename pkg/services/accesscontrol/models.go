@@ -242,6 +242,7 @@ type SetResourcePermissionCommand struct {
 
 const (
 	GlobalOrgID = 0
+
 	// Permission actions
 
 	ActionAPIKeyRead   = "apikeys:read"
