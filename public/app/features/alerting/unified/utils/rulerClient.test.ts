@@ -1,5 +1,5 @@
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
-import { getUniqueGroupName } from '../utils/rulerClient';
+import { getUniqueGroupName } from './rulerClient';
 
 describe('getUniqueGroupName', () => {
   it('Should return the original value when there are no duplicates', () => {
