@@ -22,7 +22,19 @@ func TestAuth(t *testing.T) {
 		"/my-storage/",
 	}
 
-	authService := NewStorageAuthService()
+	backends := []struct {
+		service StorageAuthService
+		name    string
+	}{
+		{
+			service: NewRadixTreeStorageAuthService(),
+			name:    "radixTree",
+		},
+		{
+			service: NewStorageAuthService(),
+			name:    "arrays",
+		},
+	}
 
 	var tests = []struct {
 		name          string
@@ -143,34 +155,36 @@ func TestAuth(t *testing.T) {
 		},
 	}
 
-	for _, prefix := range prefixes {
-		for _, action := range actions {
-			for _, tt := range tests {
-				testName := "[" + prefix + "]" + action + " -  " + tt.name
-				t.Run(testName, func(t *testing.T) {
+	for _, backend := range backends {
+		for _, prefix := range prefixes {
+			for _, action := range actions {
+				for _, tt := range tests {
+					testName := backend.name + ":[" + prefix + "]" + action + " -  " + tt.name
+					t.Run(testName, func(t *testing.T) {
 
-					var scopes []string
-					for _, scope := range tt.scopes {
-						scopes = append(scopes, addPrefixToFileScope(scope, prefix))
-					}
+						var scopes []string
+						for _, scope := range tt.scopes {
+							scopes = append(scopes, addPrefixToFileScope(scope, prefix))
+						}
 
-					permissions := map[int64]map[string][]string{0: {action: scopes}}
-					guardian := authService.NewGuardian(context.Background(), &models.SignedInUser{
-						UserId:      0,
-						OrgId:       0,
-						Permissions: permissions,
-					}, "")
+						permissions := map[int64]map[string][]string{0: {action: scopes}}
+						guardian := backend.service.NewGuardian(context.Background(), &models.SignedInUser{
+							UserId:      0,
+							OrgId:       0,
+							Permissions: permissions,
+						}, "")
 
-					for _, expectedAllow := range tt.expectedAllow {
-						path := filestorage.Join(prefix, expectedAllow)
-						require.Truef(t, guardian.can(action, path), "expected access to %s", path)
-					}
+						for _, expectedAllow := range tt.expectedAllow {
+							path := filestorage.Join(prefix, expectedAllow)
+							require.Truef(t, guardian.can(action, path), "expected access to %s", path)
+						}
 
-					for _, expectedDeny := range tt.expectedDeny {
-						path := filestorage.Join(prefix, expectedDeny)
-						require.Falsef(t, guardian.can(action, path), "expected no access to %s", path)
-					}
-				})
+						for _, expectedDeny := range tt.expectedDeny {
+							path := filestorage.Join(prefix, expectedDeny)
+							require.Falsef(t, guardian.can(action, path), "expected no access to %s", path)
+						}
+					})
+				}
 			}
 		}
 	}
