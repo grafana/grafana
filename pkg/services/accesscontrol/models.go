@@ -372,12 +372,12 @@ var (
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 
 	// Annotation scopes
-	ScopeAnnotationsRoot       = "annotations"
-	ScopeAnnotationsProvider   = NewScopeProvider(ScopeAnnotationsRoot)
-	ScopeAnnotationsAll        = ScopeAnnotationsProvider.GetResourceAllScope()
-	ScopeAnnotationsID         = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
-	ScopeAnnotationsTypeLocal  = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
-	ScopeAnnotationsTypeGlobal = ScopeAnnotationsProvider.GetResourceScopeType("organization")
+	ScopeAnnotationsRoot             = "annotations"
+	ScopeAnnotationsProvider         = NewScopeProvider(ScopeAnnotationsRoot)
+	ScopeAnnotationsAll              = ScopeAnnotationsProvider.GetResourceAllScope()
+	ScopeAnnotationsID               = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
+	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
+	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType("organization")
 
 	// Annotation tag scopes
 	ScopeAnnotationsTagsAll = "annotations:tags:*"
