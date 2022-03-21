@@ -147,7 +147,7 @@ func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, sa
 		return map[string]accesscontrol.Metadata{}
 	}
 
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts", "id", saIDs)
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts:id:", saIDs)
 }
 
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
