@@ -506,10 +506,10 @@ def test_backend_step(edition):
             'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
             'chmod +x /usr/local/bin/docker-compose',
             'make -C devenv/docker/blocks/intentapi',
+            'ls -l /drone/src/devenv/docker/blocks/intentapi/certs',
             'make devenv sources=intentapi',
-            'cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver && cd -',
+            'cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver && docker inspect devenv_apiserver_1 && cd -',
             'kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources',
-            'ls -l /drone/src/devenv/docker/blocks/intentapi',
             'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
             'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem ' +
             'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig ' +

@@ -82,12 +82,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -682,12 +682,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -1726,12 +1726,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -2379,12 +2379,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -2431,12 +2431,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -3517,12 +3517,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -4136,12 +4136,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -4188,12 +4188,12 @@ steps:
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
   - make devenv sources=intentapi
   - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
+    docker inspect devenv_apiserver_1 && cd -
   - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
     api-resources
-  - ls -l /drone/src/devenv/docker/blocks/intentapi
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -4578,6 +4578,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ff9aaf69e5a551a91b542757313a6cf4af4c109c61b7b8b275458cf10bf04a97
+hmac: ede92e183b072e28552385d152fe3e7fc158512ce5424d301c49538fafd954f9
 
 ...
