@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse } from '@grafana/ui';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
@@ -34,7 +34,7 @@ const ResourcePicker = ({
   const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   // Sync the resourceURI prop to internal state
   useEffect(() => {
     setInternalSelectedURI(resourceURI);
@@ -154,36 +154,56 @@ const ResourcePicker = ({
           />
 
           <div className={styles.selectionFooter}>
-            <h5>
-              Selected Scope{' '}
-              <Tooltip
-                content={
-                  <>
-                    <p>
-                      Select a resource above or type in the{' '}
-                      <a
-                        href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        resource id (also referred to as a resource uri)
-                      </a>{' '}
-                      below. Grafana supports template variable interpolation like so:
-                    </p>
-                    <p>/subscriptions/$subId</p>
-                  </>
-                }
-                placement="right"
-                interactive={true}
-              >
-                <Icon name="info-circle" />
-              </Tooltip>
-            </h5>
-            <Input
-              value={internalSelectedURI}
-              onChange={(event) => setInternalSelectedURI(event.currentTarget.value)}
-            />
+            <h5>Selection</h5>
 
+            {selectedResourceRows.length > 0 && (
+              <>
+                <Space v={2} />
+                <NestedResourceTable
+                  rows={selectedResourceRows}
+                  requestNestedRows={requestNestedRows}
+                  onRowSelectedChange={handleSelectionChanged}
+                  selectedRows={selectedResourceRows}
+                  noHeader={true}
+                />
+              </>
+            )}
+            <Collapse
+              collapsible
+              label="Advanced"
+              isOpen={isAdvancedOpen}
+              onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
+            >
+              <h6>
+                Resource URI{' '}
+                <Tooltip
+                  content={
+                    <>
+                      <p>
+                        You can manually edit the{' '}
+                        <a
+                          href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          resource uri{' '}
+                        </a>
+                        or use template variables:
+                      </p>
+                    </>
+                  }
+                  placement="right"
+                  interactive={true}
+                >
+                  <Icon name="info-circle" />
+                </Tooltip>
+              </h6>
+              <Input
+                value={internalSelectedURI}
+                onChange={(event) => setInternalSelectedURI(event.currentTarget.value)}
+                placeholder="ex: /subscriptions/$subId"
+              />
+            </Collapse>
             <Space v={2} />
 
             <Button disabled={!!errorMessage} onClick={handleApply}>
