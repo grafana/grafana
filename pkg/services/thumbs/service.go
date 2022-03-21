@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
@@ -46,6 +45,7 @@ type thumbService struct {
 	thumbnailRepo              thumbnailRepo
 	lockService                *serverlock.ServerLockService
 	features                   featuremgmt.FeatureToggles
+	store                      sqlstore.Store
 	crawlLockServiceActionName string
 	log                        log.Logger
 }
@@ -76,6 +76,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		renderingService:           renderService,
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo:              thumbnailRepo,
+		store:                      store,
 		features:                   features,
 		lockService:                lockService,
 		crawlLockServiceActionName: "dashboard-crawler",
@@ -362,7 +363,7 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
 	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.store.GetDashboard(c.Req.Context(), &query); err != nil {
 		return 0, err
 	}
 
