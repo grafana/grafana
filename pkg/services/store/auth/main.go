@@ -3,6 +3,7 @@ package storeauth
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -14,6 +15,19 @@ var (
 	denyAllService      = newDenyAllAuthService()
 	storeAuthMainLogger = log.New("storeAuthMainLogger")
 )
+
+type StorageAuthService interface {
+	NewGuardian(ctx context.Context, user *models.SignedInUser, prefix string) FilesGuardian
+}
+
+type FilesGuardian interface {
+	CanView(path string) bool
+	CanSave(path string) bool
+	can(action string, path string) bool
+
+	GetViewPathFilters() *filestorage.PathFilters
+	GetSavePathFilters() *filestorage.PathFilters
+}
 
 // NewGuardian workaround to avoid issue with cyclical dependencies between `usagestats` and `accesscontrol`
 var NewGuardian = func(ctx context.Context, user *models.SignedInUser, path string) FilesGuardian {

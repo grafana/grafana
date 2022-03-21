@@ -373,7 +373,8 @@ const (
 	ActionFilesDelete = "files:delete"
 
 	// File scopes
-	ScopeFilesAll = "files:path:/*"
+	ScopeFilesAllowAll = "files:path:/*"
+	ScopeFilesDenyAll  = "files:path:!/*"
 )
 
 var (

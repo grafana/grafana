@@ -77,19 +77,6 @@ func parsePath(scope string) string {
 	return scope[strings.LastIndex(scope, ":")+1:]
 }
 
-type StorageAuthService interface {
-	NewGuardian(ctx context.Context, user *models.SignedInUser, prefix string) FilesGuardian
-}
-
-type FilesGuardian interface {
-	CanView(path string) bool
-	CanSave(path string) bool
-	can(action string, path string) bool
-
-	GetViewPathFilters() *filestorage.PathFilters
-	GetSavePathFilters() *filestorage.PathFilters
-}
-
 func NewStorageAuthService() StorageAuthService {
 	return &storageAuthService{
 		log: log.New("storageAuthService"),

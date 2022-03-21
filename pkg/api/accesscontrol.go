@@ -412,10 +412,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Files",
 			Permissions: ac.ConcatPermissions(
 				[]ac.Permission{
-					{Action: ac.ActionFilesRead, Scope: ac.ScopeFilesAll},
-					{Action: ac.ActionFilesWrite, Scope: ac.ScopeFilesAll},
-					{Action: ac.ActionFilesDelete, Scope: ac.ScopeFilesAll},
-					{Action: ac.ActionFilesCreate, Scope: ac.ScopeFilesAll},
+					{Action: ac.ActionFilesRead, Scope: ac.ScopeFilesAllowAll},
+					{Action: ac.ActionFilesWrite, Scope: ac.ScopeFilesAllowAll},
+					{Action: ac.ActionFilesDelete, Scope: ac.ScopeFilesAllowAll},
+					{Action: ac.ActionFilesCreate, Scope: ac.ScopeFilesAllowAll},
 				}),
 		},
 		Grants: []string{string(models.ROLE_VIEWER), string(models.ROLE_EDITOR)},
@@ -430,7 +430,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Files",
 			Permissions: ac.ConcatPermissions(
 				[]ac.Permission{
-					{Action: ac.ActionFilesRead, Scope: ac.ScopeFilesAll},
+					{Action: ac.ActionFilesRead, Scope: ac.ScopeFilesAllowAll},
 				}),
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
