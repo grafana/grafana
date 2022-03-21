@@ -12,7 +12,7 @@ You are required to specify an Admin role for each organization. The first user 
 
 ## Before you begin
 
-- Add an organization
+- [Create an organization]({{< relref "../../manage-organizations/_index.md">}})
 - [Add a user]({{< relref "./add-user.md">}}) to Grafana
 - Ensure you have Grafana server administrator privileges
 
