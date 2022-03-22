@@ -39,7 +39,7 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
       .addNumberInput({
         path: 'minVizHeight',
         name: 'Min height',
-        description: 'minimum bar height',
+        description: 'Minimum row height',
         defaultValue: 10,
         showIf: (options: BarGaugeOptions) => options.orientation === VizOrientation.Horizontal,
       });
