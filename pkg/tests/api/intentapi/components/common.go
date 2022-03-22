@@ -70,7 +70,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 			condition := testCase.postAssertFunc(t, res)
 			t.Log("after POST:", "error: ", err, "condition:", condition)
 			return err == nil && condition
-		}, 10*time.Second, 250*time.Millisecond, "unexpected object state after POST")
+		}, 10*time.Second, 1*time.Second, "unexpected object state after POST")
 
 		var getResult rest.Result
 		t.Run("test getting resource object", func(t *testing.T) {
@@ -100,7 +100,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 				condition := testCase.putAssertFunc(t, res)
 				t.Log("after PUT:", "error: ", err, "condition:", condition)
 				return err == nil && condition
-			}, 10*time.Second, 250*time.Millisecond, "unexpected object state after PUT")
+			}, 10*time.Second, 1*time.Second, "unexpected object state after PUT")
 		})
 
 		t.Run("test deleting resource object", func(t *testing.T) {
@@ -119,7 +119,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 				err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
 				t.Log("after PUT", "error: ", err)
 				return err != nil
-			}, 10*time.Second, 10*time.Millisecond, "unexpected object state after DELETE")
+			}, 10*time.Second, 1*time.Second, "unexpected object state after DELETE")
 		})
 	})
 }
