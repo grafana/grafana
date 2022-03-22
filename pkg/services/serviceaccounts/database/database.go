@@ -314,7 +314,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 				s.sqlStore.Dialect.BooleanStr(true)))
 
 		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts", serviceaccounts.ActionRead)
+			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 			if err != nil {
 				return err
 			}

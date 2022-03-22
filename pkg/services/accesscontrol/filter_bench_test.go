@@ -34,7 +34,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 		acFilter, err := accesscontrol.Filter(
 			&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(permissions)}},
 			"data_source.id",
-			"datasources",
+			"datasources:id:",
 			"datasources:read",
 		)
 		require.NoError(b, err)
