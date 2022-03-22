@@ -16,7 +16,6 @@ import (
 	grafanaSchema "github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -64,7 +63,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 			Do(context.Background())
 		require.NoError(t, res.Error())
 
-		assert.Eventually(t, func() bool {
+		require.Eventually(t, func() bool {
 			// make sure that the object exists in the store
 			res := zeroObjectOfType(t, postBody)
 			err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
@@ -94,7 +93,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 				Do(context.Background())
 			require.NoError(t, res.Error())
 
-			assert.Eventually(t, func() bool {
+			require.Eventually(t, func() bool {
 				// make sure that the object is updated in the store
 				res := zeroObjectOfType(t, postBody)
 				err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
@@ -114,7 +113,7 @@ func runTestCase(t *testing.T, cfg componentTestCfg) {
 			require.NoError(t, res.Error())
 
 			// make sure that the object is deleted
-			assert.Eventually(t, func() bool {
+			require.Eventually(t, func() bool {
 				// make sure that the object is deleted from the store
 				res := zeroObjectOfType(t, postBody)
 				err := s.Get(context.Background(), types.NamespacedName{Name: testCase.objectName}, res)
