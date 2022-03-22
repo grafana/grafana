@@ -15,9 +15,11 @@ This topic describes what organizations are, and how to create, edit, and delete
 
 ## About organizations
 
-An organization is an entity that helps you isolate users and resources like dashboards, annotations, and data sources from each other. Their purpose is to provide completely separate experiences, which look like multiple instances of Grafana, within a single instance. Multiple organizations are easier and cheaper to manage than multiple instances of Grafana.
+An organization is an entity that helps you isolate users and resources such as dashboards, annotations, and data sources from each other. Their purpose is to provide completely separate experiences, which look like multiple instances of Grafana, within a single instance. Multiple organizations are easier and cheaper to manage than multiple instances of Grafana.
 
-Users, configuration settings, and Grafana Enterprise licenses are shared between organizations. Other resources, like dashboards, data sources, annotations, folders, Teams, and Alerts, are isolated within each organization and cannot be easily shared with another organization. The member of one organization cannot view dashboards assigned to another organization. However, a user can belong to multiple organizations.
+Users, configuration settings, and Grafana Enterprise licenses are shared between organizations. Other resources, like dashboards, data sources, annotations, folders, Teams, and Alerts, are isolated within each organization and cannot be easily shared with another organization.
+
+The member of one organization cannot view dashboards assigned to another organization. However, a user can belong to multiple organizations.
 
 Grafana Server Administrators are responsible for creating organizations. For more information about the Grafana Server Administrator role, refer to [Grafana server administrators]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#Grafana server administrators" >}}).
 
