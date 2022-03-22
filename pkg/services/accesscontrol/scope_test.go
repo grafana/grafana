@@ -190,6 +190,11 @@ func Test_scopePrefix(t *testing.T) {
 			scope: "datasources:name:test:a::ds",
 			want:  "datasources:name:",
 		},
+		{
+			name:  "prefix",
+			scope: "datasources:name:",
+			want:  "datasources:name:",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
