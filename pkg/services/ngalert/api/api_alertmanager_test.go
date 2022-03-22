@@ -2,9 +2,7 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -258,8 +256,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
-	tmpDir, err := ioutil.TempDir("", "test")
-	require.NoError(t, err)
+	tmpDir := t.TempDir()
 	kvStore := notifier.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
@@ -276,16 +273,9 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 
 	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
-	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
 	return mam
-}
-
-func cleanOrgDirectories(path string, t *testing.T) func() {
-	return func() {
-		require.NoError(t, os.RemoveAll(path))
-	}
 }
 
 var validConfig = setting.GetAlertmanagerDefaultConfiguration()
