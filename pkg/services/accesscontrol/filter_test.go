@@ -142,7 +142,7 @@ func TestFilter_Datasources(t *testing.T) {
 			expectErr:           false,
 		},
 		{
-			desc:    "expect to be filtered bu uids",
+			desc:    "expect to be filtered by uids",
 			sqlID:   "data_source.uid",
 			prefix:  "datasources:uid:",
 			actions: []string{"datasources:read"},
