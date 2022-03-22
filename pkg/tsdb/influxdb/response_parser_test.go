@@ -424,6 +424,17 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
+			query = &Query{Alias: "alias $m - $measurement", Measurement: "10m"}
+			result = parser.Parse(prepare(response), addQueryToQueries(*query))
+
+			frame = result.Responses["A"]
+			name = "alias 10m - 10m"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
 			query = &Query{Alias: "alias $col", Measurement: "10m"}
 			result = parser.Parse(prepare(response), addQueryToQueries(*query))
 			frame = result.Responses["A"]
@@ -486,6 +497,16 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			result = parser.Parse(prepare(response), addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias cpu upc $2 $3 $4"
+			testFrame.Name = name
+			testFrame.Fields[1].Config.DisplayNameFromDS = name
+			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			query = &Query{Alias: "alias $0, $1 - $2 - $3, $4: something"}
+			result = parser.Parse(prepare(response), addQueryToQueries(*query))
+			frame = result.Responses["A"]
+			name = "alias cpu, upc - $2 - $3, $4: something"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
 			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
