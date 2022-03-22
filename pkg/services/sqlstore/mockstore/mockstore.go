@@ -12,8 +12,9 @@ type OrgListResponse []struct {
 	Response error
 }
 type SQLStoreMock struct {
-	LastGetAlertsQuery *models.GetAlertsQuery
-	LatestUserId       int64
+	LastGetAlertsQuery      *models.GetAlertsQuery
+	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
+	LatestUserId            int64
 
 	ExpectedUser                   *models.User
 	ExpectedDatasource             *models.DataSource
@@ -132,6 +133,7 @@ func (m SQLStoreMock) DeleteOrphanedProvisionedDashboards(ctx context.Context, c
 }
 
 func (m *SQLStoreMock) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+	m.LastLoginAttemptCommand = cmd
 	return m.ExpectedError
 }
 

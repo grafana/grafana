@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -73,45 +72,31 @@ func TestValidateLoginAttempts(t *testing.T) {
 
 func TestSaveInvalidLoginAttempt(t *testing.T) {
 	t.Run("When brute force protection enabled", func(t *testing.T) {
-		t.Cleanup(func() { bus.ClearBusHandlers() })
-
-		createLoginAttemptCmd := &models.CreateLoginAttemptCommand{}
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
-			createLoginAttemptCmd = cmd
-			return nil
-		})
-
+		store := mockstore.NewSQLStoreMock()
 		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
 			Username:  "user",
 			Password:  "pwd",
 			IpAddress: "192.168.1.1:56433",
 			Cfg:       cfgWithBruteForceLoginProtectionEnabled(t),
-		})
+		}, store)
 		require.NoError(t, err)
 
-		require.NotNil(t, createLoginAttemptCmd)
-		assert.Equal(t, "user", createLoginAttemptCmd.Username)
-		assert.Equal(t, "192.168.1.1:56433", createLoginAttemptCmd.IpAddress)
+		require.NotNil(t, store.LastLoginAttemptCommand)
+		assert.Equal(t, "user", store.LastLoginAttemptCommand.Username)
+		assert.Equal(t, "192.168.1.1:56433", store.LastLoginAttemptCommand.IpAddress)
 	})
 
 	t.Run("When brute force protection disabled", func(t *testing.T) {
-		t.Cleanup(func() { bus.ClearBusHandlers() })
-
-		var createLoginAttemptCmd *models.CreateLoginAttemptCommand
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
-			createLoginAttemptCmd = cmd
-			return nil
-		})
-
+		store := mockstore.NewSQLStoreMock()
 		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
 			Username:  "user",
 			Password:  "pwd",
 			IpAddress: "192.168.1.1:56433",
 			Cfg:       cfgWithBruteForceLoginProtectionDisabled(t),
-		})
+		}, store)
 		require.NoError(t, err)
 
-		require.Nil(t, createLoginAttemptCmd)
+		require.Nil(t, store.LastLoginAttemptCommand)
 	})
 }
 
@@ -127,12 +112,4 @@ func cfgWithBruteForceLoginProtectionEnabled(t *testing.T) *setting.Cfg {
 	cfg := setting.NewCfg()
 	require.False(t, cfg.DisableBruteForceLoginProtection)
 	return cfg
-}
-
-func withLoginAttempts(t *testing.T, loginAttempts int64) {
-	t.Helper()
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
-		query.Result = loginAttempts
-		return nil
-	})
 }

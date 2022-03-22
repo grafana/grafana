@@ -62,7 +62,7 @@ func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery, store s
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
-		if err := saveInvalidLoginAttempt(ctx, query); err != nil {
+		if err := saveInvalidLoginAttempt(ctx, query, store); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 
