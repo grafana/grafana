@@ -2,7 +2,9 @@ package notifier
 
 import (
 	"context"
+	"crypto/md5"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -73,7 +75,7 @@ func (f *FakeConfigStore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertm
 		f.configs[cmd.OrgID] = &models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 			OrgID:                     cmd.OrgID,
-			ConfigurationHash:         cmd.ConfigurationHash,
+			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
 			ConfigurationVersion:      "v1",
 			Default:                   cmd.Default,
 		}

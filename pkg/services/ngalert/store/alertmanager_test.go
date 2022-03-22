@@ -53,7 +53,6 @@ func TestAlertManagerHash(t *testing.T) {
 		err = store.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: newConfig,
 			FetchedConfigurationHash:  configMD5,
-			ConfigurationHash:         newConfigMD5,
 			ConfigurationVersion:      "v1",
 			Default:                   false,
 			OrgID:                     1,
@@ -76,7 +75,6 @@ func TestAlertManagerHash(t *testing.T) {
 		err = store.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: config,
 			FetchedConfigurationHash:  "the-wrong-hash",
-			ConfigurationHash:         configMD5,
 			ConfigurationVersion:      "v1",
 			Default:                   false,
 			OrgID:                     1,

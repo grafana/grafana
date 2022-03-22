@@ -24,7 +24,6 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
 	FetchedConfigurationHash  string
-	ConfigurationHash         string
 	ConfigurationVersion      string
 	Default                   bool
 	OrgID                     int64

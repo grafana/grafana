@@ -239,7 +239,6 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
 		Default:                   true,
-		ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))),
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
 	}
@@ -275,7 +274,6 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(rawConfig),
-		ConfigurationHash:         fmt.Sprintf("%x", md5.Sum(rawConfig)),
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
 	}
