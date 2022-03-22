@@ -4,7 +4,7 @@ on:
     inputs:
       version:
         required: true
-        default: '7.x.x'
+        default: '8.x.x'
   workflow_call:
     inputs:
       version_call:

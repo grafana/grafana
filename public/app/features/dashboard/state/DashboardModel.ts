@@ -796,7 +796,6 @@ export class DashboardModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
-    panel.key = `${panel.id}`;
     panel.repeatIteration = this.iteration;
     if (repeatedByRow) {
       panel.repeatedByRow = true;
@@ -962,7 +961,7 @@ export class DashboardModel {
 
         for (const panel of row.panels) {
           // set the y gridPos if it wasn't already set
-          panel.gridPos.y ??= row.gridPos.y;
+          panel.gridPos.y ?? (panel.gridPos.y = row.gridPos.y); // (Safari 13.1 lacks ??= support)
           // make sure y is adjusted (in case row moved while collapsed)
           panel.gridPos.y -= yDiff;
           // insert after row
