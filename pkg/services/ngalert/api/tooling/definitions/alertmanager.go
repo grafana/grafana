@@ -804,11 +804,11 @@ func AsGrafanaRoute(r *config.Route) *Route {
 	return gRoute
 }
 
-func (route Route) ResourceType() string {
+func (r *Route) ResourceType() string {
 	return "route"
 }
 
-func (route Route) ResourceID() string {
+func (r *Route) ResourceID() string {
 	return ""
 }
 
