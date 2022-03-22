@@ -98,7 +98,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 			return err
 		}
 		adapter := provenanceOrgAdapter{
-			inner: tree,
+			inner: &tree,
 			orgID: orgID,
 		}
 		err = nps.provenanceStore.SetProvenance(ctx, adapter, p)
