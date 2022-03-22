@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -108,16 +107,6 @@ func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Prov
 	}
 	f.records[orgID][o.ResourceID()] = p
 	return nil
-}
-
-type failingProvisioningStore struct{}
-
-func (f *failingProvisioningStore) GetProvenance(ctx context.Context, o models.ProvisionableInOrg) (models.Provenance, error) {
-	return models.ProvenanceNone, fmt.Errorf("failed to store provenance")
-}
-
-func (f *failingProvisioningStore) SetProvenance(ctx context.Context, o models.ProvisionableInOrg, p models.Provenance) error {
-	return fmt.Errorf("failed to set provenance")
 }
 
 type nopTransactionManager struct{}
