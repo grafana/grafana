@@ -142,11 +142,6 @@ func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *mode
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
-	query.Result = m.ExpectedUserLoginAttemptCount
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
 	return m.ExpectedError
 }
