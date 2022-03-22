@@ -21,6 +21,8 @@ export interface PromQuery extends DataQuery {
   editorMode?: QueryEditorMode;
   /** Controls if the query preview is shown */
   editorPreview?: boolean;
+
+  mockResponse?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {

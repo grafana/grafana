@@ -343,6 +343,21 @@ export class PrometheusDatasource
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
+
+      if (request.targets[0].mockResponse !== '') {
+        let response: DataQueryResponse = {
+          state: LoadingState.Done,
+          data: JSON.parse(request.targets[0].mockResponse!),
+        };
+
+        return new Observable<DataQueryResponse>((observer) => {
+          observer.next(
+            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+          );
+          observer.complete();
+        });
+      }
+
       return super
         .query({ ...request, targets })
         .pipe(

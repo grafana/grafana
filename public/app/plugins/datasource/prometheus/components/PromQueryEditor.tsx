@@ -31,6 +31,8 @@ interface State {
   intervalFactorOption: SelectableValue<number>;
   instant: boolean;
   exemplar: boolean;
+
+  mockResponse?: string;
 }
 
 export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> {
@@ -61,6 +63,8 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       // Switch options
       instant: Boolean(query.instant),
       exemplar: Boolean(query.exemplar),
+
+      mockResponse: '',
     };
   }
 
@@ -96,6 +100,12 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
     this.setState({ legendFormat });
   };
 
+  onMockResponseChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const mockResponse = e.currentTarget.value;
+    this.query.mockResponse = mockResponse;
+    this.setState({ mockResponse });
+  };
+
   onExemplarChange = (isEnabled: boolean) => {
     this.query.exemplar = isEnabled;
     this.setState({ exemplar: isEnabled }, this.onRunQuery);
@@ -111,7 +121,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
   render() {
     const { datasource, query, range, data } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
+    const { formatOption, instant, interval, intervalFactorOption, legendFormat, mockResponse } = this.state;
     //We want to hide exemplar field for unified alerting as exemplars in alerting don't make sense and are source of confusion
     const showExemplarField = this.props.app !== CoreApp.UnifiedAlerting;
 
@@ -211,6 +221,17 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 data-testid={testIds.exemplar}
               />
             )}
+            <div className="gf-form">
+              <InlineFormLabel width={7}>Mock response</InlineFormLabel>
+              <input
+                type="text"
+                className="gf-form-input width-8"
+                aria-label=""
+                onChange={this.onMockResponseChange}
+                onBlur={this.onRunQuery}
+                value={mockResponse}
+              />
+            </div>
           </div>
         }
       />
