@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
@@ -247,10 +248,10 @@ func (repo *fakeAnnotationsRepo) Save(item *annotations.Item) error {
 	item.Id = 1
 	return nil
 }
-func (repo *fakeAnnotationsRepo) Update(item *annotations.Item) error {
+func (repo *fakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
 	return nil
 }
-func (repo *fakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (repo *fakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	if annotation, has := repo.annotations[query.AnnotationId]; has {
 		return []*annotations.ItemDTO{&annotation}, nil
 	}
@@ -395,20 +396,47 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
 
-	repo := annotations.GetRepository()
+	dashboardAnnotation := annotations.ItemDTO{Id: 1, DashboardId: 1}
+	organizationAnnotation := annotations.ItemDTO{Id: 2, DashboardId: 0}
 
-	localAnnotation := annotations.Item{
-		OrgId:       sc.initCtx.OrgId,
+	fakeAnnoRepo = &fakeAnnotationsRepo{
+		annotations: map[int64]annotations.ItemDTO{1: dashboardAnnotation, 2: organizationAnnotation},
+	}
+	annotations.SetRepository(fakeAnnoRepo)
+
+	postOrganizationCmd := dtos.PostAnnotationsCmd{
+		Time:    1000,
+		Text:    "annotation text",
+		Tags:    []string{"tag1", "tag2"},
+		PanelId: 1,
+	}
+
+	postDashboardCmd := dtos.PostAnnotationsCmd{
+		Time:        1000,
+		Text:        "annotation text",
+		Tags:        []string{"tag1", "tag2"},
 		DashboardId: 1,
-	}
-	globalAnnotation := annotations.Item{
-		OrgId: sc.initCtx.OrgId,
+		PanelId:     1,
 	}
 
-	err = repo.Save(&localAnnotation)
-	require.NoError(t, err)
-	err = repo.Save(&globalAnnotation)
-	require.NoError(t, err)
+	updateCmd := dtos.UpdateAnnotationsCmd{
+		Time: 1000,
+		Text: "annotation text",
+		Tags: []string{"tag1", "tag2"},
+	}
+
+	patchCmd := dtos.PatchAnnotationsCmd{
+		Time: 1000,
+		Text: "annotation text",
+		Tags: []string{"tag1", "tag2"},
+	}
+
+	postGraphiteCmd := dtos.PostGraphiteAnnotationsCmd{
+		When: 1000,
+		What: "annotation text",
+		Data: "Deploy",
+		Tags: []string{"tag1", "tag2"},
+	}
 
 	type args struct {
 		permissions []*accesscontrol.Permission
@@ -458,10 +486,217 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			},
 			want: http.StatusForbidden,
 		},
+		{
+			name: "AccessControl update dashboard annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPut,
+				body:   mockRequestBody(updateCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl update dashboard annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPut,
+				body:        mockRequestBody(updateCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl update organization annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPut,
+				body:   mockRequestBody(updateCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl update organization annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPut,
+				body:   mockRequestBody(updateCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl patch dashboard annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPatch,
+				body:   mockRequestBody(patchCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl patch dashboard annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPatch,
+				body:        mockRequestBody(patchCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl patch organization annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPatch,
+				body:   mockRequestBody(patchCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl patch organization annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodPatch,
+				body:   mockRequestBody(patchCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl create dashboard annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postDashboardCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl create dashboard annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations",
+				method:      http.MethodPost,
+				body:        mockRequestBody(postDashboardCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl create organization annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postOrganizationCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl create organization annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postOrganizationCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl delete dashboard annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodDelete,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl delete dashboard annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodDelete,
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl delete organization annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsAll,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodDelete,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl delete organization annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations/2",
+				method: http.MethodDelete,
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl create graphite annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
+				}},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body:   mockRequestBody(postGraphiteCmd),
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl create organization annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
+				}},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body:   mockRequestBody(postGraphiteCmd),
+			},
+			want: http.StatusForbidden,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setUpACL()
+			sc.acmock.RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
 		})
@@ -478,15 +713,15 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 
 	testCases := []testCaseResolver{
 		{
-			desc:    "correctly resolves local annotations",
+			desc:    "correctly resolves dashboard annotations",
 			given:   "annotations:id:1",
-			want:    accesscontrol.ScopeAnnotationsTypeLocal,
+			want:    accesscontrol.ScopeAnnotationsTypeDashboard,
 			wantErr: nil,
 		},
 		{
-			desc:    "correctly resolves global annotations",
+			desc:    "correctly resolves organization annotations",
 			given:   "annotations:id:2",
-			want:    accesscontrol.ScopeAnnotationsTypeGlobal,
+			want:    accesscontrol.ScopeAnnotationsTypeOrganization,
 			wantErr: nil,
 		},
 		{
@@ -503,11 +738,11 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 		},
 	}
 
-	localAnnotation := annotations.ItemDTO{Id: 1, DashboardId: 1}
-	globalAnnotation := annotations.ItemDTO{Id: 2}
+	dashboardAnnotation := annotations.ItemDTO{Id: 1, DashboardId: 1}
+	organizationAnnotation := annotations.ItemDTO{Id: 2}
 
 	fakeAnnoRepo = &fakeAnnotationsRepo{
-		annotations: map[int64]annotations.ItemDTO{1: localAnnotation, 2: globalAnnotation},
+		annotations: map[int64]annotations.ItemDTO{1: dashboardAnnotation, 2: organizationAnnotation},
 	}
 	annotations.SetRepository(fakeAnnoRepo)
 
@@ -536,14 +771,8 @@ func setUpACL() {
 		{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 		{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 	}
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-		query.Result = aclMockResp
-		return nil
-	})
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-		query.Result = []*models.TeamDTO{}
-		return nil
-	})
+	store := mockstore.NewSQLStoreMock()
+	store.ExpectedDashboardAclInfoList = aclMockResp
+	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	guardian.InitLegacyGuardian(store)
 }
