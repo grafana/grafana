@@ -109,21 +109,26 @@ type AzureResponseTable struct {
 // AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
-		Aggregation         string  `json:"aggregation"`
-		Alias               string  `json:"alias"`
+		ResourceURI     string `json:"resource"`
+		MetricNamespace string `json:"metricNamespace"`
+		MetricName      string `json:"metricName"`
+
+		Aggregation      string                        `json:"aggregation"`
+		Alias            string                        `json:"alias"`
+		DimensionFilters []AzureMonitorDimensionFilter `json:"dimensionFilters"` // new model
+		TimeGrain        string                        `json:"timeGrain"`
+		Top              string                        `json:"top"`
+
+		MetricDefinition string `json:"metricDefinition"`
+		ResourceGroup    string `json:"resourceGroup"`
+		ResourceName     string `json:"resourceName"`
+
+		// Legecy "resource" fields from before the resource picker provided just a single ResourceURI
+		// These are used for pre-resource picker queries to reconstruct a resource URI
 		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
 		Dimension           string  `json:"dimension"`       // old model
 		DimensionFilter     string  `json:"dimensionFilter"` // old model
 		Format              string  `json:"format"`
-		MetricDefinition    string  `json:"metricDefinition"`
-		MetricName          string  `json:"metricName"`
-		MetricNamespace     string  `json:"metricNamespace"`
-		ResourceGroup       string  `json:"resourceGroup"`
-		ResourceName        string  `json:"resourceName"`
-		TimeGrain           string  `json:"timeGrain"`
-		Top                 string  `json:"top"`
-
-		DimensionFilters []AzureMonitorDimensionFilter `json:"dimensionFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }
