@@ -1,5 +1,8 @@
 import React from 'react';
-import { FlameGraphRenderer } from './FlameGraph/FlameGraphRenderer';
+
+const flamegraph = require('@pyroscope/flamegraph');
+
+const { FlamegraphRenderer } = flamegraph;
 
 interface RenderWrapperProps {
   width: number;
@@ -14,7 +17,7 @@ export const FlameGraphRendererWrapper: React.FunctionComponent<RenderWrapperPro
 }) => {
   return (
     <div style={{ width, height, overflowY: 'auto' }}>
-      <FlameGraphRenderer
+      <FlamegraphRenderer
         flamebearer={flamebearer}
         ExportData={<div />}
         display="flamegraph"

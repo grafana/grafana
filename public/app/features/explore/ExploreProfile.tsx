@@ -1,12 +1,10 @@
+import React from 'react';
 import { PanelData } from '@grafana/data';
-import React, { useMemo } from 'react';
 import { FlameGraphRendererWrapper } from '../../plugins/panel/flameGraph/FlameGraphRendererWrapper';
+import { useGetFlamebearers } from '../../plugins/panel/flameGraph/utils/useGetFlamebearers';
 
 export const ExploreProfile = ({ data, width }: { data: PanelData; width: number }) => {
-  const flamebearers = useMemo(
-    () => (data?.state === 'Done' ? data?.series?.map((s) => (s?.fields?.[0]?.values as any)?.buffer[0]) : []),
-    [data]
-  );
+  const flamebearers = useGetFlamebearers({ data });
 
   return (
     <>
