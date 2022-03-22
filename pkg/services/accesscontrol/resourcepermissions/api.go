@@ -35,13 +35,13 @@ func (a *api) registerEndpoints() {
 	uidSolver := solveUID(a.service.options.UidSolver)
 	disable := middleware.Disable(a.ac.IsDisabled())
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
-		idScope := accesscontrol.Scope(a.service.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
+		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.service.options.Resource), fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID/users/:userID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
+		r.Get("/:resourceID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID/users/:userID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
+		r.Post("/:resourceID/teams/:teamID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
+		r.Post("/:resourceID/builtInRoles/:builtInRole", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
 	})
 }
 
@@ -65,7 +65,6 @@ func (a *api) getDescription(c *models.ReqContext) response.Response {
 
 type resourcePermissionDTO struct {
 	ID            int64    `json:"id"`
-	ResourceID    string   `json:"resourceId"`
 	RoleName      string   `json:"roleName"`
 	IsManaged     bool     `json:"isManaged"`
 	UserID        int64    `json:"userId,omitempty"`
@@ -105,9 +104,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 
 			dto = append(dto, resourcePermissionDTO{
 				ID:            p.ID,
-				ResourceID:    p.ResourceID,
 				RoleName:      p.RoleName,
-				IsManaged:     p.IsManaged(),
 				UserID:        p.UserId,
 				UserLogin:     p.UserLogin,
 				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
@@ -117,6 +114,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 				BuiltInRole:   p.BuiltInRole,
 				Actions:       p.Actions,
 				Permission:    permission,
+				IsManaged:     p.IsManaged,
 			})
 		}
 	}

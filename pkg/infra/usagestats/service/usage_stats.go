@@ -256,7 +256,7 @@ func (uss *UsageStats) sendUsageStats(ctx context.Context) error {
 		return nil
 	}
 
-	uss.log.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
+	uss.log.Debug("Sending anonymous usage stats", "url", usageStatsURL)
 
 	report, err := uss.GetUsageReport(ctx)
 	if err != nil {

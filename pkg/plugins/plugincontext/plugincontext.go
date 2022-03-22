@@ -66,7 +66,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID strin
 			return pc, false, errutil.Wrap("Failed to get plugin settings", err)
 		}
 	} else {
-		jsonData, err = json.Marshal(ps.JsonData)
+		jsonData, err = json.Marshal(ps.JSONData)
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to unmarshal plugin json data", err)
 		}
@@ -103,23 +103,26 @@ func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID strin
 const pluginSettingsCacheTTL = 5 * time.Second
 const pluginSettingsCachePrefix = "plugin-setting-"
 
-func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {
+func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *models.SignedInUser) (*pluginsettings.DTO, error) {
 	cacheKey := pluginSettingsCachePrefix + pluginID
 
 	if cached, found := p.cacheService.Get(cacheKey); found {
-		ps := cached.(*models.PluginSetting)
-		if ps.OrgId == user.OrgId {
+		ps := cached.(*pluginsettings.DTO)
+		if ps.OrgID == user.OrgId {
 			return ps, nil
 		}
 	}
 
-	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
-	if err := p.pluginSettingsService.GetPluginSettingById(ctx, &query); err != nil {
+	ps, err := p.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+		PluginID: pluginID,
+		OrgID:    user.OrgId,
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	p.cacheService.Set(cacheKey, query.Result, pluginSettingsCacheTTL)
-	return query.Result, nil
+	p.cacheService.Set(cacheKey, ps, pluginSettingsCacheTTL)
+	return ps, nil
 }
 
 func (p *Provider) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import ResourcePicker from '.';
@@ -28,19 +28,17 @@ describe('AzureMonitor ResourcePicker', () => {
         getResourceGroupsBySubscriptionId: jest.fn(),
         getResourcesForResourceGroup: jest.fn(),
       });
-      await act(() => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={noResourceURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
+      render(
+        <ResourcePicker
+          templateVariables={[]}
+          resourcePickerData={resourePickerDataMock}
+          resourceURI={noResourceURI}
+          onCancel={noop}
+          onApply={noop}
+        />
+      );
 
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
+      expect(await screen.findByText('Primary Subscription')).toBeInTheDocument();
       expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
       expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).not.toHaveBeenCalled();
       expect(resourePickerDataMock.getResourcesForResourceGroup).not.toHaveBeenCalled();
@@ -54,19 +52,17 @@ describe('AzureMonitor ResourcePicker', () => {
         getResourceGroupsBySubscriptionId: jest.fn(),
         getResourcesForResourceGroup: jest.fn(),
       });
-      await act(async () => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={singleSubscriptionSelectionURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
+      render(
+        <ResourcePicker
+          templateVariables={[]}
+          resourcePickerData={resourePickerDataMock}
+          resourceURI={singleSubscriptionSelectionURI}
+          onCancel={noop}
+          onApply={noop}
+        />
+      );
 
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
+      expect(await screen.findByText('Primary Subscription')).toBeInTheDocument();
       expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
       expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).not.toHaveBeenCalled();
       expect(resourePickerDataMock.getResourcesForResourceGroup).not.toHaveBeenCalled();
@@ -80,19 +76,17 @@ describe('AzureMonitor ResourcePicker', () => {
         getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
         getResourcesForResourceGroup: jest.fn(),
       });
-      await act(async () => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={singleResourceGroupSelectionURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
+      render(
+        <ResourcePicker
+          templateVariables={[]}
+          resourcePickerData={resourePickerDataMock}
+          resourceURI={singleResourceGroupSelectionURI}
+          onCancel={noop}
+          onApply={noop}
+        />
+      );
 
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
+      expect(await screen.findByText('Primary Subscription')).toBeInTheDocument();
       expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
       expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenCalledTimes(1);
       expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenLastCalledWith(
@@ -109,19 +103,17 @@ describe('AzureMonitor ResourcePicker', () => {
         getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
         getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
       });
-      await act(async () => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={singleResourceSelectionURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
+      render(
+        <ResourcePicker
+          templateVariables={[]}
+          resourcePickerData={resourePickerDataMock}
+          resourceURI={singleResourceSelectionURI}
+          onCancel={noop}
+          onApply={noop}
+        />
+      );
 
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
+      expect(await screen.findByText('Primary Subscription')).toBeInTheDocument();
       expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
       expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenCalledTimes(1);
       expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenLastCalledWith(

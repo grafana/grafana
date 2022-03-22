@@ -106,9 +106,9 @@ export function importDashboard(data: any, dashboardTitle: string): ThunkResult<
   };
 }
 
-export function removeDashboard(uri: string): ThunkResult<void> {
+export function removeDashboard(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/dashboards/${uri}`);
+    await getBackendSrv().delete(`/api/dashboards/uid/${uid}`);
     dispatch(loadPluginDashboards());
   };
 }
