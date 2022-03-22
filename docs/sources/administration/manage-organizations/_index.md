@@ -1,6 +1,6 @@
 ---
-title: 'Managing organizations'
-menuTitle: 'Managing organizations'
+title: 'Manage organizations'
+menuTitle: 'Manage organizations'
 description: 'Describes how to use organizations to isolate dashboard to users and teams.'
 weight: 300
 aliases: [docs/sources/administration/manage-organizations/_index.md]
@@ -9,7 +9,7 @@ keywords:
   - dashboards
 ---
 
-# Managing organizations
+# Manage organizations
 
 This topic describes what organizations are, and how to create, edit, and delete them.
 
@@ -18,6 +18,75 @@ This topic describes what organizations are, and how to create, edit, and delete
 An organization is an entity that helps you isolate users and resources such as dashboards, annotations, and data sources from each other. Their purpose is to provide completely separate experiences, which look like multiple instances of Grafana, within a single instance. Multiple organizations are easier and cheaper to manage than multiple instances of Grafana.
 
 Users, configuration settings, and Grafana Enterprise licenses are shared between organizations. Other resources, like dashboards, data sources, annotations, folders, Teams, and Alerts, are isolated within each organization and cannot be easily shared with another organization.
+
+The following table summarizes the resources you can share and/or isolate using folder and team, organizations, or instances.
+
+<table>
+    <thead>
+        <tr>
+            <th>Resource</th>
+            <th>Folder and teams</th>
+            <th>Organizations</th>
+            <th>Instances</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Users</td>
+            <td>Share or isolate</td>
+            <td>Share or isolate</td>
+            <td rowspan=12>Isolate only, except when using provisioning</td>
+        </tr>
+        <tr>
+            <td>Folders</td>
+            <td>Share or isolate</td>
+            <td>Isolate only</td>
+        </tr>
+        <tr>
+            <td>Dashboards</td>
+            <td>Share or isolate</td>
+            <td>Isolate only</td>
+        </tr>
+        <tr>
+            <td>Data sources</td>
+            <td>Share or isolate</td>
+            <td>Isolate only</td>
+        </tr>
+        <tr>
+            <td>Alerts</td>
+            <td>Share or isolate</td>
+            <td>Isolate only</td>
+        </tr><tr>
+            <td>Notification channels</td>
+            <td>Share only</td>
+            <td>Isolate only</td>
+        </tr><tr>
+            <td>Annotations</td>
+            <td>Share only</td>
+            <td>Isolate only</td>
+        </tr><tr>
+            <td>Reports</td>
+            <td>Share only</td>
+            <td>Isolate only</td>
+        </tr><tr>
+            <td>API keys</td>
+            <td>Share only</td>
+            <td>Isolate only</td>
+        </tr><tr>
+            <td>Authentication providers</td>
+            <td>Share only</td>
+            <td>Share only</td>
+        </tr><tr>
+            <td>Configuration settings</td>
+            <td>Share only</td>
+            <td>Share only</td>
+        </tr><tr>
+            <td>Licenses</td>
+            <td>Share</td>
+            <td>Share</td>
+        </tr>
+    </tbody>
+</table>
 
 The member of one organization cannot view dashboards assigned to another organization. However, a user can belong to multiple organizations.
 
