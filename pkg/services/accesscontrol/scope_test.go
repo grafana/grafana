@@ -159,7 +159,7 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 	}
 }
 
-func Test_scopePrefixes(t *testing.T) {
+func Test_scopePrefix(t *testing.T) {
 	tests := []struct {
 		name  string
 		scope string
