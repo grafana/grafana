@@ -16,7 +16,7 @@ import (
 const testAlertingIntervalSeconds = 10
 
 func TestProvisioningStore(t *testing.T) {
-	store, xact := createSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
+	store, xact := createProvisioningStoreSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
 
 	t.Run("Default provenance of a known type is None", func(t *testing.T) {
 		rule := models.AlertRule{
@@ -117,6 +117,6 @@ func TestProvisioningStore(t *testing.T) {
 	})
 }
 
-func createSut(_ *ngalert.AlertNG, db *store.DBstore) (services.ProvisioningStore, services.TransactionManager) {
+func createProvisioningStoreSut(_ *ngalert.AlertNG, db *store.DBstore) (services.ProvisioningStore, services.TransactionManager) {
 	return db, db
 }

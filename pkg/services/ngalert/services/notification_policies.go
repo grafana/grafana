@@ -115,7 +115,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 }
 
 type provenanceOrgAdapter struct {
-	inner models.Provisionable
+	inner models.ProvisionableInOrg
 	orgID int64
 }
 

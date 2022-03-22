@@ -91,7 +91,7 @@ func newFakeProvisioningStore() *fakeProvisioningStore {
 	}
 }
 
-func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.ProvisionableInOrg) (models.Provenance, error) {
+func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
 	if val, ok := f.records[o.ResourceOrgID()]; ok {
 		if prov, ok := val[o.ResourceID()]; ok {
 			return prov, nil
@@ -100,7 +100,7 @@ func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.Prov
 	return models.ProvenanceNone, nil
 }
 
-func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.ProvisionableInOrg, p models.Provenance) error {
+func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
 	orgID := o.ResourceOrgID()
 	if _, ok := f.records[orgID]; !ok {
 		f.records[orgID] = map[string]models.Provenance{}

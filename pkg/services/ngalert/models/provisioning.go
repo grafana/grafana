@@ -12,10 +12,11 @@ const (
 type Provisionable interface {
 	ResourceType() string
 	ResourceID() string
+	ResourceOrgID() int64
 }
 
+// ProvisionableInOrg represents a resource that can be provisioned, given external org-related information.
 type ProvisionableInOrg interface {
 	ResourceType() string
 	ResourceID() string
-	ResourceOrgID() int64
 }
