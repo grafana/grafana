@@ -120,7 +120,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				OrgId: 1,
 			}
 
-			require.Nil(t, sqlStore.DeleteDashboard(context.Background(), deleteCmd))
+			require.Nil(t, dashboardStore.DeleteDashboard(context.Background(), deleteCmd))
 
 			data, err := dashboardStore.GetProvisionedDataByDashboardID(dash.Id)
 			require.Nil(t, err)

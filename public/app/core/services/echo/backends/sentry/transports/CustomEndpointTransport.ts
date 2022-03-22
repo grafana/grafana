@@ -18,6 +18,8 @@ export interface CustomEndpointTransportOptions {
 
 const DEFAULT_MAX_CONCURRENT_REQUESTS = 3;
 
+const DEFAULT_RATE_LIMIT_TIMEOUT_MS = 5000;
+
 /**
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
  * instead of using Sentry-specific endpoint logic.
@@ -103,7 +105,11 @@ export class CustomEndpointTransport implements BaseTransport {
                 if (response.status === 429) {
                   const now = Date.now();
                   const retryAfterHeader = response.headers.get('Retry-After');
-                  this._disabledUntil = new Date(now + parseRetryAfterHeader(now, retryAfterHeader));
+                  if (retryAfterHeader) {
+                    this._disabledUntil = new Date(now + parseRetryAfterHeader(retryAfterHeader, now));
+                  } else {
+                    this._disabledUntil = new Date(now + DEFAULT_RATE_LIMIT_TIMEOUT_MS);
+                  }
                   logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
                 }
 

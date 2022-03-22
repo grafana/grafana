@@ -184,12 +184,11 @@ func TestFolderService(t *testing.T) {
 				f.Id = rand.Int63()
 				f.Uid = util.GenerateShortUID()
 				store.On("GetFolderByUID", mock.Anything, orgID, f.Uid).Return(f, nil)
+
 				var actualCmd *models.DeleteDashboardCommand
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-					actualCmd = cmd
-					return nil
-				})
-				defer bus.ClearBusHandlers()
+				store.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
 				_, err := service.DeleteFolder(context.Background(), user, orgID, f.Uid, expectedForceDeleteRules)
