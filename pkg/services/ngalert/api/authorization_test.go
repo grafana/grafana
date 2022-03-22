@@ -228,37 +228,58 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 	}
 }
 
-func TestGetEvaluatorForAlertRule(t *testing.T) {
-	t.Run("should not consider expressions", func(t *testing.T) {
-		rule := models.AlertRuleGen()()
+func TestCheckDatasourcePermissionsForRule(t *testing.T) {
+	rule := models.AlertRuleGen()()
 
-		expressionByType := models.GenerateAlertQuery()
-		expressionByType.QueryType = expr.DatasourceType
-		expressionByUID := models.GenerateAlertQuery()
-		expressionByUID.DatasourceUID = expr.OldDatasourceUID
+	expressionByType := models.GenerateAlertQuery()
+	expressionByType.QueryType = expr.DatasourceType
+	expressionByUID := models.GenerateAlertQuery()
+	expressionByUID.DatasourceUID = expr.OldDatasourceUID
 
-		var data []models.AlertQuery
-		var scopes []string
-		for i := 0; i < rand.Intn(3)+2; i++ {
-			q := models.GenerateAlertQuery()
-			scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.DatasourceUID))
-			data = append(data, q)
+	var data []models.AlertQuery
+	var scopes []string
+	expectedExecutions := rand.Intn(3) + 2
+	for i := 0; i < expectedExecutions; i++ {
+		q := models.GenerateAlertQuery()
+		scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.DatasourceUID))
+		data = append(data, q)
+	}
+
+	data = append(data, expressionByType, expressionByUID)
+	rand.Shuffle(len(data), func(i, j int) {
+		data[j], data[i] = data[i], data[j]
+	})
+
+	rule.Data = data
+
+	t.Run("should check only expressions", func(t *testing.T) {
+		permissions := map[string][]string{
+			datasources.ActionQuery: scopes,
 		}
 
-		data = append(data, expressionByType, expressionByUID)
-		rand.Shuffle(len(data), func(i, j int) {
-			data[j], data[i] = data[i], data[j]
+		executed := 0
+
+		eval := checkDatasourcePermissionsForRule(rule, func(evaluator ac.Evaluator) bool {
+			response, err := evaluator.Evaluate(permissions)
+			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
+			require.NoError(t, err)
+			executed++
+			return true
 		})
 
-		rule.Data = data
+		require.True(t, eval)
+		require.Equal(t, expectedExecutions, executed)
+	})
 
-		eval := getEvaluatorForAlertRule(rule)
+	t.Run("should return on first negative evaluation", func(t *testing.T) {
+		executed := 0
 
-		allowed, err := eval.Evaluate(map[string][]string{
-			datasources.ActionQuery: scopes,
+		eval := checkDatasourcePermissionsForRule(rule, func(evaluator ac.Evaluator) bool {
+			executed++
+			return false
 		})
 
-		require.NoError(t, err)
-		require.True(t, allowed)
+		require.False(t, eval)
+		require.Equal(t, 1, executed)
 	})
 }
