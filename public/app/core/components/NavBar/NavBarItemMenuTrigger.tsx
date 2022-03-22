@@ -47,7 +47,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       if (isHovering) {
         state.open();
       } else {
-        state.close();
+        // state.close();
       }
     },
   });
@@ -58,7 +58,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         state.open();
       }
       if (!isFocused) {
-        state.close();
+        // state.close();
         setMenuHasFocus(false);
       }
     },
