@@ -496,13 +496,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
 	}
 
-	features := featuresEnabledDuringTests
-	for _, opt := range opts {
-		if len(opt.FeatureFlags) > 0 {
-			features = append(features, opt.FeatureFlags...)
-		}
-	}
-
 	if testSQLStore == nil {
 		dbType := migrator.SQLite
 
@@ -513,6 +506,14 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = func(key string) bool {
+			for _, enabledFeature := range featuresEnabledDuringTests {
+				if enabledFeature == key {
+					return true
+				}
+			}
+			return false
+		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
@@ -520,16 +521,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
 		}
-
-		cfg.IsFeatureToggleEnabled = func(key string) bool {
-			for _, enabledFeature := range features {
-				if enabledFeature == key {
-					return true
-				}
-			}
-			return false
-		}
-
 		switch dbType {
 		case "mysql":
 			if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
@@ -594,6 +585,23 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		// temp global var until we get rid of global vars
 		dialect = testSQLStore.Dialect
 		return testSQLStore, nil
+	}
+
+	features := make([]string, len(featuresEnabledDuringTests))
+	copy(features, featuresEnabledDuringTests)
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			features = append(features, opt.FeatureFlags...)
+		}
+	}
+
+	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
+		for _, enabledFeature := range features {
+			if enabledFeature == key {
+				return true
+			}
+		}
+		return false
 	}
 
 	if err := dialect.TruncateDBTables(); err != nil {
