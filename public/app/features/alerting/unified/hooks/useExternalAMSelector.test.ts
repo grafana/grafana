@@ -126,4 +126,26 @@ describe('useExternalAmSelector', () => {
       },
     ]);
   });
+
+  it('should match urls by host and path and ignore other parts', () => {
+    useSelectorMock.mockImplementation((callback) => {
+      return callback(
+          createMockStoreState(
+              [{ url: 'http://localhost:9000/some/url/to/am/api/v2/alerts' }],
+              [],
+              ['http://user:password@localhost:9000/some/url/to/am']
+          )
+      );
+    });
+
+    const alertmanagers = useExternalAmSelector();
+
+    expect(alertmanagers).toEqual([
+      {
+        url: 'http://localhost:9000/some/url/to/am',
+        actualUrl: 'http://user:password@localhost:9000/some/url/to/am',
+        status: 'active',
+      }
+    ]);
+  })
 });

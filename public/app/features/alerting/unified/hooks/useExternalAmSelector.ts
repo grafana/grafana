@@ -24,6 +24,7 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
   }));
 
   for (const url of alertmanagerConfig) {
+    let cfgUrl = new URL(url);
     if (discoveredAlertmanagers.activeAlertManagers.length === 0) {
       enabledAlertmanagers.push({
         url: url,
@@ -33,7 +34,8 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
     } else {
       let found = false;
       for (const activeAM of discoveredAlertmanagers.activeAlertManagers) {
-        if (activeAM.url === `${url}/api/v2/alerts`) {
+        let activeUrl = new URL(activeAM.url)
+        if (activeUrl.hostname === cfgUrl.hostname && activeUrl.pathname.startsWith(cfgUrl.pathname) && activeUrl.protocol === cfgUrl.protocol) {
           found = true;
           enabledAlertmanagers.push({
             url: activeAM.url.replace(SUFFIX_REGEX, ''),
