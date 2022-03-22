@@ -148,7 +148,6 @@ func (s *ScopeResolver) GetResolveAttributeScopeMutator(orgID int64) ScopeMutato
 			// Cache result
 			s.cache.Set(getCacheKey(orgID, scope), resolvedScope, ttl)
 			s.log.Debug("resolved '%v' to '%v'", scope, resolvedScope)
-			return resolvedScope, nil
 		}
 		return resolvedScope, nil
 	}
