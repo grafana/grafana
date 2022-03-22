@@ -118,11 +118,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             // Wrap linked query into a data request based on original request
             const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
             // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
-            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
-            const traceLinkMatcher: string[] =
-              settings.jsonData.derivedFields
-                ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
-                .map((field) => field.matcherRegex) || [];
+            const settings: DataSourceInstanceSettings<LokiOptions | any> = (linkedDatasource as any).instanceSettings;
+            const traceLinkMatcher: string[] = settings.jsonData.derivedFields
+              ? settings.jsonData.derivedFields
+                  ?.filter((field: any) => field.datasourceUid === this.uid && field.matcherRegex)
+                  .map((field: any) => field.matcherRegex) || []
+              : (settings.uid === this.uid && settings.jsonData?.internalFieldPattern) || [];
+
             if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
               return throwError(
                 () =>

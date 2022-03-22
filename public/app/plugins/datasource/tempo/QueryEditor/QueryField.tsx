@@ -89,7 +89,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
         queryTypeOptions.unshift({ value: 'search', label: 'Search' });
       } else {
         // Place at end as Loki Search if native search is enabled
-        queryTypeOptions.push({ value: 'search', label: 'Log Search' });
+        queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
       }
     }
 
@@ -201,7 +201,6 @@ function SearchSection({ logsDatasourceUid, onChange, onRunQuery, query }: Searc
     return (
       <>
         <InlineLabel>Tempo uses {ds.name} to find traces.</InlineLabel>
-
         <LokiQueryField
           datasource={ds}
           onChange={onChange}
@@ -210,26 +209,6 @@ function SearchSection({ logsDatasourceUid, onChange, onRunQuery, query }: Searc
           history={[]}
         />
       </>
-    );
-  } else if (dsState) {
-    // return <h1>Fine</h1>;
-    return (
-      <QueryField
-        query={query.query}
-        onChange={(val) => {
-          onChange({
-            ...query,
-            query: val,
-            queryType: '',
-            linkedQuery: undefined,
-          });
-        }}
-        // onBlur={this.props.onBlur}
-        // onRunQuery={this.props.onRunQuery}
-        placeholder={'Enter Splunk search'}
-        portalOrigin="splunk"
-        // additionalPlugins={this.plugins}
-      />
     );
   }
 

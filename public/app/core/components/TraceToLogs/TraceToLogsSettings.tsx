@@ -58,31 +58,11 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
             name="tracesToLogs"
-            // pluginId={['loki', 'splunk']}
             logs
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}
             onChange={(ds: DataSourceInstanceSettings) => handleChange(ds, 'tracesToLogs')}
-          />
-        </InlineField>
-      </InlineFieldRow>
-
-      <InlineFieldRow>
-        <InlineField
-          tooltip="The data source the trace is going to navigate to"
-          label="Loki Search data source"
-          labelWidth={26}
-        >
-          <DataSourcePicker
-            inputId="loki-search-data-source-picker"
-            name="lokiSearch"
-            pluginId="loki"
-            logs
-            current={options.jsonData.lokiSearch?.datasourceUid}
-            autoFocus
-            width={40}
-            onChange={(ds: DataSourceInstanceSettings) => handleChange(ds, 'lokiSearch')}
           />
         </InlineField>
       </InlineFieldRow>
