@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -21,7 +20,7 @@ func TestCalculateChanges(t *testing.T) {
 	t.Run("detects alerts that need to be added", func(t *testing.T) {
 		fakeStore := store.NewFakeRuleStore(t)
 
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		submitted := models.GenerateAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID))
 
@@ -44,7 +43,7 @@ func TestCalculateChanges(t *testing.T) {
 	})
 
 	t.Run("detects alerts that need to be deleted", func(t *testing.T) {
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace)))
 
@@ -65,7 +64,7 @@ func TestCalculateChanges(t *testing.T) {
 	})
 
 	t.Run("should detect alerts that needs to be updated", func(t *testing.T) {
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace)))
 		submittedMap, submitted := models.GenerateUniqueAlertRules(len(inDatabase), models.AlertRuleGen(simulateSubmitted, withOrgID(orgId), withGroup(groupName), withNamespace(namespace), withUIDs(inDatabaseMap)))
@@ -89,7 +88,7 @@ func TestCalculateChanges(t *testing.T) {
 	})
 
 	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		_, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace)))
 
@@ -159,7 +158,7 @@ func TestCalculateChanges(t *testing.T) {
 		fakeStore := store.NewFakeRuleStore(t)
 		fakeStore.PutRule(context.Background(), dbRule)
 
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 
 		for _, testCase := range testCases {
@@ -185,7 +184,7 @@ func TestCalculateChanges(t *testing.T) {
 		fakeStore := store.NewFakeRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		submittedMap, submitted := models.GenerateUniqueAlertRules(rand.Intn(len(inDatabase)-5)+5, models.AlertRuleGen(simulateSubmitted, withOrgID(orgId), withGroup(groupName), withNamespace(namespace), withUIDs(inDatabaseMap)))
 
@@ -207,7 +206,7 @@ func TestCalculateChanges(t *testing.T) {
 	t.Run("should fail when submitted rule has UID that does not exist in db", func(t *testing.T) {
 		fakeStore := store.NewFakeRuleStore(t)
 
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 		require.NotEqual(t, "", submitted.UID)
@@ -227,7 +226,7 @@ func TestCalculateChanges(t *testing.T) {
 			return nil
 		}
 
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID)()
 
@@ -246,7 +245,7 @@ func TestCalculateChanges(t *testing.T) {
 			return nil
 		}
 
-		namespace := randFolder()
+		namespace := randNamespace()
 		groupName := util.GenerateShortUID()
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 
@@ -267,9 +266,9 @@ func withGroup(groupName string) func(rule *models.AlertRule) {
 	}
 }
 
-func withNamespace(namespace *models2.Folder) func(rule *models.AlertRule) {
+func withNamespace(namespace string) func(rule *models.AlertRule) {
 	return func(rule *models.AlertRule) {
-		rule.NamespaceUID = namespace.Uid
+		rule.NamespaceUID = namespace
 	}
 }
 

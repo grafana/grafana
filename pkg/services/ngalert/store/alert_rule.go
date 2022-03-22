@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,7 +46,7 @@ type RuleStore interface {
 	GetNamespaceAlertRules(ctx context.Context, query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(ctx context.Context, query *ngmodels.ListRuleGroupAlertRulesQuery) error
 	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
-	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
+	GetFolderByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
 }
@@ -363,9 +364,9 @@ func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.S
 	return namespaceMap, nil
 }
 
-// GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
-	folder, err := st.FolderService.GetFolderByTitle(ctx, user, orgID, namespace)
+// GetGroupNameByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
+func (st DBstore) GetFolderByTitle(ctx context.Context, title string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
+	folder, err := st.FolderService.GetFolderByTitle(ctx, user, orgID, title)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +375,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
-				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", strconv.FormatInt(orgID, 10), "orgId", orgID, "error", err)
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}

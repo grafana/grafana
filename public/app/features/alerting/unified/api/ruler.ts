@@ -140,7 +140,9 @@ function isRulerNotSupported(error: FetchResponse<ErrorResponseMessage>) {
 function isCortexErrorResponse(error: FetchResponse<ErrorResponseMessage>) {
   return (
     error.status === 404 &&
-    (error.data.message?.includes('group does not exist') || error.data.message?.includes('no rule groups found'))
+    (error.data.message?.includes('group does not exist') ||
+      error.data.message?.includes('no rule groups found') ||
+      error.data.message?.includes('folder not found'))
   );
 }
 

@@ -21,6 +21,7 @@ import {
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import {
+  PostableRuleDTO,
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
@@ -49,7 +50,6 @@ import {
   deleteRulerRulesGroup,
   fetchRulerRules,
   fetchRulerRulesGroup,
-  fetchRulerRulesNamespace,
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
@@ -76,6 +76,7 @@ import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
@@ -376,6 +377,13 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
     throw new Error('Folder must be specified');
   }
 
+  const groupName = folder.title;
+  const namespace = contextSrv.user.orgId.toString();
+
+  // fetch existing group details and rules
+  const existingGroup = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, groupName);
+  const existingRulesForGroup: PostableRuleDTO[] = existingGroup ? existingGroup.rules : [];
+
   // updating an existing rule...
   if (existing) {
     // refetch it to be sure we have the latest
@@ -391,25 +399,18 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
       await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, freshExisting.namespace, {
         name: freshExisting.group.name,
         interval: evaluateEvery,
-        rules: [formRule],
+        rules: [...existingRulesForGroup, formRule],
       });
       return { uid };
     }
   }
 
-  // if creating new rule or folder was changed, create rule in a new group
-  const targetFolderGroups = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
-
-  // set group name to rule name, but be super paranoid and check that this group does not already exist
-  const groupName = getUniqueGroupName(values.name, targetFolderGroups);
-  formRule.grafana_alert.title = groupName;
-
   const payload: PostableRulerRuleGroupDTO = {
     name: groupName,
     interval: evaluateEvery,
-    rules: [formRule],
+    rules: [...existingRulesForGroup, formRule],
   };
-  await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, payload);
+  await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, namespace, payload);
 
   // now refetch this group to get the uid, hah
   const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, groupName);

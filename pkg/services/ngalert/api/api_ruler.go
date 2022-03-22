@@ -44,12 +44,12 @@ var (
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	groupName, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		return toNamespaceErrorResponse(err)
+		return toGroupNameErrorResponse(err)
 	}
 
-	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid)
+	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, groupName.Uid)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
 	}
@@ -66,12 +66,12 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 
 func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	groupName, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		return toNamespaceErrorResponse(err)
+		return toGroupNameErrorResponse(err)
 	}
 	ruleGroup := web.Params(c.Req)[":Groupname"]
-	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
+	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, groupName.Uid, ruleGroup)
 
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
@@ -92,9 +92,9 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
+	namespace, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
-		return toNamespaceErrorResponse(err)
+		return toGroupNameErrorResponse(err)
 	}
 
 	q := ngmodels.ListNamespaceAlertRulesQuery{
@@ -133,9 +133,9 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 
 func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
+	namespace, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
-		return toNamespaceErrorResponse(err)
+		return toGroupNameErrorResponse(err)
 	}
 
 	ruleGroup := web.Params(c.Req)[":Groupname"]
@@ -248,27 +248,30 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespace := web.Params(c.Req)[":Namespace"]
+	groupName := ruleGroupConfig.Name
+
+	// TODO make sure we check if the namespace (which is a Grafana org) exists
+	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), groupName, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		return toNamespaceErrorResponse(err)
+		return toGroupNameErrorResponse(err)
 	}
 
-	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgId, namespace, conditionValidator(c, srv.DatasourceCache), srv.cfg)
+	rules, err := validateRuleGroup(&ruleGroupConfig, folder, conditionValidator(c, srv.DatasourceCache), srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	return srv.updateAlertRulesInGroup(c, namespace, ruleGroupConfig.Name, rules)
+	return srv.updateAlertRulesInGroup(c, namespace, folder, rules)
 }
 
-func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
+func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace string, groupName *models.Folder, rules []*ngmodels.AlertRule) response.Response {
 	var groupChanges *changes = nil
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		var err error
-		groupChanges, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
+		groupChanges, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName.Uid, rules)
 		if err != nil {
 			return err
 		}
@@ -278,14 +281,14 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return nil
 		}
 
-		err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+		err = authorizeRuleChanges(groupName, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 			return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 		})
 		if err != nil {
 			return err
 		}
 
-		srv.log.Debug("updating database with the changes", "group", groupName, "namespace", namespace.Uid, "add", len(groupChanges.New), "update", len(groupChanges.New), "delete", len(groupChanges.Delete))
+		srv.log.Debug("updating database with the changes", "group", groupName, "namespace", namespace, "add", len(groupChanges.New), "update", len(groupChanges.New), "delete", len(groupChanges.Delete))
 
 		if len(groupChanges.Update) > 0 || len(groupChanges.New) > 0 {
 			upsert := make([]store.UpsertRule, 0, len(groupChanges.Update)+len(groupChanges.New))
@@ -390,7 +393,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 	return gettableExtendedRuleNode
 }
 
-func toNamespaceErrorResponse(err error) response.Response {
+func toGroupNameErrorResponse(err error) response.Response {
 	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
 		return ErrResp(http.StatusForbidden, err, err.Error())
 	}
@@ -418,10 +421,10 @@ func (c *changes) isEmpty() bool {
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
-func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*changes, error) {
+func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace string, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*changes, error) {
 	q := &ngmodels.ListRuleGroupAlertRulesQuery{
 		OrgID:        orgId,
-		NamespaceUID: namespace.Uid,
+		NamespaceUID: namespace,
 		RuleGroup:    ruleGroupName,
 	}
 	if err := ruleStore.GetRuleGroupAlertRules(ctx, q); err != nil {
