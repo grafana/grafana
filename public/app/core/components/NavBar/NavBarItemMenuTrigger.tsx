@@ -175,7 +175,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
             }}
           >
             <FocusScope restoreFocus>
-              <div {...overlayPositionProps} {...dialogProps} ref={overlayRef}>
+              <div {...overlayProps} {...overlayPositionProps} {...dialogProps} ref={overlayRef}>
                 <DismissButton onDismiss={() => state.close()} />
                 {menu}
                 <DismissButton onDismiss={() => state.close()} />
