@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestTeamCommandsAndQueries(t *testing.T) {
@@ -395,7 +396,7 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t, InitTestDBOpt{AccessControlEnabled: true})
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
@@ -454,7 +455,7 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 	}
 
-	store := InitTestDB(t, InitTestDBOpt{AccessControlEnabled: true})
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	setup(store)
 
 	type getTeamMembersTestCase struct {

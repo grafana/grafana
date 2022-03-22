@@ -460,21 +460,12 @@ var testSQLStoreMutex sync.Mutex
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
-	AccessControlEnabled    bool
+	FeatureFlags            []string
 }
 
 var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
-}
-
-func isFeatureToggleEnabledForTest(requestedFeature string) bool {
-	for _, enabledFeature := range featuresEnabledDuringTests {
-		if enabledFeature == requestedFeature {
-			return true
-		}
-	}
-	return false
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -502,7 +493,14 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 	defer testSQLStoreMutex.Unlock()
 
 	if len(opts) == 0 {
-		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, AccessControlEnabled: false}}
+		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
+	}
+
+	features := featuresEnabledDuringTests
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			features = append(features, opt.FeatureFlags...)
+		}
 	}
 
 	if testSQLStore == nil {
@@ -515,13 +513,21 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = isFeatureToggleEnabledForTest
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
 		}
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
+		}
+
+		cfg.IsFeatureToggleEnabled = func(key string) bool {
+			for _, enabledFeature := range features {
+				if enabledFeature == key {
+					return true
+				}
+			}
+			return false
 		}
 
 		switch dbType {
@@ -588,19 +594,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		// temp global var until we get rid of global vars
 		dialect = testSQLStore.Dialect
 		return testSQLStore, nil
-	}
-
-	for _, opt := range opts {
-		if opt.AccessControlEnabled {
-			testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
-				if key == featuremgmt.FlagAccesscontrol {
-					return true
-				}
-				return isFeatureToggleEnabledForTest(key)
-			}
-		} else {
-			testSQLStore.Cfg.IsFeatureToggleEnabled = isFeatureToggleEnabledForTest
-		}
 	}
 
 	if err := dialect.TruncateDBTables(); err != nil {
