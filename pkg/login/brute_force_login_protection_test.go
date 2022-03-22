@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,11 +60,12 @@ func TestValidateLoginAttempts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			store := mockstore.NewSQLStoreMock()
 			withLoginAttempts(t, tc.loginAttempts)
 
 			query := &models.LoginUserQuery{Username: "user", Cfg: tc.cfg}
 
-			err := validateLoginAttempts(context.Background(), query)
+			err := validateLoginAttempts(context.Background(), query, store)
 			require.Equal(t, tc.expected, err)
 		})
 	}

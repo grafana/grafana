@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var (
@@ -32,8 +33,8 @@ func Init() {
 }
 
 // AuthenticateUser authenticates the user via username & password
-func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(ctx, query); err != nil {
+func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) error {
+	if err := validateLoginAttempts(ctx, query, store); err != nil {
 		return err
 	}
 

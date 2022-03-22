@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var (
@@ -13,7 +14,7 @@ var (
 	loginAttemptsWindow           = time.Minute * 5
 )
 
-var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQuery) error {
+var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) error {
 	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
