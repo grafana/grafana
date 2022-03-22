@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
-import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, DataFrameType, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
@@ -19,7 +19,9 @@ type TableColumn = Column & {
 
 const generateColumns = (data: DataFrame, availableWidth: number): TableColumn[] => {
   const columns: TableColumn[] = [];
+  const isDashboardList = data.meta?.type === DataFrameType.TimeSeriesLong;
 
+  let width = Math.max(availableWidth * 0.2, 200);
   const access = getFieldAccess(data);
   columns.push({
     Cell: DefaultCell,
@@ -27,54 +29,96 @@ const generateColumns = (data: DataFrame, availableWidth: number): TableColumn[]
     field: access.name!,
     Header: 'Name',
     accessor: (row: any, i: number) => {
-      return access.name!.values.get(i);
-    },
-    width: undefined,
-  });
-
-  // The type column
-  columns.push({
-    Cell: DefaultCell,
-    id: `column-type`,
-    field: access.kind ?? access.url!,
-    Header: 'Type',
-    accessor: (row: any, i: number) => {
-      let icon = 'question';
-      let txt = access.kind?.values.get(i);
-      switch (txt) {
-        case 'dashboard':
-          icon = 'apps';
-          break;
-        case 'folder':
-          icon = 'folder';
-          break;
-        case 'panel':
-          icon = 'graph-bar';
-          txt = access.type?.values.get(i) ?? txt;
-      }
-      return (
-        <div>
-          <Icon name={icon as any} />
-          &nbsp;
-          {txt}
-        </div>
-      );
-    },
-    width: undefined,
-  });
-
-  columns.push({
-    Cell: DefaultCell,
-    id: `column-url`,
-    field: access.url!,
-    Header: 'URL',
-    accessor: (row: any, i: number) => {
       const url = access.url!.values.get(i);
-      return <a href={url}>{url}</a>;
+      const name = access.name!.values.get(i);
+      return <a href={url}>{name}</a>;
     },
-    width: undefined,
+    width,
   });
+  availableWidth -= width;
 
+  if (isDashboardList) {
+    // The type column
+    width = 150;
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-type`,
+      field: access.name!,
+      Header: 'Type',
+      accessor: (row: any, i: number) => {
+        return (
+          <div>
+            <Icon name={'apps'} />
+            &nbsp; dashboard
+          </div>
+        );
+      },
+      width,
+    });
+    availableWidth -= width;
+
+    // tags...
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-tags`,
+      field: access.name!,
+      Header: 'Tags',
+      accessor: (row: any, i: number) => {
+        return <div>[TAGS]</div>;
+      },
+      width,
+    });
+  } else {
+    // The type column
+    width = 150;
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-type`,
+      field: access.kind ?? access.url!,
+      Header: 'Type',
+      accessor: (row: any, i: number) => {
+        let icon = 'apps';
+        let txt = 'dashboard';
+        if (access.kind) {
+          txt = access.kind.values.get(i);
+          switch (txt) {
+            case 'dashboard':
+              icon = 'apps';
+              break;
+            case 'folder':
+              icon = 'folder';
+              break;
+            case 'panel':
+              icon = 'graph-bar';
+              txt = access.type?.values.get(i) ?? txt;
+          }
+        }
+        return (
+          <div>
+            <Icon name={icon as any} />
+            &nbsp;
+            {txt}
+          </div>
+        );
+      },
+      width,
+    });
+    availableWidth -= width;
+
+    if (availableWidth > 0) {
+      columns.push({
+        Cell: DefaultCell,
+        id: `column-url`,
+        field: access.url!,
+        Header: 'URL',
+        accessor: (row: any, i: number) => {
+          const url = access.url!.values.get(i);
+          return <a href={url}>{url}</a>;
+        },
+        width: availableWidth,
+      });
+    }
+  }
   return columns;
 };
 
