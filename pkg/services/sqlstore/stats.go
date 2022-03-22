@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
@@ -48,11 +49,16 @@ func (ss *SQLStore) GetDataSourceAccessStats(ctx context.Context, query *models.
 	})
 }
 
+func notServiceAccount(dialect migrator.Dialect) string {
+	return `is_service_account = ` +
+		dialect.BooleanStr(false)
+}
+
 func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		sb := &SQLBuilder{}
 		sb.Write("SELECT ")
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
@@ -61,13 +67,16 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 
 		now := time.Now()
 		activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
-		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
+		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+			notServiceAccount(dialect)+` AND last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
 
 		dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
-		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
+		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+			notServiceAccount(dialect)+` AND last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
 
 		monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
+		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
 
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
@@ -100,7 +109,7 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `) AS api_keys,`)
+		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
 
@@ -191,19 +200,19 @@ func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminSta
 		) AS alerts,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + `
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `
 		) AS users,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + ` AND last_seen_at > ?
 		) AS active_users,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + ` AND last_seen_at > ?
 		) AS daily_active_users,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + ` AND last_seen_at > ?
 		) AS monthly_active_users,
 		` + ss.roleCounterSQL(ctx) + `,
 		(

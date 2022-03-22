@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icon, getSvgSize } from '../Icon/Icon';
+import { Icon } from '../Icon/Icon';
+import { getSvgSize } from '../Icon/utils';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';

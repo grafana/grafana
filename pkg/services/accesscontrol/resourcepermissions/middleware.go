@@ -1,7 +1,6 @@
 package resourcepermissions
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -10,9 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type uidSolver func(ctx context.Context, orgID int64, uid string) (int64, error)
-
-func solveUID(solve uidSolver) web.Handler {
+func solveUID(solve UidSolver) web.Handler {
 	return func(c *models.ReqContext) {
 		if solve != nil && util.IsValidShortUID(web.Params(c.Req)[":resourceID"]) {
 			params := web.Params(c.Req)
