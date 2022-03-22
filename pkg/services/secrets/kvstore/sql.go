@@ -3,6 +3,7 @@ package kvstore
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,9 +13,20 @@ import (
 
 // secretsKVStoreSQL provides a key/value store backed by the Grafana database
 type secretsKVStoreSQL struct {
-	log            log.Logger
-	sqlStore       sqlstore.Store
-	secretsService secrets.Service
+	log             log.Logger
+	sqlStore        sqlstore.Store
+	secretsService  secrets.Service
+	decryptionCache decryptionCache
+}
+
+type decryptionCache struct {
+	cache map[int64]cachedDecrypted
+	sync.Mutex
+}
+
+type cachedDecrypted struct {
+	updated time.Time
+	value   string
 }
 
 // Get an item from the store
@@ -43,7 +55,18 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 	})
 
 	if err == nil && itemFound {
+		kv.decryptionCache.Lock()
+		defer kv.decryptionCache.Unlock()
+
+		if cache, present := kv.decryptionCache.cache[item.Id]; present && item.Updated.Equal(cache.updated) {
+			return cache.value, itemFound, err
+		}
+
 		decryptedValue, err = kv.secretsService.Decrypt(ctx, []byte(item.Value))
+		kv.decryptionCache.cache[item.Id] = cachedDecrypted{
+			updated: item.Updated,
+			value:   string(decryptedValue),
+		}
 	}
 
 	return string(decryptedValue), itemFound, err

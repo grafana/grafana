@@ -18,6 +18,9 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service) Sec
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		log:            log.New("secrets.kvstore"),
+		decryptionCache: decryptionCache{
+			cache: make(map[int64]cachedDecrypted),
+		},
 	}
 }
 
