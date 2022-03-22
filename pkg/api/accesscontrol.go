@@ -282,7 +282,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Annotations",
 			Version:     2,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeDashboard},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
 			},
@@ -298,7 +298,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Annotations",
 			Version:     1,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
 			},
