@@ -21,7 +21,7 @@ const (
 )
 
 func TestPluginManager_Init(t *testing.T) {
-	t.Run("Core plugins are prioritized first", func(t *testing.T) {
+	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
 		pm := New(&plugins.Cfg{}, []PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
