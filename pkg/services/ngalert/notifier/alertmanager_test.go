@@ -3,8 +3,6 @@ package notifier
 import (
 	"context"
 	"errors"
-	"io/ioutil"
-	"os"
 	"sort"
 	"testing"
 	"time"
@@ -29,11 +27,7 @@ import (
 )
 
 func setupAMTest(t *testing.T) *Alertmanager {
-	dir, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll(dir))
-	})
+	dir := t.TempDir()
 	cfg := &setting.Cfg{
 		DataPath: dir,
 	}
