@@ -31,8 +31,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 		err := pm.Init()
 		require.NoError(t, err)
-
-		require.Equal(t, loader.loadedPaths, []string{"path1", "path2", "path3"})
+		require.Equal(t, []string{"path1", "path2", "path3"}, loader.loadedPaths)
 	})
 }
 
