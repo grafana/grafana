@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 func TestLoginUsingGrafanaDB(t *testing.T) {
 	grafanaLoginScenario(t, "When login with non-existing user", func(sc *grafanaLoginScenarioContext) {
 		sc.withNonExistingUser()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
 		require.EqualError(t, err, models.ErrUserNotFound.Error())
 
 		assert.False(t, sc.validatePasswordCalled)
@@ -22,7 +22,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with invalid credentials", func(sc *grafanaLoginScenarioContext) {
 		sc.withInvalidPassword()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
 
 		require.EqualError(t, err, ErrInvalidCredentials.Error())
 
@@ -32,7 +32,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with valid credentials", func(sc *grafanaLoginScenarioContext) {
 		sc.withValidCredentials()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
 		require.NoError(t, err)
 
 		assert.True(t, sc.validatePasswordCalled)
@@ -44,7 +44,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with disabled user", func(sc *grafanaLoginScenarioContext) {
 		sc.withDisabledUser()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
 		require.EqualError(t, err, ErrUserDisabled.Error())
 
 		assert.False(t, sc.validatePasswordCalled)
@@ -55,6 +55,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 type grafanaLoginScenarioContext struct {
 	loginUserQuery         *models.LoginUserQuery
 	validatePasswordCalled bool
+	store                  *mockstore.SQLStoreMock
 }
 
 type grafanaLoginScenarioFunc func(c *grafanaLoginScenarioContext)
@@ -72,6 +73,7 @@ func grafanaLoginScenario(t *testing.T, desc string, fn grafanaLoginScenarioFunc
 				IpAddress: "192.168.1.1:56433",
 			},
 			validatePasswordCalled: false,
+			store:                  mockstore.NewSQLStoreMock(),
 		}
 
 		t.Cleanup(func() {
@@ -94,41 +96,30 @@ func mockPasswordValidation(valid bool, sc *grafanaLoginScenarioContext) {
 	}
 }
 
-func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(user *models.User) {
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
-		if user == nil {
-			return models.ErrUserNotFound
-		}
-
-		query.Result = user
-		return nil
-	})
-}
-
 func (sc *grafanaLoginScenarioContext) withValidCredentials() {
-	sc.getUserByLoginQueryReturns(&models.User{
+	sc.store.ExpectedUser = &models.User{
 		Id:       1,
 		Login:    sc.loginUserQuery.Username,
 		Password: sc.loginUserQuery.Password,
 		Salt:     "salt",
-	})
+	}
 	mockPasswordValidation(true, sc)
 }
 
 func (sc *grafanaLoginScenarioContext) withNonExistingUser() {
-	sc.getUserByLoginQueryReturns(nil)
+	sc.store.ExpectedError = models.ErrUserNotFound
 }
 
 func (sc *grafanaLoginScenarioContext) withInvalidPassword() {
-	sc.getUserByLoginQueryReturns(&models.User{
+	sc.store.ExpectedUser = &models.User{
 		Password: sc.loginUserQuery.Password,
 		Salt:     "salt",
-	})
+	}
 	mockPasswordValidation(false, sc)
 }
 
 func (sc *grafanaLoginScenarioContext) withDisabledUser() {
-	sc.getUserByLoginQueryReturns(&models.User{
+	sc.store.ExpectedUser = &models.User{
 		IsDisabled: true,
-	})
+	}
 }
