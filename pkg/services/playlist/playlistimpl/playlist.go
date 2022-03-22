@@ -22,7 +22,7 @@ func (s *serviceImpl) SearchPlaylists(ctx context.Context, query *playlist.GetPl
 
 func (s *serviceImpl) GetPlaylist(ctx context.Context, query *playlist.GetPlaylistByIdQuery) (playlist.GetPlaylistResult, error) {
 	if err := query.Validate(); err != nil {
-		return playlist.GetPlaylistResult{}, err
+		return &playlist.Playlist{}, err
 	}
 	return s.playlistStore.getById(ctx, query)
 }

@@ -108,7 +108,7 @@ func (q *GetPlaylistByIdQuery) Validate() error {
 	return nil
 }
 
-type GetPlaylistResult Playlist
+type GetPlaylistResult *Playlist
 
 type GetPlaylistItemsByIdQuery struct {
 	PlaylistId int64
