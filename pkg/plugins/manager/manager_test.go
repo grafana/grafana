@@ -20,6 +20,22 @@ const (
 	testPluginID = "test-plugin"
 )
 
+func TestPluginManager_Init(t *testing.T) {
+	t.Run("Core plugins are prioritized first", func(t *testing.T) {
+		loader := &fakeLoader{}
+		pm := New(&plugins.Cfg{}, []PluginSource{
+			{Class: plugins.Bundled, Paths: []string{"path1"}},
+			{Class: plugins.Core, Paths: []string{"path2"}},
+			{Class: plugins.External, Paths: []string{"path3"}},
+		}, loader)
+
+		err := pm.Init()
+		require.NoError(t, err)
+
+		require.Equal(t, loader.loadedPaths, []string{"path1", "path2", "path3"})
+	})
+}
+
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
 		p, pc := createPlugin(testPluginID, "", plugins.External, true, true)
