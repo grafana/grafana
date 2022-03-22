@@ -149,13 +149,13 @@ type ItemDTO struct {
 type annotationType int
 
 const (
-	Global annotationType = iota
-	Local
+	Organization annotationType = iota
+	Dashboard
 )
 
 func (annotation *ItemDTO) GetType() annotationType {
 	if annotation.DashboardId != 0 {
-		return Local
+		return Dashboard
 	}
-	return Global
+	return Organization
 }
