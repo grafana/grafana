@@ -31,12 +31,19 @@ type StorageService interface {
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
 
-	Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*filestorage.UpsertFileCommand, error)
+	Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*Response, error)
 }
 
 type standardStorageService struct {
 	sql  *sqlstore.SQLStore
 	tree *nestedTree
+}
+
+type Response struct {
+	path       string
+	statusCode int
+	message    string
+	fileName   string
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
@@ -97,20 +104,19 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 	return s.tree.GetFile(ctx, path)
 }
 
-func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*filestorage.UpsertFileCommand, error) {
-	cmd := &filestorage.UpsertFileCommand{
-		Path:     "",
-		Contents: &[]byte{},
+func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*Response, error) {
+	response := Response{
+		path:       "upload",
+		statusCode: 200,
+		message:    "Uploaded successfully",
 	}
 	upload, _ := s.tree.getRoot("upload")
 	grafanaStorageLogger.Info("upload", "upload", s.tree.lookup)
 	if upload == nil {
-		return cmd, fmt.Errorf("upload feature is not enabled")
+		return &response, fmt.Errorf("upload feature is not enabled")
 	}
 
 	files := form.File["file"]
-	// c.Req.ParseMultipartForm(0)
-	// path := c.Req.FormValue("path")
 	contents := []byte{}
 	for _, fileHeader := range files {
 		// Restrict the size of each uploaded file to 1MB.
@@ -118,12 +124,12 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		// a specified value, use the http.MaxBytesReader() method
 		// before calling ParseMultipartForm()
 		if fileHeader.Size > MAX_UPLOAD_SIZE {
-			return cmd, fmt.Errorf("The uploaded image is too big: %s. Please use an image less than 1MB in size", fileHeader.Size)
+			return &response, fmt.Errorf("The uploaded image is too big: %s. Please use an image less than 1MB in size", fileHeader.Size)
 		}
 		// Open the file
 		file, err := fileHeader.Open()
 		if err != nil {
-			return cmd, err
+			return &response, err
 		}
 
 		// read file in chunks
@@ -145,9 +151,10 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 			Contents: &contents,
 		})
 		if err != nil {
-			return cmd, err
+			return &response, err
 		}
-		cmd.Path = "/" + fileHeader.Filename
+		response.fileName = fileHeader.Filename
+		response.path = "upload/" + fileHeader.Filename
 	}
-	return cmd, nil
+	return &response, nil
 }
