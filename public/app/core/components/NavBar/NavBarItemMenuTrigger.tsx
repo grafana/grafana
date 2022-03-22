@@ -8,7 +8,7 @@ import { useMenuTrigger } from '@react-aria/menu';
 import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useButton } from '@react-aria/button';
 import { useDialog } from '@react-aria/dialog';
-import { DismissButton, useOverlay, useOverlayPosition } from '@react-aria/overlays';
+import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
 import { FocusScope } from '@react-aria/focus';
 
 import { NavBarItemMenuContext } from './context';
@@ -47,7 +47,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       if (isHovering) {
         state.open();
       } else {
-        // state.close();
+        state.close();
       }
     },
   });
@@ -58,7 +58,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         state.open();
       }
       if (!isFocused) {
-        // state.close();
+        state.close();
         setMenuHasFocus(false);
       }
     },
@@ -162,7 +162,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
-        <Portal>
+        <OverlayContainer>
           <NavBarItemMenuContext.Provider
             value={{
               menuProps,
@@ -182,7 +182,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
               </div>
             </FocusScope>
           </NavBarItemMenuContext.Provider>
-        </Portal>
+        </OverlayContainer>
       )}
     </div>
   );
