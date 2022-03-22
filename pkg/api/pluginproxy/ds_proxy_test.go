@@ -999,6 +999,7 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, test *t
 	require.NoError(t, err)
 
 	var routes []*plugins.Route
+	secretsStore := kvstore.SetupTestService(t)
 	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.NoError(t, err)

@@ -105,6 +105,10 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			if err != nil {
 				kv.log.Debug("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
+				kv.decryptionCache.cache[item.Id] = cachedDecrypted{
+					updated: item.Updated,
+					value:   value,
+				}
 				kv.log.Debug("secret value updated", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
 			return err
