@@ -190,7 +190,8 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store s
 		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := am.silences.GC(); err != nil {
-				return 0, err
+				am.logger.Error("Silence Garbage Collection Failed at %v: %v", time.Now(), err)
+				// Don't return here - we need to snapshot our state first.
 			}
 
 			// Snapshot our silences to the Grafana KV store
