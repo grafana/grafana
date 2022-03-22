@@ -1,5 +1,5 @@
 import { Icon } from '@grafana/ui';
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 
 import { ResourceRow, ResourceRowType } from './types';
 
