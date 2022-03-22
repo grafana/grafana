@@ -163,42 +163,37 @@ func Test_scopePrefixes(t *testing.T) {
 	tests := []struct {
 		name  string
 		scope string
-		want  []string
+		want  string
 	}{
 		{
 			name:  "empty",
 			scope: "",
-			want:  []string{},
+			want:  "",
 		},
 		{
 			name:  "minimal",
 			scope: ":",
-			want:  []string{":"},
+			want:  ":",
 		},
 		{
 			name:  "datasources",
 			scope: "datasources:",
-			want:  []string{"datasources:"},
+			want:  "datasources:",
 		},
 		{
 			name:  "datasources name",
 			scope: "datasources:name:testds",
-			want:  []string{"datasources:name:", "datasources:"},
-		},
-		{
-			name:  "global user name",
-			scope: "global:user:name:testds",
-			want:  []string{"global:user:name:", "global:user:", "global:"},
+			want:  "datasources:name:",
 		},
 		{
 			name:  "datasources with colons in name",
 			scope: "datasources:name:test:a::ds",
-			want:  []string{"datasources:name:test:", "datasources:name:", "datasources:"},
+			want:  "datasources:name:",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prefix := scopePrefixes(tt.scope)
+			prefix := scopePrefix(tt.scope)
 
 			assert.Equal(t, tt.want, prefix)
 		})
