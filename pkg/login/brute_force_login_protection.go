@@ -24,7 +24,7 @@ var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQue
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
-	if err := bus.Dispatch(ctx, &loginAttemptCountQuery); err != nil {
+	if err := store.GetUserLoginAttemptCount(ctx, &loginAttemptCountQuery); err != nil {
 		return err
 	}
 

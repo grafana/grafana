@@ -40,7 +40,9 @@ type SQLStoreMock struct {
 	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *models.SignedInUser
 	ExpectedUserStars              map[int64]bool
-	ExpectedError                  error
+	ExpectedUserLoginAttemptCount  int64
+
+	ExpectedError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -130,6 +132,11 @@ func (m SQLStoreMock) DeleteOrphanedProvisionedDashboards(ctx context.Context, c
 }
 
 func (m *SQLStoreMock) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
+	query.Result = m.ExpectedUserLoginAttemptCount
 	return m.ExpectedError
 }
 

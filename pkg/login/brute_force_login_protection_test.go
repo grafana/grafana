@@ -61,7 +61,7 @@ func TestValidateLoginAttempts(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			store := mockstore.NewSQLStoreMock()
-			withLoginAttempts(t, tc.loginAttempts)
+			store.ExpectedUserLoginAttemptCount = tc.loginAttempts
 
 			query := &models.LoginUserQuery{Username: "user", Cfg: tc.cfg}
 
