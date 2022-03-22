@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	domain "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/services"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -25,7 +26,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Re
 }
 
 func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimodels.Route) response.Response {
-	_, err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree)
+	_, err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, domain.ProvenanceApi)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
