@@ -233,7 +233,8 @@ func (f *FolderServiceImpl) DeleteFolder(ctx context.Context, user *models.Signe
 	}
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
-	if err := bus.Dispatch(ctx, &deleteCmd); err != nil {
+
+	if err := f.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 
