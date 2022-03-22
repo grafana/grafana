@@ -14,8 +14,8 @@ var (
 
 type Repository interface {
 	Save(item *Item) error
-	Update(item *Item) error
-	Find(query *ItemQuery) ([]*ItemDTO, error)
+	Update(ctx context.Context, item *Item) error
+	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
 	Delete(params *DeleteParams) error
 	FindTags(query *TagsQuery) (FindTagsResult, error)
 }
@@ -149,13 +149,13 @@ type ItemDTO struct {
 type annotationType int
 
 const (
-	Global annotationType = iota
-	Local
+	Organization annotationType = iota
+	Dashboard
 )
 
 func (annotation *ItemDTO) GetType() annotationType {
 	if annotation.DashboardId != 0 {
-		return Local
+		return Dashboard
 	}
-	return Global
+	return Organization
 }

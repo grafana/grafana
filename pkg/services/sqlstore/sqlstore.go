@@ -109,7 +109,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	dialect = ss.Dialect
 
 	// Init repo instances
-	annotations.SetRepository(&SQLAnnotationRepo{})
+	annotations.SetRepository(&SQLAnnotationRepo{sql: ss})
 	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
