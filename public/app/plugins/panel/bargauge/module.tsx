@@ -32,7 +32,7 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
       .addNumberInput({
         path: 'minVizWidth',
         name: 'Min width',
-        description: 'minimum bar width',
+        description: 'Minimum column width',
         defaultValue: 0,
         showIf: (options: BarGaugeOptions) => options.orientation === VizOrientation.Vertical,
       })
