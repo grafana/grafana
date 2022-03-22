@@ -249,6 +249,9 @@ func (d *dashboardUidPermissionMigrator) Exec(sess *xorm.Session, migrator *migr
 }
 
 func (d *dashboardUidPermissionMigrator) migrateWildcards(sess *xorm.Session) error {
+	if _, err := sess.Exec("DELETE FROM permission WHERE action = 'dashboards:create' AND scope LIKE 'dashboards%"); err != nil {
+		return err
+	}
 	if _, err := sess.Exec("UPDATE permission SET scope = 'dashboards:uid:*' WHERE scope = 'dashboards:id:*'"); err != nil {
 		return err
 	}
