@@ -31,10 +31,7 @@ In terms of security:
 - Grafana supports signed and encrypted assertions.
 - Grafana does not support signed or encrypted requests.
 
-In terms of initiation:
-
-- Grafana supports SP-initiated requests.
-- Grafana does not support IdP-initiated request.
+In terms of initiation, Grafana supports SP-initiated requests.
 
 ## Set up SAML authentication
 
