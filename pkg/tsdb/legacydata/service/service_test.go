@@ -37,7 +37,7 @@ func TestHandleRequest(t *testing.T) {
 			return backend.NewQueryDataResponse(), nil
 		}
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 		s := ProvideService(client, nil, dsService)
 
 		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}

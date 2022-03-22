@@ -40,7 +40,7 @@ func TestProvideFolderService(t *testing.T) {
 			store, nil, features, permissionsServices, ac,
 		)
 
-		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 1)
+		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
 }
 
