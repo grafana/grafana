@@ -20,10 +20,11 @@ export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   item: NavModelItem;
   isActive?: boolean;
   label: string;
+  reverseMenuDirection?: boolean;
 }
 
 export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
-  const { item, isActive, label, children: menu, ...rest } = props;
+  const { item, isActive, label, children: menu, reverseMenuDirection, ...rest } = props;
   const [menuHasFocus, setMenuHasFocus] = useState(false);
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
@@ -145,30 +146,20 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   );
 
   const boundingClientRect = ref.current?.getBoundingClientRect();
-  console.log({ boundingClientRect });
   const x = boundingClientRect?.x || 0;
   const y = boundingClientRect?.y || 0;
   const width = boundingClientRect?.width || 0;
   const height = boundingClientRect?.height || 0;
-  console.log({ isOpen: state.isOpen });
 
   return (
-    <div
-      className={cx(styles.element, 'dropdown')}
-      {...focusWithinProps}
-      {...hoverProps}
-      onMouseEnter={() => console.log('mouseEnter!')}
-      onMouseLeave={() => console.log('mouseLeave!')}
-      onMouseOver={() => console.log('mouseOver!')}
-      onMouseOut={() => console.log('mouseOut!')}
-    >
+    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
       {element}
       {state.isOpen && (
         <Portal>
           <div
             style={{
               position: 'fixed',
-              top: y,
+              top: reverseMenuDirection ? y + height : y,
               left: x + width,
             }}
           >

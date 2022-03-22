@@ -67,7 +67,12 @@ const NavBarItem = ({
 
   return showMenu ? (
     <li className={cx(styles.container, className)}>
-      <NavBarItemMenuTrigger item={section} isActive={isActive} label={linkText}>
+      <NavBarItemMenuTrigger
+        item={section}
+        isActive={isActive}
+        label={linkText}
+        reverseMenuDirection={reverseMenuDirection}
+      >
         <NavBarItemMenu
           items={items}
           reverseMenuDirection={reverseMenuDirection}
