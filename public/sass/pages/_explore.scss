@@ -24,7 +24,6 @@
 
   > .explore-split:nth-child(1) {
     width: 30%; // Must correspond to Resizable's minWidth in Wrapper.tsx
-    border-right: 1px dotted $table-border;
   }
 }
 

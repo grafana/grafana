@@ -25,12 +25,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.secondary.main};
     transition: 0.3s background ease-in-out;
     position: relative;
-    width: 7px !important;
-    height: 20% !important;
-    top: calc(50% - 10%) !important;
-    left: -4px !important;
+    width: 2px !important;
+    height: 100% !important;
+    left: -1px !important;
     cursor: grab;
-    border-radius: 4px;
     &:hover {
       background: ${theme.colors.secondary.shade};
     }
