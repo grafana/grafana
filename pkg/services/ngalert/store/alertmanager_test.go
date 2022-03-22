@@ -23,7 +23,6 @@ func TestAlertManagerHash(t *testing.T) {
 		config, configMD5 := config, fmt.Sprintf("%x", md5.Sum([]byte(config)))
 		err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: config,
-			ConfigurationHash:         configMD5,
 			ConfigurationVersion:      "v1",
 			Default:                   false,
 			OrgID:                     1,
