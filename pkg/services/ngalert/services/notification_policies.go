@@ -12,13 +12,15 @@ import (
 type NotificationPolicyService struct {
 	amStore         AMConfigStore
 	provenanceStore ProvisioningStore
+	xact            TransactionManager
 	log             log.Logger
 }
 
-func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore, log log.Logger) *NotificationPolicyService {
+func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         am,
 		provenanceStore: prov,
+		xact:            xact,
 		log:             log,
 	}
 }
@@ -90,15 +92,21 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		Default:                   false,
 		OrgID:                     orgID,
 	}
-	err = nps.amStore.SaveAlertmanagerConfiguration(ctx, &cmd)
-	if err != nil {
-		return definitions.Route{}, err
-	}
-	adapter := provenanceOrgAdapter{
-		inner: tree,
-		orgID: orgID,
-	}
-	err = nps.provenanceStore.SetProvenance(ctx, adapter, p)
+	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err = nps.amStore.SaveAlertmanagerConfiguration(ctx, &cmd)
+		if err != nil {
+			return err
+		}
+		adapter := provenanceOrgAdapter{
+			inner: tree,
+			orgID: orgID,
+		}
+		err = nps.provenanceStore.SetProvenance(ctx, adapter, p)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return definitions.Route{}, err
 	}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -100,15 +101,6 @@ func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.Prov
 	return models.ProvenanceNone, nil
 }
 
-func (f *fakeProvisioningStore) GetProvenanceInOrg(ctx context.Context, o models.Provisionable, orgID int64) (models.Provenance, error) {
-	if val, ok := f.records[orgID]; ok {
-		if prov, ok := val[o.ResourceID()]; ok {
-			return prov, nil
-		}
-	}
-	return models.ProvenanceNone, nil
-}
-
 func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.ProvisionableInOrg, p models.Provenance) error {
 	orgID := o.ResourceOrgID()
 	if _, ok := f.records[orgID]; !ok {
@@ -116,4 +108,24 @@ func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Prov
 	}
 	f.records[orgID][o.ResourceID()] = p
 	return nil
+}
+
+type failingProvisioningStore struct{}
+
+func (f *failingProvisioningStore) GetProvenance(ctx context.Context, o models.ProvisionableInOrg) (models.Provenance, error) {
+	return models.ProvenanceNone, fmt.Errorf("failed to store provenance")
+}
+
+func (f *failingProvisioningStore) SetProvenance(ctx context.Context, o models.ProvisionableInOrg, p models.Provenance) error {
+	return fmt.Errorf("failed to set provenance")
+}
+
+type nopTransactionManager struct{}
+
+func newNopTransactionManager() *nopTransactionManager {
+	return &nopTransactionManager{}
+}
+
+func (n *nopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
+	return work(ctx)
 }

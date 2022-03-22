@@ -137,7 +137,7 @@ func (ng *AlertNG) init() error {
 	ng.schedule = scheduler
 
 	// Provisioning
-	policyService := services.NewNotificationPolicyService(store, store, ng.Log)
+	policyService := services.NewNotificationPolicyService(store, store, store, ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,

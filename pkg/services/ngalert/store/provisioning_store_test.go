@@ -117,6 +117,6 @@ func TestProvisioningStore(t *testing.T) {
 	})
 }
 
-func createSut(_ *ngalert.AlertNG, db *store.DBstore) (services.ProvisioningStore, store.TransactionManager) {
+func createSut(_ *ngalert.AlertNG, db *store.DBstore) (services.ProvisioningStore, services.TransactionManager) {
 	return db, db
 }

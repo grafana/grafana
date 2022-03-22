@@ -58,6 +58,7 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         newFakeAMConfigStore(),
 		provenanceStore: newFakeProvisioningStore(),
+		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
 	}
 }

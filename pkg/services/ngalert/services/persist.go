@@ -17,3 +17,8 @@ type ProvisioningStore interface {
 	GetProvenance(ctx context.Context, o models.ProvisionableInOrg) (models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.ProvisionableInOrg, p models.Provenance) error
 }
+
+// TransactionManager represents the ability to issue and close transactions through contexts.
+type TransactionManager interface {
+	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
+}
