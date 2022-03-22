@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -37,7 +37,7 @@ func TestProvideFolderService(t *testing.T) {
 
 		ProvideFolderService(
 			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
-			store, nil, features, permissionsServices, ac,
+			store, nil, features, permissionsServices, ac, mockstore.NewSQLStoreMock(),
 		)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
@@ -51,6 +51,7 @@ func TestFolderService(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		permissionsServices := acmock.NewPermissionsServicesMock()
 		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
+		mockStore := mockstore.NewSQLStoreMock()
 
 		service := FolderServiceImpl{
 			cfg:              cfg,
@@ -60,6 +61,7 @@ func TestFolderService(t *testing.T) {
 			searchService:    nil,
 			features:         features,
 			permissions:      permissionsServices.GetFolderService(),
+			sqlStore:         mockStore,
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -99,12 +101,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = models.NewDashboardFolder("Folder")
-					return nil
-				})
-				defer bus.ClearBusHandlers()
-
+				mockStore.ExpectedDashboard = models.NewDashboardFolder("Folder")
 				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
@@ -132,12 +129,6 @@ func TestFolderService(t *testing.T) {
 				dash.Id = rand.Int63()
 				f := models.DashboardToFolder(dash)
 
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
-					cmd.Result = dash
-					return nil
-				})
-				defer bus.ClearBusHandlers()
-
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil)
 				store.On("SaveDashboard", mock.Anything).Return(dash, nil).Once()
 				store.On("GetFolderByID", mock.Anything, orgID, dash.Id).Return(f, nil)
@@ -153,17 +144,7 @@ func TestFolderService(t *testing.T) {
 				dashboardFolder.Uid = util.GenerateShortUID()
 				f := models.DashboardToFolder(dashboardFolder)
 
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = dashboardFolder
-					return nil
-				})
-
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
-					cmd.Result = dashboardFolder
-					return nil
-				})
-
-				defer bus.ClearBusHandlers()
+				mockStore.ExpectedDashboard = dashboardFolder
 
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil)
 				store.On("SaveDashboard", mock.Anything).Return(dashboardFolder, nil)
