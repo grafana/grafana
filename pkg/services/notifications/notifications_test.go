@@ -252,7 +252,7 @@ func createSut(t *testing.T, bus bus.Bus) (*NotificationService, *FakeMailer) {
 
 func createSutWithConfig(t *testing.T, bus bus.Bus, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
 	smtp := NewFakeMailer()
-	ns, err := ProvideService(bus, cfg, smtp)
+	ns, err := ProvideService(bus, cfg, smtp, nil)
 	return ns, smtp, err
 }
 
@@ -261,7 +261,7 @@ func createDisconnectedSut(t *testing.T, bus bus.Bus) *NotificationService {
 
 	cfg := createSmtpConfig()
 	smtp := NewFakeDisconnectedMailer()
-	ns, err := ProvideService(bus, cfg, smtp)
+	ns, err := ProvideService(bus, cfg, smtp, nil)
 	require.NoError(t, err)
 	return ns
 }
