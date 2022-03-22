@@ -248,10 +248,10 @@ func (repo *fakeAnnotationsRepo) Save(item *annotations.Item) error {
 	item.Id = 1
 	return nil
 }
-func (repo *fakeAnnotationsRepo) Update(item *annotations.Item) error {
+func (repo *fakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
 	return nil
 }
-func (repo *fakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (repo *fakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	if annotation, has := repo.annotations[query.AnnotationId]; has {
 		return []*annotations.ItemDTO{&annotation}, nil
 	}

@@ -35,7 +35,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	items, err := repo.Find(query)
+	items, err := repo.Find(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get annotations", err)
 	}
@@ -192,7 +192,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(repo, annotationID, c.OrgId)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
 	if resp != nil {
 		return resp
 	}
@@ -220,7 +220,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		Tags:     cmd.Tags,
 	}
 
-	if err := repo.Update(&item); err != nil {
+	if err := repo.Update(c.Req.Context(), &item); err != nil {
 		return response.Error(500, "Failed to update annotation", err)
 	}
 
@@ -239,7 +239,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(repo, annotationID, c.OrgId)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
 	if resp != nil {
 		return resp
 	}
@@ -282,7 +282,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		existing.EpochEnd = cmd.TimeEnd
 	}
 
-	if err := repo.Update(&existing); err != nil {
+	if err := repo.Update(c.Req.Context(), &existing); err != nil {
 		return response.Error(500, "Failed to update annotation", err)
 	}
 
@@ -318,7 +318,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(repo, annotationID, c.OrgId)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
 	if resp != nil {
 		return resp
 	}
@@ -360,8 +360,8 @@ func canSaveOrganizationAnnotation(c *models.ReqContext) bool {
 	return c.SignedInUser.HasRole(models.ROLE_EDITOR)
 }
 
-func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
-	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
+	items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
 
 	if err != nil {
 		return nil, response.Error(500, "Failed to find annotation", err)
@@ -406,7 +406,7 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		annotation, resp := findAnnotationByID(annotations.GetRepository(), int64(annotationId), orgID)
+		annotation, resp := findAnnotationByID(ctx, annotations.GetRepository(), int64(annotationId), orgID)
 		if resp != nil {
 			return "", err
 		}
