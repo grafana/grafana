@@ -496,6 +496,14 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
 	}
 
+	features := make([]string, len(featuresEnabledDuringTests))
+	copy(features, featuresEnabledDuringTests)
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			features = append(features, opt.FeatureFlags...)
+		}
+	}
+
 	if testSQLStore == nil {
 		dbType := migrator.SQLite
 
@@ -507,7 +515,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		// set test db config
 		cfg := setting.NewCfg()
 		cfg.IsFeatureToggleEnabled = func(key string) bool {
-			for _, enabledFeature := range featuresEnabledDuringTests {
+			for _, enabledFeature := range features {
 				if enabledFeature == key {
 					return true
 				}
@@ -585,14 +593,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		// temp global var until we get rid of global vars
 		dialect = testSQLStore.Dialect
 		return testSQLStore, nil
-	}
-
-	features := make([]string, len(featuresEnabledDuringTests))
-	copy(features, featuresEnabledDuringTests)
-	for _, opt := range opts {
-		if len(opt.FeatureFlags) > 0 {
-			features = append(features, opt.FeatureFlags...)
-		}
 	}
 
 	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
