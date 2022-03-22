@@ -74,6 +74,33 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     expect(screen.getByText('Schema labels')).toBeInTheDocument();
   });
 
+  it('Uses dimension filter when loading dimension keys if query includes InstanceID', async () => {
+    const query = makeSQLQuery({
+      from: {
+        type: QueryEditorExpressionType.Function,
+        name: 'SCHEMA',
+        parameters: [
+          {
+            type: QueryEditorExpressionType.FunctionParameter,
+            name: 'AWS/EC2',
+          },
+          {
+            type: QueryEditorExpressionType.FunctionParameter,
+            name: 'InstanceId',
+          },
+        ],
+      },
+    });
+
+    render(<SQLBuilderEditor {...baseProps} query={query} />);
+    await waitFor(() =>
+      expect(datasource.getDimensionKeys).toHaveBeenCalledWith('AWS/EC2', query.region, { InstanceId: null }, undefined)
+    );
+    expect(screen.getByText('AWS/EC2')).toBeInTheDocument();
+    expect(screen.getByLabelText('With schema')).toBeChecked();
+    expect(screen.getByText('Schema labels')).toBeInTheDocument();
+  });
+
   it('Displays the SELECT correctly', async () => {
     const query = makeSQLQuery({
       select: {
