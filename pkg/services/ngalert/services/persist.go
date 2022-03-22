@@ -14,6 +14,6 @@ type AMConfigStore interface {
 
 // ProvisioningStore is a store of provisioning data for arbitrary objects.
 type ProvisioningStore interface {
-	GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error)
-	SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error
+	GetProvenance(ctx context.Context, o models.ProvisionableInOrg) (models.Provenance, error)
+	SetProvenance(ctx context.Context, o models.ProvisionableInOrg, p models.Provenance) error
 }

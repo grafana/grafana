@@ -804,6 +804,14 @@ func AsGrafanaRoute(r *config.Route) *Route {
 	return gRoute
 }
 
+func (route Route) ResourceType() string {
+	return "route"
+}
+
+func (route Route) ResourceID() string {
+	return ""
+}
+
 // Config is the entrypoint for the embedded Alertmanager config with the exception of receivers.
 // Prometheus historically uses yaml files as the method of configuration and thus some
 // post-validation is included in the UnmarshalYAML method. Here we simply run this with
