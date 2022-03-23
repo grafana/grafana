@@ -131,6 +131,11 @@ describe('Search utils', () => {
   });
 
   describe('getCheckedUids', () => {
+    it('should not return any UIDs if no items are checked');
+    it('should return only dashboard UIDs if the General folder is checked');
+    it('should return only dashboard UIDs if all items are checked when viewing a folder');
+    it('should return folder + dashboard UIDs when checked');
+
     it('should return object with empty arrays if no checked items are available', () => {
       expect(getCheckedUids(sections as any[])).toEqual({ folders: [], dashboards: [] });
     });
