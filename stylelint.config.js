@@ -14,7 +14,7 @@ module.exports = {
       },
     ],
     // Disable equivalent "borderZero" sass-lint rule
-    'declaration-property-value-allowed-list': {
+    'declaration-property-value-disallowed-list': {
       border: [],
       'border-bottom': [],
       'border-left': [],
