@@ -11,3 +11,4 @@ This aims to define the unified alerting API as code. It generates OpenAPI defin
 
 ## Requires
  - [go-swagger](https://github.com/go-swagger/go-swagger)
+ - [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports)
