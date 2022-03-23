@@ -280,7 +280,7 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			},
 		},
 		{
-			name: "should fail if no changes other than unauthorized",
+			name: "should not fail if no changes other than unauthorized",
 			changes: func() *changes {
 				return &changes{
 					New:    nil,
@@ -296,9 +296,9 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 				}
 			},
 			assert: func(t *testing.T, orig, authz *changes, err error) {
-				require.ErrorIs(t, err, ErrAuthorization)
-				require.NotNil(t, orig)
-				require.Nil(t, authz)
+				require.NoError(t, err)
+				require.False(t, orig.isEmpty())
+				require.True(t, authz.isEmpty())
 			},
 		},
 		{

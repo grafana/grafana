@@ -289,7 +289,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		}
 
 		if authorizedChanges.isEmpty() {
-			return fmt.Errorf("%w to update alert group '%s' because neither of changes are authorized", ErrAuthorization, groupName)
+			logger.Info("no authorized changes detected in the request. Do nothing", "not_authorized_add", len(groupChanges.New), "not_authorized_update", len(groupChanges.Update), "not_authorized_delete", len(groupChanges.Delete))
+			return nil
 		}
 
 		if len(groupChanges.Delete) > len(authorizedChanges.Delete) {

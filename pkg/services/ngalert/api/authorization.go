@@ -212,11 +212,6 @@ func authorizeRuleChanges(namespace *models.Folder, change *changes, evaluator f
 			}
 		}
 		result.Delete = allowedToDelete
-
-		// if there are no more changes other than unauthorized deletes, return error
-		if result.isEmpty() {
-			return nil, fmt.Errorf("%w to delete alert rules that use data sources the user does not have access to", ErrAuthorization)
-		}
 	}
 
 	var addAuthorized, updateAuthorized bool
