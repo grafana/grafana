@@ -21,6 +21,7 @@ interface Props {
   invalid?: boolean;
   disabled?: boolean;
   id?: string;
+  'aria-label'?: string;
 }
 
 /**
@@ -34,6 +35,7 @@ export const DashboardPickerByID: FC<Props> = ({
   invalid,
   disabled,
   id,
+  'aria-label': ariaLabel,
 }) => {
   const debouncedSearch = debounce(getDashboards, 300);
   const option = value ? { value, label: value.label } : undefined;
@@ -55,6 +57,7 @@ export const DashboardPickerByID: FC<Props> = ({
       value={option}
       invalid={invalid}
       disabled={disabled}
+      aria-label={ariaLabel}
     />
   );
 };
