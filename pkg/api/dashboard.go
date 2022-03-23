@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -115,25 +116,32 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		creator = hs.getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
+	var canEditOrganizationAnnotation bool
+	if !hs.AccessControl.IsDisabled() {
+		evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, accesscontrol.ScopeAnnotationsTypeOrganization)
+		canEditOrganizationAnnotation, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	}
+
 	meta := dtos.DashboardMeta{
-		IsStarred:   isStarred,
-		Slug:        dash.Slug,
-		Type:        models.DashTypeDB,
-		CanStar:     c.IsSignedIn,
-		CanSave:     canSave,
-		CanEdit:     canEdit,
-		CanAdmin:    canAdmin,
-		CanDelete:   canDelete,
-		Created:     dash.Created,
-		Updated:     dash.Updated,
-		UpdatedBy:   updater,
-		CreatedBy:   creator,
-		Version:     dash.Version,
-		HasAcl:      dash.HasAcl,
-		IsFolder:    dash.IsFolder,
-		FolderId:    dash.FolderId,
-		Url:         dash.GetUrl(),
-		FolderTitle: "General",
+		IsStarred:                      isStarred,
+		Slug:                           dash.Slug,
+		Type:                           models.DashTypeDB,
+		CanStar:                        c.IsSignedIn,
+		CanSave:                        canSave,
+		CanEdit:                        canEdit,
+		CanAdmin:                       canAdmin,
+		CanDelete:                      canDelete,
+		Created:                        dash.Created,
+		Updated:                        dash.Updated,
+		UpdatedBy:                      updater,
+		CreatedBy:                      creator,
+		Version:                        dash.Version,
+		HasAcl:                         dash.HasAcl,
+		IsFolder:                       dash.IsFolder,
+		FolderId:                       dash.FolderId,
+		Url:                            dash.GetUrl(),
+		FolderTitle:                    "General",
+		CanEditOrganizationAnnotations: canEditOrganizationAnnotation,
 	}
 
 	// lookup folder title

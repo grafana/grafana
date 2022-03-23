@@ -1178,6 +1178,13 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid);
   };
 
+  canEditAnnotations(dashboardId: number) {
+    if (contextSrv.accessControlEnabled() && dashboardId === 0) {
+      return this.meta.canEditOrganizationAnnotations;
+    }
+    return this.meta.canEdit || this.meta.canMakeEditable;
+  }
+
   canAddAnnotations() {
     return this.meta.canEdit || this.meta.canMakeEditable;
   }
