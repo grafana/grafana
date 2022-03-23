@@ -171,6 +171,7 @@ export const Components = {
   QueryEditorRow: {
     actionButton: (title: string) => `${title} query operation action`,
     title: (refId: string) => `Query editor row title ${refId}`,
+    container: (refId: string) => `Query editor row ${refId}`,
   },
   AlertTab: {
     content: 'Alert editor tab content',
