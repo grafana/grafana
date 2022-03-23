@@ -26,7 +26,7 @@ const (
 	PrometheusDatasourceType = "prometheus"
 	LokiDatasourceType       = "loki"
 
-	cloudPrefix      = "/v1/config/rules"
+	cloudPrefix      = "/config/v1/rules"
 	prometheusPrefix = "/rules"
 	lokiPrefix       = "/api/prom/rules"
 
