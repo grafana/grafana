@@ -16,9 +16,32 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+const (
+	Prometheus = iota + 1
+	Cortex
+	Cloud
+)
+
+const (
+	PrometheusDatasourceType = "prometheus"
+	LokiDatasourceType       = "loki"
+
+	cloudPrefix      = "/v1/config/rules"
+	prometheusPrefix = "/rules"
+	lokiPrefix       = "/api/prom/rules"
+
+	subtypeQuery = "subtype"
+)
+
 var dsTypeToRulerPrefix = map[string]string{
-	"prometheus": "/rules",
-	"loki":       "/api/prom/rules",
+	PrometheusDatasourceType: prometheusPrefix,
+	LokiDatasourceType:       lokiPrefix,
+}
+
+var subtypeToPrefix = map[int]string{
+	Prometheus: prometheusPrefix,
+	Cortex:     prometheusPrefix,
+	Cloud:      cloudPrefix,
 }
 
 type LotexRuler struct {
@@ -171,7 +194,22 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	if !ok {
 		return "", fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
 	}
-	return prefix, nil
+
+	// If the datasource is Loki, there's nothing else for us to do - it doesn't have subtypes.
+	if ds.Type == LokiDatasourceType {
+		return prefix, nil
+	}
+
+	// A Prometheus datasource, can have many subtypes: Cortex, Cloud and vanilla Prometheus.
+	// Alerting can determine which subtypes we want to proxy requests to
+	subtype := ctx.QueryInt(subtypeQuery)
+	subTypePrefix, ok := subtypeToPrefix[subtype]
+	if !ok {
+		r.log.Debug("unable to determine prometheus datasource subtype, using default prefix", "subtype", subtype)
+		return prefix, nil
+	}
+
+	return subTypePrefix, nil
 }
 
 func withPath(u url.URL, newPath string) *url.URL {
