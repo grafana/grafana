@@ -100,7 +100,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
+	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources:id:", strconv.FormatInt(dto.Id, 10))
 
 	return response.JSON(200, &dto)
 }
@@ -159,8 +159,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
-
+	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources:id:", strconv.FormatInt(dto.Id, 10))
 	return response.JSON(200, &dto)
 }
 
@@ -250,6 +249,7 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
+	cmd.UserId = c.UserId
 	if cmd.Url != "" {
 		if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 			return resp

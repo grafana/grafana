@@ -1,12 +1,19 @@
 groups:
   coremodel:
     must:
+      # Requires that each coremodel component define a struct named
+      # "Coremodel", and that that struct implements the generic interface
+      # defined by the coremodel framework.
       DefinesCoremodel:
         ruletype: goident
         name: Coremodel
         kind: struct
         implements:
           - "github.com/grafana/grafana/internal/components.Coremodel"
+      # Requires that each coremodel component define a func, usable by wire,
+      # that makes the coremodel available for use by things depending on the
+      # coremodel framework - e.g., the k8sbridge, which tells the underlying
+      # k8s apiserver about Grafana's resources.
       ProvidesCoremodel:
         ruletype: goident
         name: ProvideCoremodel

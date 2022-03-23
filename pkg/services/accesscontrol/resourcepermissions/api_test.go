@@ -36,7 +36,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should return description",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        true,
@@ -64,7 +65,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should only return user assignment",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        false,
@@ -90,7 +92,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should return 403 when missing read permission",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        false,
@@ -514,7 +517,8 @@ func contextProvider(tc *testContext) web.Handler {
 }
 
 var testOptions = Options{
-	Resource: "dashboards",
+	Resource:          "dashboards",
+	ResourceAttribute: "id",
 	Assignments: Assignments{
 		Users:        true,
 		Teams:        true,
