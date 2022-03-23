@@ -20,14 +20,14 @@ export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   item: NavModelItem;
   isActive?: boolean;
   label: string;
-  reverseMenuDirection?: boolean;
 }
 
 export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
-  const { item, isActive, label, children: menu, reverseMenuDirection, ...rest } = props;
+  const { item, isActive, label, children: menu, ...rest } = props;
   const [menuHasFocus, setMenuHasFocus] = useState(false);
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
+  console.log('Start', menuHasFocus);
 
   // Create state based on the incoming props
   const state = useMenuTriggerState({ ...rest });
@@ -153,12 +153,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     offset: 5,
     isOpen: state.isOpen,
   });
-
-  const boundingClientRect = ref.current?.getBoundingClientRect();
-  const x = boundingClientRect?.x || 0;
-  const y = boundingClientRect?.y || 0;
-  const width = boundingClientRect?.width || 0;
-  const height = boundingClientRect?.height || 0;
 
   return (
     <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
