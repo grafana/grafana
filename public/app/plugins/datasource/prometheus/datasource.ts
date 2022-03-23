@@ -55,6 +55,7 @@ import {
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { renderLegendFormat } from './legend';
+import { fetchDataSourceBuildInfo } from 'app/features/alerting/unified/api/buildInfo';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
@@ -811,6 +812,11 @@ export class PrometheusDatasource
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
+  async getBuildInfo() {
+    const buildInfo = await fetchDataSourceBuildInfo(this);
+    return buildInfo;
+  }
+
   async testDatasource() {
     const now = new Date().getTime();
     const request: DataQueryRequest<PromQuery> = {
@@ -828,12 +834,22 @@ export class PrometheusDatasource
       },
     } as DataQueryRequest<PromQuery>;
 
+    // TODO Tell users what we've been able to discover about the data source
+    const buildInfo = await this.getBuildInfo();
+    const buildInfoMessage = `Data source sub type: ${buildInfo.application} \nRuler API: ${
+      buildInfo.features.rulerApiEnabled ? 'Enabled' : 'Disabled'
+    }`;
+
     return lastValueFrom(this.query(request))
       .then((res: DataQueryResponse) => {
         if (!res || !res.data || res.state !== LoadingState.Done) {
           return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
         } else {
-          return { status: 'success', message: 'Data source is working' };
+          return {
+            status: 'success',
+            message: 'Data source is working',
+            details: { verboseMessage: buildInfoMessage },
+          };
         }
       })
       .catch((err: any) => {

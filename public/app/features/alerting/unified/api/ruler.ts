@@ -25,9 +25,7 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   if (rulerConfig.customRulerEnabled) {
     rulerSearchParams.set('source', 'ruler');
   }
-  if (rulerConfig.apiVersion === 'legacy') {
-    rulerSearchParams.set('noProxy', 'true');
-  }
+  rulerSearchParams.set('subtype', rulerConfig.apiVersion === 'legacy' ? '2' : '3');
 
   return {
     rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => {

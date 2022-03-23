@@ -24,8 +24,8 @@ export enum PromRuleType {
   Recording = 'recording',
 }
 export enum PromApplication {
-  Cortex = 'cortex',
-  Prometheus = 'prometheus',
+  Cortex = 'Cortex',
+  Prometheus = 'Prometheus',
 }
 
 export interface PromBuildInfoResponse {
@@ -46,10 +46,7 @@ export interface PromBuildInfoResponse {
 export interface PromBuildInfo {
   application?: PromApplication;
   features: {
-    rulerConfigApi: boolean;
-    alertManagerConfigApi: boolean;
-    querySharding: boolean;
-    federatedRules: boolean;
+    rulerApiEnabled: boolean;
   };
 }
 

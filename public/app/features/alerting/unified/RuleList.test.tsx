@@ -121,10 +121,7 @@ describe('RuleList', () => {
     mocks.api.fetchBuildInfo.mockResolvedValue({
       application: PromApplication.Prometheus,
       features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: true,
-        federatedRules: false,
-        querySharding: false,
+        rulerApiEnabled: true,
       },
     });
 
@@ -216,10 +213,7 @@ describe('RuleList', () => {
     mocks.api.fetchBuildInfo.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: true,
-        federatedRules: false,
-        querySharding: false,
+        rulerApiEnabled: true,
       },
     });
 
@@ -361,10 +355,7 @@ describe('RuleList', () => {
     mocks.api.fetchBuildInfo.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: true,
-        federatedRules: false,
-        querySharding: false,
+        rulerApiEnabled: true,
       },
     });
 
@@ -509,10 +500,7 @@ describe('RuleList', () => {
         mocks.api.fetchBuildInfo.mockResolvedValue({
           application: PromApplication.Cortex,
           features: {
-            rulerConfigApi: true,
-            alertManagerConfigApi: true,
-            federatedRules: false,
-            querySharding: false,
+            rulerApiEnabled: true,
           },
         });
 

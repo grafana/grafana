@@ -9,7 +9,7 @@ const mocks = {
 };
 
 describe('rulerUrlBuilder', () => {
-  it('Should use /api/v1/rules endpoint with noProxy param for legacy api version', () => {
+  it('Should use /api/v1/rules endpoint with subtype = 2 param for legacy api version', () => {
     // Arrange
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex',
@@ -28,16 +28,16 @@ describe('rulerUrlBuilder', () => {
 
     // Assert
     expect(rules.path).toBe('/api/ruler/ds-uid/api/v1/rules');
-    expect(rules.params).toMatchObject({ noProxy: 'true' });
+    expect(rules.params).toMatchObject({ subtype: '2' });
 
     expect(namespace.path).toBe('/api/ruler/ds-uid/api/v1/rules/test-ns');
-    expect(namespace.params).toMatchObject({ noProxy: 'true' });
+    expect(namespace.params).toMatchObject({ subtype: '2' });
 
     expect(group.path).toBe('/api/ruler/ds-uid/api/v1/rules/test-ns/test-gr');
-    expect(group.params).toMatchObject({ noProxy: 'true' });
+    expect(group.params).toMatchObject({ subtype: '2' });
   });
 
-  it('Should use /config/v1/rules endpoint for config api version', () => {
+  it('Should use /config/v1/rules endpoint with subtype = 3 parameter for config api version', () => {
     // Arrange
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex v2',
@@ -56,13 +56,13 @@ describe('rulerUrlBuilder', () => {
 
     // Assert
     expect(rules.path).toBe('/api/ruler/ds-uid/config/v1/rules');
-    expect(rules.params).toMatchObject({});
+    expect(rules.params).toMatchObject({ subtype: '3' });
 
     expect(namespace.path).toBe('/api/ruler/ds-uid/config/v1/rules/test-ns');
-    expect(namespace.params).toMatchObject({});
+    expect(namespace.params).toMatchObject({ subtype: '3' });
 
     expect(group.path).toBe('/api/ruler/ds-uid/config/v1/rules/test-ns/test-gr');
-    expect(group.params).toMatchObject({});
+    expect(group.params).toMatchObject({ subtype: '3' });
   });
 
   it('Should append source=rules parameter when custom ruler enabled', () => {
@@ -83,9 +83,9 @@ describe('rulerUrlBuilder', () => {
     const group = builder.namespaceGroup('test-ns', 'test-gr');
 
     // Assert
-    expect(rules.params).toMatchObject({ source: 'ruler' });
-    expect(namespace.params).toMatchObject({ source: 'ruler' });
-    expect(group.params).toMatchObject({ source: 'ruler' });
+    expect(rules.params).toMatchObject({ source: 'ruler', subtype: '3' });
+    expect(namespace.params).toMatchObject({ source: 'ruler', subtype: '3' });
+    expect(group.params).toMatchObject({ source: 'ruler', subtype: '3' });
   });
 
   it('Should append dashboard_uid and panel_id for rules endpoint when specified', () => {
@@ -103,6 +103,6 @@ describe('rulerUrlBuilder', () => {
     const rules = builder.rules({ dashboardUID: 'dashboard-uid', panelId: 1234 });
 
     // Assert
-    expect(rules.params).toMatchObject({ dashboard_uid: 'dashboard-uid', panel_id: '1234' });
+    expect(rules.params).toMatchObject({ dashboard_uid: 'dashboard-uid', panel_id: '1234', subtype: '3' });
   });
 });

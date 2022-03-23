@@ -3,14 +3,16 @@ import { PromApplication, PromBuildInfo, PromBuildInfoResponse } from 'app/types
 import { lastValueFrom } from 'rxjs';
 import { isFetchError } from '../utils/alertmanager';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDatasourceAPIId } from '../utils/datasource';
+import { getDataSourceByName } from '../utils/datasource';
 import { fetchRules } from './prometheus';
 import { fetchRulerRulesGroup } from './ruler';
 
-export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildInfo> {
+export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: string }): Promise<PromBuildInfo> {
+  const { url, name } = dsSettings;
+
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromBuildInfoResponse>({
-      url: `/api/datasources/proxy/${getDatasourceAPIId(dataSourceName)}/api/v1/status/buildinfo`,
+      url: `${url}/api/v1/status/buildinfo`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -23,20 +25,17 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
   });
 
   if (!response?.data.data) {
-    const promRulesSupported = await hasPromRulesSupport(dataSourceName);
-    const rulerSupported = await hasRulerSupport(dataSourceName);
+    const promRulesSupported = await hasPromRulesSupport(name);
+    const rulerSupported = await hasRulerSupport(name);
 
     if (!promRulesSupported) {
-      throw new Error(`Unable to fetch alert rules. Is the ${dataSourceName} data source properly configured?`);
+      throw new Error(`Unable to fetch alert rules. Is the ${name} data source properly configured?`);
     }
 
     return {
       application: PromApplication.Cortex,
       features: {
-        rulerConfigApi: rulerSupported,
-        alertManagerConfigApi: false,
-        querySharding: false,
-        federatedRules: false,
+        rulerApiEnabled: rulerSupported,
       },
     };
   }
@@ -46,12 +45,22 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
   return {
     application: PromApplication.Prometheus,
     features: {
-      rulerConfigApi: features?.ruler_config_api === 'true',
-      alertManagerConfigApi: features?.alertmanager_config_api === 'true',
-      querySharding: features?.query_sharding === 'true',
-      federatedRules: features?.federated_rules === 'true',
+      rulerApiEnabled: features?.ruler_config_api === 'true',
     },
   };
+}
+
+export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildInfo> {
+  const dsConfig = getDataSourceByName(dataSourceName);
+  if (!dsConfig) {
+    throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
+  }
+  const { url, name } = dsConfig;
+  if (!url) {
+    throw new Error(`The data souce url cannot be empty.`);
+  }
+
+  return fetchDataSourceBuildInfo({ name, url });
 }
 
 async function hasPromRulesSupport(dataSourceName: string) {
