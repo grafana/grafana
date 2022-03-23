@@ -100,7 +100,7 @@ def intentapi_services():
                 ' --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem' +
                 ' --service-account-key-file=/var/lib/kubernetes/service-account.pem' +
                 ' --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem' +
-                ' --service-account-issuer=https://apiserver:6443',
+                ' --service-account-issuer=https://0.0.0.0:6443',
             ],
             'volumes': [
                 {
