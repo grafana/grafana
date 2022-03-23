@@ -42,6 +42,11 @@ type FakeRuleStore struct {
 	RecordedOps []interface{}
 }
 
+type GenericRecordedQuery struct {
+	name   string
+	params []interface{}
+}
+
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
 func (f *FakeRuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 	f.mtx.Lock()
@@ -76,7 +81,30 @@ func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (int
 	return result
 }
 
-func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, _ int64, _ ...string) error {
+func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		name:   "DeleteAlertRulesByUID",
+		params: []interface{}{orgID, UIDs},
+	})
+
+	rules := f.Rules[orgID]
+
+	var result = make([]*models.AlertRule, 0, len(rules))
+
+	for _, rule := range rules {
+		add := true
+		for _, UID := range UIDs {
+			if rule.UID == UID {
+				add = false
+				break
+			}
+		}
+		if add {
+			result = append(result, rule)
+		}
+	}
+
+	f.Rules[orgID] = result
 	return nil
 }
 
