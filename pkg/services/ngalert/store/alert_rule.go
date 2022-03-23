@@ -35,7 +35,7 @@ type UpsertRule struct {
 
 // Store is the interface for persisting alert rules and instances
 type RuleStore interface {
-	DeleteAlertRuleByUID(ctx context.Context, orgID int64, ruleUID string) error
+	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	DeleteNamespaceAlertRules(ctx context.Context, orgID int64, namespaceUID string) ([]string, error)
 	DeleteRuleGroupAlertRules(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) ([]string, error)
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
@@ -63,24 +63,27 @@ func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int6
 	return &alertRule, nil
 }
 
-// DeleteAlertRuleByUID is a handler for deleting an alert rule.
-func (st DBstore) DeleteAlertRuleByUID(ctx context.Context, orgID int64, ruleUID string) error {
+// DeleteAlertRulesByUID is a handler for deleting an alert rule.
+func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error {
+	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? AND uid = ?", orgID, ruleUID)
+		rows, err := sess.Table("alert_rule").Where("org_id = ?", orgID).In("uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
+		logger.Debug("deleted alert rules", "count", rows)
 
-		_, err = sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_uid = ?", orgID, ruleUID)
-
+		rows, err = sess.Table("alert_rule_version").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
+		logger.Debug("deleted alert rule versions", "count", rows)
 
-		_, err = sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
+		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
+		logger.Debug("deleted alert instances", "count", rows)
 		return nil
 	})
 }
