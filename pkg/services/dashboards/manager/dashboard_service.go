@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -408,7 +407,7 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.Dispatch(ctx, cmd)
+	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
 }
 
 func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *m.SaveDashboardDTO) (

@@ -61,8 +61,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
@@ -127,8 +126,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
