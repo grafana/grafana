@@ -32,13 +32,6 @@ export interface TraceToLogsData extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const handleChange = (datasource: DataSourceInstanceSettings, searchType: keyof TraceToLogsData) => {
-    updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, searchType, {
-      datasourceUid: datasource.uid,
-      tags: options.jsonData.tracesToLogs?.tags,
-    });
-  };
-
   const styles = useStyles(getStyles);
 
   return (
@@ -62,7 +55,12 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds: DataSourceInstanceSettings) => handleChange(ds, 'tracesToLogs')}
+            onChange={(ds: DataSourceInstanceSettings) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                datasourceUid: ds.uid,
+                tags: options.jsonData.tracesToLogs?.tags,
+              })
+            }
           />
         </InlineField>
       </InlineFieldRow>
