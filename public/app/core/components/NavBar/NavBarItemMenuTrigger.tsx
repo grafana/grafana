@@ -54,6 +54,8 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   const { focusWithinProps } = useFocusWithin({
     onFocusWithinChange: (isFocused) => {
+      console.log('Has focus: ' + menuHasFocus);
+      console.log('Is focused: ' + isFocused);
       if (isFocused) {
         state.open();
       }
