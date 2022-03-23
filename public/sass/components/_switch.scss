@@ -85,7 +85,7 @@ input:checked + .gf-form-switch__slider::before {
   height: $input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
-  border-left: none;
+  border-left: 0;
   border-radius: $input-border-radius;
   align-items: center;
   justify-content: center;
@@ -99,7 +99,7 @@ input:checked + .gf-form-switch__slider::before {
 
   &--transparent {
     background: transparent;
-    border: none;
+    border: 0;
     width: 23px;
     height: auto;
     position: relative;
@@ -110,7 +110,7 @@ input:checked + .gf-form-switch__slider::before {
     width: 20px;
     background: transparent;
     height: auto;
-    border: none;
+    border: 0;
     position: relative;
     top: -5px;
   }
@@ -135,5 +135,5 @@ input:checked + .gf-form-switch__checkbox::before {
 
 input:checked + .gf-form-switch__checkbox {
   background: $checkbox-checked-bg;
-  border: none;
+  border: 0;
 }

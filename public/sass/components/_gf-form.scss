@@ -126,7 +126,7 @@ $input-border: 1px solid $input-border-color;
   margin-right: $space-xs;
   border-radius: $input-border-radius;
   justify-content: space-between;
-  border: none;
+  border: 0;
 
   &--grow {
     flex-grow: 1;
@@ -159,7 +159,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &--btn {
-    border: none;
+    border: 0;
     border-radius: $border-radius;
 
     &:hover {
@@ -183,7 +183,7 @@ $input-border: 1px solid $input-border-color;
   margin: 0;
   margin-right: $space-xs;
   border: $border-width solid transparent;
-  border-left: none;
+  border-left: 0;
   @include border-radius($input-border-radius);
 }
 
@@ -453,7 +453,7 @@ select.gf-form-input ~ .gf-form-help-icon {
 .cta-form__close {
   background: transparent;
   padding: 4px 8px 4px 9px;
-  border: none;
+  border: 0;
   position: absolute;
   right: 0;
   top: -2px;
