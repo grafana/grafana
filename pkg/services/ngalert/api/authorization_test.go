@@ -259,7 +259,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 		executed := 0
 
-		eval := checkDatasourcePermissionsForRule(rule, func(evaluator ac.Evaluator) bool {
+		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
 			response, err := evaluator.Evaluate(permissions)
 			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
 			require.NoError(t, err)
@@ -274,7 +274,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 	t.Run("should return on first negative evaluation", func(t *testing.T) {
 		executed := 0
 
-		eval := checkDatasourcePermissionsForRule(rule, func(evaluator ac.Evaluator) bool {
+		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
 			executed++
 			return false
 		})

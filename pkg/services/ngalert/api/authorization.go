@@ -172,8 +172,8 @@ func (api *API) authorize(method, path string) web.Handler {
 	panic(fmt.Sprintf("no authorization handler for method [%s] of endpoint [%s]", method, path))
 }
 
-// checkDatasourcePermissionsForRule checks that user has access to all data sources
-func checkDatasourcePermissionsForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
+// authorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
+func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
 	for _, query := range rule.Data {
 		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.OldDatasourceUID {
 			continue
@@ -204,7 +204,7 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 			return fmt.Errorf("%w user cannot create alert rules in the folder %s", ErrAuthorization, namespace.Title)
 		}
 		for _, rule := range changes.New {
-			dsAllowed := checkDatasourcePermissionsForRule(rule, evaluator)
+			dsAllowed := authorizeDatasourceAccessForRule(rule, evaluator)
 			if !dsAllowed {
 				return fmt.Errorf("%w to create a new alert rule '%s' because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Title)
 			}
@@ -212,7 +212,7 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 	}
 
 	for _, rule := range changes.Update {
-		dsAllowed := checkDatasourcePermissionsForRule(rule.New, evaluator)
+		dsAllowed := authorizeDatasourceAccessForRule(rule.New, evaluator)
 		if !dsAllowed {
 			return fmt.Errorf("%w to update alert rule '%s' (UID: %s) because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Existing.Title, rule.Existing.UID)
 		}
