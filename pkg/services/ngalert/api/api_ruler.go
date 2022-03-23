@@ -308,9 +308,14 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		for _, rule := range groupChanges.Delete {
-			if err = srv.store.DeleteAlertRuleByUID(tranCtx, c.SignedInUser.OrgId, rule.UID); err != nil {
-				return fmt.Errorf("failed to delete rule %d with UID %s: %w", rule.ID, rule.UID, err)
+		if len(groupChanges.Delete) > 0 {
+			UIDs := make([]string, 0, len(groupChanges.Delete))
+			for _, rule := range groupChanges.Delete {
+				UIDs = append(UIDs, rule.UID)
+			}
+
+			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.OrgId, UIDs...); err != nil {
+				return fmt.Errorf("failed to delete rules: %w", err)
 			}
 		}
 

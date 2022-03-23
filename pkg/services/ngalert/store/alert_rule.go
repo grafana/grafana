@@ -35,7 +35,7 @@ type UpsertRule struct {
 
 // Store is the interface for persisting alert rules and instances
 type RuleStore interface {
-	DeleteAlertRuleByUID(ctx context.Context, orgID int64, ruleUID string) error
+	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	DeleteNamespaceAlertRules(ctx context.Context, orgID int64, namespaceUID string) ([]string, error)
 	DeleteRuleGroupAlertRules(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) ([]string, error)
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
@@ -64,20 +64,30 @@ func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int6
 }
 
 // DeleteAlertRuleByUID is a handler for deleting an alert rule.
-func (st DBstore) DeleteAlertRuleByUID(ctx context.Context, orgID int64, ruleUID string) error {
+func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? AND uid = ?", orgID, ruleUID)
+		params := "(" + strings.Repeat(",?", len(ruleUID))[1:] + ")"
+
+		args := make([]interface{}, 0, len(ruleUID)+2)
+		args = append(args, "DELETE FROM alert_rule WHERE org_id = ? AND uid IN "+params)
+		args = append(args, orgID)
+		for _, arg := range ruleUID {
+			args = append(args, arg)
+		}
+
+		_, err := sess.Exec(args...)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_uid = ?", orgID, ruleUID)
+		args[0] = "DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_uid IN " + params
+		_, err = sess.Exec(args...)
 
 		if err != nil {
 			return err
 		}
-
-		_, err = sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
+		args[0] = "DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid IN " + params
+		_, err = sess.Exec(args...)
 		if err != nil {
 			return err
 		}
