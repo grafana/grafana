@@ -57,7 +57,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       }
       const resourceResponse = await this.makeResourceGraphRequest<RawAzureSubscriptionItem[]>(query, 1, options);
       if (!resourceResponse.data.length) {
-        throw new Error('unable to fetch resource details');
+        throw new Error('unable to fetch subscriptions');
       }
       resources = resources.concat(resourceResponse.data);
       $skipToken = resourceResponse.$skipToken;
@@ -67,7 +67,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     return resources.map((subscription) => ({
       name: subscription.subscriptionName,
       id: subscription.subscriptionId,
-      uri: `/subscriptions/${subscription.subscriptionId}`, // usually the id is the uri, but for subscriptions it's the opposite
+      uri: `/subscriptions/${subscription.subscriptionId}`,
       typeLabel: 'Subscription',
       type: ResourceRowType.Subscription,
       children: [],
