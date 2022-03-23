@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, IconName, Link,  useTheme2 } from '@grafana/ui';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { MenuTriggerProps } from '@react-types/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
@@ -47,7 +47,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       if (isHovering) {
         state.open();
       } else {
-        state.close();
+        //state.close();
       }
     },
   });
@@ -60,7 +60,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         state.open();
       }
       if (!isFocused) {
-        state.close();
+        //state.close();
         setMenuHasFocus(false);
       }
     },
@@ -151,7 +151,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     overlayRef,
     placement: 'top',
     offset: 5,
-    isOpen: state.isOpen,
   });
 
   return (
