@@ -16,9 +16,10 @@ import (
 // validateRuleNode validates API model (definitions.PostableExtendedRuleNode) and converts it to models.AlertRule
 func validateRuleNode(
 	ruleNode *apimodels.PostableExtendedRuleNode,
-	groupName string,
+	orgId int64,
+	namespace string,
 	interval time.Duration,
-	namespace *models.Folder,
+	groupName *models.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
 	intervalSeconds := int64(interval.Seconds())
@@ -85,8 +86,6 @@ func validateRuleNode(
 		}
 	}
 
-	orgId := namespace.Id
-
 	if len(ruleNode.GrafanaManagedAlert.Data) != 0 {
 		cond := ngmodels.Condition{
 			Condition: ruleNode.GrafanaManagedAlert.Condition,
@@ -105,8 +104,8 @@ func validateRuleNode(
 		Data:            ruleNode.GrafanaManagedAlert.Data,
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
-		NamespaceUID:    strconv.FormatInt(namespace.Id, 10),
-		RuleGroup:       groupName,
+		NamespaceUID:    namespace,
+		RuleGroup:       groupName.Uid,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
 	}
@@ -140,6 +139,8 @@ func validateRuleNode(
 // Returns a slice that contains all rules described by API model or error if either group specification or an alert definition is not valid.
 func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
+	orgId int64,
+	namespace string,
 	groupName *models.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, error) {
@@ -166,7 +167,7 @@ func validateRuleGroup(
 	result := make([]*ngmodels.AlertRule, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
-		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, groupName, conditionValidator, cfg)
+		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], orgId, namespace, interval, groupName, conditionValidator, cfg)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
 			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)

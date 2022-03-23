@@ -76,7 +76,6 @@ import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { contextSrv } from 'app/core/services/context_srv';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
@@ -378,7 +377,7 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
   }
 
   const groupName = folder.title;
-  const namespace = contextSrv.user.orgId.toString();
+  const namespace = 'default'; // we can add support for a custom namespace later
 
   // fetch existing group details and rules
   const existingGroup = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, groupName);

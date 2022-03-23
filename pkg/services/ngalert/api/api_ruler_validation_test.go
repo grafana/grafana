@@ -113,7 +113,7 @@ func TestValidateRuleGroup(t *testing.T) {
 	t.Run("should validate struct and rules", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		conditionValidations := 0
-		alerts, err := validateRuleGroup(&g, folder, func(condition alertmodels.Condition) error {
+		alerts, err := validateRuleGroup(&g, 1, "default", folder, func(condition alertmodels.Condition) error {
 			conditionValidations++
 			return nil
 		}, cfg)
@@ -124,7 +124,7 @@ func TestValidateRuleGroup(t *testing.T) {
 	t.Run("should default to default interval from config if group interval is 0", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		g.Interval = 0
-		alerts, err := validateRuleGroup(&g, folder, func(condition alertmodels.Condition) error {
+		alerts, err := validateRuleGroup(&g, 1, "default", folder, func(condition alertmodels.Condition) error {
 			return nil
 		}, cfg)
 		require.NoError(t, err)
@@ -197,7 +197,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			g := testCase.group()
-			_, err := validateRuleGroup(g, folder, func(condition alertmodels.Condition) error {
+			_, err := validateRuleGroup(g, 1, "default", folder, func(condition alertmodels.Condition) error {
 				return nil
 			}, cfg)
 			require.Error(t, err)
@@ -306,7 +306,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			r := testCase.rule()
 			r.GrafanaManagedAlert.UID = ""
 
-			alert, err := validateRuleNode(r, name, interval, folder, func(condition alertmodels.Condition) error {
+			alert, err := validateRuleNode(r, 1, name, interval, folder, func(condition alertmodels.Condition) error {
 				return nil
 			}, cfg)
 			require.NoError(t, err)
@@ -316,7 +316,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 
 	t.Run("accepts empty group name", func(t *testing.T) {
 		r := validRule()
-		alert, err := validateRuleNode(&r, "", interval, folder, func(condition alertmodels.Condition) error {
+		alert, err := validateRuleNode(&r, 1, "", interval, folder, func(condition alertmodels.Condition) error {
 			return nil
 		}, cfg)
 		require.NoError(t, err)
@@ -456,7 +456,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				interval = *testCase.interval
 			}
 
-			_, err := validateRuleNode(r, "", interval, folder, f, cfg)
+			_, err := validateRuleNode(r, 1, "", interval, folder, f, cfg)
 			require.Error(t, err)
 			if testCase.assert != nil {
 				testCase.assert(t, r, err)
@@ -547,7 +547,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := testCase.rule()
-			alert, err := validateRuleNode(r, name, interval, folder, func(condition alertmodels.Condition) error {
+			alert, err := validateRuleNode(r, 1, name, interval, folder, func(condition alertmodels.Condition) error {
 				return nil
 			}, cfg)
 			require.NoError(t, err)
@@ -557,7 +557,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 
 	t.Run("accepts empty group name", func(t *testing.T) {
 		r := validRule()
-		alert, err := validateRuleNode(&r, "", interval, folder, func(condition alertmodels.Condition) error {
+		alert, err := validateRuleNode(&r, 1, "", interval, folder, func(condition alertmodels.Condition) error {
 			return nil
 		}, cfg)
 		require.NoError(t, err)
@@ -671,7 +671,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 				interval = *testCase.interval
 			}
 
-			_, err := validateRuleNode(r, "", interval, folder, f, cfg)
+			_, err := validateRuleNode(r, 1, "", interval, folder, f, cfg)
 			require.Error(t, err)
 			if testCase.assert != nil {
 				testCase.assert(t, r, err)
@@ -708,7 +708,7 @@ func TestValidateRuleNodeIntervalFailures(t *testing.T) {
 				return nil
 			}
 
-			_, err := validateRuleNode(&r, util.GenerateShortUID(), testCase.interval, randFolder(), f, cfg)
+			_, err := validateRuleNode(&r, 1, util.GenerateShortUID(), testCase.interval, randFolder(), f, cfg)
 			require.Error(t, err)
 		})
 	}

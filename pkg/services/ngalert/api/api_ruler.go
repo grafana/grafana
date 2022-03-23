@@ -166,20 +166,21 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 }
 
 func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response {
-	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	namespaceMap, err := srv.store.GetNamespacesWithGroups(c.Req.Context(), c.OrgId, c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
+
+	namespaceUIDs := make([]string, len(namespaceMap))
+	for namespace := range namespaceMap {
+		namespaceUIDs = append(namespaceUIDs, namespace)
+	}
+
 	result := apimodels.NamespaceConfigResponse{}
 
 	if len(namespaceMap) == 0 {
 		srv.log.Debug("User has no access to any namespaces")
 		return response.JSON(http.StatusOK, result)
-	}
-
-	namespaceUIDs := make([]string, len(namespaceMap))
-	for k := range namespaceMap {
-		namespaceUIDs = append(namespaceUIDs, k)
 	}
 
 	dashboardUID := c.Query("dashboard_uid")
@@ -192,8 +193,8 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	}
 
 	q := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.SignedInUser.OrgId,
 		NamespaceUIDs: namespaceUIDs,
+		OrgID:         c.SignedInUser.OrgId,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
@@ -203,39 +204,44 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	}
 
 	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
-	for _, r := range q.Result {
-		folder, ok := namespaceMap[r.NamespaceUID]
-		if !ok {
-			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", r.NamespaceUID, "rule", r.UID)
-			continue
-		}
-		namespace := folder.Title
-		_, ok = configs[namespace]
-		if !ok {
-			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
+
+	// we'll use this for a reverse lookup when we add the rules
+	groupUidToTitle := make(map[string]string)
+
+	// prepare the response structure based on the namespace -> groupname mapping
+	for namespace, folders := range namespaceMap {
+		for _, folder := range folders {
+			groupUidToTitle[folder.Uid] = folder.Title
+
 			configs[namespace] = make(map[string]apimodels.GettableRuleGroupConfig)
-			configs[namespace][r.RuleGroup] = apimodels.GettableRuleGroupConfig{
-				Name:     r.RuleGroup,
-				Interval: ruleGroupInterval,
-				Rules: []apimodels.GettableExtendedRuleNode{
-					toGettableExtendedRuleNode(*r, folder.Id),
-				},
+			configs[namespace][folder.Title] = apimodels.GettableRuleGroupConfig{
+				Name: folder.Title,
+				// TODO figure this out! The interval seems to be determined by the rule interval – that's fine but now we can have multiple
+				// rules in a groupname :(
+				Interval: model.Duration(1 * time.Minute),
+				Rules:    []apimodels.GettableExtendedRuleNode{},
 			}
-		} else {
-			ruleGroupConfig, ok := configs[namespace][r.RuleGroup]
-			if !ok {
-				ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
-				configs[namespace][r.RuleGroup] = apimodels.GettableRuleGroupConfig{
-					Name:     r.RuleGroup,
-					Interval: ruleGroupInterval,
-					Rules: []apimodels.GettableExtendedRuleNode{
-						toGettableExtendedRuleNode(*r, folder.Id),
-					},
-				}
-			} else {
-				ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r, folder.Id))
-				configs[namespace][r.RuleGroup] = ruleGroupConfig
-			}
+		}
+	}
+
+	// add the rules to the correct groups
+	for _, rule := range q.Result {
+		namespace := rule.NamespaceUID
+		groupName := groupUidToTitle[rule.RuleGroup]
+
+		group, ok := configs[namespace][groupName]
+		if !ok {
+			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", namespace, "rule", rule.UID)
+		}
+
+		rules := group.Rules
+		ruleGroupInterval := model.Duration(time.Duration(rule.IntervalSeconds) * time.Second)
+
+		configs[namespace][groupName] = apimodels.GettableRuleGroupConfig{
+			Name:     groupName,
+			Interval: ruleGroupInterval,
+			// TODO what is Namespace ID vs namespace UID?
+			Rules: append(rules, toGettableExtendedRuleNode(*rule, 0)),
 		}
 	}
 
@@ -250,14 +256,15 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
 	namespace := web.Params(c.Req)[":Namespace"]
 	groupName := ruleGroupConfig.Name
+	orgId := c.SignedInUser.OrgId
 
 	// TODO make sure we check if the namespace (which is a Grafana org) exists
-	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), groupName, c.SignedInUser.OrgId, c.SignedInUser, true)
+	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), groupName, orgId, c.SignedInUser, true)
 	if err != nil {
 		return toGroupNameErrorResponse(err)
 	}
 
-	rules, err := validateRuleGroup(&ruleGroupConfig, folder, conditionValidator(c, srv.DatasourceCache), srv.cfg)
+	rules, err := validateRuleGroup(&ruleGroupConfig, orgId, namespace, folder, conditionValidator(c, srv.DatasourceCache), srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

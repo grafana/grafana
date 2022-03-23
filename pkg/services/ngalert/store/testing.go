@@ -201,11 +201,11 @@ func (f *FakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.List
 
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespacesWithGroups(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string][]models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	namespacesMap := map[string]*models2.Folder{}
+	namespacesMap := map[string][]models2.Folder{}
 
 	_, ok := f.Rules[orgID]
 	if !ok {
@@ -214,7 +214,7 @@ func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2
 
 	for rg := range f.Rules[orgID] {
 		for namespace := range f.Rules[orgID][rg] {
-			namespacesMap[namespace] = &models2.Folder{}
+			namespacesMap[namespace] = []models2.Folder{}
 		}
 	}
 

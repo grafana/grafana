@@ -45,7 +45,7 @@ type RuleStore interface {
 	GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(ctx context.Context, query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(ctx context.Context, query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
+	GetNamespacesWithGroups(context.Context, int64, *models.SignedInUser) (map[string][]models.Folder, error)
 	GetFolderByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
@@ -341,27 +341,51 @@ func (st DBstore) GetRuleGroupAlertRules(ctx context.Context, query *ngmodels.Li
 	})
 }
 
-// GetNamespaces returns the folders that are visible to the user
-func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
-	namespaceMap := make(map[string]*models.Folder)
-	var page int64 = 1
-	for {
-		// if limit is negative; it fetches at most 1000
-		folders, err := st.FolderService.GetFolders(ctx, user, orgID, -1, page)
+type NamespacesFolderQuery struct {
+	Namespace string `xorm:"namespace"`
+	FolderUID string `xorm:"folder_uid"`
+	GroupName string `xorm:"groupName"`
+}
+
+// GetNamespaces returns the namespaces that are visible to the user and what folders are within that namespace
+func (st DBstore) GetNamespacesWithGroups(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string][]models.Folder, error) {
+	var namespaceFolderQuery []NamespacesFolderQuery
+	namespaceMap := make(map[string][]models.Folder)
+
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sess.
+			Select(`DISTINCT
+				namespace_uid as namespace,
+				dashboard.uid as folder_uid,
+				dashboard.title as groupName
+			`).
+			Table("alert_rule").
+			Join("INNER", "dashboard", "alert_rule.rule_group = dashboard.uid").
+			Where("alert_rule.org_id = ?", orgID).
+			Find(&namespaceFolderQuery)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, queryResult := range namespaceFolderQuery {
+		folder, err := st.FolderService.GetFolderByUID(ctx, user, orgID, queryResult.FolderUID)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(folders) == 0 {
-			break
-		}
-
-		for _, f := range folders {
-			namespaceMap[f.Uid] = f
-		}
-		page += 1
+		folders, _ := namespaceMap[queryResult.Namespace]
+		namespaceMap[queryResult.Namespace] = append(folders, *folder)
 	}
-	return namespaceMap, nil
+
+	return namespaceMap, err
 }
 
 // GetGroupNameByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
