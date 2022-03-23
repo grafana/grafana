@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
-import { PermissionLevelString } from '../../../types';
+import { AccessControlAction, PermissionLevelString } from '../../../types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -27,6 +27,8 @@ export interface Props {
    * initialFolderId needs to have an value > -1 or an error will be thrown.
    */
   skipInitialLoad?: boolean;
+  /** The id of the search input. Use this to set a matching label with htmlFor */
+  inputId?: string;
 }
 
 interface State {
@@ -79,7 +81,12 @@ export class FolderPicker extends PureComponent<Props, State> {
     const searchHits = await searchFolders(query, permissionLevel);
 
     const options: Array<SelectableValue<number>> = searchHits.map((hit) => ({ label: hit.title, value: hit.id }));
-    if (contextSrv.isEditor && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
+
+    const hasAccess =
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+
+    if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
       options.unshift({ label: rootName, value: 0 });
     }
 
@@ -169,12 +176,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { enableCreateNew } = this.props;
+    const { enableCreateNew, inputId } = this.props;
 
     return (
-      <div aria-label={selectors.components.FolderPicker.container}>
+      <div data-testid={selectors.components.FolderPicker.containerV2}>
         <AsyncSelect
-          menuShouldPortal
+          inputId={inputId}
+          aria-label={selectors.components.FolderPicker.input}
           loadingMessage="Loading folders..."
           defaultOptions
           defaultValue={folder}
@@ -183,6 +191,7 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
+          menuShouldPortal
         />
       </div>
     );

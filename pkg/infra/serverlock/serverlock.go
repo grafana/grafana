@@ -25,7 +25,7 @@ type ServerLockService struct {
 // LockAndExecute try to create a lock for this server and only executes the
 // `fn` function when successful. This should not be used at low internal. But services
 // that needs to be run once every ex 10m.
-func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName string, maxInterval time.Duration, fn func()) error {
+func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
 	// gets or creates a lockable row
 	rowLock, err := sl.getOrCreate(ctx, actionName)
 	if err != nil {
@@ -47,7 +47,7 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 	}
 
 	if acquiredLock {
-		fn()
+		fn(ctx)
 	}
 
 	return nil

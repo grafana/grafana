@@ -12,11 +12,12 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -24,6 +25,11 @@ const (
 	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
+)
+
+var (
+	// Provides current time. Can be overwritten in tests.
+	timeNow = time.Now
 )
 
 type receiverInitError struct {
@@ -55,21 +61,18 @@ func getAlertStatusColor(status model.AlertStatus) string {
 	return ColorAlertResolved
 }
 
-type NotificationChannelConfig struct {
-	UID                   string                        `json:"uid"`
-	Name                  string                        `json:"name"`
-	Type                  string                        `json:"type"`
-	DisableResolveMessage bool                          `json:"disableResolveMessage"`
-	Settings              *simplejson.Json              `json:"settings"`
-	SecureSettings        securejsondata.SecureJsonData `json:"secureSettings"`
+type NotificationChannel interface {
+	notify.Notifier
+	notify.ResolvedSender
 }
-
-// DecryptedValue returns decrypted value from secureSettings
-func (an *NotificationChannelConfig) DecryptedValue(field string, fallback string) string {
-	if value, ok := an.SecureSettings.DecryptedValue(field); ok {
-		return value
-	}
-	return fallback
+type NotificationChannelConfig struct {
+	OrgID                 int64             // only used internally
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string][]byte `json:"secureSettings"`
 }
 
 type httpCfg struct {

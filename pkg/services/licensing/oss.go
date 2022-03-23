@@ -16,10 +16,6 @@ type OSSLicensingService struct {
 	HooksService *hooks.HooksService
 }
 
-func (*OSSLicensingService) HasLicense() bool {
-	return false
-}
-
 func (*OSSLicensingService) Expiry() int64 {
 	return 0
 }
@@ -36,15 +32,19 @@ func (*OSSLicensingService) ContentDeliveryPrefix() string {
 	return "grafana-oss"
 }
 
-func (l *OSSLicensingService) LicenseURL(user *models.SignedInUser) string {
-	if user.IsGrafanaAdmin {
+func (l *OSSLicensingService) LicenseURL(showAdminLicensingPage bool) string {
+	if showAdminLicensingPage {
 		return l.Cfg.AppSubURL + "/admin/upgrading"
 	}
 
 	return "https://grafana.com/oss/grafana?utm_source=grafana_footer"
 }
 
-func (*OSSLicensingService) HasValidLicense() bool {
+func (*OSSLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*OSSLicensingService) FeatureEnabled(feature string) bool {
 	return false
 }
 
@@ -59,7 +59,7 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 				node.Children = append(node.Children, &dtos.NavLink{
 					Text: "Stats and license",
 					Id:   "upgrading",
-					Url:  l.LicenseURL(req.SignedInUser),
+					Url:  l.LicenseURL(req.IsGrafanaAdmin),
 					Icon: "unlock",
 				})
 			}

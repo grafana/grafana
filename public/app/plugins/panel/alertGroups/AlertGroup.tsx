@@ -8,8 +8,7 @@ import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabel
 import { AlertGroupHeader } from 'app/features/alerting/unified/components/alert-groups/AlertGroupHeader';
 import { CollapseToggle } from 'app/features/alerting/unified/components/CollapseToggle';
 import { getNotificationsTextColors } from 'app/features/alerting/unified/styles/notifications';
-import { makeAMLink } from 'app/features/alerting/unified/utils/misc';
-import { getMatcherQueryParams } from 'app/features/alerting/unified/utils/matchers';
+import { makeAMLink, makeLabelBasedSilenceLink } from 'app/features/alerting/unified/utils/misc';
 
 type Props = {
   alertManagerSourceName: string;
@@ -68,9 +67,7 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
                   )}
                   {alert.status.state === AlertState.Active && (
                     <LinkButton
-                      href={`${makeAMLink('/alerting/silence/new', alertManagerSourceName)}&${getMatcherQueryParams(
-                        alert.labels
-                      )}`}
+                      href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
                       className={styles.button}
                       icon={'bell-slash'}
                       size={'sm'}

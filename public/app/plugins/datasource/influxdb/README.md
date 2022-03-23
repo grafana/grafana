@@ -1,4 +1,4 @@
-# InfluxDB data source 
+# InfluxDB data source
 
 Grafana ships with built-in support for InfluxDB releases >0.9.x.
 

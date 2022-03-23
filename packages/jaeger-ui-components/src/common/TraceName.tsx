@@ -15,57 +15,31 @@
 import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import BreakableText from './BreakableText';
-import LoadingIndicator from './LoadingIndicator';
-import { fetchedState, FALLBACK_TRACE_NAME } from '../constants';
+import { FALLBACK_TRACE_NAME } from '../constants';
+import { TNil } from '../types';
 
-import { FetchedState, TNil } from '../types';
-import { ApiError } from '../types/api-error';
-import { createStyle, safeSize, Theme, useTheme } from '../Theme';
-
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     TraceName: css`
       label: TraceName;
-      font-size: ${safeSize(theme.components?.TraceName?.fontSize, 'unset')};
-    `,
-    TraceNameError: css`
-      label: TraceNameError;
-      color: #c00;
+      font-size: ${theme.typography.size.lg};
     `,
   };
-});
+};
 
 type Props = {
   className?: string;
-  error?: ApiError | TNil;
-  state?: FetchedState | TNil;
   traceName?: string | TNil;
 };
 
 export default function TraceName(props: Props) {
-  const { className, error, state, traceName } = props;
-  const isErred = state === fetchedState.ERROR;
-  let title: string | React.ReactNode = traceName || FALLBACK_TRACE_NAME;
-  const styles = getStyles(useTheme());
-  let errorCssClass = '';
-  if (isErred) {
-    errorCssClass = styles.TraceNameError;
-    let titleStr = '';
-    if (error) {
-      titleStr = typeof error === 'string' ? error : error.message || String(error);
-    }
-    if (!titleStr) {
-      titleStr = 'Error: Unknown error';
-    }
-    title = titleStr;
-    title = <BreakableText text={titleStr} />;
-  } else if (state === fetchedState.LOADING) {
-    title = <LoadingIndicator small />;
-  } else {
-    const text = String(traceName || FALLBACK_TRACE_NAME);
-    title = <BreakableText text={text} />;
-  }
-  return <span className={cx(styles.TraceName, errorCssClass, className)}>{title}</span>;
+  const { className, traceName } = props;
+  const styles = useStyles2(getStyles);
+  const text = String(traceName || FALLBACK_TRACE_NAME);
+  const title = <BreakableText text={text} />;
+  return <span className={cx(styles.TraceName, className)}>{title}</span>;
 }

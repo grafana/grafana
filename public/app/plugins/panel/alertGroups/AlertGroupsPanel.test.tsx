@@ -6,7 +6,6 @@ import { byTestId } from 'testing-library-selector';
 import { configureStore } from 'app/store/configureStore';
 import { AlertGroupPanelOptions } from './types';
 import { getDefaultTimeRange, LoadingState, PanelProps, FieldConfigSource } from '@grafana/data';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { fetchAlertGroups } from 'app/features/alerting/unified/api/alertmanager';
 import {
   mockAlertGroup,
@@ -21,20 +20,18 @@ import { render, waitFor } from '@testing-library/react';
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     buildInfo: {},
     panels: {},
-    featureToggles: {
-      ngalert: true,
-    },
+    unifiedAlertingEnabled: true,
   },
 }));
 
 const mocks = {
   api: {
-    fetchAlertGroups: typeAsJestMock(fetchAlertGroups),
+    fetchAlertGroups: jest.mocked(fetchAlertGroups),
   },
 };
 
@@ -67,7 +64,7 @@ const defaultProps: PanelProps<AlertGroupPanelOptions> = {
     removeAllListeners: jest.fn(),
     newScopedBus: jest.fn(),
   },
-  fieldConfig: ({} as unknown) as FieldConfigSource,
+  fieldConfig: {} as unknown as FieldConfigSource,
   height: 400,
   onChangeTimeRange: jest.fn(),
   onFieldConfigChange: jest.fn(),

@@ -3,6 +3,7 @@ import { alertRuleToQueries } from './query';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 
 describe('alertRuleToQueries', () => {
   it('it should convert grafana alert', () => {
@@ -110,7 +111,9 @@ const grafanaAlert = {
             type: 'query',
           },
         ],
-        datasource: '__expr__',
+        datasource: {
+          uid: ExpressionDatasourceUID,
+        },
         hide: false,
         refId: 'B',
         type: 'classic_conditions',

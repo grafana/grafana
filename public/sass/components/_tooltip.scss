@@ -111,6 +111,10 @@
   a {
     color: $tooltipLinkColor;
   }
+
+  a.external-link {
+    color: $tooltipExternalLinkColor;
+  }
 }
 
 .grafana-tip {

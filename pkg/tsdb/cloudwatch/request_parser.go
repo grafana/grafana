@@ -10,9 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
+
+var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 
 // parseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
 func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*cloudWatchQuery, error) {
@@ -140,9 +143,15 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
 		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
 		// it would likely collide with some ref id. That's why the `query` prefix is used.
-		id = fmt.Sprintf("query%s", refId)
+		suffix := refId
+		if !validMetricDataID.MatchString(suffix) {
+			uuid := uuid.NewString()
+			suffix = strings.Replace(uuid, "-", "", -1)
+		}
+		id = fmt.Sprintf("query%s", suffix)
 	}
 	expression := model.Get("expression").MustString("")
+	sqlExpression := model.Get("sqlExpression").MustString("")
 	alias := model.Get("alias").MustString()
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
@@ -154,21 +163,34 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 
 	matchExact := model.Get("matchExact").MustBool(true)
+	metricQueryType := metricQueryType(model.Get("metricQueryType").MustInt(0))
+
+	var metricEditorModeValue metricEditorMode
+	memv, err := model.Get("metricEditorMode").Int()
+	if err != nil && len(expression) > 0 {
+		// this should only ever happen if this is an alerting query that has not yet been migrated in the frontend
+		metricEditorModeValue = MetricEditorModeRaw
+	} else {
+		metricEditorModeValue = metricEditorMode(memv)
+	}
 
 	return &cloudWatchQuery{
-		RefId:          refId,
-		Region:         region,
-		Id:             id,
-		Namespace:      namespace,
-		MetricName:     metricName,
-		Statistic:      statistic,
-		Expression:     expression,
-		ReturnData:     returnData,
-		Dimensions:     dimensions,
-		Period:         period,
-		Alias:          alias,
-		MatchExact:     matchExact,
-		UsedExpression: "",
+		RefId:            refId,
+		Region:           region,
+		Id:               id,
+		Namespace:        namespace,
+		MetricName:       metricName,
+		Statistic:        statistic,
+		Expression:       expression,
+		ReturnData:       returnData,
+		Dimensions:       dimensions,
+		Period:           period,
+		Alias:            alias,
+		MatchExact:       matchExact,
+		UsedExpression:   "",
+		MetricQueryType:  metricQueryType,
+		MetricEditorMode: metricEditorModeValue,
+		SqlExpression:    sqlExpression,
 	}, nil
 }
 

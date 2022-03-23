@@ -1,25 +1,31 @@
 package libraryelements
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	dboards "github.com/grafana/grafana/pkg/dashboards"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const userInDbName = "user_in_db"
@@ -59,17 +65,24 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
 			require.NoError(t, err)
 
-			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext, sc.folder.Uid)
+			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.Uid)
 			require.EqualError(t, err, ErrFolderHasConnectedLibraryElements.Error())
+		})
+
+	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.Uid+"xxxx")
+			require.EqualError(t, err, models.ErrFolderNotFound.Error())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateVariableCommand(sc.folder.Id, "query0")
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			resp = sc.service.getAllHandler(sc.reqContext)
@@ -80,7 +93,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NotNil(t, result.Result)
 			require.Equal(t, 2, len(result.Result.Elements))
 
-			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext, sc.folder.Uid)
+			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.Uid)
 			require.NoError(t, err)
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -163,7 +176,7 @@ func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryE
 }
 
 type scenarioContext struct {
-	ctx           *macaron.Context
+	ctx           *web.Context
 	service       *LibraryElementService
 	reqContext    *models.ReqContext
 	user          models.SignedInUser
@@ -186,16 +199,14 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 		User:      &user,
 		Overwrite: false,
 	}
-	origUpdateAlerting := dashboards.UpdateAlerting
-	t.Cleanup(func() {
-		dashboards.UpdateAlerting = origUpdateAlerting
-	})
-	dashboards.UpdateAlerting = func(store dboards.Store, orgID int64, dashboard *models.Dashboard,
-		user *models.SignedInUser) error {
-		return nil
-	}
 
-	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil)
+	service := dashboardservice.ProvideDashboardService(
+		setting.NewCfg(), dashboardStore, dashAlertExtractor,
+		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+	)
+	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -205,17 +216,30 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
-	s := dashboards.NewFolderService(user.OrgId, &user, sqlStore)
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
+	permissionsServices := acmock.NewPermissionsServicesMock()
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+
+	d := dashboardservice.ProvideDashboardService(
+		cfg, dashboardStore, nil,
+		features, permissionsServices,
+	)
+	ac := acmock.New()
+	s := dashboardservice.ProvideFolderService(
+		cfg, d, dashboardStore, nil,
+		features, permissionsServices, ac,
+	)
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), title, title)
+	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
 	require.NoError(t, err)
 
-	updateFolderACL(t, sqlStore, folder.Id, items)
+	updateFolderACL(t, dashboardStore, folder.Id, items)
 
 	return folder
 }
 
-func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, items []folderACLItem) {
+func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, folderID int64, items []folderACLItem) {
 	t.Helper()
 
 	if len(items) == 0 {
@@ -235,7 +259,7 @@ func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, 
 		})
 	}
 
-	err := sqlStore.UpdateDashboardACL(folderID, aclItems)
+	err := dashboardStore.UpdateDashboardACL(context.Background(), folderID, aclItems)
 	require.NoError(t, err)
 }
 
@@ -264,10 +288,13 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 
 func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
+	store := mockstore.NewSQLStoreMock()
+	guardian.InitLegacyGuardian(store)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel")
-		resp := sc.service.createHandler(sc.reqContext, command)
+		sc.reqContext.Req.Body = mockRequestBody(command)
+		resp := sc.service.createHandler(sc.reqContext)
 		sc.initialResult = validateAndUnMarshalResponse(t, resp)
 
 		fn(t, sc)
@@ -280,13 +307,28 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		ctx := macaron.Context{Req: &http.Request{}}
+		ctx := web.Context{Req: &http.Request{
+			Header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+		}}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
+		guardian.InitLegacyGuardian(sqlStore)
+		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboardService := dashboardservice.ProvideDashboardService(
+			setting.NewCfg(), dashboardStore, nil,
+			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		)
+		ac := acmock.New()
 		service := LibraryElementService{
 			Cfg:      setting.NewCfg(),
 			SQLStore: sqlStore,
+			folderService: dashboardservice.ProvideFolderService(
+				setting.NewCfg(), dashboardService, dashboardStore, nil,
+				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac,
+			),
 		}
 
 		user := models.SignedInUser{
@@ -307,6 +349,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Name:  "User In DB",
 			Login: userInDbName,
 		}
+
 		_, err := sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
 
@@ -333,4 +376,9 @@ func getCompareOptions() []cmp.Option {
 			return in.UTC().Unix()
 		}),
 	}
+}
+
+func mockRequestBody(v interface{}) io.ReadCloser {
+	b, _ := json.Marshal(v)
+	return io.NopCloser(bytes.NewReader(b))
 }

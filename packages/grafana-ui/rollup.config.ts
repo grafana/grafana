@@ -34,6 +34,7 @@ const buildCjsPackage = ({ env }) => {
       '@grafana/e2e-selectors',
       'moment',
       'jquery', // required to use jquery.plot, which is assigned externally
+      'react-inlinesvg', // required to mock Icon svg loading in tests
     ],
     plugins: [
       commonjs({

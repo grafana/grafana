@@ -10,6 +10,7 @@ import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
 import { useLocation } from 'react-router-dom';
 import { InspectTab } from 'app/features/inspector/types';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -63,7 +64,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id];
+  const panelState = getPanelStateForModel(state, props.panel);
   if (!panelState) {
     return { plugin: null };
   }

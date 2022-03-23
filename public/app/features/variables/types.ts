@@ -1,15 +1,23 @@
 import { ComponentType } from 'react';
 import {
+  BusEventWithPayload,
   DataQuery,
   DataSourceJsonData,
+  DataSourceRef,
   LoadingState,
   QueryEditorProps,
   VariableModel as BaseVariableModel,
   VariableType,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
-import { NEW_VARIABLE_ID } from './state/types';
-import { VariableQueryProps } from '../../types';
+import { NEW_VARIABLE_ID } from './constants';
+
+export enum TransactionStatus {
+  NotStarted = 'Not started',
+  Fetching = 'Fetching',
+  Completed = 'Completed',
+}
 
 export enum VariableRefresh {
   never, // removed from the UI
@@ -48,7 +56,7 @@ export interface AdHocVariableFilter {
 }
 
 export interface AdHocVariableModel extends VariableModel {
-  datasource: string | null;
+  datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
 }
 
@@ -67,7 +75,7 @@ export interface DataSourceVariableModel extends VariableWithMultiSupport {
 }
 
 export interface QueryVariableModel extends DataSourceVariableModel {
-  datasource: string | null;
+  datasource: DataSourceRef | null;
   definition: string;
   sort: VariableSort;
   queryValue?: string;
@@ -123,6 +131,7 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
 
 export interface VariableModel extends BaseVariableModel {
   id: string;
+  rootStateKey: string | null;
   global: boolean;
   hide: VariableHide;
   skipUrlSync: boolean;
@@ -134,9 +143,10 @@ export interface VariableModel extends BaseVariableModel {
 
 export const initialVariableModelState: VariableModel = {
   id: NEW_VARIABLE_ID,
+  rootStateKey: null,
   name: '',
   label: null,
-  type: ('' as unknown) as VariableType,
+  type: '' as unknown as VariableType,
   global: false,
   index: -1,
   hide: VariableHide.dontHide,
@@ -146,7 +156,35 @@ export const initialVariableModelState: VariableModel = {
   description: null,
 };
 
+export interface VariableQueryEditorProps {
+  query: any;
+  onChange: (query: any, definition: string) => void;
+  datasource: any;
+  templateSrv: TemplateSrv;
+}
+
 export type VariableQueryEditorType<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
-> = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
+> = ComponentType<VariableQueryEditorProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
+
+export interface VariablesChangedEvent {
+  refreshAll: boolean;
+  panelIds: number[];
+}
+
+export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-changed';
+}
+
+export interface VariablesTimeRangeProcessDoneEvent {
+  variableIds: string[];
+}
+
+export class VariablesTimeRangeProcessDone extends BusEventWithPayload<VariablesTimeRangeProcessDoneEvent> {
+  static type = 'variables-time-range-process-done';
+}
+
+export class VariablesChangedInUrl extends BusEventWithPayload<VariablesChangedEvent> {
+  static type = 'variables-changed-in-url';
+}

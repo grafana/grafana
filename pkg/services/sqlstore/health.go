@@ -1,15 +1,16 @@
 package sqlstore
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
+	"context"
+
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
-	bus.AddHandler("sql", GetDBHealthQuery)
-}
-
-func GetDBHealthQuery(query *models.GetDBHealthQuery) error {
-	_, err := x.Exec("SELECT 1")
-	return err
+// GetDBHealthQuery executes a query to check
+// the availability of the database.
+func (ss *SQLStore) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
+	return ss.WithDbSession(ctx, func(session *DBSession) error {
+		_, err := session.Exec("SELECT 1")
+		return err
+	})
 }

@@ -9,7 +9,6 @@ import ResponseParser from './response_parser';
 import { MySQLOptions, MySQLQuery, MysqlQueryForInterpolation } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
@@ -21,8 +20,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<MySQLOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
@@ -62,7 +60,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: this.getRef(),
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
           rawQuery: true,
         };
@@ -80,7 +78,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
     const queryModel = new MySQLQueryModel(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: queryModel.render(this.interpolateVariable as any),
       format: target.format,
     };
@@ -95,7 +93,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
     const query = {
       refId: options.annotation.name,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
@@ -135,12 +133,12 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
     const interpolatedQuery = {
       refId: refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql,
       format: 'table',
     };
 
-    const range = this.timeSrv.timeRange();
+    const range = optionalOptions?.range;
 
     return lastValueFrom(
       getBackendSrv()
@@ -148,8 +146,8 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
           url: '/api/ds/query',
           method: 'POST',
           data: {
-            from: range.from.valueOf().toString(),
-            to: range.to.valueOf().toString(),
+            from: range?.from?.valueOf()?.toString(),
+            to: range?.to?.valueOf()?.toString(),
             queries: [interpolatedQuery],
           },
           requestId: refId,
@@ -179,7 +177,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
                 refId: 'A',
                 intervalMs: 1,
                 maxDataPoints: 1,
-                datasourceId: this.id,
+                datasource: this.getRef(),
                 rawSql: 'SELECT 1',
                 format: 'table',
               },
@@ -207,6 +205,6 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
     rawSql = rawSql.replace('$__', '');
 
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.containsTemplate(rawSql);
   }
 }

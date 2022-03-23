@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -11,8 +12,8 @@ import (
 // DeleteExpiredSnapshots removes snapshots with old expiry dates.
 // SnapShotRemoveExpired is deprecated and should be removed in the future.
 // Snapshot expiry is decided by the user when they share the snapshot.
-func (ss *SQLStore) DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if !setting.SnapShotRemoveExpired {
 			sqlog.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
 			return nil
@@ -29,8 +30,8 @@ func (ss *SQLStore) DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCom
 	})
 }
 
-func (ss *SQLStore) CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// never
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
@@ -59,8 +60,8 @@ func (ss *SQLStore) CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotC
 	})
 }
 
-func (ss *SQLStore) DeleteDashboardSnapshot(cmd *models.DeleteDashboardSnapshotCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
 		_, err := sess.Exec(rawSQL, cmd.DeleteKey)
 		return err

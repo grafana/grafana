@@ -4,10 +4,8 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "rootDirs": ["."],
-    "paths": {
-      "@grafana/slate-react": ["../grafana-ui/node_modules/@types/slate-react"]
-    },
-    "typeRoots": ["node_modules/@types"]
+    "incremental": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",

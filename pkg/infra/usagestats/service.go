@@ -15,10 +15,13 @@ type Report struct {
 	UsageStatsId    string                 `json:"usageStatsId"`
 }
 
-type MetricsFunc func() (map[string]interface{}, error)
+type MetricsFunc func(context.Context) (map[string]interface{}, error)
+
+type SendReportCallbackFunc func()
 
 type Service interface {
 	GetUsageReport(context.Context) (Report, error)
 	RegisterMetricsFunc(MetricsFunc)
-	ShouldBeReported(string) bool
+	RegisterSendReportCallback(SendReportCallbackFunc)
+	ShouldBeReported(context.Context, string) bool
 }

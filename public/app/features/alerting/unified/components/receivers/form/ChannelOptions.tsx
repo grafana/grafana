@@ -13,6 +13,7 @@ export interface Props<R extends ChannelValues> {
   onResetSecureField: (key: string) => void;
   errors?: FieldErrors<R>;
   pathPrefix?: string;
+  readOnly?: boolean;
 }
 
 export function ChannelOptions<R extends ChannelValues>({
@@ -22,6 +23,7 @@ export function ChannelOptions<R extends ChannelValues>({
   secureFields,
   errors,
   pathPrefix = '',
+  readOnly = false,
 }: Props<R>): JSX.Element {
   const { watch } = useFormContext<ReceiverFormValues<R>>();
   const currentFormValues = watch() as Record<string, any>; // react hook form types ARE LYING!
@@ -44,29 +46,32 @@ export function ChannelOptions<R extends ChannelValues>({
                 readOnly={true}
                 value="Configured"
                 suffix={
-                  <Button
-                    onClick={() => onResetSecureField(option.propertyName)}
-                    variant="link"
-                    type="button"
-                    size="sm"
-                  >
-                    Clear
-                  </Button>
+                  readOnly ? null : (
+                    <Button
+                      onClick={() => onResetSecureField(option.propertyName)}
+                      variant="link"
+                      type="button"
+                      size="sm"
+                    >
+                      Clear
+                    </Button>
+                  )
                 }
               />
             </Field>
           );
         }
 
-        const error: FieldError | DeepMap<any, FieldError> | undefined = ((option.secure
-          ? errors?.secureSettings
-          : errors?.settings) as DeepMap<any, FieldError> | undefined)?.[option.propertyName];
+        const error: FieldError | DeepMap<any, FieldError> | undefined = (
+          (option.secure ? errors?.secureSettings : errors?.settings) as DeepMap<any, FieldError> | undefined
+        )?.[option.propertyName];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
 
         return (
           <OptionField
             defaultValue={defaultValue}
+            readOnly={readOnly}
             key={key}
             error={error}
             pathPrefix={option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`}

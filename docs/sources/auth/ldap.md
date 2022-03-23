@@ -11,7 +11,7 @@ weight = 300
 The LDAP integration in Grafana allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
-> [Enhanced LDAP authentication]({{< relref "../enterprise/enhanced_ldap.md" >}}) is available in [Grafana Cloud Pro and Advanced](https://grafana.com/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> [Enhanced LDAP authentication]({{< relref "../enterprise/enhanced_ldap.md" >}}) is available in [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 > Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
 
@@ -68,7 +68,7 @@ ssl_skip_verify = false
 bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
-bind_password = 'grafana'
+bind_password = "grafana"
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 # Allow login from email or username, example "(|(sAMAccountName=%s)(userPrincipalName=%s))"
@@ -236,7 +236,7 @@ use_ssl = false
 start_tls = false
 ssl_skip_verify = false
 bind_dn = "cn=admin,dc=grafana,dc=org"
-bind_password = 'grafana'
+bind_password = "grafana"
 search_filter = "(cn=%s)"
 search_base_dns = ["dc=grafana,dc=org"]
 
@@ -263,7 +263,7 @@ use_ssl = false
 start_tls = false
 ssl_skip_verify = false
 bind_dn = "cn=admin,dc=grafana,dc=org"
-bind_password = 'grafana'
+bind_password = "grafana"
 search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 
@@ -286,7 +286,7 @@ start_tls = false
 ssl_skip_verify = false
 
 bind_dn = "cn=admin,dc=grafana,dc=org"
-bind_password = 'grafana'
+bind_password = "grafana"
 search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 

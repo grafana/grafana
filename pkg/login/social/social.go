@@ -45,10 +45,12 @@ type OAuthInfo struct {
 	TeamsUrl               string
 	AllowSignup            bool
 	Name                   string
+	Icon                   string
 	TlsClientCert          string
 	TlsClientKey           string
 	TlsClientCa            string
 	TlsSkipVerify          bool
+	UsePKCE                bool
 }
 
 func ProvideService(cfg *setting.Cfg) *SocialService {
@@ -80,10 +82,12 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			HostedDomain:         sec.Key("hosted_domain").String(),
 			AllowSignup:          sec.Key("allow_sign_up").MustBool(),
 			Name:                 sec.Key("name").MustString(name),
+			Icon:                 sec.Key("icon").String(),
 			TlsClientCert:        sec.Key("tls_client_cert").String(),
 			TlsClientKey:         sec.Key("tls_client_key").String(),
 			TlsClientCa:          sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:        sec.Key("tls_skip_verify_insecure").MustBool(),
+			UsePKCE:              sec.Key("use_pkce").MustBool(),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
@@ -145,9 +149,10 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:        newSocialBase(name, &config, info),
-				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole: cfg.AutoAssignOrgRole,
+				SocialBase:          newSocialBase(name, &config, info),
+				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
+				autoAssignOrgRole:   cfg.AutoAssignOrgRole,
+				roleAttributeStrict: info.RoleAttributeStrict,
 			}
 		}
 

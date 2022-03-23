@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataSourceRef } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
@@ -9,10 +9,15 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
   }
 };
 
-export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): DataQuery[] {
+export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datasource?: DataSourceRef): DataQuery[] {
   const q = query || {};
   q.refId = getNextRefIdChar(queries);
   q.hide = false;
+
+  if (!q.datasource && datasource) {
+    q.datasource = datasource;
+  }
+
   return [...queries, q as DataQuery];
 }
 
@@ -40,4 +45,14 @@ function getRefId(num: number): string {
   } else {
     return getRefId(Math.floor(num / letters.length) - 1) + letters[num % letters.length];
   }
+}
+
+/**
+ * Returns the input value for non empty string and undefined otherwise
+ *
+ * It is inadvisable to set a query param to an empty string as it will be added to the URL.
+ * It is better to keep it undefined so the param won't be added to the URL at all.
+ */
+export function getQueryParamValue(value: string | undefined | null): string | undefined {
+  return value || undefined;
 }

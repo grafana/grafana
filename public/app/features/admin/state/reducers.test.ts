@@ -32,7 +32,7 @@ const makeInitialUserListAdminState = (): UserListAdminState => ({
   perPage: 50,
   totalPages: 1,
   showPaging: false,
-  filter: 'all',
+  filters: [{ name: 'activeLast30Days', value: true }],
   isLoading: false,
 });
 
@@ -77,7 +77,7 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: (null as unknown) as string,
+                error: null as unknown as string,
               },
             ])
           )
@@ -88,7 +88,7 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: (null as unknown) as string,
+                error: null as unknown as string,
               },
             ],
             ldapError: undefined,

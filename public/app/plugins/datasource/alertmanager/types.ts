@@ -1,5 +1,7 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 
+import { DataSourceJsonData } from '@grafana/data';
+
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
@@ -87,17 +89,23 @@ export type Receiver = {
   [key: string]: any;
 };
 
+type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
+
 export type Route = {
   receiver?: string;
   group_by?: string[];
   continue?: boolean;
+  object_matchers?: ObjectMatcher[];
   matchers?: string[];
+  /** @deprecated use `object_matchers` */
   match?: Record<string, string>;
+  /** @deprecated use `object_matchers` */
   match_re?: Record<string, string>;
   group_wait?: string;
   group_interval?: string;
   repeat_interval?: string;
   routes?: Route[];
+  mute_time_intervals?: string[];
 };
 
 export type InhibitRule = {
@@ -134,6 +142,7 @@ export type AlertmanagerConfig = {
   route?: Route;
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
+  mute_time_intervals?: MuteTimeInterval[];
 };
 
 export type Matcher = {
@@ -227,15 +236,18 @@ export interface AlertmanagerStatus {
   };
 }
 
+export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
+
 export interface TestReceiversPayload {
   receivers?: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 interface TestReceiversResultGrafanaReceiverConfig {
   name: string;
   uid?: string;
   error?: string;
-  status: 'failed';
+  status: 'ok' | 'failed';
 }
 
 interface TestReceiversResultReceiver {
@@ -246,3 +258,47 @@ export interface TestReceiversResult {
   notified_at: string;
   receivers: TestReceiversResultReceiver[];
 }
+
+export interface ExternalAlertmanagers {
+  activeAlertManagers: AlertmanagerUrl[];
+  droppedAlertManagers: AlertmanagerUrl[];
+}
+
+export interface AlertmanagerUrl {
+  url: string;
+}
+
+export interface ExternalAlertmanagersResponse {
+  data: ExternalAlertmanagers;
+  status: 'string';
+}
+
+export interface ExternalAlertmanagerConfig {
+  alertmanagers: string[];
+  alertmanagersChoice: string;
+}
+
+export enum AlertManagerImplementation {
+  cortex = 'cortex',
+  prometheus = 'prometheus',
+}
+
+export interface TimeRange {
+  /** Times are in format `HH:MM` in UTC */
+  start_time: string;
+  end_time: string;
+}
+export interface TimeInterval {
+  times?: TimeRange[];
+  weekdays?: string[];
+  days_of_month?: string[];
+  months?: string[];
+  years?: string[];
+}
+
+export type MuteTimeInterval = {
+  name: string;
+  time_intervals: TimeInterval[];
+};
+
+export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };

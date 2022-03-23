@@ -197,7 +197,7 @@ describe('GraphNG utils', () => {
       timeZone: DefaultTimeZone,
       getTimeRange: getDefaultTimeRange,
       eventBus: new EventBusSrv(),
-      sync: DashboardCursorSync.Tooltip,
+      sync: () => DashboardCursorSync.Tooltip,
       allFrames: [frame!],
     }).getConfig();
     expect(result).toMatchSnapshot();

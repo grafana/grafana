@@ -1,4 +1,4 @@
-# Dashlist Panel -  Native Plugin
+# Dashlist Panel - Native Plugin
 
 This Dashlist panel is **included** with Grafana.
 

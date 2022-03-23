@@ -2,87 +2,114 @@ var config = {
   defaults: {
     concurrency: 1,
     runners: ['axe'],
+    useIncognitoBrowserContext: false,
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
     },
+    // see https://github.com/grafana/grafana/pull/41693#issuecomment-979921463 for context
+    // on why we're ignoring singleValue/react-select-*-placeholder elements
+    hideElements: '#updateVersion, [class*="-singleValue"], [id^="react-select-"][id$="-placeholder"]',
   },
 
   urls: [
     {
       url: '${HOST}/login',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 12,
+    },
+    {
+      url: '${HOST}/login',
+      wait: 500,
       actions: [
+        "wait for element input[name='user'] to be added",
         "set field input[name='user'] to admin",
         "set field input[name='password'] to admin",
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 3,
+      threshold: 13,
+      rootElement: '.main-view',
     },
     {
       url: '${HOST}/?orgId=1',
-      threshold: 7,
+      wait: 500,
+      threshold: 0,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
-      hideElements: '.sidemenu',
-      threshold: 2,
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
-      rootElement: '.dashboard-settings',
-      threshold: 10,
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
     },
     {
       url: '${HOST}/?orgId=1&search=open',
+      wait: 500,
       rootElement: '.main-view',
-      threshold: 15,
+      threshold: 0,
     },
     {
       url: '${HOST}/alerting/list',
+      wait: 500,
       rootElement: '.main-view',
-      threshold: 7,
-    },
-    {
-      url: '${HOST}/datasources',
-      rootElement: '.main-view',
-      threshold: 36,
-    },
-    {
-      url: '${HOST}/org/users',
-      rootElement: '.main-view',
-      threshold: 4,
-    },
-    {
-      url: '${HOST}/org/teams',
-      rootElement: '.main-view',
-      threshold: 1,
-    },
-    {
-      url: '${HOST}/plugins',
-      rootElement: '.main-view',
-      threshold: 41,
-    },
-    {
-      url: '${HOST}/org',
-      rootElement: '.main-view',
-      threshold: 2,
-    },
-    {
-      url: '${HOST}/org/apikeys',
-      rootElement: '.main-view',
+      // the unified alerting promotion alert's content contrast is too low
+      // see https://github.com/grafana/grafana/pull/41829
       threshold: 5,
     },
     {
-      url: '${HOST}/dashboards',
+      url: '${HOST}/datasources',
+      wait: 500,
       rootElement: '.main-view',
-      threshold: 11,
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/org/users',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/org/teams',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/plugins',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/org',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/org/apikeys',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/dashboards',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
     },
   ],
 };
 
 function myPa11yCiConfiguration(urls, defaults) {
   const HOST_SERVER = process.env.HOST || 'localhost';
-  const PORT_SERVER = process.env.PORT || '3000';
+  const PORT_SERVER = process.env.PORT || '3001';
   for (var idx = 0; idx < urls.length; idx++) {
     urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
   }

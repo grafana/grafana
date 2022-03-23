@@ -2,15 +2,28 @@ package notifier
 
 import (
 	"context"
+	"crypto/md5"
+	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type FakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
+}
+
+func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
+	t.Helper()
+
+	return FakeConfigStore{
+		configs: configs,
+	}
 }
 
 func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
@@ -21,7 +34,7 @@ func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context)
 	return result, nil
 }
 
-func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
+func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
 	var ok bool
 	query.Result, ok = f.configs[query.OrgID]
 	if !ok {
@@ -31,7 +44,7 @@ func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(query *models.GetLa
 	return nil
 }
 
-func (f *FakeConfigStore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (f *FakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
@@ -42,7 +55,7 @@ func (f *FakeConfigStore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertman
 	return nil
 }
 
-func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
+func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
@@ -57,8 +70,30 @@ func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(cmd *models.
 	return nil
 }
 
+func (f *FakeConfigStore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	if config, exists := f.configs[cmd.OrgID]; exists && config.ConfigurationHash == cmd.FetchedConfigurationHash {
+		f.configs[cmd.OrgID] = &models.AlertConfiguration{
+			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+			OrgID:                     cmd.OrgID,
+			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
+			ConfigurationVersion:      "v1",
+			Default:                   cmd.Default,
+		}
+		return nil
+	}
+	return errors.New("config not found or hash not valid")
+}
+
 type FakeOrgStore struct {
 	orgs []int64
+}
+
+func NewFakeOrgStore(t *testing.T, orgs []int64) FakeOrgStore {
+	t.Helper()
+
+	return FakeOrgStore{
+		orgs: orgs,
+	}
 }
 
 func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
@@ -70,7 +105,7 @@ type FakeKVStore struct {
 	store map[int64]map[string]map[string]string
 }
 
-func newFakeKVStore(t *testing.T) *FakeKVStore {
+func NewFakeKVStore(t *testing.T) *FakeKVStore {
 	t.Helper()
 
 	return &FakeKVStore{
@@ -128,6 +163,29 @@ func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, ke
 	delete(fkv.store[orgId][namespace], key)
 
 	return nil
+}
+
+func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string, keyPrefix string) ([]kvstore.Key, error) {
+	fkv.mtx.Lock()
+	defer fkv.mtx.Unlock()
+	var keys []kvstore.Key
+	for orgIDFromStore, namespaceMap := range fkv.store {
+		if orgID != kvstore.AllOrganizations && orgID != orgIDFromStore {
+			continue
+		}
+		if keyMap, exists := namespaceMap[namespace]; exists {
+			for k := range keyMap {
+				if strings.HasPrefix(k, keyPrefix) {
+					keys = append(keys, kvstore.Key{
+						OrgId:     orgIDFromStore,
+						Namespace: namespace,
+						Key:       keyPrefix,
+					})
+				}
+			}
+		}
+	}
+	return keys, nil
 }
 
 type fakeState struct {

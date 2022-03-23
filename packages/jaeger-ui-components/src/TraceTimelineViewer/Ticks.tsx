@@ -15,12 +15,14 @@
 import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { formatDuration } from './utils';
 import { TNil } from '../types';
-import { autoColor, createStyle, Theme, useTheme } from '../Theme';
+import { autoColor } from '../Theme';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     Ticks: css`
       label: Ticks;
@@ -47,7 +49,7 @@ const getStyles = createStyle((theme: Theme) => {
       right: 0.25rem;
     `,
   };
-});
+};
 
 type TicksProps = {
   endTime?: number | TNil;
@@ -68,7 +70,7 @@ export default function Ticks(props: TicksProps) {
       labels.push(formatDuration(durationAtTick));
     }
   }
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   const ticks: React.ReactNode[] = [];
   for (let i = 0; i < numTicks; i++) {
     const portion = i / (numTicks - 1);

@@ -51,10 +51,19 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         invalid={invalidInput}
         error={invalidInput ? 'Library panel with this name already exists' : ''}
       >
-        <Input name="name" value={panelName} onChange={(e) => setPanelName(e.currentTarget.value)} />
+        <Input
+          id="share-panel-library-panel-name-input"
+          name="name"
+          value={panelName}
+          onChange={(e) => setPanelName(e.currentTarget.value)}
+        />
       </Field>
       <Field label="Save in folder" description="Library panel permissions are derived from the folder permissions">
-        <FolderPicker onChange={({ id }) => setFolderId(id)} initialFolderId={initialFolderId} />
+        <FolderPicker
+          onChange={({ id }) => setFolderId(id)}
+          initialFolderId={initialFolderId}
+          inputId="share-panel-library-panel-folder-picker"
+        />
       </Field>
 
       <Modal.ButtonRow>

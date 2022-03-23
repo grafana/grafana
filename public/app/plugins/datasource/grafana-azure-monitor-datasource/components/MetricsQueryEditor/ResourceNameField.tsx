@@ -36,6 +36,7 @@ const ResourceNameField: React.FC<ResourceNameFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        allowCustomValue
       />
     </Field>
   );

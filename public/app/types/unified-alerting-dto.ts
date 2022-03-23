@@ -42,7 +42,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
     value: string;
   }>;
   labels: Labels;
-  annotations: Annotations;
+  annotations?: Annotations;
   duration?: number; // for
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
@@ -99,9 +99,10 @@ export enum GrafanaAlertStateDecision {
   NoData = 'NoData',
   KeepLastState = 'KeepLastState',
   OK = 'OK',
+  Error = 'Error',
 }
 
-interface AlertDataQuery extends DataQuery {
+export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
 }
@@ -123,6 +124,7 @@ export interface PostableGrafanaRuleDefinition {
   data: AlertQuery[];
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
+  id?: string;
   uid: string;
   namespace_uid: string;
   namespace_id: number;
@@ -149,6 +151,7 @@ export type PostableRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | Pos
 export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
   name: string;
   interval?: string;
+  source_tenants?: string[];
   rules: R[];
 };
 

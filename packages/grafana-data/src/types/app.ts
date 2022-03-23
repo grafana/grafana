@@ -1,13 +1,20 @@
-import { ComponentClass } from 'react';
+import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 
+/**
+ * @public
+ * The app container that is loading another plugin (panel or query editor)
+ * */
 export enum CoreApp {
+  CloudAlerting = 'cloud-alerting',
+  UnifiedAlerting = 'unified-alerting',
   Dashboard = 'dashboard',
   Explore = 'explore',
   Unknown = 'unknown',
-  CloudAlerting = 'cloud-alerting',
+  PanelEditor = 'panel-editor',
+  PanelViewer = 'panel-viewer',
 }
 
 export interface AppRootProps<T = KeyValue> {
@@ -41,11 +48,8 @@ export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
 
 export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   // Content under: /a/${plugin-id}/*
-  root?: ComponentClass<AppRootProps<T>>;
+  root?: ComponentType<AppRootProps<T>>;
   rootNav?: NavModel; // Initial navigation model
-
-  // Old style pages
-  angularPages?: { [component: string]: any };
 
   /**
    * Called after the module has loaded, and before the app is used.
@@ -62,7 +66,7 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
    *
    * NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
    */
-  setRootPage(root: ComponentClass<AppRootProps<T>>, rootNav?: NavModel) {
+  setRootPage(root: ComponentType<AppRootProps<T>>, rootNav?: NavModel) {
     this.root = root;
     this.rootNav = rootNav;
     return this;
@@ -82,12 +86,6 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
             console.warn('App Page uses unknown component: ', include.component, this.meta);
             continue;
           }
-
-          if (!this.angularPages) {
-            this.angularPages = {};
-          }
-
-          this.angularPages[include.component] = exp;
         }
       }
     }

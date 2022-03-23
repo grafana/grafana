@@ -12,8 +12,9 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
+  TimeZone,
 } from '@grafana/data';
-import { Button, Container, Spinner, Table } from '@grafana/ui';
+import { Button, Spinner, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
@@ -30,6 +31,7 @@ import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer'
 interface Props {
   isLoading: boolean;
   options: GetDataOptions;
+  timeZone: TimeZone;
   data?: DataFrame[];
   panel?: PanelModel;
   onOptionsChange?: (options: GetDataOptions) => void;
@@ -184,7 +186,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   getProcessedData(): DataFrame[] {
-    const { options, panel } = this.props;
+    const { options, panel, timeZone } = this.props;
     const data = this.state.transformedData;
 
     if (!options.withFieldConfig || !panel) {
@@ -197,6 +199,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       data,
       theme: config.theme2,
       fieldConfig: panel.fieldConfig,
+      timeZone,
       replaceVariables: (value: string) => {
         return value;
       },
@@ -229,8 +232,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const hasTraces = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'trace');
 
     return (
-      <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <div className={styles.actionsWrapper}>
+      <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
+        <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
             panel={panel}
@@ -278,7 +281,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             </Button>
           )}
         </div>
-        <Container grow={1}>
+        <div className={styles.content}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -292,7 +295,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               );
             }}
           </AutoSizer>
-        </Container>
+        </div>
       </div>
     );
   }

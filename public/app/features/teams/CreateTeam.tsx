@@ -6,6 +6,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { connect } from 'react-redux';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
+import { contextSrv } from 'app/core/core';
 
 export interface Props {
   navModel: NavModel;
@@ -20,6 +21,7 @@ export class CreateTeam extends PureComponent<Props> {
   create = async (formModel: TeamDTO) => {
     const result = await getBackendSrv().post('/api/teams', formModel);
     if (result.teamId) {
+      await contextSrv.fetchUserPermissions();
       locationService.push(`/org/teams/edit/${result.teamId}`);
     }
   };
@@ -33,7 +35,7 @@ export class CreateTeam extends PureComponent<Props> {
             {({ register }) => (
               <FieldSet label="New Team">
                 <Field label="Name">
-                  <Input {...register('name', { required: true })} width={60} />
+                  <Input {...register('name', { required: true })} id="team-name" width={60} />
                 </Field>
                 <Field
                   label={

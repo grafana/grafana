@@ -3,18 +3,17 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 const (
@@ -29,7 +28,7 @@ var (
 // PagerdutyNotifier is responsible for sending
 // alert notifications to pagerduty
 type PagerdutyNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Key           string
 	Severity      string
 	CustomDetails map[string]string
@@ -39,42 +38,72 @@ type PagerdutyNotifier struct {
 	Summary       string
 	tmpl          *template.Template
 	log           log.Logger
+	ns            notifications.WebhookSender
+}
+
+type PagerdutyConfig struct {
+	*NotificationChannelConfig
+	Key       string
+	Severity  string
+	Class     string
+	Component string
+	Group     string
+	Summary   string
+}
+
+func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewPagerdutyConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PagerdutyConfig, error) {
+	key := decryptFunc(context.Background(), config.SecureSettings, "integrationKey", config.Settings.Get("integrationKey").MustString())
+	if key == "" {
+		return nil, errors.New("could not find integration key property in settings")
+	}
+	return &PagerdutyConfig{
+		NotificationChannelConfig: config,
+		Key:                       key,
+		Severity:                  config.Settings.Get("severity").MustString("critical"),
+		Class:                     config.Settings.Get("class").MustString("default"),
+		Component:                 config.Settings.Get("component").MustString("Grafana"),
+		Group:                     config.Settings.Get("group").MustString("default"),
+		Summary:                   config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
+	}, nil
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-
-	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
-	if key == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
-	}
-
+func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, t *template.Template) *PagerdutyNotifier {
 	return &PagerdutyNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+		Base: NewBase(&models.AlertNotification{
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		Key: key,
+		Key: config.Key,
 		CustomDetails: map[string]string{
 			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
 			"num_firing":   `{{ .Alerts.Firing | len }}`,
 			"num_resolved": `{{ .Alerts.Resolved | len }}`,
 		},
-		Severity:  model.Settings.Get("severity").MustString("critical"),
-		Class:     model.Settings.Get("class").MustString("default"),
-		Component: model.Settings.Get("component").MustString("Grafana"),
-		Group:     model.Settings.Get("group").MustString("default"),
-		Summary:   model.Settings.Get("summary").MustString(`{{ template "default.title" . }}`),
+		Severity:  config.Severity,
+		Class:     config.Class,
+		Component: config.Component,
+		Group:     config.Group,
+		Summary:   config.Summary,
 		tmpl:      t,
-		log:       log.New("alerting.notifier." + model.Name),
-	}, nil
+		log:       log.New("alerting.notifier." + config.Name),
+		ns:        ns,
+	}
 }
 
 // Notify sends an alert notification to PagerDuty
@@ -104,7 +133,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
@@ -144,7 +173,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
+		Description: tmpl(DefaultMessageTitleEmbed), // TODO: this can be configurable template.
 		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
@@ -166,7 +195,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		pn.log.Debug("failed to template PagerDuty message", "err", tmplErr.Error())
+		pn.log.Warn("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

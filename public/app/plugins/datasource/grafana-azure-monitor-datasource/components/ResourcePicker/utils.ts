@@ -5,7 +5,8 @@ import { ResourceRow, ResourceRowGroup } from './types';
 //  - subscriptions: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572
 //  - resource groups: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources
 //  - resources: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM
-const RESOURCE_URI_REGEX = /\/subscriptions\/(?<subscriptionID>[^/]+)(?:\/resourceGroups\/(?<resourceGroup>[^/]+)(?:\/providers.+\/(?<resource>[^/]+))?)?/;
+const RESOURCE_URI_REGEX =
+  /\/subscriptions\/(?<subscriptionID>[^/]+)(?:\/resourceGroups\/(?<resourceGroup>[^/]+)(?:\/providers.+\/(?<resource>[^/]+))?)?/;
 
 type RegexGroups = Record<string, string | undefined>;
 
@@ -25,14 +26,14 @@ export function isGUIDish(input: string) {
   return !!input.match(/^[A-Z0-9]+/i);
 }
 
-export function findRow(rows: ResourceRowGroup, id: string): ResourceRow | undefined {
+export function findRow(rows: ResourceRowGroup, uri: string): ResourceRow | undefined {
   for (const row of rows) {
-    if (row.id.toLowerCase() === id.toLowerCase()) {
+    if (row.uri.toLowerCase() === uri.toLowerCase()) {
       return row;
     }
 
     if (row.children) {
-      const result = findRow(row.children, id);
+      const result = findRow(row.children, uri);
 
       if (result) {
         return result;
@@ -43,9 +44,9 @@ export function findRow(rows: ResourceRowGroup, id: string): ResourceRow | undef
   return undefined;
 }
 
-export function addResources(rows: ResourceRowGroup, targetResourceGroupID: string, newResources: ResourceRowGroup) {
+export function addResources(rows: ResourceRowGroup, targetParentId: string, newResources: ResourceRowGroup) {
   return produce(rows, (draftState) => {
-    const draftRow = findRow(draftState, targetResourceGroupID);
+    const draftRow = findRow(draftState, targetParentId);
 
     if (!draftRow) {
       // This case shouldn't happen often because we're usually coming here from a resource we already have

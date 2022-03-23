@@ -50,7 +50,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const alignedDataFrame = preparePlotFrame(props.sparkline, props.config);
 
     this.state = {
-      data: preparePlotData(alignedDataFrame),
+      data: preparePlotData([alignedDataFrame]),
       alignedDataFrame,
       configBuilder: this.prepareConfig(alignedDataFrame),
     };
@@ -64,7 +64,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     return {
       ...state,
-      data: preparePlotData(frame),
+      data: preparePlotData([frame]),
       alignedDataFrame: frame,
     };
   }
@@ -91,6 +91,15 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   getYRange(field: Field) {
     let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
+
+    if (min === max) {
+      if (min === 0) {
+        max = 100;
+      } else {
+        min = 0;
+        max! *= 2;
+      }
+    }
 
     return [
       Math.max(min!, field.config.min ?? -Infinity),

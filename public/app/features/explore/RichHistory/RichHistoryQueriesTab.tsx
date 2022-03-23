@@ -6,7 +6,7 @@ import { uniqBy } from 'lodash';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
-import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select } from '@grafana/ui';
+import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select, FilterInput } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import {
@@ -20,7 +20,6 @@ import {
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { useDebounce } from 'react-use';
 
 export interface Props {
@@ -106,7 +105,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
     `,
     footer: css`
       height: 60px;
-      margin-top: ${theme.spacing.lg};
+      margin: ${theme.spacing.lg} auto;
       display: flex;
       justify-content: center;
       font-weight: ${theme.typography.weight.light};
@@ -138,15 +137,12 @@ export function RichHistoryQueriesTab(props: Props) {
   } = props;
 
   const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
-  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
+  const [data, setData] = useState<[RichHistoryQuery[], ReturnType<typeof createDatasourcesList>]>([[], []]);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
-
-  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
-  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   useDebounce(
     () => {
@@ -157,16 +153,22 @@ export function RichHistoryQueriesTab(props: Props) {
   );
 
   useEffect(() => {
-    setFilteredQueries(
+    const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
+    const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
+
+    setData([
       filterAndSortQueries(
         queries,
         sortOrder,
         datasourceFilters.map((d) => d.value),
         debouncedSearchInput,
         timeFilter
-      )
-    );
+      ),
+      listOfDatasources,
+    ]);
   }, [timeFilter, queries, sortOrder, datasourceFilters, debouncedSearchInput]);
+
+  const [filteredQueries, listOfDatasources] = data;
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
@@ -238,7 +240,7 @@ export function RichHistoryQueriesTab(props: Props) {
                 return (
                   <RichHistoryCard
                     query={q}
-                    key={q.ts}
+                    key={q.id}
                     exploreId={exploreId}
                     dsImg={listOfDatasources[idx].imgUrl}
                     isRemoved={listOfDatasources[idx].isRemoved}

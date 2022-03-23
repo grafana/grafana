@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { useMountedState } from 'react-use';
-import { AppEvents, PluginType } from '@grafana/data';
-import { Button, HorizontalGroup, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
+import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 
-import { CatalogPlugin, PluginStatus } from '../../types';
-import { getStyles } from './index';
+import { CatalogPlugin, PluginStatus, Version } from '../../types';
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
 
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
+  latestCompatibleVersion?: Version;
 };
 
-export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsButtonProps) {
+export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVersion }: InstallControlsButtonProps) {
   const { isInstalling, error: errorInstalling } = useInstallStatus();
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
@@ -21,17 +20,11 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
-  const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
-  const styles = useStyles2(getStyles);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
-  const isMounted = useMountedState();
 
   const onInstall = async () => {
-    await install(plugin.id, plugin.version);
+    await install(plugin.id, latestCompatibleVersion?.version);
     if (!errorInstalling) {
-      if (isMounted() && plugin.type === PluginType.panel) {
-        setHasInstalledPanel(true);
-      }
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
     }
   };
@@ -45,7 +38,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   };
 
   const onUpdate = async () => {
-    await install(plugin.id, plugin.version, true);
+    await install(plugin.id, latestCompatibleVersion?.version, true);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
     }
@@ -67,9 +60,6 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
           <Button variant="destructive" disabled={isUninstalling} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
-          {hasInstalledPanel && (
-            <div className={styles.message}>Please refresh your browser window before using this plugin.</div>
-          )}
         </HorizontalGroup>
       </>
     );

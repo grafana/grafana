@@ -25,21 +25,21 @@ describe('standardFieldConfigEditorRegistry', () => {
 describe('supportsDataQuery', () => {
   describe('when called with plugin that supports queries', () => {
     it('then it should return true', () => {
-      const plugin = ({ meta: { skipDataQuery: false } } as unknown) as PanelPlugin;
+      const plugin = { meta: { skipDataQuery: false } } as unknown as PanelPlugin;
       expect(supportsDataQuery(plugin)).toBe(true);
     });
   });
 
   describe('when called with plugin that does not support queries', () => {
     it('then it should return false', () => {
-      const plugin = ({ meta: { skipDataQuery: true } } as unknown) as PanelPlugin;
+      const plugin = { meta: { skipDataQuery: true } } as unknown as PanelPlugin;
       expect(supportsDataQuery(plugin)).toBe(false);
     });
   });
 
   describe('when called without skipDataQuery', () => {
     it('then it should return false', () => {
-      const plugin = ({ meta: {} } as unknown) as PanelPlugin;
+      const plugin = { meta: {} } as unknown as PanelPlugin;
       expect(supportsDataQuery(plugin)).toBe(false);
     });
   });
@@ -89,13 +89,17 @@ describe('updateDefaultFieldConfigValue', () => {
 
 describe('setOptionImmutably', () => {
   it.each`
-    source                    | path       | value     | expected
-    ${{}}                     | ${'a'}     | ${1}      | ${{ a: 1 }}
-    ${{}}                     | ${'a.b.c'} | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } } }}
-    ${{ a: {} }}              | ${'a.b.c'} | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } } }}
-    ${{ b: {} }}              | ${'a.b.c'} | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } }, b: {} }}
-    ${{ a: { b: { c: 3 } } }} | ${'a.b.c'} | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } } }}
-  `('numeric-like text mapping, value:${value', ({ source, path, value, expected }) => {
+    source                    | path          | value     | expected
+    ${{}}                     | ${'a'}        | ${1}      | ${{ a: 1 }}
+    ${{}}                     | ${'a.b.c'}    | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } } }}
+    ${{ a: {} }}              | ${'a.b.c'}    | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } } }}
+    ${{ b: {} }}              | ${'a.b.c'}    | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } }, b: {} }}
+    ${{ a: { b: { c: 3 } } }} | ${'a.b.c'}    | ${[1, 2]} | ${{ a: { b: { c: [1, 2] } } }}
+    ${{}}                     | ${'a.b[2]'}   | ${'x'}    | ${{ a: { b: [undefined, undefined, 'x'] } }}
+    ${{}}                     | ${'a[0]'}     | ${1}      | ${{ a: [1] }}
+    ${{}}                     | ${'a[0].b.c'} | ${1}      | ${{ a: [{ b: { c: 1 } }] }}
+    ${{ a: [{ b: 1 }] }}      | ${'a[0].c'}   | ${2}      | ${{ a: [{ b: 1, c: 2 }] }}
+  `('property value:${value', ({ source, path, value, expected }) => {
     expect(setOptionImmutably(source, path, value)).toEqual(expected);
   });
 

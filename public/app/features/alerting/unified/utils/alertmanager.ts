@@ -1,7 +1,17 @@
-import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  MatcherOperator,
+  Route,
+  Matcher,
+  TimeInterval,
+  TimeRange,
+} from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 import { MatcherFieldValue } from '../types/silence-form';
 import { SelectableValue } from '@grafana/data';
+import { getAllDataSources } from './config';
+import { DataSourceType } from './datasource';
+import { FetchError } from '@grafana/runtime';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -18,6 +28,25 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
     config.template_files = {};
   }
   return config;
+}
+
+export function removeMuteTimingFromRoute(muteTiming: string, route: Route): Route {
+  const newRoute: Route = {
+    ...route,
+    mute_time_intervals: route.mute_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
+    routes: route.routes?.map((subRoute) => removeMuteTimingFromRoute(muteTiming, subRoute)),
+  };
+  return newRoute;
+}
+
+export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: string, route: Route): Route {
+  return {
+    ...route,
+    mute_time_intervals: route.mute_time_intervals?.map((name) =>
+      name === oldMuteTimingName ? newMuteTimingName : name
+    ),
+    routes: route.routes?.map((subRoute) => renameMuteTimings(newMuteTimingName, oldMuteTimingName, subRoute)),
+  };
 }
 
 function isReceiverUsedInRoute(receiver: string, route: Route): boolean {
@@ -75,6 +104,17 @@ export function matcherFieldToMatcher(field: MatcherFieldValue): Matcher {
   };
 }
 
+export function matchersToString(matchers: Matcher[]) {
+  const matcherFields = matchers.map(matcherToMatcherField);
+
+  const combinedMatchers = matcherFields.reduce((acc, current) => {
+    const currentMatcherString = `${current.name}${current.operator}"${current.value}"`;
+    return acc ? `${acc},${currentMatcherString}` : currentMatcherString;
+  }, '');
+
+  return `{${combinedMatchers}}`;
+}
+
 export const matcherFieldOptions: SelectableValue[] = [
   { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
   { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
@@ -88,22 +128,6 @@ const matcherOperators = [
   MatcherOperator.notEqual,
   MatcherOperator.equal,
 ];
-
-function unescapeMatcherValue(value: string) {
-  let trimmed = value.trim().replace(/\\"/g, '"');
-  if (trimmed.startsWith('"') && trimmed.endsWith('"') && !trimmed.endsWith('\\"')) {
-    trimmed = trimmed.substr(1, trimmed.length - 2);
-  }
-  return trimmed.replace(/\\"/g, '"');
-}
-
-function escapeMatcherValue(value: string) {
-  return '"' + value.replace(/"/g, '\\"') + '"';
-}
-
-export function stringifyMatcher(matcher: Matcher): string {
-  return `${matcher.name}${matcherToOperator(matcher)}${escapeMatcherValue(matcher.value)}`;
-}
 
 export function parseMatcher(matcher: string): Matcher {
   const trimmed = matcher.trim();
@@ -120,7 +144,7 @@ export function parseMatcher(matcher: string): Matcher {
   }
   const [operator, idx] = operatorsFound[0];
   const name = trimmed.substr(0, idx).trim();
-  const value = unescapeMatcherValue(trimmed.substr(idx + operator.length).trim());
+  const value = trimmed.substr(idx + operator.length).trim();
   if (!name) {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }
@@ -134,7 +158,7 @@ export function parseMatcher(matcher: string): Matcher {
 }
 
 export function parseMatchers(matcherQueryString: string): Matcher[] {
-  const matcherRegExp = /\b(\w+)(=~|!=|!~|=(?="?\w))"?([^"\n,]*)"?/g;
+  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,]*)"?/g;
   const matchers: Matcher[] = [];
 
   matcherQueryString.replace(matcherRegExp, (_, key, operator, value) => {
@@ -173,4 +197,68 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
       return nameMatches && valueMatches;
     });
   });
+}
+
+export function getAllAlertmanagerDataSources() {
+  return getAllDataSources().filter((ds) => ds.type === DataSourceType.Alertmanager);
+}
+
+export function getAlertmanagerByUid(uid?: string) {
+  return getAllAlertmanagerDataSources().find((ds) => uid === ds.uid);
+}
+
+export function timeIntervalToString(timeInterval: TimeInterval): string {
+  const { times, weekdays, days_of_month, months, years } = timeInterval;
+  const timeString = getTimeString(times);
+  const weekdayString = getWeekdayString(weekdays);
+  const daysString = getDaysOfMonthString(days_of_month);
+  const monthsString = getMonthsString(months);
+  const yearsString = getYearsString(years);
+
+  return [timeString, weekdayString, daysString, monthsString, yearsString].join(', ');
+}
+
+export function getTimeString(times?: TimeRange[]): string {
+  return (
+    'Times: ' +
+    (times ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} UTC`).join(' and ') : 'All')
+  );
+}
+
+export function getWeekdayString(weekdays?: string[]): string {
+  return (
+    'Weekdays: ' +
+    (weekdays
+      ?.map((day) => {
+        if (day.includes(':')) {
+          return day
+            .split(':')
+            .map((d) => {
+              const abbreviated = d.slice(0, 3);
+              return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+            })
+            .join('-');
+        } else {
+          const abbreviated = day.slice(0, 3);
+          return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+        }
+      })
+      .join(', ') ?? 'All')
+  );
+}
+
+export function getDaysOfMonthString(daysOfMonth?: string[]): string {
+  return 'Days of the month: ' + (daysOfMonth?.join(', ') ?? 'All');
+}
+
+export function getMonthsString(months?: string[]): string {
+  return 'Months: ' + (months?.join(', ') ?? 'All');
+}
+
+export function getYearsString(years?: string[]): string {
+  return 'Years: ' + (years?.join(', ') ?? 'All');
+}
+
+export function isFetchError(e: unknown): e is FetchError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }

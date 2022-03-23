@@ -18,13 +18,14 @@ import IoChevronRight from 'react-icons/lib/io/chevron-right';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { GrafanaTheme2 } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
+import { autoColor } from '../Theme';
 
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
-
-export const getStyles = createStyle((theme: Theme) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     SpanTreeOffset: css`
       label: SpanTreeOffset;
@@ -74,7 +75,7 @@ type TProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
+  theme: GrafanaTheme2;
 };
 
 export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
@@ -167,4 +168,4 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
   }
 }
 
-export default withTheme(UnthemedSpanTreeOffset);
+export default withTheme2(UnthemedSpanTreeOffset);

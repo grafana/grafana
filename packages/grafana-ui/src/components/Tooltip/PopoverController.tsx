@@ -1,33 +1,6 @@
 import React from 'react';
 import { Placement } from '@popperjs/core';
-import { PopoverContent } from './Tooltip';
-
-// This API allows popovers to update Popper's position when e.g. popover content changes
-// updatePopperPosition is delivered to content by react-popper
-
-export interface UsingPopperProps {
-  show?: boolean;
-  placement?: TooltipPlacement;
-  content: PopoverContent;
-  children: JSX.Element;
-}
-
-export type TooltipPlacement =
-  | 'auto-start'
-  | 'auto'
-  | 'auto-end'
-  | 'top-start'
-  | 'top'
-  | 'top-end'
-  | 'right-start'
-  | 'right'
-  | 'right-end'
-  | 'bottom-end'
-  | 'bottom'
-  | 'bottom-start'
-  | 'left-end'
-  | 'left'
-  | 'left-start';
+import { PopoverContent } from './types';
 
 type PopperControllerRenderProp = (
   showPopper: () => void,

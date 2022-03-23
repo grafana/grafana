@@ -3,7 +3,7 @@ import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { FormField } from '../FormField/FormField';
 import { Button } from '../Button/Button';
 import { css, cx } from '@emotion/css';
-import { PopoverContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
@@ -63,7 +63,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
               value="configured"
               {...omit(inputProps, 'value')}
             />
-            <Button onClick={onReset} variant="secondary">
+            <Button onClick={onReset} variant="secondary" type="button">
               Reset
             </Button>
           </>

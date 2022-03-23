@@ -2,61 +2,82 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"path"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // EmailNotifier is responsible for sending
 // alert notifications over email.
 type EmailNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	Addresses   []string
 	SingleEmail bool
 	Message     string
 	log         log.Logger
+	ns          notifications.EmailSender
 	tmpl        *template.Template
+}
+
+type EmailConfig struct {
+	*NotificationChannelConfig
+	SingleEmail bool
+	Addresses   []string
+	Message     string
+}
+
+func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewEmailConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewEmailNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
+	addressesString := config.Settings.Get("addresses").MustString()
+	if addressesString == "" {
+		return nil, errors.New("could not find addresses in settings")
+	}
+	// split addresses with a few different ways
+	addresses := util.SplitEmails(addressesString)
+	return &EmailConfig{
+		NotificationChannelConfig: config,
+		SingleEmail:               config.Settings.Get("singleEmail").MustBool(false),
+		Message:                   config.Settings.Get("message").MustString(),
+		Addresses:                 addresses,
+	}, nil
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*EmailNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
-	}
-
-	addressesString := model.Settings.Get("addresses").MustString()
-	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
-
-	if addressesString == "" {
-		return nil, receiverInitError{Reason: "could not find addresses in settings", Cfg: *model}
-	}
-
-	// split addresses with a few different ways
-	addresses := util.SplitEmails(addressesString)
-
+func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+		Base: NewBase(&models.AlertNotification{
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		Addresses:   addresses,
-		SingleEmail: singleEmail,
-		Message:     model.Settings.Get("message").MustString(),
+		Addresses:   config.Addresses,
+		SingleEmail: config.SingleEmail,
+		Message:     config.Message,
 		log:         log.New("alerting.notifier.email"),
+		ns:          ns,
 		tmpl:        t,
-	}, nil
+	}
 }
 
 // Notify sends the alert notification.
@@ -64,7 +85,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
@@ -101,10 +122,10 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		en.log.Debug("failed to template email message", "err", tmplErr.Error())
+		en.log.Warn("failed to template email message", "err", tmplErr.Error())
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := en.ns.SendEmailCommandHandlerSync(ctx, cmd); err != nil {
 		return false, err
 	}
 

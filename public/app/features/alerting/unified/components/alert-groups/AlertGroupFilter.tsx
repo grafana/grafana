@@ -44,7 +44,7 @@ export const AlertGroupFilter = ({ groups }: Props) => {
         <MatcherFilter
           className={styles.filterInput}
           key={matcherFilterKey}
-          queryString={queryString}
+          defaultQueryString={queryString}
           onFilterChange={(value) => setQueryParams({ queryString: value ? value : null })}
         />
         <GroupBy
@@ -79,7 +79,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   filterInput: css`
     width: 340px;
-    margin-left: ${theme.spacing(1)};
+    & + & {
+      margin-left: ${theme.spacing(1)};
+    }
   `,
   clearButton: css`
     margin-left: ${theme.spacing(1)};

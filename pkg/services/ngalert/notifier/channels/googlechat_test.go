@@ -12,13 +12,14 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestGoogleChatNotifier(t *testing.T) {
+	constNow := time.Now()
+	defer mockTimeNow(constNow)()
+
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -57,7 +58,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 								Widgets: []widget{
 									textParagraphWidget{
 										Text: text{
-											Text: "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+											Text: "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 										},
 									},
 									buttonWidget{
@@ -77,7 +78,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + (time.Now()).Format(time.RFC822),
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -116,7 +117,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 								Widgets: []widget{
 									textParagraphWidget{
 										Text: text{
-											Text: "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
+											Text: "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 										},
 									},
 									buttonWidget{
@@ -135,7 +136,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									},
 									textParagraphWidget{
 										Text: text{
-											Text: "Grafana v" + setting.BuildVersion + " | " + (time.Now()).Format(time.RFC822),
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -148,7 +149,115 @@ func TestGoogleChatNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "googlechat_testing" of type "googlechat": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
+		}, {
+			name:     "Customized message",
+			settings: `{"url": "http://localhost", "message": "I'm a custom template and you have {{ len .Alerts.Firing }} firing alert."}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "[FIRING:1]  (val1)",
+				FallbackText: "[FIRING:1]  (val1)",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "[FIRING:1]  (val1)",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: "I'm a custom template and you have 1 firing alert.",
+										},
+									},
+									buttonWidget{
+										Buttons: []button{
+											{
+												TextButton: textButton{
+													Text: "OPEN IN GRAFANA",
+													OnClick: onClick{
+														OpenLink: openLink{
+															URL: "http://localhost/alerting/list",
+														},
+													},
+												},
+											},
+										},
+									},
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expMsgError: nil,
+		}, {
+			name:     "Invalid template",
+			settings: `{"url": "http://localhost", "message": "I'm a custom template {{ .NotAField }} bad template"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "[FIRING:1]  (val1)",
+				FallbackText: "[FIRING:1]  (val1)",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "[FIRING:1]  (val1)",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: "I'm a custom template ",
+										},
+									},
+									buttonWidget{
+										Buttons: []button{
+											{
+												TextButton: textButton{
+													Text: "OPEN IN GRAFANA",
+													OnClick: onClick{
+														OpenLink: openLink{
+															URL: "http://localhost/alerting/list",
+														},
+													},
+												},
+											},
+										},
+									},
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expMsgError: nil,
 		},
 	}
 
@@ -163,7 +272,8 @@ func TestGoogleChatNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewGoogleChatNotifier(m, tmpl)
+			webhookSender := mockNotificationService()
+			cfg, err := NewGoogleChatConfig(m)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -171,20 +281,9 @@ func TestGoogleChatNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
-
-			if time.Now().Second() == 59 {
-				// The notification payload has a time component with a precision
-				// of minute. So if we are at the edge of a minute, we delay for 1 second
-				// to avoid any flakiness.
-				time.Sleep(1 * time.Second)
-			}
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewGoogleChatNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -198,7 +297,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

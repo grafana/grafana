@@ -6,14 +6,13 @@ import { uniqBy } from 'lodash';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
-import { stylesFactory, useTheme, Select, MultiSelect } from '@grafana/ui';
+import { stylesFactory, useTheme, Select, MultiSelect, FilterInput } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { filterAndSortQueries, createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { useDebounce } from 'react-use';
 
 export interface Props {
@@ -81,15 +80,12 @@ export function RichHistoryStarredTab(props: Props) {
     exploreId,
   } = props;
 
-  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
+  const [data, setData] = useState<[RichHistoryQuery[], ReturnType<typeof createDatasourcesList>]>([[], []]);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
-  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   useDebounce(
     () => {
@@ -100,16 +96,21 @@ export function RichHistoryStarredTab(props: Props) {
   );
 
   useEffect(() => {
+    const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
+    const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
     const starredQueries = queries.filter((q) => q.starred === true);
-    setFilteredQueries(
+    setData([
       filterAndSortQueries(
         starredQueries,
         sortOrder,
         datasourceFilters.map((d) => d.value),
         debouncedSearchInput
-      )
-    );
+      ),
+      listOfDatasources,
+    ]);
   }, [queries, sortOrder, datasourceFilters, debouncedSearchInput]);
+
+  const [filteredQueries, listOfDatasources] = data;
 
   return (
     <div className={styles.container}>
@@ -150,7 +151,7 @@ export function RichHistoryStarredTab(props: Props) {
           return (
             <RichHistoryCard
               query={q}
-              key={q.ts}
+              key={q.id}
               exploreId={exploreId}
               dsImg={listOfDatasources[idx].imgUrl}
               isRemoved={listOfDatasources[idx].isRemoved}

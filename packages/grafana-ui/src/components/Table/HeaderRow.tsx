@@ -55,19 +55,15 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, 
     <div className={tableStyles.headerCell} {...headerProps} role="columnheader">
       {column.canSort && (
         <>
-          <div
-            {...column.getSortByToggleProps()}
-            className={tableStyles.headerCellLabel}
-            title={column.render('Header')}
-          >
+          <button {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel}>
             {showTypeIcons && (
-              <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" style={{ marginRight: '8px' }} />
+              <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
             )}
             <div>{column.render('Header')}</div>
             <div>
               {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
             </div>
-          </div>
+          </button>
           {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
         </>
       )}

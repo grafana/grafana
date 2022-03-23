@@ -1,6 +1,6 @@
-import { Column, Row } from 'react-table';
+import { Row } from 'react-table';
 import memoizeOne from 'memoize-one';
-import { ContentPosition } from 'csstype';
+import { Property } from 'csstype';
 import {
   DataFrame,
   Field,
@@ -12,12 +12,13 @@ import {
 
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem } from './types';
+import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem, GrafanaTableColumn } from './types';
 import { JSONViewCell } from './JSONViewCell';
+import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
 
-export function getTextAlign(field?: Field): ContentPosition {
+export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
   }
@@ -47,9 +48,9 @@ export function getColumns(
   availableWidth: number,
   columnMinWidth: number,
   footerValues?: FooterItem[]
-): Column[] {
-  const columns: any[] = [];
-  let fieldCountWithoutWidth = data.fields.length;
+): GrafanaTableColumn[] {
+  const columns: GrafanaTableColumn[] = [];
+  let fieldCountWithoutWidth = 0;
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
@@ -60,10 +61,11 @@ export function getColumns(
 
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
-      fieldCountWithoutWidth -= 1;
+    } else {
+      fieldCountWithoutWidth++;
     }
 
-    const selectSortType = (type: FieldType): string => {
+    const selectSortType = (type: FieldType) => {
       switch (type) {
         case FieldType.number:
           return 'number';
@@ -78,13 +80,14 @@ export function getColumns(
     columns.push({
       Cell,
       id: fieldIndex.toString(),
+      field: field,
       Header: getFieldDisplayName(field, data),
       accessor: (row: any, i: number) => {
         return field.values.get(i);
       },
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
-      minWidth: fieldTableOptions.minWidth || columnMinWidth,
+      minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
       Footer: getFooterValue(fieldIndex, footerValues),
@@ -128,6 +131,10 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+  }
+
+  if (field.type === FieldType.geo) {
+    return GeoCell;
   }
 
   // Default or Auto
@@ -238,12 +245,12 @@ export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
 }
 
 function toNumber(value: any): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-
   if (value === null || value === undefined || value === '' || isNaN(value)) {
     return Number.NEGATIVE_INFINITY;
+  }
+
+  if (typeof value === 'number') {
+    return value;
   }
 
   return Number(value);

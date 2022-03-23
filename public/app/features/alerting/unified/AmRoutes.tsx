@@ -16,13 +16,17 @@ import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from '.
 import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
+import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
+import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
 
 const AmRoutes: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
-
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+
+  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : true;
+
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   const fetchConfig = useCallback(() => {
@@ -35,8 +39,11 @@ const AmRoutes: FC = () => {
     fetchConfig();
   }, [fetchConfig]);
 
-  const { result, loading: resultLoading, error: resultError } =
-    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+  const {
+    result,
+    loading: resultLoading,
+    error: resultError,
+  } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
   const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
@@ -55,7 +62,12 @@ const AmRoutes: FC = () => {
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
   const handleSave = (data: Partial<FormAmRoute>) => {
+    if (!result) {
+      return;
+    }
+
     const newData = formAmRouteToAmRoute(
+      alertManagerSourceName,
       {
         ...rootRoute,
         ...data,
@@ -111,10 +123,13 @@ const AmRoutes: FC = () => {
           <div className={styles.break} />
           <AmSpecificRouting
             onChange={handleSave}
+            readOnly={readOnly}
             onRootRouteEdit={enterRootRouteEditMode}
             receivers={receivers}
             routes={rootRoute}
           />
+          <div className={styles.break} />
+          <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />
         </>
       )}
     </AlertingPageWrapper>
@@ -128,6 +143,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     height: 0;
     margin-bottom: ${theme.spacing(2)};
-    border-bottom: solid 1px ${theme.colors.border.medium};
   `,
 });

@@ -6,17 +6,21 @@ import { Router } from 'react-router-dom';
 import { fetchAlertGroups } from './api/alertmanager';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 import { configureStore } from 'app/store/configureStore';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import AlertGroups from './AlertGroups';
 import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv } from './mocks';
 import { DataSourceType } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
 
 jest.mock('./api/alertmanager');
-
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    isEditor: true,
+    hasAccess: () => true,
+  },
+}));
 const mocks = {
   api: {
-    fetchAlertGroups: typeAsJestMock(fetchAlertGroups),
+    fetchAlertGroups: jest.mocked(fetchAlertGroups),
   },
 };
 
@@ -49,7 +53,7 @@ const ui = {
   sourceButton: byText('See source'),
   matcherInput: byTestId('search-query-input'),
   groupByContainer: byTestId('group-by-container'),
-  groupByInput: byRole('textbox', { name: /group by label keys/i }),
+  groupByInput: byRole('combobox', { name: /group by label keys/i }),
   clearButton: byRole('button', { name: 'Clear filters' }),
 };
 
@@ -147,5 +151,20 @@ describe('AlertGroups', () => {
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
     expect(groups[1]).toHaveTextContent('uniqueLabel=true');
+  });
+
+  it('should combine multiple ungrouped groups', async () => {
+    mocks.api.fetchAlertGroups.mockImplementation(() => {
+      const groups = [
+        mockAlertGroup({ labels: {} }),
+        mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
+      ];
+      return Promise.resolve(groups);
+    });
+    renderAmNotifications();
+    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
+    const groups = ui.group.getAll();
+
+    expect(groups).toHaveLength(1);
   });
 });

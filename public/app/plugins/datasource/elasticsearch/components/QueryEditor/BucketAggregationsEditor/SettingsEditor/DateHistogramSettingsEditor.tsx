@@ -1,17 +1,16 @@
-import React, { ComponentProps } from 'react';
-import { InlineField, Input, Select } from '@grafana/ui';
+import React, { useRef } from 'react';
+import { GroupBase, OptionsOrGroups } from 'react-select';
+import { InlineField, Input, Select, TimeZonePicker } from '@grafana/ui';
 import { DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { SelectableValue } from '@grafana/data';
+import { InternalTimeZones, SelectableValue } from '@grafana/data';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { inlineFieldProps } from '.';
 import { uniqueId } from 'lodash';
 import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 
-type IntervalOption = Required<Pick<SelectableValue<string>, 'label' | 'value'>>;
-
-const defaultIntervalOptions: IntervalOption[] = [
+const defaultIntervalOptions: Array<SelectableValue<string>> = [
   { label: 'auto', value: 'auto' },
   { label: '10s', value: '10s' },
   { label: '1m', value: '1m' },
@@ -22,21 +21,24 @@ const defaultIntervalOptions: IntervalOption[] = [
   { label: '1d', value: '1d' },
 ];
 
-const hasValue = (searchValue: IntervalOption['value']) => ({ value }: IntervalOption) => value === searchValue;
+const hasValue =
+  (searchValue: string) =>
+  ({ value }: SelectableValue<string>) =>
+    value === searchValue;
 
-const isValidNewOption: ComponentProps<typeof Select>['isValidNewOption'] = (
-  inputValue,
-  _,
-  options: IntervalOption[]
+const isValidNewOption = (
+  inputValue: string,
+  _: SelectableValue<string> | null,
+  options: OptionsOrGroups<unknown, GroupBase<unknown>>
 ) => {
   // TODO: would be extremely nice here to allow only template variables and values that are
   // valid date histogram's Interval options
-  const valueExists = options.some(hasValue(inputValue));
+  const valueExists = (options as Array<SelectableValue<string>>).some(hasValue(inputValue));
   // we also don't want users to create "empty" values
   return !valueExists && inputValue.trim().length > 0;
 };
 
-const optionStartsWithValue: ComponentProps<typeof Select>['filterOption'] = (option: IntervalOption, value) =>
+const optionStartsWithValue = (option: SelectableValue<string>, value: string) =>
   option.value?.startsWith(value) || false;
 
 interface Props {
@@ -45,9 +47,10 @@ interface Props {
 
 export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
+  const { current: baseId } = useRef(uniqueId('es-date_histogram-'));
 
-  const handleIntervalChange = (newValue: string) =>
-    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue }));
+  const handleIntervalChange = ({ value }: SelectableValue<string>) =>
+    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: value }));
 
   return (
     <>
@@ -67,6 +70,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
 
       <InlineField label="Min Doc Count" {...inlineFieldProps}>
         <Input
+          id={`${baseId}-min_doc_count`}
           onBlur={(e) =>
             dispatch(
               changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value })
@@ -80,6 +84,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
 
       <InlineField label="Trim Edges" {...inlineFieldProps} tooltip="Trim the edges on the timeseries datapoints">
         <Input
+          id={`${baseId}-trime_edges`}
           onBlur={(e) =>
             dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'trimEdges', newValue: e.target.value }))
           }
@@ -95,10 +100,21 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
         tooltip="Change the start value of each bucket by the specified positive (+) or negative offset (-) duration, such as 1h for an hour, or 1d for a day"
       >
         <Input
+          id={`${baseId}-offset`}
           onBlur={(e) =>
             dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'offset', newValue: e.target.value }))
           }
           defaultValue={bucketAgg.settings?.offset || bucketAggregationConfig.date_histogram.defaultSettings?.offset}
+        />
+      </InlineField>
+
+      <InlineField label="Timezone" {...inlineFieldProps}>
+        <TimeZonePicker
+          value={bucketAgg.settings?.timeZone || bucketAggregationConfig.date_histogram.defaultSettings?.timeZone}
+          includeInternal={[InternalTimeZones.utc]}
+          onChange={(timeZone) => {
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'timeZone', newValue: timeZone }));
+          }}
         />
       </InlineField>
     </>

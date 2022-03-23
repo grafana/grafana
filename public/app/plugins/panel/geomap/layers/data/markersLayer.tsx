@@ -7,45 +7,27 @@ import {
   FrameGeometrySourceMode,
 } from '@grafana/data';
 import Map from 'ol/Map';
-import Feature from 'ol/Feature';
-import { Point } from 'ol/geom';
-import * as layer from 'ol/layer';
-import * as source from 'ol/source';
-
-import tinycolor from 'tinycolor2';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import {
-  ColorDimensionConfig,
-  ScaleDimensionConfig,
-  getScaledDimension,
-  getColorDimension,
-} from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { FeatureLike } from 'ol/Feature';
+import { getLocationMatchers } from 'app/features/geo/utils/location';
+import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { circleMarker, markerMakers } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
+import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
+import { StyleEditor } from './StyleEditor';
+import { getStyleConfigState } from '../../style/utils';
+import VectorLayer from 'ol/layer/Vector';
+import { isNumber } from 'lodash';
+import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
-  size: ScaleDimensionConfig;
-  color: ColorDimensionConfig;
-  fillOpacity: number;
-  shape?: string;
+  style: StyleConfig;
   showLegend?: boolean;
 }
 
 const defaultOptions: MarkersConfig = {
-  size: {
-    fixed: 5,
-    min: 2,
-    max: 15,
-  },
-  color: {
-    fixed: 'dark-green', // picked from theme
-  },
-  fillOpacity: 0.4,
-  shape: 'circle',
+  style: defaultStyleConfig,
   showLegend: true,
 };
 
@@ -54,10 +36,12 @@ export const MARKERS_LAYER_ID = 'markers';
 // Used by default when nothing is configured
 export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   type: MARKERS_LAYER_ID,
+  name: '', // will get replaced
   config: defaultOptions,
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
+  tooltip: true,
 };
 
 /**
@@ -66,7 +50,7 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
 export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   id: MARKERS_LAYER_ID,
   name: 'Markers',
-  description: 'use markers to render each data point',
+  description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
 
@@ -75,8 +59,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    */
   create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
-    const matchers = await getLocationMatchers(options.location);
-    const vectorLayer = new layer.Vector({});
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -88,120 +70,104 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     if (config.showLegend) {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
-    const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
+
+    const style = await getStyleConfigState(config.style);
+    const location = await getLocationMatchers(options.location);
+    const source = new FrameVectorSource(location);
+    const vectorLayer = new VectorLayer({
+      source,
+    });
+
+    if (!style.fields) {
+      // Set a global style
+      vectorLayer.setStyle(style.maker(style.base));
+    } else {
+      vectorLayer.setStyle((feature: FeatureLike) => {
+        const idx = feature.get('rowIndex') as number;
+        const dims = style.dims;
+        if (!dims || !isNumber(idx)) {
+          return style.maker(style.base);
+        }
+
+        const values = { ...style.base };
+
+        if (dims.color) {
+          values.color = dims.color.get(idx);
+        }
+        if (dims.size) {
+          values.size = dims.size.get(idx);
+        }
+        if (dims.text) {
+          values.text = dims.text.get(idx);
+        }
+        if (dims.rotation) {
+          values.rotation = dims.rotation.get(idx);
+        }
+        return style.maker(values);
+      });
+    }
 
     return {
       init: () => vectorLayer,
       legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
+          source.clear();
           return; // ignore empty
         }
 
-        const features: Feature<Point>[] = [];
-
         for (const frame of data.series) {
-          const info = dataFrameToPoints(frame, matchers);
-          if (info.warning) {
-            console.log('Could not find locations', info.warning);
-            continue; // ???
-          }
-
-          const colorDim = getColorDimension(frame, config.color, theme);
-          const sizeDim = getScaledDimension(frame, config.size);
-          const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
-
-          // Map each data value into new points
-          for (let i = 0; i < frame.length; i++) {
-            // Get the circle color for a specific data value depending on color scheme
-            const color = colorDim.get(i);
-            // Set the opacity determined from user configuration
-            const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
-            // Get circle size from user configuration
-            const radius = sizeDim.get(i);
-
-            // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature(info.points[i]);
-            dot.setProperties({
-              frame,
-              rowIndex: i,
-            });
-
-            dot.setStyle(shape!.make(color, fillColor, radius));
-            features.push(dot);
+          if (style.fields) {
+            const dims: StyleDimensions = {};
+            if (style.fields.color) {
+              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
+            }
+            if (style.fields.size) {
+              dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
+            }
+            if (style.fields.text) {
+              dims.text = getTextDimension(frame, style.config.text!);
+            }
+            if (style.fields.rotation) {
+              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
+            }
+            style.dims = dims;
           }
 
           // Post updates to the legend component
           if (legend) {
             legendProps.next({
-              color: colorDim,
-              size: sizeDim,
+              color: style.dims?.color,
+              size: style.dims?.size,
             });
           }
+
+          source.update(frame);
           break; // Only the first frame for now!
         }
+      },
 
-        // Source reads the data and provides a set of features to visualize
-        const vectorSource = new source.Vector({ features });
-        vectorLayer.setSource(vectorSource);
+      // Marker overlay options
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.style',
+            path: 'config.style',
+            name: 'Styles',
+            editor: StyleEditor,
+            settings: {
+              displayRotation: true,
+            },
+            defaultValue: defaultOptions.style,
+          })
+          .addBooleanSwitch({
+            path: 'config.showLegend',
+            name: 'Show legend',
+            description: 'Show map legend',
+            defaultValue: defaultOptions.showLegend,
+          });
       },
     };
-  },
-  // Marker overlay options
-  registerOptionsUI: (builder) => {
-    builder
-      .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Marker Color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
-      })
-      .addCustomEditor({
-        id: 'config.size',
-        path: 'config.size',
-        name: 'Marker Size',
-        editor: ScaleDimensionEditor,
-        settings: {
-          min: 1,
-          max: 100, // possible in the UI
-        },
-        defaultValue: {
-          // Configured values
-          fixed: 5,
-          min: 1,
-          max: 20,
-        },
-      })
-      .addSelect({
-        path: 'config.shape',
-        name: 'Marker Shape',
-        settings: {
-          options: markerMakers.selectOptions().options,
-        },
-        defaultValue: 'circle',
-      })
-      .addSliderInput({
-        path: 'config.fillOpacity',
-        name: 'Fill opacity',
-        defaultValue: defaultOptions.fillOpacity,
-        settings: {
-          min: 0,
-          max: 1,
-          step: 0.1,
-        },
-        showIf: (cfg) => markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill,
-      })
-      .addBooleanSwitch({
-        path: 'config.showLegend',
-        name: 'Show legend',
-        description: 'Show legend',
-        defaultValue: defaultOptions.showLegend,
-      });
   },
 
   // fill in the default values

@@ -10,17 +10,18 @@ import pluralize from 'pluralize';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
+  expandAll: boolean;
 }
 
-export const CloudRules: FC<Props> = ({ namespaces }) => {
+export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   const styles = useStyles(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
-  const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
-    rules,
-    rulesDataSources,
-  ]);
+  const dataSourcesLoading = useMemo(
+    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading),
+    [rules, rulesDataSources]
+  );
 
   return (
     <section className={styles.wrapper}>
@@ -43,6 +44,7 @@ export const CloudRules: FC<Props> = ({ namespaces }) => {
             group={group}
             key={`${getRulesSourceName(rulesSource)}-${name}-${group.name}`}
             namespace={namespace}
+            expandAll={expandAll}
           />
         ));
       })}

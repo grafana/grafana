@@ -12,6 +12,7 @@ export interface Props {
   tags?: string[];
   onChange: (tags: string[]) => void;
   width?: number;
+  id?: string;
   className?: string;
   /** Toggle disabled state */
   disabled?: boolean;
@@ -30,6 +31,7 @@ export const TagsInput: FC<Props> = ({
   disabled,
   addOnBlur,
   invalid,
+  id,
 }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
@@ -40,10 +42,7 @@ export const TagsInput: FC<Props> = ({
   };
 
   const onRemove = (tagToRemove: string) => {
-    if (disabled) {
-      return;
-    }
-    onChange(tags?.filter((x) => x !== tagToRemove));
+    onChange(tags.filter((x) => x !== tagToRemove));
   };
 
   const onAdd = (event?: React.MouseEvent) => {
@@ -72,11 +71,12 @@ export const TagsInput: FC<Props> = ({
     <div className={cx(styles.wrapper, className, width ? css({ width: theme.spacing(width) }) : '')}>
       <div className={tags?.length ? styles.tags : undefined}>
         {tags?.map((tag: string, index: number) => {
-          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
+          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} disabled={disabled} />;
         })}
       </div>
       <div>
         <Input
+          id={id}
           disabled={disabled}
           placeholder={placeholder}
           onChange={onNameChange}

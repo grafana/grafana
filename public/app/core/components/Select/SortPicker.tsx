@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { useAsync } from 'react-use';
-import { Icon, IconName, Select } from '@grafana/ui';
+import { Icon, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { DEFAULT_SORT } from 'app/features/search/constants';
 import { SearchSrv } from '../../services/search_srv';
@@ -34,8 +34,9 @@ export const SortPicker: FC<Props> = ({ onChange, value, placeholder, filter }) 
       onChange={onChange}
       value={selected ?? null}
       options={options}
+      aria-label="Sort"
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
-      prefix={<Icon name={(value?.includes('asc') ? 'sort-amount-up' : 'sort-amount-down') as IconName} />}
+      prefix={<Icon name={value?.includes('asc') ? 'sort-amount-up' : 'sort-amount-down'} />}
     />
   ) : null;
 };

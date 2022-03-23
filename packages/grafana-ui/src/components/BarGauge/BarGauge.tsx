@@ -1,24 +1,26 @@
 // Library
-import React, { PureComponent, CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, PureComponent, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 import {
-  TimeSeriesValue,
-  DisplayValue,
-  formattedValueToString,
-  FormattedValue,
-  DisplayValueAlignmentFactors,
-  ThresholdsMode,
   DisplayProcessor,
-  FieldConfig,
-  FieldColorModeId,
-  getFieldColorMode,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
   FALLBACK_COLOR,
+  FieldColorModeId,
+  FieldConfig,
+  FormattedValue,
+  formattedValueToString,
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
+  getFieldColorMode,
   TextDisplayOptions,
+  ThresholdsMode,
+  TimeSeriesValue,
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { measureText, calculateFontSize } from '../../utils/measureText';
+import { calculateFontSize, measureText } from '../../utils/measureText';
 import { Themeable2 } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -112,7 +114,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={styles.wrapper}>
         <FormattedValueDisplay
-          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={styles.value}
         />
@@ -122,53 +124,12 @@ export class BarGauge extends PureComponent<Props> {
     );
   }
 
-  getCellColor(positionValue: TimeSeriesValue): CellColors {
-    const { value, display } = this.props;
-    if (positionValue === null) {
-      return {
-        background: FALLBACK_COLOR,
-        border: FALLBACK_COLOR,
-      };
-    }
-
-    const color = display ? display(positionValue).color : null;
-
-    if (color) {
-      // if we are past real value the cell is not "on"
-      if (value === null || (positionValue !== null && positionValue > value.numeric)) {
-        return {
-          background: tinycolor(color).setAlpha(0.18).toRgbString(),
-          border: 'transparent',
-          isLit: false,
-        };
-      } else {
-        return {
-          background: tinycolor(color).setAlpha(0.95).toRgbString(),
-          backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
-          border: tinycolor(color).setAlpha(0.9).toRgbString(),
-          isLit: true,
-        };
-      }
-    }
-
-    return {
-      background: FALLBACK_COLOR,
-      border: FALLBACK_COLOR,
-    };
-  }
-
   renderRetroBars(): ReactNode {
-    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
-    const {
-      valueHeight,
-      valueWidth,
-      maxBarHeight,
-      maxBarWidth,
-      wrapperWidth,
-      wrapperHeight,
-    } = calculateBarAndValueDimensions(this.props);
-    const minValue = field.min!;
-    const maxValue = field.max!;
+    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
+    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
+      calculateBarAndValueDimensions(this.props);
+    const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
+    const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
     const isVert = isVertical(orientation);
     const valueRange = maxValue - minValue;
@@ -200,7 +161,7 @@ export class BarGauge extends PureComponent<Props> {
 
     for (let i = 0; i < cellCount; i++) {
       const currentValue = minValue + (valueRange / cellCount) * i;
-      const cellColor = this.getCellColor(currentValue);
+      const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
         borderRadius: '2px',
       };
@@ -228,7 +189,7 @@ export class BarGauge extends PureComponent<Props> {
       <div style={containerStyles}>
         {cells}
         <FormattedValueDisplay
-          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={valueStyles}
         />
@@ -301,10 +262,13 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   const titleFontSize = titleHeight / TITLE_LINE_HEIGHT;
   const textSize = measureText(title, titleFontSize);
 
+  // Do not allow title to take up more than 40% width
+  const textWidth = Math.min(textSize.width + 15, width * 0.4);
+
   return {
     fontSize: text?.titleSize ?? titleFontSize,
     height: 0,
-    width: textSize.width + 15,
+    width: textWidth,
     placement: 'left',
   };
 }
@@ -425,6 +389,44 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
   };
 }
 
+export function getCellColor(
+  positionValue: TimeSeriesValue,
+  value: Props['value'],
+  display: Props['display']
+): CellColors {
+  if (positionValue === null) {
+    return {
+      background: FALLBACK_COLOR,
+      border: FALLBACK_COLOR,
+    };
+  }
+
+  const color = display ? display(positionValue).color : null;
+
+  if (color) {
+    // if we are past real value the cell is not "on"
+    if (value === null || isNaN(value.numeric) || (positionValue !== null && positionValue > value.numeric)) {
+      return {
+        background: tinycolor(color).setAlpha(0.18).toRgbString(),
+        border: 'transparent',
+        isLit: false,
+      };
+    } else {
+      return {
+        background: tinycolor(color).setAlpha(0.95).toRgbString(),
+        backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
+        border: tinycolor(color).setAlpha(0.9).toRgbString(),
+        isLit: true,
+      };
+    }
+  }
+
+  return {
+    background: FALLBACK_COLOR,
+    border: FALLBACK_COLOR,
+  };
+}
+
 export function getValuePercent(value: number, minValue: number, maxValue: number): number {
   return Math.min((value - minValue) / (maxValue - minValue), 1);
 }
@@ -436,7 +438,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const { displayMode, field, value, alignmentFactors, orientation, theme, text } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
-  const valuePercent = getValuePercent(value.numeric, field.min!, field.max!);
+  const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
+  const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
+  const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
@@ -476,6 +480,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     // adjust so that filled in bar is at the bottom
     emptyBar.bottom = '-3px';
 
+    //adjust empty region to always have same width as colored bar
+    emptyBar.width = `${valueWidth}px`;
+
     if (isBasic) {
       // Basic styles
       barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
@@ -498,6 +505,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     // shift empty region back to fill gaps due to border radius
     emptyBar.left = '-3px';
+
+    //adjust empty region to always have same height as colored bar
+    emptyBar.height = `${valueHeight}px`;
 
     if (isBasic) {
       // Basic styles

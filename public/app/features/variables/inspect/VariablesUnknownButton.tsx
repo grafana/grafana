@@ -25,7 +25,14 @@ export const VariablesUnknownButton: FC<Props> = ({ id, usages }) => {
   return (
     <NetworkGraphModal show={false} title={`Showing usages for: $${id}`} nodes={nodes} edges={network.edges}>
       {({ showModal }) => {
-        return <IconButton onClick={() => showModal()} name="code-branch" title="Show usages" />;
+        return (
+          <IconButton
+            onClick={() => showModal()}
+            name="code-branch"
+            title="Show usages"
+            data-testid="VariablesUnknownButton"
+          />
+        );
       }}
     </NetworkGraphModal>
   );

@@ -20,6 +20,7 @@ interface Props<R> {
   secureFields?: Record<string, boolean>;
   errors?: FieldErrors<R>;
   onDelete?: () => void;
+  readOnly?: boolean;
 }
 
 export function ChannelSubForm<R extends ChannelValues>({
@@ -32,10 +33,11 @@ export function ChannelSubForm<R extends ChannelValues>({
   errors,
   secureFields,
   commonSettingsComponent: CommonSettingsComponent,
+  readOnly = false,
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch, register } = useFormContext();
+  const { control, watch, register, trigger, formState } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
@@ -64,22 +66,34 @@ export function ChannelSubForm<R extends ChannelValues>({
     [notifiers]
   );
 
+  const handleTest = async () => {
+    await trigger();
+    const isValid = Object.keys(formState.errors).length === 0;
+
+    if (isValid && onTest) {
+      onTest();
+    }
+  };
+
   const notifier = notifiers.find(({ type }) => type === selectedType);
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
   const mandatoryOptions = notifier?.options.filter((o) => o.required);
   const optionalOptions = notifier?.options.filter((o) => !o.required);
 
+  const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Contact point type" data-testid={`${pathPrefix}type`}>
+          <Field label="Contact point type" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Select
+                  disabled={readOnly}
+                  inputId={contactPointTypeInputId}
                   menuShouldPortal
                   {...field}
                   width={37}
@@ -92,35 +106,37 @@ export function ChannelSubForm<R extends ChannelValues>({
             />
           </Field>
         </div>
-        <div className={styles.buttons}>
-          {onTest && (
-            <Button
-              disabled={testingReceiver}
-              size="xs"
-              variant="secondary"
-              type="button"
-              onClick={() => onTest()}
-              icon={testingReceiver ? 'fa fa-spinner' : 'message'}
-            >
-              Test
+        {!readOnly && (
+          <div className={styles.buttons}>
+            {onTest && (
+              <Button
+                disabled={testingReceiver}
+                size="xs"
+                variant="secondary"
+                type="button"
+                onClick={() => handleTest()}
+                icon={testingReceiver ? 'fa fa-spinner' : 'message'}
+              >
+                Test
+              </Button>
+            )}
+            <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
+              Duplicate
             </Button>
-          )}
-          <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-            Duplicate
-          </Button>
-          {onDelete && (
-            <Button
-              data-testid={`${pathPrefix}delete-button`}
-              size="xs"
-              variant="secondary"
-              type="button"
-              onClick={() => onDelete()}
-              icon="trash-alt"
-            >
-              Delete
-            </Button>
-          )}
-        </div>
+            {onDelete && (
+              <Button
+                data-testid={`${pathPrefix}delete-button`}
+                size="xs"
+                variant="secondary"
+                type="button"
+                onClick={() => onDelete()}
+                icon="trash-alt"
+              >
+                Delete
+              </Button>
+            )}
+          </div>
+        )}
       </div>
       {notifier && (
         <div className={styles.innerContent}>
@@ -131,6 +147,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             errors={errors}
             onResetSecureField={onResetSecureField}
             pathPrefix={pathPrefix}
+            readOnly={readOnly}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
             <CollapsibleSection label={`Optional ${notifier.name} settings`}>
@@ -146,11 +163,12 @@ export function ChannelSubForm<R extends ChannelValues>({
                 onResetSecureField={onResetSecureField}
                 errors={errors}
                 pathPrefix={pathPrefix}
+                readOnly={readOnly}
               />
             </CollapsibleSection>
           )}
           <CollapsibleSection label="Notification settings">
-            <CommonSettingsComponent pathPrefix={pathPrefix} />
+            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={readOnly} />
           </CollapsibleSection>
         </div>
       )}

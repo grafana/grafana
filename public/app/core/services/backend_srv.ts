@@ -19,9 +19,13 @@ import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
-import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
-import { parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
+import {
+  isContentTypeApplicationJson,
+  parseInitFromOptions,
+  parseResponseBody,
+  parseUrlFromOptions,
+} from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
@@ -188,7 +192,9 @@ export class BackendSrv implements BackendService {
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
 
-        const data = await parseResponseBody<T>(response, options.responseType);
+        const responseType = options.responseType ?? (isContentTypeApplicationJson(headers) ? 'json' : undefined);
+
+        const data = await parseResponseBody<T>(response, responseType);
         const fetchResponse: FetchResponse<T> = {
           status,
           statusText,
@@ -385,8 +391,8 @@ export class BackendSrv implements BackendService {
     return await this.request({ method: 'GET', url, params, requestId });
   }
 
-  async delete(url: string) {
-    return await this.request({ method: 'DELETE', url });
+  async delete(url: string, data?: any) {
+    return await this.request({ method: 'DELETE', url, data });
   }
 
   async post(url: string, data?: any) {
@@ -425,7 +431,6 @@ export class BackendSrv implements BackendService {
   }
 }
 
-coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;

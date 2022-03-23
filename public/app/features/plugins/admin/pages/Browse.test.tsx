@@ -1,24 +1,33 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { PluginType } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
-import { PluginAdminRoutes, CatalogPlugin } from '../types';
+import { fetchRemotePlugins } from '../state/actions';
+import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '../types';
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 import BrowsePage from './Browse';
 
-// Mock the config to enable the plugin catalog
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
+  const mockedRuntime = { ...original };
 
-  return { ...original, pluginAdminEnabled: true };
+  mockedRuntime.config.bootData.user.isGrafanaAdmin = true;
+  mockedRuntime.config.buildInfo.version = 'v8.1.0';
+
+  return mockedRuntime;
 });
 
-const renderBrowse = (path = '/plugins', plugins: CatalogPlugin[] = []): RenderResult => {
-  const store = configureStore({ plugins: getPluginsStateMock(plugins) });
+const renderBrowse = (
+  path = '/plugins',
+  plugins: CatalogPlugin[] = [],
+  pluginsStateOverride?: ReducerState
+): RenderResult => {
+  const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock(plugins) });
   locationService.push(path);
   const props = getRouteComponentProps({
     route: { routeName: PluginAdminRoutes.Home } as any,
@@ -287,5 +296,66 @@ describe('Browse list of plugins', () => {
         'Redis Application',
       ]);
     });
+  });
+
+  describe('when GCOM api is not available', () => {
+    it('should disable the All / Installed filter', async () => {
+      const plugins = [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 2', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 3', isInstalled: true }),
+      ];
+      const state = getPluginsStateMock(plugins);
+
+      // Mock the store like if the remote plugins request was rejected
+      const stateOverride = {
+        ...state,
+        requests: {
+          ...state.requests,
+          [fetchRemotePlugins.typePrefix]: {
+            status: RequestStatus.Rejected,
+          },
+        },
+      };
+
+      // The radio input for the filters should be disabled
+      const { getByRole } = renderBrowse('/plugins', [], stateOverride);
+      await waitFor(() => expect(getByRole('radio', { name: 'Installed' })).toBeDisabled());
+    });
+  });
+
+  it('should be possible to switch between display modes', async () => {
+    const { findByTestId, getByRole, getByTitle, queryByText } = renderBrowse('/plugins?filterBy=all', [
+      getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1' }),
+      getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
+      getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
+    ]);
+
+    await findByTestId('plugin-list');
+
+    const listOptionTitle = 'Display plugins in list';
+    const gridOptionTitle = 'Display plugins in a grid layout';
+    const listOption = getByRole('radio', { name: listOptionTitle });
+    const listOptionLabel = getByTitle(listOptionTitle);
+    const gridOption = getByRole('radio', { name: gridOptionTitle });
+    const gridOptionLabel = getByTitle(gridOptionTitle);
+
+    // All options should be visible
+    expect(listOptionLabel).toBeVisible();
+    expect(gridOptionLabel).toBeVisible();
+
+    // The default display mode should be "grid"
+    expect(gridOption).toBeChecked();
+    expect(listOption).not.toBeChecked();
+
+    // Switch to "list" view
+    userEvent.click(listOption);
+    expect(gridOption).not.toBeChecked();
+    expect(listOption).toBeChecked();
+
+    // All plugins are still visible
+    expect(queryByText('Plugin 1')).toBeInTheDocument();
+    expect(queryByText('Plugin 2')).toBeInTheDocument();
+    expect(queryByText('Plugin 3')).toBeInTheDocument();
   });
 });

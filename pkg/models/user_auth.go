@@ -19,6 +19,7 @@ type UserAuth struct {
 	Created           time.Time
 	OAuthAccessToken  string
 	OAuthRefreshToken string
+	OAuthIdToken      string
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
 }
@@ -118,9 +119,4 @@ type TeamOrgGroupDTO struct {
 	TeamName string `json:"teamName"`
 	OrgName  string `json:"orgName"`
 	GroupDN  string `json:"groupDN"`
-}
-
-type GetTeamsForLDAPGroupCommand struct {
-	Groups []string
-	Result []TeamOrgGroupDTO
 }

@@ -1,6 +1,7 @@
 package state
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
@@ -99,6 +100,46 @@ func TestNeedsSending(t *testing.T) {
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
 		},
+		{
+			name:        "state: no-data, needs to be re-sent",
+			expected:    true,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.NoData,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:        "state: no-data, should not be re-sent",
+			expected:    false,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.NoData,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
+			},
+		},
+		{
+			name:        "state: error, needs to be re-sent",
+			expected:    true,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.Error,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:        "state: error, should not be re-sent",
+			expected:    false,
+			resendDelay: 1 * time.Minute,
+			testState: &State{
+				State:              eval.Error,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -149,14 +190,14 @@ func TestSetEndsAt(t *testing.T) {
 		},
 		{
 			name:     "more than resend delay: for=unset,interval=1m - endsAt = interval * 3",
-			expected: evaluationTime.Add(60 * 3),
+			expected: evaluationTime.Add(time.Second * 60 * 3),
 			testRule: &ngmodels.AlertRule{
 				IntervalSeconds: 60,
 			},
 		},
 		{
 			name:     "more than resend delay: for=0s,interval=1m - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(60 * 3),
+			expected: evaluationTime.Add(time.Second * 60 * 3),
 			testRule: &ngmodels.AlertRule{
 				For:             0 * time.Second,
 				IntervalSeconds: 60,
@@ -164,7 +205,7 @@ func TestSetEndsAt(t *testing.T) {
 		},
 		{
 			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
-			expected: evaluationTime.Add(300 * 3),
+			expected: evaluationTime.Add(time.Second * 300 * 3),
 			testRule: &ngmodels.AlertRule{
 				For:             60 * time.Second,
 				IntervalSeconds: 300,
@@ -172,7 +213,7 @@ func TestSetEndsAt(t *testing.T) {
 		},
 		{
 			name:     "more than resend delay: for=5m,interval=1m - endsAt = interval * 3",
-			expected: evaluationTime.Add(60 * 3),
+			expected: evaluationTime.Add(time.Second * 60 * 3),
 			testRule: &ngmodels.AlertRule{
 				For:             300 * time.Second,
 				IntervalSeconds: 60,

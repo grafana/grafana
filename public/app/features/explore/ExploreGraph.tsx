@@ -16,7 +16,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import {
   Icon,
   PanelContext,
@@ -32,6 +32,8 @@ import { identity } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { applyGraphStyle } from './exploreGraphStyleUtils';
+import { ExploreGraphStyle } from '../../types';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -47,6 +49,7 @@ interface Props {
   tooltipDisplayMode?: TooltipDisplayMode;
   splitOpenFn?: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
+  graphStyle: ExploreGraphStyle;
 }
 
 export function ExploreGraph({
@@ -60,6 +63,7 @@ export function ExploreGraph({
   annotations,
   onHiddenSeriesChanged,
   splitOpenFn,
+  graphStyle,
   tooltipDisplayMode = TooltipDisplayMode.Single,
 }: Props) {
   const theme = useTheme2();
@@ -101,15 +105,16 @@ export function ExploreGraph({
 
   const dataWithConfig = useMemo(() => {
     const registry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore');
+    const styledFieldConfig = applyGraphStyle(fieldConfig, graphStyle);
     return applyFieldOverrides({
-      fieldConfig,
+      fieldConfig: styledFieldConfig,
       data,
       timeZone,
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry: registry,
     });
-  }, [fieldConfig, data, timeZone, theme]);
+  }, [fieldConfig, graphStyle, data, timeZone, theme]);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {
@@ -157,9 +162,10 @@ export function ExploreGraph({
         width={width}
         height={height}
         onChangeTimeRange={onChangeTime}
+        timeZone={timeZone}
         options={
           {
-            tooltip: { mode: tooltipDisplayMode },
+            tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
             legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
           } as TimeSeriesOptions
         }

@@ -11,6 +11,9 @@ export const lightThemeVarsTemplate = (theme: GrafanaTheme2) =>
 
 $theme-name: light;
 
+$colors-action-hover: ${theme.colors.action.hover};
+$colors-action-selected: ${theme.colors.action.selected};
+
 // New Colors
 // -------------------------
 $blue-light: ${theme.colors.primary.text};
@@ -293,6 +296,7 @@ $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($tooltipColor, 5%);
+$tooltipExternalLinkColor: #6E9FFF;
 
 $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
@@ -308,7 +312,7 @@ $checkboxImageUrl: '../img/checkbox_white.png';
 $info-box-border-color: $blue-base;
 
 // footer
-$footer-link-color: $gray-3;
+$footer-link-color: $gray-1;
 $footer-link-hover: $dark-2;
 
 // json explorer

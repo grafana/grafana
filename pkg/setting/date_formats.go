@@ -11,6 +11,7 @@ type DateFormats struct {
 	UseBrowserLocale bool                `json:"useBrowserLocale"`
 	Interval         DateFormatIntervals `json:"interval"`
 	DefaultTimezone  string              `json:"defaultTimezone"`
+	DefaultWeekStart string              `json:"defaultWeekStart"`
 }
 
 type DateFormatIntervals struct {
@@ -22,17 +23,17 @@ type DateFormatIntervals struct {
 	Year   string `json:"year"`
 }
 
-const localBrowserTimezone = "browser"
+const localBrowser = "browser"
 
 func valueAsTimezone(section *ini.Section, keyName string) (string, error) {
-	timezone := section.Key(keyName).MustString(localBrowserTimezone)
-	if timezone == localBrowserTimezone {
-		return localBrowserTimezone, nil
+	timezone := section.Key(keyName).MustString(localBrowser)
+	if timezone == localBrowser {
+		return localBrowser, nil
 	}
 
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
-		return localBrowserTimezone, err
+		return localBrowser, err
 	}
 
 	return location.String(), nil
@@ -54,4 +55,5 @@ func (cfg *Cfg) readDateFormats() {
 		cfg.Logger.Warn("Unknown timezone as default_timezone", "err", err)
 	}
 	cfg.DateFormats.DefaultTimezone = timezone
+	cfg.DateFormats.DefaultWeekStart = valueAsString(dateFormats, "default_week_start", "browser")
 }

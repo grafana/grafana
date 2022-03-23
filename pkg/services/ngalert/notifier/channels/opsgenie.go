@@ -3,20 +3,19 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
 const (
@@ -32,7 +31,7 @@ var (
 
 // OpsgenieNotifier is responsible for sending alert notifications to Opsgenie.
 type OpsgenieNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	APIKey           string
 	APIUrl           string
 	AutoClose        bool
@@ -40,44 +39,69 @@ type OpsgenieNotifier struct {
 	SendTagsAs       string
 	tmpl             *template.Template
 	log              log.Logger
+	ns               notifications.WebhookSender
+}
+
+type OpsgenieConfig struct {
+	*NotificationChannelConfig
+	APIKey           string
+	APIUrl           string
+	AutoClose        bool
+	OverridePriority bool
+	SendTagsAs       string
+}
+
+func OpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewOpsgenieConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.Template, fc.DecryptFunc), nil
+}
+
+func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*OpsgenieConfig, error) {
+	apiKey := decryptFunc(context.Background(), config.SecureSettings, "apiKey", config.Settings.Get("apiKey").MustString())
+	if apiKey == "" {
+		return nil, errors.New("could not find api key property in settings")
+	}
+	sendTagsAs := config.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
+	if sendTagsAs != OpsgenieSendTags &&
+		sendTagsAs != OpsgenieSendDetails &&
+		sendTagsAs != OpsgenieSendBoth {
+		return nil, fmt.Errorf("invalid value for sendTagsAs: %q", sendTagsAs)
+	}
+	return &OpsgenieConfig{
+		NotificationChannelConfig: config,
+		APIKey:                    apiKey,
+		APIUrl:                    config.Settings.Get("apiUrl").MustString(OpsgenieAlertURL),
+		AutoClose:                 config.Settings.Get("autoClose").MustBool(true),
+		OverridePriority:          config.Settings.Get("overridePriority").MustBool(true),
+		SendTagsAs:                sendTagsAs,
+	}, nil
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template) (*OpsgenieNotifier, error) {
-	autoClose := model.Settings.Get("autoClose").MustBool(true)
-	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
-	apiURL := model.Settings.Get("apiUrl").MustString()
-	if apiKey == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find api key property in settings"}
-	}
-	if apiURL == "" {
-		apiURL = OpsgenieAlertURL
-	}
-
-	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
-	if sendTagsAs != OpsgenieSendTags && sendTagsAs != OpsgenieSendDetails && sendTagsAs != OpsgenieSendBoth {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: fmt.Sprintf("invalid value for sendTagsAs: %q", sendTagsAs),
-		}
-	}
-
+func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
 	return &OpsgenieNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+		Base: NewBase(&models.AlertNotification{
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		APIKey:           apiKey,
-		APIUrl:           apiURL,
-		AutoClose:        autoClose,
-		OverridePriority: overridePriority,
-		SendTagsAs:       sendTagsAs,
+		APIKey:           config.APIKey,
+		APIUrl:           config.APIUrl,
+		AutoClose:        config.AutoClose,
+		OverridePriority: config.OverridePriority,
+		SendTagsAs:       config.SendTagsAs,
 		tmpl:             t,
-		log:              log.New("alerting.notifier." + model.Name),
-	}, nil
+		log:              log.New("alerting.notifier." + config.Name),
+		ns:               ns,
+	}
 }
 
 // Notify sends an alert notification to Opsgenie
@@ -116,7 +140,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := on.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Opsgenie: %w", err)
 	}
 
@@ -152,10 +176,10 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 	description := fmt.Sprintf(
 		"%s\n%s\n\n%s",
-		tmpl(`{{ template "default.title" . }}`),
+		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
 		tmpl(`{{ template "default.message" . }}`),
 	)
@@ -203,7 +227,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	apiURL = tmpl(on.APIUrl)
 
 	if tmplErr != nil {
-		on.log.Debug("failed to template Opsgenie message", "err", tmplErr.Error())
+		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
 	}
 
 	return bodyJSON, apiURL, nil

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api"
+	_ "github.com/grafana/grafana/pkg/api/docs/definitions"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -124,7 +125,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	return s.provisioningService.RunInitProvisioners()
+	return s.provisioningService.RunInitProvisioners(s.context)
 }
 
 // Run initializes and starts services. This will block until all services have
@@ -152,16 +153,16 @@ func (s *Server) Run() error {
 				return s.context.Err()
 			default:
 			}
-			s.log.Debug("Starting background service " + serviceName)
+			s.log.Debug("Starting background service", "service", serviceName)
 			err := service.Run(s.context)
 			// Do not return context.Canceled error since errgroup.Group only
 			// returns the first error to the caller - thus we can miss a more
 			// interesting error.
 			if err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("Stopped background service "+serviceName, "reason", err)
+				s.log.Error("Stopped background service", "service", serviceName, "reason", err)
 				return fmt.Errorf("%s run error: %w", serviceName, err)
 			}
-			s.log.Debug("Stopped background service "+serviceName, "reason", err)
+			s.log.Debug("Stopped background service", "service", serviceName, "reason", err)
 			return nil
 		})
 	}

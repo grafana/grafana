@@ -2,11 +2,15 @@ import { isArray, isEqual } from 'lodash';
 import { ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './state/types';
-import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
+import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { variableAdapters } from './adapters';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { StoreState } from '../../types';
+import { getState } from '../../store/store';
+import { getVariablesState } from './state/selectors';
+import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -252,4 +256,34 @@ export function ensureStringValues(value: any | any[]): string | string[] {
   }
 
   return '';
+}
+
+export function hasOngoingTransaction(key: string, state: StoreState = getState()): boolean {
+  return getVariablesState(key, state).transaction.status !== TransactionStatus.NotStarted;
+}
+
+export function toStateKey(key: string | null | undefined): string {
+  return String(key);
+}
+
+export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariableIdentifier => {
+  if (!variable.rootStateKey) {
+    throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
+  }
+
+  return { type: variable.type, id: variable.id, rootStateKey: variable.rootStateKey };
+};
+
+export function toVariablePayload<T extends any = undefined>(
+  identifier: VariableIdentifier,
+  data?: T
+): VariablePayload<T>;
+// eslint-disable-next-line
+export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+// eslint-disable-next-line
+export function toVariablePayload<T extends any = undefined>(
+  obj: VariableIdentifier | VariableModel,
+  data?: T
+): VariablePayload<T> {
+  return { type: obj.type, id: obj.id, data: data as T };
 }

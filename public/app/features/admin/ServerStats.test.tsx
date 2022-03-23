@@ -26,6 +26,11 @@ const stats: ServerStat = {
 jest.mock('./state/apis', () => ({
   getServerStats: async () => stats,
 }));
+jest.mock('../../core/services/context_srv', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
 
 describe('ServerStats', () => {
   it('Should render page with stats', async () => {
@@ -36,5 +41,8 @@ describe('ServerStats', () => {
     expect(screen.getByText('Playlists')).toBeInTheDocument();
     expect(screen.getByText('Snapshots')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage dashboards' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage data sources' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage users' })).toBeInTheDocument();
   });
 });

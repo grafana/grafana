@@ -1,25 +1,18 @@
 package grafanads
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
@@ -40,42 +33,27 @@ const DatasourceUID = "grafana"
 // This is important to do since otherwise we will only get a
 // not implemented error response from plugin at runtime.
 var (
-	_      backend.QueryDataHandler   = (*Service)(nil)
-	_      backend.CheckHealthHandler = (*Service)(nil)
-	logger                            = log.New("tsdb.grafana")
+	_ backend.QueryDataHandler   = (*Service)(nil)
+	_ backend.CheckHealthHandler = (*Service)(nil)
 )
 
-func ProvideService(cfg *setting.Cfg, backendPM backendplugin.Manager) *Service {
-	return newService(cfg.StaticRootPath, backendPM)
+func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
+	return newService(cfg, search, store)
 }
 
-func newService(staticRootPath string, backendPM backendplugin.Manager) *Service {
+func newService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
 	s := &Service{
-		staticRootPath: staticRootPath,
-		roots: []string{
-			"testdata",
-			"img/icons",
-			"img/bg",
-			"gazetteer",
-			"upload", // does not exist yet
-		},
+		search: search,
+		store:  store,
 	}
 
-	if err := backendPM.Register("grafana", coreplugin.New(backend.ServeOpts{
-		CheckHealthHandler: s,
-		QueryDataHandler:   s,
-	})); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-		return nil
-	}
 	return s
 }
 
 // Service exists regardless of user settings
 type Service struct {
-	// path to the public folder
-	staticRootPath string
-	roots          []string
+	search searchV2.SearchService
+	store  store.StorageService
 }
 
 func DataSourceModel(orgId int64) *models.DataSource {
@@ -86,11 +64,11 @@ func DataSourceModel(orgId int64) *models.DataSource {
 		Type:           "grafana",
 		OrgId:          orgId,
 		JsonData:       simplejson.New(),
-		SecureJsonData: make(securejsondata.SecureJsonData),
+		SecureJsonData: make(map[string][]byte),
 	}
 }
 
-func (s *Service) QueryData(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -98,9 +76,11 @@ func (s *Service) QueryData(_ context.Context, req *backend.QueryDataRequest) (*
 		case queryTypeRandomWalk:
 			response.Responses[q.RefID] = s.doRandomWalk(q)
 		case queryTypeList:
-			response.Responses[q.RefID] = s.doListQuery(q)
+			response.Responses[q.RefID] = s.doListQuery(ctx, q)
 		case queryTypeRead:
-			response.Responses[q.RefID] = s.doReadQuery(q)
+			response.Responses[q.RefID] = s.doReadQuery(ctx, q)
+		case queryTypeSearch:
+			response.Responses[q.RefID] = s.doSearchQuery(ctx, req, q)
 		default:
 			response.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("unknown query type"),
@@ -118,25 +98,7 @@ func (s *Service) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) 
 	}, nil
 }
 
-func (s *Service) publicPath(path string) (string, error) {
-	if strings.Contains(path, "..") {
-		return "", fmt.Errorf("invalid string")
-	}
-
-	ok := false
-	for _, root := range s.roots {
-		if strings.HasPrefix(path, root) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return "", fmt.Errorf("bad root path")
-	}
-	return filepath.Join(s.staticRootPath, path), nil
-}
-
-func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
+func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) backend.DataResponse {
 	q := &listQueryModel{}
 	response := backend.DataResponse{}
 	err := json.Unmarshal(query.JSON, &q)
@@ -145,40 +107,17 @@ func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	if q.Path == "" {
-		count := len(s.roots)
-		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		names.Name = "name"
-		mtype.Name = "mediaType"
-		for i, f := range s.roots {
-			names.Set(i, f)
-			mtype.Set(i, "directory")
-		}
-		frame := data.NewFrame("", names, mtype)
-		frame.SetMeta(&data.FrameMeta{
-			Type: data.FrameTypeDirectoryListing,
-		})
-		response.Frames = data.Frames{frame}
-	} else {
-		path, err := s.publicPath(q.Path)
-		if err != nil {
-			response.Error = err
-			return response
-		}
-		frame, err := experimental.GetDirectoryFrame(path, false)
-		if err != nil {
-			response.Error = err
-			return response
-		}
+	path := store.RootPublicStatic + "/" + q.Path
+	frame, err := s.store.List(ctx, nil, path)
+	response.Error = err
+	if frame != nil {
 		response.Frames = data.Frames{frame}
 	}
-
 	return response
 }
 
-func (s *Service) doReadQuery(query backend.DataQuery) backend.DataResponse {
-	q := &listQueryModel{}
+func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) backend.DataResponse {
+	q := &readQueryModel{}
 	response := backend.DataResponse{}
 	err := json.Unmarshal(query.JSON, &q)
 	if err != nil {
@@ -191,27 +130,14 @@ func (s *Service) doReadQuery(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	path, err := s.publicPath(q.Path)
+	path := store.RootPublicStatic + "/" + q.Path
+	file, err := s.store.Read(ctx, nil, path)
 	if err != nil {
 		response.Error = err
 		return response
 	}
 
-	// Can ignore gosec G304 here, because we check the file pattern above
-	// nolint:gosec
-	fileReader, err := os.Open(path)
-	if err != nil {
-		response.Error = fmt.Errorf("failed to read file")
-		return response
-	}
-
-	defer func() {
-		if err := fileReader.Close(); err != nil {
-			logger.Warn("Failed to close file", "err", err, "path", path)
-		}
-	}()
-
-	frame, err := testdatasource.LoadCsvContent(fileReader, filepath.Base(path))
+	frame, err := testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), filepath.Base(path))
 	if err != nil {
 		response.Error = err
 		return response
@@ -227,4 +153,16 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
 
 	return response
+}
+
+func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
+	q := searchV2.DashboardQuery{}
+	err := json.Unmarshal(query.JSON, &q)
+	if err != nil {
+		return backend.DataResponse{
+			Error: err,
+		}
+	}
+
+	return *s.search.DoDashboardQuery(ctx, req.PluginContext.User, req.PluginContext.OrgID, q)
 }

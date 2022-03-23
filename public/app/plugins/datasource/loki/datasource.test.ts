@@ -1,9 +1,20 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries, toUtc } from '@grafana/data';
+import {
+  AbstractLabelOperator,
+  AnnotationQueryRequest,
+  CoreApp,
+  DataFrame,
+  dateTime,
+  FieldCache,
+  FieldType,
+  LogRowModel,
+  MutableDataFrame,
+  toUtc,
+} from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
-import LokiDatasource from './datasource';
+import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -25,13 +36,13 @@ const rawRange = {
   to: toUtc('2018-04-25 11:00'),
 };
 
-const timeSrvStub = ({
+const timeSrvStub = {
   timeRange: () => ({
     from: rawRange.from,
     to: rawRange.to,
     raw: rawRange,
   }),
-} as unknown) as TimeSrv;
+} as unknown as TimeSrv;
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as any[]),
@@ -52,13 +63,13 @@ const testLogsResponse: FetchResponse<LokiResponse> = {
     status: 'success',
   },
   ok: true,
-  headers: ({} as unknown) as Headers,
+  headers: {} as unknown as Headers,
   redirected: false,
   status: 200,
   statusText: 'Success',
   type: 'default',
   url: '',
-  config: ({} as unknown) as BackendSrvRequest,
+  config: {} as unknown as BackendSrvRequest,
 };
 
 const testMetricsResponse: FetchResponse<LokiResponse> = {
@@ -75,13 +86,13 @@ const testMetricsResponse: FetchResponse<LokiResponse> = {
     status: 'success',
   },
   ok: true,
-  headers: ({} as unknown) as Headers,
+  headers: {} as unknown as Headers,
   redirected: false,
   status: 200,
   statusText: 'OK',
   type: 'basic',
   url: '',
-  config: ({} as unknown) as BackendSrvRequest,
+  config: {} as unknown as BackendSrvRequest,
 };
 
 interface AdHocFilter {
@@ -153,6 +164,42 @@ describe('LokiDatasource', () => {
       // Step is in seconds (1 ms === 0.001 s)
       expect(req.step).toEqual(0.001);
     });
+
+    describe('log volume hint', () => {
+      let options: RangeQueryOptions;
+
+      beforeEach(() => {
+        const raw = { from: 'now', to: 'now-1h' };
+        const range = { from: dateTime(), to: dateTime(), raw: raw };
+        options = {
+          range,
+        } as unknown as RangeQueryOptions;
+      });
+
+      it('should add volume hint param for log volume queries', () => {
+        const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: true };
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tags': 'Source=logvolhist',
+            },
+          })
+        );
+      });
+
+      it('should not add volume hint param for regular queries', () => {
+        const target = { expr: '{job="grafana"}', refId: 'B', volumeQuery: false };
+        ds.runRangeQuery(target, options);
+        expect(backendSrv.fetch).not.toBeCalledWith(
+          expect.objectContaining({
+            headers: {
+              'X-Query-Tags': 'Source=logvolhist',
+            },
+          })
+        );
+      });
+    });
   });
 
   describe('when doing logs queries with limits', () => {
@@ -170,10 +217,10 @@ describe('LokiDatasource', () => {
         },
       };
 
-      const templateSrvMock = ({
+      const templateSrvMock = {
         getAdhocFilters: (): any[] => [],
         replace: (a: string) => a,
-      } as unknown) as TemplateSrv;
+      } as unknown as TemplateSrv;
 
       const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub as any);
 
@@ -280,7 +327,7 @@ describe('LokiDatasource', () => {
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should return series data for metrics range queries', async () => {
+    it('should return dataframe data for metrics range queries', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: metricsQuery, refId: 'B', range: true }],
@@ -291,11 +338,19 @@ describe('LokiDatasource', () => {
 
       await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
-        const timeSeries = result.data[0] as TimeSeries;
+        const frame = result.data[0] as DataFrame;
 
-        expect(timeSeries.meta?.preferredVisualisationType).toBe('graph');
-        expect(timeSeries.refId).toBe('B');
-        expect(timeSeries.datapoints[0]).toEqual([1.1, 1605715380000]);
+        expect(frame.meta?.preferredVisualisationType).toBe('graph');
+        expect(frame.refId).toBe('B');
+        frame.fields.forEach((field) => {
+          const value = field.values.get(0);
+
+          if (field.type === FieldType.time) {
+            expect(value).toBe(1605715380000);
+          } else {
+            expect(value).toBe(1.1);
+          }
+        });
       });
     });
 
@@ -563,7 +618,7 @@ describe('LokiDatasource', () => {
     };
 
     it('should transform the loki data to annotation response', async () => {
-      const response: FetchResponse = ({
+      const response: FetchResponse = {
         data: {
           data: {
             resultType: LokiResultType.Stream,
@@ -587,7 +642,7 @@ describe('LokiDatasource', () => {
           },
           status: 'success',
         },
-      } as unknown) as FetchResponse;
+      } as unknown as FetchResponse;
       const { promise } = getTestContext(response, { stepInterval: '15s' });
 
       const res = await promise;
@@ -600,7 +655,7 @@ describe('LokiDatasource', () => {
       expect(res[1].tags).toEqual(['value2']);
     });
     describe('Formatting', () => {
-      const response: FetchResponse = ({
+      const response: FetchResponse = {
         data: {
           data: {
             resultType: LokiResultType.Stream,
@@ -617,7 +672,7 @@ describe('LokiDatasource', () => {
           },
           status: 'success',
         },
-      } as unknown) as FetchResponse;
+      } as unknown as FetchResponse;
       describe('When tagKeys is set', () => {
         it('should only include selected labels', async () => {
           const { promise } = getTestContext(response, { tagKeys: 'label2,label3', stepInterval: '15s' });
@@ -802,10 +857,10 @@ describe('LokiDatasource', () => {
             value: 'grafana',
           },
         ];
-        const templateSrvMock = ({
+        const templateSrvMock = {
           getAdhocFilters: (): AdHocFilter[] => adHocFilters,
           replace: (a: string) => a,
-        } as unknown) as TemplateSrv;
+        } as unknown as TemplateSrv;
         ds = createLokiDSForTests(templateSrvMock);
       });
       describe('and query has no parser', () => {
@@ -819,7 +874,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job="grafana"} | logfmt [5m])', ds);
@@ -837,10 +892,10 @@ describe('LokiDatasource', () => {
             value: 'grafana',
           },
         ];
-        const templateSrvMock = ({
+        const templateSrvMock = {
           getAdhocFilters: (): AdHocFilter[] => adHocFilters,
           replace: (a: string) => a,
-        } as unknown) as TemplateSrv;
+        } as unknown as TemplateSrv;
         ds = createLokiDSForTests(templateSrvMock);
       });
       describe('and query has no parser', () => {
@@ -854,7 +909,7 @@ describe('LokiDatasource', () => {
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
-          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job!="grafana"', ds);
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz",job!="grafana"} | logfmt', ds);
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job!="grafana"} | logfmt [5m])', ds);
@@ -882,6 +937,97 @@ describe('LokiDatasource', () => {
       expect(interval).toBeGreaterThanOrEqual(safeInterval);
     });
   });
+
+  describe('prepareLogRowContextQueryTarget', () => {
+    const ds = createLokiDSForTests();
+    it('creates query with only labels from /labels API', () => {
+      const row: LogRowModel = {
+        rowIndex: 0,
+        dataFrame: new MutableDataFrame({
+          fields: [
+            {
+              name: 'tsNs',
+              type: FieldType.string,
+              values: ['0'],
+            },
+          ],
+        }),
+        labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
+        uid: '1',
+      } as any;
+
+      //Mock stored labels to only include "bar" label
+      jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
+      const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
+
+      expect(contextQuery.expr).toContain('baz');
+      expect(contextQuery.expr).not.toContain('uniqueParsedLabel');
+    });
+  });
+
+  describe('logs volume data provider', () => {
+    it('creates provider for logs query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{label=value}', refId: 'A' }],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+    });
+
+    it('does not create provider for metrics query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: 'rate({label=value}[1m])', refId: 'A' }],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
+    });
+
+    it('creates provider if at least one query is a logs query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'rate({label=value}[1m])', refId: 'A' },
+          { expr: '{label=value}', refId: 'B' },
+        ],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+    });
+  });
+
+  describe('importing queries', () => {
+    it('keeps all labels when no labels are loaded', async () => {
+      const ds = createLokiDSForTests();
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: [] })));
+      const queries = await ds.importFromAbstractQueries([
+        {
+          refId: 'A',
+          labelMatchers: [
+            { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
+            { name: 'foo2', operator: AbstractLabelOperator.Equal, value: 'bar2' },
+          ],
+        },
+      ]);
+      expect(queries[0].expr).toBe('{foo="bar", foo2="bar2"}');
+    });
+
+    it('filters out non existing labels', async () => {
+      const ds = createLokiDSForTests();
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: ['foo'] })));
+      const queries = await ds.importFromAbstractQueries([
+        {
+          refId: 'A',
+          labelMatchers: [
+            { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
+            { name: 'foo2', operator: AbstractLabelOperator.Equal, value: 'bar2' },
+          ],
+        },
+      ]);
+      expect(queries[0].expr).toBe('{foo="bar"}');
+    });
+  });
 });
 
 function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {
@@ -892,10 +1038,10 @@ function assertAdHocFilters(query: string, expectedResults: string, ds: LokiData
 }
 
 function createLokiDSForTests(
-  templateSrvMock = ({
+  templateSrvMock = {
     getAdhocFilters: (): any[] => [],
     replace: (a: string) => a,
-  } as unknown) as TemplateSrv
+  } as unknown as TemplateSrv
 ): LokiDatasource {
   const instanceSettings: any = {
     url: 'myloggingurl',

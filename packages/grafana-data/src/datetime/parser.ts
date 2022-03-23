@@ -19,6 +19,7 @@ export interface DateTimeOptionsWhenParsing extends DateTimeOptions {
    * the returned DateTime value will be 06:00:00.
    */
   roundUp?: boolean;
+  fiscalYearStartMonth?: number;
 }
 
 type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (value: DateTimeInput, options?: T) => DateTime;
@@ -56,7 +57,7 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
       return moment() as DateTime;
     }
 
-    const parsed = parse(value, options?.roundUp, options?.timeZone);
+    const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth);
     return parsed || (moment() as DateTime);
   }
 

@@ -10,9 +10,7 @@ weight = 1300
 
 Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-## Hosted Prometheus
-
-Run Prometheus on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana). The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=doc-grafana-&plcmt=in-text).
+> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
 ## Prometheus settings
 
@@ -33,6 +31,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                           |
 | `Label name`              | Add the name of the field in the label object.                                                                                                                                                                                                                    |
 | `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                                                                                 |
+| `URL Label`               | (Optional) Set a custom display label for the link URL. The link label defaults to the full external URL or the name of datasource and is overridden by this setting.                                                                                             |
 | `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                                                                              |
 
 ## Prometheus query editor
@@ -117,13 +116,13 @@ types of template variables.
 Variable of the type _Query_ allows you to query Prometheus for a list of metrics, labels or label values. The Prometheus data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                          | Description                                                             |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| `label_names()`               | Returns a list of label names.                                          |
-| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         |
-| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. |
-| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        |
-| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              |
+| Name                          | Description                                                             | Used API endpoints                |
+| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
+| `label_names()`               | Returns a list of label names.                                          | /api/v1/labels                    |
+| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         | /api/v1/label/`label`/values      |
+| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. | /api/v1/series                    |
+| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        | /api/v1/label/\_\_name\_\_/values |
+| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              | /api/v1/query                     |
 
 For details of what _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 

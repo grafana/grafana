@@ -135,7 +135,6 @@ export class AngularLocationWrapper {
       } else if (newUrl.startsWith('?')) {
         locationService.push({ ...locationService.getLocation(), search: newUrl });
       } else if (newUrl.trim().length === 0) {
-        console.log('pushing emptu');
         locationService.push('/');
       } else {
         locationService.push(newUrl);

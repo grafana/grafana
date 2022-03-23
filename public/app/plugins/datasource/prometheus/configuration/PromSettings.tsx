@@ -75,6 +75,7 @@ export const PromSettings = (props: Props) => {
             HTTP Method
           </InlineFormLabel>
           <Select
+            aria-label="Select HTTP method"
             menuShouldPortal
             options={httpOptions}
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
@@ -148,16 +149,14 @@ export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement
   return (eventItem as SelectableValue<string>).value;
 };
 
-const onChangeHandler = (
-  key: keyof PromOptions,
-  options: Props['options'],
-  onOptionsChange: Props['onOptionsChange']
-) => (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
-  onOptionsChange({
-    ...options,
-    jsonData: {
-      ...options.jsonData,
-      [key]: getValueFromEventItem(eventItem),
-    },
-  });
-};
+const onChangeHandler =
+  (key: keyof PromOptions, options: Props['options'], onOptionsChange: Props['onOptionsChange']) =>
+  (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        [key]: getValueFromEventItem(eventItem),
+      },
+    });
+  };

@@ -6,12 +6,13 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceJsonData,
   dateMath,
   DateTime,
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -20,11 +21,21 @@ import { createGraphFrames } from './graphTransform';
 import { JaegerQuery } from './types';
 import { convertTagsLogfmt } from './util';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
-export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
+export interface JaegerJsonData extends DataSourceJsonData {
+  nodeGraph?: NodeGraphOptions;
+}
+
+export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
-  constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
+  nodeGraph?: NodeGraphOptions;
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
     super(instanceSettings);
+    this.nodeGraph = instanceSettings.jsonData.nodeGraph;
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
@@ -35,20 +46,26 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
-    const target = options.targets[0];
+    const target: JaegerQuery = options.targets[0];
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
     }
 
     if (target.queryType !== 'search' && target.query) {
-      return this._request(`/api/traces/${encodeURIComponent(target.query)}`).pipe(
+      return this._request(
+        `/api/traces/${encodeURIComponent(getTemplateSrv().replace(target.query, options.scopedVars))}`
+      ).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
           if (!traceData) {
             return { data: [emptyTraceDataFrame] };
           }
+          let data = [createTraceFrame(traceData)];
+          if (this.nodeGraph?.enabled) {
+            data.push(...createGraphFrames(traceData));
+          }
           return {
-            data: [createTraceFrame(traceData), ...createGraphFrames(traceData)],
+            data,
           };
         })
       );
@@ -61,7 +78,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
       try {
         const traceData = JSON.parse(this.uploadedJson as string).data[0];
-        return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
+        let data = [createTraceFrame(traceData)];
+        if (this.nodeGraph?.enabled) {
+          data.push(...createGraphFrames(traceData));
+        }
+        return of({ data });
       } catch (error) {
         return of({ error: { message: 'JSON is not valid Jaeger format' }, data: [] });
       }
@@ -71,7 +92,10 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     // remove empty properties
     jaegerQuery = pickBy(jaegerQuery, identity);
     if (jaegerQuery.tags) {
-      jaegerQuery = { ...jaegerQuery, tags: convertTagsLogfmt(jaegerQuery.tags) };
+      jaegerQuery = {
+        ...jaegerQuery,
+        tags: convertTagsLogfmt(getTemplateSrv().replace(jaegerQuery.tags, options.scopedVars)),
+      };
     }
 
     if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {

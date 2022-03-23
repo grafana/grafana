@@ -1,8 +1,7 @@
-import { DataQuery } from '@grafana/data';
-import { ExpressionQuery } from '../features/expressions/types';
+import { DataQuery, DataSourceRef } from '@grafana/data';
 
 export interface QueryGroupOptions {
-  queries: Array<DataQuery | ExpressionQuery>;
+  queries: DataQuery[];
   dataSource: QueryGroupDataSource;
   maxDataPoints?: number | null;
   minInterval?: string | null;
@@ -14,8 +13,7 @@ export interface QueryGroupOptions {
   };
 }
 
-export interface QueryGroupDataSource {
+export interface QueryGroupDataSource extends DataSourceRef {
   name?: string | null;
-  uid?: string;
   default?: boolean;
 }

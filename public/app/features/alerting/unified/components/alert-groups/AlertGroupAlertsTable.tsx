@@ -38,7 +38,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
             </span>
           </>
         ),
-        size: '190px',
+        size: '220px',
       },
       {
         id: 'labels',

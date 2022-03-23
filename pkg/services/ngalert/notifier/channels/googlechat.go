@@ -3,46 +3,74 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GoogleChatNotifier is responsible for sending
 // alert notifications to Google chat.
 type GoogleChatNotifier struct {
-	old_notifiers.NotifierBase
-	URL  string
-	log  log.Logger
-	tmpl *template.Template
+	*Base
+	URL     string
+	log     log.Logger
+	ns      notifications.WebhookSender
+	tmpl    *template.Template
+	content string
 }
 
-func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Template) (*GoogleChatNotifier, error) {
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
-	}
+type GoogleChatConfig struct {
+	*NotificationChannelConfig
+	URL     string
+	Content string
+}
 
-	return &GoogleChatNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
-		}),
-		URL:  url,
-		log:  log.New("alerting.notifier.googlechat"),
-		tmpl: t,
+func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewGoogleChatConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewGoogleChatNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewGoogleChatConfig(config *NotificationChannelConfig) (*GoogleChatConfig, error) {
+	url := config.Settings.Get("url").MustString()
+	if url == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
+	return &GoogleChatConfig{
+		NotificationChannelConfig: config,
+		URL:                       url,
+		Content:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
 	}, nil
+}
+
+func NewGoogleChatNotifier(config *GoogleChatConfig, ns notifications.WebhookSender, t *template.Template) *GoogleChatNotifier {
+	return &GoogleChatNotifier{
+		Base: NewBase(&models.AlertNotification{
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
+		}),
+		content: config.Content,
+		URL:     config.URL,
+		log:     log.New("alerting.notifier.googlechat"),
+		ns:      ns,
+		tmpl:    t,
+	}
 }
 
 // Notify send an alert notification to Google Chat.
@@ -54,7 +82,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	widgets := []widget{}
 
-	if msg := tmpl(`{{ template "default.message" . }}`); msg != "" {
+	if msg := tmpl(gcn.content); msg != "" {
 		// Add a text paragraph widget for the message if there is a message.
 		// Google Chat API doesn't accept an empty text property.
 		widgets = append(widgets, textParagraphWidget{
@@ -62,6 +90,11 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 				Text: msg,
 			},
 		})
+	}
+
+	if tmplErr != nil {
+		gcn.log.Warn("failed to template Google Chat message", "err", tmplErr.Error())
+		tmplErr = nil
 	}
 
 	ruleURL := joinUrlPath(gcn.tmpl.ExternalURL.String(), "/alerting/list", gcn.log)
@@ -84,18 +117,18 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	// Add text paragraph widget for the build version and timestamp.
 	widgets = append(widgets, textParagraphWidget{
 		Text: text{
-			Text: "Grafana v" + setting.BuildVersion + " | " + (time.Now()).Format(time.RFC822),
+			Text: "Grafana v" + setting.BuildVersion + " | " + (timeNow()).Format(time.RFC822),
 		},
 	})
 
 	// Nest the required structs.
 	res := &outerStruct{
-		PreviewText:  tmpl(`{{ template "default.title" . }}`),
-		FallbackText: tmpl(`{{ template "default.title" . }}`),
+		PreviewText:  tmpl(DefaultMessageTitleEmbed),
+		FallbackText: tmpl(DefaultMessageTitleEmbed),
 		Cards: []card{
 			{
 				Header: header{
-					Title: tmpl(`{{ template "default.title" . }}`),
+					Title: tmpl(DefaultMessageTitleEmbed),
 				},
 				Sections: []section{
 					{
@@ -108,7 +141,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	u := tmpl(gcn.URL)
 	if tmplErr != nil {
-		gcn.log.Debug("failed to template GoogleChat message", "err", tmplErr.Error())
+		gcn.log.Warn("failed to template GoogleChat message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(res)
@@ -125,7 +158,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		Body: string(body),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := gcn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		gcn.log.Error("Failed to send Google Hangouts Chat alert", "error", err, "webhook", gcn.Name)
 		return false, err
 	}

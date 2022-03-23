@@ -37,6 +37,13 @@ interface GraphState {
   contextItem?: FlotItem<GraphSeriesXY>;
 }
 
+/**
+ * This is a react wrapper for the angular, flot based graph visualization.
+ * Rather than using this component, you should use the `<PanelRender .../> with
+ * timeseries panel configs.
+ *
+ * @deprecated
+ */
 export class Graph extends PureComponent<GraphProps, GraphState> {
   static defaultProps = {
     showLines: true,

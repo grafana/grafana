@@ -8,15 +8,17 @@ import { CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/
 export const modelVersion = Object.freeze([1, 0]);
 
 export interface PanelOptions {
+  inlineEditing: boolean;
   root: CanvasGroupOptions;
 }
 
 export const defaultPanelOptions: PanelOptions = {
-  root: ({
+  inlineEditing: true,
+  root: {
     elements: [
       {
         ...DEFAULT_CANVAS_ELEMENT_CONFIG,
       },
     ],
-  } as unknown) as CanvasGroupOptions,
+  } as unknown as CanvasGroupOptions,
 };

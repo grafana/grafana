@@ -1,6 +1,10 @@
 import { DataQuery } from '@grafana/data';
-import { migrateMultipleStatsAnnotationQuery, migrateMultipleStatsMetricsQuery } from './migrations';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from './types';
+import {
+  migrateMultipleStatsAnnotationQuery,
+  migrateMultipleStatsMetricsQuery,
+  migrateCloudWatchQuery,
+} from './migrations';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from './types';
 
 describe('migration', () => {
   describe('migrateMultipleStatsMetricsQuery', () => {
@@ -110,8 +114,59 @@ describe('migration', () => {
       });
 
       it('should use statistics prop and remove statistics prop', () => {
-        expect(annotationToMigrate.statistic).toEqual('p23.23');
+        expect('statistic' in annotationToMigrate && annotationToMigrate.statistic).toEqual('p23.23');
         expect(annotationToMigrate).not.toHaveProperty('statistics');
+      });
+    });
+
+    describe('migrateCloudWatchQuery', () => {
+      describe('and query doesnt have an expression', () => {
+        const query: CloudWatchMetricsQuery = {
+          statistic: 'Average',
+          refId: 'A',
+          id: '',
+          region: '',
+          namespace: '',
+          period: '',
+          alias: '',
+          metricName: '',
+          dimensions: {},
+          matchExact: false,
+          expression: '',
+        };
+        migrateCloudWatchQuery(query);
+        it('should have basic metricEditorMode', () => {
+          expect(query.metricQueryType).toBe(MetricQueryType.Search);
+        });
+
+        it('should have Builder BasicEditorMode', () => {
+          expect(query.metricEditorMode).toBe(MetricEditorMode.Builder);
+        });
+      });
+
+      describe('and query has an expression', () => {
+        const query: CloudWatchMetricsQuery = {
+          statistic: 'Average',
+          refId: 'A',
+          id: '',
+          region: '',
+          namespace: '',
+          period: '',
+          alias: '',
+          metricName: '',
+          dimensions: {},
+          matchExact: false,
+          expression: 'SUM(x)',
+        };
+        migrateCloudWatchQuery(query);
+        migrateCloudWatchQuery(query);
+
+        it('should have basic metricEditorMode', () => {
+          expect(query.metricQueryType).toBe(MetricQueryType.Search);
+        });
+        it('should have Expression BasicEditorMode', () => {
+          expect(query.metricEditorMode).toBe(MetricEditorMode.Code);
+        });
       });
     });
   });

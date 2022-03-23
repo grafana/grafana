@@ -1,5 +1,9 @@
-import { MapLayerOptions } from '@grafana/data';
-import { Units } from 'ol/proj/Units';
+import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
+import { HideableFieldConfig } from '@grafana/schema';
+import { LayerElement } from 'app/core/components/Layers/types';
+import BaseLayer from 'ol/layer/Base';
+import Units from 'ol/proj/Units';
+import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {
@@ -37,9 +41,43 @@ export const defaultView: MapViewConfig = {
   zoom: 1,
 };
 
+/** Support hide from legend/tooltip */
+export interface GeomapFieldConfig extends HideableFieldConfig {
+  // nothing custom yet
+}
+
 export interface GeomapPanelOptions {
   view: MapViewConfig;
   controls: ControlsOptions;
   basemap: MapLayerOptions;
   layers: MapLayerOptions[];
+}
+export interface FeatureStyleConfig {
+  style?: StyleConfig;
+  check?: FeatureRuleConfig;
+}
+export interface FeatureRuleConfig {
+  property: string;
+  operation: ComparisonOperation;
+  value: string | boolean | number;
+}
+
+export enum ComparisonOperation {
+  EQ = 'eq',
+  NEQ = 'neq',
+  LT = 'lt',
+  LTE = 'lte',
+  GT = 'gt',
+  GTE = 'gte',
+}
+
+//-------------------
+// Runtime model
+//-------------------
+export interface MapLayerState<TConfig = any> extends LayerElement {
+  options: MapLayerOptions<TConfig>;
+  handler: MapLayerHandler;
+  layer: BaseLayer; // the openlayers instance
+  onChange: (cfg: MapLayerOptions<TConfig>) => void;
+  isBasemap?: boolean;
 }

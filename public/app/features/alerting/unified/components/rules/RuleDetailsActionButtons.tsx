@@ -1,19 +1,24 @@
-import React, { FC, useState } from 'react';
+import React, { FC, Fragment, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { AppEvents, GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { appEvents } from 'app/core/core';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { createExploreLink, createViewLink } from '../../utils/misc';
+import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
+import { createExploreLink, createViewLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { getAlertmanagerByUid } from '../../utils/alertmanager';
+import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
+import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { isFederatedRuleGroup } from '../../utils/rules';
+import { AccessControlAction } from 'app/types';
 
 interface Props {
   rule: CombinedRule;
@@ -23,13 +28,21 @@ interface Props {
 export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const notifyApp = useAppNotification();
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const alertId = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.id ?? '' : '';
+  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(alertId);
+
+  const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
+    ? rulesSource
+    : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
 
+  const isFederated = isFederatedRuleGroup(group);
   const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
@@ -50,15 +63,18 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   const buildShareUrl = () => {
     if (isCloudRulesSource(rulesSource)) {
+      const { appUrl, appSubUrl } = config;
+      const baseUrl = appSubUrl !== '' ? `${appUrl}${appSubUrl}/` : config.appUrl;
       const ruleUrl = `${encodeURIComponent(rulesSource.name)}/${encodeURIComponent(rule.name)}`;
-      return `${config.appUrl}${config.appSubUrl}/alerting/${ruleUrl}/find`;
+      return `${baseUrl}alerting/${ruleUrl}/find`;
     }
 
     return window.location.href.split('?')[0];
   };
 
   // explore does not support grafana rule queries atm
-  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor) {
+  // neither do "federated rules"
+  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor && !isFederated) {
     leftButtons.push(
       <LinkButton
         className={style.button}
@@ -110,7 +126,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
           <LinkButton
             className={style.button}
             size="xs"
-            key="dashboard"
+            key="panel"
             variant="primary"
             icon="apps"
             target="__blank"
@@ -121,6 +137,32 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         );
       }
     }
+  }
+
+  if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
+    leftButtons.push(
+      <LinkButton
+        className={style.button}
+        size="xs"
+        key="silence"
+        icon="bell-slash"
+        target="__blank"
+        href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
+      >
+        Silence
+      </LinkButton>
+    );
+  }
+
+  if (alertId) {
+    leftButtons.push(
+      <Fragment key="history">
+        <Button className={style.button} size="xs" icon="history" onClick={() => showStateHistoryModal()}>
+          Show state history
+        </Button>
+        {StateHistoryModal}
+      </Fragment>
+    );
   }
 
   if (!isViewMode) {
@@ -138,7 +180,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (isEditable && rulerRule) {
+  if (isEditable && rulerRule && !isFederated) {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
@@ -152,11 +194,12 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     if (isViewMode) {
       rightButtons.push(
         <ClipboardButton
+          key="copy"
           onClipboardCopy={() => {
-            appEvents.emit(AppEvents.alertSuccess, ['URL copied!']);
+            notifyApp.success('URL copied!');
           }}
           onClipboardError={(e) => {
-            appEvents.emit(AppEvents.alertError, ['Error while copying URL', e.text]);
+            notifyApp.error('Error while copying URL', e.text);
           }}
           className={style.button}
           size="sm"
@@ -228,3 +271,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
   `,
 });
+
+function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  if (!rule) {
+    return false;
+  }
+  return (rule as RulerGrafanaRuleDTO).grafana_alert != null;
+}

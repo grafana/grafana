@@ -9,7 +9,9 @@ import {
   GrafanaTheme2,
   LicenseInfo,
   MapLayerOptions,
+  OAuthSettings,
   PanelPluginMeta,
+  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
@@ -34,19 +36,21 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngInfo = '';
   allowOrgCreate = false;
   disableLoginForm = false;
-  defaultDatasource = '';
+  defaultDatasource = ''; // UID
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
   alertingMinInterval = 1;
+  angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
+  samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
-  oauth: any;
+  oauth: OAuthSettings = {};
   disableUserSignUp = false;
   loginHint: any;
   passwordHint: any;
@@ -58,19 +62,17 @@ export class GrafanaBootConfig implements GrafanaConfig {
   liveEnabled = true;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: string[] = [];
-  featureToggles: FeatureToggles = {
-    ngalert: false,
-    accesscontrol: false,
-    trimDefaults: false,
-    tempoServiceGraph: false,
-    tempoSearch: false,
-    recordedQueries: false,
-    prometheusMonaco: false,
-    newNavigation: false,
-  };
+  pluginsToPreload: PreloadPlugin[] = [];
+  featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  dashboardPreviews: {
+    systemRequirements: {
+      met: boolean;
+      requiredImageRendererPluginVersion: string;
+    };
+    thumbnailsExist: boolean;
+  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
@@ -81,8 +83,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     sampleRate: 1,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
-  pluginAdminEnabled = false;
+  pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
+  pluginCatalogHiddenPlugins: string[] = [];
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
@@ -95,8 +98,18 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled = false;
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
+  recordedQueries = {
+    enabled: true,
+  };
+  featureHighlights = {
+    enabled: false,
+  };
+  reporting = {
+    enabled: true,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
@@ -116,7 +129,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         version: 'v1.0',
         commit: '1',
         env: 'production',
-        isEnterprise: false,
       },
       viewersCanEdit: false,
       editorsCanAdmin: false,

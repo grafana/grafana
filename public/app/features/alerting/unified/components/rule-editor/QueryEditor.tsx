@@ -9,7 +9,7 @@ import {
   RelativeTimeRange,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
+import { Button, HorizontalGroup, stylesFactory } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { QueryRows } from './QueryRows';
 import {
@@ -85,7 +85,10 @@ export class QueryEditor extends PureComponent<Props, State> {
         datasourceUid: defaultDataSource.uid,
         model: {
           refId: '',
-          datasource: defaultDataSource.name,
+          datasource: {
+            type: defaultDataSource.type,
+            uid: defaultDataSource.uid,
+          },
         },
       })
     );
@@ -118,18 +121,15 @@ export class QueryEditor extends PureComponent<Props, State> {
           Query
         </Button>
         {config.expressionsEnabled && (
-          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
-            <Button
-              type="button"
-              icon="plus"
-              onClick={this.onNewExpressionQuery}
-              variant="secondary"
-              className={styles.expressionButton}
-            >
-              <span>Expression&nbsp;</span>
-              <Icon name="exclamation-triangle" className="muted" size="sm" />
-            </Button>
-          </Tooltip>
+          <Button
+            type="button"
+            icon="plus"
+            onClick={this.onNewExpressionQuery}
+            variant="secondary"
+            className={styles.expressionButton}
+          >
+            <span>Expression&nbsp;</span>
+          </Button>
         )}
       </HorizontalGroup>
     );

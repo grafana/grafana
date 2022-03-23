@@ -2,9 +2,8 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
-import { RuleList } from './RuleList';
+import RuleList from './RuleList';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
 import { fetchRulerRules, deleteRulerRulesGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
@@ -39,14 +38,14 @@ jest.mock('app/core/core', () => ({
 }));
 
 const mocks = {
-  getAllDataSourcesMock: typeAsJestMock(getAllDataSources),
+  getAllDataSourcesMock: jest.mocked(getAllDataSources),
 
   api: {
-    fetchRules: typeAsJestMock(fetchRules),
-    fetchRulerRules: typeAsJestMock(fetchRulerRules),
-    deleteGroup: typeAsJestMock(deleteRulerRulesGroup),
-    deleteNamespace: typeAsJestMock(deleteNamespace),
-    setRulerRuleGroup: typeAsJestMock(setRulerRuleGroup),
+    fetchRules: jest.mocked(fetchRules),
+    fetchRulerRules: jest.mocked(fetchRulerRules),
+    deleteGroup: jest.mocked(deleteRulerRulesGroup),
+    deleteNamespace: jest.mocked(deleteNamespace),
+    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
   },
 };
 
@@ -431,7 +430,7 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(2);
 
     const filterInput = ui.rulesFilterInput.get();
-    await userEvent.type(filterInput, '{foo="bar"}');
+    userEvent.type(filterInput, '{{foo="bar"}');
 
     // Input is debounced so wait for it to be visible
     await waitFor(() => expect(filterInput).toHaveValue('{foo="bar"}'));
@@ -449,15 +448,15 @@ describe('RuleList', () => {
     expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
 
     // Check for different label matchers
-    await userEvent.type(filterInput, '{selectall}{del}{foo!="bar",foo!="baz"}');
+    userEvent.type(filterInput, '{selectall}{del}{{foo!="bar",foo!="baz"}');
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
-    await userEvent.type(filterInput, '{selectall}{del}{foo=~"b.+"}');
+    userEvent.type(filterInput, '{selectall}{del}{{foo=~"b.+"}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
-    await userEvent.type(filterInput, '{selectall}{del}{region="US"}');
+    userEvent.type(filterInput, '{selectall}{del}{{region="US"}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
@@ -499,12 +498,12 @@ describe('RuleList', () => {
     testCase('rename both lotex namespace and group', async () => {
       // make changes to form
       userEvent.clear(ui.editGroupModal.namespaceInput.get());
-      await userEvent.type(ui.editGroupModal.namespaceInput.get(), 'super namespace');
+      userEvent.type(ui.editGroupModal.namespaceInput.get(), 'super namespace');
 
       userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
-      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+      userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
 
-      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+      userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
       userEvent.click(ui.editGroupModal.saveButton.get());
@@ -532,8 +531,8 @@ describe('RuleList', () => {
     testCase('rename just the lotex group', async () => {
       // make changes to form
       userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
-      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
-      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+      userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+      userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
       userEvent.click(ui.editGroupModal.saveButton.get());
@@ -554,7 +553,7 @@ describe('RuleList', () => {
 
     testCase('edit lotex group eval interval, no renaming', async () => {
       // make changes to form
-      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+      userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
       userEvent.click(ui.editGroupModal.saveButton.get());

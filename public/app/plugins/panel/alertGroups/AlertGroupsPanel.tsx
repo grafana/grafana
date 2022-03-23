@@ -17,7 +17,7 @@ import { useFilteredGroups } from './useFilteredGroups';
 
 export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
   const dispatch = useDispatch();
-  const isAlertingEnabled = config.featureToggles.ngalert;
+  const isAlertingEnabled = config.unifiedAlertingEnabled;
 
   const expandAll = props.options.expandAll;
   const alertManagerSourceName = props.options.alertmanager;

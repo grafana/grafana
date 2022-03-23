@@ -1,10 +1,12 @@
-import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Counter, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { CollapseToggle } from 'app/features/alerting/unified/components/CollapseToggle';
 
 export interface OptionsPaneCategoryProps {
   id: string;
@@ -18,28 +20,47 @@ export interface OptionsPaneCategoryProps {
   children: ReactNode;
 }
 
+const CATEGORY_PARAM_NAME = 'showCategory';
+
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
     const initialIsExpanded = isOpenDefault !== false;
-
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: initialIsExpanded,
     });
 
-    // `savedState` can be undefined by typescript, so we have to handle that case
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
     const styles = useStyles2(getStyles);
+    const [queryParams, updateQueryParams] = useQueryParams();
+    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
+    const manualClickTime = useRef(0);
+    const ref = useRef<HTMLDivElement>(null);
+    const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
 
     useEffect(() => {
-      if (!isExpanded && forceOpen && forceOpen > 0) {
-        setIsExpanded(true);
+      if (manualClickTime.current) {
+        // ignore changes since the click handled the expected behavior
+        if (Date.now() - manualClickTime.current < 200) {
+          return;
+        }
       }
-    }, [forceOpen, isExpanded]);
+      if (isOpenFromUrl || forceOpen) {
+        if (!isExpanded) {
+          setIsExpanded(true);
+        }
+        if (isOpenFromUrl) {
+          ref.current?.scrollIntoView();
+        }
+      }
+    }, [forceOpen, isExpanded, isOpenFromUrl]);
 
     const onToggle = useCallback(() => {
+      manualClickTime.current = Date.now();
+      updateQueryParams({
+        [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
+      });
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, isExpanded]);
+    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -78,20 +99,25 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         className={boxStyles}
         data-testid="options-category"
         aria-label={selectors.components.OptionsGroup.group(id)}
+        ref={ref}
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
-          <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
-            <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
-          </div>
-          <div className={styles.title} role="heading">
+          <CollapseToggle isCollapsed={!isExpanded} idControlled={id} onToggle={onToggle} />
+          <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
-          </div>
+          </h6>
         </div>
-        {isExpanded && <div className={bodyStyles}>{children}</div>}
+        {isExpanded && (
+          <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
+            {children}
+          </div>
+        )}
       </div>
     );
   }
 );
+
+OptionsPaneCategory.displayName = 'OptionsPaneCategory';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -101,19 +127,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     boxNestedExpanded: css`
       margin-bottom: ${theme.spacing(2)};
     `,
-    toggle: css`
-      color: ${theme.colors.text.secondary};
-      margin-right: ${theme.spacing(1)};
-    `,
     title: css`
       flex-grow: 1;
       overflow: hidden;
+      line-height: 1.5;
+      font-size: 1rem;
+      font-weight: ${theme.typography.fontWeightMedium};
+      margin: 0;
     `,
     header: css`
       display: flex;
       cursor: pointer;
       align-items: baseline;
-      padding: ${theme.spacing(1)};
+      padding: ${theme.spacing(0.5)};
       color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightMedium};
 

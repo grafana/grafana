@@ -3,7 +3,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css as cssCore } from '@emotion/react';
 import { css } from '@emotion/css';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean, hasMarks = false) => {
   const { spacing } = theme;
   const railColor = theme.colors.border.strong;
   const trackColor = theme.colors.primary.main;
@@ -14,7 +14,8 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
   return {
     container: css`
       width: 100%;
-      margin: ${isHorizontal ? 'none' : `${spacing(1, 3, 1, 1)}`};
+      margin: ${isHorizontal ? 'inherit' : `${spacing(1, 3, 1, 1)}`};
+      padding-bottom: ${isHorizontal && hasMarks ? theme.spacing(1) : 'inherit'};
       height: ${isHorizontal ? 'auto' : '100%'};
     `,
     slider: css`
@@ -22,6 +23,16 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
         display: flex;
         flex-grow: 1;
         margin-left: 7px; // half the size of the handle to align handle to the left on 0 value
+      }
+      .rc-slider-mark {
+        top: ${theme.spacing(1.75)};
+      }
+      .rc-slider-mark-text {
+        color: ${theme.colors.text.disabled};
+        font-size: ${theme.typography.bodySmall.fontSize};
+      }
+      .rc-slider-mark-text-active {
+        color: ${theme.colors.text.primary};
       }
       .rc-slider-vertical .rc-slider-handle {
         margin-top: -10px;

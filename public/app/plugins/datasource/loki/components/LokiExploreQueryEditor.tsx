@@ -10,7 +10,7 @@ import { LokiOptionFields } from './LokiOptionFields';
 
 type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions>;
 
-export function LokiExploreQueryEditor(props: Props) {
+export const LokiExploreQueryEditor = memo((props: Props) => {
   const { query, data, datasource, history, onChange, onRunQuery, range } = props;
 
   return (
@@ -23,9 +23,9 @@ export function LokiExploreQueryEditor(props: Props) {
       history={history}
       data={data}
       range={range}
+      data-testid={testIds.editor}
       ExtraFieldElement={
         <LokiOptionFields
-          queryType={query.instant ? 'instant' : 'range'}
           lineLimitValue={query?.maxLines?.toString() || ''}
           resolution={query.resolution || 1}
           query={query}
@@ -35,6 +35,10 @@ export function LokiExploreQueryEditor(props: Props) {
       }
     />
   );
-}
+});
 
-export default memo(LokiExploreQueryEditor);
+LokiExploreQueryEditor.displayName = 'LokiExploreQueryEditor';
+
+export const testIds = {
+  editor: 'loki-editor-explore',
+};

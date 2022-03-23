@@ -1,11 +1,10 @@
 import Datasource from '../datasource';
-import { mocked } from 'ts-jest/utils';
 
 type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 
-export default function createMockDatasource() {
+export default function createMockDatasource(overrides?: DeepPartial<Datasource>) {
   // We make this a partial so we get _some_ kind of type safety when making this, rather than
   // having it be any or casted immediately to Datasource
   const _mockDatasource: DeepPartial<Datasource> = {
@@ -16,6 +15,7 @@ export default function createMockDatasource() {
         return true;
       },
       getSubscriptions: jest.fn().mockResolvedValueOnce([]),
+      defaultSubscriptionId: 'subscriptionId',
     },
 
     getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
@@ -34,15 +34,18 @@ export default function createMockDatasource() {
 
     azureLogAnalyticsDatasource: {
       getKustoSchema: () => Promise.resolve(),
+      getDeprecatedDefaultWorkSpace: () => 'defaultWorkspaceId',
     },
     resourcePickerData: {
-      getResourcePickerData: () => ({}),
-      getResourcesForResourceGroup: () => ({}),
-      getResourceURIFromWorkspace: () => '',
+      getSubscriptions: () => jest.fn().mockResolvedValue([]),
+      getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue([]),
+      getResourcesForResourceGroup: jest.fn().mockResolvedValue([]),
+      getResourceURIFromWorkspace: jest.fn().mockReturnValue(''),
     },
+    ...overrides,
   };
 
   const mockDatasource = _mockDatasource as Datasource;
 
-  return mocked(mockDatasource, true);
+  return jest.mocked(mockDatasource, true);
 }

@@ -1,31 +1,32 @@
 import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { useHistory } from '../hooks/useHistory';
-import { PluginAdminRoutes } from '../types';
+import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
 import { Page as PluginPage } from '../components/Page';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { Page } from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useGetAll, useGetAllWithFilters } from '../state/hooks';
+import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
 import { Sorters } from '../helpers';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
-  useGetAll();
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
   const navModelId = getNavModelId(route.routeName);
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
+  const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
   const history = useHistory();
+  const remotePluginsAvailable = useIsRemotePluginsAvailable();
   const query = (locationSearch.q as string) || '';
   const filterBy = (locationSearch.filterBy as string) || 'installed';
   const filterByType = (locationSearch.filterByType as string) || 'all';
@@ -36,6 +37,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     filterByType,
     sortBy,
   });
+  const filterByOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'installed', label: 'Installed' },
+  ];
 
   const onSortByChange = (value: SelectableValue<string>) => {
     history.push({ query: { sortBy: value.value } });
@@ -66,6 +71,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
           <HorizontalGroup wrap>
             <SearchField value={query} onSearch={onSearch} />
             <HorizontalGroup wrap className={styles.actionBar}>
+              {/* Filter by type */}
               <div>
                 <RadioButtonGroup
                   value={filterByType}
@@ -78,16 +84,29 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   ]}
                 />
               </div>
-              <div>
-                <RadioButtonGroup
-                  value={filterBy}
-                  onChange={onFilterByChange}
-                  options={[
-                    { value: 'all', label: 'All' },
-                    { value: 'installed', label: 'Installed' },
-                  ]}
-                />
-              </div>
+
+              {/* Filter by installed / all */}
+              {remotePluginsAvailable ? (
+                <div>
+                  <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+                </div>
+              ) : (
+                <Tooltip
+                  content="This filter has been disabled because the Grafana server cannot access grafana.com"
+                  placement="top"
+                >
+                  <div>
+                    <RadioButtonGroup
+                      disabled={true}
+                      value={filterBy}
+                      onChange={onFilterByChange}
+                      options={filterByOptions}
+                    />
+                  </div>
+                </Tooltip>
+              )}
+
+              {/* Sorting */}
               <div>
                 <Select
                   menuShouldPortal
@@ -104,6 +123,23 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   ]}
                 />
               </div>
+
+              {/* Display mode */}
+              <div>
+                <RadioButtonGroup<PluginListDisplayMode>
+                  className={styles.displayAs}
+                  value={displayMode}
+                  onChange={setDisplayMode}
+                  options={[
+                    {
+                      value: PluginListDisplayMode.Grid,
+                      icon: 'table',
+                      description: 'Display plugins in a grid layout',
+                    },
+                    { value: PluginListDisplayMode.List, icon: 'list-ul', description: 'Display plugins in list' },
+                  ]}
+                />
+              </div>
             </HorizontalGroup>
           </HorizontalGroup>
           <div className={styles.listWrap}>
@@ -115,7 +151,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 text="Loading results"
               />
             ) : (
-              <PluginList plugins={plugins} />
+              <PluginList plugins={plugins} displayMode={displayMode} />
             )}
           </div>
         </PluginPage>
@@ -132,6 +168,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   listWrap: css`
     margin-top: ${theme.spacing(2)};
+  `,
+  displayAs: css`
+    svg {
+      margin-right: 0;
+    }
   `,
 });
 

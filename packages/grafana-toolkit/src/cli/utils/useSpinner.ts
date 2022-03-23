@@ -6,7 +6,7 @@ export const useSpinner = async (label: string, fn: () => Promise<any>, killProc
   try {
     await fn();
     spinner.succeed();
-  } catch (err) {
+  } catch (err: any) {
     spinner.fail(err.message || err);
 
     if (err.stdout) {

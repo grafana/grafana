@@ -1,6 +1,5 @@
 import { getRootReducer, RootReducerType } from '../state/helpers';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { updateAutoValue, UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
 import { createIntervalOptions } from './reducer';
 import {
@@ -18,33 +17,48 @@ import { intervalBuilder } from '../shared/testing/builders';
 import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/actions';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { variablesInitTransaction } from '../state/transactionReducer';
+import { afterEach, beforeEach } from '../../../../test/lib/common';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
   describe('when updateIntervalVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      const interval = intervalBuilder().withId('0').withQuery('1s,1m,1h,1d').withAuto(false).build();
+      const interval = intervalBuilder()
+        .withId('0')
+        .withRootStateKey('key')
+        .withQuery('1s,1m,1h,1d')
+        .withAuto(false)
+        .build();
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
-        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval)), true);
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+        )
+        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toKeyedVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        createIntervalOptions({ type: 'interval', id: '0', data: undefined }),
-        setCurrentVariableValue({
-          type: 'interval',
-          id: '0',
-          data: { option: { text: '1s', value: '1s', selected: false } },
-        })
+        toKeyedAction('key', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
+        toKeyedAction(
+          'key',
+          setCurrentVariableValue({
+            type: 'interval',
+            id: '0',
+            data: { option: { text: '1s', value: '1s', selected: false } },
+          })
+        )
       );
     });
   });
 
   describe('when updateOptions is dispatched but something throws', () => {
     silenceConsoleOutput();
-    it('then an notifyApp action should be dispatched', async () => {
-      const timeSrvMock = ({
+    const originalTimeSrv = getTimeSrv();
+    beforeEach(() => {
+      const timeSrvMock = {
         timeRange: jest.fn().mockReturnValue({
           from: dateTime(new Date()).subtract(1, 'days').toDate(),
           to: new Date(),
@@ -53,11 +67,18 @@ describe('interval actions', () => {
             to: 'now',
           },
         }),
-      } as unknown) as TimeSrv;
-      const originalTimeSrv = getTimeSrv();
+      } as unknown as TimeSrv;
       setTimeSrv(timeSrvMock);
+    });
+
+    afterEach(() => {
+      setTimeSrv(originalTimeSrv);
+    });
+
+    it('then an notifyApp action should be dispatched', async () => {
       const interval = intervalBuilder()
         .withId('0')
+        .withRootStateKey('key')
         .withQuery('1s,1m,1h,1d')
         .withAuto(true)
         .withAutoMin('1xyz') // illegal interval string
@@ -65,20 +86,26 @@ describe('interval actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
-        .whenAsyncActionIsDispatched(updateOptions(toVariableIdentifier(interval)), true);
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+        )
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
+        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
-        expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(interval)));
-        expect(dispatchedActions[1]).toEqual(createIntervalOptions(toVariablePayload(interval)));
+        expect(dispatchedActions[0]).toEqual(toKeyedAction('key', variableStateFetching(toVariablePayload(interval))));
+        expect(dispatchedActions[1]).toEqual(toKeyedAction('key', createIntervalOptions(toVariablePayload(interval))));
         expect(dispatchedActions[2]).toEqual(
-          variableStateFailed(
-            toVariablePayload(interval, {
-              error: new Error(
-                'Invalid interval string, has to be either unit-less or end with one of the following units: "y, M, w, d, h, m, s, ms"'
-              ),
-            })
+          toKeyedAction(
+            'key',
+            variableStateFailed(
+              toVariablePayload(interval, {
+                error: new Error(
+                  'Invalid interval string, has to be either unit-less or end with one of the following units: "y, M, w, d, h, m, s, ms"'
+                ),
+              })
+            )
           )
         );
 
@@ -91,20 +118,39 @@ describe('interval actions', () => {
 
         return dispatchedActions.length === expectedNumberOfActions;
       });
+    });
 
-      setTimeSrv(originalTimeSrv);
+    describe('but there is no ongoing transaction', () => {
+      it('then no actions are dispatched', async () => {
+        const interval = intervalBuilder()
+          .withId('0')
+          .withRootStateKey('key')
+          .withQuery('1s,1m,1h,1d')
+          .withAuto(true)
+          .withAutoMin('1xyz') // illegal interval string
+          .build();
+
+        const tester = await reduxTester<RootReducerType>()
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+          )
+          .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval)), true);
+
+        tester.thenNoActionsWhereDispatched();
+      });
     });
   });
 
   describe('when updateAutoValue is dispatched', () => {
     describe('and auto is false', () => {
       it('then no dependencies are called', async () => {
-        const interval = intervalBuilder().withId('0').withAuto(false).build();
+        const interval = intervalBuilder().withId('0').withRootStateKey('key').withAuto(false).build();
 
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn(),
           getTimeSrv: () => {
-            return ({
+            return {
               timeRange: jest.fn().mockReturnValue({
                 from: '2001-01-01',
                 to: '2001-01-02',
@@ -113,19 +159,19 @@ describe('interval actions', () => {
                   to: '2001-01-02',
                 },
               }),
-            } as unknown) as TimeSrv;
+            } as unknown as TimeSrv;
           },
-          templateSrv: ({
+          templateSrv: {
             setGrafanaVariable: jest.fn(),
-          } as unknown) as TemplateSrv,
+          } as unknown as TemplateSrv,
         };
 
         await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
+            toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
-          .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
+          .whenAsyncActionIsDispatched(updateAutoValue(toKeyedVariableIdentifier(interval), dependencies), true);
 
         expect(dependencies.calculateInterval).toHaveBeenCalledTimes(0);
         expect(dependencies.getTimeSrv().timeRange).toHaveBeenCalledTimes(0);
@@ -137,6 +183,7 @@ describe('interval actions', () => {
       it('then correct dependencies are called', async () => {
         const interval = intervalBuilder()
           .withId('0')
+          .withRootStateKey('key')
           .withName('intervalName')
           .withAuto(true)
           .withAutoCount(33)
@@ -155,21 +202,21 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
           getTimeSrv: () => {
-            return ({
+            return {
               timeRange: timeRangeMock,
-            } as unknown) as TimeSrv;
+            } as unknown as TimeSrv;
           },
-          templateSrv: ({
+          templateSrv: {
             setGrafanaVariable: setGrafanaVariableMock,
-          } as unknown) as TemplateSrv,
+          } as unknown as TemplateSrv,
         };
 
         await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
+            toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
-          .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
+          .whenAsyncActionIsDispatched(updateAutoValue(toKeyedVariableIdentifier(interval), dependencies), true);
 
         expect(dependencies.calculateInterval).toHaveBeenCalledTimes(1);
         expect(dependencies.calculateInterval).toHaveBeenCalledWith(

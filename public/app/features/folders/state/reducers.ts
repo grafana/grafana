@@ -9,9 +9,11 @@ export const initialState: FolderState = {
   title: 'loading',
   url: '',
   canSave: false,
+  canDelete: false,
   hasChanged: false,
   version: 1,
   permissions: [],
+  canViewFolderPermissions: false,
 };
 
 const folderSlice = createSlice({
@@ -38,10 +40,14 @@ const folderSlice = createSlice({
         permissions: processAclItems(action.payload),
       };
     },
+    setCanViewFolderPermissions: (state, action: PayloadAction<boolean>): FolderState => {
+      state.canViewFolderPermissions = action.payload;
+      return state;
+    },
   },
 });
 
-export const { loadFolderPermissions, loadFolder, setFolderTitle } = folderSlice.actions;
+export const { loadFolderPermissions, loadFolder, setFolderTitle, setCanViewFolderPermissions } = folderSlice.actions;
 
 export const folderReducer = folderSlice.reducer;
 

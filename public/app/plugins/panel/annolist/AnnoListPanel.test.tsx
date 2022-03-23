@@ -8,16 +8,17 @@ import { backendSrv } from '../../../core/services/backend_srv';
 import userEvent from '@testing-library/user-event';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { locationService } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
 const defaultOptions: AnnoOptions = {
   limit: 10,
   navigateAfter: '10m',
-  navigateBefore: '20m',
+  navigateBefore: '10m',
   navigateToPanel: true,
   onlyFromThisDashboard: true,
   onlyInTimeRange: false,
@@ -27,7 +28,7 @@ const defaultOptions: AnnoOptions = {
   tags: ['tag A', 'tag B'],
 };
 
-const defaultResult: AnnotationEvent = {
+const defaultResult: any = {
   text: 'Result text',
   userId: 1,
   login: 'Result login',
@@ -37,6 +38,8 @@ const defaultResult: AnnotationEvent = {
   time: Date.UTC(2021, 0, 1, 0, 0, 0, 0),
   panelId: 13,
   dashboardId: 14, // deliberately different from panelId
+  id: 14,
+  url: '/d/asdkjhajksd/some-dash',
 };
 
 async function setupTestContext({
@@ -51,6 +54,7 @@ async function setupTestContext({
   const dash: any = { id: 1, formatDate: (time: number) => new Date(time).toISOString() };
   const dashSrv: any = { getCurrent: () => dash };
   setDashboardSrv(dashSrv);
+  const pushSpy = jest.spyOn(locationService, 'push');
 
   const props: Props = {
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
@@ -64,7 +68,7 @@ async function setupTestContext({
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
     },
-    fieldConfig: ({} as unknown) as FieldConfigSource,
+    fieldConfig: {} as unknown as FieldConfigSource,
     height: 400,
     id: 1,
     onChangeTimeRange: jest.fn(),
@@ -72,7 +76,7 @@ async function setupTestContext({
     onOptionsChange: jest.fn(),
     options,
     renderCounter: 1,
-    replaceVariables: jest.fn(),
+    replaceVariables: (str: string) => str,
     timeRange: getDefaultTimeRange(),
     timeZone: 'utc',
     title: 'Test Title',
@@ -82,7 +86,7 @@ async function setupTestContext({
   const { rerender } = render(<AnnoListPanel {...props} />);
   await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
-  return { props, rerender, getMock };
+  return { props, rerender, getMock, pushSpy };
 }
 
 describe('AnnoListPanel', () => {
@@ -192,14 +196,16 @@ describe('AnnoListPanel', () => {
 
     describe('and the user clicks on the annotation', () => {
       it('then it should navigate to the dashboard connected to the annotation', async () => {
-        const { getMock } = await setupTestContext();
+        const { getMock, pushSpy } = await setupTestContext();
 
         getMock.mockClear();
         expect(screen.getByText(/result text/i)).toBeInTheDocument();
         userEvent.click(screen.getByText(/result text/i));
+        await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
-        expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardIds: 14 });
+        expect(pushSpy).toHaveBeenCalledTimes(1);
+        expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
       });
     });
 
@@ -259,9 +265,6 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByRole('img')).toBeInTheDocument();
-        userEvent.hover(screen.getByRole('img'));
-
-        expect(screen.getByText(/result email/i)).toBeInTheDocument();
       });
     });
   });

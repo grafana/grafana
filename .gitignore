@@ -12,11 +12,23 @@ awsconfig
 /emails/dist
 /reports
 /e2e/tmp
-.yarnrc
-.yarn/
+/scripts/grafana-server/tmp
 vendor/
 /docs/menu.yaml
 /requests
+tsconfig.tsbuildinfo
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+# we temporarily commit this file because yarn downloading it
+# somehow produces different checksum values
+!.yarn/cache/pa11y-ci-https-1e9675e9e1-668c9119bd.zip
+.pnp.*
 
 # Enterprise emails
 /emails/templates/enterprise_*
@@ -27,6 +39,7 @@ vendor/
 
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
+/devenv/docker/blocks/saml-enterprise
 
 /tmp
 tools/phantomjs/phantomjs
@@ -53,6 +66,7 @@ public/css/*.min.css
 !.vscode/launch.json
 .vs/
 .eslintcache
+.stylelintcache
 
 /data/*
 /bin/*
@@ -76,6 +90,7 @@ profile.cov
 /pkg/cmd/grafana-server/debug
 /pkg/extensions/*
 /pkg/server/wireexts_enterprise.go
+/pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
 /public/app/extensions
 debug.test
@@ -83,6 +98,7 @@ debug.test
 /packaging/**/*.rpm
 /packaging/**/*.deb
 /packaging/**/*.tar.gz
+/packaging/**/*.tar.gz.sha256
 
 # Ignore OSX indexing
 .DS_Store
@@ -122,6 +138,12 @@ compilation-stats.json
 /e2e/**/screenshots
 !/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
+/e2e/benchmarks/**/results/*
+/e2e/benchmarks/**/results
+/e2e/build_results.zip
+
+# grafana server
+/scripts/grafana-server/server.log
 
 # a11y tests
 /pa11y-ci-results.json
@@ -135,3 +157,11 @@ compilation-stats.json
 
 # auto generated Go files
 *_gen.go
+!pkg/services/featuremgmt/toggles_gen.go
+
+# Auto-generated localisation files
+public/locales/_build/
+public/locales/**/*.js
+
+deployment_tools_config.json
+

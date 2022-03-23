@@ -1,8 +1,22 @@
-node_modules
-compiled
+.git
+.github
+.yarn
 build
-vendor
-devenv
+compiled
 data
+deployment_tools_config.json
+devenv
 dist
 e2e/tmp
+node_modules
+pkg
+public/lib/monaco
+scripts/grafana-server/tmp
+vendor
+
+# TS generate from cue by cuetsy
+**/*.gen.ts
+
+# Auto-generated localisation files
+public/locales/_build/
+public/locales/**/*.js

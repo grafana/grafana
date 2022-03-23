@@ -12,11 +12,14 @@ import { InlineFieldRow } from '../Forms/InlineFieldRow';
  */
 export const SegmentSection = ({
   label,
+  htmlFor,
   children,
   fill,
 }: {
   // Name of the section
   label: string;
+  // htmlFor for the label
+  htmlFor?: string;
   // List of components in the section
   children: React.ReactNode;
   // Fill the space at the end
@@ -26,7 +29,7 @@ export const SegmentSection = ({
   return (
     <>
       <InlineFieldRow>
-        <InlineLabel width={12} className={styles.label}>
+        <InlineLabel htmlFor={htmlFor} width={12} className={styles.label}>
           {label}
         </InlineLabel>
         {children}

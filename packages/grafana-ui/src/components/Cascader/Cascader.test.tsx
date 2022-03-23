@@ -1,6 +1,6 @@
 import React from 'react';
 import { Cascader, CascaderOption, CascaderProps } from './Cascader';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const options = [
@@ -46,22 +46,24 @@ describe('Cascader', () => {
 
   describe('options from state change', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      jest.useFakeTimers('modern');
     });
 
     it('displays updated options', () => {
       render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
 
-      userEvent.click(screen.getByPlaceholderText(placeholder));
+      act(() => {
+        userEvent.click(screen.getByPlaceholderText(placeholder));
+      });
 
       expect(screen.getByText('Initial state option')).toBeInTheDocument();
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
       act(() => {
         jest.runAllTimers();
+        userEvent.click(screen.getByPlaceholderText(placeholder));
       });
 
-      userEvent.click(screen.getByPlaceholderText(placeholder));
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
       expect(screen.getByText('First')).toBeInTheDocument();
     });
@@ -107,8 +109,9 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue('First/Second')).toBeInTheDocument();
   });
@@ -129,8 +132,9 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
   });
@@ -141,8 +145,9 @@ describe('Cascader', () => {
     );
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
@@ -151,8 +156,9 @@ describe('Cascader', () => {
     render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });

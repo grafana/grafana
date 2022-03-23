@@ -1,30 +1,40 @@
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import React, { FC, useState } from 'react';
-import { HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { isGrafanaRulerRule } from '../../utils/rules';
-import { CollapseToggle } from '../CollapseToggle';
-import { RulesTable } from './RulesTable';
-import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { ActionIcon } from './ActionIcon';
-import { useHasRuler } from '../../hooks/useHasRuler';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import pluralize from 'pluralize';
+import React, { FC, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useFolder } from '../../hooks/useFolder';
-import { RuleStats } from './RuleStats';
+import { useHasRuler } from '../../hooks/useHasRuler';
+import { deleteRulesGroupAction } from '../../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { CollapseToggle } from '../CollapseToggle';
+import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditCloudGroupModal';
+import { RulesTable } from './RulesTable';
+import { RuleStats } from './RuleStats';
 
 interface Props {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
+  expandAll: boolean;
 }
 
-export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
+export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }) => {
   const { rulesSource } = namespace;
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isEditingGroup, setIsEditingGroup] = useState(false);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(!expandAll);
+
+  useEffect(() => {
+    setIsCollapsed(!expandAll);
+  }, [expandAll]);
 
   const hasRuler = useHasRuler();
   const rulerRule = group.rules[0]?.rulerRule;
@@ -33,6 +43,12 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+  const isFederated = isFederatedRuleGroup(group);
+
+  const deleteGroup = () => {
+    dispatch(deleteRulesGroupAction(namespace, group));
+    setIsDeletingGroup(false);
+  };
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -49,12 +65,20 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
       const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
       if (folder?.canSave) {
         actionIcons.push(
-          <ActionIcon key="edit" icon="pen" tooltip="edit" to={baseUrl + '/settings'} target="__blank" />
+          <ActionIcon
+            aria-label="edit folder"
+            key="edit"
+            icon="pen"
+            tooltip="edit folder"
+            to={baseUrl + '/settings'}
+            target="__blank"
+          />
         );
       }
       if (folder?.canAdmin) {
         actionIcons.push(
           <ActionIcon
+            aria-label="manage permissions"
             key="manage-perms"
             icon="lock"
             tooltip="manage permissions"
@@ -65,13 +89,27 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
       }
     }
   } else if (hasRuler(rulesSource)) {
+    if (!isFederated) {
+      actionIcons.push(
+        <ActionIcon
+          aria-label="edit rule group"
+          data-testid="edit-group"
+          key="edit"
+          icon="pen"
+          tooltip="edit rule group"
+          onClick={() => setIsEditingGroup(true)}
+        />
+      );
+    }
+
     actionIcons.push(
       <ActionIcon
-        data-testid="edit-group"
-        key="edit"
-        icon="pen"
-        tooltip="edit"
-        onClick={() => setIsEditingGroup(true)}
+        aria-label="delete rule group"
+        data-testid="delete-group"
+        key="delete-group"
+        icon="trash-alt"
+        tooltip="delete rule group"
+        onClick={() => setIsDeletingGroup(true)}
       />
     );
   }
@@ -87,13 +125,19 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
           onToggle={setIsCollapsed}
           data-testid="group-collapse-toggle"
         />
-        <Icon name={isCollapsed ? 'folder-open' : 'folder'} />
+        <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
         {isCloudRulesSource(rulesSource) && (
           <Tooltip content={rulesSource.name} placement="top">
-            <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
+            <img
+              alt={rulesSource.meta.name}
+              className={styles.dataSourceIcon}
+              src={rulesSource.meta.info.logos.small}
+            />
           </Tooltip>
         )}
-        <h6 className={styles.heading}>{groupName}</h6>
+        <h6 className={styles.heading}>
+          {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+        </h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
           <RuleStats showInactive={false} group={group} />
@@ -111,6 +155,22 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
       {isEditingGroup && (
         <EditCloudGroupModal group={group} namespace={namespace} onClose={() => setIsEditingGroup(false)} />
       )}
+      <ConfirmModal
+        isOpen={isDeletingGroup}
+        title="Delete group"
+        body={
+          <div>
+            Deleting this group will permanently remove the group
+            <br />
+            and {group.rules.length} alert {pluralize('rule', group.rules.length)} belonging to it.
+            <br />
+            Are you sure you want to delete this group?
+          </div>
+        }
+        onConfirm={deleteGroup}
+        onDismiss={() => setIsDeletingGroup(false)}
+        confirmText="Delete"
+      />
     </div>
   );
 });
@@ -173,7 +233,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   actionIcons: css`
     & > * + * {
-      margin-left: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(0.5)};
     }
   `,
   rulesTable: css`

@@ -5,10 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -102,9 +100,6 @@ func RunCmd() int {
 				return logError("error packaging dist directory", err)
 			}
 
-		case "latest":
-			makeLatestDistCopies()
-
 		case "clean":
 			clean(opts)
 
@@ -115,35 +110,6 @@ func RunCmd() int {
 	}
 
 	return 0
-}
-
-func makeLatestDistCopies() {
-	files, err := ioutil.ReadDir("dist")
-	if err != nil {
-		log.Fatalf("failed to create latest copies. Cannot read from /dist")
-	}
-
-	latestMapping := map[string]string{
-		"_amd64.deb":               "dist/grafana_latest_amd64.deb",
-		".x86_64.rpm":              "dist/grafana-latest-1.x86_64.rpm",
-		".linux-amd64.tar.gz":      "dist/grafana-latest.linux-x64.tar.gz",
-		".linux-amd64-musl.tar.gz": "dist/grafana-latest.linux-x64-musl.tar.gz",
-		".linux-armv7.tar.gz":      "dist/grafana-latest.linux-armv7.tar.gz",
-		".linux-armv7-musl.tar.gz": "dist/grafana-latest.linux-armv7-musl.tar.gz",
-		".linux-armv6.tar.gz":      "dist/grafana-latest.linux-armv6.tar.gz",
-		".linux-arm64.tar.gz":      "dist/grafana-latest.linux-arm64.tar.gz",
-		".linux-arm64-musl.tar.gz": "dist/grafana-latest.linux-arm64-musl.tar.gz",
-	}
-
-	for _, file := range files {
-		for extension, fullName := range latestMapping {
-			if strings.HasSuffix(file.Name(), extension) {
-				if _, err := runError("cp", path.Join("dist", file.Name()), fullName); err != nil {
-					log.Println("error running cp command:", err)
-				}
-			}
-		}
-	}
 }
 
 func yarn(params ...string) {

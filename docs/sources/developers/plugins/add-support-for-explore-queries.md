@@ -46,7 +46,7 @@ The query editor for Explore is similar to the query editor for the data source 
      .setExploreQueryField(ExploreQueryEditor);
    ```
 
-1. Add a [QueryField]({{< relref "../../packages_api/ui/queryfield.md" >}}) to `ExploreQueryEditor`.
+1. Add a `QueryField` to `ExploreQueryEditor`.
 
    ```ts
    import { QueryField } from '@grafana/ui';

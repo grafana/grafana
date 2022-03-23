@@ -3,8 +3,4 @@
  *
  * @packageDocumentation
  */
-export * from './schema/legend.gen';
-export * from './schema/tooltip.gen';
-export * from './schema/text.gen';
-export * from './schema/table.gen';
 export * from './schema/graph.gen';

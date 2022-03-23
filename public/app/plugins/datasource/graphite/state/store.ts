@@ -25,7 +25,7 @@ export type GraphiteQueryEditorState = {
   // external dependencies
   datasource: GraphiteDatasource;
   target: GraphiteTarget;
-  refresh: (target: string) => void;
+  refresh: () => void;
   queries?: DataQuery[];
   templateSrv: TemplateSrv;
   range?: TimeRange;
@@ -134,7 +134,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   }
   if (actions.unpause.match(action)) {
     state.paused = false;
-    state.refresh(state.target.target);
+    state.refresh();
   }
   if (actions.addFunction.match(action)) {
     const newFunc = state.datasource.createFuncInstance(action.payload.name, {
@@ -175,7 +175,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     handleTargetChanged(state);
   }
   if (actions.runQuery.match(action)) {
-    state.refresh(state.target.target);
+    state.refresh();
   }
   if (actions.toggleEditorMode.match(action)) {
     state.target.textEditor = !state.target.textEditor;

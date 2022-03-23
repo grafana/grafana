@@ -1,9 +1,10 @@
 import { cx } from '@emotion/css';
-import { Checkbox, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2, FadeTransition } from '@grafana/ui';
+import { Checkbox, FadeTransition, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
+
 import { Space } from '../Space';
 import getStyles from './styles';
-import { ResourceRowType, ResourceRow, ResourceRowGroup } from './types';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow } from './utils';
 
 interface NestedRowsProps {
@@ -45,8 +46,7 @@ interface NestedRowProps {
 
 const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, requestNestedRows, onRowSelectedChange }) => {
   const styles = useStyles2(getStyles);
-  const initialOpenStatus = row.type === ResourceRowType.Subscription ? 'open' : 'closed';
-  const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>(initialOpenStatus);
+  const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 
   const isSelected = !!selectedRows.find((v) => v.id === row.id);
   const isDisabled = selectedRows.length > 0 && !isSelected;
@@ -58,16 +58,16 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
       return;
     }
     setRowStatus('loading');
-    await requestNestedRows(row);
-    setRowStatus('open');
+    requestNestedRows(row)
+      .then(() => setRowStatus('open'))
+      .catch(() => setRowStatus('closed'));
   };
 
   // opens the resource group on load of component if there was a previously saved selection
   useEffect(() => {
     // Assuming we don't have multi-select yet
     const selectedRow = selectedRows[0];
-
-    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.id);
+    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.uri);
 
     if (containsChild) {
       setRowStatus('open');
@@ -182,6 +182,17 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
 
   const checkboxId = `checkbox_${entry.id}`;
 
+  // Scroll to the selected element if it's not in the view
+  // Only do it once, when the component is mounted
+  useEffect(() => {
+    if (isSelected) {
+      document.getElementById(checkboxId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
       {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
@@ -191,7 +202,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
         <IconButton
           className={styles.collapseButton}
           name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-label={isOpen ? 'Collapse' : 'Expand'}
+          aria-label={isOpen ? `Collapse ${entry.name}` : `Expand ${entry.name}`}
           onClick={handleToggleCollapse}
           id={entry.id}
         />
@@ -203,7 +214,13 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
 
       {isSelectable && (
         <>
-          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+          <Checkbox
+            id={checkboxId}
+            onChange={handleSelectedChanged}
+            disabled={isDisabled}
+            value={isSelected}
+            className={styles.nestedRowCheckbox}
+          />
           <Space layout="inline" h={2} />
         </>
       )}

@@ -74,7 +74,10 @@ describe('useCreatableSelectPersistedBehaviour', () => {
 
     // Should call onChange when selecting an already existing option
     userEvent.click(option1);
-    expect(onChange).toHaveBeenCalledWith('Option 1');
+    expect(onChange).toHaveBeenLastCalledWith(
+      { value: 'Option 1', label: 'Option 1' },
+      { action: 'select-option', name: undefined, option: undefined }
+    );
 
     userEvent.click(input);
 
@@ -82,7 +85,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     userEvent.type(input, 'Option 2');
     userEvent.click(screen.getByLabelText('Select option'));
 
-    expect(onChange).toHaveBeenCalledWith('Option 2');
+    expect(onChange).toHaveBeenLastCalledWith({ value: 'Option 2' });
   });
 
   it('Should create an option for value if value is not in options', () => {

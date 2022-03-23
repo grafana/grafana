@@ -41,6 +41,8 @@ By default, the minimum width of the table column is 150 pixels. This field opti
 
 For example, if you enter `75` in the field, then when you click outside the field, all the columns will scale to no smaller than 75 pixels wide.
 
+For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to`50` to allow table based panels to render correctly in dashboards.
+
 ## Column alignment
 
 Choose how Grafana should align cell contents:
@@ -93,6 +95,12 @@ Shows value formatted as code. If a value is an object the JSON view allowing br
 If you have a field value that is an image URL or a base64 encoded image you can configure the table to display it as an image.
 
 {{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
+
+## Cell value inspect
+
+Enables value inspection from table cell. The raw value is presented in a modal window.
+
+> **Note:** Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
 
 ## Column filter
 

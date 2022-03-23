@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -11,9 +12,9 @@ import (
 )
 
 func TestGetDBHealthQuery(t *testing.T) {
-	InitTestDB(t)
+	store := InitTestDB(t)
 
 	query := models.GetDBHealthQuery{}
-	err := GetDBHealthQuery(&query)
+	err := store.GetDBHealthQuery(context.Background(), &query)
 	require.NoError(t, err)
 }

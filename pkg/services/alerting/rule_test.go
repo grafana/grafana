@@ -1,21 +1,22 @@
 package alerting
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext, reqHandler plugins.DataRequestHandler) (*ConditionResult, error) {
+func (f *FakeCondition) Eval(context *EvalContext, reqHandler legacydata.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{}, nil
 }
 
@@ -83,16 +84,16 @@ func TestAlertRuleForParsing(t *testing.T) {
 }
 
 func TestAlertRuleModel(t *testing.T) {
-	sqlstore.InitTestDB(t)
+	sqlStore := sqlstore.InitTestDB(t)
 	RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 		return &FakeCondition{}, nil
 	})
 
 	firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-	err := sqlstore.CreateAlertNotificationCommand(&firstNotification)
+	err := sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 	require.Nil(t, err)
 	secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-	err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
+	err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {
@@ -129,7 +130,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.Nil(t, err)
 
 		require.Len(t, alertRule.Conditions, 1)
@@ -168,7 +169,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.Nil(t, err)
 		require.NotContains(t, alertRule.Notifications, "999")
 		require.Contains(t, alertRule.Notifications, "notifier2")
@@ -199,7 +200,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.Nil(t, err)
 		require.EqualValues(t, alertRule.Frequency, 60)
 	})
@@ -237,7 +238,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		_, err := NewRuleFromDBAlert(alert, false)
+		_, err := NewRuleFromDBAlert(context.Background(), alert, false)
 		require.NotNil(t, err)
 		require.EqualValues(t, err.Error(), "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 	})

@@ -71,15 +71,23 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
 
   display: TextBoxDisplay,
 
-  defaultConfig: {
-    align: Align.Left,
-    valign: VAlign.Middle,
-  },
-
   defaultSize: {
     width: 240,
     height: 160,
   },
+
+  getNewOptions: (options) => ({
+    background: {
+      color: {
+        fixed: 'grey',
+      },
+    },
+    ...options,
+    config: {
+      align: Align.Left,
+      valign: VAlign.Middle,
+    },
+  }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: TextBoxConfig) => {
@@ -89,22 +97,27 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
       valign: cfg.valign ?? VAlign.Middle,
       size: cfg.size,
     };
+
     if (cfg.color) {
       data.color = ctx.getColor(cfg.color).value();
     }
+
     return data;
   },
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
+    const category = ['Text box'];
     builder
       .addCustomEditor({
+        category,
         id: 'textSelector',
         path: 'config.text',
         name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
+        category,
         id: 'config.color',
         path: 'config.color',
         name: 'Text color',
@@ -113,6 +126,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
         defaultValue: {},
       })
       .addRadio({
+        category,
         path: 'config.align',
         name: 'Align text',
         settings: {
@@ -125,6 +139,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
         defaultValue: Align.Left,
       })
       .addRadio({
+        category,
         path: 'config.valign',
         name: 'Vertical align',
         settings: {
@@ -137,6 +152,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
         defaultValue: VAlign.Middle,
       })
       .addNumberInput({
+        category,
         path: 'config.size',
         name: 'Text size',
         settings: {

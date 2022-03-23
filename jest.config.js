@@ -5,14 +5,15 @@ process.env.TZ = 'Pacific/Easter';
 
 module.exports = {
   verbose: false,
+  testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': 'ts-jest',
+    '^.+\\.(ts|tsx|js|jsx)$': require.resolve('ts-jest'),
   },
   transformIgnorePatterns: [
     'node_modules/(?!(ol)/)', // <- exclude the open layers library
   ],
   moduleDirectories: ['node_modules', 'public'],
-  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts'],
+  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-shim.ts', './public/test/jest-setup.ts'],
@@ -27,7 +28,14 @@ module.exports = {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
-    '^react($|/.+)': '<rootDir>/node_modules/react$1',
+
+    // lingui-macro (for i18n) makes use of babel-macro, which we do not enable in tests, so we
+    // provide our own mock component
+    '@lingui/macro': '<rootDir>/public/test/mocks/linguiMacro.tsx',
+
+    // i18n messages.js files are auto-generated, and may not exist when the tests are ran.
+    // Because we mock out <Trans /> anyway, we can mock the messages also
+    'locales/\\w+/messages$': '<rootDir>/public/test/mocks/i18nMessages.ts',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };

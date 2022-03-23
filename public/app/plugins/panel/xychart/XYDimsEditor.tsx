@@ -9,7 +9,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 
-import { XYDimensionConfig, Options } from './types';
+import { XYDimensionConfig, XYChartOptions } from './models.gen';
 import { getXYDimensions, isGraphable } from './dims';
 
 interface XYInfo {
@@ -18,7 +18,7 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Options>> = ({
+export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChartOptions>> = ({
   value,
   onChange,
   context,

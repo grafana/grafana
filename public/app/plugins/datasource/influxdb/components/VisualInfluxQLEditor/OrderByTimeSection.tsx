@@ -17,12 +17,14 @@ const className = cx('width-9', paddingRightClass);
 type Props = {
   value: Mode;
   onChange: (value: Mode) => void;
+  inputId?: string;
 };
 
-export const OrderByTimeSection = ({ value, onChange }: Props): JSX.Element => {
+export const OrderByTimeSection = ({ value, onChange, inputId }: Props): JSX.Element => {
   return (
     <>
       <Select<Mode>
+        inputId={inputId}
         className={className}
         onChange={(v) => {
           onChange(unwrap(v.value));

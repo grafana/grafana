@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Project, VisualMetricQueryEditor, AliasBy } from '.';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { AliasBy, Project, VisualMetricQueryEditor } from '.';
+import CloudMonitoringDatasource from '../datasource';
+import { getAlignmentPickerData } from '../functions';
 import {
-  MetricQuery,
-  MetricDescriptor,
-  EditorMode,
-  MetricKind,
-  PreprocessorType,
   AlignmentTypes,
   CustomMetaData,
+  EditorMode,
+  MetricDescriptor,
+  MetricKind,
+  MetricQuery,
+  PreprocessorType,
+  SLOQuery,
   ValueTypes,
 } from '../types';
-import { getAlignmentPickerData } from '../functions';
-import CloudMonitoringDatasource from '../datasource';
 import { MQLQueryEditor } from './MQLQueryEditor';
 
 export interface Props {
@@ -60,18 +62,18 @@ function Editor({
   variableOptionGroup,
 }: React.PropsWithChildren<Props>) {
   const [state, setState] = useState<State>(defaultState);
-  const { projectName, metricType, groupBys, editorMode } = query;
+  const { projectName, metricType, groupBys, editorMode, crossSeriesReducer } = query;
 
   useEffect(() => {
     if (projectName && metricType) {
       datasource
-        .getLabels(metricType, refId, projectName, groupBys)
+        .getLabels(metricType, refId, projectName)
         .then((labels) => setState((prevState) => ({ ...prevState, labels })));
     }
-  }, [datasource, groupBys, metricType, projectName, refId]);
+  }, [datasource, groupBys, metricType, projectName, refId, crossSeriesReducer]);
 
   const onChange = useCallback(
-    (metricQuery: MetricQuery) => {
+    (metricQuery: MetricQuery | SLOQuery) => {
       onQueryChange({ ...query, ...metricQuery });
       onRunQuery();
     },
@@ -100,6 +102,7 @@ function Editor({
   return (
     <>
       <Project
+        refId={refId}
         templateVariableOptions={variableOptionGroup.options}
         projectName={projectName}
         datasource={datasource}
@@ -110,6 +113,7 @@ function Editor({
 
       {editorMode === EditorMode.Visual && (
         <VisualMetricQueryEditor
+          refId={refId}
           labels={state.labels}
           variableOptionGroup={variableOptionGroup}
           customMetaData={customMetaData}
@@ -129,6 +133,7 @@ function Editor({
       )}
 
       <AliasBy
+        refId={refId}
         value={query.aliasBy}
         onChange={(aliasBy) => {
           onChange({ ...query, aliasBy });

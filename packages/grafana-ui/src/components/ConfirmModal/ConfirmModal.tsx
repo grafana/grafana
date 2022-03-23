@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { Modal } from '../Modal/Modal';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button';
 import { useStyles2 } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { HorizontalGroup, Input } from '..';
-import { selectors } from '@grafana/e2e-selectors';
 
 export interface ConfirmModalProps {
   /** Toggle modal's open/closed state */
@@ -58,8 +59,10 @@ export const ConfirmModal = ({
 
   useEffect(() => {
     // for some reason autoFocus property did no work on this button, but this does
-    buttonRef.current?.focus();
-  }, []);
+    if (isOpen) {
+      buttonRef.current?.focus();
+    }
+  }, [isOpen]);
 
   return (
     <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>

@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FilterInput } from '../FilterInput/FilterInput';
-import { LinkButton } from '@grafana/ui';
+import { LinkButton, FilterInput } from '@grafana/ui';
 
 export interface Props {
   searchQuery: string;
@@ -13,10 +12,10 @@ export interface Props {
 export default class PageActionBar extends PureComponent<Props> {
   render() {
     const { searchQuery, linkButton, setSearchQuery, target, placeholder = 'Search by name or type' } = this.props;
-    const linkProps = { href: linkButton?.href, disabled: linkButton?.disabled };
+    const linkProps: typeof LinkButton.defaultProps = { href: linkButton?.href, disabled: linkButton?.disabled };
 
     if (target) {
-      (linkProps as any).target = target;
+      linkProps.target = target;
     }
 
     return (

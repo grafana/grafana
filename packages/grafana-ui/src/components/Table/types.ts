@@ -1,7 +1,8 @@
-import { CellProps } from 'react-table';
-import { Field, KeyValue } from '@grafana/data';
+import { CellProps, Column, Row } from 'react-table';
+import { Field, KeyValue, SelectableValue } from '@grafana/data';
 import { TableStyles } from './styles';
-import { CSSProperties, FC } from 'react';
+import { FC } from 'react';
+import { Property } from 'csstype';
 
 export { TableFieldOptions, TableCellDisplayMode, FieldTextAlignment } from '@grafana/schema';
 
@@ -24,7 +25,7 @@ export interface TableSortByFieldState {
 
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
-  cellProps: CSSProperties;
+  cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
   onCellFilterAdded: TableFilterActionCallback;
   innerWidth: number;
@@ -33,3 +34,11 @@ export interface TableCellProps extends CellProps<any> {
 export type CellComponent = FC<TableCellProps>;
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
+
+export type GrafanaTableColumn = Column & {
+  field: Field;
+  sortType: 'number' | 'basic' | 'alphanumeric-insensitive';
+  filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => SelectableValue[];
+  justifyContent: Property.JustifyContent;
+  minWidth: number;
+};

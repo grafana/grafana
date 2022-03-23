@@ -11,9 +11,12 @@ import (
 // AlertTest makes a test alert.
 func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
-
-	extractor := NewDashAlertExtractor(dash, orgID, user)
-	alerts, err := extractor.GetAlerts()
+	dashInfo := DashAlertInfo{
+		User:  user,
+		Dash:  dash,
+		OrgID: orgID,
+	}
+	alerts, err := e.dashAlertExtractor.GetAlerts(context.Background(), dashInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -22,14 +25,14 @@ func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID
 		if alert.PanelId != panelID {
 			continue
 		}
-		rule, err := NewRuleFromDBAlert(alert, true)
+		rule, err := NewRuleFromDBAlert(context.Background(), alert, true)
 		if err != nil {
 			return nil, err
 		}
 
 		handler := NewEvalHandler(e.DataService)
 
-		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{})
+		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.sqlStore)
 		context.IsTestRun = true
 		context.IsDebug = true
 

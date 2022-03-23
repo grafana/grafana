@@ -1,7 +1,7 @@
 import path from 'path';
 import { buildManifest, signManifest, saveManifest } from '../../plugins/manifest';
 import { Task, TaskRunner } from './task';
-
+import { getToolkitVersion } from './plugin.utils';
 interface PluginSignOptions {
   signatureType?: string;
   rootUrls?: string[];
@@ -23,8 +23,8 @@ const pluginSignRunner: TaskRunner<PluginSignOptions> = async ({ signatureType, 
       manifest.rootUrls = rootUrls;
     }
 
+    manifest.toolkit = { version: getToolkitVersion() };
     const signedManifest = await signManifest(manifest);
-    // console.log(signedManifest);
 
     console.log('Saving signed manifest...');
     await saveManifest(distContentDir, signedManifest);

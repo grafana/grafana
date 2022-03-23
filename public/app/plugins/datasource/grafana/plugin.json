@@ -3,6 +3,7 @@
   "name": "-- Grafana --",
   "id": "grafana",
 
+  "backend": true,
   "builtIn": true,
   "annotations": true,
   "metrics": true

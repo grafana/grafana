@@ -7,8 +7,9 @@ import { LegendDisplayMode } from '@grafana/schema';
 import { preparePlotConfigBuilder } from './utils';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
+import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
-const propsToDiff: string[] = [];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
@@ -17,8 +18,8 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   panelContext: PanelContext = {} as PanelContext;
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const { eventBus, sync } = this.context;
-    const { theme, timeZone } = this.props;
+    const { eventBus, sync } = this.context as PanelContext;
+    const { theme, timeZone, legend, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -28,6 +29,10 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
       eventBus,
       sync,
       allFrames,
+      legend,
+      renderers,
+      tweakScale,
+      tweakAxis,
     });
   };
 

@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	dboards "github.com/grafana/grafana/pkg/dashboards"
+	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,14 +16,14 @@ import (
 func TestProvisioningServiceImpl(t *testing.T) {
 	t.Run("Restart dashboard provisioning and stop service", func(t *testing.T) {
 		serviceTest := setup()
-		err := serviceTest.service.ProvisionDashboards()
+		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
 		serviceTest.waitForPollChanges()
 
 		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
 
-		err = serviceTest.service.ProvisionDashboards()
+		err = serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 
 		serviceTest.waitForPollChanges()
@@ -42,7 +43,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
 		serviceTest := setup()
-		err := serviceTest.service.ProvisionDashboards()
+		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
 		serviceTest.waitForPollChanges()
@@ -51,7 +52,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
 			return errors.New("Test error")
 		}
-		err = serviceTest.service.ProvisionDashboards()
+		err = serviceTest.service.ProvisionDashboards(context.Background())
 		assert.NotNil(t, err)
 		serviceTest.waitForPollChanges()
 
@@ -92,7 +93,7 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = newProvisioningServiceImpl(
-		func(string, dboards.Store) (dashboards.DashboardProvisioner, error) {
+		func(context.Context, string, dashboardstore.DashboardProvisioningService, utils.OrgStore) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,

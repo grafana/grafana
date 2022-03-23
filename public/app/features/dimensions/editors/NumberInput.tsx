@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Input } from '@grafana/ui';
+import { Field, Input } from '@grafana/ui';
 
 interface Props {
   value?: number;
@@ -13,16 +13,18 @@ interface Props {
 
 interface State {
   text: string;
+  inputCorrected: boolean;
 }
 
 /**
  * This is an Input field that will call `onChange` for blur and enter
  */
 export class NumberInput extends PureComponent<Props, State> {
-  state: State = { text: '' };
+  state: State = { text: '', inputCorrected: false };
 
   componentDidMount() {
     this.setState({
+      ...this.state,
       text: isNaN(this.props.value!) ? '' : `${this.props.value}`,
     });
   }
@@ -30,6 +32,7 @@ export class NumberInput extends PureComponent<Props, State> {
   componentDidUpdate(oldProps: Props) {
     if (this.props.value !== oldProps.value) {
       this.setState({
+        ...this.state,
         text: isNaN(this.props.value!) ? '' : `${this.props.value}`,
       });
     }
@@ -42,11 +45,30 @@ export class NumberInput extends PureComponent<Props, State> {
       value = e.currentTarget.valueAsNumber;
     }
     this.props.onChange(value);
+    this.setState({ ...this.state, inputCorrected: false });
   };
 
   onChange = (e: React.FocusEvent<HTMLInputElement>) => {
+    let newValue: string | undefined = undefined;
+    let corrected = false;
+    const min = this.props.min;
+    const max = this.props.max;
+    const currValue = e.currentTarget.valueAsNumber;
+    if (!Number.isNaN(currValue)) {
+      if (min != null && currValue < min) {
+        newValue = min.toString();
+        corrected = true;
+      } else if (max != null && currValue > max) {
+        newValue = max.toString();
+        corrected = true;
+      } else {
+        newValue = e.currentTarget.value;
+      }
+    }
     this.setState({
-      text: e.currentTarget.value,
+      ...this.state,
+      text: newValue ? newValue : '',
+      inputCorrected: corrected,
     });
   };
 
@@ -58,20 +80,22 @@ export class NumberInput extends PureComponent<Props, State> {
 
   render() {
     const { placeholder } = this.props;
-    const { text } = this.state;
+    const { text, inputCorrected } = this.state;
     return (
-      <Input
-        type="number"
-        min={this.props.min}
-        max={this.props.max}
-        step={this.props.step}
-        autoFocus={this.props.autoFocus}
-        value={text}
-        onChange={this.onChange}
-        onBlur={this.onBlur}
-        onKeyPress={this.onKeyPress}
-        placeholder={placeholder}
-      />
+      <Field invalid={inputCorrected} error={inputCorrected ? 'Cannot go beyond range' : ''}>
+        <Input
+          type="number"
+          min={this.props.min}
+          max={this.props.max}
+          step={this.props.step}
+          autoFocus={this.props.autoFocus}
+          value={text}
+          onChange={this.onChange}
+          onBlur={this.onBlur}
+          onKeyPress={this.onKeyPress}
+          placeholder={placeholder}
+        />
+      </Field>
     );
   }
 }

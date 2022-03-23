@@ -8,9 +8,11 @@ window.matchMedia = (mediaQueryString) => {
   let mql = oMatchMedia(mediaQueryString);
 
   if (!mql.addEventListener) {
+    // @ts-ignore
     mql.addEventListener = (type: string, listener: MqlListener) => {
       mql.addListener(listener);
     };
+    // @ts-ignore
     mql.removeEventListener = (type: string, listener: MqlListener) => {
       mql.removeListener(listener);
     };

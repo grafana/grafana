@@ -53,9 +53,8 @@ export default Page;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    bottom: 0;
-    position: absolute;
-    top: 0;
     width: 100%;
+    flex-grow: 1;
+    min-height: 0;
   `,
 });
