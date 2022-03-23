@@ -147,10 +147,18 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
   // used to make the select resource button that launches the resource picker show a nicer file path to users
   async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
-    const { subscriptionID, resourceGroup } = parseResourceURI(resourceURI) ?? {};
+    const { subscriptionID, resourceGroup, resource } = parseResourceURI(resourceURI) ?? {};
 
     if (!subscriptionID) {
       throw new Error('Invalid resource URI passed');
+    }
+
+    if (getTemplateSrv().containsTemplate(resourceURI)) {
+      return {
+        subscriptionName: subscriptionID,
+        resourceGroupName: resourceGroup,
+        resourceName: resource,
+      };
     }
 
     // resourceGroupURI and resourceURI could be invalid values, but that's okay because the join
