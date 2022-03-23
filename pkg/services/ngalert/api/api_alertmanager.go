@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -127,6 +128,19 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Respo
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+
+	// Validate our silence to avoid panics
+	//
+	// Question for reviewers: do we care about the format registry? My reading
+	// of the code is that an empty format registry means "all data validates,
+	// but required fields must be present." Since we didn't evaluate before,
+	// that's the existing behavior. If we want an empty registry, I think we can
+	// just create it on each API call - it's not a very high-throughput API.
+	err := postableSilence.Validate(strfmt.NewFormats())
+	if err != nil {
+		srv.log.Error("argument failed validation", "err", err)
+		return ErrResp(http.StatusBadRequest, err, "Silence Failed Validation: %v", postableSilence)
 	}
 
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
