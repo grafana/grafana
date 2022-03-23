@@ -85,14 +85,14 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 }
 
-func newTestLive(t *testing.T) *live.GrafanaLive {
+func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil,
-		sqlstore.InitTestDB(t),
+		store,
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
@@ -216,10 +216,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
-		dashboardStore := database.ProvideDashboardStore(sqlstore.InitTestDB(t))
+		sql := sqlstore.InitTestDB(t)
+		dashboardStore := database.ProvideDashboardStore(sql)
 		hs := &HTTPServer{
 			Cfg:                   cfg,
-			Live:                  newTestLive(t),
+			Live:                  newTestLive(t, sql),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              mockSQLStore,
@@ -1005,7 +1006,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                newTestLive(t),
+			Live:                newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
@@ -1042,7 +1043,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Cfg:                   cfg,
 			Bus:                   bus.GetBus(),
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t),
+			Live:                  newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
@@ -1079,7 +1080,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                   cfg,
 			Bus:                   bus.GetBus(),
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t),
+			Live:                  newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
