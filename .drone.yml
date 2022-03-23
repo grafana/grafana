@@ -707,7 +707,7 @@ steps:
   - cd grafana-enterprise
   - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
     && git push origin $${TEST_TAG}
-  - cd ../grafana
+  - cd -
   - git remote add downstream https://github.com/grafana/$${DOWNSTREAM}.git
   - git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag
     $${TEST_TAG} && git push downstream $${TEST_TAG}
@@ -4407,6 +4407,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a77af97b38b91f5da1589c06edb55fd304fa4bcd35e1f34f65f1561163d3c8de
+hmac: d30a3ad5ac32ab22eff1c5633c2aa0b927dc5154b1159dfa52244a306c2f2cf6
 
 ...
