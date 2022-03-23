@@ -2,7 +2,7 @@
 title = "Data link variables"
 keywords = ["grafana", "url variables", "documentation", "variables", "data link"]
 aliases = ["/docs/grafana/latest/variables/data-link-variables.md"]
-weight = 400
+weight = 450
 +++
 
 # Data link variables

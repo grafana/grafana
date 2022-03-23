@@ -2,7 +2,7 @@
 title = "Dashboard URL variables"
 keywords = ["grafana", "url variables", "documentation", "variables", "dashboards"]
 aliases = ["/docs/grafana/latest/variables/url-variables.md","/docs/grafana/latest/variables/variable-types/url-variables.md"]
-weight = 400
+weight = 250
 +++
 
 # Dashboard URL variables
