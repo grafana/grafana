@@ -3,7 +3,7 @@ import { DashboardSearchItemType, DashboardSection, DashboardSectionItem } from 
 function makeSection(sectionPartial: Partial<DashboardSection>): DashboardSection {
   return {
     title: 'Default title',
-    id: -1,
+    id: Number.MAX_SAFE_INTEGER - 1,
     score: -99,
     expanded: true,
     type: DashboardSearchItemType.DashFolder,
@@ -15,9 +15,9 @@ function makeSection(sectionPartial: Partial<DashboardSection>): DashboardSectio
 
 const makeSectionItem = (itemPartial: Partial<DashboardSectionItem>): DashboardSectionItem => {
   return {
-    id: -1,
+    id: Number.MAX_SAFE_INTEGER - 2,
     uid: 'default-uid',
-    title: 'Prom dash',
+    title: 'Default dashboard title',
     type: DashboardSearchItemType.DashDB,
     isStarred: false,
     tags: [],
