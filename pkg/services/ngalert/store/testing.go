@@ -79,12 +79,7 @@ func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (int
 func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, _ int64, _ ...string) error {
 	return nil
 }
-func (f *FakeRuleStore) DeleteNamespaceAlertRules(_ context.Context, _ int64, _ string) ([]string, error) {
-	return []string{}, nil
-}
-func (f *FakeRuleStore) DeleteRuleGroupAlertRules(_ context.Context, _ int64, _ string, _ string) ([]string, error) {
-	return []string{}, nil
-}
+
 func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
 	return nil
 }
