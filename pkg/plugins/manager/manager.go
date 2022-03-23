@@ -24,20 +24,25 @@ var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg          *plugins.Cfg
-	store        map[string]*plugins.Plugin
-	pluginLoader plugins.Loader
-	pluginsMu    sync.RWMutex
-	pluginPaths  map[plugins.Class][]string
-	pluginFs     filestore.Manager
-	log          log.Logger
+	cfg           *plugins.Cfg
+	store         map[string]*plugins.Plugin
+	pluginLoader  plugins.Loader
+	pluginsMu     sync.RWMutex
+	pluginSources []PluginSource
+	pluginFs      filestore.Manager
+	log           log.Logger
+}
+
+type PluginSource struct {
+	Class plugins.Class
+	Paths []string
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader, pluginFs filestore.Manager) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), map[plugins.Class][]string{
-		plugins.Core:     corePluginPaths(grafanaCfg),
-		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
-		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), []PluginSource{
+		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
+		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
 	}, pluginLoader, pluginFs)
 	if err := pm.Init(); err != nil {
 		return nil, err
@@ -45,20 +50,20 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader, plugin
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader, pluginFs filestore.Manager) *PluginManager {
+func New(cfg *plugins.Cfg, pluginSources []PluginSource, pluginLoader plugins.Loader, pluginFs filestore.Manager) *PluginManager {
 	return &PluginManager{
-		cfg:          cfg,
-		pluginLoader: pluginLoader,
-		pluginPaths:  pluginPaths,
-		pluginFs:     pluginFs,
-		store:        make(map[string]*plugins.Plugin),
-		log:          log.New("plugin.manager"),
+		cfg:           cfg,
+		pluginLoader:  pluginLoader,
+		pluginSources: pluginSources,
+		pluginFs:      pluginFs,
+		store:         make(map[string]*plugins.Plugin),
+		log:           log.New("plugin.manager"),
 	}
 }
 
 func (m *PluginManager) Init() error {
-	for class, paths := range m.pluginPaths {
-		err := m.loadPlugins(context.Background(), class, paths...)
+	for _, ps := range m.pluginSources {
+		err := m.loadPlugins(context.Background(), ps.Class, ps.Paths...)
 		if err != nil {
 			return err
 		}
