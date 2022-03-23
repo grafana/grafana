@@ -21,10 +21,9 @@ A query returns data that Grafana visualizes in dashboards. When you create a pa
 1. Click the **Data source** drop-down menu and select a data source.
 1. Click **Query options** to configure the maximum number of data points returned by the query and how frequently you want the query to request data from the data source.
 
-   For more information about query options, refer to [Reference: Query options]({{< relref "../reference-query-options.md" >}}).
+   For more information about query options, refer to [Query options]({{< relref "../query-options.md" >}}).
 
 1. Write the query.
-
 1. Click **Apply**.
 
 The system queries the data source and presents the data in the visualization.
