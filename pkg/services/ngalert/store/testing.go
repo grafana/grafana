@@ -169,7 +169,7 @@ func (f *FakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.List
 	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
-func (f *FakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.ListRuleGroupAlertRulesQuery) error {
+func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)

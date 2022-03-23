@@ -250,8 +250,8 @@ type ListNamespaceAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
-// ListRuleGroupAlertRulesQuery is the query for listing rule group alert rules
-type ListRuleGroupAlertRulesQuery struct {
+// GetAlertRulesQuery is the query for listing rule group alert rules
+type GetAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
