@@ -262,41 +262,52 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	return srv.updateAlertRulesInGroup(c, namespace, ruleGroupConfig.Name, rules)
 }
 
+// updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
+// All operations are performed in a single transaction
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
-	var groupChanges *changes = nil
+	var authorizedChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
-
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
-		var err error
-		groupChanges, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
+		logger := srv.log.New("namespace_uid", namespace.Uid, "group", groupName, "org_id", c.OrgId, "user_id", c.UserId)
+
+		groupChanges, err := calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
 		if err != nil {
 			return err
 		}
 
 		if groupChanges.isEmpty() {
-			srv.log.Info("no changes detected in the request. Do nothing")
+			authorizedChanges = groupChanges
+			logger.Info("no changes detected in the request. Do nothing")
 			return nil
 		}
 
-		groupChanges, err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+		authorizedChanges, err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 			return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 		})
 		if err != nil {
 			return err
 		}
 
-		srv.log.Debug("updating database with the changes", "group", groupName, "namespace", namespace.Uid, "add", len(groupChanges.New), "update", len(groupChanges.New), "delete", len(groupChanges.Delete))
+		if authorizedChanges.isEmpty() {
+			return fmt.Errorf("%w to update alert group '%s' because neither of changes are authorized", ErrAuthorization, groupName)
+		}
 
-		if len(groupChanges.Update) > 0 || len(groupChanges.New) > 0 {
-			upsert := make([]store.UpsertRule, 0, len(groupChanges.Update)+len(groupChanges.New))
-			for _, update := range groupChanges.Update {
-				srv.log.Debug("updating rule", "uid", update.New.UID, "diff", update.Diff.String())
+		if len(groupChanges.Delete) > len(authorizedChanges.Delete) {
+			logger.Info("user is not authorized to delete one or many rules in the group. those rules will be skipped", "expected", len(groupChanges.Delete), "authorized", len(authorizedChanges.Delete))
+		}
+
+		logger.Debug("updating database with the authorized changes", "add", len(authorizedChanges.New), "update", len(authorizedChanges.New), "delete", len(authorizedChanges.Delete))
+
+		if len(authorizedChanges.Update) > 0 || len(authorizedChanges.New) > 0 {
+			upsert := make([]store.UpsertRule, 0, len(authorizedChanges.Update)+len(authorizedChanges.New))
+			for _, update := range authorizedChanges.Update {
+				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
 				upsert = append(upsert, store.UpsertRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})
 			}
-			for _, rule := range groupChanges.New {
+			for _, rule := range authorizedChanges.New {
 				upsert = append(upsert, store.UpsertRule{
 					Existing: nil,
 					New:      *rule,
@@ -308,9 +319,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		if len(groupChanges.Delete) > 0 {
-			UIDs := make([]string, 0, len(groupChanges.Delete))
-			for _, rule := range groupChanges.Delete {
+		if len(authorizedChanges.Delete) > 0 {
+			UIDs := make([]string, 0, len(authorizedChanges.Delete))
+			for _, rule := range authorizedChanges.Delete {
 				UIDs = append(UIDs, rule.UID)
 			}
 
@@ -319,7 +330,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		if len(groupChanges.New) > 0 {
+		if len(authorizedChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
 				OrgId:  c.OrgId,
 				UserId: c.UserId,
@@ -347,21 +358,21 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, rule := range groupChanges.Update {
+	for _, rule := range authorizedChanges.Update {
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
 		})
 	}
 
-	for _, rule := range groupChanges.Delete {
+	for _, rule := range authorizedChanges.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.UID,
 		})
 	}
 
-	if groupChanges.isEmpty() {
+	if authorizedChanges.isEmpty() {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
 
