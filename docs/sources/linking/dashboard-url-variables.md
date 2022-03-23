@@ -58,3 +58,7 @@ The query parameter `var-adhoc=key|=|value` applies the ad hoc filter configured
 ### Example
 
 See https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica - this passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
+
+## Controlling time range using the URL
+
+To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window` query parameters. Because these are not variables, they do not require the `var-` prefix. For more information, see the [Linking overview]({{< relref "_index.md" >}}).
