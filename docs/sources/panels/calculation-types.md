@@ -1,10 +1,10 @@
 +++
-title = "Reference: Calculation types"
-aliases = ["/docs/grafana/latest/panels/calculations-list/", "/docs/sources/panels/reference-calculation-types/"]
+title = "Calculation types"
+aliases = ["/docs/grafana/latest/panels/calculations-list/", "/docs/sources/panels/reference-calculation-types/", "/docs/grafana/latest/panels/reference-calculation-types"]
 weight = 1100
 +++
 
-# Reference: Calculations
+# Reference: Calculation types
 
 Refer to the following list of calculations you can perform in Grafana. You can find these calculations in the **Transform** tab and in the bar gauge, gauge, and stat visualizations.
 
