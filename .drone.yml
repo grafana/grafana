@@ -7,27 +7,7 @@ node:
 platform:
   arch: amd64
   os: linux
-services:
-- commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
-  image: quay.io/coreos/etcd:v3.5.2
-  name: etcd
-- commands:
-  - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
-    --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
-    --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
-    --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
-    --service-account-issuer=https://apiserver:6443
-  depends_on:
-  - etcd
-  - generate_intentapi_certs
-  image: k8s.gcr.io/kube-apiserver:v1.23.3
-  name: apiserver
-  volumes:
-  - name: intentapi_certs
-    path: /var/lib/kubernetes
+services: []
 steps:
 - commands:
   - mkdir -p bin
@@ -107,6 +87,26 @@ steps:
   volumes:
   - name: intentapi_certs
     path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
+- commands:
+  - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
+    --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
+    --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
+    --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
+    --service-account-issuer=https://apiserver:6443
+  depends_on:
+  - etcd
+  - generate_intentapi_certs
+  image: k8s.gcr.io/kube-apiserver:v1.23.3
+  name: apiserver
+  volumes:
+  - name: intentapi_certs
+    path: /var/lib/kubernetes
 - commands:
   - dockerize -wait https://apiserver:6443 -timeout 120s
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
@@ -4668,6 +4668,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 702c12732f39b29a48e9c1fb02620548fe7e58a2b45c015851775d4890f85c08
+hmac: 14fa339992007049e9c269f63c553b546c1cd75fe6ae699fbb79fa6fc3deb11d
 
 ...

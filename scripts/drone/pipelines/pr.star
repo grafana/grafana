@@ -69,10 +69,14 @@ def pr_pipelines(edition):
         lint_backend_step(edition=edition),
         lint_frontend_step(),
         generate_intentapi_certs_step(),
+    ]
+    
+    test_steps.extend(intentapi_services())
+    test_steps.extend([
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-    ]
+    ])
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
@@ -136,7 +140,7 @@ def pr_pipelines(edition):
 
     return [
         pipeline(
-            name='pr-test', edition=edition, trigger=trigger, services=intentapi_services(), steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
+            name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + test_steps,
                 volumes=intentapi_volumes(),
         ), pipeline(
