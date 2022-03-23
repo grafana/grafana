@@ -7,6 +7,7 @@ load(
     'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
+    'generate_intentapi_certs_step',
     'test_backend_step',
     'test_backend_integration_step',
     'test_frontend_step',
@@ -37,7 +38,7 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
-    'test_a11y_frontend_step'
+    'test_a11y_frontend_step',
 )
 
 load(
@@ -45,6 +46,8 @@ load(
     'integration_test_services',
     'integration_test_services_volumes',
     'ldap_service',
+    'intentapi_services',
+    'intentapi_volumes',
 )
 
 load(
@@ -53,7 +56,6 @@ load(
     'notify_pipeline',
     'failure_template',
     'drone_change_template',
-    'tests_volumes',
 )
 
 load(
@@ -73,6 +75,7 @@ def get_steps(edition, is_downstream=False):
         shellcheck_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
+        generate_intentapi_certs_step(),
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
@@ -179,9 +182,9 @@ def main_pipelines(edition):
     pipelines = [
         docs_pipelines(edition, ver_mode, trigger),
         pipeline(
-            name='main-test', edition=edition, trigger=trigger, services=[],
+            name='main-test', edition=edition, trigger=trigger, services=intentapi_services(),
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,
-            volumes=tests_volumes(),
+            volumes=intentapi_volumes(),
         ),
         pipeline(
             name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],

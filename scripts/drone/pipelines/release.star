@@ -11,6 +11,7 @@ load(
     'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
+    'generate_intentapi_certs_step',
     'test_backend_step',
     'test_backend_integration_step',
     'test_frontend_step',
@@ -38,7 +39,7 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
-    'publish_images_step'
+    'publish_images_step',
 )
 
 load(
@@ -46,6 +47,8 @@ load(
     'integration_test_services',
     'integration_test_services_volumes',
     'ldap_service',
+    'intentapi_services',
+    'intentapi_volumes',
 )
 
 load(
@@ -54,7 +57,6 @@ load(
     'notify_pipeline',
     'failure_template',
     'drone_change_template',
-    'tests_volumes',
 )
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
@@ -173,6 +175,7 @@ def get_steps(edition, ver_mode):
         shellcheck_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
+        generate_intentapi_certs_step(),
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
@@ -268,7 +271,7 @@ def get_oss_pipelines(trigger, ver_mode):
     )
     pipelines = [
         pipeline(
-            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=intentapi_services(),
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -280,7 +283,7 @@ def get_oss_pipelines(trigger, ver_mode):
                 name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
                 steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   test_steps,
-                volumes=tests_volumes(),
+                volumes=intentapi_volumes(),
             ),
             pipeline(
                 name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,

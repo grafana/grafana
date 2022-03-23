@@ -11,6 +11,7 @@ load(
     'build_frontend_step',
     'build_frontend_package_step',
     'build_plugins_step',
+    'generate_intentapi_certs_step',
     'test_backend_step',
     'test_backend_integration_step',
     'test_frontend_step',
@@ -36,6 +37,8 @@ load(
     'integration_test_services',
     'integration_test_services_volumes',
     'ldap_service',
+    'intentapi_services',
+    'intentapi_volumes',
 )
 
 load(
@@ -44,7 +47,6 @@ load(
     'pipeline',
     'failure_template',
     'drone_change_template',
-    'tests_volumes',
 )
 
 load(
@@ -66,6 +68,7 @@ def pr_pipelines(edition):
         shellcheck_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
+        generate_intentapi_certs_step(),
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
@@ -133,9 +136,9 @@ def pr_pipelines(edition):
 
     return [
         pipeline(
-            name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
+            name='pr-test', edition=edition, trigger=trigger, services=intentapi_services(), steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + test_steps,
-                volumes=tests_volumes(),
+                volumes=intentapi_volumes(),
         ), pipeline(
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
                 + build_steps,

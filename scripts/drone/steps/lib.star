@@ -488,10 +488,9 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-
-def test_backend_step(edition):
+def generate_intentapi_certs_step():
     return {
-        'name': 'test-backend' + enterprise2_suffix(edition),
+        'name': 'generate_intentapi_certs',
         'image': build_image,
         'depends_on': [
             'initialize',
@@ -503,14 +502,27 @@ def test_backend_step(edition):
             'echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list',
             'apt-get update',
             'apt-get install -yq kubectl',
-            'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
-            'chmod +x /usr/local/bin/docker-compose',
             'make -C devenv/docker/blocks/intentapi',
             'ls -l /drone/src/devenv/docker/blocks/intentapi/certs',
-            'make devenv sources=intentapi',
-            'dockerize -wait https://localhost:6443 -timeout 120s',
-            'cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver && cd -',
-            'kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources',
+        ], 
+        'volumes': [
+            {
+                'name': 'intentapi_certs',
+                'path': '/drone/src/devenv/docker/blocks/intentapi/certs',
+            },
+        ],
+    }
+
+def test_backend_step(edition):
+    return {
+        'name': 'test-backend' + enterprise2_suffix(edition),
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'commands': [
+            'dockerize -wait https://apiserver:6443 -timeout 120s',
+            'ls -l /drone/src/devenv/docker/blocks/intentapi/certs/',
             'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
             'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem ' +
             'GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig ' +
@@ -519,8 +531,10 @@ def test_backend_step(edition):
         ],
         'volumes': [ {
                 'name': 'docker', 'path': '/var/run/docker.sock'
-            }, {
-                'name': 'intentapi-certs', 'path': '/var/lib/kubernetes'
+            },
+            {
+                'name': 'intentapi_certs',
+                'path': '/drone/src/devenv/docker/blocks/intentapi/certs',
             },
         ]
     }

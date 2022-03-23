@@ -59,3 +59,53 @@ def ldap_service():
           'SLAPD_ADDITIONAL_MODULES': 'memberof',
         },
     }
+
+def intentapi_volumes():
+    return [{
+            'name': 'intentapi_certs',
+            'temp': { 'medium': 'memory' },
+    }]
+
+def intentapi_services():
+    intentapi_services = [
+        {
+            'name': 'apiserver',
+            'image': 'k8s.gcr.io/kube-apiserver:v1.23.3',
+            'depends_on': [
+                'etcd',
+                'generate_intentapi_certs',
+            ],
+            'commands': [
+                '/usr/local/bin/kube-apiserver' +
+                ' --bind-address=0.0.0.0' +
+                ' --secure-port=6443' +
+                ' --etcd-servers=http://etcd:2379' +
+                ' --client-ca-file=/var/lib/kubernetes/ca.pem' +
+                ' --tls-cert-file=/var/lib/kubernetes/kubernetes.pem' +
+                ' --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem' +
+                ' --service-account-key-file=/var/lib/kubernetes/service-account.pem' +
+                ' --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem' +
+                ' --service-account-issuer=https://apiserver:6443',
+            ],
+            'volumes': [
+                {
+                    'name': 'intentapi_certs',
+                    'path': '/var/lib/kubernetes',
+                },
+            ],
+        },
+        {
+            'name': 'etcd',
+            'image': 'quay.io/coreos/etcd:v3.5.2',
+            'commands': [
+                '/usr/local/bin/etcd' +
+                ' -name=etcd-node-0' +
+                ' -listen-client-urls=http://etcd:2379' +
+                ' -advertise-client-urls=http://etcd:2379' +
+                ' -initial-advertise-peer-urls=http://etcd:2380' +
+                ' -listen-peer-urls=http://etcd:2380' +
+                ' -initial-cluster=etcd-node-0=http://etcd:2380'
+            ],
+        },
+    ]
+    return intentapi_services

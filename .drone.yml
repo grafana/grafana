@@ -7,7 +7,27 @@ node:
 platform:
   arch: amd64
   os: linux
-services: []
+services:
+- commands:
+  - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
+    --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
+    --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
+    --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
+    --service-account-issuer=https://apiserver:6443
+  depends_on:
+  - etcd
+  - generate_intentapi_certs
+  image: k8s.gcr.io/kube-apiserver:v1.23.3
+  name: apiserver
+  volumes:
+  - name: intentapi_certs
+    path: /var/lib/kubernetes
+- commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -78,17 +98,18 @@ steps:
     kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
   - apt-get update
   - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.3
+  name: generate_intentapi_certs
+  volumes:
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -101,8 +122,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -128,9 +149,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- host:
-    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
-  name: intentapi_certs
+- name: intentapi_certs
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -613,7 +634,27 @@ node:
 platform:
   arch: amd64
   os: linux
-services: []
+services:
+- commands:
+  - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
+    --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
+    --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
+    --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
+    --service-account-issuer=https://apiserver:6443
+  depends_on:
+  - etcd
+  - generate_intentapi_certs
+  image: k8s.gcr.io/kube-apiserver:v1.23.3
+  name: apiserver
+  volumes:
+  - name: intentapi_certs
+    path: /var/lib/kubernetes
+- commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -684,17 +725,18 @@ steps:
     kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
   - apt-get update
   - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.3
+  name: generate_intentapi_certs
+  volumes:
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -707,8 +749,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -732,9 +774,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- host:
-    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
-  name: intentapi_certs
+- name: intentapi_certs
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -1360,7 +1402,27 @@ node:
 platform:
   arch: amd64
   os: linux
-services: []
+services:
+- commands:
+  - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
+    --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
+    --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
+    --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
+    --service-account-issuer=https://apiserver:6443
+  depends_on:
+  - etcd
+  - generate_intentapi_certs
+  image: k8s.gcr.io/kube-apiserver:v1.23.3
+  name: apiserver
+  volumes:
+  - name: intentapi_certs
+    path: /var/lib/kubernetes
+- commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -1734,17 +1796,18 @@ steps:
     kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
   - apt-get update
   - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.3
+  name: generate_intentapi_certs
+  volumes:
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -1757,8 +1820,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -1787,9 +1850,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- host:
-    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
-  name: intentapi_certs
+- name: intentapi_certs
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -2393,17 +2456,18 @@ steps:
     kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
   - apt-get update
   - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.3
+  name: generate_intentapi_certs
+  volumes:
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -2416,8 +2480,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -2441,24 +2505,8 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
-  - apt-get update
-  - apt-get install -y apt-transport-https ca-certificates curl
-  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
-    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
-  - apt-get update
-  - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
-  - make -C devenv/docker/blocks/intentapi
-  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -2471,8 +2519,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -3209,7 +3257,27 @@ node:
 platform:
   arch: amd64
   os: linux
-services: []
+services:
+- commands:
+  - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
+    --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
+    --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
+    --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
+    --service-account-issuer=https://apiserver:6443
+  depends_on:
+  - etcd
+  - generate_intentapi_certs
+  image: k8s.gcr.io/kube-apiserver:v1.23.3
+  name: apiserver
+  volumes:
+  - name: intentapi_certs
+    path: /var/lib/kubernetes
+- commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -3537,17 +3605,18 @@ steps:
     kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
   - apt-get update
   - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.3
+  name: generate_intentapi_certs
+  volumes:
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -3560,8 +3629,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -3584,9 +3653,9 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- host:
-    path: ' /drone/src/devenv/docker/blocks/intentapi/certs'
-  name: intentapi_certs
+- name: intentapi_certs
+  temp:
+    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -4162,17 +4231,18 @@ steps:
     kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
   - apt-get update
   - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
   - make -C devenv/docker/blocks/intentapi
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.5.3
+  name: generate_intentapi_certs
+  volumes:
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -4185,8 +4255,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -4210,24 +4280,8 @@ steps:
   image: grafana/build-container:1.5.3
   name: lint-backend-enterprise2
 - commands:
-  - apt-get update
-  - apt-get install -y apt-transport-https ca-certificates curl
-  - curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-  - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/
-    kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
-  - apt-get update
-  - apt-get install -yq kubectl
-  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
-    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  - chmod +x /usr/local/bin/docker-compose
-  - make -C devenv/docker/blocks/intentapi
-  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
-  - make devenv sources=intentapi
-  - dockerize -wait https://localhost:6443 -timeout 120s
-  - cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver &&
-    cd -
-  - kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
-    api-resources
+  - dockerize -wait https://apiserver:6443 -timeout 120s
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig
@@ -4240,8 +4294,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: intentapi-certs
-    path: /var/lib/kubernetes
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
@@ -4614,6 +4668,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 41c631c0ac11c1749cb39213cbbcdbcb06a96463396dafda405fc8c7b5ff22e1
+hmac: 3505c5577509bbabd72fc6d494390a8d80fa818af5a7bf12c0afc2c116469f64
 
 ...
