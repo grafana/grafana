@@ -75,7 +75,6 @@ type GetAnnotationTagsResponse struct {
 type DeleteParams struct {
 	OrgId       int64
 	Id          int64
-	AlertId     int64
 	DashboardId int64
 	PanelId     int64
 }

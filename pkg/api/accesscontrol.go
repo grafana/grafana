@@ -280,9 +280,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Dashboard annotation writer",
 			Description: "Update annotations associated with dashboards.",
 			Group:       "Annotations",
-			Version:     2,
+			Version:     3,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeDashboard},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
 			},
@@ -296,9 +296,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Annotation writer",
 			Description: "Update all annotations.",
 			Group:       "Annotations",
-			Version:     1,
+			Version:     2,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
 			},

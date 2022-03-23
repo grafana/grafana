@@ -49,11 +49,11 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 	return response.JSON(200, items)
 }
 
-type CreateAnnotationError struct {
+type AnnotationError struct {
 	message string
 }
 
-func (e *CreateAnnotationError) Error() string {
+func (e *AnnotationError) Error() string {
 	return e.message
 }
 
@@ -85,7 +85,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	repo := annotations.GetRepository()
 
 	if cmd.Text == "" {
-		err := &CreateAnnotationError{"text field should not be empty"}
+		err := &AnnotationError{"text field should not be empty"}
 		return response.Error(400, "Failed to save annotation", err)
 	}
 
@@ -132,7 +132,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Resp
 	repo := annotations.GetRepository()
 
 	if cmd.What == "" {
-		err := &CreateAnnotationError{"what field should not be empty"}
+		err := &AnnotationError{"what field should not be empty"}
 		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
@@ -152,12 +152,12 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Resp
 			if tagStr, ok := t.(string); ok {
 				tagsArray = append(tagsArray, tagStr)
 			} else {
-				err := &CreateAnnotationError{"tag should be a string"}
+				err := &AnnotationError{"tag should be a string"}
 				return response.Error(400, "Failed to save Graphite annotation", err)
 			}
 		}
 	default:
-		err := &CreateAnnotationError{"unsupported tags format"}
+		err := &AnnotationError{"unsupported tags format"}
 		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
@@ -289,19 +289,59 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 	return response.Success("Annotation patched")
 }
 
-func (hs *HTTPServer) DeleteAnnotations(c *models.ReqContext) response.Response {
-	cmd := dtos.DeleteAnnotationsCmd{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Response {
+	cmd := dtos.MassDeleteAnnotationsCmd{}
+	err := web.Bind(c.Req, &cmd)
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	repo := annotations.GetRepository()
 
-	err := repo.Delete(&annotations.DeleteParams{
-		OrgId:       c.OrgId,
-		Id:          cmd.AnnotationId,
-		DashboardId: cmd.DashboardId,
-		PanelId:     cmd.PanelId,
-	})
+	if (cmd.DashboardId != 0 && cmd.PanelId == 0) || (cmd.PanelId != 0 && cmd.DashboardId == 0) {
+		err := &AnnotationError{message: "DashboardId and PanelId are both required for mass delete"}
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	repo := annotations.GetRepository()
+	var deleteParams *annotations.DeleteParams
+
+	// validations only for FGAC. A user can mass delete all annotations in a (dashboard + panel) or a specific annotation
+	// if has access to that dashboard.
+	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		var dashboardId int64
+
+		if cmd.AnnotationId != 0 {
+			annotation, respErr := findAnnotationByID(c.Req.Context(), repo, cmd.AnnotationId, c.OrgId)
+			if respErr != nil {
+				return respErr
+			}
+			dashboardId = annotation.DashboardId
+			deleteParams = &annotations.DeleteParams{
+				OrgId: c.OrgId,
+				Id:    cmd.AnnotationId,
+			}
+		} else {
+			dashboardId = cmd.DashboardId
+			deleteParams = &annotations.DeleteParams{
+				OrgId:       c.OrgId,
+				DashboardId: cmd.DashboardId,
+				PanelId:     cmd.PanelId,
+			}
+		}
+
+		canSave, err := hs.canMassDeleteAnnotations(c, dashboardId)
+		if err != nil || !canSave {
+			return dashboardGuardianResponse(err)
+		}
+	} else { // legacy permissions
+		deleteParams = &annotations.DeleteParams{
+			OrgId:       c.OrgId,
+			Id:          cmd.AnnotationId,
+			DashboardId: cmd.DashboardId,
+			PanelId:     cmd.PanelId,
+		}
+	}
+
+	err = repo.Delete(deleteParams)
 
 	if err != nil {
 		return response.Error(500, "Failed to delete annotations", err)
@@ -423,4 +463,24 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 func (hs *HTTPServer) canCreateOrganizationAnnotation(c *models.ReqContext) (bool, error) {
 	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+}
+
+func (hs *HTTPServer) canMassDeleteAnnotations(c *models.ReqContext, dashboardID int64) (bool, error) {
+	if dashboardID == 0 {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, accesscontrol.ScopeAnnotationsTypeOrganization)
+		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+	} else {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, accesscontrol.ScopeAnnotationsTypeDashboard)
+		canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+		if err != nil || !canSave {
+			return false, err
+		}
+
+		canSave, err = canSaveDashboardAnnotation(c, dashboardID)
+		if err != nil || !canSave {
+			return false, err
+		}
+	}
+
+	return true, nil
 }
