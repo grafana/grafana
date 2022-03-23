@@ -33,7 +33,7 @@ func TestPluginManager_Init(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader)
+		}, loader, &fakeFsManager{})
 
 		err := pm.Init()
 		require.NoError(t, err)
