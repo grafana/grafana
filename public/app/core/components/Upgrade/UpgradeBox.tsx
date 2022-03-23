@@ -91,8 +91,16 @@ export interface UpgradeContentProps {
   featureUrl?: string;
   featureName: string;
   description?: string;
+  caption?: string;
 }
-export const UpgradeContent = ({ listItems, image, featureUrl, featureName, description }: UpgradeContentProps) => {
+export const UpgradeContent = ({
+  listItems,
+  image,
+  featureUrl,
+  featureName,
+  description,
+  caption,
+}: UpgradeContentProps) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.container}>
@@ -114,6 +122,7 @@ export const UpgradeContent = ({ listItems, image, featureUrl, featureName, desc
       </div>
       <div className={styles.media}>
         <img src={image} alt={'Feature screenshot'} />
+        {caption && <p className={styles.caption}>{caption}</p>}
       </div>
     </div>
   );
@@ -161,6 +170,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     title: css`
       color: ${theme.colors.text.maxContrast};
+    `,
+    caption: css`
+      font-weight: ${theme.typography.fontWeightLight};
+      margin: ${theme.spacing(1, 0, 0)};
     `,
   };
 };
