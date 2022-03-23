@@ -1,6 +1,7 @@
 package loki
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -16,7 +17,10 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 	}
 
 	for _, frame := range frames {
-		adjustFrame(frame, query)
+		err = adjustFrame(frame, query)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return frames, nil
@@ -29,7 +33,7 @@ func lokiResponseToDataFrames(value *loghttp.QueryResponse, query *lokiQuery) (d
 	case loghttp.Vector:
 		return lokiVectorToDataFrames(res, query), nil
 	case loghttp.Streams:
-		return lokiStreamsToDataFrames(res, query), nil
+		return lokiStreamsToDataFrames(res, query)
 	default:
 		return nil, fmt.Errorf("resultType %T not supported{", res)
 	}
@@ -52,8 +56,8 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery) data.Frames
 			values = append(values, float64(k.Value))
 		}
 
-		timeField := data.NewField("", nil, timeVector)
-		valueField := data.NewField("", tags, values)
+		timeField := data.NewField("time", nil, timeVector)
+		valueField := data.NewField("value", tags, values)
 
 		frame := data.NewFrame("", timeField, valueField)
 
@@ -74,8 +78,8 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery) data.Frames
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		timeField := data.NewField("", nil, timeVector)
-		valueField := data.NewField("", tags, values)
+		timeField := data.NewField("time", nil, timeVector)
+		valueField := data.NewField("value", tags, values)
 
 		frame := data.NewFrame("", timeField, valueField)
 
@@ -85,30 +89,38 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery) data.Frames
 	return frames
 }
 
-func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery) data.Frames {
-	frames := data.Frames{}
+func labelsToString(labels map[string]string) (string, error) {
+	// FIXME: i THINK this guarantees a sorted order, not 100% sure :-(
+	data, err := json.Marshal(labels)
+	if err != nil {
+		return "", err
+	}
+
+	// FIXME: does this deal well with non-ascii?
+	return string(data), nil
+}
+
+func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery) (data.Frames, error) {
+	timeVector := make([]time.Time, 0) // FIXME: we can allocate it to the right size
+	values := make([]string, 0)        // FIXME: we can allocate it to the right size
+	labelsVector := make([]string, 0)  // FIXME: we can allocate it to the right size
 
 	for _, v := range streams {
-		tags := make(map[string]string, len(v.Labels))
-		timeVector := make([]time.Time, 0, len(v.Entries))
-		values := make([]string, 0, len(v.Entries))
-
-		for k, v := range v.Labels {
-			tags[k] = v
+		labelsText, err := labelsToString(v.Labels.Map())
+		if err != nil {
+			return nil, err
 		}
 
 		for _, k := range v.Entries {
 			timeVector = append(timeVector, k.Timestamp.UTC())
 			values = append(values, k.Line)
+			labelsVector = append(labelsVector, labelsText)
 		}
-
-		timeField := data.NewField("", nil, timeVector)
-		valueField := data.NewField("", tags, values)
-
-		frame := data.NewFrame("", timeField, valueField)
-
-		frames = append(frames, frame)
 	}
 
-	return frames
+	timeField := data.NewField("time", nil, timeVector)
+	valueField := data.NewField("line", nil, values)
+	labelsField := data.NewField("labels", nil, labelsVector)
+
+	return data.Frames{data.NewFrame("", timeField, valueField, labelsField)}, nil
 }

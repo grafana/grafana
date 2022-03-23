@@ -89,7 +89,7 @@ function constructDataFrame(
       { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
       { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line - needs to be the first field with string type
       { name: 'id', type: FieldType.string, config: {}, values: uids },
-      { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
+      { name: 'tsNs', type: FieldType.string, config: { displayName: 'Time ns' }, values: timesNs }, // Time
     ],
     length: times.length,
   };
@@ -129,9 +129,9 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
   }
 
   const tsField = data.fields[0];
-  const tsNsField = data.fields[1];
-  const lineField = data.fields[2];
-  const labelsField = data.fields[3];
+  const lineField = data.fields[1];
+  const labelsField = data.fields[2];
+  const tsNsField = data.fields[3];
   const idField = data.fields[4];
 
   // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.

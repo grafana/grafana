@@ -17,7 +17,7 @@ type lokiStream struct {
 	Values [][2]string `json:"values"`
 }
 
-func lokiBytesToLabeledFrame(msg []byte) (*data.Frame, error) {
+func lokiBytesToLabeledFrame(msg []byte, query lokiQuery) (*data.Frame, error) {
 	rsp := &lokiResponse{}
 	err := json.Unmarshal(msg, rsp)
 	if err != nil {
@@ -28,12 +28,15 @@ func lokiBytesToLabeledFrame(msg []byte) (*data.Frame, error) {
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	lineField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 
-	labelField.Name = "__labels" // for now, avoid automatically spreading this by labels
-	timeField.Name = "Time"
-	lineField.Name = "Line"
+	labelField.Name = "labels" // for now, avoid automatically spreading this by labels
+	timeField.Name = "time"
+	lineField.Name = "line"
 
 	for _, stream := range rsp.Streams {
-		label := stream.Stream.String() // TODO -- make it match prom labels!
+		label, err := labelsToString(stream.Stream) // TODO -- make it match prom labels!
+		if err != nil {
+			return nil, err
+		}
 		for _, value := range stream.Values {
 			n, err := strconv.ParseInt(value[0], 10, 64)
 			if err != nil {
@@ -48,5 +51,10 @@ func lokiBytesToLabeledFrame(msg []byte) (*data.Frame, error) {
 		}
 	}
 
-	return data.NewFrame("", labelField, timeField, lineField), nil
+	frame := data.NewFrame("", timeField, lineField, labelField)
+	err = adjustFrame(frame, &lokiQuery{})
+	if err != nil {
+		return nil, err
+	}
+	return frame, nil
 }

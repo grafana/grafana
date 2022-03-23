@@ -160,7 +160,7 @@ describe('loki result transformer', () => {
 
       const data = new CircularDataFrame({ capacity: 1 });
       data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
-      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
+      data.addField({ name: 'tsNs', type: FieldType.string, config: { displayName: 'Time ns' } });
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'id', type: FieldType.string });
@@ -197,7 +197,7 @@ describe('loki result transformer', () => {
 
       const data = new CircularDataFrame({ capacity: 6 });
       data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
-      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
+      data.addField({ name: 'tsNs', type: FieldType.string, config: { displayName: 'Time ns' } });
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'id', type: FieldType.string });

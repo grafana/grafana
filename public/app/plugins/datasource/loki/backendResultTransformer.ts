@@ -1,8 +1,15 @@
-import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
+import {
+  DataQueryResponse,
+  DataFrame,
+  isDataFrame,
+  FieldType,
+  QueryResultMeta,
+  ArrayVector,
+  Field,
+} from '@grafana/data';
 import { LokiQuery, LokiQueryType } from './types';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import { makeIdField } from './makeIdField';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
@@ -25,20 +32,19 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
   };
   const newFrame = setFrameMeta(frame, meta);
-  const newFields = frame.fields.map((field) => {
-    // the nanosecond-timestamp field must have a type-time
-    if (field.name === 'tsNs') {
+
+  const newFields = newFrame.fields.map((field) => {
+    if (field.name === 'labels') {
       return {
-        ...field,
-        type: FieldType.time,
+        name: field.name,
+        type: FieldType.other,
+        config: field.config,
+        values: new ArrayVector(field.values.toArray().map((text) => JSON.parse(text))),
       };
     } else {
       return field;
     }
   });
-
-  // we add a calculated id-field
-  newFields.push(makeIdField(frame));
 
   return {
     ...newFrame,
@@ -92,10 +98,7 @@ function groupFrames(
   return { streamsFrames, metricInstantFrames, metricRangeFrames };
 }
 
-export function transformBackendResult(
-  response: DataQueryResponse,
-  request: DataQueryRequest<LokiQuery>
-): DataQueryResponse {
+export function transformBackendResult(response: DataQueryResponse, queries: LokiQuery[]): DataQueryResponse {
   const { data, ...rest } = response;
 
   // in the typescript type, data is an array of basically anything.
@@ -108,7 +111,7 @@ export function transformBackendResult(
     return d;
   });
 
-  const queryMap = new Map(request.targets.map((query) => [query.refId, query]));
+  const queryMap = new Map(queries.map((query) => [query.refId, query]));
 
   const { streamsFrames, metricInstantFrames, metricRangeFrames } = groupFrames(dataFrames, queryMap);
 

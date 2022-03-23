@@ -27,7 +27,7 @@ func TestLokiFramer(t *testing.T) {
 			   ]}
 			]}`)
 
-		frame, err := lokiBytesToLabeledFrame(msg)
+		frame, err := lokiBytesToLabeledFrame(msg, lokiQuery{})
 		require.NoError(t, err)
 
 		lines := frame.Fields[2]

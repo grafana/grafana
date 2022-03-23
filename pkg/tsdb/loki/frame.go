@@ -2,6 +2,7 @@ package loki
 
 import (
 	"fmt"
+	"hash/fnv"
 	"sort"
 	"strings"
 	"time"
@@ -11,14 +12,24 @@ import (
 
 // we adjust the dataframes to be the way frontend & alerting
 // wants them.
-func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
+func adjustFrame(frame *data.Frame, query *lokiQuery) error {
+	_, nonTimeFields := partitionFields(frame)
+
+	isMetricFrame := nonTimeFields[0].Type() != data.FieldTypeString
+
+	if isMetricFrame {
+		return adjustMetricFrame(frame, query)
+	} else {
+		return adjustLogsFrame(frame, query)
+	}
+}
+
+func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
 	labels := getFrameLabels(frame)
 
 	timeFields, nonTimeFields := partitionFields(frame)
 
-	isMetricFrame := nonTimeFields[0].Type() != data.FieldTypeString
-
-	isMetricRange := isMetricFrame && query.QueryType == QueryTypeRange
+	isMetricRange := query.QueryType == QueryTypeRange
 
 	name := formatName(labels, query)
 	frame.Name = name
@@ -34,7 +45,6 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 	}
 
 	for _, field := range timeFields {
-		field.Name = "time"
 
 		if isMetricRange {
 			if field.Config == nil {
@@ -45,36 +55,97 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 	}
 
 	for _, field := range nonTimeFields {
-		field.Name = "value"
 		if field.Config == nil {
 			field.Config = &data.FieldConfig{}
 		}
 		field.Config.DisplayNameFromDS = name
 	}
 
-	// for streams-dataframes, we need to send to the browser the nanosecond-precision timestamp too.
+	return nil
+}
+
+func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
+	timeFields, _ := partitionFields(frame)
+
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
+
+	// we need to send to the browser the nanosecond-precision timestamp too.
 	// usually timestamps become javascript-date-objects in the browser automatically, which only
 	// have millisecond-precision.
 	// so we send a separate timestamp-as-string field too.
-	if !isMetricFrame {
-		stringTimeField := makeStringTimeField(timeFields[0])
-		frame.Fields = append(frame.Fields, stringTimeField)
+	stringTimeField, err := makeStringTimeField(timeFields[0])
+	if err != nil {
+		return err
 	}
 
-	return frame
+	idField, err := makeIdField(stringTimeField, frame.Fields[1], frame.Fields[2])
+	if err != nil {
+		return err
+	}
+	frame.Fields = append(frame.Fields, stringTimeField, idField)
+	return nil
 }
 
-func makeStringTimeField(field *data.Field) *data.Field {
-	length := field.Len()
+func makeStringTimeField(timeField *data.Field) (*data.Field, error) {
+	length := timeField.Len()
+	if timeField.Type() != data.FieldTypeTime {
+		return nil, fmt.Errorf("wrong field type")
+	}
 	stringTimestamps := make([]string, length)
 
 	for i := 0; i < length; i++ {
-		if v, ok := field.ConcreteAt(i); ok {
-			nsNumber := v.(time.Time).UnixNano()
-			stringTimestamps[i] = fmt.Sprintf("%d", nsNumber)
-		}
+		nsNumber := timeField.At(i).(time.Time).UnixNano()
+		stringTimestamps[i] = fmt.Sprintf("%d", nsNumber)
 	}
-	return data.NewField("tsNs", field.Labels.Copy(), stringTimestamps)
+	return data.NewField("tsNs", timeField.Labels.Copy(), stringTimestamps), nil
+}
+
+func calculateCheckSum(time string, line string, labels string) string {
+	input := []byte(line + "_" + labels)
+	hash := fnv.New32()
+	hash.Write(input)
+	return fmt.Sprintf("%s_%x", time, hash.Sum32())
+}
+
+func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField *data.Field) (*data.Field, error) {
+	length := stringTimeField.Len()
+
+	if (lineField.Len() != length) || (labelsField.Len() != length) {
+		return nil, fmt.Errorf("fields with different lengths")
+	}
+
+	if (stringTimeField.Type() != data.FieldTypeString) ||
+		(lineField.Type() != data.FieldTypeString) ||
+		(labelsField.Type() != data.FieldTypeString) {
+		return nil, fmt.Errorf("wrong field types")
+	}
+
+	ids := make([]string, length)
+
+	checksums := make(map[string]int)
+
+	for i := 0; i < length; i++ {
+		time := stringTimeField.At(i).(string)
+		line := lineField.At(i).(string)
+		labels := labelsField.At(i).(string)
+
+		sum := calculateCheckSum(time, line, labels)
+
+		sumCount := checksums[sum]
+		idSuffix := ""
+		if sumCount > 0 {
+			// we had this checksum already, we need to do something to make it unique
+			idSuffix = fmt.Sprintf("_%d", sumCount)
+		}
+		checksums[sum] = sumCount + 1
+
+		ids[i] = sum + idSuffix
+	}
+	return data.NewField("id", nil, ids), nil
 }
 
 func formatNamePrometheusStyle(labels map[string]string) string {

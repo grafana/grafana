@@ -132,7 +132,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 
 			frame := &data.Frame{}
 			if isV1 {
-				frame, err = lokiBytesToLabeledFrame(message)
+				frame, err = lokiBytesToLabeledFrame(message, lokiQuery{Expr: query.Expr})
 			} else {
 				err = json.Unmarshal(message, &frame)
 			}

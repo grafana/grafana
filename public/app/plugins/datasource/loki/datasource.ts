@@ -162,7 +162,14 @@ export class LokiDatasource
         ...request,
         targets: request.targets.map(getNormalizedLokiQuery),
       };
-      return super.query(fixedRequest).pipe(map((response) => transformBackendResult(response, fixedRequest)));
+
+      if (fixedRequest.liveStreaming) {
+        return this.runLiveQueryThroughBackend(fixedRequest);
+      } else {
+        return super
+          .query(fixedRequest)
+          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+      }
     }
 
     const filteredTargets = request.targets
@@ -183,7 +190,12 @@ export class LokiDatasource
         target.queryType === LokiQueryType.Stream &&
         request.rangeRaw?.to === 'now'
       ) {
-        subQueries.push(doLokiChannelStream(target, this, request));
+        let maxLength = request.maxDataPoints ?? 1000;
+        if (maxLength > 100) {
+          // for small buffers, keep them small
+          maxLength *= 2;
+        }
+        subQueries.push(doLokiChannelStream(target, this, request.range, maxLength));
       } else {
         subQueries.push(this.runRangeQuery(target, request, filteredTargets.length));
       }
@@ -198,6 +210,38 @@ export class LokiDatasource
     }
 
     return merge(...subQueries);
+  }
+
+  runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+    // this only works in explore-mode, so variables don't need to be handled,
+    //  and only for logs-queries, not metric queries
+    const logsQueries = request.targets.filter((query) => query.expr !== '' && !isMetricsQuery(query.expr));
+
+    if (logsQueries.length === 0) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
+    // const subQueries = logsQueries.map((query) => {
+    //   const maxDataPoints = query.maxLines || this.maxLines;
+    //   // FIXME: currently we are running it through the frontend still.
+    //   return this.runLiveQuery(query, maxDataPoints);
+    // });
+
+    // return merge(...subQueries);
+
+    const query = request.targets[0];
+    // return this.runLiveQuery(query, query.maxLines ?? this.maxLines).pipe(
+    //   map((thing) => {
+    //     console.log(thing.data[0].length);
+    //     return thing;
+    //   })
+    // );
+    return doLokiChannelStream(query, this, request.range, query.maxLines ?? this.maxLines).pipe(
+      map((response) => transformBackendResult(response, [query]))
+    );
   }
 
   runInstantQuery = (

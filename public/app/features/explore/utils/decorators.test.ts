@@ -47,7 +47,7 @@ const getTestContext = () => {
     fields: [
       { name: 'value', type: FieldType.number, values: [4, 5, 6] },
       { name: 'time', type: FieldType.time, values: [100, 100, 100] },
-      { name: 'tsNs', type: FieldType.time, values: ['100000002', undefined, '100000001'] },
+      { name: 'tsNs', type: FieldType.string, values: ['100000002', undefined, '100000001'] },
       { name: 'message', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
     ],
   });
@@ -60,7 +60,7 @@ const getTestContext = () => {
     fields: [
       { name: 'value', type: FieldType.number, values: [4, 5, 6] },
       { name: 'time', type: FieldType.time, values: [100, 100, 100] },
-      { name: 'tsNs', type: FieldType.time, values: ['100000002', undefined, '100000001'] },
+      { name: 'tsNs', type: FieldType.string, values: ['100000002', undefined, '100000001'] },
       { name: 'message', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
     ],
     meta: { preferredVisualisationType: 'logs' },
@@ -203,7 +203,7 @@ describe('decorateWithTableResult', () => {
         columns: [
           { text: 'value', type: 'number' },
           { text: 'time', type: 'time' },
-          { text: 'tsNs', type: 'time' },
+          { text: 'tsNs', type: 'string' },
           { text: 'message', type: 'string' },
         ],
         rows: [
