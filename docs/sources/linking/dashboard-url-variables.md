@@ -57,4 +57,4 @@ The query parameter `var-adhoc=key|=|value` applies the ad hoc filter configured
 
 ### Example
 
-See https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica
+See https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica - this passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
