@@ -6959,14 +6959,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pyroscope/flamegraph@npm:0.0.6-956-d9b96f9.0":
-  version: 0.0.6-956-d9b96f9.0
-  resolution: "@pyroscope/flamegraph@npm:0.0.6-956-d9b96f9.0"
+"@pyroscope/flamegraph@npm:0.2.1-968-111d45e.0":
+  version: 0.2.1-968-111d45e.0
+  resolution: "@pyroscope/flamegraph@npm:0.2.1-968-111d45e.0"
   dependencies:
     true-myth: ^5.1.2
   peerDependencies:
     react: ">=16.14.0"
-  checksum: dd9664ea12f266ca6efe778a83483411d6ffd775ac311a40fa170606d4ecd305ef0a5f03040e302fea380b492d229626ec9efa2ddafbb17339cb05bc2310ab6a
+  checksum: e31ea941c3e701660ae2ba3992b40bec947bfb27e3adc2b7c2d05f47dafede3cba82d59414ec37b9f6b9e24a3648762604a96f722c4ea99c0343eb91d691bef2
   languageName: node
   linkType: hard
 
@@ -20751,7 +20751,7 @@ __metadata:
     "@opentelemetry/semantic-conventions": 1.0.1
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.4
     "@popperjs/core": 2.11.2
-    "@pyroscope/flamegraph": 0.0.6-956-d9b96f9.0
+    "@pyroscope/flamegraph": 0.2.1-968-111d45e.0
     "@react-aria/button": 3.3.4
     "@react-aria/dialog": 3.1.4
     "@react-aria/focus": 3.5.0
