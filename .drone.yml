@@ -717,6 +717,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
     TEST_TAG: v0.0.0-test
+  failure: ignore
   image: grafana/build-container:1.5.3
   name: trigger-test-release
   when:
@@ -4407,6 +4408,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d30a3ad5ac32ab22eff1c5633c2aa0b927dc5154b1159dfa52244a306c2f2cf6
+hmac: 67a26152ee9e37986530bf816090cda4362119d3d711d78360b36cf50aa30633
 
 ...

@@ -172,6 +172,7 @@ def trigger_test_release():
             'git remote add downstream https://github.com/grafana/$${DOWNSTREAM}.git',
             'git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG}',
         ],
+        'failure': 'ignore',
         'when': {
             'paths': {
                 'include': [
