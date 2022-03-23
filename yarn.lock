@@ -20933,6 +20933,7 @@ __metadata:
     jest: 27.5.0
     jest-canvas-mock: 2.3.1
     jest-date-mock: 1.0.8
+    jest-fail-on-console: 2.3.0
     jest-junit: 13.0.0
     jest-matcher-utils: 27.5.0
     jest-mock-console: 1.2.3
@@ -23606,6 +23607,15 @@ __metadata:
     jest-mock: ^27.5.0
     jest-util: ^27.5.0
   checksum: 71db2875b34b096645e49a05d32b5881bcd3751c2e875d83d654a1cb61ce7482175d335e005799f8bb4580803b59cc33ba3b378281cda775bc334cbc8ab8ba01
+  languageName: node
+  linkType: hard
+
+"jest-fail-on-console@npm:2.3.0":
+  version: 2.3.0
+  resolution: "jest-fail-on-console@npm:2.3.0"
+  dependencies:
+    chalk: ^4.1.0
+  checksum: b0ce97a5f6bc11226a1eecb9406c98e42ce5e7197310019f3cb27495b43cc1d01aaee36b094ea46a23deffcb62b246ddccd5dfdefe525b72d8dad2c9f1f634ee
   languageName: node
   linkType: hard
 
