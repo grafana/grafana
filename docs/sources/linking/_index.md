@@ -22,7 +22,7 @@ The next step is to figure out which link type is right for your workflow. Even 
 
 ## Controlling time range using the URL
 
-You can control the time range of a panel or dashboard by providing following query parameters in dashboard URL:
+To control the time range of a panel or dashboard, you can provide the following query parameters in the dashboard URL:
 
 - `from` - defines lower limit of the time range, specified in ms epoch
 - `to` - defines upper limit of the time range, specified in ms epoch
