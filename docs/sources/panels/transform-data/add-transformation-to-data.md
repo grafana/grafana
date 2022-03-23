@@ -1,12 +1,12 @@
 +++
-title = "Apply a transformation to data"
+title = "Add a transformation to data"
 weight = 20
-aliases = ["/docs/sources/panels/transform-data/apply-transformation-to-data/"]
+aliases = ["/docs/sources/panels/transform-data/add-transformation-to-data/", "/docs/sources/panels/transform-data/apply-transformation-to-data", "/docs/grafana/latest/panels/transform-data/apply-transformation-to-data"]
 +++
 
-# Apply a transformation function to data
+# Add a transformation function to data
 
-The following steps guide you in applying a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "transformation-functions.md" >}}).
+The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "transformation-functions.md" >}}).
 
 ## Before you begin
 
