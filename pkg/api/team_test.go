@@ -217,8 +217,6 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 
 func TestTeamAPIEndpoint_SearchTeams_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
-
 	// Seed three teams
 	for i := 1; i <= 3; i++ {
 		_, err := sc.db.CreateTeam(fmt.Sprintf("team%d", i), fmt.Sprintf("team%d@example.org", i), 1)

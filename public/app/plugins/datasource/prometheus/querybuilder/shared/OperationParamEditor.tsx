@@ -76,6 +76,7 @@ function SelectInputParamEditor({
       value={valueOption}
       options={selectOptions}
       placeholder={paramDef.placeholder}
+      allowCustomValue={true}
       onChange={(value) => onChange(index, value.value!)}
     />
   );

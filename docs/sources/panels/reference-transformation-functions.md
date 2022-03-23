@@ -53,6 +53,12 @@ This transformation allow you to select one query and from it extract standard o
 
 If you want to extract a unique config for every row in the config query result then try the rows to fields transformation.
 
+### Options
+
+- **Config query**: Select the query that returns the data you want to use as configuration.
+- **Apply to**: Select what fields or series to apply the configuration to.
+- **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
+
 ## Convert field type
 
 This transformation changes the field type of the specified field.
@@ -281,6 +287,40 @@ In "Rows" mode, the result has a table for each series and show each label value
 | Server     | Server B |
 | Datacenter | EU       |
 
+### Value field name
+
+If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
+
+| Time                | Datacenter | Server A | Server B |
+| ------------------- | ---------- | -------- | -------- |
+| 2020-07-07 11:34:20 | EU         | 1        | 2        |
+
+### Merging behavior
+
+The labels to fields transformer is internally two separate transformations. The first acts on single series and extracts labels to fields. The second is the [merge](#merge) transformation that joins all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
+
+To illustrate this, here is an example where you have two queries that return time series with no overlapping labels.
+
+- Series 1: labels Server=ServerA
+- Series 2: labels Datacenter=EU
+
+This will first result in these two tables:
+
+| Time                | Server  | Value |
+| ------------------- | ------- | ----- |
+| 2020-07-07 11:34:20 | ServerA | 10    |
+
+| Time                | Datacenter | Value |
+| ------------------- | ---------- | ----- |
+| 2020-07-07 11:34:20 | EU         | 20    |
+
+After merge:
+
+| Time                | Server  | Value | Datacenter |
+| ------------------- | ------- | ----- | ---------- |
+| 2020-07-07 11:34:20 | ServerA | 10    |            |
+| 2020-07-07 11:34:20 |         | 20    | EU         |
+
 ## Merge
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
@@ -323,40 +363,6 @@ Grafana displays a list of fields returned by the query. You can:
 In the example below, I hid the value field and renamed Max and Min.
 
 {{< figure src="/static/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-### Value field name
-
-If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
-
-| Time                | Datacenter | Server A | Server B |
-| ------------------- | ---------- | -------- | -------- |
-| 2020-07-07 11:34:20 | EU         | 1        | 2        |
-
-### Merging behavior
-
-The labels to fields transformer is internally two separate transformations. The first acts on single series and extracts labels to fields. The second is the [merge](#merge) transformation that joins all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
-
-To illustrate this, here is an example where you have two queries that return time series with no overlapping labels.
-
-- Series 1: labels Server=ServerA
-- Series 2: labels Datacenter=EU
-
-This will first result in these two tables:
-
-| Time                | Server  | Value |
-| ------------------- | ------- | ----- |
-| 2020-07-07 11:34:20 | ServerA | 10    |
-
-| Time                | Datacenter | Value |
-| ------------------- | ---------- | ----- |
-| 2020-07-07 11:34:20 | EU         | 20    |
-
-After merge:
-
-| Time                | Server  | Value | Datacenter |
-| ------------------- | ------- | ----- | ---------- |
-| 2020-07-07 11:34:20 | ServerA | 10    |            |
-| 2020-07-07 11:34:20 |         | 20    | EU         |
 
 ## Reduce
 

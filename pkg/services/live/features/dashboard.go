@@ -8,9 +8,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type actionType string
@@ -39,6 +39,7 @@ type dashboardEvent struct {
 type DashboardHandler struct {
 	Publisher   models.ChannelPublisher
 	ClientCount models.ChannelClientCount
+	Store       sqlstore.Store
 }
 
 // GetHandlerForPath called on init
@@ -62,7 +63,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
-		if err := bus.Dispatch(ctx, &query); err != nil {
+		if err := h.Store.GetDashboard(ctx, &query); err != nil {
 			logger.Error("Error getting dashboard", "query", query, "error", err)
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 		}
@@ -109,7 +110,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
-		if err := bus.Dispatch(ctx, &query); err != nil {
+		if err := h.Store.GetDashboard(ctx, &query); err != nil {
 			logger.Error("Unknown dashboard", "query", query)
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
