@@ -15,7 +15,7 @@ describe('LokiQueryBuilderOptions', () => {
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
-      queryType: 'instant',
+      queryType: LokiQueryType.Instant,
     });
   });
 
