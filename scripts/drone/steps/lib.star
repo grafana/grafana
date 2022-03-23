@@ -508,6 +508,7 @@ def test_backend_step(edition):
             'make -C devenv/docker/blocks/intentapi',
             'ls -l /drone/src/devenv/docker/blocks/intentapi/certs',
             'make devenv sources=intentapi',
+            'dockerize -wait https://localhost:6443 -timeout 120s',
             'cd /drone/src/devenv && docker-compose ps && docker-compose logs apiserver && cd -',
             'kubectl --kubeconfig=/drone/src/devenv/docker/blocks/intentapi/apiserver.kubeconfig api-resources',
             'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
@@ -519,7 +520,7 @@ def test_backend_step(edition):
         'volumes': [ {
                 'name': 'docker', 'path': '/var/run/docker.sock'
             }, {
-                'name': 'intentapi-certs', 'path': '/drone/src/devenv/docker/blocks/intentapi/certs'
+                'name': 'intentapi-certs', 'path': '/var/lib/kubernetes'
             },
         ]
     }
