@@ -66,6 +66,34 @@ Content-Type: text/plain; charset=utf-8
 {"message":"Preferences updated"}
 ```
 
+## Patch Current User Prefs
+
+Update one or more preferences without modifying the others.
+
+`PATCH /api/user/preferences`
+
+**Example Request**:
+
+```http
+PATCH /api/user/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "theme": "dark"
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: text/plain; charset=utf-8
+
+{"message":"Preferences updated"}
+```
+
 ## Get Current Org Prefs
 
 `GET /api/org/preferences`
@@ -104,6 +132,34 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "theme": "",
   "homeDashboardId":0,
   "timezone":"utc"
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: text/plain; charset=utf-8
+
+{"message":"Preferences updated"}
+```
+
+## Patch Current Org Prefs
+
+Update one or more preferences without modifying the others.
+
+`PATCH /api/org/preferences`
+
+**Example Request**:
+
+```http
+PATCH /api/org/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "theme": "dark"
 }
 ```
 

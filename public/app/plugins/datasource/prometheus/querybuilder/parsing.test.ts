@@ -444,6 +444,103 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('handles multiple binary operations', () => {
+    expect(buildVisualQueryFromString('foo{x="yy"} * metric{y="zz",a="bb"} * metric2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [{ label: 'x', op: '=', value: 'yy' }],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            query: {
+              metric: 'metric',
+              labels: [
+                { label: 'y', op: '=', value: 'zz' },
+                { label: 'a', op: '=', value: 'bb' },
+              ],
+              operations: [],
+            },
+          },
+          {
+            operator: '*',
+            query: {
+              metric: 'metric2',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles multiple binary operations and scalar', () => {
+    expect(buildVisualQueryFromString('foo{x="yy"} * metric{y="zz",a="bb"} * 2')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [{ label: 'x', op: '=', value: 'yy' }],
+        operations: [
+          {
+            id: '__multiply_by',
+            params: [2],
+          },
+        ],
+        binaryQueries: [
+          {
+            operator: '*',
+            query: {
+              metric: 'metric',
+              labels: [
+                { label: 'y', op: '=', value: 'zz' },
+                { label: 'a', op: '=', value: 'bb' },
+              ],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  it('handles binary operation with vector matchers', () => {
+    expect(buildVisualQueryFromString('foo * on(foo, bar) metric')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            vectorMatches: 'foo, bar',
+            vectorMatchesType: 'on',
+            query: { metric: 'metric', labels: [], operations: [] },
+          },
+        ],
+      },
+    });
+
+    expect(buildVisualQueryFromString('foo * ignoring(foo) metric')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            vectorMatches: 'foo',
+            vectorMatchesType: 'ignoring',
+            query: { metric: 'metric', labels: [], operations: [] },
+          },
+        ],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {

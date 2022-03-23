@@ -26,56 +26,62 @@ func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
 }
 
 func (ss *SQLStore) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
-	query.Result = make([]*models.OrgDTO, 0)
-	sess := x.Table("org")
-	if query.Query != "" {
-		sess.Where("name LIKE ?", query.Query+"%")
-	}
-	if query.Name != "" {
-		sess.Where("name=?", query.Name)
-	}
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		query.Result = make([]*models.OrgDTO, 0)
+		sess := dbSession.Table("org")
+		if query.Query != "" {
+			sess.Where("name LIKE ?", query.Query+"%")
+		}
+		if query.Name != "" {
+			sess.Where("name=?", query.Name)
+		}
 
-	if len(query.Ids) > 0 {
-		sess.In("id", query.Ids)
-	}
+		if len(query.Ids) > 0 {
+			sess.In("id", query.Ids)
+		}
 
-	if query.Limit > 0 {
-		sess.Limit(query.Limit, query.Limit*query.Page)
-	}
+		if query.Limit > 0 {
+			sess.Limit(query.Limit, query.Limit*query.Page)
+		}
 
-	sess.Cols("id", "name")
-	err := sess.Find(&query.Result)
-	return err
+		sess.Cols("id", "name")
+		err := sess.Find(&query.Result)
+		return err
+	})
 }
 
 func (ss *SQLStore) GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
-	var org models.Org
-	exists, err := x.Id(query.Id).Get(&org)
-	if err != nil {
-		return err
-	}
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var org models.Org
+		exists, err := dbSession.ID(query.Id).Get(&org)
+		if err != nil {
+			return err
+		}
 
-	if !exists {
-		return models.ErrOrgNotFound
-	}
+		if !exists {
+			return models.ErrOrgNotFound
+		}
 
-	query.Result = &org
-	return nil
+		query.Result = &org
+		return nil
+	})
 }
 
 func (ss *SQLStore) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
-	var org models.Org
-	exists, err := x.Where("name=?", query.Name).Get(&org)
-	if err != nil {
-		return err
-	}
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var org models.Org
+		exists, err := dbSession.Where("name=?", query.Name).Get(&org)
+		if err != nil {
+			return err
+		}
 
-	if !exists {
-		return models.ErrOrgNotFound
-	}
+		if !exists {
+			return models.ErrOrgNotFound
+		}
 
-	query.Result = &org
-	return nil
+		query.Result = &org
+		return nil
+	})
 }
 
 // GetOrgByName gets an organization by name.

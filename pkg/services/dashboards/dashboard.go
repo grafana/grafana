@@ -51,6 +51,7 @@ type Store interface {
 	UnprovisionDashboard(ctx context.Context, id int64) error
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
+	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	FolderStore
 }
 

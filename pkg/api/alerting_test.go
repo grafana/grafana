@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -26,13 +27,13 @@ type setUpConf struct {
 	aclMockResp []*models.DashboardAclInfoDTO
 }
 
-type mockSearchService struct{ ExpectedResult search.HitList }
+type mockSearchService struct{ ExpectedResult models.HitList }
 
 func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
 	q.Result = mss.ExpectedResult
 	return nil
 }
-func (mss *mockSearchService) SortOptions() []search.SortOption { return nil }
+func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
 
 func setUp(confs ...setUpConf) *HTTPServer {
 	singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
@@ -46,15 +47,9 @@ func setUp(confs ...setUpConf) *HTTPServer {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-		query.Result = aclMockResp
-		return nil
-	})
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-		query.Result = []*models.TeamDTO{}
-		return nil
-	})
+	store.ExpectedDashboardAclInfoList = aclMockResp
+	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	guardian.InitLegacyGuardian(store)
 	return hs
 }
 
@@ -99,9 +94,9 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET",
 			"/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery",
 			"/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				hs.SearchService.(*mockSearchService).ExpectedResult = search.HitList{
-					&search.Hit{ID: 1},
-					&search.Hit{ID: 2},
+				hs.SearchService.(*mockSearchService).ExpectedResult = models.HitList{
+					&models.Hit{ID: 1},
+					&models.Hit{ID: 2},
 				}
 
 				sc.handlerFunc = hs.GetAlerts
