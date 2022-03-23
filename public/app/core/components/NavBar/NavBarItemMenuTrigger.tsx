@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, IconName, Link, Portal, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, Link,  useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { MenuTriggerProps } from '@react-types/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
