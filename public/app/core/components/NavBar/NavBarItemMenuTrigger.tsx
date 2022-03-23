@@ -53,15 +53,19 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   });
 
   const { focusWithinProps } = useFocusWithin({
+    onFocusWithin: (e) => {
+      console.log('event focus within', e);
+    },
     onFocusWithinChange: (isFocused) => {
       console.log('Has focus: ' + menuHasFocus);
       console.log('Is focused: ' + isFocused);
+      console.log('state', {state});
       if (isFocused) {
         state.open();
       }
       if (!isFocused) {
-        //state.close();
-        setMenuHasFocus(false);
+        // state.close();
+        // setMenuHasFocus(false);
       }
     },
   });
@@ -151,6 +155,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     overlayRef,
     placement: 'top',
     offset: 5,
+    isOpen: state.isOpen,
   });
 
   return (
