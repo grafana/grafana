@@ -190,7 +190,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store s
 		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := am.silences.GC(); err != nil {
-				am.logger.Error("Silence Garbage Collection Failed at %v: %v", time.Now(), err)
+				am.logger.Error("silence garbage collection", "err", err)
 				// Don't return here - we need to snapshot our state first.
 			}
 
