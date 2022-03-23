@@ -63,31 +63,18 @@ func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int6
 	return &alertRule, nil
 }
 
-// DeleteAlertRuleByUID is a handler for deleting an alert rule.
+// DeleteAlertRulesByUID is a handler for deleting an alert rule.
 func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		params := "(" + strings.Repeat(",?", len(ruleUID))[1:] + ")"
-
-		args := make([]interface{}, 0, len(ruleUID)+2)
-		args = append(args, "DELETE FROM alert_rule WHERE org_id = ? AND uid IN "+params)
-		args = append(args, orgID)
-		for _, arg := range ruleUID {
-			args = append(args, arg)
-		}
-
-		_, err := sess.Exec(args...)
+		_, err := sess.Table("alert_rule").Where("org_id = ?", orgID).In("uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
-
-		args[0] = "DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_uid IN " + params
-		_, err = sess.Exec(args...)
-
+		_, err = sess.Table("alert_rule_version").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
-		args[0] = "DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid IN " + params
-		_, err = sess.Exec(args...)
+		_, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
