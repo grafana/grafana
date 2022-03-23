@@ -60,7 +60,7 @@ import (
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
-	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -228,7 +228,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
-	pref.ProvideService,
+	prefimpl.ProvideService,
 )
 
 var wireSet = wire.NewSet(
