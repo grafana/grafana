@@ -310,7 +310,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		var dashboardId int64
 
 		if cmd.AnnotationId != 0 {
-			annotation, respErr := findAnnotationByID(repo, cmd.AnnotationId, c.OrgId)
+			annotation, respErr := findAnnotationByID(c.Req.Context(), repo, cmd.AnnotationId, c.OrgId)
 			if respErr != nil {
 				return respErr
 			}

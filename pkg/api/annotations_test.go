@@ -717,6 +717,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setUpFGACGuardian(t)
 			sc.acmock.
 				RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
@@ -910,6 +911,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setUpFGACGuardian(t)
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
 			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
@@ -938,4 +940,13 @@ func setUpACL() {
 	store.ExpectedDashboardAclInfoList = aclMockResp
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
 	guardian.InitLegacyGuardian(store)
+}
+
+func setUpFGACGuardian(t *testing.T) {
+	origNewGuardian := guardian.New
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true})
 }
