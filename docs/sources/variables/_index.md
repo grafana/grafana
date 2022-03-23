@@ -27,7 +27,7 @@ For example, if you were administering a dashboard to monitor several servers, y
 wmi_system_threads{instance=~"$server"}
 ```
 
-Variable values are always synced to the URL using the syntax `var-<varname>=value`. For more information, refer to [Dashboard URL variables]({{< relref "../linking/dashboard-url-variables.md" }}).
+Variable values are always synced to the URL using the syntax `var-<varname>=value`. For more information, refer to [Dashboard URL variables]({{< relref "../linking/dashboard-url-variables.md" >}}).
 
 ## Examples of templates and variables
 
