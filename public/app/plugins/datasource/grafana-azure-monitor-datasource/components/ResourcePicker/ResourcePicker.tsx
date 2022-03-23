@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse, Label } from '@grafana/ui';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
@@ -10,7 +10,6 @@ import NestedResourceTable from './NestedResourceTable';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { addResources, findRow, parseResourceURI } from './utils';
 
-const TEMPLATE_VARIABLE_GROUP_ID = '$$grafana-templateVariables$$';
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
@@ -103,12 +102,8 @@ const ResourcePicker = ({
       // clear error message (also when loading cached resources)
       setErrorMessage(undefined);
 
-      // If we already have children, we don't need to re-fetch them. Also abort if we're expanding the special
-      // template variable group, though that shouldn't happen in practice
-      if (
-        resourceGroupOrSubscription.children?.length ||
-        resourceGroupOrSubscription.uri === TEMPLATE_VARIABLE_GROUP_ID
-      ) {
+      // If we already have children, we don't need to re-fetch them.
+      if (resourceGroupOrSubscription.children?.length) {
         return;
       }
 
@@ -165,6 +160,7 @@ const ResourcePicker = ({
                   onRowSelectedChange={handleSelectionChanged}
                   selectedRows={selectedResourceRows}
                   noHeader={true}
+                  selectableEntryTypes={selectableEntryTypes}
                 />
               </>
             )}
@@ -174,31 +170,34 @@ const ResourcePicker = ({
               isOpen={isAdvancedOpen}
               onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
             >
-              <h6>
-                Resource URI{' '}
-                <Tooltip
-                  content={
-                    <>
-                      <p>
-                        You can manually edit the{' '}
-                        <a
-                          href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
-                          resource uri{' '}
-                        </a>
-                        or use template variables:
-                      </p>
-                    </>
-                  }
-                  placement="right"
-                  interactive={true}
-                >
-                  <Icon name="info-circle" />
-                </Tooltip>
-              </h6>
+              <Label htmlFor={`input-${internalSelectedURI}`}>
+                <h6>
+                  Resource URI{' '}
+                  <Tooltip
+                    content={
+                      <>
+                        <p>
+                          You can manually edit the{' '}
+                          <a
+                            href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            resource uri{' '}
+                          </a>
+                          or use template variables:
+                        </p>
+                      </>
+                    }
+                    placement="right"
+                    interactive={true}
+                  >
+                    <Icon name="info-circle" />
+                  </Tooltip>
+                </h6>
+              </Label>
               <Input
+                id={`input-${internalSelectedURI}`}
                 value={internalSelectedURI}
                 onChange={(event) => setInternalSelectedURI(event.currentTarget.value)}
                 placeholder="ex: /subscriptions/$subId"
