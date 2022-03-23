@@ -13,8 +13,6 @@ To see a list of available variables, type `$` in the data link **URL** field.
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
-You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../variables/_index.md" >}}) for more information on template variables.
-
 ## Time range panel variables
 
 These variables allow you to include the current time range in the data link URL.
@@ -47,7 +45,9 @@ Value-specific variables are available under `__value` namespace:
 
 ## Template variables
 
-When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
+You can also use template variables in data link URLs. For more information, refer to [Templates and variables]({{< relref "../variables/_index.md" >}}).
+
+When linking to another dashboard that uses template variables, select variable values to apply them for whoever clicks the link.
 
 `${myvar:queryparams}` - where `myvar` is a name of the template variable that matches one in the current dashboard that you want to use.
 
