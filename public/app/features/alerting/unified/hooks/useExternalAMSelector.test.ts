@@ -32,13 +32,13 @@ describe('useExternalAmSelector', () => {
   });
   it('should have one in pending', () => {
     useSelectorMock.mockImplementation((callback) => {
-      return callback(createMockStoreState([], [], ['some/url/to/am']));
+      return callback(createMockStoreState([], [], ['http://localhost:9000/some/url/to/am']));
     });
     const alertmanagers = useExternalAmSelector();
 
     expect(alertmanagers).toEqual([
       {
-        url: 'some/url/to/am',
+        url: 'http://localhost:9000/some/url/to/am',
         status: 'pending',
         actualUrl: '',
       },
@@ -48,7 +48,11 @@ describe('useExternalAmSelector', () => {
   it('should have one active, one pending', () => {
     useSelectorMock.mockImplementation((callback) => {
       return callback(
-        createMockStoreState([{ url: 'some/url/to/am/api/v2/alerts' }], [], ['some/url/to/am', 'some/url/to/am1'])
+        createMockStoreState(
+          [{ url: 'http://localhost:9000/some/url/to/am/api/v2/alerts' }],
+          [],
+          ['http://localhost:9000/some/url/to/am', 'http://localhost:9000/some/url/to/am1']
+        )
       );
     });
 
@@ -56,12 +60,12 @@ describe('useExternalAmSelector', () => {
 
     expect(alertmanagers).toEqual([
       {
-        url: 'some/url/to/am',
-        actualUrl: 'some/url/to/am/api/v2/alerts',
+        url: 'http://localhost:9000/some/url/to/am',
+        actualUrl: 'http://localhost:9000/some/url/to/am',
         status: 'active',
       },
       {
-        url: 'some/url/to/am1',
+        url: 'http://localhost:9000/some/url/to/am1',
         actualUrl: '',
         status: 'pending',
       },
@@ -72,9 +76,12 @@ describe('useExternalAmSelector', () => {
     useSelectorMock.mockImplementation((callback) => {
       return callback(
         createMockStoreState(
-          [{ url: 'some/url/to/am/api/v2/alerts' }, { url: 'some/url/to/am1/api/v2/alerts' }],
+          [
+            { url: 'http://localhost:9000/some/url/to/am/api/v2/alerts' },
+            { url: 'http://localhost:9000/some/url/to/am1/api/v2/alerts' },
+          ],
           [],
-          ['some/url/to/am', 'some/url/to/am1']
+          ['http://localhost:9000/some/url/to/am', 'http://localhost:9000/some/url/to/am1']
         )
       );
     });
@@ -83,13 +90,13 @@ describe('useExternalAmSelector', () => {
 
     expect(alertmanagers).toEqual([
       {
-        url: 'some/url/to/am',
-        actualUrl: 'some/url/to/am/api/v2/alerts',
+        url: 'http://localhost:9000/some/url/to/am',
+        actualUrl: 'http://localhost:9000/some/url/to/am',
         status: 'active',
       },
       {
-        url: 'some/url/to/am1',
-        actualUrl: 'some/url/to/am1/api/v2/alerts',
+        url: 'http://localhost:9000/some/url/to/am1',
+        actualUrl: 'http://localhost:9000/some/url/to/am1',
         status: 'active',
       },
     ]);
@@ -99,9 +106,9 @@ describe('useExternalAmSelector', () => {
     useSelectorMock.mockImplementation((callback) => {
       return callback(
         createMockStoreState(
-          [{ url: 'some/url/to/am/api/v2/alerts' }],
-          [{ url: 'some/dropped/url/api/v2/alerts' }],
-          ['some/url/to/am', 'some/url/to/am1']
+          [{ url: 'http://localhost:9000/some/url/to/am/api/v2/alerts' }],
+          [{ url: 'http://localhost:9000/some/dropped/url/api/v2/alerts' }],
+          ['http://localhost:9000/some/url/to/am', 'http://localhost:9000/some/url/to/am1']
         )
       );
     });
@@ -110,18 +117,18 @@ describe('useExternalAmSelector', () => {
 
     expect(alertmanagers).toEqual([
       {
-        url: 'some/url/to/am',
-        actualUrl: 'some/url/to/am/api/v2/alerts',
+        url: 'http://localhost:9000/some/url/to/am',
+        actualUrl: 'http://localhost:9000/some/url/to/am',
         status: 'active',
       },
       {
-        url: 'some/url/to/am1',
+        url: 'http://localhost:9000/some/url/to/am1',
         actualUrl: '',
         status: 'pending',
       },
       {
-        url: 'some/dropped/url',
-        actualUrl: 'some/dropped/url/api/v2/alerts',
+        url: 'http://localhost:9000/some/dropped/url',
+        actualUrl: 'http://localhost:9000/some/dropped/url/api/v2/alerts',
         status: 'dropped',
       },
     ]);
@@ -130,11 +137,11 @@ describe('useExternalAmSelector', () => {
   it('should match urls by host and path and ignore other parts', () => {
     useSelectorMock.mockImplementation((callback) => {
       return callback(
-          createMockStoreState(
-              [{ url: 'http://localhost:9000/some/url/to/am/api/v2/alerts' }],
-              [],
-              ['http://user:password@localhost:9000/some/url/to/am']
-          )
+        createMockStoreState(
+          [{ url: 'http://localhost:9000/some/url/to/am/api/v2/alerts' }],
+          [],
+          ['http://user:password@localhost:9000/some/url/to/am']
+        )
       );
     });
 
@@ -145,7 +152,7 @@ describe('useExternalAmSelector', () => {
         url: 'http://localhost:9000/some/url/to/am',
         actualUrl: 'http://user:password@localhost:9000/some/url/to/am',
         status: 'active',
-      }
+      },
     ]);
-  })
+  });
 });

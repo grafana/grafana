@@ -24,7 +24,7 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
   }));
 
   for (const url of alertmanagerConfig) {
-    let cfgUrl = new URL(url);
+    const cfgUrl = new URL(url);
     if (discoveredAlertmanagers.activeAlertManagers.length === 0) {
       enabledAlertmanagers.push({
         url: url,
@@ -34,13 +34,17 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
     } else {
       let found = false;
       for (const activeAM of discoveredAlertmanagers.activeAlertManagers) {
-        let activeUrl = new URL(activeAM.url)
-        if (activeUrl.hostname === cfgUrl.hostname && activeUrl.pathname.startsWith(cfgUrl.pathname) && activeUrl.protocol === cfgUrl.protocol) {
+        const activeUrl = new URL(activeAM.url);
+        if (
+          activeUrl.hostname === cfgUrl.hostname &&
+          (activeUrl.pathname.startsWith(cfgUrl.pathname + '/') || activeUrl.pathname === cfgUrl.pathname) &&
+          activeUrl.protocol === cfgUrl.protocol
+        ) {
           found = true;
           enabledAlertmanagers.push({
             url: activeAM.url.replace(SUFFIX_REGEX, ''),
             status: 'active',
-            actualUrl: activeAM.url,
+            actualUrl: url,
           });
         }
       }
