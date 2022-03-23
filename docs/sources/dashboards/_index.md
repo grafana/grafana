@@ -23,5 +23,6 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Reporting]({{< relref "./reporting.md" >}})
 - [Time range controls]({{< relref "./time-range-controls.md" >}})
 - [Dashboard version history]({{< relref "./dashboard-history.md" >}})
-
-
+- [Dashboard export and import]({{< relref "./export-import.md" >}})
+- [Dashboard JSON model]({{< relref "./json-model.md" >}})
+- [Scripted dashboards]({{< relref "./scripted-dashboards.md" >}})
