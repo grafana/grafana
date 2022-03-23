@@ -6091,21 +6091,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:0.15.12":
+"@lezer/common@npm:0.15.12, @lezer/common@npm:^0.15.0":
   version: 0.15.12
   resolution: "@lezer/common@npm:0.15.12"
   checksum: dae65816187bd690bf446bec116313d3b5328e70e3e1f7c806273d9356ca2017cf82aa650ea53b95260fb98898ea73d44f33319f9dbbd48d473e2f20771b2377
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:^0.15.0":
-  version: 0.15.11
-  resolution: "@lezer/common@npm:0.15.11"
-  checksum: 5cabce5493b9392bb54816d6b921dae20d154b175423479b408e990fdf572fd2ed77a6b2df0ed6ef26d779eeb66ec737d10aa2312e1ffecbcec22e14b19f7be3
-  languageName: node
-  linkType: hard
-
-"@lezer/lr@npm:^0.15.8":
+"@lezer/lr@npm:0.15.8":
   version: 0.15.8
   resolution: "@lezer/lr@npm:0.15.8"
   dependencies:
@@ -20585,7 +20578,7 @@ __metadata:
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 4.1.6
     "@lezer/common": 0.15.12
-    "@lezer/lr": ^0.15.8
+    "@lezer/lr": 0.15.8
     "@lingui/cli": 3.13.2
     "@lingui/core": 3.13.2
     "@lingui/macro": 3.13.2
