@@ -123,7 +123,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
-        folder: { title: namespace, id: ga.namespace_id },
+        folder: { title: group.name, id: ga.rule_group },
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
@@ -316,7 +316,7 @@ export const panelToRuleFormValues = async (
     folder:
       folderId && folderTitle
         ? {
-            id: folderId,
+            id: String(folderId),
             title: folderTitle,
           }
         : undefined,
@@ -334,6 +334,7 @@ export const panelToRuleFormValues = async (
       },
     ],
   };
+
   return formValues;
 };
 

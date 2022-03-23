@@ -126,6 +126,7 @@ export interface PostableGrafanaRuleDefinition {
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
+  rule_group: string;
   namespace_uid: string;
   namespace_id: number;
 }

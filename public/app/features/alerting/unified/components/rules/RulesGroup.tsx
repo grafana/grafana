@@ -38,7 +38,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
 
   const hasRuler = useHasRuler();
   const rulerRule = group.rules[0]?.rulerRule;
-  const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
+
+  // TODO fix this wrong assumption that namespace_uid is the folder ID
+  const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.rule_group) || undefined;
   const { folder } = useFolder(folderUID);
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
@@ -114,7 +116,13 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
     );
   }
 
-  const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
+  const groupName = (
+    <span>
+      {namespace.name}
+      <Icon name="angle-right" />
+      {group.name}
+    </span>
+  );
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">

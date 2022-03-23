@@ -115,11 +115,11 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 				Name:     r.RuleGroup,
 				Interval: ruleGroupInterval,
 				Rules: []apimodels.GettableExtendedRuleNode{
-					toGettableExtendedRuleNode(*r, namespace.Id),
+					toGettableExtendedRuleNode(*r),
 				},
 			}
 		} else {
-			ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r, namespace.Id))
+			ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r))
 			ruleGroupConfigs[r.RuleGroup] = ruleGroupConfig
 		}
 	}
@@ -152,7 +152,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(q.Result))
 	for _, r := range q.Result {
 		ruleGroupInterval = model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
-		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, namespace.Id))
+		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r))
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
@@ -228,20 +228,17 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	for _, rule := range q.Result {
 		namespace := rule.NamespaceUID
 		groupName := groupUidToTitle[rule.RuleGroup]
+		ruleGroupInterval := model.Duration(time.Duration(rule.IntervalSeconds) * time.Second)
 
 		group, ok := configs[namespace][groupName]
 		if !ok {
-			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", namespace, "rule", rule.UID)
+			srv.log.Error("group not visible to the user", "user", c.SignedInUser.UserId, "namespace", namespace, "group", groupName, "rule", rule.UID)
 		}
-
-		rules := group.Rules
-		ruleGroupInterval := model.Duration(time.Duration(rule.IntervalSeconds) * time.Second)
 
 		configs[namespace][groupName] = apimodels.GettableRuleGroupConfig{
 			Name:     groupName,
 			Interval: ruleGroupInterval,
-			// TODO what is Namespace ID vs namespace UID?
-			Rules: append(rules, toGettableExtendedRuleNode(*rule, 0)),
+			Rules:    append(group.Rules, toGettableExtendedRuleNode(*rule)),
 		}
 	}
 
@@ -373,7 +370,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace stri
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimodels.GettableExtendedRuleNode {
+func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtendedRuleNode {
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
 			ID:              r.ID,
@@ -386,7 +383,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 			Version:         r.Version,
 			UID:             r.UID,
 			NamespaceUID:    r.NamespaceUID,
-			NamespaceID:     namespaceID,
 			RuleGroup:       r.RuleGroup,
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),

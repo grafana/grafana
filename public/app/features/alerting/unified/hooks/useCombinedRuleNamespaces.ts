@@ -81,17 +81,6 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
           });
 
           const result = Object.values(namespaces);
-          if (isGrafanaRulesSource(rulesSource)) {
-            // merge all groups in case of grafana managed, essentially treating namespaces (folders) as gorups
-            result.forEach((namespace) => {
-              namespace.groups = [
-                {
-                  name: 'default',
-                  rules: namespace.groups.flatMap((g) => g.rules).sort((a, b) => a.name.localeCompare(b.name)),
-                },
-              ];
-            });
-          }
           cache.current[rulesSourceName] = { promRules, rulerRules, result };
           return result;
         })
