@@ -136,10 +136,7 @@ describe('RuleEditor', () => {
     mocks.api.fetchBuildInfo.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: true,
-        federatedRules: false,
-        querySharding: false,
+        rulerApiEnabled: true,
       },
     });
 
@@ -238,10 +235,7 @@ describe('RuleEditor', () => {
     mocks.api.fetchBuildInfo.mockResolvedValue({
       application: PromApplication.Prometheus,
       features: {
-        rulerConfigApi: false,
-        alertManagerConfigApi: false,
-        federatedRules: false,
-        querySharding: false,
+        rulerApiEnabled: false,
       },
     });
 
@@ -332,10 +326,7 @@ describe('RuleEditor', () => {
     mocks.api.fetchBuildInfo.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: true,
-        federatedRules: false,
-        querySharding: false,
+        rulerApiEnabled: true,
       },
     });
 
@@ -559,7 +550,7 @@ describe('RuleEditor', () => {
         return {
           application: PromApplication.Cortex,
           features: {
-            rulerConfigApi: true,
+            rulerApiEnabled: true,
             alertManagerConfigApi: false,
             federatedRules: false,
             querySharding: false,
@@ -570,7 +561,7 @@ describe('RuleEditor', () => {
         return {
           application: PromApplication.Cortex,
           features: {
-            rulerConfigApi: false,
+            rulerApiEnabled: false,
             alertManagerConfigApi: false,
             federatedRules: false,
             querySharding: false,
@@ -581,7 +572,7 @@ describe('RuleEditor', () => {
         return {
           application: PromApplication.Cortex,
           features: {
-            rulerConfigApi: false,
+            rulerApiEnabled: false,
             alertManagerConfigApi: false,
             federatedRules: false,
             querySharding: false,

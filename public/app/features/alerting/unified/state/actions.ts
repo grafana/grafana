@@ -233,7 +233,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
     const buildInfo = await fetchBuildInfo(name);
     const customRulerConfig = (jsonData as AlertingDataSourceJsonData).ruler;
 
-    const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerConfigApi
+    const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
       ? {
           dataSourceName: name,
           customRulerEnabled: Boolean(customRulerConfig?.url),
