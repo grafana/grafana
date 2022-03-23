@@ -142,7 +142,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	q := ngmodels.GetAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
 		NamespaceUID: namespace.Uid,
-		RuleGroup:    ruleGroup,
+		RuleGroup:    &ruleGroup,
 	}
 	if err := srv.store.GetAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
@@ -422,7 +422,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 	q := &ngmodels.GetAlertRulesQuery{
 		OrgID:        orgId,
 		NamespaceUID: namespace.Uid,
-		RuleGroup:    ruleGroupName,
+		RuleGroup:    &ruleGroupName,
 	}
 	if err := ruleStore.GetAlertRules(ctx, q); err != nil {
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", ruleGroupName, err)

@@ -318,20 +318,19 @@ func (st DBstore) GetNamespaceAlertRules(ctx context.Context, query *ngmodels.Li
 // GetAlertRules is a handler for retrieving rule group alert rules of specific organisation.
 func (st DBstore) GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?"
-		args := []interface{}{query.OrgID, query.NamespaceUID, query.RuleGroup}
-
+		q := sess.Table("alert_rule").Where("org_id = ? AND namespace_uid = ?", query.OrgID, query.NamespaceUID)
+		if query.RuleGroup != nil {
+			q = q.Where("rule_group = ?", *query.RuleGroup)
+		}
 		if query.DashboardUID != "" {
-			q = fmt.Sprintf("%s and dashboard_uid = ?", q)
-			args = append(args, query.DashboardUID)
+			q = q.Where("dashboard_uid = ?", query.DashboardUID)
 			if query.PanelID != 0 {
-				q = fmt.Sprintf("%s and panel_id = ?", q)
-				args = append(args, query.PanelID)
+				q = q.Where("panel_id = ?", query.PanelID)
 			}
 		}
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
-		if err := sess.SQL(q, args...).Find(&alertRules); err != nil {
+		if err := q.Find(&alertRules); err != nil {
 			return err
 		}
 

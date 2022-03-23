@@ -255,7 +255,7 @@ type GetAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
-	RuleGroup    string
+	RuleGroup    *string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.

@@ -1120,7 +1120,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 	q := models.GetAlertRulesQuery{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
-		RuleGroup:    ruleGroup,
+		RuleGroup:    &ruleGroup,
 	}
 	err = dbstore.GetAlertRules(ctx, &q)
 	require.NoError(t, err)
