@@ -9,6 +9,12 @@ platform:
   os: linux
 services:
 - commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
+- commands:
   - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
     --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
     --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
@@ -22,12 +28,6 @@ services:
   volumes:
   - name: intentapi_certs
     path: /var/lib/kubernetes
-- commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
-  image: quay.io/coreos/etcd:v3.5.2
-  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -636,6 +636,12 @@ platform:
   os: linux
 services:
 - commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
+- commands:
   - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
     --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
     --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
@@ -649,12 +655,6 @@ services:
   volumes:
   - name: intentapi_certs
     path: /var/lib/kubernetes
-- commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
-  image: quay.io/coreos/etcd:v3.5.2
-  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -1404,6 +1404,12 @@ platform:
   os: linux
 services:
 - commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
+- commands:
   - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
     --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
     --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
@@ -1417,12 +1423,6 @@ services:
   volumes:
   - name: intentapi_certs
     path: /var/lib/kubernetes
-- commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
-  image: quay.io/coreos/etcd:v3.5.2
-  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -3259,6 +3259,12 @@ platform:
   os: linux
 services:
 - commands:
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
+    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
+    -initial-cluster=etcd-node-0=http://etcd:2380
+  image: quay.io/coreos/etcd:v3.5.2
+  name: etcd
+- commands:
   - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
     --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
     --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
@@ -3272,12 +3278,6 @@ services:
   volumes:
   - name: intentapi_certs
     path: /var/lib/kubernetes
-- commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
-  image: quay.io/coreos/etcd:v3.5.2
-  name: etcd
 steps:
 - commands:
   - mkdir -p bin
@@ -4668,6 +4668,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 3505c5577509bbabd72fc6d494390a8d80fa818af5a7bf12c0afc2c116469f64
+hmac: 702c12732f39b29a48e9c1fb02620548fe7e58a2b45c015851775d4890f85c08
 
 ...

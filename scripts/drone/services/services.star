@@ -69,6 +69,19 @@ def intentapi_volumes():
 def intentapi_services():
     intentapi_services = [
         {
+            'name': 'etcd',
+            'image': 'quay.io/coreos/etcd:v3.5.2',
+            'commands': [
+                '/usr/local/bin/etcd' +
+                ' -name=etcd-node-0' +
+                ' -listen-client-urls=http://etcd:2379' +
+                ' -advertise-client-urls=http://etcd:2379' +
+                ' -initial-advertise-peer-urls=http://etcd:2380' +
+                ' -listen-peer-urls=http://etcd:2380' +
+                ' -initial-cluster=etcd-node-0=http://etcd:2380'
+            ],
+        },
+        {
             'name': 'apiserver',
             'image': 'k8s.gcr.io/kube-apiserver:v1.23.3',
             'depends_on': [
@@ -92,19 +105,6 @@ def intentapi_services():
                     'name': 'intentapi_certs',
                     'path': '/var/lib/kubernetes',
                 },
-            ],
-        },
-        {
-            'name': 'etcd',
-            'image': 'quay.io/coreos/etcd:v3.5.2',
-            'commands': [
-                '/usr/local/bin/etcd' +
-                ' -name=etcd-node-0' +
-                ' -listen-client-urls=http://etcd:2379' +
-                ' -advertise-client-urls=http://etcd:2379' +
-                ' -initial-advertise-peer-urls=http://etcd:2380' +
-                ' -listen-peer-urls=http://etcd:2380' +
-                ' -initial-cluster=etcd-node-0=http://etcd:2380'
             ],
         },
     ]
