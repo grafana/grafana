@@ -170,8 +170,10 @@ function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceTo
   } else if (filterByTraceID && span.traceID && isSplunkDS) {
     query += `TraceID=${span.traceID}`;
   }
-  if (filterBySpanID && span.spanID) {
+  if (filterBySpanID && span.spanID && !isSplunkDS) {
     query += ` |="${span.spanID}"`;
+  } else if (filterBySpanID && span.spanID && isSplunkDS) {
+    query += `SpanID="${span.spanID}"`;
   }
 
   return query;
