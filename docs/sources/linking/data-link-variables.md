@@ -49,6 +49,8 @@ You can also use template variables in data link URLs. For more information, ref
 
 When linking to another dashboard that uses template variables, select variable values to apply them for whoever clicks the link.
 
-`${myvar:queryparams}` - where `myvar` is a name of the template variable that matches one in the current dashboard that you want to use.
+- `${myvar:queryparams}` - where `myvar` matches the name of the desired template variable in the current dashboard
 
-If you want to add all of the current dashboard's variables to the URL, then use `__all_variables`.
+  > **Note:** This example uses advanced variable formatting to convert variables, including those with multiple values, into query parameters. For more information, refer to [Advanced variable format options](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+
+- `__all_variables` - add all of the current dashboard's variables to the URL
