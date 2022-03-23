@@ -19,74 +19,22 @@ An organization is an entity that helps you isolate users and resources such as 
 
 Users, configuration settings, and Grafana Enterprise licenses are shared between organizations. Other resources, like dashboards, data sources, annotations, folders, Teams, and Alerts, are isolated within each organization and cannot be easily shared with another organization.
 
-The following table summarizes the resources you can share and/or isolate using folder and team, organizations, or instances.
+The following table summarizes the resources you can share and/or isolate using organizations.
 
-<table>
-    <thead>
-        <tr>
-            <th>Resource</th>
-            <th>Folder and teams</th>
-            <th>Organizations</th>
-            <th>Instances</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>Users</td>
-            <td>Share or isolate</td>
-            <td>Share or isolate</td>
-            <td rowspan=12>Isolate only, except when using provisioning</td>
-        </tr>
-        <tr>
-            <td>Folders</td>
-            <td>Share or isolate</td>
-            <td>Isolate only</td>
-        </tr>
-        <tr>
-            <td>Dashboards</td>
-            <td>Share or isolate</td>
-            <td>Isolate only</td>
-        </tr>
-        <tr>
-            <td>Data sources</td>
-            <td>Share or isolate</td>
-            <td>Isolate only</td>
-        </tr>
-        <tr>
-            <td>Alerts</td>
-            <td>Share or isolate</td>
-            <td>Isolate only</td>
-        </tr><tr>
-            <td>Notification channels</td>
-            <td>Share only</td>
-            <td>Isolate only</td>
-        </tr><tr>
-            <td>Annotations</td>
-            <td>Share only</td>
-            <td>Isolate only</td>
-        </tr><tr>
-            <td>Reports</td>
-            <td>Share only</td>
-            <td>Isolate only</td>
-        </tr><tr>
-            <td>API keys</td>
-            <td>Share only</td>
-            <td>Isolate only</td>
-        </tr><tr>
-            <td>Authentication providers</td>
-            <td>Share only</td>
-            <td>Share only</td>
-        </tr><tr>
-            <td>Configuration settings</td>
-            <td>Share only</td>
-            <td>Share only</td>
-        </tr><tr>
-            <td>Licenses</td>
-            <td>Share</td>
-            <td>Share</td>
-        </tr>
-    </tbody>
-</table>
+| Resource                 | Mode             |
+| ------------------------ | ---------------- |
+| Users                    | Share or isolate |
+| Folders                  | Isolate only     |
+| Dashboards               | Isolate only     |
+| Data sources             | Isolate only     |
+| Alerts                   | Isolate only     |
+| Notification channels    | Isolate only     |
+| Annotations              | Isolate only     |
+| Reports                  | Isolate only     |
+| API keys                 | Isolate only     |
+| Authentication providers | Share only       |
+| Configuration settings   | Share only       |
+| Licenses                 | Share            |
 
 The member of one organization cannot view dashboards assigned to another organization. However, a user can belong to multiple organizations.
 
