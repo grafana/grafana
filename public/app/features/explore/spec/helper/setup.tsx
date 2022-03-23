@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { EnhancedStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { fromPairs } from 'lodash';
@@ -29,7 +28,7 @@ type SetupOptions = {
 
 export function setupExplore(options?: SetupOptions): {
   datasources: { [name: string]: DataSourceApi };
-  store: EnhancedStore;
+  store: ReturnType<typeof configureStore>;
   unmount: () => void;
 } {
   // Clear this up otherwise it persists data source selection

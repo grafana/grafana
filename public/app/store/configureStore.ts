@@ -1,4 +1,4 @@
-import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
+import { configureStore as reduxConfigureStore, MiddlewareArray } from '@reduxjs/toolkit';
 import { setStore } from './store';
 import { StoreState } from 'app/types/store';
 import { addReducer, createRootReducer } from '../core/reducers/root';
@@ -17,7 +17,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
   const store = reduxConfigureStore<
     StoreState,
     AnyAction,
-    ReadonlyArray<ThunkMiddlewareFor<StoreState, { thunk: true }>>
+    MiddlewareArray<[ThunkMiddlewareFor<StoreState, { thunk: true; serializableCheck: false; immutableCheck: false }>]>
   >({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
