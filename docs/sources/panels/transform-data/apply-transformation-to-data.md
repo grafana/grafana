@@ -6,7 +6,7 @@ aliases = ["/docs/sources/panels/transform-data/apply-transformation-to-data/"]
 
 # Apply a transformation function to data
 
-The following steps guide you in applying a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Reference: Transformation functions]({{< relref "../reference-transformation-functions.md" >}}).
+The following steps guide you in applying a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "transformation-functions.md" >}}).
 
 ## Before you begin
 
@@ -19,9 +19,9 @@ The following steps guide you in applying a transformation to data. This documen
 1. Click the **Transform** tab.
 1. Click a transformation.
 
-   A transformation row appear where you configure the transformation options. For more information about how to configure a transformation, refer to [Reference: Transformation functions]({{< relref "../reference-transformation-functions.md" >}}).
+   A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "transformation-functions.md" >}}).
 
-   For information about available calculations, refer to [Reference: Calculations]({{< relref "../reference-calculation-types.md" >}}).
+   For information about available calculations, refer to [Calculation types]({{< relref "../calculation-types.md" >}}).
 
 1. To apply another transformation, click **Add transformation**.
 
