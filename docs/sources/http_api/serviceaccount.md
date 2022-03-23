@@ -179,4 +179,122 @@ Content-Type: application/json
 
 ## Service account Tokens
 
-TODO
+## Get Service account tokens
+
+`GET /api/serviceaccounts/:id/tokens`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+
+| Action               | Scope              |
+| -------------------- | ------------------ |
+| serviceaccounts:read | serviceaccounts:\* |
+| apikeys:read         | apikeys:\*         |
+
+**Example Request**:
+
+```http
+GET /api/serviceaccounts/2/tokens HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+	{
+		"id": 1,
+		"name": "grafana",
+		"role": "Viewer",
+		"created": "2022-03-23T10:31:02Z",
+		"expiration": null,
+		"secondsUntilExpiration": 0,
+		"hasExpired": false
+	}
+]
+```
+
+## Create Service account tokens
+
+`POST /api/serviceaccounts/:id/tokens`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+| apikeys:write         | apikeys:\*         |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/2/tokens HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+
+{
+	"name": "grafana",
+	"role": "Viewer"
+}
+```
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"id": 7,
+	"name": "grafana",
+	"key": "eyJrIjoiVjFxTHZ6dGdPSjg5Um92MjN1RlhjMkNqYkZUbm9jYkwiLCJuIjoiZ3JhZmFuYSIsImlkIjoxfQ=="
+}
+```
+
+## Delete Service account tokens
+
+`DELETE /api/serviceaccounts/:id/tokens/:tokenId`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+| apikeys:write         | apikeys:\*         |
+
+**Example Request**:
+
+```http
+DELETE /api/serviceaccounts/2/tokens/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "API key deleted"
+}
+```
