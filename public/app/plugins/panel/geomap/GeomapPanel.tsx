@@ -481,6 +481,13 @@ export class GeomapPanel extends Component<Props, State> {
     if (!options.name) {
       options.name = this.getNextLayerName();
     }
+
+    let legend: React.ReactNode[] = [];
+
+    if (handler.legend) {
+      legend = [<div key="legend">{handler.legend}</div>];
+    }
+
     const UID = options.name;
     const state: MapLayerState<any> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
@@ -496,6 +503,9 @@ export class GeomapPanel extends Component<Props, State> {
         this.updateLayer(UID, cfg);
       },
     };
+
+    this.setState({ bottomLeft: legend });
+
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
     return state;
