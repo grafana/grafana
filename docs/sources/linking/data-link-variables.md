@@ -9,7 +9,7 @@ weight = 400
 
 You can use variables in data links to refer to series fields, labels, and values. For more information about data links, refer to [Data links]({{< relref "data-links.md" >}}).
 
-To see a list of available variables, type `$` in the data link **URL** field to see a list of variables that you can use.
+To see a list of available variables, type `$` in the data link **URL** field.
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
