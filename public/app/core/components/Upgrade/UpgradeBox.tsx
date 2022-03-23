@@ -121,11 +121,19 @@ export const UpgradeContent = ({
         )}
       </div>
       <div className={styles.media}>
-        <img src={image} alt={'Feature screenshot'} />
+        <img src={getImgUrl(image)} alt={'Feature screenshot'} />
         {caption && <p className={styles.caption}>{caption}</p>}
       </div>
     </div>
   );
+};
+
+export const getImgUrl = (urlOrId: string) => {
+  if (urlOrId.startsWith('http')) {
+    return urlOrId;
+  }
+
+  return 'https://drive.google.com/uc?export=download&id=' + urlOrId;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -155,9 +163,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       li {
         display: flex;
-        align-items: center;
-        line-height: 3;
+        align-items: flex-start;
         color: ${theme.colors.text.primary};
+        padding: ${theme.spacing(1, 0)};
       }
     `,
 
