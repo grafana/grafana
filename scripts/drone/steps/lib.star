@@ -518,7 +518,7 @@ def test_backend_step(edition):
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'apiserver',
         ],
         'commands': [
             'dockerize -wait https://apiserver:6443 -timeout 120s',
