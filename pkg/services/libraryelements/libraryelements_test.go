@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,10 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 const userInDbName = "user_in_db"
@@ -222,9 +225,10 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 		cfg, dashboardStore, nil,
 		features, permissionsServices,
 	)
+	ac := acmock.New()
 	s := dashboardservice.ProvideFolderService(
 		cfg, d, dashboardStore, nil,
-		features, permissionsServices,
+		features, permissionsServices, ac, nil,
 	)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
@@ -284,6 +288,8 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 
 func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
+	store := mockstore.NewSQLStoreMock()
+	guardian.InitLegacyGuardian(store)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel")
@@ -309,17 +315,19 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
+		guardian.InitLegacyGuardian(sqlStore)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
 		dashboardService := dashboardservice.ProvideDashboardService(
 			setting.NewCfg(), dashboardStore, nil,
 			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
 		)
+		ac := acmock.New()
 		service := LibraryElementService{
 			Cfg:      setting.NewCfg(),
 			SQLStore: sqlStore,
 			folderService: dashboardservice.ProvideFolderService(
 				setting.NewCfg(), dashboardService, dashboardStore, nil,
-				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac, nil,
 			),
 		}
 

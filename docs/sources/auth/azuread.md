@@ -109,6 +109,7 @@ auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
 allowed_domains =
 allowed_groups =
+role_attribute_strict = false
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:

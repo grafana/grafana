@@ -83,6 +83,7 @@ func ProvideService(
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
+	ac.RegisterAttributeScopeResolver(NewUidScopeResolver(store))
 
 	return s
 }
@@ -96,16 +97,15 @@ type DataSourceRetriever interface {
 // NewNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an id based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+	prefix := datasources.ScopeProvider.GetResourceScopeName("")
 	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
-		dsNames := strings.Split(initialScope, ":")
-		if dsNames[0] != datasources.ScopeDatasourcesRoot || len(dsNames) != 3 {
+		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		dsName := dsNames[2]
-		// Special wildcard case
-		if dsName == "*" {
-			return datasources.ScopeDatasourcesProvider.GetResourceAllIDScope(), nil
+		dsName := initialScope[len(prefix):]
+		if dsName == "" {
+			return "", accesscontrol.ErrInvalidScope
 		}
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
@@ -113,10 +113,35 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", err
 		}
 
-		return datasources.ScopeDatasourcesProvider.GetResourceScope(fmt.Sprintf("%v", query.Result.Id)), nil
+		return datasources.ScopeProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
 	}
 
-	return datasources.ScopeDatasourcesProvider.GetResourceScopeName(""), dsNameResolver
+	return prefix, dsNameResolver
+}
+
+// NewUidScopeResolver provides an AttributeScopeResolver able to
+// translate a scope prefixed with "datasources:uid:" into an id based scope.
+func NewUidScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+	prefix := datasources.ScopeProvider.GetResourceScopeUID("")
+	dsUIDResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if !strings.HasPrefix(initialScope, prefix) {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		dsUID := initialScope[len(prefix):]
+		if dsUID == "" {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		query := models.GetDataSourceQuery{Uid: dsUID, OrgId: orgID}
+		if err := db.GetDataSource(ctx, &query); err != nil {
+			return "", err
+		}
+
+		return datasources.ScopeProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
+	}
+
+	return prefix, dsUIDResolver
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
@@ -143,13 +168,19 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Viewer",
-			Permission:  "Query",
-		}, accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Editor",
-			Permission:  "Query",
-		}); err != nil {
+		// This belongs in Data source permissions, and we probably want
+		// to do this with a hook in the store and rollback on fail.
+		// We can't use events, because there's no way to communicate
+		// failure, and we want "not being able to set default perms"
+		// to fail the creation.
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: "Viewer", Permission: "Query"},
+			{BuiltinRole: "Editor", Permission: "Query"},
+		}
+		if cmd.UserId != 0 {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
+		}
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), permissions...); err != nil {
 			return err
 		}
 	}

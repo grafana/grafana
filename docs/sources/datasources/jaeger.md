@@ -156,7 +156,6 @@ datasources:
         spanEndTimeShift: '1h'
         filterByTraceID: false
         filterBySpanID: false
-        lokiSearch: true
     secureJsonData:
       basicAuthPassword: my_password
 ```

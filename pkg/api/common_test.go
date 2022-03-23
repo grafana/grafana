@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -230,16 +231,16 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
-	mockStore := sqlstore.InitTestDB(t)
+	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Bus:                bus.GetBus(),
-		Live:               newTestLive(t),
+		Live:               newTestLive(t, store),
 		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(mockStore, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService: searchusers.ProvideUsersService(store, filters.ProvideOSSSearchUserFilter()),
 		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
@@ -351,8 +352,11 @@ func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAc
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = cfg
+	var featureFlags []string
+	if enableAccessControl {
+		featureFlags = append(featureFlags, featuremgmt.FlagAccesscontrol)
+	}
+	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: featureFlags})
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db)
 }
 
@@ -373,7 +377,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		Cfg:                cfg,
 		Features:           features,
 		Bus:                bus.GetBus(),
-		Live:               newTestLive(t),
+		Live:               newTestLive(t, db),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
@@ -445,4 +449,32 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 func mockRequestBody(v interface{}) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
+}
+
+// APITestServerOption option func for customizing HTTPServer configuration
+// when setting up an API test server via SetupAPITestServer.
+type APITestServerOption func(hs *HTTPServer)
+
+// SetupAPITestServer sets up a webtest.Server ready for testing all
+// routes registered via HTTPServer.registerRoutes().
+// Optionally customize HTTPServer configuration by providing APITestServerOption
+// option(s).
+func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Server {
+	t.Helper()
+
+	hs := &HTTPServer{
+		RouteRegister:      routing.NewRouteRegister(),
+		Cfg:                setting.NewCfg(),
+		AccessControl:      accesscontrolmock.New().WithDisabled(),
+		Features:           featuremgmt.WithFeatures(),
+		searchUsersService: &searchusers.OSSService{},
+	}
+
+	for _, opt := range opts {
+		opt(hs)
+	}
+
+	hs.registerRoutes()
+	s := webtest.NewServer(t, hs.RouteRegister)
+	return s
 }

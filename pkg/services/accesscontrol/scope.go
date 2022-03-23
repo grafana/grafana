@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	ttl           = 30 * time.Second
-	cleanInterval = 2 * time.Minute
+	ttl            = 30 * time.Second
+	cleanInterval  = 2 * time.Minute
+	maxPrefixParts = 2
 )
 
 func GetResourceScope(resource string, resourceID string) string {
@@ -28,6 +29,10 @@ func GetResourceScopeUID(resource string, resourceID string) string {
 
 func GetResourceScopeName(resource string, resourceID string) string {
 	return Scope(resource, "name", resourceID)
+}
+
+func GetResourceScopeType(resource string, typeName string) string {
+	return Scope(resource, "type", typeName)
 }
 
 func GetResourceAllScope(resource string) string {
@@ -152,10 +157,15 @@ func (s *ScopeResolver) GetResolveAttributeScopeMutator(orgID int64) ScopeMutato
 	}
 }
 
+// scopePrefix returns the prefix associated to a given scope
+// we assume prefixes are all in the form <resource>:<attribute>:<value>
+// ex: "datasources:name:test" returns "datasources:name:"
 func scopePrefix(scope string) string {
 	parts := strings.Split(scope, ":")
-	n := len(parts) - 1
-	parts[n] = ""
+	// We assume prefixes don't have more than maxPrefixParts parts
+	if len(parts) > maxPrefixParts {
+		parts = append(parts[:maxPrefixParts], "")
+	}
 	return strings.Join(parts, ":")
 }
 
@@ -179,6 +189,7 @@ type ScopeProvider interface {
 	GetResourceScope(resourceID string) string
 	GetResourceScopeUID(resourceID string) string
 	GetResourceScopeName(resourceID string) string
+	GetResourceScopeType(typeName string) string
 	GetResourceAllScope() string
 	GetResourceAllIDScope() string
 }
@@ -207,6 +218,11 @@ func (s scopeProviderImpl) GetResourceScopeUID(resourceID string) string {
 // GetResourceScopeName returns scope that has the format "<rootScope>:name:<resourceID>"
 func (s scopeProviderImpl) GetResourceScopeName(resourceID string) string {
 	return GetResourceScopeName(s.root, resourceID)
+}
+
+// GetResourceScopeType returns scope that has the format "<rootScope>:type:<typeName>"
+func (s scopeProviderImpl) GetResourceScopeType(typeName string) string {
+	return GetResourceScopeType(s.root, typeName)
 }
 
 // GetResourceAllScope returns scope that has the format "<rootScope>:*"

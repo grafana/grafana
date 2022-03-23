@@ -120,7 +120,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, user *tests.TestUser) {
-				server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
 				marshalled, err := json.Marshal(tc.body)
 				require.NoError(t, err)
 
@@ -179,7 +179,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
+			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.Id))).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
@@ -203,7 +203,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
+			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.Id)).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
@@ -218,7 +218,7 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
-	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) *web.Mux {
+	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
 	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, saStore)
 	a.RegisterAPIEndpoints(featuremgmt.WithFeatures(featuremgmt.FlagServiceAccounts))
 
@@ -240,7 +240,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 		c.Map(ctx)
 	})
 	a.RouterRegister.Register(m.Router)
-	return m
+	return m, a
 }
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
@@ -309,7 +309,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
 					scopeID = int(createdUser.Id)
 				}
-				server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
 
 				actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, scopeID))
 
@@ -413,43 +413,40 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			serviceAccountRequestScenario(t, http.MethodPatch, serviceAccountIDPath, tc.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
-				scopeID := tc.Id
-				if tc.user != nil {
-					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-					scopeID = int(createdUser.Id)
-				}
-				server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+			server, saAPI := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+			scopeID := tc.Id
+			if tc.user != nil {
+				createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
+				scopeID = int(createdUser.Id)
+			}
 
-				var rawBody io.Reader = http.NoBody
-				if tc.body != nil {
-					body, err := json.Marshal(tc.body)
-					require.NoError(t, err)
-					rawBody = bytes.NewReader(body)
-				}
+			var rawBody io.Reader = http.NoBody
+			if tc.body != nil {
+				body, err := json.Marshal(tc.body)
+				require.NoError(t, err)
+				rawBody = bytes.NewReader(body)
+			}
 
-				actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, scopeID), rawBody)
+			actual := requestResponse(server, http.MethodPatch, fmt.Sprintf(serviceAccountIDPath, scopeID), rawBody)
 
-				actualCode := actual.Code
-				require.Equal(t, tc.expectedCode, actualCode)
+			actualCode := actual.Code
+			require.Equal(t, tc.expectedCode, actualCode)
 
-				if actualCode == http.StatusOK {
-					actualBody := map[string]interface{}{}
-					err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
-					require.NoError(t, err)
-					assert.Equal(t, scopeID, int(actualBody["id"].(float64)))
-					assert.Equal(t, string(*tc.body.Role), actualBody["role"].(string))
-					assert.Equal(t, *tc.body.Name, actualBody["name"].(string))
-					assert.Equal(t, tc.user.Login, actualBody["login"].(string))
+			if actualCode == http.StatusOK {
+				actualBody := map[string]interface{}{}
+				err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
+				require.NoError(t, err)
+				assert.Equal(t, scopeID, int(actualBody["id"].(float64)))
+				assert.Equal(t, string(*tc.body.Role), actualBody["role"].(string))
+				assert.Equal(t, *tc.body.Name, actualBody["name"].(string))
+				assert.Equal(t, tc.user.Login, actualBody["login"].(string))
 
-					// Ensure the user was updated in DB
-					query := models.GetOrgUsersQuery{UserID: int64(scopeID), OrgId: 1, IsServiceAccount: true}
-					err = store.GetOrgUsers(context.Background(), &query)
-					require.NoError(t, err)
-					require.Equal(t, *tc.body.Name, query.Result[0].Name)
-					require.Equal(t, string(*tc.body.Role), query.Result[0].Role)
-				}
-			})
+				// Ensure the user was updated in DB
+				sa, err := saAPI.store.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))
+				require.NoError(t, err)
+				require.Equal(t, *tc.body.Name, sa.Name)
+				require.Equal(t, string(*tc.body.Role), sa.Role)
+			}
 		})
 	}
 }

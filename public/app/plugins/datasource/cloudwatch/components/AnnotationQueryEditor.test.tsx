@@ -1,10 +1,9 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 import { CloudWatchAnnotationQuery } from '../types';
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
-import { act } from 'react-dom/test-utils';
 
 const ds = setupMockedDataSource({
   variables: [],
@@ -43,15 +42,15 @@ const props = {
   onRunQuery: jest.fn(),
 };
 
-afterEach(cleanup);
-
 describe('AnnotationQueryEditor', () => {
-  it('should not display match exact switch', () => {
+  it('should not display match exact switch', async () => {
     render(<AnnotationQueryEditor {...props} />);
-    expect(screen.queryByText('Match exact')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText('Match exact')).toBeNull();
+    });
   });
 
-  it('shoud not display wildcard option in dimension value dropdown', async () => {
+  it('should not display wildcard option in dimension value dropdown', async () => {
     ds.datasource.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
     props.query.dimensions = { instanceId: 'instance-123' };
     render(<AnnotationQueryEditor {...props} />);
@@ -59,11 +58,9 @@ describe('AnnotationQueryEditor', () => {
     const valueElement = screen.getByText('instance-123');
     expect(valueElement).toBeInTheDocument();
     expect(screen.queryByText('*')).toBeNull();
-    act(async () => {
-      await valueElement.click();
-      await waitFor(() => {
-        expect(screen.queryByText('*')).toBeNull();
-      });
+    valueElement.click();
+    await waitFor(() => {
+      expect(screen.queryByText('*')).toBeNull();
     });
   });
 });

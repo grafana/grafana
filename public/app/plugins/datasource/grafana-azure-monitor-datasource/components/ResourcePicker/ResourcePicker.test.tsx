@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import ResourcePicker from '.';
@@ -10,127 +10,143 @@ import {
 } from '../../__mocks__/resourcePickerRows';
 
 const noResourceURI = '';
-const singleSubscriptionSelectionURI = 'def-456';
+const singleSubscriptionSelectionURI = '/subscriptions/def-456';
 const singleResourceGroupSelectionURI = '/subscriptions/def-456/resourceGroups/dev-3';
 const singleResourceSelectionURI =
-  '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-serverproviders/Microsoft.Compute/virtualMachines/db-server';
+  '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
+const createResourcePickerDataMock = () => {
+  return createMockResourcePickerData({
+    getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
+    getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
+    getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
+  });
+};
 describe('AzureMonitor ResourcePicker', () => {
   const noop: any = () => {};
-
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
   });
-  describe('when rendering the resource picker without a selection', () => {
-    it('should load subscriptions', async () => {
-      const resourePickerDataMock = createMockResourcePickerData({
-        getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
-        getResourceGroupsBySubscriptionId: jest.fn(),
-        getResourcesForResourceGroup: jest.fn(),
-      });
-      await act(() => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={noResourceURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
-
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
-      expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
-      expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).not.toHaveBeenCalled();
-      expect(resourePickerDataMock.getResourcesForResourceGroup).not.toHaveBeenCalled();
-    });
+  it('should pre-load subscriptions when there is no existing selection', async () => {
+    render(
+      <ResourcePicker
+        templateVariables={[]}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={noResourceURI}
+        onCancel={noop}
+        onApply={noop}
+      />
+    );
+    const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
+    expect(subscriptionCheckbox).toBeInTheDocument();
+    expect(subscriptionCheckbox).not.toBeChecked();
+    const uncheckedCheckboxes = await screen.findAllByRole('checkbox', { checked: false });
+    expect(uncheckedCheckboxes.length).toBe(3);
   });
 
-  describe('when rendering the resource picker with a subscription selected', () => {
-    it('should load subscriptions once', async () => {
-      const resourePickerDataMock = createMockResourcePickerData({
-        getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
-        getResourceGroupsBySubscriptionId: jest.fn(),
-        getResourcesForResourceGroup: jest.fn(),
-      });
-      await act(async () => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={singleSubscriptionSelectionURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
-
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
-      expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
-      expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).not.toHaveBeenCalled();
-      expect(resourePickerDataMock.getResourcesForResourceGroup).not.toHaveBeenCalled();
-    });
+  it('should show a subscription as selected if there is one saved', async () => {
+    render(
+      <ResourcePicker
+        templateVariables={[]}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={singleSubscriptionSelectionURI}
+        onCancel={noop}
+        onApply={noop}
+      />
+    );
+    const subscriptionCheckbox = await screen.findByLabelText('Dev Subscription');
+    expect(subscriptionCheckbox).toBeChecked();
   });
 
-  describe('when rendering the resource picker with a resource group selected', () => {
-    it('should load subscriptions and resource groups for its parent subscription once', async () => {
-      const resourePickerDataMock = createMockResourcePickerData({
-        getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
-        getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
-        getResourcesForResourceGroup: jest.fn(),
-      });
-      await act(async () => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={singleResourceGroupSelectionURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
-
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
-      expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
-      expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenCalledTimes(1);
-      expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenLastCalledWith(
-        singleSubscriptionSelectionURI
-      );
-      expect(resourePickerDataMock.getResourcesForResourceGroup).not.toHaveBeenCalled();
-    });
+  it('should show a resource group as selected if there is one saved', async () => {
+    render(
+      <ResourcePicker
+        templateVariables={[]}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={singleResourceGroupSelectionURI}
+        onCancel={noop}
+        onApply={noop}
+      />
+    );
+    const resourceGroupCheckbox = await screen.findByLabelText('A Great Resource Group');
+    expect(resourceGroupCheckbox).toBeChecked();
   });
 
-  describe('when rendering the resource picker with a resource selected', () => {
-    it('should load subscriptions, resource groups and resources once', async () => {
-      const resourePickerDataMock = createMockResourcePickerData({
-        getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
-        getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
-        getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
-      });
-      await act(async () => {
-        render(
-          <ResourcePicker
-            templateVariables={[]}
-            resourcePickerData={resourePickerDataMock}
-            resourceURI={singleResourceSelectionURI}
-            onCancel={noop}
-            onApply={noop}
-          />
-        );
-      });
+  it('should show a resource as selected if there is one saved', async () => {
+    render(
+      <ResourcePicker
+        templateVariables={[]}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={singleResourceSelectionURI}
+        onCancel={noop}
+        onApply={noop}
+      />
+    );
 
-      await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
-      expect(resourePickerDataMock.getSubscriptions).toHaveBeenCalledTimes(1);
-      expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenCalledTimes(1);
-      expect(resourePickerDataMock.getResourceGroupsBySubscriptionId).toHaveBeenLastCalledWith(
-        singleSubscriptionSelectionURI
-      );
-      expect(resourePickerDataMock.getResourcesForResourceGroup).toHaveBeenCalledTimes(1);
-      expect(resourePickerDataMock.getResourcesForResourceGroup).toHaveBeenLastCalledWith(
-        singleResourceGroupSelectionURI
-      );
-    });
+    const resourceCheckbox = await screen.findByLabelText('db-server');
+    expect(resourceCheckbox).toBeChecked();
+  });
+
+  it('should be able to expand a subscription when clicked and reveal resource groups', async () => {
+    render(
+      <ResourcePicker
+        templateVariables={[]}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={noResourceURI}
+        onCancel={noop}
+        onApply={noop}
+      />
+    );
+    const expandSubscriptionButton = await screen.findByLabelText('Expand Primary Subscription');
+    expect(expandSubscriptionButton).toBeInTheDocument();
+    expect(screen.queryByLabelText('A Great Resource Group')).not.toBeInTheDocument();
+    expandSubscriptionButton.click();
+    expect(await screen.findByLabelText('A Great Resource Group')).toBeInTheDocument();
+  });
+
+  it('should call onApply with a new subscription uri when a user selects it', async () => {
+    const onApply = jest.fn();
+    render(
+      <ResourcePicker
+        templateVariables={[]}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={noResourceURI}
+        onCancel={noop}
+        onApply={onApply}
+      />
+    );
+    const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
+    expect(subscriptionCheckbox).toBeInTheDocument();
+    expect(subscriptionCheckbox).not.toBeChecked();
+    subscriptionCheckbox.click();
+    const applyButton = screen.getByRole('button', { name: 'Apply' });
+    applyButton.click();
+    expect(onApply).toBeCalledTimes(1);
+    expect(onApply).toBeCalledWith('/subscriptions/def-123');
+  });
+
+  it('should call onApply with a template variable when a user selects it', async () => {
+    const onApply = jest.fn();
+    render(
+      <ResourcePicker
+        templateVariables={['$workspace']}
+        resourcePickerData={createResourcePickerDataMock()}
+        resourceURI={noResourceURI}
+        onCancel={noop}
+        onApply={onApply}
+      />
+    );
+
+    const expandButton = await screen.findByLabelText('Expand Template variables');
+    expandButton.click();
+
+    const workSpaceCheckbox = await screen.findByLabelText('$workspace');
+    workSpaceCheckbox.click();
+
+    const applyButton = screen.getByRole('button', { name: 'Apply' });
+    applyButton.click();
+
+    expect(onApply).toBeCalledTimes(1);
+    expect(onApply).toBeCalledWith('$workspace');
   });
 });

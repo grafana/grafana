@@ -1,6 +1,6 @@
 package definitions
 
-import "github.com/grafana/grafana/pkg/services/search"
+import "github.com/grafana/grafana/pkg/models"
 
 // swagger:route GET /search/sorting search searchSorting
 //
@@ -75,7 +75,7 @@ type SearchParameters struct {
 // swagger:response searchResponse
 type SearchResponse struct {
 	// in: body
-	Body search.HitList `json:"body"`
+	Body models.HitList `json:"body"`
 }
 
 // swagger:response searchSortingResponse
