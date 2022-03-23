@@ -71,14 +71,15 @@ def intentapi_services():
         {
             'name': 'etcd',
             'image': 'quay.io/coreos/etcd:v3.5.2',
+            'detach': True,
             'commands': [
                 '/usr/local/bin/etcd' +
                 ' -name=etcd-node-0' +
-                ' -listen-client-urls=http://etcd:2379' +
-                ' -advertise-client-urls=http://etcd:2379' +
-                ' -initial-advertise-peer-urls=http://etcd:2380' +
-                ' -listen-peer-urls=http://etcd:2380' +
-                ' -initial-cluster=etcd-node-0=http://etcd:2380'
+                ' -listen-client-urls=http://0.0.0.0:2379' +
+                ' -advertise-client-urls=http://0.0.0.0:2379' +
+                ' -initial-advertise-peer-urls=http://0.0.0.0:2380' +
+                ' -listen-peer-urls=http://0.0.0.0:2380' +
+                ' -initial-cluster=etcd-node-0=http://0.0.0.0:2380'
             ],
         },
         {
@@ -88,6 +89,7 @@ def intentapi_services():
                 'etcd',
                 'generate_intentapi_certs',
             ],
+            'detach': True,
             'commands': [
                 '/usr/local/bin/kube-apiserver' +
                 ' --bind-address=0.0.0.0' +

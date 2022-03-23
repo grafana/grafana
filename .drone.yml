@@ -88,9 +88,10 @@ steps:
   - name: intentapi_certs
     path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://0.0.0.0:2379
+    -advertise-client-urls=http://0.0.0.0:2379 -initial-advertise-peer-urls=http://0.0.0.0:2380
+    -listen-peer-urls=http://0.0.0.0:2380 -initial-cluster=etcd-node-0=http://0.0.0.0:2380
+  detach: true
   image: quay.io/coreos/etcd:v3.5.2
   name: etcd
 - commands:
@@ -102,6 +103,7 @@ steps:
   depends_on:
   - etcd
   - generate_intentapi_certs
+  detach: true
   image: k8s.gcr.io/kube-apiserver:v1.23.3
   name: apiserver
   volumes:
@@ -636,9 +638,10 @@ platform:
   os: linux
 services:
 - commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://0.0.0.0:2379
+    -advertise-client-urls=http://0.0.0.0:2379 -initial-advertise-peer-urls=http://0.0.0.0:2380
+    -listen-peer-urls=http://0.0.0.0:2380 -initial-cluster=etcd-node-0=http://0.0.0.0:2380
+  detach: true
   image: quay.io/coreos/etcd:v3.5.2
   name: etcd
 - commands:
@@ -650,6 +653,7 @@ services:
   depends_on:
   - etcd
   - generate_intentapi_certs
+  detach: true
   image: k8s.gcr.io/kube-apiserver:v1.23.3
   name: apiserver
   volumes:
@@ -1404,9 +1408,10 @@ platform:
   os: linux
 services:
 - commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://0.0.0.0:2379
+    -advertise-client-urls=http://0.0.0.0:2379 -initial-advertise-peer-urls=http://0.0.0.0:2380
+    -listen-peer-urls=http://0.0.0.0:2380 -initial-cluster=etcd-node-0=http://0.0.0.0:2380
+  detach: true
   image: quay.io/coreos/etcd:v3.5.2
   name: etcd
 - commands:
@@ -1418,6 +1423,7 @@ services:
   depends_on:
   - etcd
   - generate_intentapi_certs
+  detach: true
   image: k8s.gcr.io/kube-apiserver:v1.23.3
   name: apiserver
   volumes:
@@ -3259,9 +3265,10 @@ platform:
   os: linux
 services:
 - commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://etcd:2379 -advertise-client-urls=http://etcd:2379
-    -initial-advertise-peer-urls=http://etcd:2380 -listen-peer-urls=http://etcd:2380
-    -initial-cluster=etcd-node-0=http://etcd:2380
+  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://0.0.0.0:2379
+    -advertise-client-urls=http://0.0.0.0:2379 -initial-advertise-peer-urls=http://0.0.0.0:2380
+    -listen-peer-urls=http://0.0.0.0:2380 -initial-cluster=etcd-node-0=http://0.0.0.0:2380
+  detach: true
   image: quay.io/coreos/etcd:v3.5.2
   name: etcd
 - commands:
@@ -3273,6 +3280,7 @@ services:
   depends_on:
   - etcd
   - generate_intentapi_certs
+  detach: true
   image: k8s.gcr.io/kube-apiserver:v1.23.3
   name: apiserver
   volumes:
@@ -4668,6 +4676,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 14fa339992007049e9c269f63c553b546c1cd75fe6ae699fbb79fa6fc3deb11d
+hmac: 1fa30cd0ca54655b2226ef6ab5e2feb7e67218376d925438b0a9164530b6ef75
 
 ...
