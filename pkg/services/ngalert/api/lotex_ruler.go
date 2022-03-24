@@ -201,7 +201,7 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	}
 
 	// A Prometheus datasource, can have many subtypes: Cortex, Cloud and vanilla Prometheus.
-	// Alerting can determine which subtypes we want to proxy requests to
+	// Based on these subtypes, we want to use a different proxying path.
 	subtype := ctx.QueryInt(subtypeQuery)
 	subTypePrefix, ok := subtypeToPrefix[subtype]
 	if !ok {
