@@ -69,7 +69,16 @@ func TestURLBuilder(t *testing.T) {
 			require.Equal(t, url, "default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics")
 		})
 
-		t.Run("when resource uri is provided the legacy fields are ignored", func(t *testing.T) {
+		t.Run("when only resource uri is provided", func(t *testing.T) {
+			ub := &urlBuilder{
+				ResourceURI: "resource/uri",
+			}
+
+			url := ub.BuildMetricsURL()
+			require.Equal(t, url, "resource/uri/providers/microsoft.insights/metrics")
+		})
+
+		t.Run("when resource uri and legacy fields are provided the legacy fields are ignored", func(t *testing.T) {
 			ub := &urlBuilder{
 				ResourceURI:         "resource/uri",
 				DefaultSubscription: "default-sub",
