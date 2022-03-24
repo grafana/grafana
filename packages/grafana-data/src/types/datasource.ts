@@ -536,24 +536,6 @@ export interface DataSourceJsonData {
   alertmanagerUid?: string;
 }
 
-export interface AlertingDataSourceJsonData extends DataSourceJsonData {
-  ruler?: {
-    url: string;
-    basicAuth: boolean;
-    withCredentials: boolean;
-    basicAuthPassword?: string;
-    basicAuthUser?: string;
-  };
-}
-
-export interface AlertingSecureDataSourceJsonData {
-  rulerBasicAuthPassword?: string;
-}
-
-export interface SecureDataSourceJsonData {
-  basicAuthPassword?: string;
-}
-
 /**
  * Data Source instance edit model.  This is returned from:
  *  /api/datasources

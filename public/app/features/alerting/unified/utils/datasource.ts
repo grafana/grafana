@@ -1,4 +1,4 @@
-import { AlertingDataSourceJsonData, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceJsonData, DataSourceInstanceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { RulesSource } from 'app/types/unified-alerting';
 import { getAllDataSources } from './config';
@@ -71,7 +71,7 @@ export function isGrafanaRulesSource(
   return rulesSource === GRAFANA_RULES_SOURCE_NAME;
 }
 
-export function getDataSourceByName(name: string): DataSourceInstanceSettings<AlertingDataSourceJsonData> | undefined {
+export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
 }
 
