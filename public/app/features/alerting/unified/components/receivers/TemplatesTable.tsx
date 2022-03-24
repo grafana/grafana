@@ -9,6 +9,10 @@ import { ReceiversSection } from './ReceiversSection';
 import { makeAMLink } from '../../utils/misc';
 import { useDispatch } from 'react-redux';
 import { deleteTemplateAction } from '../../state/actions';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
+import { isGrafanaRulesSource } from '../../utils/datasource';
+import { Authorize } from '../../components/Authorize';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -19,6 +23,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
+  const isGrafanaAM = isGrafanaRulesSource(alertManagerName);
 
   const templateRows = useMemo(() => Object.entries(config.template_files), [config]);
   const [templateToDelete, setTemplateToDelete] = useState<string>();
@@ -36,6 +41,11 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
       description="Templates construct the messages that get sent to the contact points."
       addButtonLabel="New template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
+      showButton={contextSrv.hasPermission(
+        isGrafanaAM
+          ? AccessControlAction.AlertingNotificationsCreate
+          : AccessControlAction.AlertingNotificationsExternalWrite
+      )}
     >
       <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
@@ -47,7 +57,15 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
           <tr>
             <th></th>
             <th>Template</th>
-            <th>Actions</th>
+            <Authorize
+              actions={
+                isGrafanaAM
+                  ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
+                  : [AccessControlAction.AlertingNotificationsExternalWrite]
+              }
+            >
+              <th>Actions</th>
+            </Authorize>
           </tr>
         </thead>
         <tbody>

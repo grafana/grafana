@@ -12,7 +12,10 @@ import { css } from '@emotion/css';
 import { isReceiverUsed } from '../../utils/alertmanager';
 import { useDispatch } from 'react-redux';
 import { deleteReceiverAction } from '../../state/actions';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { isVanillaPrometheusAlertManagerDataSource, isGrafanaRulesSource } from '../../utils/datasource';
+import { Authorize } from '../../components/Authorize';
+import { AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/core';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -24,6 +27,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const tableStyles = useStyles2(getAlertTableStyles);
   const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
+  const isGrafanaAM = isGrafanaRulesSource(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
@@ -66,7 +70,14 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
       className={styles.section}
       title="Contact points"
       description="Define where the notifications will be sent to, for example email or Slack."
-      showButton={!isVanillaAM}
+      showButton={
+        !isVanillaAM &&
+        contextSrv.hasPermission(
+          isGrafanaAM
+            ? AccessControlAction.AlertingNotificationsCreate
+            : AccessControlAction.AlertingNotificationsExternalWrite
+        )
+      }
       addButtonLabel="New contact point"
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
@@ -74,13 +85,29 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
         <colgroup>
           <col />
           <col />
-          <col />
+          <Authorize
+            actions={
+              isGrafanaAM
+                ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
+                : [AccessControlAction.AlertingNotificationsExternalWrite]
+            }
+          >
+            <col />
+          </Authorize>
         </colgroup>
         <thead>
           <tr>
             <th>Contact point name</th>
             <th>Type</th>
-            <th>Actions</th>
+            <Authorize
+              actions={
+                isGrafanaAM
+                  ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
+                  : [AccessControlAction.AlertingNotificationsExternalWrite]
+              }
+            >
+              <th>Actions</th>
+            </Authorize>
           </tr>
         </thead>
         <tbody>
@@ -93,38 +120,64 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
             <tr key={receiver.name} className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
               <td>{receiver.name}</td>
               <td>{receiver.types.join(', ')}</td>
-              <td className={tableStyles.actionsCell}>
-                {!isVanillaAM && (
-                  <>
-                    <ActionIcon
-                      aria-label="Edit"
-                      data-testid="edit"
-                      to={makeAMLink(
-                        `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                        alertManagerName
-                      )}
-                      tooltip="Edit contact point"
-                      icon="pen"
-                    />
-                    <ActionIcon
-                      onClick={() => onClickDeleteReceiver(receiver.name)}
-                      tooltip="Delete contact point"
-                      icon="trash-alt"
-                    />
-                  </>
-                )}
-                {isVanillaAM && (
-                  <ActionIcon
-                    data-testid="view"
-                    to={makeAMLink(
-                      `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                      alertManagerName
-                    )}
-                    tooltip="View contact point"
-                    icon="file-alt"
-                  />
-                )}
-              </td>
+              <Authorize
+                actions={
+                  isGrafanaAM
+                    ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
+                    : [AccessControlAction.AlertingNotificationsExternalWrite]
+                }
+              >
+                <td className={tableStyles.actionsCell}>
+                  {!isVanillaAM && (
+                    <>
+                      <Authorize
+                        actions={
+                          isGrafanaAM
+                            ? [AccessControlAction.AlertingNotificationsUpdate]
+                            : [AccessControlAction.AlertingNotificationsExternalWrite]
+                        }
+                      >
+                        <ActionIcon
+                          aria-label="Edit"
+                          data-testid="edit"
+                          to={makeAMLink(
+                            `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                            alertManagerName
+                          )}
+                          tooltip="Edit contact point"
+                          icon="pen"
+                        />
+                      </Authorize>
+                      <Authorize
+                        actions={
+                          isGrafanaAM
+                            ? [AccessControlAction.AlertingNotificationsDelete]
+                            : [AccessControlAction.AlertingNotificationsExternalWrite]
+                        }
+                      >
+                        <ActionIcon
+                          onClick={() => onClickDeleteReceiver(receiver.name)}
+                          tooltip="Delete contact point"
+                          icon="trash-alt"
+                        />
+                      </Authorize>
+                    </>
+                  )}
+                  {isVanillaAM && (
+                    <Authorize actions={[AccessControlAction.AlertingNotificationsExternalWrite]}>
+                      <ActionIcon
+                        data-testid="view"
+                        to={makeAMLink(
+                          `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                          alertManagerName
+                        )}
+                        tooltip="View contact point"
+                        icon="file-alt"
+                      />
+                    </Authorize>
+                  )}
+                </td>
+              </Authorize>
             </tr>
           ))}
         </tbody>

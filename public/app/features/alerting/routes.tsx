@@ -95,21 +95,33 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/routes',
-    roles: () => ['Admin', 'Editor'],
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
     ),
   },
   {
     path: '/alerting/routes/mute-timing/new',
-    roles: () => ['Admin', 'Editor'],
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsCreate,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
     ),
   },
   {
     path: '/alerting/routes/mute-timing/edit',
-    roles: () => ['Admin', 'Editor'],
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsUpdate,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
     ),
@@ -137,35 +149,55 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/notifications',
-    roles: config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : undefined,
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
     ),
   },
   {
     path: '/alerting/notifications/templates/new',
-    roles: () => ['Editor', 'Admin'],
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsCreate,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
     ),
   },
   {
     path: '/alerting/notifications/templates/:id/edit',
-    roles: () => ['Editor', 'Admin'],
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsUpdate,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
     ),
   },
   {
     path: '/alerting/notifications/receivers/new',
-    roles: () => ['Editor', 'Admin'],
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsCreate,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
     ),
   },
   {
     path: '/alerting/notifications/receivers/:id/edit',
-    roles: () => ['Editor', 'Admin'],
+    roles: () =>
+      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
+        AccessControlAction.AlertingNotificationsUpdate,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
     ),
