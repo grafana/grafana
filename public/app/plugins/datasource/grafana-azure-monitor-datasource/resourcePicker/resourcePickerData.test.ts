@@ -4,129 +4,246 @@ import {
   createMockARGSubscriptionResponse,
 } from '../__mocks__/argResourcePickerResponse';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
-import { ResourceRowType } from '../components/ResourcePicker/types';
 import ResourcePickerData from './resourcePickerData';
+import { AzureGraphResponse } from '../types';
 
-const instanceSettings = createMockInstanceSetttings();
-const resourcePickerData = new ResourcePickerData(instanceSettings);
-let postResource: jest.Mock;
+const createResourcePickerData = (responses: AzureGraphResponse[]) => {
+  const instanceSettings = createMockInstanceSetttings();
+  const resourcePickerData = new ResourcePickerData(instanceSettings);
 
+  const postResource = jest.fn();
+  responses.forEach((res) => {
+    postResource.mockResolvedValueOnce(res);
+  });
+  resourcePickerData.postResource = postResource;
+
+  return { resourcePickerData, postResource };
+};
 describe('AzureMonitor resourcePickerData', () => {
   describe('getSubscriptions', () => {
-    beforeEach(() => {
-      postResource = jest.fn().mockResolvedValue(createMockARGSubscriptionResponse());
-      resourcePickerData.postResource = postResource;
-    });
-
-    it('calls ARG API', async () => {
+    it('makes 1 call to ARG with the correct path and query arguments', async () => {
+      const mockResponse = createMockARGSubscriptionResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
       await resourcePickerData.getSubscriptions();
 
-      expect(postResource).toHaveBeenCalled();
-      const argQuery = postResource.mock.calls[0][1].query;
+      expect(postResource).toBeCalledTimes(1);
+      const firstCall = postResource.mock.calls[0];
+      const [path, postBody] = firstCall;
+      expect(path).toEqual('resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01');
+      expect(postBody.query).toContain("where type == 'microsoft.resources/subscriptions'");
+    });
+    it('returns formatted subscriptions', async () => {
+      const mockResponse = createMockARGSubscriptionResponse();
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
 
-      expect(argQuery).toContain(`where type == 'microsoft.resources/subscriptions'`);
+      const subscriptions = await resourcePickerData.getSubscriptions();
+      expect(subscriptions.length).toEqual(6);
+      expect(subscriptions[0]).toEqual({
+        id: '1',
+        name: 'Primary Subscription',
+        type: 'Subscription',
+        typeLabel: 'Subscription',
+        uri: '/subscriptions/1',
+        children: [],
+      });
     });
 
-    describe('when there is more than one page', () => {
-      beforeEach(() => {
-        const response1 = {
-          ...createMockARGSubscriptionResponse(),
-          $skipToken: 'aaa',
-        };
-        const response2 = createMockARGSubscriptionResponse();
-        postResource = jest.fn();
-        postResource.mockResolvedValueOnce(response1);
-        postResource.mockResolvedValueOnce(response2);
-        resourcePickerData.postResource = postResource;
-      });
+    it('makes multiple requests when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
+      const response1 = {
+        ...createMockARGSubscriptionResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const response2 = createMockARGSubscriptionResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([response1, response2]);
 
-      it('should requests additional pages', async () => {
-        await resourcePickerData.getSubscriptions();
-        expect(postResource).toHaveBeenCalledTimes(2);
-      });
+      await resourcePickerData.getSubscriptions();
 
-      it('should use the skipToken of the previous page', async () => {
-        await resourcePickerData.getSubscriptions();
-        const secondCall = postResource.mock.calls[1];
-        expect(secondCall[1]).toMatchObject({ options: { $skipToken: 'aaa', resultFormat: 'objectArray' } });
+      expect(postResource).toHaveBeenCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.options.$skipToken).toEqual('skipfirst100');
+    });
+
+    it('returns a concatenates a formatted array of subscriptions when there are multiple pages from arg', async () => {
+      const response1 = {
+        ...createMockARGSubscriptionResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const response2 = createMockARGSubscriptionResponse();
+      const { resourcePickerData } = createResourcePickerData([response1, response2]);
+
+      const subscriptions = await resourcePickerData.getSubscriptions();
+
+      expect(subscriptions.length).toEqual(12);
+      expect(subscriptions[0]).toEqual({
+        id: '1',
+        name: 'Primary Subscription',
+        type: 'Subscription',
+        typeLabel: 'Subscription',
+        uri: '/subscriptions/1',
+        children: [],
       });
+    });
+
+    it('throws an error if it does not recieve data from arg', async () => {
+      const mockResponse = { data: [] };
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
+      try {
+        await resourcePickerData.getSubscriptions();
+        throw Error('expected getSubscriptions to fail but it succeeded');
+      } catch (err) {
+        expect(err.message).toEqual('unable to fetch subscriptions');
+      }
     });
   });
 
-  describe('getResourcesForResourceGroup', () => {
-    beforeEach(() => {
-      postResource = jest.fn().mockResolvedValue(createMockARGResourceGroupsResponse());
-      resourcePickerData.postResource = postResource;
-    });
-
-    it('calls ARG API', async () => {
+  describe('getResourceGroupsBySubscriptionId', () => {
+    it('makes 1 call to ARG with the correct path and query arguments', async () => {
+      const mockResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
       await resourcePickerData.getResourceGroupsBySubscriptionId('123');
 
-      expect(postResource).toHaveBeenCalled();
-      const argQuery = postResource.mock.calls[0][1].query;
+      expect(postResource).toBeCalledTimes(1);
+      const firstCall = postResource.mock.calls[0];
+      const [path, postBody] = firstCall;
+      expect(path).toEqual('resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01');
+      expect(postBody.query).toContain("type == 'microsoft.resources/subscriptions/resourcegroups'");
+      expect(postBody.query).toContain("where subscriptionId == '123'");
+    });
+    it('returns formatted resourceGroups', async () => {
+      const mockResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
 
-      expect(argQuery).toContain(`| where subscriptionId == '123'`);
+      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      expect(resourceGroups.length).toEqual(6);
+      expect(resourceGroups[0]).toEqual({
+        id: 'prod',
+        name: 'Production',
+        type: 'ResourceGroup',
+        typeLabel: 'Resource Group',
+        uri: '/subscriptions/abc-123/resourceGroups/prod',
+        children: [],
+      });
     });
 
-    describe('when there is more than one page', () => {
-      beforeEach(() => {
-        const response1 = {
-          ...createMockARGResourceGroupsResponse(),
-          $skipToken: 'aaa',
-        };
-        const response2 = createMockARGResourceGroupsResponse();
-        postResource = jest.fn();
-        postResource.mockResolvedValueOnce(response1);
-        postResource.mockResolvedValueOnce(response2);
-        resourcePickerData.postResource = postResource;
-      });
+    it('makes multiple requests when it is returned a skip token', async () => {
+      const response1 = {
+        ...createMockARGResourceGroupsResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const response2 = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([response1, response2]);
 
-      it('should requests additional pages', async () => {
-        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
-        expect(postResource).toHaveBeenCalledTimes(2);
-      });
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123');
 
-      it('should use the skipToken of the previous page', async () => {
-        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
-        const secondCall = postResource.mock.calls[1];
-        expect(secondCall[1]).toMatchObject({ options: { $skipToken: 'aaa', resultFormat: 'objectArray' } });
+      expect(postResource).toHaveBeenCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.options.$skipToken).toEqual('skipfirst100');
+    });
+
+    it('returns a concatonized and formatted array of resourceGroups when there are multiple pages', async () => {
+      const response1 = {
+        ...createMockARGResourceGroupsResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const response2 = createMockARGResourceGroupsResponse();
+      const { resourcePickerData } = createResourcePickerData([response1, response2]);
+
+      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+
+      expect(resourceGroups.length).toEqual(12);
+      expect(resourceGroups[0]).toEqual({
+        id: 'prod',
+        name: 'Production',
+        type: 'ResourceGroup',
+        typeLabel: 'Resource Group',
+        uri: '/subscriptions/abc-123/resourceGroups/prod',
+        children: [],
       });
+    });
+
+    it('throws an error if it does not receive data', async () => {
+      const mockResponse = { data: [] };
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
+      try {
+        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+        throw Error('expected getSubscriptions to fail but it succeeded');
+      } catch (err) {
+        expect(err.message).toEqual('unable to fetch resource groups');
+      }
+    });
+
+    it('throws an error if it recieves data with a malformed uri', async () => {
+      const mockResponse = {
+        data: [
+          {
+            resourceGroupURI: '/a-differently-formatted/uri/than/the/type/we/planned/to/parse',
+            resourceGroupName: 'Production',
+          },
+        ],
+      };
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
+      try {
+        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+        throw Error('expected getResourceGroupsBySubscriptionId to fail but it succeeded');
+      } catch (err) {
+        expect(err.message).toEqual('unable to fetch resource groups');
+      }
     });
   });
 
   describe('getResourcesForResourceGroup', () => {
-    const resourceRow = {
-      id: '/subscriptions/def-456/resourceGroups/dev',
-      name: 'Dev',
-      type: ResourceRowType.ResourceGroup,
-      typeLabel: 'Resource group',
-    };
+    it('makes 1 call to ARG with the correct path and query arguments', async () => {
+      const mockResponse = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      await resourcePickerData.getResourcesForResourceGroup('dev');
 
-    beforeEach(() => {
-      postResource = jest.fn().mockResolvedValue(createARGResourcesResponse());
-      resourcePickerData.postResource = postResource;
+      expect(postResource).toBeCalledTimes(1);
+      const firstCall = postResource.mock.calls[0];
+      const [path, postBody] = firstCall;
+      expect(path).toEqual('resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01');
+      expect(postBody.query).toContain('resources');
+      expect(postBody.query).toContain('where id hasprefix "dev"');
     });
-
-    it('requests resources for the specified resource row', async () => {
-      await resourcePickerData.getResourcesForResourceGroup(resourceRow.id);
-
-      expect(postResource).toHaveBeenCalled();
-      const argQuery = postResource.mock.calls[0][1].query;
-
-      expect(argQuery).toContain(resourceRow.id);
-    });
-
     it('returns formatted resources', async () => {
-      const results = await resourcePickerData.getResourcesForResourceGroup(resourceRow.id);
+      const mockResponse = createARGResourcesResponse();
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
 
-      expect(results.map((v) => v.id)).toEqual([
-        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
-        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/disks/web-server_DataDisk',
-        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/db-server',
-        '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/disks/db-server_DataDisk',
-      ]);
+      const resources = await resourcePickerData.getResourcesForResourceGroup('dev');
 
-      results.forEach((v) => expect(v.type).toEqual(ResourceRowType.Resource));
+      expect(resources.length).toEqual(4);
+      expect(resources[0]).toEqual({
+        id: 'web-server',
+        name: 'web-server',
+        type: 'Resource',
+        location: 'North Europe',
+        resourceGroupName: 'dev',
+        typeLabel: 'Microsoft.Compute/virtualMachines',
+        uri: '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
+      });
+    });
+
+    it('throws an error if it recieves data with a malformed uri', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: '/a-differently-formatted/uri/than/the/type/we/planned/to/parse',
+            name: 'web-server',
+            type: 'Microsoft.Compute/virtualMachines',
+            resourceGroup: 'dev',
+            subscriptionId: 'def-456',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
+      try {
+        await resourcePickerData.getResourcesForResourceGroup('dev');
+        throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
+      } catch (err) {
+        expect(err.message).toEqual('unable to fetch resource details');
+      }
     });
   });
 });

@@ -227,20 +227,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:2556927610": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/ErrorContainer.test.tsx:2082593062": [
-      [2, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/Explore.test.tsx:2684077338": [
-      [11, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/ExploreDrawer.test.tsx:2094071178": [
-      [1, 17, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/explore/LiveLogs.test.tsx:1667605379": [
       [2, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/MetaInfoText.test.tsx:802018588": [
-      [1, 27, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/RichHistory/RichHistory.test.tsx:409631018": [
       [1, 17, 13, "RegExp match", "2409514259"]

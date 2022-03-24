@@ -14,6 +14,8 @@ type InheritedScopesSolver func(ctx context.Context, orgID int64, resourceID str
 type Options struct {
 	// Resource is the action and scope prefix that is generated
 	Resource string
+	// ResourceAttribute is the attribute the scope should be based on (e.g. id or uid)
+	ResourceAttribute string
 	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
 	OnlyManaged bool
 	// ResourceValidator is a validator function that will be called before each assignment.
