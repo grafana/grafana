@@ -192,12 +192,12 @@ function getTimeRangeFromSpan(
   const spanEndMs = (span.startTime + span.duration) / 1000;
   let adjustedEndTime = Math.floor(spanEndMs + timeShift.endMs);
 
-  // Because we can only pass milliseconds in the url we need to check if they equal.
-  // We need end time to be later than start time
+  // Splunk requires a time interval of >= 1s, rather than >=1ms like Loki timerange in below elseif block
   if (isSplunkDS && adjustedEndTime - adjustedStartTime < 1000) {
     adjustedEndTime = adjustedStartTime + 1000;
   } else if (adjustedStartTime === adjustedEndTime) {
-    // Splunk requires a time interval of >= 1s, rather than >=1ms like Loki timerange in above if block
+    // Because we can only pass milliseconds in the url we need to check if they equal.
+    // We need end time to be later than start time
     adjustedEndTime++;
   }
 
