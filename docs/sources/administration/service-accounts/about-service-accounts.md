@@ -1,20 +1,18 @@
 +++
-title = "Service accounts"
-description = "Grafana Service accounts"
-keywords = ["grafana", "serviceaccounts", "documentation", "serviceaccounts-auth"]
-aliases = ["/docs/grafana/latest/auth/serviceaccounts/"]
-weight = 1100
+title = "About Service accounts"
+aliases = ["docs/sources/manage-service-accounts/_index.md", 
+"docs/sources/administration/service-accounts/about-service-accounts.md",
+"docs/sources/administration/service-accounts/create-service-accounts.md"]
+weight = 100
 +++
 
-# Service accounts
-
-A Service account is generally a regular user account, but used to run automated or compute workload which are intended for programmatic use either internally for a Grafana feature or through an API key. Applications use service accounts to make authorized API calls, authorized as the service account itself.
+# About Service accounts
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. Such tasks include reporting, alerting rules, syncing user groups or pure machine to machine communication. Similarly the service account could be set up to manage users and permissions across the organization to an external auth provider. It can also be used in combination with FGAC to grant specific scopes. Customers also use service accounts to gather all api keys within a specific domain.
 
 A service account can be associated with multiple api keys. As a result, we recommend starting off by creating one service account per use case.
 
-> **Note:** Service accounts act on an organization level, if you have the same task that is needed for multiple organizations, we recommend provisioning service accounts via terraform.
+> **Note:** Service accounts act on an organization level, if you have the same task that is needed for multiple organizations, we recommend provisioning service accounts via terraform. See <link to provisining via terraform>
 
 Service accounts differ key takeaways:
 

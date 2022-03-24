@@ -12,7 +12,7 @@ aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 
 ## Search Service accounts with Paging
 
-`GET /api/users/search?perpage=10&page=1&query=mygraf`
+`GET /api/serviceaccounts/search?perpage=10&page=1&query=myserviceaccount`
 
 #### Required permissions
 
