@@ -16,31 +16,34 @@ import (
 )
 
 type setUserResourcePermissionTest struct {
-	desc       string
-	orgID      int64
-	userID     int64
-	actions    []string
-	resource   string
-	resourceID string
-	seeds      []types.SetResourcePermissionCommand
+	desc              string
+	orgID             int64
+	userID            int64
+	actions           []string
+	resource          string
+	resourceID        string
+	resourceAttribute string
+	seeds             []types.SetResourcePermissionCommand
 }
 
 func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 	tests := []setUserResourcePermissionTest{
 		{
-			desc:       "should set resource permission for user",
-			userID:     1,
-			actions:    []string{"datasources:query"},
-			resource:   "datasources",
-			resourceID: "1",
+			desc:              "should set resource permission for user",
+			userID:            1,
+			actions:           []string{"datasources:query"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 		},
 		{
-			desc:       "should remove resource permission for user",
-			orgID:      1,
-			userID:     1,
-			actions:    []string{},
-			resource:   "datasources",
-			resourceID: "1",
+			desc:              "should remove resource permission for user",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 			seeds: []types.SetResourcePermissionCommand{
 				{
 					Actions:    []string{"datasources:query"},
@@ -50,12 +53,13 @@ func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 			},
 		},
 		{
-			desc:       "should add new resource permission for user",
-			orgID:      1,
-			userID:     1,
-			actions:    []string{"datasources:query", "datasources:write"},
-			resource:   "datasources",
-			resourceID: "1",
+			desc:              "should add new resource permission for user",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"datasources:query", "datasources:write"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 			seeds: []types.SetResourcePermissionCommand{
 				{
 					Actions:    []string{"datasources:write"},
@@ -76,9 +80,10 @@ func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 			}
 
 			added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, types.SetResourcePermissionCommand{
-				Actions:    test.actions,
-				Resource:   test.resource,
-				ResourceID: test.resourceID,
+				Actions:           test.actions,
+				Resource:          test.resource,
+				ResourceID:        test.resourceID,
+				ResourceAttribute: test.resourceAttribute,
 			}, nil)
 
 			require.NoError(t, err)
@@ -86,59 +91,65 @@ func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 				assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
 			} else {
 				assert.Len(t, added.Actions, len(test.actions))
-				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), added.Scope)
+				assert.Equal(t, accesscontrol.Scope(test.resource, test.resourceAttribute, test.resourceID), added.Scope)
 			}
 		})
 	}
 }
 
 type setTeamResourcePermissionTest struct {
-	desc       string
-	orgID      int64
-	teamID     int64
-	actions    []string
-	resource   string
-	resourceID string
-	seeds      []types.SetResourcePermissionCommand
+	desc              string
+	orgID             int64
+	teamID            int64
+	actions           []string
+	resource          string
+	resourceID        string
+	resourceAttribute string
+	seeds             []types.SetResourcePermissionCommand
 }
 
 func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
 	tests := []setTeamResourcePermissionTest{
 		{
-			desc:       "should add new resource permission for team",
-			orgID:      1,
-			teamID:     1,
-			actions:    []string{"datasources:query"},
-			resource:   "datasources",
-			resourceID: "1",
+			desc:              "should add new resource permission for team",
+			orgID:             1,
+			teamID:            1,
+			actions:           []string{"datasources:query"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 		},
 		{
-			desc:       "should add new resource permission when others exist",
-			orgID:      1,
-			teamID:     1,
-			actions:    []string{"datasources:query", "datasources:write"},
-			resource:   "datasources",
-			resourceID: "1",
+			desc:              "should add new resource permission when others exist",
+			orgID:             1,
+			teamID:            1,
+			actions:           []string{"datasources:query", "datasources:write"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 			seeds: []types.SetResourcePermissionCommand{
 				{
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 			},
 		},
 		{
-			desc:       "should remove permissions for team",
-			orgID:      1,
-			teamID:     1,
-			actions:    []string{},
-			resource:   "datasources",
-			resourceID: "1",
+			desc:              "should remove permissions for team",
+			orgID:             1,
+			teamID:            1,
+			actions:           []string{},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 			seeds: []types.SetResourcePermissionCommand{
 				{
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 			},
 		},
@@ -154,9 +165,10 @@ func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
 			}
 
 			added, err := store.SetTeamResourcePermission(context.Background(), test.orgID, test.teamID, types.SetResourcePermissionCommand{
-				Actions:    test.actions,
-				Resource:   test.resource,
-				ResourceID: test.resourceID,
+				Actions:           test.actions,
+				Resource:          test.resource,
+				ResourceID:        test.resourceID,
+				ResourceAttribute: test.resourceAttribute,
 			}, nil)
 
 			require.NoError(t, err)
@@ -164,59 +176,65 @@ func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
 				assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
 			} else {
 				assert.Len(t, added.Actions, len(test.actions))
-				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), added.Scope)
+				assert.Equal(t, accesscontrol.Scope(test.resource, test.resourceAttribute, test.resourceID), added.Scope)
 			}
 		})
 	}
 }
 
 type setBuiltInResourcePermissionTest struct {
-	desc        string
-	orgID       int64
-	builtInRole string
-	actions     []string
-	resource    string
-	resourceID  string
-	seeds       []types.SetResourcePermissionCommand
+	desc              string
+	orgID             int64
+	builtInRole       string
+	actions           []string
+	resource          string
+	resourceID        string
+	resourceAttribute string
+	seeds             []types.SetResourcePermissionCommand
 }
 
 func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
 	tests := []setBuiltInResourcePermissionTest{
 		{
-			desc:        "should add new resource permission for builtin role",
-			orgID:       1,
-			builtInRole: "Viewer",
-			actions:     []string{"datasources:query"},
-			resource:    "datasources",
-			resourceID:  "1",
+			desc:              "should add new resource permission for builtin role",
+			orgID:             1,
+			builtInRole:       "Viewer",
+			actions:           []string{"datasources:query"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 		},
 		{
-			desc:        "should add new resource permission when others exist",
-			orgID:       1,
-			builtInRole: "Viewer",
-			actions:     []string{"datasources:query", "datasources:write"},
-			resource:    "datasources",
-			resourceID:  "1",
+			desc:              "should add new resource permission when others exist",
+			orgID:             1,
+			builtInRole:       "Viewer",
+			actions:           []string{"datasources:query", "datasources:write"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 			seeds: []types.SetResourcePermissionCommand{
 				{
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 			},
 		},
 		{
-			desc:        "should remove permissions for builtin role",
-			orgID:       1,
-			builtInRole: "Viewer",
-			actions:     []string{},
-			resource:    "datasources",
-			resourceID:  "1",
+			desc:              "should remove permissions for builtin role",
+			orgID:             1,
+			builtInRole:       "Viewer",
+			actions:           []string{},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 			seeds: []types.SetResourcePermissionCommand{
 				{
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 			},
 		},
@@ -232,9 +250,10 @@ func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
 			}
 
 			added, err := store.SetBuiltInResourcePermission(context.Background(), test.orgID, test.builtInRole, types.SetResourcePermissionCommand{
-				Actions:    test.actions,
-				Resource:   test.resource,
-				ResourceID: test.resourceID,
+				Actions:           test.actions,
+				Resource:          test.resource,
+				ResourceID:        test.resourceID,
+				ResourceAttribute: test.resourceAttribute,
 			}, nil)
 
 			require.NoError(t, err)
@@ -242,46 +261,51 @@ func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
 				assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
 			} else {
 				assert.Len(t, added.Actions, len(test.actions))
-				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), added.Scope)
+				assert.Equal(t, accesscontrol.Scope(test.resource, test.resourceAttribute, test.resourceID), added.Scope)
 			}
 		})
 	}
 }
 
 type setResourcePermissionsTest struct {
-	desc     string
-	orgID    int64
-	commands []types.SetResourcePermissionsCommand
+	desc              string
+	orgID             int64
+	resourceAttribute string
+	commands          []types.SetResourcePermissionsCommand
 }
 
 func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 	tests := []setResourcePermissionsTest{
 		{
-			desc:  "should set all permissions provided",
-			orgID: 1,
+			desc:              "should set all permissions provided",
+			orgID:             1,
+			resourceAttribute: "uid",
 			commands: []types.SetResourcePermissionsCommand{
 				{
 					User: accesscontrol.User{ID: 1},
 					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
-						Actions:    []string{"datasources:query"},
-						Resource:   "datasources",
-						ResourceID: "1",
+						Actions:           []string{"datasources:query"},
+						Resource:          "datasources",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
 					},
 				},
 				{
 					TeamID: 3,
 					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
-						Actions:    []string{"datasources:query"},
-						Resource:   "datasources",
-						ResourceID: "1",
+						Actions:           []string{"datasources:query"},
+						Resource:          "datasources",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
 					},
 				},
 				{
 					BuiltinRole: "Admin",
 					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
-						Actions:    []string{"datasources:query"},
-						Resource:   "datasources",
-						ResourceID: "1",
+						Actions:           []string{"datasources:query"},
+						Resource:          "datasources",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
 					},
 				},
 			},
@@ -304,7 +328,7 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 					assert.Equal(t, c.TeamID, permissions[i].TeamId)
 					assert.Equal(t, c.User.ID, permissions[i].UserId)
 					assert.Equal(t, c.BuiltinRole, permissions[i].BuiltInRole)
-					assert.Equal(t, accesscontrol.GetResourceScope(c.Resource, c.ResourceID), permissions[i].Scope)
+					assert.Equal(t, accesscontrol.Scope(c.Resource, tt.resourceAttribute, c.ResourceID), permissions[i].Scope)
 				}
 			}
 		})
@@ -312,13 +336,14 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 }
 
 type getResourcePermissionsTest struct {
-	desc        string
-	user        *models.SignedInUser
-	numUsers    int
-	actions     []string
-	resource    string
-	resourceID  string
-	onlyManaged bool
+	desc              string
+	user              *models.SignedInUser
+	numUsers          int
+	actions           []string
+	resource          string
+	resourceID        string
+	resourceAttribute string
+	onlyManaged       bool
 }
 
 func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
@@ -330,10 +355,11 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
-			numUsers:   3,
-			actions:    []string{"datasources:query"},
-			resource:   "datasources",
-			resourceID: "1",
+			numUsers:          3,
+			actions:           []string{"datasources:query"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
 		},
 		{
 			desc: "should return manage permissions for all resource ids",
@@ -342,11 +368,12 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
-			numUsers:    3,
-			actions:     []string{"datasources:query"},
-			resource:    "datasources",
-			resourceID:  "1",
-			onlyManaged: true,
+			numUsers:          3,
+			actions:           []string{"datasources:query"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			onlyManaged:       true,
 		},
 	}
 
@@ -389,14 +416,15 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.numUsers)
+			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.resourceAttribute, test.numUsers)
 
 			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgId, types.GetResourcePermissionsQuery{
-				User:        test.user,
-				Actions:     test.actions,
-				Resource:    test.resource,
-				ResourceID:  test.resourceID,
-				OnlyManaged: test.onlyManaged,
+				User:              test.user,
+				Actions:           test.actions,
+				Resource:          test.resource,
+				ResourceID:        test.resourceID,
+				ResourceAttribute: test.resourceAttribute,
+				OnlyManaged:       test.onlyManaged,
 			})
 			require.NoError(t, err)
 
@@ -409,7 +437,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 	}
 }
 
-func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlstore.SQLStore, actions []string, resource, resourceID string, numUsers int) {
+func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
 	for i := 0; i < numUsers; i++ {
 		org, _ := sql.GetOrgByName("test")
@@ -427,9 +455,10 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 		require.NoError(t, err)
 
 		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.Id}, types.SetResourcePermissionCommand{
-			Actions:    actions,
-			Resource:   resource,
-			ResourceID: resourceID,
+			Actions:           actions,
+			Resource:          resource,
+			ResourceID:        resourceID,
+			ResourceAttribute: resourceAttribute,
 		}, nil)
 		require.NoError(t, err)
 	}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2, VizTooltipContainer } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 type Props = {
   colorPalette: string[];
@@ -10,6 +10,7 @@ type Props = {
 
   // Show a value as string -- when not defined, the raw values will not be shown
   display?: (v: number) => string;
+  hoverValue?: number;
 };
 
 type HoverState = {
@@ -17,48 +18,63 @@ type HoverState = {
   value: number;
 };
 
-export const ColorScale = ({ colorPalette, min, max, display }: Props) => {
+const LEFT_OFFSET = 2;
+
+export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
-  const [hover, setHover] = useState<HoverState>({ isShown: false, value: 0 });
-  const [cursor, setCursor] = useState({ clientX: 0, clientY: 0 });
+  const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
+  const [percent, setPercent] = useState<number | null>(null);
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, colors);
 
   useEffect(() => {
     setColors(getGradientStops({ colorArray: colorPalette }));
   }, [colorPalette]);
-
-  const theme = useTheme2();
-  const styles = getStyles(theme, colors);
 
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
     const offsetWidth = (event.target as any).offsetWidth as number;
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
-    setHover({ isShown: true, value: scaleValue });
-    setCursor({ clientX: event.clientX, clientY: event.clientY });
+
+    setScaleHover({ isShown: true, value: scaleValue });
+    setPercent(normPercentage);
   };
 
   const onScaleMouseLeave = () => {
-    setHover({ isShown: false, value: 0 });
+    setScaleHover({ isShown: false, value: 0 });
   };
+
+  useEffect(() => {
+    if (hoverValue != null) {
+      const percent = hoverValue / (max - min);
+      setPercent(percent * 100);
+    }
+  }, [hoverValue, min, max]);
 
   return (
     <div className={styles.scaleWrapper}>
-      <div>
-        <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
-          {display && hover.isShown && (
-            <VizTooltipContainer position={{ x: cursor.clientX, y: cursor.clientY }} offset={{ x: 10, y: 10 }}>
-              {display(hover.value)}
-            </VizTooltipContainer>
-          )}
-        </div>
-        {display && (
-          <div>
-            <span>{display(min)}</span>
-            <span className={styles.maxDisplay}>{display(max)}</span>
+      <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+        {display && (scaleHover.isShown || hoverValue !== undefined) && (
+          <div className={styles.followerContainer}>
+            <div className={styles.follower} style={{ left: `${percent}%` }} />
           </div>
         )}
       </div>
+      {display && (
+        <div className={styles.followerContainer}>
+          {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
+            <span className={styles.hoverValue} style={{ left: `${percent - LEFT_OFFSET}%` }}>
+              {display(hoverValue || scaleHover.value)}
+            </span>
+          )}
+          <div className={styles.legendValues} style={{ opacity: scaleHover.isShown || hoverValue ? 0.3 : 1 }}>
+            <span>{display(min)}</span>
+            <span>{display(max)}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -96,18 +112,36 @@ const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; st
 
 const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleWrapper: css`
-    margin: 0 16px;
-    padding-top: 4px;
     width: 100%;
     max-width: 300px;
-    color: #ccccdc;
+    margin-left: 25px;
+    padding: 10px 0;
     font-size: 11px;
+    opacity: 1;
   `,
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
-    height: 6px;
+    height: 10px;
   `,
-  maxDisplay: css`
-    float: right;
+  legendValues: css`
+    display: flex;
+    justify-content: space-between;
+  `,
+  hoverValue: css`
+    position: absolute;
+    padding-top: 5px;
+  `,
+  followerContainer: css`
+    position: relative;
+  `,
+  follower: css`
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    border-radius: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    pointer-events: none;
+    border: 2px solid ${theme.colors.text.primary};
+    margin-top: 5px;
   `,
 });

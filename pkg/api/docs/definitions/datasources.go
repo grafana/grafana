@@ -46,7 +46,7 @@ import (
 // encrypted fields are listed under secureJsonFields section in the response.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 //
 // Responses:
 // 200: createOrUpdateDatasourceResponse
@@ -59,7 +59,7 @@ import (
 // Delete an existing data source by id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 //
 // Responses:
 // 200: okResponse
@@ -101,7 +101,7 @@ import (
 // Get a single data source by Id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 //
 // Responses:
 // 200: getDatasourceResponse

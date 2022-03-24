@@ -24,20 +24,21 @@ type templateData struct {
 func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.Route,
 	appID string, cfg *setting.Cfg, pluginSettingsService pluginsettings.Service, secretsService secrets.Service) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
-		query := models.GetPluginSettingByIdQuery{OrgId: ctx.OrgId, PluginId: appID}
-		if err := pluginSettingsService.GetPluginSettingById(ctx.Req.Context(), &query); err != nil {
+		query := pluginsettings.GetByPluginIDArgs{OrgID: ctx.OrgId, PluginID: appID}
+		ps, err := pluginSettingsService.GetPluginSettingByPluginID(ctx.Req.Context(), &query)
+		if err != nil {
 			ctx.JsonApiErr(500, "Failed to fetch plugin settings", err)
 			return
 		}
 
-		secureJsonData, err := secretsService.DecryptJsonData(ctx.Req.Context(), query.Result.SecureJsonData)
+		secureJsonData, err := secretsService.DecryptJsonData(ctx.Req.Context(), ps.SecureJSONData)
 		if err != nil {
 			ctx.JsonApiErr(500, "Failed to decrypt plugin settings", err)
 			return
 		}
 
 		data := templateData{
-			JsonData:       query.Result.JsonData,
+			JsonData:       ps.JSONData,
 			SecureJsonData: secureJsonData,
 		}
 
