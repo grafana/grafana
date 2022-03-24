@@ -381,8 +381,7 @@ func (st DBstore) GetNamespacesWithGroups(ctx context.Context, orgID int64, user
 			return nil, err
 		}
 
-		folders, _ := namespaceMap[queryResult.Namespace]
-		namespaceMap[queryResult.Namespace] = append(folders, *folder)
+		namespaceMap[queryResult.Namespace] = append(namespaceMap[queryResult.Namespace], *folder)
 	}
 
 	return namespaceMap, err
@@ -482,20 +481,18 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 
 func (st DBstore) GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var ruleGroups [][]string
+		var ruleGroups []ngmodels.OrgRuleGroupResult
+
 		q := `
-SELECT DISTINCT
-	rule_group,
-	namespace_uid,
-	(
-		SELECT title
-		FROM dashboard
-		WHERE
-			org_id = alert_rule.org_id AND
-			uid = alert_rule.namespace_uid
-	) AS namespace_title
-FROM alert_rule
-WHERE org_id = ?`
+			SELECT DISTINCT
+				rule_group as group_uid,
+				namespace_uid as namespace,
+				dashboard.title as group_name
+			FROM alert_rule
+			INNER JOIN dashboard
+				ON alert_rule.rule_group = dashboard.uid
+			WHERE alert_rule.org_id = ?`
+
 		params := []interface{}{query.OrgID}
 
 		if len(query.NamespaceUIDs) > 0 {
@@ -504,7 +501,7 @@ WHERE org_id = ?`
 				params = append(params, folderUID)
 				placeholders = append(placeholders, "?")
 			}
-			q = fmt.Sprintf(" %s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
+			q = fmt.Sprintf(" %s AND namespace IN (%s)", q, strings.Join(placeholders, ","))
 		}
 
 		if query.DashboardUID != "" {
@@ -516,7 +513,7 @@ WHERE org_id = ?`
 			}
 		}
 
-		q = fmt.Sprintf(" %s ORDER BY namespace_title", q)
+		q = fmt.Sprintf(" %s ORDER BY namespace, group_name", q)
 
 		if err := sess.SQL(q, params...).Find(&ruleGroups); err != nil {
 			return err

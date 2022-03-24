@@ -203,12 +203,11 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
-
 	// we'll use this for a reverse lookup when we add the rules
 	groupUidToTitle := make(map[string]string)
 
 	// prepare the response structure based on the namespace -> groupname mapping
+	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
 	for namespace, folders := range namespaceMap {
 		for _, folder := range folders {
 			groupUidToTitle[folder.Uid] = folder.Title
