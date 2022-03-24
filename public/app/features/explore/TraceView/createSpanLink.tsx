@@ -88,7 +88,7 @@ function legacyCreateSpanLinkFactory(
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
     const query = getQueryFromSpan(span, isSplunkDS, traceToLogsOptions);
-    if (!query) {
+    if (!query && !isSplunkDS) {
       return undefined;
     }
 
@@ -99,7 +99,7 @@ function legacyCreateSpanLinkFactory(
         datasourceUid: dataSourceSettings.uid,
         datasourceName: dataSourceSettings.name,
         query: {
-          [isSplunkDS ? 'query' : 'expr']: getQueryFromSpan(span, isSplunkDS, traceToLogsOptions),
+          [isSplunkDS ? 'query' : 'expr']: query,
           refId: '',
         },
       },
@@ -153,13 +153,13 @@ function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceTo
     return acc;
   }, [] as string[]);
 
-  // If no tags found, return undefined to prevent an invalid Loki query
-  if (!tags.length) {
+  // If no tags found and is Loki query, return undefined to prevent an invalid Loki query
+  if (!tags.length && !isSplunkDS) {
     return undefined;
   }
 
   let query = '';
-  if (tags.length > 0) {
+  if (tags.length > 0 && !isSplunkDS) {
     query += `{${tags.join(', ')}}`;
   }
 
