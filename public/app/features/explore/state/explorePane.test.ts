@@ -1,4 +1,4 @@
-import { DataQuery, DefaultTimeZone, EventBusExtended, serializeStateToUrlParam, toUtc } from '@grafana/data';
+import { serializeStateToUrlParam } from '@grafana/data';
 import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
 import { refreshExplore } from './explorePane';
 import { setDataSourceSrv } from '@grafana/runtime';
