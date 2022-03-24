@@ -66,6 +66,10 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 			return Scope("datasources", "id", "1"), nil
 		} else if initialScope == "datasources:name:testds2" {
 			return Scope("datasources", "id", "2"), nil
+		} else if initialScope == "datasources:name:test:ds4" {
+			return Scope("datasources", "id", "4"), nil
+		} else if initialScope == "datasources:name:testds5*" {
+			return Scope("datasources", "id", "5"), nil
 		} else {
 			return "", models.ErrDataSourceNotFound
 		}
@@ -118,6 +122,20 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 			),
 			wantCalls: 2,
 		},
+		{
+			name:          "should resolve name with colon",
+			orgID:         1,
+			evaluator:     EvalPermission("datasources:read", Scope("datasources", "name", "test:ds4")),
+			wantEvaluator: EvalPermission("datasources:read", Scope("datasources", "id", "4")),
+			wantCalls:     1,
+		},
+		{
+			name:          "should resolve names with '*'",
+			orgID:         1,
+			evaluator:     EvalPermission("datasources:read", Scope("datasources", "name", "testds5*")),
+			wantEvaluator: EvalPermission("datasources:read", Scope("datasources", "id", "5")),
+			wantCalls:     1,
+		},
 	}
 	for _, tt := range tests {
 		resolver := NewScopeResolver()
@@ -165,6 +183,16 @@ func Test_scopePrefix(t *testing.T) {
 		{
 			name:  "datasources name",
 			scope: "datasources:name:testds",
+			want:  "datasources:name:",
+		},
+		{
+			name:  "datasources with colons in name",
+			scope: "datasources:name:test:a::ds",
+			want:  "datasources:name:",
+		},
+		{
+			name:  "prefix",
+			scope: "datasources:name:",
 			want:  "datasources:name:",
 		},
 	}

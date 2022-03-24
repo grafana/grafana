@@ -25,7 +25,7 @@ import (
 func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 	return &FakeRuleStore{
 		t:     t,
-		Rules: map[int64]map[string]map[string][]*models.AlertRule{},
+		Rules: map[int64][]*models.AlertRule{},
 		Hook: func(interface{}) error {
 			return nil
 		},
@@ -34,9 +34,10 @@ func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 
 // FakeRuleStore mocks the RuleStore of the scheduler.
 type FakeRuleStore struct {
-	t           *testing.T
-	mtx         sync.Mutex
-	Rules       map[int64]map[string]map[string][]*models.AlertRule
+	t   *testing.T
+	mtx sync.Mutex
+	// OrgID -> RuleGroup -> Namespace -> Rules
+	Rules       map[int64][]*models.AlertRule
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
 }
@@ -47,27 +48,15 @@ func (f *FakeRuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 	defer f.mtx.Unlock()
 mainloop:
 	for _, r := range rules {
-		rgs, ok := f.Rules[r.OrgID]
-		if !ok {
-			f.Rules[r.OrgID] = map[string]map[string][]*models.AlertRule{}
-		}
-
-		rg, ok := rgs[r.RuleGroup]
-		if !ok {
-			f.Rules[r.OrgID][r.RuleGroup] = map[string][]*models.AlertRule{}
-		}
-
-		_, ok = rg[r.NamespaceUID]
-		if !ok {
-			f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{}
-		}
-		for idx, rulePtr := range f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] {
+		rgs := f.Rules[r.OrgID]
+		for idx, rulePtr := range rgs {
 			if rulePtr.UID == r.UID {
-				f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID][idx] = r
+				rgs[idx] = r
 				continue mainloop
 			}
 		}
-		f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = append(f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID], r)
+		rgs = append(rgs, r)
+		f.Rules[r.OrgID] = rgs
 	}
 }
 
@@ -87,7 +76,9 @@ func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (int
 	return result
 }
 
-func (f *FakeRuleStore) DeleteAlertRuleByUID(_ context.Context, _ int64, _ string) error { return nil }
+func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, _ int64, _ ...string) error {
+	return nil
+}
 func (f *FakeRuleStore) DeleteNamespaceAlertRules(_ context.Context, _ int64, _ string) ([]string, error) {
 	return []string{}, nil
 }
@@ -104,22 +95,17 @@ func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertR
 	if err := f.Hook(*q); err != nil {
 		return err
 	}
-	rgs, ok := f.Rules[q.OrgID]
+	rules, ok := f.Rules[q.OrgID]
 	if !ok {
 		return nil
 	}
 
-	for _, rg := range rgs {
-		for _, rules := range rg {
-			for _, r := range rules {
-				if r.UID == q.UID {
-					q.Result = r
-					break
-				}
-			}
+	for _, rule := range rules {
+		if rule.UID == q.UID {
+			q.Result = rule
+			break
 		}
 	}
-
 	return nil
 }
 
@@ -131,20 +117,22 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 	if err := f.Hook(*q); err != nil {
 		return err
 	}
-	for _, rg := range f.Rules {
-		for _, n := range rg {
-			for _, r := range n {
-				q.Result = append(q.Result, r...)
-			}
-		}
+	for _, rules := range f.Rules {
+		q.Result = append(q.Result, rules...)
 	}
-
 	return nil
 }
+
 func (f *FakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
+
+	rules, ok := f.Rules[q.OrgID]
+	if !ok {
+		return nil
+	}
+	q.Result = rules
 	return nil
 }
 func (f *FakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.ListNamespaceAlertRulesQuery) error {
@@ -153,40 +141,45 @@ func (f *FakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.List
 	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
-func (f *FakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.ListRuleGroupAlertRulesQuery) error {
+func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
 	if err := f.Hook(*q); err != nil {
 		return err
 	}
-	rgs, ok := f.Rules[q.OrgID]
+	rules, ok := f.Rules[q.OrgID]
 	if !ok {
 		return nil
 	}
-
-	rg, ok := rgs[q.RuleGroup]
-	if !ok {
-		return nil
-	}
-
-	if q.NamespaceUID != "" {
-		r, ok := rg[q.NamespaceUID]
-		if !ok {
-			return nil
+	var result []*models.AlertRule
+	for _, rule := range rules {
+		if q.NamespaceUID != rule.NamespaceUID {
+			continue
 		}
-		q.Result = r
-		return nil
+		if q.RuleGroup != nil && *q.RuleGroup != rule.RuleGroup {
+			continue
+		}
+		result = append(result, rule)
 	}
-
-	for _, r := range rg {
-		q.Result = append(q.Result, r...)
-	}
-
+	q.Result = result
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
-	return nil, nil
+func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	namespacesMap := map[string]*models2.Folder{}
+
+	_, ok := f.Rules[orgID]
+	if !ok {
+		return namespacesMap, nil
+	}
+
+	for _, rule := range f.Rules[orgID] {
+		namespacesMap[rule.NamespaceUID] = &models2.Folder{}
+	}
+	return namespacesMap, nil
 }
 func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	return nil, nil
@@ -197,6 +190,25 @@ func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRul
 	f.RecordedOps = append(f.RecordedOps, *q)
 	if err := f.Hook(*q); err != nil {
 		return err
+	}
+
+	// If we have namespaces, we want to try and retrieve the list of rules stored.
+	if len(q.NamespaceUIDs) != 0 {
+		rules, ok := f.Rules[q.OrgID]
+		if !ok {
+			return nil
+		}
+
+		var ruleGroups [][]string
+		for _, rule := range rules {
+			for _, namespace := range q.NamespaceUIDs {
+				if rule.NamespaceUID == namespace { // if they match, they should go in.
+					ruleGroups = append(ruleGroups, []string{rule.RuleGroup, rule.NamespaceUID, rule.NamespaceUID})
+				}
+			}
+		}
+
+		q.Result = ruleGroups
 	}
 	return nil
 }
@@ -210,6 +222,7 @@ func (f *FakeRuleStore) UpsertAlertRules(_ context.Context, q []UpsertRule) erro
 	}
 	return nil
 }
+
 func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd UpdateRuleGroupCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -217,29 +230,15 @@ func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd UpdateRuleGroupCm
 	if err := f.Hook(cmd); err != nil {
 		return err
 	}
-	rgs, ok := f.Rules[cmd.OrgID]
-	if !ok {
-		f.Rules[cmd.OrgID] = map[string]map[string][]*models.AlertRule{}
-	}
+	existingRules := f.Rules[cmd.OrgID]
 
-	rg, ok := rgs[cmd.RuleGroupConfig.Name]
-	if !ok {
-		f.Rules[cmd.OrgID][cmd.RuleGroupConfig.Name] = map[string][]*models.AlertRule{}
-	}
-
-	_, ok = rg[cmd.NamespaceUID]
-	if !ok {
-		f.Rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = []*models.AlertRule{}
-	}
-
-	rules := []*models.AlertRule{}
 	for _, r := range cmd.RuleGroupConfig.Rules {
 		// TODO: Not sure why this is not being set properly, where is the code that sets this?
 		for i := range r.GrafanaManagedAlert.Data {
 			r.GrafanaManagedAlert.Data[i].DatasourceUID = "-100"
 		}
 
-		new := &models.AlertRule{
+		newRule := &models.AlertRule{
 			OrgID:           cmd.OrgID,
 			Title:           r.GrafanaManagedAlert.Title,
 			Condition:       r.GrafanaManagedAlert.Condition,
@@ -254,26 +253,26 @@ func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd UpdateRuleGroupCm
 		}
 
 		if r.ApiRuleNode != nil {
-			new.For = time.Duration(r.ApiRuleNode.For)
-			new.Annotations = r.ApiRuleNode.Annotations
-			new.Labels = r.ApiRuleNode.Labels
+			newRule.For = time.Duration(r.ApiRuleNode.For)
+			newRule.Annotations = r.ApiRuleNode.Annotations
+			newRule.Labels = r.ApiRuleNode.Labels
 		}
 
-		if new.NoDataState == "" {
-			new.NoDataState = models.NoData
+		if newRule.NoDataState == "" {
+			newRule.NoDataState = models.NoData
 		}
 
-		if new.ExecErrState == "" {
-			new.ExecErrState = models.AlertingErrState
+		if newRule.ExecErrState == "" {
+			newRule.ExecErrState = models.AlertingErrState
 		}
 
-		err := new.PreSave(time.Now)
+		err := newRule.PreSave(time.Now)
 		require.NoError(f.t, err)
 
-		rules = append(rules, new)
+		existingRules = append(existingRules, newRule)
 	}
 
-	f.Rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = rules
+	f.Rules[cmd.OrgID] = existingRules
 	return nil
 }
 
@@ -452,11 +451,11 @@ func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
 
 	return nil
 }
-func (repo *FakeAnnotationsRepo) Update(item *annotations.Item) error {
+func (repo *FakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
 	return nil
 }
 
-func (repo *FakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	annotations := []*annotations.ItemDTO{{Id: 1}}
 	return annotations, nil
 }

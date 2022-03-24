@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PromQuery } from '../../types';
-import { getQueryWithDefaults } from '../types';
+import { getQueryWithDefaults } from '../state';
 import { CoreApp } from '@grafana/data';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { selectOptionInTest } from '@grafana/ui';
@@ -59,13 +59,19 @@ describe('PromQueryBuilderOptions', () => {
       legendFormat: '{{label_name}}',
     });
   });
+
+  it('Handle defaults with undefined range', async () => {
+    setup(getQueryWithDefaults({ refId: 'A', expr: '', range: undefined, instant: true }, CoreApp.Dashboard));
+
+    expect(screen.getByText('Type: Instant')).toBeInTheDocument();
+  });
 });
 
 function setup(queryOverrides: Partial<PromQuery> = {}) {
   const props = {
     query: {
       ...getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.PanelEditor),
-      queryOverrides,
+      ...queryOverrides,
     },
     onRunQuery: jest.fn(),
     onChange: jest.fn(),

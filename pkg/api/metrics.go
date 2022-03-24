@@ -1,14 +1,18 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -33,6 +37,103 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
+	if err != nil {
+		return hs.handleQueryMetricsError(err)
+	}
+	return toJsonStreamingResponse(resp)
+}
+
+func parseDashboardQueryParams(params map[string]string) (models.GetDashboardQuery, int64, error) {
+	query := models.GetDashboardQuery{}
+
+	if params[":orgId"] == "" || params[":dashboardUid"] == "" || params[":panelId"] == "" {
+		return query, 0, models.ErrDashboardOrPanelIdentifierNotSet
+	}
+
+	orgId, err := strconv.ParseInt(params[":orgId"], 10, 64)
+	if err != nil {
+		return query, 0, models.ErrDashboardPanelIdentifierInvalid
+	}
+
+	panelId, err := strconv.ParseInt(params[":panelId"], 10, 64)
+	if err != nil {
+		return query, 0, models.ErrDashboardPanelIdentifierInvalid
+	}
+
+	query.Uid = params[":dashboardUid"]
+	query.OrgId = orgId
+
+	return query, panelId, nil
+}
+
+func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, query models.GetDashboardQuery, panelId int64) error {
+	// Query the dashboard
+	if err := ss.GetDashboard(ctx, &query); err != nil {
+		return err
+	}
+
+	if query.Result == nil {
+		return models.ErrDashboardCorrupt
+	}
+
+	// dashboard saved but no panels
+	dashboard := query.Result
+	if dashboard.Data == nil {
+		return models.ErrDashboardCorrupt
+	}
+
+	// FIXME: parse the dashboard JSON in a more performant/structured way.
+	panels := dashboard.Data.Get("panels")
+
+	for i := 0; ; i++ {
+		panel, ok := panels.CheckGetIndex(i)
+		if !ok {
+			break
+		}
+
+		if panel.Get("id").MustInt64(-1) == panelId {
+			return nil
+		}
+	}
+
+	// no panel with that ID
+	return models.ErrDashboardPanelNotFound
+}
+
+// QueryMetricsV2 returns query metrics.
+// POST /api/ds/query   DataSource query w/ expressions
+func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
+	// check feature flag
+	if !hs.Features.IsEnabled(featuremgmt.FlagValidatedQueries) {
+		return response.Respond(http.StatusNotFound, "404 page not found\n")
+	}
+
+	// build query
+	reqDTO := dtos.MetricRequest{}
+	if err := web.Bind(c.Req, &reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	params := web.Params(c.Req)
+	getDashboardQuery, panelId, err := parseDashboardQueryParams(params)
+
+	// check dashboard: inside the statement is the happy path. we should maybe
+	// refactor this as it's not super obvious
+	if err == nil {
+		err = checkDashboardAndPanel(c.Req.Context(), hs.SQLStore, getDashboardQuery, panelId)
+	}
+
+	// 404 if dashboard or panel not found
+	if err != nil {
+		c.Logger.Warn("Failed to find dashboard or panel for validated query", "err", err)
+		var dashboardErr models.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+		}
+		return response.Error(http.StatusNotFound, "Dashboard or panel not found", err)
+	}
+
+	// return panel data
 	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)

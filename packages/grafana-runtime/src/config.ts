@@ -108,6 +108,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   featureHighlights = {
     enabled: false,
   };
+  reporting = {
+    enabled: true,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

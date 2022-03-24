@@ -40,9 +40,13 @@ export interface FeatureToggles {
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
   validatedQueries?: boolean;
+  lokiLive?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
+  storage?: boolean;
+  storageLocalUpload?: boolean;
+  azureMonitorResourcePickerForMetrics?: boolean;
 }

@@ -80,7 +80,6 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 		}
 	}
 
-	cmd.ServiceAccountId = nil // Security: API keys can't be added to SAs through this endpoint since we do not implement access checks here
 	cmd.OrgId = c.OrgId
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)

@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -56,13 +57,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
@@ -71,7 +75,9 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -123,8 +129,8 @@ var wireBasicSet = wire.NewSet(
 	manager.ProvideService,
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.PluginDashboardManager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
@@ -155,6 +161,8 @@ var wireBasicSet = wire.NewSet(
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
+	store.ProvideService,
+	store.ProvideHTTPService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
@@ -191,7 +199,8 @@ var wireBasicSet = wire.NewSet(
 	dashboardsnapshots.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
-	pluginsettings.ProvideService,
+	pluginSettings.ProvideService,
+	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	alerting.ProvideService,
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsmanager.ServiceAccountsService)),
@@ -207,12 +216,18 @@ var wireBasicSet = wire.NewSet(
 	dashboardstore.ProvideDashboardStore,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
+	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.FolderService), new(*dashboardservice.FolderServiceImpl)),
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
-	plugindashboards.ProvideService,
+	plugindashboardsservice.ProvideService,
+	wire.Bind(new(plugindashboards.Service), new(*plugindashboardsservice.Service)),
+	plugindashboardsservice.ProvideDashboardUpdater,
+	alerting.ProvideDashAlertExtractorService,
+	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
+	guardian.ProvideService,
 )
 
 var wireSet = wire.NewSet(
@@ -220,10 +235,12 @@ var wireSet = wire.NewSet(
 	sqlstore.ProvideService,
 	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.TempUserStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -234,6 +251,7 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
+	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),

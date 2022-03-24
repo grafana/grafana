@@ -1,21 +1,21 @@
-import React, { MouseEvent, PureComponent } from 'react';
-import { bindActionCreators } from 'redux';
-import { connect, ConnectedProps } from 'react-redux';
-import { Icon, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-
-import { KeyedVariableIdentifier } from '../state/types';
-import { StoreState, ThunkDispatch } from '../../../types';
-import { VariableEditorEditor } from './VariableEditorEditor';
-import { getEditorVariables, getVariablesState } from '../state/selectors';
-import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
-import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
-import { VariableEditorList } from './VariableEditorList';
-import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
-import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
+import { Button, Icon } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import React, { MouseEvent, PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
+import { bindActionCreators } from 'redux';
+
+import { StoreState, ThunkDispatch } from '../../../types';
+import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
+import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getEditorVariables, getVariablesState } from '../state/selectors';
+import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
+import { KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
+import { VariableEditorEditor } from './VariableEditorEditor';
+import { VariableEditorList } from './VariableEditorList';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { uid } = ownProps.dashboard;
@@ -116,13 +116,13 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           {this.props.variables.length > 0 && variableToEdit === null && (
             <>
               <VariablesDependenciesButton variables={this.props.variables} />
-              <LinkButton
+              <Button
                 type="button"
                 onClick={this.onNewVariable}
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
               >
                 New
-              </LinkButton>
+              </Button>
             </>
           )}
         </div>

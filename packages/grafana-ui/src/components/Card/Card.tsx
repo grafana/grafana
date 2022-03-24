@@ -19,6 +19,7 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   heading?: ReactNode;
   /** @deprecated Use `Card.Description` instead */
   description?: string;
+  isSelected?: boolean;
 }
 
 export interface CardInterface extends FC<Props> {
@@ -35,6 +36,7 @@ const CardContext = React.createContext<{
   href?: string;
   onClick?: () => void;
   disabled?: boolean;
+  isSelected?: boolean;
 } | null>(null);
 
 /**
@@ -49,6 +51,7 @@ export const Card: CardInterface = ({
   children,
   heading: deprecatedHeading,
   description: deprecatedDescription,
+  isSelected,
   className,
   ...htmlProps
 }) => {
@@ -63,16 +66,17 @@ export const Card: CardInterface = ({
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
   const theme = useTheme2();
-  const styles = getCardContainerStyles(theme, disabled, disableHover);
+  const styles = getCardContainerStyles(theme, disabled, disableHover, isSelected);
 
   return (
     <CardContainer
       disableEvents={disabled}
       disableHover={disableHover}
+      isSelected={isSelected}
       className={cx(styles.container, className)}
       {...htmlProps}
     >
-      <CardContext.Provider value={{ href, onClick: onCardClick, disabled }}>
+      <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
         {!hasHeadingComponent && <Heading />}
         {deprecatedHeading && <Heading>{deprecatedHeading}</Heading>}
         {deprecatedDescription && <Description>{deprecatedDescription}</Description>}
@@ -96,7 +100,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
-  const { href, onClick } = context ?? { href: undefined, onClick: undefined };
+  const { href, onClick, isSelected } = context ?? { href: undefined, onClick: undefined, isSelected: undefined };
 
   return (
     <h2 className={cx(styles.heading, className)}>
@@ -111,6 +115,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
+      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly checked={isSelected} />}
     </h2>
   );
 };
@@ -256,6 +261,7 @@ const getMetaStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(0.5, 0, 0),
     lineHeight: theme.typography.bodySmall.lineHeight,
     overflowWrap: 'anywhere',
+    zIndex: 0,
   }),
   separator: css({
     margin: `0 ${theme.spacing(1)}`,

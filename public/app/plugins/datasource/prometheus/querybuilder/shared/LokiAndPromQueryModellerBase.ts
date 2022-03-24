@@ -9,6 +9,7 @@ import {
 
 export interface VisualQueryBinary<T> {
   operator: string;
+  vectorMatchesType?: 'on' | 'ignoring';
   vectorMatches?: string;
   query: T;
 }
@@ -37,13 +38,16 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
     return this.categories;
   }
 
-  getOperationDef(id: string) {
-    return this.operationsRegisty.get(id);
+  getOperationDef(id: string): QueryBuilderOperationDef | undefined {
+    return this.operationsRegisty.getIfExists(id);
   }
 
   renderOperations(queryString: string, operations: QueryBuilderOperation[]) {
     for (const operation of operations) {
-      const def = this.operationsRegisty.get(operation.id);
+      const def = this.operationsRegisty.getIfExists(operation.id);
+      if (!def) {
+        throw new Error(`Could not find operation ${operation.id} in the registry`);
+      }
       queryString = def.renderer(operation, def, queryString);
     }
 
@@ -63,7 +67,7 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
     let result = leftOperand + ` ${binaryQuery.operator} `;
 
     if (binaryQuery.vectorMatches) {
-      result += `${binaryQuery.vectorMatches} `;
+      result += `${binaryQuery.vectorMatchesType}(${binaryQuery.vectorMatches}) `;
     }
 
     return result + this.renderQuery(binaryQuery.query, true);

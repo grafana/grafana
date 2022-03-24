@@ -14,7 +14,7 @@ Grafana has default and custom configuration files. You can customize your Grafa
 
 ## Configuration file location
 
-The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change the location in this file.
+The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change this file.
 
 Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
@@ -202,6 +202,8 @@ Another way is to put a web server like Nginx or Apache in front of Grafana and 
 
 ### domain
 
+This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
+
 ### enforce_domain
 
 Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
@@ -360,6 +362,8 @@ Defaults to `private`.
 <hr />
 
 ## [remote_cache]
+
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../enterprise/query-caching.md" >}}).
 
 ### type
 

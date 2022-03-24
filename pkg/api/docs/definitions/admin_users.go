@@ -28,7 +28,7 @@ import (
 //
 // Set password for user.
 //
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.
 //
 // Security:
 // - basic:
@@ -45,7 +45,7 @@ import (
 // Set permissions for user.
 //
 // Only works with Basic Authentication (username and password). See introduction for an explanation.
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global:users:*`.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.
 //
 // Responses:
 // 200: okResponse
@@ -58,7 +58,7 @@ import (
 //
 // Delete global User.
 //
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.
 //
 // Security:
 // - basic:
@@ -74,7 +74,7 @@ import (
 //
 // Disable user.
 //
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).
 //
 // Security:
 // - basic:
@@ -90,7 +90,7 @@ import (
 //
 // Enable user.
 //
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).
 //
 // Security:
 // - basic:
@@ -106,7 +106,7 @@ import (
 //
 // Fetch user quota.
 //
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global:users:1` (userIDScope).
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).
 //
 // Security:
 // - basic:
@@ -122,7 +122,7 @@ import (
 //
 // Update user quota.
 //
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).
 //
 // Security:
 // - basic:
@@ -137,7 +137,7 @@ import (
 // swagger:route GET /admin/users/{user_id}/auth-tokens admin_users getAuthTokens
 //
 // Return a list of all auth tokens (devices) that the user currently have logged in from.
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.
 //
 // Security:
 // - basic:
@@ -153,7 +153,7 @@ import (
 // Revoke auth token for user.
 //
 // Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.
 //
 // Security:
 // - basic:
@@ -169,7 +169,7 @@ import (
 // swagger:route POST /admin/users/{user_id}/logout admin_users logoutUser
 //
 // Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity.
-// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.
 //
 // Security:
 // - basic:

@@ -4494,15 +4494,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -5566,6 +5566,39 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      },
+      "patch": {
+        "tags": ["org_preferences"],
+        "summary": "Patch Current Org Prefs.",
+        "operationId": "patchOrgPreferences",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchPrefsCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/addOrgUser"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       }
     },
     "/org/users": {
@@ -6328,6 +6361,16 @@
         "description": "gets the current alerts",
         "tags": ["prometheus"],
         "operationId": "RouteGetGrafanaAlertStatuses",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "x-go-name": "IncludeInternalLabels",
+            "description": "Include Grafana specific labels as part of the response.",
+            "name": "includeInternalLabels",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "AlertResponse",
@@ -6345,13 +6388,23 @@
         "operationId": "RouteGetGrafanaRuleStatuses",
         "parameters": [
           {
+            "type": "boolean",
+            "default": false,
+            "x-go-name": "IncludeInternalLabels",
+            "description": "Include Grafana specific labels as part of the response.",
+            "name": "includeInternalLabels",
+            "in": "query"
+          },
+          {
             "type": "string",
+            "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
             "name": "DashboardUID",
             "in": "query"
           },
           {
             "type": "integer",
             "format": "int64",
+            "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
             "name": "PanelID",
             "in": "query"
           }
@@ -6397,17 +6450,6 @@
         "tags": ["prometheus"],
         "operationId": "RouteGetRuleStatuses",
         "parameters": [
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          },
           {
             "type": "integer",
             "format": "int64",
@@ -7847,14 +7889,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -7862,6 +7896,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7895,16 +7937,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -8520,6 +8562,36 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdatePrefsCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["user_preferences"],
+        "summary": "Patch user preferences.",
+        "operationId": "patchUserPreferences",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchPrefsCmd"
             }
           }
         ],
@@ -10143,7 +10215,7 @@
       },
       "x-go-package": "github.com/prometheus/common/config"
     },
-    "BrandingOptions": {
+    "BrandingOptionsDTO": {
       "type": "object",
       "properties": {
         "emailFooterLink": {
@@ -10280,7 +10352,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "orgId": {
           "type": "integer",
@@ -10296,10 +10368,11 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "$ref": "#/definitions/State"
+          "type": "string",
+          "x-go-name": "State"
         },
         "templateVars": {
           "type": "object",
@@ -10480,7 +10553,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "recipients": {
           "type": "string",
@@ -10491,7 +10564,7 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
           "type": "string",
@@ -10528,6 +10601,10 @@
         "group": {
           "type": "string",
           "x-go-name": "Group"
+        },
+        "hidden": {
+          "type": "boolean",
+          "x-go-name": "Hidden"
         },
         "name": {
           "type": "string",
@@ -10761,6 +10838,10 @@
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
         },
         "canEdit": {
           "type": "boolean",
@@ -11723,6 +11804,10 @@
           "type": "boolean",
           "x-go-name": "CanAdmin"
         },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
         "canEdit": {
           "type": "boolean",
           "x-go-name": "CanEdit"
@@ -12068,8 +12153,8 @@
         },
         "exec_err_state": {
           "type": "string",
-          "enum": ["Alerting", "Error"],
-          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
+          "enum": ["OK", "Alerting", "Error"],
+          "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
           "x-go-name": "ExecErrState"
         },
         "id": {
@@ -12162,6 +12247,13 @@
             "$ref": "#/definitions/GettableExtendedRuleNode"
           },
           "x-go-name": "Rules"
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "SourceTenants"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -13073,6 +13165,41 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "NavLink": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "target": {
+          "type": "string",
+          "x-go-name": "Target"
+        },
+        "text": {
+          "type": "string",
+          "x-go-name": "Text"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "NavbarPreference": {
+      "type": "object",
+      "properties": {
+        "savedItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavLink"
+          },
+          "x-go-name": "SavedItems"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "NewApiKeyResult": {
       "type": "object",
       "properties": {
@@ -13548,6 +13675,36 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
     },
+    "PatchPrefsCmd": {
+      "type": "object",
+      "properties": {
+        "homeDashboardId": {
+          "description": "The numerical :id of a favorited dashboard",
+          "type": "integer",
+          "format": "int64",
+          "default": 0,
+          "x-go-name": "HomeDashboardID"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark"],
+          "x-go-name": "Theme"
+        },
+        "timezone": {
+          "type": "string",
+          "enum": ["utc", "browser"],
+          "x-go-name": "Timezone"
+        },
+        "weekStart": {
+          "type": "string",
+          "x-go-name": "WeekStart"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "PauseAlertCommand": {
       "type": "object",
       "properties": {
@@ -13906,8 +14063,8 @@
         },
         "exec_err_state": {
           "type": "string",
-          "enum": ["Alerting", "Error"],
-          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
+          "enum": ["OK", "Alerting", "Error"],
+          "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
           "x-go-name": "ExecErrState"
         },
         "no_data_state": {
@@ -13989,6 +14146,9 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "HomeDashboardID"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "theme": {
           "type": "string",
@@ -14266,7 +14426,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
-    "ReportOptions": {
+    "ReportOptionsDTO": {
       "type": "object",
       "properties": {
         "layout": {
@@ -14336,6 +14496,10 @@
         "group": {
           "type": "string",
           "x-go-name": "Group"
+        },
+        "hidden": {
+          "type": "boolean",
+          "x-go-name": "Hidden"
         },
         "name": {
           "type": "string",
@@ -14539,6 +14703,13 @@
             "$ref": "#/definitions/GettableExtendedRuleNode"
           },
           "x-go-name": "Rules"
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "SourceTenants"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -14673,7 +14844,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "Schedule": {
+    "ScheduleDTO": {
       "type": "object",
       "properties": {
         "day": {
@@ -14800,6 +14971,10 @@
           "type": "boolean",
           "x-go-name": "Global"
         },
+        "includeHidden": {
+          "type": "boolean",
+          "x-go-name": "IncludeHidden"
+        },
         "roleUids": {
           "type": "array",
           "items": {
@@ -14824,7 +14999,7 @@
       "type": "object",
       "properties": {
         "branding": {
-          "$ref": "#/definitions/BrandingOptions"
+          "$ref": "#/definitions/BrandingOptionsDTO"
         },
         "id": {
           "type": "integer",
@@ -15053,10 +15228,6 @@
     },
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
-    },
-    "State": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
     "Status": {
       "type": "object",
@@ -15682,8 +15853,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -15716,7 +15888,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -16026,6 +16198,9 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
+        },
         "theme": {
           "type": "string",
           "enum": ["light", "dark"],
@@ -16061,6 +16236,10 @@
         "group": {
           "type": "string",
           "x-go-name": "Group"
+        },
+        "hidden": {
+          "type": "boolean",
+          "x-go-name": "Hidden"
         },
         "name": {
           "type": "string",
@@ -16589,6 +16768,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": ["alerts", "labels", "receiver"],
       "properties": {
@@ -16606,9 +16786,7 @@
         "receiver": {
           "$ref": "#/definitions/receiver"
         }
-      },
-      "x-go-name": "AlertGroup",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertGroups": {
       "type": "array",
@@ -16772,12 +16950,11 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
-      },
-      "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilence": {
       "description": "GettableSilence gettable silence",
@@ -16951,7 +17128,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -16985,10 +17161,11 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -16997,7 +17174,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",

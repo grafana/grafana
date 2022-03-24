@@ -1,13 +1,14 @@
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { notifyApp, updateNavIndex } from 'app/core/actions';
+import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { FolderState, ThunkResult } from 'app/types';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
-import { notifyApp, updateNavIndex } from 'app/core/actions';
-import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { lastValueFrom } from 'rxjs';
 import { buildNavModel } from './navModel';
 import { loadFolder, loadFolderPermissions, setCanViewFolderPermissions } from './reducers';
-import { lastValueFrom } from 'rxjs';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -143,6 +144,7 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
 export function createNewFolder(folderName: string): ThunkResult<void> {
   return async (dispatch) => {
     const newFolder = await getBackendSrv().post('/api/folders', { title: folderName });
+    await contextSrv.fetchUserPermissions();
     dispatch(notifyApp(createSuccessNotification('Folder Created', 'OK')));
     locationService.push(locationUtil.stripBaseFromUrl(newFolder.url));
   };

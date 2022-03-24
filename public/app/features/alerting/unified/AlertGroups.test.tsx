@@ -12,7 +12,12 @@ import { DataSourceType } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
 
 jest.mock('./api/alertmanager');
-
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    isEditor: true,
+    hasAccess: () => true,
+  },
+}));
 const mocks = {
   api: {
     fetchAlertGroups: jest.mocked(fetchAlertGroups),
@@ -146,5 +151,20 @@ describe('AlertGroups', () => {
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
     expect(groups[1]).toHaveTextContent('uniqueLabel=true');
+  });
+
+  it('should combine multiple ungrouped groups', async () => {
+    mocks.api.fetchAlertGroups.mockImplementation(() => {
+      const groups = [
+        mockAlertGroup({ labels: {} }),
+        mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
+      ];
+      return Promise.resolve(groups);
+    });
+    renderAmNotifications();
+    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
+    const groups = ui.group.getAll();
+
+    expect(groups).toHaveLength(1);
   });
 });

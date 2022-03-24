@@ -13,10 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -99,7 +100,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
+	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
 
 	return response.JSON(200, &dto)
 }
@@ -158,7 +159,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
+	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
 
 	return response.JSON(200, &dto)
 }
@@ -249,6 +250,7 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
+	cmd.UserId = c.UserId
 	if cmd.Url != "" {
 		if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 			return resp
@@ -577,7 +579,7 @@ func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, us
 	query.Result = datasources
 
 	if err := hs.DatasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &query); err != nil {
-		if !errors.Is(err, bus.ErrHandlerNotFound) {
+		if !errors.Is(err, permissions.ErrNotImplemented) {
 			return nil, err
 		}
 		return datasources, nil

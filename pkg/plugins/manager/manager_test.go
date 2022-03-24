@@ -12,9 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,6 +19,21 @@ import (
 const (
 	testPluginID = "test-plugin"
 )
+
+func TestPluginManager_Init(t *testing.T) {
+	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
+		loader := &fakeLoader{}
+		pm := New(&plugins.Cfg{}, []PluginSource{
+			{Class: plugins.Bundled, Paths: []string{"path1"}},
+			{Class: plugins.Core, Paths: []string{"path2"}},
+			{Class: plugins.External, Paths: []string{"path3"}},
+		}, loader)
+
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Equal(t, []string{"path1", "path2", "path3"}, loader.loadedPaths)
+	})
+}
 
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
@@ -469,8 +481,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
-	pm := New(&plugins.Cfg{}, nil, &fakeLoader{}, dashboardService)
+	pm := New(&plugins.Cfg{}, nil, &fakeLoader{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -524,8 +535,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
 	loader := &fakeLoader{}
-	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
-	manager := New(cfg, nil, loader, dashboardService)
+	manager := New(cfg, nil, loader)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,

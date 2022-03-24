@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -26,35 +27,55 @@ type KafkaNotifier struct {
 	tmpl     *template.Template
 }
 
-// NewKafkaNotifier is the constructor function for the Kafka notifier.
-func NewKafkaNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*KafkaNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
+type KafkaConfig struct {
+	*NotificationChannelConfig
+	Endpoint string
+	Topic    string
+}
 
-	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
+func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewKafkaConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewKafkaNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewKafkaConfig(config *NotificationChannelConfig) (*KafkaConfig, error) {
+	endpoint := config.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka rest proxy endpoint property in settings"}
+		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
 	}
-	topic := model.Settings.Get("kafkaTopic").MustString()
+	topic := config.Settings.Get("kafkaTopic").MustString()
 	if topic == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka topic property in settings"}
+		return nil, errors.New("could not find kafka topic property in settings")
 	}
+	return &KafkaConfig{
+		NotificationChannelConfig: config,
+		Endpoint:                  endpoint,
+		Topic:                     topic,
+	}, nil
+}
 
+// NewKafkaNotifier is the constructor function for the Kafka notifier.
+func NewKafkaNotifier(config *KafkaConfig, ns notifications.WebhookSender, t *template.Template) *KafkaNotifier {
 	return &KafkaNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		Endpoint: endpoint,
-		Topic:    topic,
+		Endpoint: config.Endpoint,
+		Topic:    config.Topic,
 		log:      log.New("alerting.notifier.kafka"),
 		ns:       ns,
 		tmpl:     t,
-	}, nil
+	}
 }
 
 // Notify sends the alert notification.

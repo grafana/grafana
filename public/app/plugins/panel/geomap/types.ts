@@ -2,7 +2,7 @@ import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 import BaseLayer from 'ol/layer/Base';
-import { Units } from 'ol/proj/Units';
+import Units from 'ol/proj/Units';
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
