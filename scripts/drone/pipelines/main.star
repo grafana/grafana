@@ -169,7 +169,7 @@ def trigger_test_release():
             'cd grafana-enterprise',
             'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
             'cd -',
-            'git remote add downstream https://github.com/grafana/$${DOWNSTREAM}.git',
+            'git remote add downstream https://github.com/grafana/$${DOWNSTREAM_REPO}.git',
             'git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG}',
         ],
         'failure': 'ignore',

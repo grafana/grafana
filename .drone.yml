@@ -709,7 +709,7 @@ steps:
   - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
     && git push origin $${TEST_TAG}
   - cd -
-  - git remote add downstream https://github.com/grafana/$${DOWNSTREAM}.git
+  - git remote add downstream https://github.com/grafana/$${DOWNSTREAM_REPO}.git
   - git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag
     $${TEST_TAG} && git push downstream $${TEST_TAG}
   environment:
@@ -4409,6 +4409,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a0dade6263da9db443e6f1ad8d23fcda7d962451ef07dbc6cc9f9fd2ae1d3bc1
+hmac: f8ee7ebfe0dd8221b71c0f0d01fa7dfd41be01526959c35b6f2eb4069babbf51
 
 ...
