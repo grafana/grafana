@@ -20,8 +20,13 @@ describe('Explore: interpolation', () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
-        queries: [{ refId: 'A', expr: '{ from="${__from}", to="${__to}" }' }],
+        queries: [{ refId: 'A', expr: '{ job="a", from="${__from}", to="${__to}" }' }],
         range: { from: '1600000000000', to: '1700000000000' },
+      }),
+      right: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'b', expr: '{ job="b", from="${__from}", to="${__to}" }' }],
+        range: { from: '1800000000000', to: '1900000000000' },
       }),
     };
     const { datasources } = setupExplore({ urlParams });
@@ -34,6 +39,8 @@ describe('Explore: interpolation', () => {
 
     await waitForExplore();
 
-    expect(fakeFetch).toBeCalledWith('{ from="1600000000000", to="1700000000000" }');
+    expect(fakeFetch).toBeCalledTimes(2);
+    expect(fakeFetch).toHaveBeenCalledWith('{ job="a", from="1600000000000", to="1700000000000" }');
+    expect(fakeFetch).toHaveBeenCalledWith('{ job="b", from="1800000000000", to="1900000000000" }');
   });
 });
