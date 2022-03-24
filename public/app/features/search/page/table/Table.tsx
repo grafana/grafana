@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
 import { DataFrame, DataFrameType, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
@@ -14,7 +14,7 @@ type Props = {
 };
 
 type TableColumn = Column & {
-  field: Field;
+  field?: Field;
 };
 
 interface FieldAccess {
@@ -61,6 +61,23 @@ const generateColumns = (
   const columns: TableColumn[] = [];
 
   let width = Math.max(availableWidth * 0.2, 200);
+
+  columns.push({
+    id: `column-checkbox`,
+    Header: () => (
+      <div className={styles.checkboxHeader}>
+        <Checkbox onChange={() => {}} />
+      </div>
+    ),
+    Cell: () => (
+      <div className={styles.checkbox}>
+        <Checkbox onChange={() => {}} />
+      </div>
+    ),
+    accessor: 'check',
+    field: access.name!,
+    width: 60,
+  });
 
   columns.push({
     Cell: DefaultCell,
@@ -186,6 +203,20 @@ export const Table = ({ data, width }: Props) => {
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
+            if (cell.column.id === 'column-checkbox') {
+              return (
+                <div key={index} className={styles.cellWrapper}>
+                  <TableCell
+                    key={index}
+                    tableStyles={tableStyles}
+                    cell={cell}
+                    columnIndex={index}
+                    columnCount={row.cells.length}
+                  />
+                </div>
+              );
+            }
+
             return (
               <a href={url} key={index}>
                 <div className={styles.cellWrapper}>
@@ -292,6 +323,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
+    `,
+    checkboxHeader: css`
+      display: flex;
+      justify-content: flex-start;
+      width: 50px;
+    `,
+    checkbox: css`
+      width: 55px;
+      margin-left: 10px;
+      margin-top: 5px;
     `,
   };
 };
