@@ -1,7 +1,7 @@
 import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, IconName, Link, useTheme2 } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 
 export interface Props {
   icon?: IconName;
@@ -14,9 +14,6 @@ export interface Props {
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
-  canPin?: boolean;
-  pinned?: boolean;
-  onTogglePin?: () => void;
 }
 
 export function NavBarMenuItem({
@@ -29,19 +26,9 @@ export function NavBarMenuItem({
   text,
   url,
   isMobile = false,
-  canPin = false,
-  pinned = false,
-  onTogglePin,
 }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, styleOverrides);
-
-  const onClickPin = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    onTogglePin?.();
-  };
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -78,17 +65,7 @@ export function NavBarMenuItem({
     return isDivider ? (
       <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
     ) : (
-      <li className={styles.listItem}>
-        {element}
-        {canPin && (
-          <IconButton
-            name="anchor"
-            className={cx('pin-button', styles.pinButton, { [styles.visible]: pinned })}
-            onClick={onClickPin}
-            tooltip={`${pinned ? 'Unpin' : 'Pin'} menu item`}
-          />
-        )}
-      </li>
+      <li className={styles.listItem}>{element}</li>
     );
   }
 
