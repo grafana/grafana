@@ -313,6 +313,19 @@ describe('Receivers', () => {
     });
   });
 
+  it('Hides create contact point button for users without permission', () => {
+    mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+    mocks.api.updateConfig.mockResolvedValue();
+    mocks.contextSrv.hasAccess.mockImplementation((action) =>
+      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead].some(
+        (a) => a === action
+      )
+    );
+    renderReceivers();
+
+    expect(ui.newContactPointButton.query()).not.toBeInTheDocument();
+  });
+
   it('Cloud alertmanager receiver can be edited', async () => {
     mocks.api.fetchConfig.mockResolvedValue(someCloudAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
