@@ -3,24 +3,42 @@ import { Label, stylesFactory, useTheme2, VizLegendItem } from '@grafana/ui';
 import { formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
-import { DimensionSupplier } from 'app/features/dimensions';
+import { DimensionSupplier, ResourceDimensionConfig } from 'app/features/dimensions';
 import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale';
+import SVG from 'react-inlinesvg';
 
 export interface MarkersLegendProps {
   color?: DimensionSupplier<string>;
   size?: DimensionSupplier<number>;
+  symbol?: ResourceDimensionConfig;
+  layerName?: string;
+  opacity?: number;
 }
 
 export function MarkersLegend(props: MarkersLegendProps) {
-  const { color } = props;
+  const { color, symbol, layerName, opacity } = props;
   const theme = useTheme2();
+  const style = getStyles(theme);
 
-  if (!color || (!color.field && color.fixed)) {
+  if (!color) {
     return <></>;
   }
 
-  const style = getStyles(theme);
+  if (color && !color.field && color.fixed && symbol?.fixed) {
+    return (
+      <div className={style.fixedColorContainer}>
+        <SVG
+          src={`public/${symbol.fixed}`}
+          className={style.legendSymbol}
+          title={'Symbol'}
+          style={{ fill: color.fixed, opacity: opacity }}
+        />
+        <span>{layerName}</span>
+      </div>
+    )
+  }
+
   const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
   const colorMode = getFieldColorModeForField(color!.field!);
 
@@ -94,6 +112,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   legendItem: css`
     white-space: nowrap;
+  `,
+  fixedColorContainer: css`
+    display: flex;
+    min-width: 70px;
+    font-size: ${theme.typography.bodySmall.fontSize};
+    padding: ${theme.spacing(0, 0.5)};
+  `,
+  legendSymbol: css`
+    height: 10px;
+    width: 10px;
+    margin: auto;
   `,
   gradientContainer: css`
     min-width: 200px;

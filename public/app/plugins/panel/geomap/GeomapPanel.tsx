@@ -46,6 +46,7 @@ type Props = PanelProps<GeomapPanelOptions>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
+  legends: ReactNode[];
 }
 
 export interface GeomapLayerActions {
@@ -82,7 +83,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { ttipOpen: false };
+    this.state = { ttipOpen: false, legends: [] };
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
@@ -124,7 +125,7 @@ export class GeomapPanel extends Component<Props, State> {
       layers: layers.slice(1).map((v) => v.options),
     });
 
-    // Notify the the panel editor
+    // Notify the panel editor
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         map: this.map,
@@ -482,10 +483,9 @@ export class GeomapPanel extends Component<Props, State> {
       options.name = this.getNextLayerName();
     }
 
-    let legend: React.ReactNode[] = [];
-
+    // @TODO update legend on delete/update
     if (handler.legend) {
-      legend = [<div key="legend">{handler.legend}</div>];
+      this.setState({ legends: [...this.state.legends, <div key={options.name}>{handler.legend}</div>] });
     }
 
     const UID = options.name;
@@ -503,8 +503,6 @@ export class GeomapPanel extends Component<Props, State> {
         this.updateLayer(UID, cfg);
       },
     };
-
-    this.setState({ bottomLeft: legend });
 
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
@@ -608,14 +606,14 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    const { ttip, ttipOpen, topRight, bottomLeft } = this.state;
+    const { ttip, ttipOpen, topRight, legends } = this.state;
 
     return (
       <>
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
+          <GeomapOverlay bottomLeft={legends} topRight={topRight} />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>

@@ -119,28 +119,26 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         }
 
         for (const frame of data.series) {
-          if (style.fields) {
-            const dims: StyleDimensions = {};
-            if (style.fields.color) {
-              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
-            }
-            if (style.fields.size) {
-              dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
-            }
-            if (style.fields.text) {
-              dims.text = getTextDimension(frame, style.config.text!);
-            }
-            if (style.fields.rotation) {
-              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
-            }
-            style.dims = dims;
+          const dims: StyleDimensions = {};
+
+          dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
+          dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
+          dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
+
+          if (style.config.text && (style.config.text.field || style.config.text.fixed)) {
+            dims.text = getTextDimension(frame, style.config.text);
           }
+
+          style.dims = dims;
 
           // Post updates to the legend component
           if (legend) {
             legendProps.next({
               color: style.dims?.color,
               size: style.dims?.size,
+              opacity: style.config.opacity,
+              symbol: style.config.symbol,
+              layerName: options.name,
             });
           }
 
