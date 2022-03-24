@@ -172,7 +172,7 @@ describe('RuleEditor', () => {
     userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: 'Prom', customRulerEnabled: false, apiVersion: 'legacy' },
+      { dataSourceName: 'Prom', apiVersion: 'legacy' },
       'namespace2',
       {
         name: 'group2',
@@ -266,7 +266,7 @@ describe('RuleEditor', () => {
     userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, customRulerEnabled: false, apiVersion: 'legacy' },
+      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
       'Folder A',
       {
         interval: '1m',
@@ -373,7 +373,7 @@ describe('RuleEditor', () => {
     userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: 'Prom', customRulerEnabled: false, apiVersion: 'legacy' },
+      { dataSourceName: 'Prom', apiVersion: 'legacy' },
       'namespace2',
       {
         name: 'group2',
@@ -469,7 +469,7 @@ describe('RuleEditor', () => {
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, customRulerEnabled: false, apiVersion: 'legacy' },
+      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
       'Folder A',
       {
         interval: '1m',

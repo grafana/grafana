@@ -12,16 +12,12 @@ export interface FetchPromRulesFilter {
 
 export interface PrometheusDataSourceConfig {
   dataSourceName: string;
-  customRulerEnabled: boolean;
 }
 
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
-  const { dataSourceName, customRulerEnabled } = dataSourceConfig;
+  const { dataSourceName } = dataSourceConfig;
 
   const searchParams = new URLSearchParams();
-  if (customRulerEnabled) {
-    searchParams.set('source', 'ruler');
-  }
 
   return {
     rules: (filter?: FetchPromRulesFilter) => {
@@ -40,16 +36,12 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
   };
 }
 
-export async function fetchRules(
-  dataSourceName: string,
-  filter?: FetchPromRulesFilter,
-  customRulerEnabled = false
-): Promise<RuleNamespace[]> {
+export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
   }
 
-  const { url, params } = prometheusUrlBuilder({ dataSourceName, customRulerEnabled }).rules(filter);
+  const { url, params } = prometheusUrlBuilder({ dataSourceName }).rules(filter);
 
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({

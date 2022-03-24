@@ -175,15 +175,8 @@ export interface StateHistoryItem {
   data: StateHistoryItemData;
 }
 
-export enum PromRulerMode {
-  NotSupported = 'NotSupported',
-  Default = 'Default',
-  Custom = 'Custom',
-}
-
 export interface RulerDataSourceConfig {
   dataSourceName: string;
-  customRulerEnabled: boolean;
   apiVersion: 'legacy' | 'config';
 }
 

@@ -28,7 +28,6 @@ export interface HttpSettingsBaseProps<JSONData = any, SecureJSONData = any> {
 }
 
 export interface HttpSettingsProps extends HttpSettingsBaseProps {
-  title?: string;
   /** The default url for the data source */
   defaultUrl: string;
   /** Show the http access help box */
