@@ -11,6 +11,8 @@ import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { useDispatch } from 'react-redux';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { ModalsContext } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { DashboardSavedEvent } from 'app/types/events';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -36,8 +38,14 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       setState({ originalPath, original });
     }, 1000);
 
+    const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
+      const original = dashboard.getSaveModelClone();
+      setState({ original });
+    });
+
     return () => {
       clearTimeout(timeoutId);
+      savedEventUnsub.unsubscribe();
     };
   }, [dashboard]);
 
