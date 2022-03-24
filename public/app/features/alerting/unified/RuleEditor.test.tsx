@@ -388,7 +388,7 @@ describe('RuleEditor', () => {
               grafana_alert: {
                 uid,
                 namespace_uid: 'abcd',
-                namespace_id: 1,
+                rule_group: '123',
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Alerting,

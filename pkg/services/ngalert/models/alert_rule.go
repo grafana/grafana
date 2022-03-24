@@ -265,6 +265,12 @@ type ListRuleGroupAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
+type OrgRuleGroupResult struct {
+	GroupName string `xorm:"group_name"`
+	GroupUID  string `xorm:"group_uid"`
+	Namespace string `xorm:"namespace"`
+}
+
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
 type ListOrgRuleGroupsQuery struct {
 	OrgID         int64
@@ -275,7 +281,7 @@ type ListOrgRuleGroupsQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	Result [][]string
+	Result []OrgRuleGroupResult
 }
 
 // Condition contains backend expressions and queries and the RefID

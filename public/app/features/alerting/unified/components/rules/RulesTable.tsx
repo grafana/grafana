@@ -1,9 +1,8 @@
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
 import { RuleDetails } from './RuleDetails';
-import { isCloudRulesSource } from '../../utils/datasource';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotation } from '../../utils/constants';
@@ -137,8 +136,13 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
           const { namespace, group } = rule;
-          const { rulesSource } = namespace;
-          return isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
+          return (
+            <>
+              {namespace.name}
+              <Icon name="angle-right" />
+              {group.name}
+            </>
+          );
         },
         size: 5,
       });

@@ -81,8 +81,8 @@ export const mockRulerGrafanaRule = (
     grafana_alert: {
       uid: '123',
       title: 'myalert',
-      namespace_uid: '123',
-      namespace_id: 1,
+      namespace_uid: 'default',
+      rule_group: '123',
       condition: 'A',
       no_data_state: GrafanaAlertStateDecision.Alerting,
       exec_err_state: GrafanaAlertStateDecision.Alerting,

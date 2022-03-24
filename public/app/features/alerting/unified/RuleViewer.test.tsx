@@ -91,8 +91,8 @@ const mockGrafanaRule = {
     labels: {},
     grafana_alert: {
       condition: 'B',
+      rule_group: '123',
       exec_err_state: GrafanaAlertStateDecision.Alerting,
-      namespace_id: 11,
       namespace_uid: 'namespaceuid123',
       no_data_state: GrafanaAlertStateDecision.NoData,
       title: 'Test alert',

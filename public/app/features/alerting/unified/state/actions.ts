@@ -21,7 +21,6 @@ import {
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import {
-  PostableRuleDTO,
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
@@ -58,7 +57,6 @@ import {
   getAllRulesSourceNames,
   getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
-  isGrafanaRulesSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
@@ -73,7 +71,7 @@ import {
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute, isFetchError } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
-import { isEmpty } from 'lodash';
+import { isEmpty, reject } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
@@ -253,17 +251,13 @@ export const fetchEditableRuleAction = createAsyncThunk(
 
 async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
-  // in case of GRAFANA, each group implicitly only has one rule. delete the group.
-  if (isGrafanaRulesSource(ruleSourceName)) {
-    await deleteRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group.name);
-    return;
-  }
-  // in case of CLOUD
-  // it was the last rule, delete the entire group
+
+  // if it was the last rule, delete the entire group
   if (group.rules.length === 1) {
     await deleteRulerRulesGroup(ruleSourceName, namespace, group.name);
     return;
   }
+
   // post the group with rule removed
   await setRulerRuleGroup(ruleSourceName, namespace, {
     ...group,
@@ -377,11 +371,11 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
   }
 
   const groupName = folder.title;
-  const namespace = 'default'; // we can add support for a custom namespace later
+  const namespace = 'default'; // TODO we can add support for a custom namespace later
 
   // fetch existing group details and rules
   const existingGroup = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, groupName);
-  const existingRulesForGroup: PostableRuleDTO[] = existingGroup ? existingGroup.rules : [];
+  const existingRulesForGroup = existingGroup ? existingGroup.rules : [];
 
   // updating an existing rule...
   if (existing) {
@@ -392,13 +386,19 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
     }
 
     // if same folder, repost the group with updated rule
-    if (freshExisting.namespace === folder.title) {
+    if (freshExisting.group.name === groupName) {
       const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid!;
       formRule.grafana_alert.uid = uid;
+
+      // omit the old rule from the payload
+      const previousRules = reject(existingRulesForGroup as RulerGrafanaRuleDTO[], (rule) => {
+        return rule.grafana_alert.uid === uid;
+      });
+
       await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, freshExisting.namespace, {
         name: freshExisting.group.name,
         interval: evaluateEvery,
-        rules: [...existingRulesForGroup, formRule],
+        rules: [...previousRules, formRule],
       });
       return { uid };
     }
@@ -412,7 +412,7 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
   await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, namespace, payload);
 
   // now refetch this group to get the uid, hah
-  const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, groupName);
+  const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, groupName);
   const newUid = (result?.rules[0] as RulerGrafanaRuleDTO)?.grafana_alert?.uid;
   if (newUid) {
     // if folder has changed, delete the old one

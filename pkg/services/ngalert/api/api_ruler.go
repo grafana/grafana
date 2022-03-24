@@ -65,13 +65,14 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 }
 
 func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	groupName, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespace := web.Params(c.Req)[":Namespace"]
+	groupName := web.Params(c.Req)[":Groupname"]
+
+	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), groupName, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toGroupNameErrorResponse(err)
 	}
-	ruleGroup := web.Params(c.Req)[":Groupname"]
-	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, groupName.Uid, ruleGroup)
+	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace, folder.Uid)
 
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
@@ -132,8 +133,10 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 }
 
 func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
+	namespace := web.Params(c.Req)[":Namespace"]
+	groupName := web.Params(c.Req)[":Groupname"]
+
+	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), groupName, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return toGroupNameErrorResponse(err)
 	}
@@ -141,8 +144,8 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	ruleGroup := web.Params(c.Req)[":Groupname"]
 	q := ngmodels.ListRuleGroupAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
-		NamespaceUID: namespace.Uid,
-		RuleGroup:    ruleGroup,
+		NamespaceUID: namespace,
+		RuleGroup:    folder.Uid,
 	}
 	if err := srv.store.GetRuleGroupAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
@@ -254,7 +257,6 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	groupName := ruleGroupConfig.Name
 	orgId := c.SignedInUser.OrgId
 
-	// TODO make sure we check if the namespace (which is a Grafana org) exists
 	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), groupName, orgId, c.SignedInUser, true)
 	if err != nil {
 		return toGroupNameErrorResponse(err)

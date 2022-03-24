@@ -20,6 +20,9 @@ import (
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
 const AlertRuleMaxTitleLength = 190
 
+// AlertRuleMaxNamespaceLength is the maximum length of the alert rule namespace
+const AlertRuleMaxNamespaceLength = 190
+
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
 
@@ -185,10 +188,12 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
+
 		for _, r := range rules {
 			var parentVersion int64
-			switch r.Existing {
-			case nil: // new rule
+
+			// new rule
+			if r.Existing == nil {
 				uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
 				if err != nil {
 					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
@@ -204,7 +209,7 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 					return err
 				}
 				newRules = append(newRules, r.New)
-			default:
+			} else {
 				r.New.ID = r.Existing.ID
 				r.New.Version = r.Existing.Version + 1
 
@@ -461,6 +466,11 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	// enfore max name length in SQLite
 	if len(alertRule.Title) > AlertRuleMaxTitleLength {
 		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxTitleLength)
+	}
+
+	// enfore max namespace length in SQLite
+	if len(alertRule.Title) > AlertRuleMaxNamespaceLength {
+		return fmt.Errorf("%w: namespace length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxNamespaceLength)
 	}
 
 	// enfore max rule group name length in SQLite

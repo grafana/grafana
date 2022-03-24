@@ -137,25 +137,20 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	groupMap := make(map[string]*apimodels.RuleGroup)
 
 	for _, r := range ruleGroupQuery.Result {
-		if len(r) < 3 {
-			continue
-		}
-		groupId, namespaceUID, namespace := r[0], r[1], r[2]
-
 		newGroup := &apimodels.RuleGroup{
-			Name:           groupId,
-			File:           namespace, // file is what Prometheus uses for provisioning, we replace it with namespace.
+			Name:           r.GroupName,
+			File:           r.Namespace, // file is what Prometheus uses for provisioning, we replace it with namespace.
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
 
-		groupMap[groupId+"-"+namespaceUID] = newGroup
+		groupMap[r.Namespace+"-"+r.GroupUID] = newGroup
 
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
 	}
 
 	for _, rule := range alertRuleQuery.Result {
-		newGroup, ok := groupMap[rule.RuleGroup+"-"+rule.NamespaceUID]
+		newGroup, ok := groupMap[rule.NamespaceUID+"-"+rule.RuleGroup]
 		if !ok {
 			continue
 		}

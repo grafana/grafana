@@ -238,12 +238,17 @@ func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRul
 			return nil
 		}
 
-		var ruleGroups [][]string
+		var ruleGroups []models.OrgRuleGroupResult
 		for rg := range f.Rules[q.OrgID] {
 			for storedNamespace := range f.Rules[q.OrgID][rg] {
 				for _, namespace := range q.NamespaceUIDs {
 					if storedNamespace == namespace { // if they match, they should go in.
-						ruleGroups = append(ruleGroups, []string{rg, storedNamespace, storedNamespace})
+						ruleGroups = append(ruleGroups, models.OrgRuleGroupResult{
+							// TODO figure this out?
+							Namespace: namespace,
+							GroupName: rg,
+							GroupUID:  rg,
+						})
 					}
 				}
 			}
