@@ -88,9 +88,9 @@ steps:
   - name: intentapi_certs
     path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
-  - /usr/local/bin/etcd -name=etcd-node-0 -listen-client-urls=http://0.0.0.0:2379
-    -advertise-client-urls=http://0.0.0.0:2379 -initial-advertise-peer-urls=http://0.0.0.0:2380
-    -listen-peer-urls=http://0.0.0.0:2380 -initial-cluster=etcd-node-0=http://0.0.0.0:2380
+  - /usr/local/bin/etcd -name=etcd -listen-client-urls=http://0.0.0.0:2379 -advertise-client-urls=http://0.0.0.0:2379
+    -initial-advertise-peer-urls=http://0.0.0.0:2380 -listen-peer-urls=http://0.0.0.0:2380
+    -initial-cluster=etcd=http://0.0.0.0:2380
   detach: true
   image: quay.io/coreos/etcd:v3.5.2
   name: etcd
@@ -100,7 +100,7 @@ steps:
     --tls-private-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/kubernetes-key.pem
     --service-account-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account.pem
     --service-account-signing-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account-key.pem
-    --service-account-issuer=https://localhost:6443
+    --service-account-issuer=https://0.0.0.0:6443
   depends_on:
   - etcd
   - generate_intentapi_certs
@@ -112,7 +112,7 @@ steps:
   - name: intentapi_certs
     path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
-  - dockerize -wait http://etc:2379 -timeout 120s
+  - dockerize -wait http://etcd:2379 -timeout 120s
   - dockerize -wait https://apiserver:6443 -timeout 120s
   depends_on:
   - etcd
@@ -590,6 +590,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a2dd409dc201c84e7ea83619b3176700b71ce1cca5f92ec24553d57b4bb6a3f7
+hmac: 297565cc3fbf936ca83eb410fce40d88c147cbc63ba3f1a0300d843bfa62c829
 
 ...

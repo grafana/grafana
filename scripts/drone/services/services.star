@@ -79,12 +79,12 @@ def intentapi_services():
             'detach': True,
             'commands': [
                 '/usr/local/bin/etcd' +
-                ' -name=etcd-node-0' +
+                ' -name=etcd' +
                 ' -listen-client-urls=http://0.0.0.0:2379' +
                 ' -advertise-client-urls=http://0.0.0.0:2379' +
                 ' -initial-advertise-peer-urls=http://0.0.0.0:2380' +
                 ' -listen-peer-urls=http://0.0.0.0:2380' +
-                ' -initial-cluster=etcd-node-0=http://0.0.0.0:2380'
+                ' -initial-cluster=etcd=http://0.0.0.0:2380'
             ],
         },
         {
@@ -106,7 +106,7 @@ def intentapi_services():
                 ' --tls-private-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/kubernetes-key.pem' +
                 ' --service-account-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account.pem' +
                 ' --service-account-signing-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account-key.pem' +
-                ' --service-account-issuer=https://localhost:6443'
+                ' --service-account-issuer=https://0.0.0.0:6443'
             ],
             'volumes': [
                 {
@@ -123,7 +123,7 @@ def intentapi_services():
                 'apiserver',
             ],
             'commands': [
-                'dockerize -wait http://etc:2379 -timeout 120s',
+                'dockerize -wait http://etcd:2379 -timeout 120s',
                 'dockerize -wait https://apiserver:6443 -timeout 120s',
             ],
             'volumes': [

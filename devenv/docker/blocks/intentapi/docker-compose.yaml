@@ -19,7 +19,7 @@
       - --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
       - --service-account-issuer=https://localhost:6443
 
-  etcd:
+  etcd-node-0:
     image: quay.io/coreos/etcd:v${etcd_version}
     restart: on-failure
     ports:
