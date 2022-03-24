@@ -6,6 +6,7 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 import { changeRangeAction, changeRefreshIntervalAction, timeReducer, updateTime } from './time';
 import { createDefaultInitialState } from './helpers';
 import { configureStore } from 'app/store/configureStore';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
 const MOCK_TIME_RANGE = {};
 
@@ -27,6 +28,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Explore item reducer', () => {
+  beforeEach(() => {
+    silenceConsoleOutput();
+  });
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
       const { dispatch } = configureStore({
