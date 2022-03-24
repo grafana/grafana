@@ -96,6 +96,7 @@ type HTTPServer struct {
 	RemoteCacheService           *remotecache.RemoteCache
 	ProvisioningService          provisioning.ProvisioningService
 	Login                        login.Service
+	AuthInfoService              login.AuthInfoService
 	License                      models.Licensing
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
@@ -133,7 +134,6 @@ type HTTPServer struct {
 	teamGuardian                 teamguardian.TeamGuardian
 	queryDataService             *query.Service
 	serviceAccountsService       serviceaccounts.Service
-	authInfoService              login.AuthInfoService
 	teamPermissionsService       accesscontrol.PermissionsService
 	permissionServices           accesscontrol.PermissionsServices
 	NotificationService          *notifications.NotificationService
@@ -235,7 +235,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamGuardian:                 teamGuardian,
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
-		authInfoService:              authInfoService,
+		AuthInfoService:              authInfoService,
 		NotificationService:          notificationService,
 		dashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,

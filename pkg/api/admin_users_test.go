@@ -288,7 +288,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
-			authInfoService: &mockAuthInfoService{},
+			AuthInfoService: &mockAuthInfoService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -409,7 +409,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 			Bus:              bus.GetBus(),
 			SQLStore:         mockstore.NewSQLStoreMock(),
 			AuthTokenService: fakeAuthTokenService,
-			authInfoService:  authInfoService,
+			AuthInfoService:  authInfoService,
 		}
 
 		sc := setupScenarioContext(t, url)

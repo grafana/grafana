@@ -29,8 +29,10 @@ var loginLogger = log.New("login")
 
 var AuthenticateUserFunc = AuthenticateUser
 
-func Init() {
-	bus.AddHandler("auth", AuthenticateUser)
+func Init(store sqlstore.Store, loginService login.Service, authInfoService login.AuthInfoService) {
+	bus.AddHandler("auth", func(ctx context.Context, query *models.LoginUserQuery) error {
+		return AuthenticateUser(ctx, query, store, loginService, authInfoService)
+	})
 }
 
 // AuthenticateUser authenticates the user via username & password

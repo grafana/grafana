@@ -50,7 +50,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, bus.New(), secretsService)
 		srv := authinfoservice.ProvideAuthInfoService(&authinfoservice.OSSUserProtectionImpl{}, authInfoStore)
-		hs.authInfoService = srv
+		hs.AuthInfoService = srv
 
 		createUserCmd := models.CreateUserCommand{
 			Email:   fmt.Sprint("user", "@test.com"),

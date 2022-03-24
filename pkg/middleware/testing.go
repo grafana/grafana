@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -34,6 +35,8 @@ type scenarioContext struct {
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
 	sqlStore             sqlstore.Store
+	loginService         login.Service
+	authInfoService      login.AuthInfoService
 	contextHandler       *contexthandler.ContextHandler
 
 	req *http.Request

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -78,13 +79,14 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const salt = "Salt"
 
-		login.Init()
+		login.Init(sc.sqlStore, sc.loginService, sc.authInfoService)
+		encoded, err := util.EncodePassword(password, salt)
+		if err != nil {
+			t.Error(err)
+		}
+		sc.sqlStore.(*mockstore.SQLStoreMock).ExpectedUser = &models.User{Password: encoded, Id: id, Salt: salt}
 
 		bus.AddHandler("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
-			encoded, err := util.EncodePassword(password, salt)
-			if err != nil {
-				return err
-			}
 			query.Result = &models.User{
 				Password: encoded,
 				Id:       id,

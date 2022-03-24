@@ -381,7 +381,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		SQLStore:         sqlstoremock,
 		Login:            loginservice.LoginServiceMock{},
-		authInfoService:  sc.authInfoService,
+		AuthInfoService:  sc.authInfoService,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -611,7 +611,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			cfg.LDAPEnabled = true
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &models.User{}}
-			hs.authInfoService = &mockAuthInfoService{}
+			hs.AuthInfoService = &mockAuthInfoService{}
 			hs.Login = &loginservice.LoginServiceMock{}
 			sc.resp = httptest.NewRecorder()
 			sc.req, err = http.NewRequest(test.method, test.url, nil)

@@ -25,8 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -331,6 +332,7 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
+		sc.sqlStore.(*mockstore.SQLStoreMock).ExpectedOrg = &models.Org{}
 		org, err := sc.sqlStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
 		require.NoError(t, err)
 		sc.fakeReq("GET", "/").exec()
@@ -686,6 +688,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore
+		sc.loginService = &fakeLoginService{}
+		sc.authInfoService = &fakeAuthInfoService{}
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
 		sc.m.Use(OrgRedirect(sc.cfg))
@@ -717,7 +721,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()
 
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := mockstore.NewSQLStoreMock()
+	//sqlStore := sqlstore.InitTestDB(t)
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
@@ -741,3 +746,34 @@ type fakeRenderService struct {
 func (s *fakeRenderService) Init() error {
 	return nil
 }
+
+type fakeAuthInfoService struct{}
+
+func (m *fakeAuthInfoService) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+	return nil, nil
+}
+func (m *fakeAuthInfoService) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+	return nil
+}
+
+func (m *fakeAuthInfoService) SetAuthInfo(ctx context.Context, query *models.SetAuthInfoCommand) error {
+	return nil
+}
+
+func (m *fakeAuthInfoService) UpdateAuthInfo(ctx context.Context, query *models.UpdateAuthInfoCommand) error {
+	return nil
+}
+
+func (m *fakeAuthInfoService) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+	return nil
+}
+
+type fakeLoginService struct{}
+
+func (f *fakeLoginService) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
+	return nil, nil
+}
+func (f *fakeLoginService) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
+	return nil
+}
+func (f *fakeLoginService) SetTeamSyncFunc(loginsvc.TeamSyncFunc) {}
