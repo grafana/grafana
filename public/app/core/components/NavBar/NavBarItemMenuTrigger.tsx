@@ -20,10 +20,12 @@ export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   item: NavModelItem;
   isActive?: boolean;
   label: string;
+  menuIdOpen?: string;
+  onSetMenuIdOpen: (key: string) => void;
 }
 
 export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
-  const { item, isActive, label, children: menu, ...rest } = props;
+  const { item, isActive, label, children: menu, menuIdOpen, onSetMenuIdOpen, ...rest } = props;
   const [menuHasFocus, setMenuHasFocus] = useState(false);
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
@@ -55,28 +57,37 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const { focusWithinProps } = useFocusWithin({
     onFocusWithin: (e) => {
       console.log('FOCUS');
-      console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
       // console.log('event focus within', e.target.id);
       // console.log('ref', ref.current?.id);
       // If focus is within the trigger OR a child of it, open the menu
-      state.open();
       if (e.target.parentElement?.getAttribute('aria-labelledby') === ref.current?.id) {
         //setMenuHasFocus(true);
         //state.open();
       }
+      // Set menu open, state 'menuIdOpen' of which menu is open
+      // Only when you focus within the trigger (icon navbar item) not the children
+      if(e.target.id === ref.current?.id){
+        onSetMenuIdOpen(ref.current?.id);
+        state.open();
+      }
+      console.log('menuIdOpen on focus', menuIdOpen);
     },
     onBlurWithin: (e) => {
       console.log('BLUR');
       // console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
-      console.log('event blur within', e.target.id);
+      console.log('menuIdOpen on blur', menuIdOpen);
       console.log('ref', ref.current?.id);
       // If blurring from the top element, close the menu
-      if (
-        e.target.id === ref.current?.id ||
-        e.target.parentElement?.getAttribute('aria-labelledby') !== ref.current?.id
-      ) {
+      // if (
+      //   e.target.id === ref.current?.id ||
+      //   e.target.parentElement?.getAttribute('aria-labelledby') !== ref.current?.id
+      // ) {
+      //   state.close();
+      //   //setMenuHasFocus(false);
+      // }
+      // close the menu if: the menuIdOpen state is different of the current ref.current.id 
+      if(ref.current?.id !== menuIdOpen) {
         state.close();
-        //setMenuHasFocus(false);
       }
     },
     onFocusWithinChange: (isFocused) => {
