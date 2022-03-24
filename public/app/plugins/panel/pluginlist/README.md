@@ -1,3 +1,5 @@
-# Plugin List Panel - Native Plugin
+# This plugin is deprecated and will be removed in future versions. Please use the built-in plugin catalogue instead.
 
-The Plugin List plans shows the installed plugins for your Grafana instance and is **included** with Grafana. It is used on the default Home dashboard.
+## Plugin List Panel - Native Plugin
+
+The Plugin List plans shows the installed plugins for your Grafana instance and is **included** with Grafana.
