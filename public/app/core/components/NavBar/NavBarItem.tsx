@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode } from 'react';
 import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
@@ -46,7 +46,6 @@ const NavBarItem = ({
     menuItemType: NavMenuItemType.Section,
   };
   const items: NavModelItem[] = [section].concat(filteredItems);
-  const [menuIdOpen, setMenuIdOpen] = useState('');
 
   const onNavigate = (item: NavModelItem) => {
     const { url, target, onClick } = item;
@@ -71,10 +70,7 @@ const NavBarItem = ({
         item={section}
         isActive={isActive}
         label={linkText}
-        onSetMenuIdOpen={(menuId) => {
-          setMenuIdOpen(menuId);
-        }}
-        menuIdOpen={menuIdOpen}
+        reverseMenuDirection={reverseMenuDirection}
       >
         <NavBarItemMenu
           items={items}

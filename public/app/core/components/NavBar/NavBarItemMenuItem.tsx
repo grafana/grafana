@@ -17,7 +17,7 @@ export interface NavBarItemMenuItemProps {
 }
 
 export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
-  const { onClose, onLeft, onTab } = useNavBarItemMenuContext();
+  const { onClose, onLeft } = useNavBarItemMenuContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
   const isDisabled = state.disabledKeys.has(key);
@@ -51,9 +51,9 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
       if (e.key === 'ArrowLeft') {
         onLeft();
       }
-      console.info('keyboard tab', e.key);
+      //console.info('keyboard tab', e.key);
       if (e.key === 'ArrowDown') {
-        onTab();
+        //onTab();
       }
       e.continuePropagation();
     },

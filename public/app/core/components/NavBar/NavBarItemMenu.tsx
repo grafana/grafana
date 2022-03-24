@@ -39,7 +39,6 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     // console.log('focusedKey', state.selectionManager.focusedKey );
     // console.log('disabledKeys', state.disabledKeys );
 
-
     // console.log('focused key ' + state.selectionManager.focusedKey);
     if (menuHasFocus && !state.selectionManager.isFocused) {
       state.selectionManager.setFocusedKey(section?.key ?? '');
@@ -92,7 +91,6 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       left: 100%;
       list-style: none;
       min-width: 140px;
-      position: absolute;
       top: ${reverseDirection ? 'auto' : 0};
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};

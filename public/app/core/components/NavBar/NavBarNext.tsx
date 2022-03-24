@@ -17,6 +17,7 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { Branding } from '../Branding/Branding';
 import { useSelector } from 'react-redux';
 import { FocusScope } from '@react-aria/focus';
+import { NavBarContext } from './context';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -58,6 +59,7 @@ export const NavBarNext = React.memo(() => {
   );
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuIdOpen, setMenuIdOpen] = useState<string | null>(null);
 
   if (kiosk !== KioskMode.Off) {
     return null;
@@ -65,72 +67,79 @@ export const NavBarNext = React.memo(() => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
-      <FocusScope>
-      <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
-        <Icon name="bars" size="xl" />
-      </div>
+      <NavBarContext.Provider
+        value={{
+          menuIdOpen: menuIdOpen,
+          setMenuIdOpen: setMenuIdOpen,
+        }}
+      >
+        <FocusScope>
+          <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
+            <Icon name="bars" size="xl" />
+          </div>
 
-      <NavBarSection>
-        <NavBarItemWithoutMenu
-          isActive={isMatchOrChildMatch(homeLink, activeItem)}
-          label="Home"
-          className={styles.grafanaLogo}
-          url={homeUrl}
-        >
-          <Branding.MenuLogo />
-        </NavBarItemWithoutMenu>
-        <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
-          <Icon name="search" size="xl" />
-        </NavBarItem>
-      </NavBarSection>
+          <NavBarSection>
+            <NavBarItemWithoutMenu
+              isActive={isMatchOrChildMatch(homeLink, activeItem)}
+              label="Home"
+              className={styles.grafanaLogo}
+              url={homeUrl}
+            >
+              <Branding.MenuLogo />
+            </NavBarItemWithoutMenu>
+            <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
+              <Icon name="search" size="xl" />
+            </NavBarItem>
+          </NavBarSection>
 
-      <NavBarSection>
-        {coreItems.map((link, index) => (
-          <NavBarItem
-            key={`${link.id}-${index}`}
-            isActive={isMatchOrChildMatch(link, activeItem)}
-            link={{ ...link, subTitle: undefined, onClick: undefined }}
-          >
-            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-          </NavBarItem>
-        ))}
-      </NavBarSection>
+          <NavBarSection>
+            {coreItems.map((link, index) => (
+              <NavBarItem
+                key={`${link.id}-${index}`}
+                isActive={isMatchOrChildMatch(link, activeItem)}
+                link={{ ...link, subTitle: undefined, onClick: undefined }}
+              >
+                {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+              </NavBarItem>
+            ))}
+          </NavBarSection>
 
-      <NavBarSection>
-        {pluginItems.map((link, index) => (
-          <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
-            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-          </NavBarItem>
-        ))}
-      </NavBarSection>
+          <NavBarSection>
+            {pluginItems.map((link, index) => (
+              <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
+                {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+              </NavBarItem>
+            ))}
+          </NavBarSection>
 
-      <div className={styles.spacer} />
+          <div className={styles.spacer} />
 
-      <NavBarSection>
-        {configItems.map((link, index) => (
-          <NavBarItem
-            key={`${link.id}-${index}`}
-            isActive={isMatchOrChildMatch(link, activeItem)}
-            reverseMenuDirection
-            link={link}
-          >
-            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-          </NavBarItem>
-        ))}
-      </NavBarSection>
+          <NavBarSection>
+            {configItems.map((link, index) => (
+              <NavBarItem
+                key={`${link.id}-${index}`}
+                isActive={isMatchOrChildMatch(link, activeItem)}
+                reverseMenuDirection
+                link={link}
+              >
+                {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+              </NavBarItem>
+            ))}
+          </NavBarSection>
 
-      {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-      {menuOpen && (
-        <NavBarMenu
-          activeItem={activeItem}
-          navItems={[searchItem, ...coreItems, ...pluginItems, ...configItems]}
-          onClose={() => setMenuOpen(false)}
-        />
-      )}
-      </FocusScope>
+          {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
+          {menuOpen && (
+            <NavBarMenu
+              activeItem={activeItem}
+              navItems={[searchItem, ...coreItems, ...pluginItems, ...configItems]}
+              onClose={() => setMenuOpen(false)}
+            />
+          )}
+        </FocusScope>
+      </NavBarContext.Provider>
     </nav>
   );
 });

@@ -9,9 +9,9 @@ import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions'
 import { useButton } from '@react-aria/button';
 import { useDialog } from '@react-aria/dialog';
 import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
-import { FocusScope, useFocusManager } from '@react-aria/focus';
+import { FocusScope } from '@react-aria/focus';
 
-import { NavBarItemMenuContext } from './context';
+import { NavBarItemMenuContext, useNavBarContext } from './context';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
 import { reportExperimentView } from '@grafana/runtime';
 
@@ -20,16 +20,15 @@ export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   item: NavModelItem;
   isActive?: boolean;
   label: string;
-  menuIdOpen?: string;
-  onSetMenuIdOpen: (key: string) => void;
+  reverseMenuDirection: boolean;
 }
 
 export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
-  const { item, isActive, label, children: menu, menuIdOpen, onSetMenuIdOpen, ...rest } = props;
+  const { item, isActive, label, children: menu, reverseMenuDirection, ...rest } = props;
   const [menuHasFocus, setMenuHasFocus] = useState(false);
+  const { menuIdOpen, setMenuIdOpen } = useNavBarContext();
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
-  //console.log('Start', menuHasFocus);
 
   // Create state based on the incoming props
   const state = useMenuTriggerState({ ...rest });
@@ -54,57 +53,24 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     },
   });
 
+  useEffect(() => {
+    if (menuIdOpen !== ref.current?.id) {
+      state.close();
+      setMenuHasFocus(false);
+    } else {
+      state.open();
+      ref.current?.focus();
+    }
+  }, [menuIdOpen]);
+
   const { focusWithinProps } = useFocusWithin({
     onFocusWithin: (e) => {
-      console.log('FOCUS');
-      // console.log('event focus within', e.target.id);
-      // console.log('ref', ref.current?.id);
-      // If focus is within the trigger OR a child of it, open the menu
-      if (e.target.parentElement?.getAttribute('aria-labelledby') === ref.current?.id) {
-        //setMenuHasFocus(true);
-        //state.open();
-      }
-      // Set menu open, state 'menuIdOpen' of which menu is open
-      // Only when you focus within the trigger (icon navbar item) not the children
-      if(e.target.id === ref.current?.id){
-        onSetMenuIdOpen(ref.current?.id);
-        state.open();
-      }
-      console.log('menuIdOpen on focus', menuIdOpen);
-    },
-    onBlurWithin: (e) => {
-      console.log('BLUR');
-      // console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
-      console.log('menuIdOpen on blur', menuIdOpen);
-      console.log('ref', ref.current?.id);
-      // If blurring from the top element, close the menu
-      // if (
-      //   e.target.id === ref.current?.id ||
-      //   e.target.parentElement?.getAttribute('aria-labelledby') !== ref.current?.id
-      // ) {
-      //   state.close();
-      //   //setMenuHasFocus(false);
-      // }
-      // close the menu if: the menuIdOpen state is different of the current ref.current.id 
-      if(ref.current?.id !== menuIdOpen) {
-        state.close();
-      }
-    },
-    onFocusWithinChange: (isFocused) => {
-      // console.log('Has focus: ' + menuHasFocus);
-      // console.log('Is focused: ' + isFocused);
-      // console.log('state', { state });
-      if (isFocused) {
-        //state.open();
-      }
-      if (!isFocused) {
-        //state.close();
-        //setMenuHasFocus(false);
+      if (e.target.id === ref.current?.id) {
+        // If focussing on the trigger itself, set the menu id that is open
+        setMenuIdOpen(ref.current?.id);
       }
     },
   });
-
-  const focusManager = useFocusManager();
 
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
@@ -189,8 +155,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   let { overlayProps: overlayPositionProps } = useOverlayPosition({
     targetRef: ref,
     overlayRef,
-    placement: 'top',
-    offset: 5,
+    placement: reverseMenuDirection ? 'right bottom' : 'right top',
     isOpen: state.isOpen,
   });
 
@@ -207,11 +172,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
               onLeft: () => {
                 setMenuHasFocus(false);
                 ref.current?.focus();
-              },
-              onTab: () => {
-                console.info('context tab');
-                setMenuHasFocus(false);
-                focusManager.focusNext();
               },
             }}
           >
