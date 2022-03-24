@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -403,7 +402,7 @@ func (st DBstore) GetFolderByTitle(ctx context.Context, title string, orgID int6
 		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
-				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", strconv.FormatInt(orgID, 10), "orgId", orgID, "error", err)
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "group name", folder.Title, "orgId", orgID, "error", err)
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
