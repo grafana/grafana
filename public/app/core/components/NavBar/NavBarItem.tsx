@@ -12,6 +12,8 @@ import { NavBarItemMenu } from './NavBarItemMenu';
 import { getNavModelItemKey } from './utils';
 import { useLingui } from '@lingui/react';
 import menuItemTranslations from './navBarItem-translations';
+import { useFocusManager } from '@react-aria/focus';
+import { useKeyboard } from '@react-aria/interactions';
 
 export interface Props {
   isActive?: boolean;
@@ -33,7 +35,7 @@ const NavBarItem = ({
   const { i18n } = useLingui();
   const theme = useTheme2();
   const menuItems = link.children ?? [];
-
+  const focusManager = useFocusManager();
   // Spreading `menuItems` here as otherwise we'd be mutating props
   const menuItemsSorted = reverseMenuDirection ? [...menuItems].reverse() : menuItems;
   const filteredItems = menuItemsSorted
@@ -61,6 +63,17 @@ const NavBarItem = ({
       window.open(url, target);
     }
   };
+
+  let { keyboardProps } = useKeyboard({
+    onKeyDown: (e) => {
+      switch (e.key) {
+        case 'ArrowDown':
+          console.log('dowwwn');
+          focusManager.focusNext();
+          break;
+      }
+    },
+  });
 
   const translationKey = link.id && menuItemTranslations[link.id];
   const linkText = translationKey ? i18n._(translationKey) : link.text;

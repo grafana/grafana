@@ -16,6 +16,7 @@ import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { Branding } from '../Branding/Branding';
 import { useSelector } from 'react-redux';
+import { FocusScope } from '@react-aria/focus';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -64,6 +65,7 @@ export const NavBarNext = React.memo(() => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
+      <FocusScope>
       <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
         <Icon name="bars" size="xl" />
       </div>
@@ -128,6 +130,7 @@ export const NavBarNext = React.memo(() => {
           onClose={() => setMenuOpen(false)}
         />
       )}
+      </FocusScope>
     </nav>
   );
 });
