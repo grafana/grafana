@@ -96,7 +96,7 @@ steps:
   name: etcd
 - commands:
   - apt-get update
-  - apt-get install -yq kubectl
+  - apt-get install -y ca-certificates curl
   - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
     -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
@@ -582,6 +582,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 608346c93b4c28479a4bdfbcbbdd7264fab4649c7bb4bdadce9bd88c8a69710f
+hmac: 17ce02537a59525140f36d1b984df6f7a3adc83797e8414601803d216c89fc69
 
 ...

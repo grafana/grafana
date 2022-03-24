@@ -92,7 +92,7 @@ def intentapi_services():
             'detach': True,
             'commands': [
                 'apt-get update',
-                'apt-get install -yq kubectl',
+                'apt-get install -y ca-certificates curl',
                 'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
                 'chmod +x /usr/local/bin/docker-compose',
                 'ls -l /drone/src/devenv/docker/blocks/intentapi/certs',
