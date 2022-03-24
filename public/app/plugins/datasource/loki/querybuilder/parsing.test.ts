@@ -53,7 +53,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with line filters and escaped characters', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} |= "\\line"')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} |= "\\\\line"')).toEqual(
       noErrors({
         labels: [
           {
