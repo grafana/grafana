@@ -94,8 +94,6 @@ export const fetchPromRulesAction = createAsyncThunk(
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
-    // const dsConfig = getDataSourceConfig(thunkAPI.getState, rulesSourceName);
-
     return await withSerializedError(fetchRules(rulesSourceName, filter));
   }
 );
@@ -170,12 +168,14 @@ export const fetchRulerRulesAction = createAsyncThunk(
 );
 
 export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceName: string }): ThunkResult<void> {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
-    await Promise.allSettled([
-      dispatch(fetchPromRulesAction({ rulesSourceName })),
-      dispatch(fetchRulerRulesAction({ rulesSourceName })),
-    ]);
+    const dsConfig = getDataSourceConfig(getState, rulesSourceName);
+
+    await dispatch(fetchPromRulesAction({ rulesSourceName }));
+    if (dsConfig.rulerConfig) {
+      await dispatch(fetchRulerRulesAction({ rulesSourceName }));
+    }
   };
 }
 
@@ -267,7 +267,7 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
       if (force || !promRules[rulesSourceName]?.loading) {
         dispatch(fetchPromRulesAction({ rulesSourceName }));
       }
-      if (force || !rulerRules[rulesSourceName]?.loading || dataSourceConfig.rulerConfig) {
+      if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
         dispatch(fetchRulerRulesAction({ rulesSourceName }));
       }
     });
