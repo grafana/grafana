@@ -78,7 +78,6 @@ function legacyCreateSpanLinkFactory(
   }
 
   const dataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
-
   if (!dataSourceSettings) {
     return undefined;
   }
@@ -88,7 +87,6 @@ function legacyCreateSpanLinkFactory(
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
-
     const query = getQueryFromSpan(span, isSplunkDS, traceToLogsOptions);
     if (!query) {
       return undefined;
@@ -168,12 +166,12 @@ function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceTo
   if (filterByTraceID && span.traceID && !isSplunkDS) {
     query += ` |="${span.traceID}"`;
   } else if (filterByTraceID && span.traceID && isSplunkDS) {
-    query += `TraceID=${span.traceID}`;
+    query += ` TraceID=${span.traceID}`;
   }
   if (filterBySpanID && span.spanID && !isSplunkDS) {
     query += ` |="${span.spanID}"`;
   } else if (filterBySpanID && span.spanID && isSplunkDS) {
-    query += `SpanID="${span.spanID}"`;
+    query += ` SpanID=${span.spanID}`;
   }
 
   return query;

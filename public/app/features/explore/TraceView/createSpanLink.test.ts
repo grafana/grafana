@@ -13,7 +13,7 @@ describe('createSpanLinkFactory', () => {
     expect(createLink).not.toBeDefined();
   });
 
-  describe('should return link', () => {
+  describe('should return loki link', () => {
     beforeAll(() => {
       setDataSourceSrv({
         getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
@@ -213,6 +213,82 @@ describe('createSpanLinkFactory', () => {
         })
       );
       expect(linkDef).toBeUndefined();
+    });
+  });
+
+  describe('should return splunk link', () => {
+    const splunkUID = 'PD90232BAD06BE469';
+
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
+          return { uid: splunkUID, name: 'Splunk 8' } as any;
+        },
+      } as any);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('the `query` keyword is used in the link rather than `expr`, which loki uses', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: ['ip'],
+      });
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'Splunk 8',
+            tags: [{ key: 'ip', value: '192.168.0.1' }],
+          },
+        })
+      );
+      expect(linkDef!.href).toContain(
+        `${encodeURIComponent(
+          '"datasource":"Splunk 8","queries":[{"query":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+      expect(linkDef!.href).not.toContain(
+        `${encodeURIComponent(
+          '"datasource":"Splunk 8","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('automatically timeshifts the timerange by one second in a splunk query', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: ['ip'],
+      });
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'Splunk 8',
+            tags: [{ key: 'ip', value: '192.168.0.1' }],
+          },
+        })
+      );
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+      expect(linkDef!.href).not.toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:00.000Z"},"datasource":"Splunk 8","queries":[{"query":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
+      const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!(createTraceSpan());
+
+      expect(linkDef!.href).toContain(`${encodeURIComponent('TraceID=7946b05c2e2e4e5a')}`);
+      expect(linkDef!.href).toContain(`${encodeURIComponent('TraceID=7946b05c2e2e4e5a SpanID=6605c7b08e715d6c')}`);
+      expect(linkDef!.href).not.toContain(`${encodeURIComponent(' |=7946b05c2e2e4e5a')}`);
     });
   });
 });
