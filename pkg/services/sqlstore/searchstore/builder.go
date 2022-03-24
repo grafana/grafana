@@ -16,37 +16,57 @@ type Builder struct {
 	Filters []interface{}
 	Dialect migrator.Dialect
 
-	params []interface{}
-	sql    bytes.Buffer
+	params  []interface{}
+	sql     bytes.Buffer
+	GroupBy string
 }
 
 // ToSQL builds the SQL query and returns it as a string, together with the SQL parameters.
-func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
+func (b *Builder) ToSQL(limit, page int64, selectBuilder BuildSelect) (string, []interface{}) {
 	b.params = make([]interface{}, 0)
 	b.sql = bytes.Buffer{}
 
-	b.buildSelect()
+	selectBuilder(b)
 
 	b.sql.WriteString("( ")
 	orderQuery := b.applyFilters()
-
-	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) AS ids
-		INNER JOIN dashboard ON ids.id = dashboard.id`)
+	if limit != 0 {
+		b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) AS ids
+			INNER JOIN dashboard ON ids.id = dashboard.id`)
+	} else {
+		b.sql.WriteString(`) AS ids
+			INNER JOIN dashboard ON ids.id = dashboard.id`)
+	}
 	b.sql.WriteString("\n")
 
 	b.sql.WriteString(
 		`LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
+
 	b.sql.WriteString("\n")
 	b.sql.WriteString(orderQuery)
 
 	return b.sql.String(), b.params
 }
 
-func (b *Builder) buildSelect() {
+type BuildSelect func(b *Builder)
+
+func BuildSelectForCount(b *Builder) {
+	b.sql.WriteString(
+		`SELECT folder.uid AS folder_uid, COUNT(*) AS count`)
+	for _, f := range b.Filters {
+		if f, ok := f.(FilterSelect); ok {
+			b.sql.WriteString(fmt.Sprintf(", %s", f.Select()))
+		}
+	}
+
+	b.sql.WriteString(` FROM `)
+}
+
+func BuildSelectForSearch(b *Builder) {
 	b.sql.WriteString(
 		`SELECT
-			dashboard.id,
+			dashboard.id AS id,
 			dashboard.uid,
 			dashboard.title,
 			dashboard.slug,

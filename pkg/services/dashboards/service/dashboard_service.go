@@ -578,6 +578,10 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 				hit.SortMetaName = query.Sort.MetaName
 			}
 
+			if query.CountDB && item.IsFolder {
+				hit.DsCounter = item.DsCounter
+			}
+
 			query.Result = append(query.Result, hit)
 			hits[item.ID] = hit
 		}

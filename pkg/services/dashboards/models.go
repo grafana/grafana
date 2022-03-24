@@ -33,4 +33,5 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	DsCounter   int64 `xorm:"-"`
 }

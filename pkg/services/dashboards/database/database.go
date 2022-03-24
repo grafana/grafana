@@ -1,6 +1,7 @@
 package database
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -997,7 +998,7 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 		page = 1
 	}
 
-	sql, params := sb.ToSQL(limit, page)
+	sql, params := sb.ToSQL(limit, page, searchstore.BuildSelectForSearch)
 
 	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.SQL(sql, params...).Find(&res)
@@ -1007,5 +1008,38 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 		return nil, err
 	}
 
-	return res, nil
+	if query.CountDB {
+		var sql bytes.Buffer
+		sql.WriteString(
+			`SELECT d.folder_uid AS uid, COUNT(*) AS dbcount FROM (`)
+		sql.WriteString("\n")
+		sqlgenerated, params := sb.ToSQL(0, 0, searchstore.BuildSelectForSearch)
+		sql.WriteString(sqlgenerated)
+		sql.WriteString(") AS d\n")
+		sql.WriteString(`GROUP BY d.folder_uid`)
+		var resp []models.DashboardCounter
+		err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			return sess.SQL(sql.String(), params...).Find(&resp)
+		})
+
+		if err == nil {
+			res = mergeCounterWithDashboards(res, resp)
+		}
+	}
+
+	return res, err
+}
+
+func mergeCounterWithDashboards(dsFound []dashboards.DashboardSearchProjection, cRes []models.DashboardCounter) []dashboards.DashboardSearchProjection {
+	for i, d := range dsFound {
+		if d.IsFolder {
+			for _, c := range cRes {
+				if c.FolderUID == d.UID {
+					dsFound[i].DsCounter = c.Count
+					break
+				}
+			}
+		}
+	}
+	return dsFound
 }

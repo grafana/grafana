@@ -21,6 +21,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
+	countDB := c.Query("countdb") == "true"
 	permission := models.PERMISSION_VIEW
 
 	if limit > 5000 {
@@ -60,6 +61,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		FolderIds:    folderIDs,
 		Permission:   permission,
 		Sort:         sort,
+		CountDB:      countDB,
 	}
 
 	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)

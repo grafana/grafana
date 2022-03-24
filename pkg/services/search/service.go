@@ -39,8 +39,8 @@ type Query struct {
 	FolderIds    []int64
 	Permission   models.PermissionType
 	Sort         string
-
-	Result models.HitList
+	CountDB      bool
+	Result       models.HitList
 }
 
 type Service interface {
@@ -68,6 +68,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		Limit:        query.Limit,
 		Page:         query.Page,
 		Permission:   query.Permission,
+		CountDB:      query.CountDB,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
