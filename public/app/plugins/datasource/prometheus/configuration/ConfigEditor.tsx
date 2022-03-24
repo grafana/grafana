@@ -28,13 +28,6 @@ export const ConfigEditor = (props: Props) => {
           Browser access mode in the Prometheus datasource is deprecated and will be removed in a future release.
         </Alert>
       )}
-      {options.url.endsWith('/api/prom') && (
-        <Alert title="Deprecation Notice" severity="warning">
-          It looks like your data source uses the legacy /api/prom prefix. <br />
-          Please consider upgrading to the newest /prometheus prefix to keep the compatibility with future versions of
-          Grafana.
-        </Alert>
-      )}
 
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9090"
