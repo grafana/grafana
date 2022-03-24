@@ -325,5 +325,4 @@ func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.Tag
 	}
 
 	return annotations.FindTagsResult{Tags: tags}, nil
-
 }
