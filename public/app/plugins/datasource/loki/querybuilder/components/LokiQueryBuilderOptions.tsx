@@ -23,6 +23,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
 
   const onResolutionChange = (option: SelectableValue<number>) => {
     onChange({ ...query, resolution: option.value });
+    onRunQuery();
   };
 
   const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
@@ -34,6 +35,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
     const newMaxLines = preprocessMaxLines(e.currentTarget.value);
     if (query.maxLines !== newMaxLines) {
       onChange({ ...query, maxLines: newMaxLines });
+      onRunQuery();
     }
   }
 
