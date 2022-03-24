@@ -55,7 +55,7 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 		Cols: []string{"org_id", "uid"}, Type: migrator.UniqueIndex,
 	}))
 
-	mg.AddMigration("increase max description length to 65535", migrator.NewTableCharsetMigration("library_element", []*migrator.Column{
-		{Name: "description", Type: migrator.DB_NVarchar, Length: 65535, Nullable: false},
+	mg.AddMigration("increase max description length to 2048", migrator.NewTableCharsetMigration("library_element", []*migrator.Column{
+		{Name: "description", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false},
 	}))
 }
