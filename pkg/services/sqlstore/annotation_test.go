@@ -245,7 +245,7 @@ func TestAnnotations(t *testing.T) {
 			require.NoError(t, err)
 
 			annotationId := items[0].Id
-			err = repo.Delete(&annotations.DeleteParams{Id: annotationId, OrgId: 1})
+			err = repo.Delete(context.Background(), &annotations.DeleteParams{Id: annotationId, OrgId: 1})
 			require.NoError(t, err)
 
 			items, err = repo.Find(context.Background(), query)
@@ -275,7 +275,7 @@ func TestAnnotations(t *testing.T) {
 
 			dashboardId := items[0].DashboardId
 			panelId := items[0].PanelId
-			err = repo.Delete(&annotations.DeleteParams{DashboardId: dashboardId, PanelId: panelId, OrgId: 1})
+			err = repo.Delete(context.Background(), &annotations.DeleteParams{DashboardId: dashboardId, PanelId: panelId, OrgId: 1})
 			require.NoError(t, err)
 
 			items, err = repo.Find(context.Background(), query)
@@ -284,7 +284,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by key", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "server",
 			})
@@ -295,7 +295,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by value", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "outage",
 			})
@@ -308,7 +308,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags in other org", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "server-1",
 			})
@@ -317,7 +317,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags that do not exist", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "unknown:tag",
 			})

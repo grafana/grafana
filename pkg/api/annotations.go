@@ -341,7 +341,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		}
 	}
 
-	err = repo.Delete(deleteParams)
+	err = repo.Delete(c.Req.Context(), deleteParams)
 
 	if err != nil {
 		return response.Error(500, "Failed to delete annotations", err)
@@ -376,7 +376,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 		return dashboardGuardianResponse(err)
 	}
 
-	err = repo.Delete(&annotations.DeleteParams{
+	err = repo.Delete(c.Req.Context(), &annotations.DeleteParams{
 		OrgId: c.OrgId,
 		Id:    annotationID,
 	})
@@ -422,7 +422,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response 
 	}
 
 	repo := annotations.GetRepository()
-	result, err := repo.FindTags(query)
+	result, err := repo.FindTags(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to find annotation tags", err)
 	}

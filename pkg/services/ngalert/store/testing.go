@@ -440,7 +440,7 @@ func (repo *FakeAnnotationsRepo) Len() int {
 	return len(repo.Items)
 }
 
-func (repo *FakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
 	return nil
 }
 
@@ -460,7 +460,7 @@ func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.Item
 	return annotations, nil
 }
 
-func (repo *FakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	result := annotations.FindTagsResult{
 		Tags: []*annotations.TagsDTO{},
 	}
