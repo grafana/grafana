@@ -1,15 +1,15 @@
-import React, { FC, useMemo } from 'react';
-import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
+import React, { FC } from 'react';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Field, Input, InputControl, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
-import { contextSrv } from 'app/core/services/context_srv';
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 import { checkForPathSeparator } from './util';
+import { RuleTypePicker } from './rule-types/RuleTypePicker';
 
 interface Props {
   editingExistingRule: boolean;
@@ -30,38 +30,36 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
     watch,
     formState: { errors },
     setValue,
+    getValues,
   } = useFormContext<RuleFormValues & { location?: string }>();
 
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const alertTypeOptions = useMemo((): SelectableValue[] => {
-    const result = [
-      {
-        label: 'Grafana managed alert',
-        value: RuleFormType.grafana,
-        description: 'Classic Grafana alerts based on thresholds.',
-      },
-    ];
-
-    if (contextSrv.isEditor) {
-      result.push({
-        label: 'Cortex/Loki managed alert',
-        value: RuleFormType.cloudAlerting,
-        description: 'Alert based on a system or application behavior. Based on Prometheus.',
-      });
-      result.push({
-        label: 'Cortex/Loki managed recording rule',
-        value: RuleFormType.cloudRecording,
-        description: 'Recording rule to pre-compute frequently needed or expensive calculations. Based on Prometheus.',
-      });
-    }
-
-    return result;
-  }, []);
-
   return (
     <RuleEditorSection stepNo={1} title="Rule type">
+      <Field
+        disabled={editingExistingRule}
+        error={errors.type?.message}
+        invalid={!!errors.type?.message}
+        data-testid="alert-type-picker"
+      >
+        <InputControl
+          render={({ field: { onChange } }) => (
+            <RuleTypePicker
+              aria-label="Rule type"
+              selected={getValues('type') ?? RuleFormType.grafana}
+              onChange={onChange}
+            />
+          )}
+          name="type"
+          control={control}
+          rules={{
+            required: { value: true, message: 'Please select alert type' },
+          }}
+        />
+      </Field>
+
       <Field
         className={styles.formInput}
         label="Rule name"
@@ -88,31 +86,6 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         />
       </Field>
       <div className={styles.flexRow}>
-        <Field
-          disabled={editingExistingRule}
-          label="Rule type"
-          className={styles.formInput}
-          error={errors.type?.message}
-          invalid={!!errors.type?.message}
-          data-testid="alert-type-picker"
-        >
-          <InputControl
-            render={({ field: { onChange, ref, ...field } }) => (
-              <Select
-                menuShouldPortal
-                aria-label="Rule type"
-                {...field}
-                options={alertTypeOptions}
-                onChange={(v: SelectableValue) => onChange(v?.value)}
-              />
-            )}
-            name="type"
-            control={control}
-            rules={{
-              required: { value: true, message: 'Please select alert type' },
-            }}
-          />
-        </Field>
         {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
           <Field
             className={styles.formInput}

@@ -50,6 +50,16 @@ export enum LokiOperationId {
   Unwrap = 'unwrap',
 }
 
+export enum LokiOperationOrder {
+  LineFilters = 1,
+  LineFormats = 2,
+  LabelFilters = 3,
+  Unwrap = 4,
+  NoErrors = 5,
+  RangeVectorFunction = 5,
+  Last = 6,
+}
+
 export function getDefaultEmptyQuery(): LokiVisualQuery {
   return {
     labels: [],
