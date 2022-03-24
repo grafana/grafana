@@ -30,11 +30,11 @@ func (api *API) authorize(method, path string) web.Handler {
 	var fallback web.Handler
 	switch method {
 	case http.MethodPost, http.MethodPut, http.MethodDelete:
-		fallback = ac.ReqOrgAdminOrEditor
+		fallback = middleware.ReqEditorRole
 	case http.MethodGet:
-		fallback = ac.ReqSignedIn
+		fallback = middleware.ReqSignedIn
 	default:
-		fallback = ac.ReqSignedIn
+		fallback = middleware.ReqSignedIn
 	}
 
 	switch method + path {
@@ -66,11 +66,11 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana Rules Testing Paths
 	case http.MethodPost + "/api/v1/rule/test/grafana":
-		fallback = ac.ReqSignedIn
+		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/v1/eval":
-		fallback = ac.ReqSignedIn
+		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
@@ -94,7 +94,7 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Lotex Rules testing
 	case http.MethodPost + "/api/v1/rule/test/{Recipient}":
-		fallback = ac.ReqSignedIn
+		fallback = middleware.ReqSignedIn
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Alert Instances and Silences
@@ -150,7 +150,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodDelete + "/api/alertmanager/grafana/config/api/v1/alerts": // reset alertmanager config to the default
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsDelete)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/alerts":
-		fallback = ac.ReqOrgAdminOrEditor // moved from the request handler as is
+		fallback = middleware.ReqEditorRole
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
@@ -158,7 +158,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		// additional authorization is done in the request handler
 		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsUpdate), ac.EvalPermission(ac.ActionAlertingNotificationsCreate), ac.EvalPermission(ac.ActionAlertingNotificationsDelete))
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/receivers/test":
-		fallback = ac.ReqOrgAdminOrEditor // moved from the request handler as is
+		fallback = middleware.ReqEditorRole
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 
 	// External Alertmanager Paths
