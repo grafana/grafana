@@ -84,26 +84,28 @@ def intentapi_services():
         },
         {
             'name': 'apiserver',
-            'image': 'build_image',
+            'image': 'k8s.gcr.io/kube-apiserver',
             'depends_on': [
                 'etcd',
                 'generate_intentapi_certs',
             ],
             'detach': True,
             'commands': [
-                'apt-get update',
-                'apt-get install -y ca-certificates curl',
-                'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
-                'chmod +x /usr/local/bin/docker-compose',
-                'ls -l /drone/src/devenv/docker/blocks/intentapi/certs',
-                'ls -l /var/lib/kubernetes',
-                'make devenv sources=intentapi',
-                'cd /drone/src/devenv && docker-compose ps && docker-compose logs -f apiserver',
+                '/usr/local/bin/kube-apiserver' +
+                ' --bind-address=0.0.0.0' +
+                ' --secure-port=6443' +
+                ' --etcd-servers=http://etcd:2379' +
+                ' --client-ca-file=/drone/src/devenv/docker/blocks/intentapi/certs/ca.pem' +
+                ' --tls-cert-file=/drone/src/devenv/docker/blocks/intentapi/certs/kubernetes.pem' +
+                ' --tls-private-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/kubernetes-key.pem' +
+                ' --service-account-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account.pem' +
+                ' --service-account-signing-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account-key.pem' +
+                ' --service-account-issuer=https://localhost:6443'
             ],
             'volumes': [
                 {
                     'name': 'intentapi_certs',
-                    'path': '/var/lib/kubernetes',
+                    'path': '/drone/src/devenv/docker/blocks/intentapi/certs',
                 },
             ],
         },
