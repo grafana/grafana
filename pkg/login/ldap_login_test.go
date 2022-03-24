@@ -7,7 +7,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +30,7 @@ func TestLoginUsingLDAP(t *testing.T) {
 			return config, nil
 		}
 
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, sc.store, sc.loginService, sc.authInfoService)
 		require.EqualError(t, err, errTest.Error())
 
 		assert.True(t, enabled)
@@ -39,7 +41,7 @@ func TestLoginUsingLDAP(t *testing.T) {
 		setting.LDAPEnabled = false
 
 		sc.withLoginResult(false)
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, sc.store, sc.loginService, sc.authInfoService)
 		require.NoError(t, err)
 
 		assert.False(t, enabled)
@@ -110,6 +112,9 @@ func mockLDAPAuthenticator(valid bool) *mockAuth {
 type LDAPLoginScenarioContext struct {
 	loginUserQuery        *models.LoginUserQuery
 	LDAPAuthenticatorMock *mockAuth
+	store                 *mockstore.SQLStoreMock
+	loginService          login.Service
+	authInfoService       login.AuthInfoService
 }
 
 type LDAPLoginScenarioFunc func(c *LDAPLoginScenarioContext)
@@ -127,6 +132,7 @@ func LDAPLoginScenario(t *testing.T, desc string, fn LDAPLoginScenarioFunc) {
 				IpAddress: "192.168.1.1:56433",
 			},
 			LDAPAuthenticatorMock: mock,
+			loginService:          nil, // FIXME
 		}
 
 		origNewLDAP := newLDAP

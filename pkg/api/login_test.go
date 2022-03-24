@@ -24,9 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -733,7 +735,7 @@ func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error)
 }
 
 func mockAuthenticateUserFunc(user *models.User, authmodule string, err error) {
-	login.AuthenticateUserFunc = func(ctx context.Context, query *models.LoginUserQuery) error {
+	login.AuthenticateUserFunc = func(ctx context.Context, query *models.LoginUserQuery, _ sqlstore.Store, _ loginsvc.Service, _ loginsvc.AuthInfoService) error {
 		query.User = user
 		query.AuthModule = authmodule
 		return err

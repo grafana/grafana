@@ -49,6 +49,10 @@ func (m *mockAuthInfoService) UpdateAuthInfo(ctx context.Context, query *models.
 	return m.ExpectedError
 }
 
+func (m *mockAuthInfoService) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+	return m.ExpectedError
+}
+
 func TestAdminAPIEndpoint(t *testing.T) {
 	const role = models.ROLE_ADMIN
 

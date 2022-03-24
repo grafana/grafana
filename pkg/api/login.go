@@ -209,7 +209,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		Cfg:        hs.Cfg,
 	}
 
-	err := login.AuthenticateUserFunc(c.Req.Context(), authQuery, hs.SQLStore)
+	err := login.AuthenticateUserFunc(c.Req.Context(), authQuery, hs.SQLStore, hs.Login, hs.authInfoService)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)

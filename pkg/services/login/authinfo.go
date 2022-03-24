@@ -11,4 +11,5 @@ type AuthInfoService interface {
 	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
 	SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
+	GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error
 }

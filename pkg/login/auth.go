@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -33,7 +34,7 @@ func Init() {
 }
 
 // AuthenticateUser authenticates the user via username & password
-func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) error {
+func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store, loginService login.Service, authInfoService login.AuthInfoService) error {
 	if err := validateLoginAttempts(ctx, query, store); err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery, store s
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query)
+	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, store, loginService, authInfoService)
 	if ldapEnabled {
 		query.AuthModule = models.AuthModuleLDAP
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {

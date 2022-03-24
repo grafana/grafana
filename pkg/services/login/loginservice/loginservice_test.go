@@ -84,6 +84,10 @@ func (a *authInfoServiceMock) UpdateAuthInfo(ctx context.Context, cmd *models.Up
 	return nil
 }
 
+func (a *authInfoServiceMock) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+	return nil
+}
+
 func Test_teamSync(t *testing.T) {
 	authInfoMock := &authInfoServiceMock{}
 	login := Implementation{
