@@ -606,11 +606,11 @@ Proxies all calls to the actual data source.
 
 ## Query a data source
 
-Queries a data source having backend implementation.
+Queries a data source having a backend implementation.
 
 `POST /api/ds/query`
 
-> **Note:** Most of Grafana's builtin data sources have backend implementation.
+> **Note:** Most of Grafana's builtin data sources have a backend implementation.
 
 **Example request for the Test data source**:
 
@@ -642,13 +642,13 @@ Content-Type: application/json
 
 JSON Body schema:
 
+- **from/to** – Specifies the time range for the queries. Is required and should be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
 - **queries** – Specifies one or more queries. Must contain at least 1.
-- **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
-- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each `query` in the request must have an unique `datasource`.
+- **queries.refId** – Specifies an identifier of the query. Is optional and defaults to "A".
+- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each query in the request must have a unique `datasource`.
 - **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
-- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and defaults to 100.
-- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
-- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
+- **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Is optional and defaults to 100.
+- **queries.intervalMs** - Specifies the time series time interval in milliseconds. Is optional and defaults to 1000.
 
 In addition, each data source has its own specific properties that should be added in a request (for example **queries.stringInput** as shown in the request above). In order to understand how to form a query for a certain datasource, please use the Developer Tools in your browser of choice and inspect the HTTP requests being made to /api/ds/query.
 
@@ -701,11 +701,11 @@ Please note that these resources have been deprecated and will be removed in a f
 
 > **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
 
-Queries a data source having backend implementation.
+Queries a data source having a backend implementation.
 
 `POST /api/tsdb/query`
 
-> **Note:** Most of Grafana's builtin data sources have backend implementation.
+> **Note:** Most of Grafana's builtin data sources have a backend implementation.
 
 **Example Request**:
 
@@ -734,11 +734,11 @@ Content-Type: application/json
 
 JSON Body schema:
 
-- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-1h`.
-- **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
-- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have an unique `datasourceId`.
-- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
-- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+- **from/to** – Specifies the time range for the queries. Is required and should be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
+- **queries.refId** – Specifies an identifier of the query. Is optional and defaults to "A".
+- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have a unique `datasourceId`.
+- **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Is optional and defaults to 100.
+- **queries.intervalMs** - Specifies the time series time interval in milliseconds. Is optional and defaults to 1000.
 
 In addition, each data source has its own specific properties that should be added in a request.
 
