@@ -178,7 +178,7 @@ type GetAnnotationTagssParams struct {
 type MassDeleteAnnotationsParams struct {
 	// in:body
 	// required:true
-	Body dtos.DeleteAnnotationsCmd `json:"body"`
+	Body dtos.MassDeleteAnnotationsCmd `json:"body"`
 }
 
 // swagger:parameters createAnnotation
