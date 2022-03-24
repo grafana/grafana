@@ -16,7 +16,7 @@ interface ResultBag {
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
   const checkEditingRequests = useUnifiedAlertingSelector((state) => state.lotexSupportsRuleEditing);
   const dispatch = useDispatch();
-  const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
+  const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.rule_group : undefined;
 
   const { folder, loading } = useFolder(folderUID);
 
