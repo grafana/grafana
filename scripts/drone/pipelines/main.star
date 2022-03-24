@@ -167,8 +167,10 @@ def trigger_test_release():
         'commands': [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
             'cd grafana-enterprise',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
             'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
             'cd -',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
             'git remote add downstream https://github.com/grafana/$${DOWNSTREAM_REPO}.git',
             'git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG}',
         ],

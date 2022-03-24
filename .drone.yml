@@ -706,9 +706,11 @@ steps:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     --depth=1
   - cd grafana-enterprise
+  - git fetch origin "refs/tags/*:refs/tags/*"
   - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
     && git push origin $${TEST_TAG}
   - cd -
+  - git fetch origin "refs/tags/*:refs/tags/*"
   - git remote add downstream https://github.com/grafana/$${DOWNSTREAM_REPO}.git
   - git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag
     $${TEST_TAG} && git push downstream $${TEST_TAG}
@@ -4411,6 +4413,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 1b494a08bb985041646a7f23f29f54196e6e4f7a858ace04dc5d24f1321e8b45
+hmac: a21c505047ca21de2bb73f00f2cbf739414db7aa6f4a6b5eeadeab415b61fd96
 
 ...
