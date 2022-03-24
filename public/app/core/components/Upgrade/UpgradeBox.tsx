@@ -86,13 +86,14 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
 };
 
 export interface UpgradeContentProps {
-  listItems: string[];
   image: string;
   featureUrl?: string;
   featureName: string;
   description?: string;
+  listItems: string[];
   caption?: string;
 }
+
 export const UpgradeContent = ({
   listItems,
   image,
@@ -101,7 +102,7 @@ export const UpgradeContent = ({
   description,
   caption,
 }: UpgradeContentProps) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getUpgradeContentStyles);
   return (
     <div className={styles.container}>
       <div className={styles.content}>
@@ -115,7 +116,7 @@ export const UpgradeContent = ({
           ))}
         </ul>
         {featureUrl && (
-          <LinkButton variant={'link'} href={featureUrl} className={styles.link}>
+          <LinkButton fill={'text'} href={featureUrl} className={styles.link}>
             Learn more
           </LinkButton>
         )}
@@ -128,15 +129,7 @@ export const UpgradeContent = ({
   );
 };
 
-export const getImgUrl = (urlOrId: string) => {
-  if (urlOrId.startsWith('http')) {
-    return urlOrId;
-  }
-
-  return 'https://drive.google.com/uc?export=download&id=' + urlOrId;
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
+const getUpgradeContentStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
@@ -168,7 +161,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         padding: ${theme.spacing(1, 0)};
       }
     `,
-
     icon: css`
       color: ${theme.colors.success.main};
       margin-right: ${theme.spacing(1)};
@@ -184,4 +176,54 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: ${theme.spacing(1, 0, 0)};
     `,
   };
+};
+
+export const UpgradeContentVertical = ({
+  featureName,
+  description,
+  featureUrl,
+  image,
+}: Omit<UpgradeContentProps, 'listItems' | 'caption'>) => {
+  const styles = useStyles2(getContentVerticalStyles);
+  return (
+    <div>
+      <h3 className={styles.title}>Get started with {featureName}</h3>
+      {description && <h6 className={styles.description}>{description}</h6>}
+      <LinkButton fill={'text'} href={featureUrl}>
+        Learn more
+      </LinkButton>
+      <div className={styles.media}>
+        <img src={getImgUrl(image)} alt={'Feature screenshot'} />
+      </div>
+    </div>
+  );
+};
+
+const getContentVerticalStyles = (theme: GrafanaTheme2) => {
+  return {
+    title: css`
+      color: ${theme.colors.text.maxContrast};
+    `,
+    description: css`
+      color: ${theme.colors.text.primary};
+      font-weight: ${theme.typography.fontWeightLight};
+    `,
+    media: css`
+      width: 100%;
+      margin-top: ${theme.spacing(2)};
+
+      img {
+        width: 100%;
+      }
+    `,
+  };
+};
+
+// Get Gdrive URL by item id
+const getImgUrl = (urlOrId: string) => {
+  if (urlOrId.startsWith('http')) {
+    return urlOrId;
+  }
+
+  return 'https://drive.google.com/uc?export=download&id=' + urlOrId;
 };
