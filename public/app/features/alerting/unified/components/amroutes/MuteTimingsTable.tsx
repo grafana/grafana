@@ -97,22 +97,14 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
         <p>No mute timings configured</p>
       )}
       {!hideActions && (
-        <Authorize
-          actions={
-            isGrafanaAM
-              ? [AccessControlAction.AlertingNotificationsDelete]
-              : [AccessControlAction.AlertingNotificationsExternalWrite]
-          }
-        >
-          <ConfirmModal
-            isOpen={!!muteTimingName}
-            title="Delete mute timing"
-            body={`Are you sure you would like to delete "${muteTimingName}"`}
-            confirmText="Delete"
-            onConfirm={() => dispatch(deleteMuteTimingAction(alertManagerSourceName, muteTimingName))}
-            onDismiss={() => setMuteTimingName('')}
-          />
-        </Authorize>
+        <ConfirmModal
+          isOpen={!!muteTimingName}
+          title="Delete mute timing"
+          body={`Are you sure you would like to delete "${muteTimingName}"`}
+          confirmText="Delete"
+          onConfirm={() => dispatch(deleteMuteTimingAction(alertManagerSourceName, muteTimingName))}
+          onDismiss={() => setMuteTimingName('')}
+        />
       )}
     </div>
   );
@@ -172,7 +164,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
               <Authorize
                 actions={
                   isGrafanaAM
-                    ? [AccessControlAction.AlertingNotificationsUpdate]
+                    ? [AccessControlAction.AlertingNotificationsDelete]
                     : [AccessControlAction.AlertingNotificationsExternalWrite]
                 }
               >
