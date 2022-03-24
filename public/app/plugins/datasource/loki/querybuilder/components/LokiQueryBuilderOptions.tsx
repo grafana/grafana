@@ -7,6 +7,7 @@ import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
 import { getLegendModeLabel } from 'app/plugins/datasource/prometheus/querybuilder/components/PromQueryLegendEditor';
 import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
+import { isMetricsQuery } from '../../datasource';
 
 export interface Props {
   query: LokiQuery;
@@ -37,10 +38,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
   }
 
   let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
+  let showMaxLines = !isMetricsQuery(query.expr);
 
   return (
     <EditorRow>
-      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, queryType)}>
+      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines)}>
         <EditorField
           label="Legend"
           tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
@@ -62,16 +64,18 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
             onChange={onQueryTypeChange}
           />
         </EditorField>
-        <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
-          <AutoSizeInput
-            className="width-4"
-            placeholder="auto"
-            type="number"
-            min={0}
-            defaultValue={query.maxLines?.toString() ?? ''}
-            onCommitChange={onMaxLinesChange}
-          />
-        </EditorField>
+        {showMaxLines && (
+          <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="number"
+              min={0}
+              defaultValue={query.maxLines?.toString() ?? ''}
+              onCommitChange={onMaxLinesChange}
+            />
+          </EditorField>
+        )}
         <EditorField label="Resolution">
           <Select
             isSearchable={false}
@@ -87,7 +91,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
   );
 });
 
-function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType): string[] {
+function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, showMaxLines: boolean): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
 
@@ -100,6 +104,10 @@ function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType): string[] 
   }
 
   items.push(`Type: ${queryTypeLabel?.label}`);
+
+  if (showMaxLines && query.maxLines) {
+    items.push(`Line limit: ${query.maxLines}`);
+  }
 
   return items;
 }
