@@ -3,8 +3,6 @@ package metrics
 import (
 	"fmt"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 )
 
 // urlBuilder builds the URL for calling the Azure Monitor API
@@ -27,7 +25,6 @@ func (params *urlBuilder) BuildMetricsURL() string {
 
 	// We have a legacy query from before the resource picker, so we manually create the resource URI
 	if resourceURI == "" {
-		azlog.Info("Detected legacy query without a resource URI")
 		subscription := params.Subscription
 
 		if params.Subscription == "" {

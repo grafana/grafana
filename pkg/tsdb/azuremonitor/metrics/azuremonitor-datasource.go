@@ -90,7 +90,6 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			ResourceName:        azJSONModel.ResourceName,
 		}
 		azureURL := ub.BuildMetricsURL()
-		azlog.Info("build azureURL", "ResourceURI", azJSONModel.ResourceURI, "azureURL", azureURL)
 
 		alias := azJSONModel.Alias
 
