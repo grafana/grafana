@@ -28,7 +28,12 @@ const defaultProps = {
   }),
   onCancel: noop,
   onApply: noop,
-  selectableEntryTypes: [],
+  selectableEntryTypes: [
+    ResourceRowType.Subscription,
+    ResourceRowType.ResourceGroup,
+    ResourceRowType.Resource,
+    ResourceRowType.Variable,
+  ],
 };
 
 describe('AzureMonitor ResourcePicker', () => {
@@ -50,7 +55,7 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(subscriptionCheckbox).toBeChecked();
   });
 
-  it('should show a resource group as selected if there is one saved', async () => {
+  it('should show a resourceGroup as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleResourceGroupSelectionURI} />);
     const resourceGroupCheckbox = await screen.findByLabelText('A Great Resource Group');
     expect(resourceGroupCheckbox).toBeChecked();
@@ -73,7 +78,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should call onApply with a new subscription uri when a user selects it', async () => {
     const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} />);
+    render(<ResourcePicker {...defaultProps} onApply={onApply} />);
     const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
     expect(subscriptionCheckbox).toBeInTheDocument();
     expect(subscriptionCheckbox).not.toBeChecked();
@@ -103,16 +108,10 @@ describe('AzureMonitor ResourcePicker', () => {
   describe('when rendering resource picker without any selectable entry types', () => {
     it('renders no checkboxes', async () => {
       await act(async () => {
-        render(
-          <ResourcePicker
-            {...defaultProps}
-            selectableEntryTypes={[ResourceRowType.ResourceGroup, ResourceRowType.Resource]}
-          />
-        );
+        render(<ResourcePicker {...defaultProps} selectableEntryTypes={[]} />);
       });
-
-      const button = screen.getByText('Primary Subscription');
-      userEvent.click(button);
+      const checkboxes = screen.queryAllByRole('checkbox');
+      expect(checkboxes.length).toBe(0);
     });
   });
 });

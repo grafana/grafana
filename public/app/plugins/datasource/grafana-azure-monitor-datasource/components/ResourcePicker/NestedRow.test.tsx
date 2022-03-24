@@ -7,6 +7,7 @@ import { ResourceRowType } from './types';
 const defaultProps = {
   row: {
     id: '1',
+    uri: 'some-uri',
     name: '1',
     type: ResourceRowType.Resource,
     typeLabel: '1',

@@ -5,7 +5,7 @@ import { ResourceRowType } from './types';
 
 const defaultProps = {
   level: 0,
-  entry: { id: '123', name: '123', type: ResourceRowType.Resource, typeLabel: '' },
+  entry: { id: '123', uri: 'someuri', name: '123', type: ResourceRowType.Resource, typeLabel: '' },
   isSelected: false,
   isSelectable: false,
   isOpen: false,
