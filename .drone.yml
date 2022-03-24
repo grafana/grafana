@@ -105,13 +105,24 @@ steps:
   - etcd
   - generate_intentapi_certs
   detach: true
-  image: k8s.gcr.io/kube-apiserver
+  image: k8s.gcr.io/kube-apiserver:v1.23.3
   name: apiserver
+  pull: if-not-exists
   volumes:
   - name: intentapi_certs
     path: /drone/src/devenv/docker/blocks/intentapi/certs
 - commands:
+  - dockerize -wait http://etc:2379 -timeout 120s
   - dockerize -wait https://apiserver:6443 -timeout 120s
+  depends_on:
+  - etcd
+  - apiserver
+  image: grafana/build-container:1.5.3
+  name: wait-for-intentapi-services
+  volumes:
+  - name: intentapi_certs
+    path: /drone/src/devenv/docker/blocks/intentapi/certs
+- commands:
   - ls -l /drone/src/devenv/docker/blocks/intentapi/certs/
   - GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem
     GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem
@@ -119,7 +130,7 @@ steps:
     GRAFANA_TEST_INTENTAPI_KUBECONFIG_PATH=/drone/src/devenv/docker/blocks/intentapi/intentapi.kubeconfig
     ./bin/grabpl test-backend --edition oss
   depends_on:
-  - apiserver
+  - wait-for-intentapi-services
   image: grafana/build-container:1.5.3
   name: test-backend
   volumes:
@@ -579,6 +590,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 13ad1328293cdb00acca36c343fa0690b34a03fa35b9395115cf9a26caeb7458
+hmac: a2dd409dc201c84e7ea83619b3176700b71ce1cca5f92ec24553d57b4bb6a3f7
 
 ...

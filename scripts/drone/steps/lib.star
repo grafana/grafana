@@ -518,10 +518,9 @@ def test_backend_step(edition):
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'apiserver',
+            'wait-for-intentapi-services',
         ],
         'commands': [
-            'dockerize -wait https://apiserver:6443 -timeout 120s',
             'ls -l /drone/src/devenv/docker/blocks/intentapi/certs/',
             'GRAFANA_TEST_INTENTAPI_SERVER_CERT_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi.pem ' +
             'GRAFANA_TEST_INTENTAPI_SERVER_KEY_FILE_PATH=/drone/src/devenv/docker/blocks/intentapi/certs/intentapi-key.pem ' +

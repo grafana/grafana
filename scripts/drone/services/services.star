@@ -1,3 +1,8 @@
+load(
+    'scripts/drone/steps/lib.star',
+    'build_image',
+)
+
 def integration_test_services_volumes():
     return [
         { 'name': 'postgres', 'temp': { 'medium': 'memory' } },
@@ -84,7 +89,8 @@ def intentapi_services():
         },
         {
             'name': 'apiserver',
-            'image': 'k8s.gcr.io/kube-apiserver',
+            'pull': 'if-not-exists',
+            'image': 'k8s.gcr.io/kube-apiserver:v1.23.3',
             'depends_on': [
                 'etcd',
                 'generate_intentapi_certs',
@@ -101,6 +107,24 @@ def intentapi_services():
                 ' --service-account-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account.pem' +
                 ' --service-account-signing-key-file=/drone/src/devenv/docker/blocks/intentapi/certs/service-account-key.pem' +
                 ' --service-account-issuer=https://localhost:6443'
+            ],
+            'volumes': [
+                {
+                    'name': 'intentapi_certs',
+                    'path': '/drone/src/devenv/docker/blocks/intentapi/certs',
+                },
+            ],
+        },
+        {
+            'name': 'wait-for-intentapi-services',
+            'image': build_image,
+            'depends_on': [
+                'etcd',
+                'apiserver',
+            ],
+            'commands': [
+                'dockerize -wait http://etc:2379 -timeout 120s',
+                'dockerize -wait https://apiserver:6443 -timeout 120s',
             ],
             'volumes': [
                 {
