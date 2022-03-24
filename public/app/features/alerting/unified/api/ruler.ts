@@ -18,9 +18,8 @@ export interface RulerRequestUrl {
 
 export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   const grafanaServerPath = `/api/ruler/${getDatasourceAPIId(rulerConfig.dataSourceName)}`;
-  const rulerPath = rulerConfig.apiVersion === 'config' ? '/config/v1/rules' : '/api/v1/rules';
 
-  const basePath = `${grafanaServerPath}${rulerPath}`;
+  const rulerPath = `${grafanaServerPath}/api/v1/rules`;
   const rulerSearchParams = new URLSearchParams();
   if (rulerConfig.customRulerEnabled) {
     rulerSearchParams.set('source', 'ruler');
@@ -37,16 +36,16 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
       }
 
       return {
-        path: `${basePath}`,
+        path: `${rulerPath}`,
         params: Object.fromEntries(rulerSearchParams),
       };
     },
     namespace: (namespace: string): RulerRequestUrl => ({
-      path: `${basePath}/${encodeURIComponent(namespace)}`,
+      path: `${rulerPath}/${encodeURIComponent(namespace)}`,
       params: Object.fromEntries(rulerSearchParams),
     }),
     namespaceGroup: (namespace: string, group: string): RulerRequestUrl => ({
-      path: `${basePath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`,
+      path: `${rulerPath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`,
       params: Object.fromEntries(rulerSearchParams),
     }),
   };

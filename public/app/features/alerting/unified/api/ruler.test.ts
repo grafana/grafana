@@ -37,7 +37,7 @@ describe('rulerUrlBuilder', () => {
     expect(group.params).toMatchObject({ subtype: '2' });
   });
 
-  it('Should use /config/v1/rules endpoint with subtype = 3 parameter for config api version', () => {
+  it('Should use /api/v1/rules endpoint with subtype = 3 parameter for config api version', () => {
     // Arrange
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex v2',
@@ -55,13 +55,13 @@ describe('rulerUrlBuilder', () => {
     const group = builder.namespaceGroup('test-ns', 'test-gr');
 
     // Assert
-    expect(rules.path).toBe('/api/ruler/ds-uid/config/v1/rules');
+    expect(rules.path).toBe('/api/ruler/ds-uid/api/v1/rules');
     expect(rules.params).toMatchObject({ subtype: '3' });
 
-    expect(namespace.path).toBe('/api/ruler/ds-uid/config/v1/rules/test-ns');
+    expect(namespace.path).toBe('/api/ruler/ds-uid/api/v1/rules/test-ns');
     expect(namespace.params).toMatchObject({ subtype: '3' });
 
-    expect(group.path).toBe('/api/ruler/ds-uid/config/v1/rules/test-ns/test-gr');
+    expect(group.path).toBe('/api/ruler/ds-uid/api/v1/rules/test-ns/test-gr');
     expect(group.params).toMatchObject({ subtype: '3' });
   });
 
