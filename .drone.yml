@@ -702,6 +702,29 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    --depth=1
+  - cd grafana-enterprise
+  - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
+    && git push origin $${TEST_TAG}
+  - cd -
+  - git remote add downstream https://github.com/grafana/$${DOWNSTREAM_REPO}.git
+  - git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag
+    $${TEST_TAG} && git push downstream $${TEST_TAG}
+  environment:
+    DOWNSTREAM_REPO:
+      from_secret: downstream
+    GITHUB_TOKEN:
+      from_secret: github_token
+    TEST_TAG: v0.0.0-test
+  failure: ignore
+  image: grafana/build-container:1.5.3
+  name: trigger-test-release
+  when:
+    paths:
+      include:
+      - .drone.yml
 - image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
@@ -4386,6 +4409,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a14708e4946492b73da169e1d7719ced3508da27df8d1ecd1e3caf0985daad58
+hmac: f8ee7ebfe0dd8221b71c0f0d01fa7dfd41be01526959c35b6f2eb4069babbf51
 
 ...
