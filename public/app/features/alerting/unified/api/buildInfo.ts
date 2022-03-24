@@ -40,7 +40,7 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
     };
   }
 
-  const { application, features } = response.data.data;
+  const { features } = response.data.data;
 
   return {
     application: PromApplication.Prometheus,
