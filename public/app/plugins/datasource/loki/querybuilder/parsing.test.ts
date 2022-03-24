@@ -52,6 +52,21 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with line filters and escaped characters', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} |= "\\line"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: '__line_contains', params: ['\\line'] }],
+      })
+    );
+  });
+
   it('parses query with matcher label filter', () => {
     expect(buildVisualQueryFromString('{app="frontend"} | bar="baz"')).toEqual(
       noErrors({
@@ -175,7 +190,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: '__line_matches_regex', params: ['`abc`'] },
+          { id: '__line_matches_regex', params: ['abc'] },
           { id: 'json', params: [] },
           { id: '__label_filter', params: ['bar', '=', 'baz'] },
           { id: 'rate', params: ['5m'] },

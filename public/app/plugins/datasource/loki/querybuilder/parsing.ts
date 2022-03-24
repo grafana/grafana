@@ -130,7 +130,7 @@ function getLineFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
     '!~': '"__line_matches_regex"_not',
   };
   const filter = getString(expr, node.getChild('Filter'));
-  const filterExpr = getString(expr, node.getChild('String')).replace(/"/g, '');
+  const filterExpr = handleQuotes(getString(expr, node.getChild('String')));
 
   return {
     id: mapFilter[filter],
@@ -142,7 +142,7 @@ function getLabelParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const parserNode = node.firstChild;
   const parser = getString(expr, parserNode);
 
-  const string = getString(expr, node.getChild('String')).replace(/"/g, '');
+  const string = handleQuotes(getString(expr, node.getChild('String')));
   const params = !!string ? [string] : [];
   return {
     id: parser,
@@ -158,10 +158,11 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
     const label = filter!.firstChild;
     const op = label!.nextSibling;
     const value = op!.nextSibling;
+    const valueString = handleQuotes(getString(expr, value));
 
     return {
       id,
-      params: [label, op, value].map((child) => getString(expr, child).replace(/"/g, '')),
+      params: [getString(expr, label), getString(expr, op), valueString],
     };
   }
 
@@ -177,8 +178,8 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
       params: [
         getString(expr, label),
         getString(expr, op),
-        getString(expr, ip).replace(/"/g, ''),
-        getString(expr, value).replace(/"/g, ''),
+        handleQuotes(getString(expr, ip)),
+        handleQuotes(getString(expr, value)),
       ],
     };
   } else {
@@ -207,7 +208,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   // Not implemented in visual query builder yet
   const id = 'line_format';
-  const string = getString(expr, node.getChild('String')).replace(/"/g, '');
+  const string = handleQuotes(getString(expr, node.getChild('String')));
 
   return {
     id,
@@ -222,9 +223,11 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const op = identifier!.nextSibling;
   const value = op!.nextSibling;
 
+  let valueString = handleQuotes(getString(expr, value));
+
   return {
     id,
-    params: [getString(expr, identifier), getString(expr, op), getString(expr, value).replace(/"/g, '')],
+    params: [getString(expr, identifier), getString(expr, op), valueString],
   };
 }
 
@@ -285,6 +288,13 @@ function makeError(expr: string, node: SyntaxNode) {
 
 function isIntervalVariableError(node: SyntaxNode) {
   return node?.parent?.name === 'Range';
+}
+
+function handleQuotes(string: string) {
+  if (string[0] === `"` && string[string.length - 1] === `"`) {
+    return string.replace(/"/g, '').replace(/\\\\/g, '\\');
+  }
+  return string.replace(/`/g, '');
 }
 
 // Template variables
