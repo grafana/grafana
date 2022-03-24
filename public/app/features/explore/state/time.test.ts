@@ -28,9 +28,8 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Explore item reducer', () => {
-  beforeEach(() => {
-    silenceConsoleOutput();
-  });
+  silenceConsoleOutput();
+
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
       const { dispatch } = configureStore({
