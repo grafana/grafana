@@ -3,7 +3,7 @@ import { DataTransformerInfo } from '../../types/transformations';
 import { map } from 'rxjs/operators';
 import { DataFrame } from '../../types/dataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { stringStartsAsRegEx, stringToJsRegex } from '../../text/string';
+import { stringToJsRegex } from '../../text/string';
 
 /**
  * Options for renameByRegexTransformer
