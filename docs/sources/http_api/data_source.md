@@ -645,7 +645,7 @@ JSON Body schema:
 - **from/to** – Specifies the time range for the queries. Are both required and should be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
 - **queries** – Specifies one or more queries. Must contain at least 1.
 - **queries.refId** – Specifies an identifier of the query. Is optional and defaults to "A".
-- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each query in the request must have a unique `datasource`.
+- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each query in the request must have a `datasource`.
 - **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
 - **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Is optional and defaults to 100.
 - **queries.intervalMs** - Specifies the time series time interval in milliseconds. Is optional and defaults to 1000.
