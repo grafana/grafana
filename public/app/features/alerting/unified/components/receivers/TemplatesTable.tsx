@@ -9,7 +9,7 @@ import { ReceiversSection } from './ReceiversSection';
 import { makeAMLink } from '../../utils/misc';
 import { useDispatch } from 'react-redux';
 import { deleteTemplateAction } from '../../state/actions';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../../components/Authorize';

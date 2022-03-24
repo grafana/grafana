@@ -5,8 +5,9 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
-
+import { isGrafanaRulesSource, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { Authorize } from '../../components/Authorize';
+import { AccessControlAction } from 'app/types';
 export interface AmRootRouteProps {
   isEditMode: boolean;
   onEnterEditMode: () => void;
@@ -28,6 +29,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
 
+  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
   const isReadOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
 
   return (
@@ -37,9 +39,17 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
           Root policy - <i>default for all alerts</i>
         </h5>
         {!isEditMode && !isReadOnly && (
-          <Button icon="pen" onClick={onEnterEditMode} size="sm" type="button" variant="secondary">
-            Edit
-          </Button>
+          <Authorize
+            actions={
+              isGrafanaAM
+                ? [AccessControlAction.AlertingNotificationsCreate]
+                : [AccessControlAction.AlertingNotificationsExternalWrite]
+            }
+          >
+            <Button icon="pen" onClick={onEnterEditMode} size="sm" type="button" variant="secondary">
+              Edit
+            </Button>
+          </Authorize>
         )}
       </div>
       <p>

@@ -8,12 +8,15 @@ import { AmRoutesTable } from './AmRoutesTable';
 import { getGridStyles } from './gridStyles';
 import { MuteTimingsTable } from './MuteTimingsTable';
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
+import { Authorize } from '../Authorize';
+import { AccessControlAction } from 'app/types';
 
 export interface AmRoutesExpandedReadProps {
   onChange: (routes: FormAmRoute) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
   readOnly?: boolean;
+  isGrafanaAM: boolean;
 }
 
 export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
@@ -21,6 +24,7 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
   receivers,
   routes,
   readOnly = false,
+  isGrafanaAM,
 }) => {
   const styles = useStyles2(getStyles);
   const gridStyles = useStyles2(getGridStyles);
@@ -71,23 +75,32 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
             }}
             receivers={receivers}
             routes={subroutes}
+            isGrafanaAM={isGrafanaAM}
           />
         ) : (
           <p>No nested policies configured.</p>
         )}
         {!isAddMode && !readOnly && (
-          <Button
-            className={styles.addNestedRoutingBtn}
-            icon="plus"
-            onClick={() => {
-              setSubroutes((subroutes) => [...subroutes, emptyRoute]);
-              setIsAddMode(true);
-            }}
-            variant="secondary"
-            type="button"
+          <Authorize
+            actions={
+              isGrafanaAM
+                ? [AccessControlAction.AlertingNotificationsCreate]
+                : [AccessControlAction.AlertingNotificationsExternalWrite]
+            }
           >
-            Add nested policy
-          </Button>
+            <Button
+              className={styles.addNestedRoutingBtn}
+              icon="plus"
+              onClick={() => {
+                setSubroutes((subroutes) => [...subroutes, emptyRoute]);
+                setIsAddMode(true);
+              }}
+              variant="secondary"
+              type="button"
+            >
+              Add nested policy
+            </Button>
+          </Authorize>
         )}
       </div>
       <div className={gridStyles.titleCell}>Mute timings</div>

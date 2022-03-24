@@ -20,6 +20,7 @@ import {
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { AccessControlAction } from 'app/types';
 import { Authorize } from '../../components/Authorize';
+import { contextSrv } from 'app/core/services/context_srv';
 
 interface Props {
   alertManagerSourceName: string;
@@ -86,6 +87,11 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
           buttonIcon="plus"
           buttonSize="lg"
           href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+          showButton={contextSrv.hasPermission(
+            isGrafanaAM
+              ? AccessControlAction.AlertingNotificationsCreate
+              : AccessControlAction.AlertingNotificationsExternalWrite
+          )}
         />
       ) : (
         <p>No mute timings configured</p>
@@ -113,6 +119,18 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false, setMuteTimingName: (name: string) => void) {
+  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
+  const userHasEditPermissions = contextSrv.hasPermission(
+    isGrafanaAM
+      ? AccessControlAction.AlertingNotificationsUpdate
+      : AccessControlAction.AlertingNotificationsExternalWrite
+  );
+  const userHasDeletePermissions = contextSrv.hasPermission(
+    isGrafanaAM
+      ? AccessControlAction.AlertingNotificationsDelete
+      : AccessControlAction.AlertingNotificationsExternalWrite
+  );
+  const showActions = !hideActions && (userHasEditPermissions || userHasDeletePermissions);
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
     const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
       {
@@ -129,19 +147,41 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
         renderCell: ({ data }) => renderTimeIntervals(data.time_intervals),
       },
     ];
-    if (!hideActions) {
+    if (showActions) {
       columns.push({
         id: 'actions',
         label: 'Actions',
         renderCell: function renderActions({ data }) {
           return (
             <div>
-              <Link
-                href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, { muteName: data.name })}
+              <Authorize
+                actions={
+                  isGrafanaAM
+                    ? [AccessControlAction.AlertingNotificationsUpdate]
+                    : [AccessControlAction.AlertingNotificationsExternalWrite]
+                }
               >
-                <IconButton name="edit" title="Edit mute timing" />
-              </Link>
-              <IconButton name={'trash-alt'} title="Delete mute timing" onClick={() => setMuteTimingName(data.name)} />
+                <Link
+                  href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
+                    muteName: data.name,
+                  })}
+                >
+                  <IconButton name="edit" title="Edit mute timing" />
+                </Link>
+              </Authorize>
+              <Authorize
+                actions={
+                  isGrafanaAM
+                    ? [AccessControlAction.AlertingNotificationsUpdate]
+                    : [AccessControlAction.AlertingNotificationsExternalWrite]
+                }
+              >
+                <IconButton
+                  name={'trash-alt'}
+                  title="Delete mute timing"
+                  onClick={() => setMuteTimingName(data.name)}
+                />
+              </Authorize>
             </div>
           );
         },
@@ -149,7 +189,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
       });
     }
     return columns;
-  }, [alertManagerSourceName, hideActions, setMuteTimingName]);
+  }, [alertManagerSourceName, setMuteTimingName, showActions, isGrafanaAM]);
 }
 
 function renderTimeIntervals(timeIntervals: TimeInterval[]) {

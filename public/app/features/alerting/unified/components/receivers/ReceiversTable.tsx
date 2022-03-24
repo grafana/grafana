@@ -15,7 +15,7 @@ import { deleteReceiverAction } from '../../state/actions';
 import { isVanillaPrometheusAlertManagerDataSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../../components/Authorize';
 import { AccessControlAction } from 'app/types';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 interface Props {
   config: AlertManagerCortexConfig;
