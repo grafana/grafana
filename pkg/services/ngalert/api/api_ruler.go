@@ -98,18 +98,14 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 			logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(q.Result), "authorized", len(canDelete), "unauthorized", cannotDelete)
 		}
 
-		err = srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgId, canDelete...)
-		if err != nil {
-			return err
-		}
-		return nil
+		return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgId, canDelete...)
 	})
 
 	if err != nil {
 		if errors.Is(err, ErrAuthorization) {
 			return ErrResp(http.StatusUnauthorized, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
+		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
 
 	logger.Debug("rules have been deleted from the store. updating scheduler")
