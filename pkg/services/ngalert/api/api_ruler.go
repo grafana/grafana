@@ -44,12 +44,12 @@ var (
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	groupName, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toGroupNameErrorResponse(err)
 	}
 
-	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, groupName.Uid)
+	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, folder.Uid)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
 	}
@@ -92,28 +92,25 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 }
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
-	if err != nil {
-		return toGroupNameErrorResponse(err)
-	}
+	namespace := web.Params(c.Req)[":Namespace"]
 
 	q := ngmodels.ListNamespaceAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
-		NamespaceUID: namespace.Uid,
+		NamespaceUID: namespace,
 	}
 	if err := srv.store.GetNamespaceAlertRules(c.Req.Context(), &q); err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
+		return ErrResp(http.StatusInternalServerError, err, "failed to fetch rules for namespace")
 	}
 
 	result := apimodels.NamespaceConfigResponse{}
 	ruleGroupConfigs := make(map[string]apimodels.GettableRuleGroupConfig)
 	for _, r := range q.Result {
+		// TODO r.RuleGroup is the folder ID here, needs to be the folder name
 		ruleGroupConfig, ok := ruleGroupConfigs[r.RuleGroup]
 		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
 			ruleGroupConfigs[r.RuleGroup] = apimodels.GettableRuleGroupConfig{
-				Name:     r.RuleGroup,
+				Name:     r.RuleGroup, // TODO this needs to be the name of the folder
 				Interval: ruleGroupInterval,
 				Rules: []apimodels.GettableExtendedRuleNode{
 					toGettableExtendedRuleNode(*r),
@@ -126,7 +123,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 	}
 
 	for _, ruleGroupConfig := range ruleGroupConfigs {
-		result[namespaceTitle] = append(result[namespaceTitle], ruleGroupConfig)
+		result[namespace] = append(result[namespace], ruleGroupConfig)
 	}
 
 	return response.JSON(http.StatusAccepted, result)
