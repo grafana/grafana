@@ -4,7 +4,6 @@ import { css, cx } from '@emotion/css';
 import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardModel } from '../../state/DashboardModel';
 import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
@@ -131,7 +130,6 @@ export function DashboardSettings({ dashboard, editview }: Props) {
 
   const onPostSave = () => {
     dashboard.meta.hasUnsavedFolderChange = false;
-    dashboardWatcher.reloadPage();
   };
 
   const folderTitle = dashboard.meta.folderTitle;
