@@ -26,7 +26,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	authorize := acmiddleware.Middleware(api.AccessControl)
 	var eval ac.Evaluator = nil
 
-	// can be overridden in path matchers below
+	// Most routes follow this general authorization approach as a fallback. Exceptions are overridden directly in the below block.
 	var fallback web.Handler
 	switch method {
 	case http.MethodPost, http.MethodPut, http.MethodDelete:
