@@ -88,7 +88,7 @@ export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string 
 
 /** Current user info included in bootData
  *
- * @public
+ * @internal
  */
 export interface CurrentUserDTO {
   isSignedIn: boolean;
@@ -111,7 +111,7 @@ export interface CurrentUserDTO {
 
 /** Contains essential user and config info
  *
- * @public
+ * @internal
  */
 export interface BootData {
   user: CurrentUserDTO;
@@ -126,7 +126,7 @@ export interface BootData {
 /**
  * Describes all the different Grafana configuration values available for an instance.
  *
- * @public
+ * @internal
  */
 export interface GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings };

@@ -29,9 +29,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   appUrl = '';
   appSubUrl = '';
   windowTitlePrefix = '';
-  buildInfo: BuildInfo = {} as BuildInfo;
+  buildInfo: BuildInfo;
   newPanelTitle = '';
-  bootData = {} as BootData;
+  bootData: BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
@@ -116,6 +116,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
     this.theme2 = createTheme({ colors: { mode } });
     this.theme = this.theme2.v1;
+    this.bootData = options.bootData;
+    this.buildInfo = options.buildInfo;
 
     const defaults = {
       datasources: {},
