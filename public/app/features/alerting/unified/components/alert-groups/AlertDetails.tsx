@@ -17,15 +17,15 @@ interface AmNotificationsAlertDetailsProps {
 
 export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, alertManagerSourceName }) => {
   const styles = useStyles2(getStyles);
-  const isExternalAM = !isGrafanaRulesSource(alertManagerSourceName);
+  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
   return (
     <>
       <div className={styles.actionsRow}>
         <Authorize
           actions={
-            isExternalAM
-              ? [AccessControlAction.AlertingInstancesExternalWrite]
-              : [AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingInstanceUpdate]
+            isGrafanaAM
+              ? [AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingInstanceUpdate]
+              : [AccessControlAction.AlertingInstancesExternalWrite]
           }
           fallback={contextSrv.isEditor}
         >
@@ -54,7 +54,7 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
           )}
         </Authorize>
         <Authorize
-          actions={isExternalAM ? [AccessControlAction.DataSourcesExplore] : [AccessControlAction.AlertingInstanceRead]}
+          actions={isGrafanaAM ? [AccessControlAction.AlertingInstanceRead] : [AccessControlAction.DataSourcesExplore]}
         >
           {alert.generatorURL && (
             <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>

@@ -38,7 +38,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
   const filteredSilences = useFilteredSilences(silences);
-  const isExternalAM = !isGrafanaRulesSource(alertManagerSourceName);
+  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
 
   const { silenceState } = getSilenceFiltersFromUrlParams(queryParams);
 
@@ -67,9 +67,9 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
           <SilencesFilter />
           <Authorize
             actions={
-              isExternalAM
-                ? [AccessControlAction.AlertingInstancesExternalWrite]
-                : [AccessControlAction.AlertingInstanceCreate]
+              isGrafanaAM
+                ? [AccessControlAction.AlertingInstanceCreate]
+                : [AccessControlAction.AlertingInstancesExternalWrite]
             }
             fallback={contextSrv.isEditor}
           >
@@ -178,13 +178,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  const isExternalAM = !isGrafanaRulesSource(alertManagerSourceName);
+  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
   return useMemo((): SilenceTableColumnProps[] => {
     const handleExpireSilenceClick = (id: string) => {
       dispatch(expireSilenceAction(alertManagerSourceName, id));
     };
     const showActions = contextSrv.hasAccess(
-      isExternalAM ? AccessControlAction.AlertingInstancesExternalWrite : AccessControlAction.AlertingInstanceUpdate,
+      isGrafanaAM ? AccessControlAction.AlertingInstanceUpdate : AccessControlAction.AlertingInstancesExternalWrite,
       contextSrv.isEditor
     );
     const columns: SilenceTableColumnProps[] = [
@@ -262,7 +262,7 @@ function useColumns(alertManagerSourceName: string) {
       });
     }
     return columns;
-  }, [alertManagerSourceName, dispatch, styles, isExternalAM]);
+  }, [alertManagerSourceName, dispatch, styles, isGrafanaAM]);
 }
 
 export default SilencesTable;
