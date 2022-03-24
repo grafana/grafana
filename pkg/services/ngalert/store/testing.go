@@ -223,59 +223,6 @@ func (f *FakeRuleStore) UpsertAlertRules(_ context.Context, q []UpsertRule) erro
 	return nil
 }
 
-func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd UpdateRuleGroupCmd) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, cmd)
-	if err := f.Hook(cmd); err != nil {
-		return err
-	}
-	existingRules := f.Rules[cmd.OrgID]
-
-	for _, r := range cmd.RuleGroupConfig.Rules {
-		// TODO: Not sure why this is not being set properly, where is the code that sets this?
-		for i := range r.GrafanaManagedAlert.Data {
-			r.GrafanaManagedAlert.Data[i].DatasourceUID = "-100"
-		}
-
-		newRule := &models.AlertRule{
-			OrgID:           cmd.OrgID,
-			Title:           r.GrafanaManagedAlert.Title,
-			Condition:       r.GrafanaManagedAlert.Condition,
-			Data:            r.GrafanaManagedAlert.Data,
-			UID:             util.GenerateShortUID(),
-			IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-			NamespaceUID:    cmd.NamespaceUID,
-			RuleGroup:       cmd.RuleGroupConfig.Name,
-			NoDataState:     models.NoDataState(r.GrafanaManagedAlert.NoDataState),
-			ExecErrState:    models.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-			Version:         1,
-		}
-
-		if r.ApiRuleNode != nil {
-			newRule.For = time.Duration(r.ApiRuleNode.For)
-			newRule.Annotations = r.ApiRuleNode.Annotations
-			newRule.Labels = r.ApiRuleNode.Labels
-		}
-
-		if newRule.NoDataState == "" {
-			newRule.NoDataState = models.NoData
-		}
-
-		if newRule.ExecErrState == "" {
-			newRule.ExecErrState = models.AlertingErrState
-		}
-
-		err := newRule.PreSave(time.Now)
-		require.NoError(f.t, err)
-
-		existingRules = append(existingRules, newRule)
-	}
-
-	f.Rules[cmd.OrgID] = existingRules
-	return nil
-}
-
 func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
 }
