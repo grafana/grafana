@@ -95,16 +95,20 @@ steps:
   image: quay.io/coreos/etcd:v3.5.2
   name: etcd
 - commands:
-  - /usr/local/bin/kube-apiserver --bind-address=0.0.0.0 --secure-port=6443 --etcd-servers=http://etcd:2379
-    --client-ca-file=/var/lib/kubernetes/ca.pem --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
-    --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem --service-account-key-file=/var/lib/kubernetes/service-account.pem
-    --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
-    --service-account-issuer=https://0.0.0.0:6443
+  - apt-get update
+  - apt-get install -yq kubectl
+  - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname
+    -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - ls -l /drone/src/devenv/docker/blocks/intentapi/certs
+  - ls -l /var/lib/kubernetes
+  - make devenv sources=intentapi
+  - cd /drone/src/devenv && docker-compose ps && docker-compose logs -f apiserver
   depends_on:
   - etcd
   - generate_intentapi_certs
   detach: true
-  image: k8s.gcr.io/kube-apiserver:v1.23.3
+  image: build_image
   name: apiserver
   volumes:
   - name: intentapi_certs
@@ -578,6 +582,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f1f7601902e63b0d35accf9fbf644705082a17bb215983b843041a60622e2097
+hmac: 608346c93b4c28479a4bdfbcbbdd7264fab4649c7bb4bdadce9bd88c8a69710f
 
 ...

@@ -84,23 +84,21 @@ def intentapi_services():
         },
         {
             'name': 'apiserver',
-            'image': 'k8s.gcr.io/kube-apiserver:v1.23.3',
+            'image': 'build_image',
             'depends_on': [
                 'etcd',
                 'generate_intentapi_certs',
             ],
             'detach': True,
             'commands': [
-                '/usr/local/bin/kube-apiserver' +
-                ' --bind-address=0.0.0.0' +
-                ' --secure-port=6443' +
-                ' --etcd-servers=http://etcd:2379' +
-                ' --client-ca-file=/var/lib/kubernetes/ca.pem' +
-                ' --tls-cert-file=/var/lib/kubernetes/kubernetes.pem' +
-                ' --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem' +
-                ' --service-account-key-file=/var/lib/kubernetes/service-account.pem' +
-                ' --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem' +
-                ' --service-account-issuer=https://0.0.0.0:6443',
+                'apt-get update',
+                'apt-get install -yq kubectl',
+                'curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose',
+                'chmod +x /usr/local/bin/docker-compose',
+                'ls -l /drone/src/devenv/docker/blocks/intentapi/certs',
+                'ls -l /var/lib/kubernetes',
+                'make devenv sources=intentapi',
+                'cd /drone/src/devenv && docker-compose ps && docker-compose logs -f apiserver',
             ],
             'volumes': [
                 {
