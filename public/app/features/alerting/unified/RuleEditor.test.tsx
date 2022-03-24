@@ -20,6 +20,8 @@ import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
+jest.setTimeout(60 * 1000);
+
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
