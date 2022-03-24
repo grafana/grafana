@@ -9,7 +9,7 @@ import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions'
 import { useButton } from '@react-aria/button';
 import { useDialog } from '@react-aria/dialog';
 import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
-import { FocusScope } from '@react-aria/focus';
+import { FocusScope, useFocusManager } from '@react-aria/focus';
 
 import { NavBarItemMenuContext } from './context';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
@@ -54,44 +54,46 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   const { focusWithinProps } = useFocusWithin({
     onFocusWithin: (e) => {
-      // console.log('FOCUS');
-      // console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
-      // // console.log('event focus within', e.target.id);
-      // // console.log('ref', ref.current?.id);
-      // // If focus is within the trigger OR a child of it, open the menu
-      // state.open();
-      // if (e.target.parentElement?.getAttribute('aria-labelledby') === ref.current?.id) {
-      //   //setMenuHasFocus(true);
-      //   //state.open();
-      // }
+      console.log('FOCUS');
+      console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
+      // console.log('event focus within', e.target.id);
+      // console.log('ref', ref.current?.id);
+      // If focus is within the trigger OR a child of it, open the menu
+      state.open();
+      if (e.target.parentElement?.getAttribute('aria-labelledby') === ref.current?.id) {
+        //setMenuHasFocus(true);
+        //state.open();
+      }
     },
     onBlurWithin: (e) => {
-      // console.log('BLUR');
-      // // console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
-      // console.log('event blur within', e.target.id);
-      // console.log('ref', ref.current?.id);
-      // // If blurring from the top element, close the menu
-      // if (
-      //   e.target.id === ref.current?.id ||
-      //   e.target.parentElement?.getAttribute('aria-labelledby') !== ref.current?.id
-      // ) {
-      //   state.close();
-      //   //setMenuHasFocus(false);
-      // }
+      console.log('BLUR');
+      // console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
+      console.log('event blur within', e.target.id);
+      console.log('ref', ref.current?.id);
+      // If blurring from the top element, close the menu
+      if (
+        e.target.id === ref.current?.id ||
+        e.target.parentElement?.getAttribute('aria-labelledby') !== ref.current?.id
+      ) {
+        state.close();
+        //setMenuHasFocus(false);
+      }
     },
     onFocusWithinChange: (isFocused) => {
       // console.log('Has focus: ' + menuHasFocus);
       // console.log('Is focused: ' + isFocused);
       // console.log('state', { state });
       if (isFocused) {
-        state.open();
+        //state.open();
       }
       if (!isFocused) {
-        state.close();
-        setMenuHasFocus(false);
+        //state.close();
+        //setMenuHasFocus(false);
       }
     },
   });
+
+  const focusManager = useFocusManager();
 
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
@@ -194,6 +196,11 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
               onLeft: () => {
                 setMenuHasFocus(false);
                 ref.current?.focus();
+              },
+              onTab: () => {
+                console.info('context tab');
+                setMenuHasFocus(false);
+                focusManager.focusNext();
               },
             }}
           >
