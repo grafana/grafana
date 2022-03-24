@@ -5,7 +5,8 @@ import (
 )
 
 type Service interface {
-	GetPreferenceWithDefaults(context.Context, *GetPreferenceWithDefaultsQuery) (*Preference, error)
-	GetPreference(context.Context, *GetPreferenceQuery) (*Preference, error)
-	SavePreference(context.Context, *SavePreferenceCommand) (*Preference, error)
+	GetWithDefaults(context.Context, *GetPreferenceWithDefaultsQuery) (*Preference, error)
+	Get(context.Context, *GetPreferenceQuery) (*Preference, error)
+	Save(context.Context, *SavePreferenceCommand) error
+	GetDefaults() *Preference
 }

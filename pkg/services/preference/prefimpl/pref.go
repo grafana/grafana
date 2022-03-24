@@ -10,18 +10,19 @@ import (
 
 type Service struct {
 	store store
+	cfg   *setting.Cfg
 }
 
-func ProvideService(db db.DB, cfg setting.Cfg) *Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) *Service {
 	return &Service{
 		store: &sqlStore{
-			db:  db,
-			cfg: cfg,
+			db: db,
 		},
+		cfg: cfg,
 	}
 }
 
-func (s *Service) GetPreferenceWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
+func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
 	listQuery := &pref.ListPreferenceQuery{
 		Teams:  query.Teams,
 		OrgID:  query.OrgID,
@@ -32,7 +33,7 @@ func (s *Service) GetPreferenceWithDefaults(ctx context.Context, query *pref.Get
 		return nil, err
 	}
 
-	res := s.store.GetDefaults()
+	res := s.GetDefaults()
 	for _, p := range prefs {
 		if p.Theme != "" {
 			res.Theme = p.Theme
@@ -51,10 +52,21 @@ func (s *Service) GetPreferenceWithDefaults(ctx context.Context, query *pref.Get
 	return res, err
 }
 
-func (s *Service) GetPreference(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
+func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
 	return s.store.Get(ctx, query)
 }
 
-func (s *Service) SavePreference(ctx context.Context, cmd *pref.SavePreferenceCommand) (*pref.Preference, error) {
+func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
 	return s.store.Set(ctx, cmd)
+}
+
+func (s *Service) GetDefaults() *pref.Preference {
+	defaults := &pref.Preference{
+		Theme:           s.cfg.DefaultTheme,
+		Timezone:        s.cfg.DateFormats.DefaultTimezone,
+		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
+		HomeDashboardID: 0,
+	}
+
+	return defaults
 }

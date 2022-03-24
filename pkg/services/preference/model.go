@@ -1,6 +1,8 @@
 package pref
 
-import "time"
+import (
+	"time"
+)
 
 type Preference struct {
 	ID              int64
@@ -14,6 +16,7 @@ type Preference struct {
 	Created         time.Time
 	Updated         time.Time
 	Version         int64
+	// JsonData        *PreferencesJsonData
 }
 
 type GetPreferenceWithDefaultsQuery struct {
@@ -43,3 +46,32 @@ type ListPreferenceQuery struct {
 	OrgID  int64
 	UserID int64
 }
+
+// type NavLink struct {
+// 	Id     string `json:"id,omitempty"`
+// 	Text   string `json:"text,omitempty"`
+// 	Url    string `json:"url,omitempty"`
+// 	Target string `json:"target,omitempty"`
+// }
+
+// type NavbarPreference struct {
+// 	SavedItems []NavLink `json:"savedItems"`
+// }
+
+// type PreferencesJsonData struct {
+// 	Navbar NavbarPreference `json:"navbar"`
+// }
+
+// func (j *PreferencesJsonData) FromDB(data []byte) error {
+// 	dec := json.NewDecoder(bytes.NewBuffer(data))
+// 	dec.UseNumber()
+// 	return dec.Decode(j)
+// }
+
+// func (j *PreferencesJsonData) ToDB() ([]byte, error) {
+// 	if j == nil {
+// 		return nil, nil
+// 	}
+
+// 	return json.Marshal(j)
+// }

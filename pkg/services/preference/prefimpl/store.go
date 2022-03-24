@@ -8,19 +8,16 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type store interface {
 	Get(context.Context, *pref.GetPreferenceQuery) (*pref.Preference, error)
-	GetDefaults() *pref.Preference
 	List(context.Context, *pref.ListPreferenceQuery) ([]*pref.Preference, error)
-	Set(context.Context, *pref.SavePreferenceCommand) (*pref.Preference, error)
+	Set(context.Context, *pref.SavePreferenceCommand) error
 }
 
 type sqlStore struct {
-	db  db.DB
-	cfg setting.Cfg
+	db db.DB
 }
 
 func (s *sqlStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
@@ -35,17 +32,6 @@ func (s *sqlStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pr
 		return nil
 	})
 	return &prefs, err
-}
-
-func (s *sqlStore) GetDefaults() *pref.Preference {
-	defaults := &pref.Preference{
-		Theme:           s.cfg.DefaultTheme,
-		Timezone:        s.cfg.DateFormats.DefaultTimezone,
-		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
-		HomeDashboardID: 0,
-	}
-
-	return defaults
 }
 
 func (s *sqlStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([]*pref.Preference, error) {
@@ -80,16 +66,16 @@ func (s *sqlStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([
 	return prefs, err
 }
 
-func (s *sqlStore) Set(ctx context.Context, cmd *pref.SavePreferenceCommand) (*pref.Preference, error) {
-	var prefs pref.Preference
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgID, cmd.UserID, cmd.TeamID).Get(&prefs)
+func (s *sqlStore) Set(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
+	var preference pref.Preference
+	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgID, cmd.UserID, cmd.TeamID).Get(&preference)
 		if err != nil {
 			return err
 		}
 
 		if !exists {
-			prefs = pref.Preference{
+			preference = pref.Preference{
 				UserID:          cmd.UserID,
 				OrgID:           cmd.OrgID,
 				TeamID:          cmd.TeamID,
@@ -100,20 +86,16 @@ func (s *sqlStore) Set(ctx context.Context, cmd *pref.SavePreferenceCommand) (*p
 				Created:         time.Now(),
 				Updated:         time.Now(),
 			}
-			_, err = sess.Insert(&prefs)
+			_, err = sess.Insert(&preference)
 			return err
 		}
-		prefs.HomeDashboardID = cmd.HomeDashboardID
-		prefs.Timezone = cmd.Timezone
-		prefs.WeekStart = cmd.WeekStart
-		prefs.Theme = cmd.Theme
-		prefs.Updated = time.Now()
-		prefs.Version += 1
-		_, err = sess.ID(prefs.ID).AllCols().Update(&prefs)
+		preference.HomeDashboardID = cmd.HomeDashboardID
+		preference.Timezone = cmd.Timezone
+		preference.WeekStart = cmd.WeekStart
+		preference.Theme = cmd.Theme
+		preference.Updated = time.Now()
+		preference.Version += 1
+		_, err = sess.ID(preference.ID).AllCols().Update(&preference)
 		return err
 	})
-	if err != nil {
-		return nil, err
-	}
-	return &prefs, nil
 }
