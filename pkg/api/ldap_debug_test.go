@@ -368,6 +368,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
+	sc.authInfoService = &mockAuthInfoService{}
 
 	ldap := setting.LDAPEnabled
 	t.Cleanup(func() {
@@ -380,7 +381,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		SQLStore:         sqlstoremock,
 		Login:            loginservice.LoginServiceMock{},
-		authInfoService:  &mockAuthInfoService{},
+		authInfoService:  sc.authInfoService,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -492,13 +493,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 		}
 
 		userSearchResult = nil
-
-		bus.AddHandler("test", func(ctx context.Context, q *models.GetExternalUserInfoByLoginQuery) error {
-			assert.Equal(t, "ldap-daniel", q.LoginOrEmail)
-			q.Result = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
-
-			return nil
-		})
+		sc.authInfoService.ExpectedExternalUserInfo = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
 
 		bus.AddHandler("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
 			assert.Equal(t, 34, cmd.UserId)

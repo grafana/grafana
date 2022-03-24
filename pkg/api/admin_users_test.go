@@ -28,8 +28,9 @@ const (
 )
 
 type mockAuthInfoService struct {
-	LatestUserID  int64
-	ExpectedError error
+	LatestUserID             int64
+	ExpectedError            error
+	ExpectedExternalUserInfo *models.ExternalUserInfo
 }
 
 func (m *mockAuthInfoService) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
@@ -50,6 +51,7 @@ func (m *mockAuthInfoService) UpdateAuthInfo(ctx context.Context, query *models.
 }
 
 func (m *mockAuthInfoService) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+	query.Result = m.ExpectedExternalUserInfo
 	return m.ExpectedError
 }
 
