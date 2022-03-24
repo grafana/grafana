@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
@@ -223,7 +226,7 @@ func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []
 			return err
 		}
 
-		if err := deleteMissingAlerts(existingAlerts, alerts, sess, d.log); err != nil {
+		if err := d.deleteMissingAlerts(existingAlerts, alerts, sess); err != nil {
 			return err
 		}
 
@@ -255,7 +258,7 @@ func (d *DashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context
 		}
 
 		for _, deleteDashCommand := range result {
-			err := d.sqlStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+			err := d.DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
 			if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 				return err
 			}
@@ -613,7 +616,7 @@ func updateAlerts(existingAlerts []*models.Alert, alerts []*models.Alert, sess *
 	return nil
 }
 
-func deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *sqlstore.DBSession, log log.Logger) error {
+func (d *DashboardStore) deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *sqlstore.DBSession) error {
 	for _, missingAlert := range alerts {
 		missing := true
 
@@ -625,7 +628,7 @@ func deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert,
 		}
 
 		if missing {
-			if err := deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess, log); err != nil {
+			if err := d.deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
 				// No use trying to delete more, since we're in a transaction and it will be
 				// rolled back on error.
 				return err
@@ -636,8 +639,8 @@ func deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert,
 	return nil
 }
 
-func deleteAlertByIdInternal(alertId int64, reason string, sess *sqlstore.DBSession, log log.Logger) error {
-	log.Debug("Deleting alert", "id", alertId, "reason", reason)
+func (d *DashboardStore) deleteAlertByIdInternal(alertId int64, reason string, sess *sqlstore.DBSession) error {
+	d.log.Debug("Deleting alert", "id", alertId, "reason", reason)
 
 	if _, err := sess.Exec("DELETE FROM alert WHERE id = ?", alertId); err != nil {
 		return err
@@ -689,4 +692,139 @@ func (d *DashboardStore) GetDashboardsByPluginID(ctx context.Context, query *mod
 		query.Result = dashboards
 		return err
 	})
+}
+
+func (d *DashboardStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return d.deleteDashboard(cmd, sess)
+	})
+}
+
+func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, sess *sqlstore.DBSession) error {
+	dashboard := models.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
+	has, err := sess.Get(&dashboard)
+	if err != nil {
+		return err
+	} else if !has {
+		return models.ErrDashboardNotFound
+	}
+
+	deletes := []string{
+		"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
+		"DELETE FROM star WHERE dashboard_id = ? ",
+		"DELETE FROM dashboard WHERE id = ?",
+		"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
+		"DELETE FROM dashboard_version WHERE dashboard_id = ?",
+		"DELETE FROM annotation WHERE dashboard_id = ?",
+		"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
+		"DELETE FROM dashboard_acl WHERE dashboard_id = ?",
+	}
+
+	if dashboard.IsFolder {
+		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
+
+		var dashIds []struct {
+			Id int64
+		}
+		err := sess.SQL("SELECT id FROM dashboard WHERE folder_id = ?", dashboard.Id).Find(&dashIds)
+		if err != nil {
+			return err
+		}
+
+		for _, id := range dashIds {
+			if err := d.deleteAlertDefinition(id.Id, sess); err != nil {
+				return err
+			}
+		}
+
+		// remove all access control permission with folder scope
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
+		}
+
+		for _, dash := range dashIds {
+			// remove all access control permission with child dashboard scopes
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dash.Id, 10)))
+			if err != nil {
+				return err
+			}
+		}
+
+		if len(dashIds) > 0 {
+			childrenDeletes := []string{
+				"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM star WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_version WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM annotation WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+			}
+			for _, sql := range childrenDeletes {
+				_, err := sess.Exec(sql, dashboard.OrgId, dashboard.Id)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		var existingRuleID int64
+		exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", dashboard.Id).Cols("id").Get(&existingRuleID)
+		if err != nil {
+			return err
+		}
+		if exists {
+			if !cmd.ForceDeleteFolderRules {
+				return fmt.Errorf("folder cannot be deleted: %w", models.ErrFolderContainsAlertRules)
+			}
+
+			// Delete all rules under this folder.
+			deleteNGAlertsByFolder := []string{
+				"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+				"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+			}
+
+			for _, sql := range deleteNGAlertsByFolder {
+				_, err := sess.Exec(sql, dashboard.Id)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := d.deleteAlertDefinition(dashboard.Id, sess); err != nil {
+		return err
+	}
+
+	for _, sql := range deletes {
+		_, err := sess.Exec(sql, dashboard.Id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore.DBSession) error {
+	alerts := make([]*models.Alert, 0)
+	if err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts); err != nil {
+		return err
+	}
+
+	for _, alert := range alerts {
+		if err := d.deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
+			// If we return an error, the current transaction gets rolled back, so no use
+			// trying to delete more
+			return err
+		}
+	}
+
+	return nil
 }

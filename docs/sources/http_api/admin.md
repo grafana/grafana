@@ -376,7 +376,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action                | Scope           |
 | --------------------- | --------------- |
-| users.password:update | global:users:\* |
+| users.password:update | global.users:\* |
 
 **Example Request**:
 
@@ -409,7 +409,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action                   | Scope           |
 | ------------------------ | --------------- |
-| users.permissions:update | global:users:\* |
+| users.permissions:update | global.users:\* |
 
 **Example Request**:
 
@@ -442,7 +442,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
-| users:delete | global:users:\* |
+| users:delete | global.users:\* |
 
 **Example Request**:
 
@@ -510,7 +510,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
-| users.authtoken:list | global:users:\* |
+| users.authtoken:list | global.users:\* |
 
 **Example Request**:
 
@@ -569,7 +569,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action                 | Scope           |
 | ---------------------- | --------------- |
-| users.authtoken:update | global:users:\* |
+| users.authtoken:update | global.users:\* |
 
 **Example Request**:
 
@@ -609,7 +609,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
-| users.logout | global:users:\* |
+| users.logout | global.users:\* |
 
 **Example Request**:
 
