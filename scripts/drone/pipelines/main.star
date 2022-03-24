@@ -165,7 +165,7 @@ def trigger_test_release():
             'TEST_TAG': 'v0.0.0-test',
         },
         'commands': [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
             'cd grafana-enterprise',
             'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
             'cd -',

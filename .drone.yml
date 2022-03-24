@@ -704,6 +704,7 @@ steps:
   name: initialize
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    --depth=1
   - cd grafana-enterprise
   - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
     && git push origin $${TEST_TAG}
@@ -4408,6 +4409,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 67a26152ee9e37986530bf816090cda4362119d3d711d78360b36cf50aa30633
+hmac: a0dade6263da9db443e6f1ad8d23fcda7d962451ef07dbc6cc9f9fd2ae1d3bc1
 
 ...
