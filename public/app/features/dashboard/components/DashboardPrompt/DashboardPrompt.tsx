@@ -34,7 +34,6 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       const originalPath = locationService.getLocation().pathname;
       const original = dashboard.getSaveModelClone();
       setState({ originalPath, original });
-      // hideModal();
     }, 1000);
 
     return () => {
