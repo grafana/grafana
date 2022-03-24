@@ -76,9 +76,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
           moveToBlockedLocationAfterReactStateUpdate(location);
           hideModal();
         },
-        onDismiss: () => {
-          hideModal();
-        },
+        onDismiss: hideModal,
       });
       return false;
     }
@@ -112,9 +110,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
         hideModal();
         moveToBlockedLocationAfterReactStateUpdate(location);
       },
-      onDismiss: () => {
-        hideModal();
-      },
+      onDismiss: hideModal,
     });
 
     return false;
