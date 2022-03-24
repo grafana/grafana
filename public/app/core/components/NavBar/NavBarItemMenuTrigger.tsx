@@ -27,7 +27,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const [menuHasFocus, setMenuHasFocus] = useState(false);
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
-  console.log('Start', menuHasFocus);
+  //console.log('Start', menuHasFocus);
 
   // Create state based on the incoming props
   const state = useMenuTriggerState({ ...rest });
@@ -47,25 +47,48 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       if (isHovering) {
         state.open();
       } else {
-        //state.close();
+        state.close();
       }
     },
   });
 
   const { focusWithinProps } = useFocusWithin({
     onFocusWithin: (e) => {
-      console.log('event focus within', e);
+      // console.log('FOCUS');
+      // console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
+      // // console.log('event focus within', e.target.id);
+      // // console.log('ref', ref.current?.id);
+      // // If focus is within the trigger OR a child of it, open the menu
+      // state.open();
+      // if (e.target.parentElement?.getAttribute('aria-labelledby') === ref.current?.id) {
+      //   //setMenuHasFocus(true);
+      //   //state.open();
+      // }
+    },
+    onBlurWithin: (e) => {
+      // console.log('BLUR');
+      // // console.log('event focus within', e.target.parentElement?.getAttribute('aria-labelledby'));
+      // console.log('event blur within', e.target.id);
+      // console.log('ref', ref.current?.id);
+      // // If blurring from the top element, close the menu
+      // if (
+      //   e.target.id === ref.current?.id ||
+      //   e.target.parentElement?.getAttribute('aria-labelledby') !== ref.current?.id
+      // ) {
+      //   state.close();
+      //   //setMenuHasFocus(false);
+      // }
     },
     onFocusWithinChange: (isFocused) => {
-      console.log('Has focus: ' + menuHasFocus);
-      console.log('Is focused: ' + isFocused);
-      console.log('state', {state});
+      // console.log('Has focus: ' + menuHasFocus);
+      // console.log('Is focused: ' + isFocused);
+      // console.log('state', { state });
       if (isFocused) {
         state.open();
       }
       if (!isFocused) {
-        // state.close();
-        // setMenuHasFocus(false);
+        state.close();
+        setMenuHasFocus(false);
       }
     },
   });
