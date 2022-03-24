@@ -14,8 +14,8 @@ var (
 
 type Repository interface {
 	Save(item *Item) error
-	Update(item *Item) error
-	Find(query *ItemQuery) ([]*ItemDTO, error)
+	Update(ctx context.Context, item *Item) error
+	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
 	Delete(params *DeleteParams) error
 	FindTags(query *TagsQuery) (FindTagsResult, error)
 }
@@ -75,7 +75,6 @@ type GetAnnotationTagsResponse struct {
 type DeleteParams struct {
 	OrgId       int64
 	Id          int64
-	AlertId     int64
 	DashboardId int64
 	PanelId     int64
 }
@@ -144,4 +143,18 @@ type ItemDTO struct {
 	Email       string           `json:"email"`
 	AvatarUrl   string           `json:"avatarUrl"`
 	Data        *simplejson.Json `json:"data"`
+}
+
+type annotationType int
+
+const (
+	Organization annotationType = iota
+	Dashboard
+)
+
+func (annotation *ItemDTO) GetType() annotationType {
+	if annotation.DashboardId != 0 {
+		return Dashboard
+	}
+	return Organization
 }

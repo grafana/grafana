@@ -91,6 +91,7 @@ const GroupByItem: React.FC<GroupByItemProps> = (props) => {
   return (
     <InputGroup>
       <Select
+        aria-label={`Group by ${fieldName ?? 'filter key'}`}
         width="auto"
         value={fieldName ? toOption(fieldName) : null}
         options={options}

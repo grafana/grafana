@@ -20,7 +20,7 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
-| users:read | global:users:\* |
+| users:read | global.users:\* |
 
 **Example Request**:
 
@@ -75,7 +75,7 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
-| users:read | global:users:\* |
+| users:read | global.users:\* |
 
 **Example Request**:
 
@@ -182,7 +182,7 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
-| users:read | global:users:\* |
+| users:read | global.users:\* |
 
 **Example Request using the email as option**:
 

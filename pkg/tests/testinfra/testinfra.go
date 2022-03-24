@@ -3,7 +3,6 @@ package testinfra
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -96,12 +95,7 @@ func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	t.Helper()
 
-	tmpDir, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		err := os.RemoveAll(tmpDir)
-		assert.NoError(t, err)
-	})
+	tmpDir := t.TempDir()
 
 	// Search upwards in directory tree for project root
 	var rootDir string
@@ -125,7 +119,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.True(t, found, "Couldn't detect project root directory")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
-	err = os.MkdirAll(cfgDir, 0750)
+	err := os.MkdirAll(cfgDir, 0750)
 	require.NoError(t, err)
 	dataDir := filepath.Join(tmpDir, "data")
 	// nolint:gosec
@@ -182,6 +176,8 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 
 	logSect, err := cfg.NewSection("log")
+	require.NoError(t, err)
+	_, err = logSect.NewKey("mode", "console")
 	require.NoError(t, err)
 	_, err = logSect.NewKey("level", "debug")
 	require.NoError(t, err)

@@ -64,6 +64,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   }),
+
+  nestedRowCheckbox: css({
+    zIndex: 0,
+  }),
 });
 
 export default getStyles;
