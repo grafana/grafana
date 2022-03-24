@@ -60,8 +60,8 @@ func (m *permissionMigrator) bulkCreateRoles(allRoles []*accesscontrol.Role) ([]
 	return allCreatedRoles, err
 }
 
-func (m *permissionMigrator) bulkAssignRoles(rolesMap map[int64]map[string]*accesscontrol.Role, assignments map[int64]map[string]struct{}) error {
-	if len(assignments) == 0 {
+func (m *permissionMigrator) bulkAssignRoles(allRoles []*accesscontrol.Role) error {
+	if len(allRoles) == 0 {
 		return nil
 	}
 
@@ -70,45 +70,38 @@ func (m *permissionMigrator) bulkAssignRoles(rolesMap map[int64]map[string]*acce
 	teamRoleAssignments := make([]accesscontrol.TeamRole, 0)
 	builtInRoleAssignments := make([]accesscontrol.BuiltinRole, 0)
 
-	for orgID, roleNames := range assignments {
-		for name := range roleNames {
-			role, ok := rolesMap[orgID][name]
-			if !ok {
-				return &ErrUnknownRole{name}
+	for _, role := range allRoles {
+		if strings.HasPrefix(role.Name, "managed:users") {
+			userID, err := strconv.ParseInt(strings.Split(role.Name, ":")[2], 10, 64)
+			if err != nil {
+				return err
 			}
-
-			if strings.HasPrefix(name, "managed:users") {
-				userID, err := strconv.ParseInt(strings.Split(name, ":")[2], 10, 64)
-				if err != nil {
-					return err
-				}
-				userRoleAssignments = append(userRoleAssignments, accesscontrol.UserRole{
-					OrgID:   role.OrgID,
-					RoleID:  role.ID,
-					UserID:  userID,
-					Created: ts,
-				})
-			} else if strings.HasPrefix(name, "managed:teams") {
-				teamID, err := strconv.ParseInt(strings.Split(name, ":")[2], 10, 64)
-				if err != nil {
-					return err
-				}
-				teamRoleAssignments = append(teamRoleAssignments, accesscontrol.TeamRole{
-					OrgID:   role.OrgID,
-					RoleID:  role.ID,
-					TeamID:  teamID,
-					Created: ts,
-				})
-			} else if strings.HasPrefix(name, "managed:builtins") {
-				builtIn := strings.Title(strings.Split(name, ":")[2])
-				builtInRoleAssignments = append(builtInRoleAssignments, accesscontrol.BuiltinRole{
-					OrgID:   role.OrgID,
-					RoleID:  role.ID,
-					Role:    builtIn,
-					Created: ts,
-					Updated: ts,
-				})
+			userRoleAssignments = append(userRoleAssignments, accesscontrol.UserRole{
+				OrgID:   role.OrgID,
+				RoleID:  role.ID,
+				UserID:  userID,
+				Created: ts,
+			})
+		} else if strings.HasPrefix(role.Name, "managed:teams") {
+			teamID, err := strconv.ParseInt(strings.Split(role.Name, ":")[2], 10, 64)
+			if err != nil {
+				return err
 			}
+			teamRoleAssignments = append(teamRoleAssignments, accesscontrol.TeamRole{
+				OrgID:   role.OrgID,
+				RoleID:  role.ID,
+				TeamID:  teamID,
+				Created: ts,
+			})
+		} else if strings.HasPrefix(role.Name, "managed:builtins") {
+			builtIn := strings.Title(strings.Split(role.Name, ":")[2])
+			builtInRoleAssignments = append(builtInRoleAssignments, accesscontrol.BuiltinRole{
+				OrgID:   role.OrgID,
+				RoleID:  role.ID,
+				Role:    builtIn,
+				Created: ts,
+				Updated: ts,
+			})
 		}
 	}
 
