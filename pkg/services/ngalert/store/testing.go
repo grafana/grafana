@@ -3,7 +3,9 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -29,6 +31,7 @@ func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 		Hook: func(interface{}) error {
 			return nil
 		},
+		Folders: map[int64][]*models2.Folder{},
 	}
 }
 
@@ -40,11 +43,12 @@ type FakeRuleStore struct {
 	Rules       map[int64][]*models.AlertRule
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
+	Folders     map[int64][]*models2.Folder
 }
 
 type GenericRecordedQuery struct {
-	name   string
-	params []interface{}
+	Name   string
+	Params []interface{}
 }
 
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
@@ -62,6 +66,23 @@ mainloop:
 		}
 		rgs = append(rgs, r)
 		f.Rules[r.OrgID] = rgs
+
+		var existing *models2.Folder
+		folders := f.Folders[r.OrgID]
+		for _, folder := range folders {
+			if folder.Uid == r.NamespaceUID {
+				existing = folder
+				break
+			}
+		}
+		if existing == nil {
+			folders = append(folders, &models2.Folder{
+				Id:    rand.Int63(),
+				Uid:   r.NamespaceUID,
+				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+			})
+			f.Folders[r.OrgID] = folders
+		}
 	}
 }
 
@@ -83,8 +104,8 @@ func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (int
 
 func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
-		name:   "DeleteAlertRulesByUID",
-		params: []interface{}{orgID, UIDs},
+		Name:   "DeleteAlertRulesByUID",
+		Params: []interface{}{orgID, UIDs},
 	})
 
 	rules := f.Rules[orgID]
@@ -204,8 +225,14 @@ func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2
 	}
 	return namespacesMap, nil
 }
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
-	return nil, nil
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+	folders := f.Folders[orgID]
+	for _, folder := range folders {
+		if folder.Title == title {
+			return folder, nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
 }
 func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRuleGroupsQuery) error {
 	f.mtx.Lock()
