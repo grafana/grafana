@@ -8,7 +8,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+)
+
+const (
+	// TODO: move to /services/accesscontrol/models.go
+
+	// File actions
+	ActionFilesCreate = "files:create"
+	ActionFilesRead   = "files:read"
+	ActionFilesWrite  = "files:write"
+	ActionFilesDelete = "files:delete"
+
+	// File scopes
+	ScopeFilesAllowAll = "files:path:/*"
+	ScopeFilesDenyAll  = "files:path:!/*"
 )
 
 func pathWithPrecedingFolders(path string) []string {
@@ -43,11 +56,11 @@ func createPathFilter(prefix string, action string, user *models.SignedInUser, a
 	for _, scope := range user.Permissions[user.OrgId][action] {
 		path := parsePath(scope)
 
-		if path == ac.ScopeFilesAllowAll {
+		if path == ScopeFilesAllowAll {
 			allowedPrefixes = append(allowedPrefixes, filestorage.Delimiter)
 		}
 
-		if path == ac.ScopeFilesDenyAll {
+		if path == ScopeFilesDenyAll {
 			allowedPrefixes = append(allowedPrefixes, filestorage.Delimiter)
 		}
 
@@ -107,8 +120,8 @@ func (a *accessControlStorageAuth) newGuardian(ctx context.Context, user *models
 		log:         a.log,
 		storageName: strings.TrimPrefix(storagePrefix, filestorage.Delimiter),
 		pathFilterByAction: map[string]filestorage.PathFilter{
-			ac.ActionFilesRead:  a.createPathFilters(ac.ActionFilesRead, user, storagePrefix),
-			ac.ActionFilesWrite: a.createPathFilters(ac.ActionFilesWrite, user, storagePrefix),
+			ActionFilesRead:  a.createPathFilters(ActionFilesRead, user, storagePrefix),
+			ActionFilesWrite: a.createPathFilters(ActionFilesWrite, user, storagePrefix),
 		},
 	}
 }
