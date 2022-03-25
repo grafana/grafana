@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameType, getDisplayProcessor } from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameType, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { lastValueFrom } from 'rxjs';
@@ -46,4 +46,38 @@ export async function getRawIndexData(): Promise<RawIndexData> {
     }
   }
   return data;
+}
+
+export function buildStatsTable(field?: Field): DataFrame {
+  if (!field) {
+    return { length: 0, fields: [] };
+  }
+
+  const counts = new Map<any, number>();
+  for (let i = 0; i < field.values.length; i++) {
+    const k = field.values.get(i);
+    const v = counts.get(k) ?? 0;
+    counts.set(k, v + 1);
+  }
+
+  // Sort largest first
+  counts[Symbol.iterator] = function* () {
+    yield* [...this.entries()].sort((a, b) => b[1] - a[1]);
+  };
+
+  const keys: any[] = [];
+  const vals: number[] = [];
+
+  for (let [k, v] of counts) {
+    keys.push(k);
+    vals.push(v);
+  }
+
+  return {
+    fields: [
+      { ...field, values: new ArrayVector(keys) },
+      { name: 'Count', type: FieldType.number, values: new ArrayVector(vals), config: {} },
+    ],
+    length: keys.length,
+  };
 }

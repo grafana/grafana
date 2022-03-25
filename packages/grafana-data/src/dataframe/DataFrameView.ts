@@ -1,4 +1,4 @@
-import { DataFrame } from '../types/dataFrame';
+import { DataFrame, Field } from '../types/dataFrame';
 import { DisplayProcessor } from '../types';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
@@ -16,14 +16,17 @@ import { FunctionalVector } from '../vector/FunctionalVector';
 export class DataFrameView<T = any> extends FunctionalVector<T> {
   private index = 0;
   private obj: T;
+  readonly fields: Record<keyof T, Field>;
 
   constructor(private data: DataFrame) {
     super();
     const obj = {} as unknown as T;
+    const fields = {} as any;
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
       const getter = () => field.values.get(this.index);
+      fields[field.name] = field;
 
       if (!(obj as any).hasOwnProperty(field.name)) {
         Object.defineProperty(obj, field.name, {
@@ -41,6 +44,7 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
     }
 
     this.obj = obj;
+    this.fields = fields;
   }
 
   get dataFrame() {

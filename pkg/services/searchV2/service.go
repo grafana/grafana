@@ -89,7 +89,7 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash 
 	// create a list of all viewable dashboards for this user
 	res := make([]dashMeta, 0, len(dash))
 	for _, dash := range dash {
-		if filter(dash.dash.UID) {
+		if filter(dash.dash.UID) || (dash.is_folder && dash.dash.UID == "") { // include the "General" folder
 			res = append(res, dash)
 		}
 	}
@@ -108,6 +108,22 @@ type dashDataQueryResult struct {
 
 func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
 	meta := make([]dashMeta, 0, 200)
+
+	// Add the root folder ID
+	meta = append(meta, dashMeta{
+		id:        0,
+		is_folder: true,
+		folder_id: 0,
+		slug:      "",
+		created:   time.Now(),
+		updated:   time.Now(),
+		dash: &extract.DashboardInfo{
+			ID:    0,
+			Path:  "",
+			UID:   "",
+			Title: "General",
+		},
+	})
 
 	// key will allow name or uid
 	lookup := func(key string) *extract.DatasourceInfo {

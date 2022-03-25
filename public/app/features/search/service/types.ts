@@ -6,8 +6,13 @@ export interface QueryResult {
   description?: string;
   url: string; // link to value (unique)
   tags?: string[];
-  location?: string; // the folder name
+  location?: LocationInfo[]; // the folder name
   score?: number;
+}
+
+export interface LocationInfo {
+  kind: 'folder' | 'dashboard';
+  name: string;
 }
 
 export interface QueryFilters {

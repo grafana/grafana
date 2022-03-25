@@ -2,14 +2,17 @@ import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
 import { DataFrame, DataFrameType, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Checkbox, Icon, TagList, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
+import SVG from 'react-inlinesvg';
 
 // HACK
 import { getNextWord } from 'app/plugins/datasource/testdata/LogIpsum';
+import { config } from '@grafana/runtime';
+import { LocationInfo } from '../../service';
 
 type Props = {
   data: DataFrame;
@@ -27,7 +30,7 @@ interface FieldAccess {
   url?: Field<string>; // link to value (unique)
   type?: Field<string>; // graph
   tags?: Field<any>;
-  location?: Field<string>; // the folder name
+  location?: Field<LocationInfo[]>; // the folder name
   score?: Field<number>;
 }
 
@@ -154,26 +157,38 @@ const generateColumns = (
       field: access.kind ?? access.url!,
       Header: 'Type',
       accessor: (row: any, i: number) => {
-        let icon = 'apps';
+        let icon = 'public/img/icons/unicons/apps.svg';
         let txt = 'Dashboard';
         if (access.kind) {
           txt = access.kind.values.get(i);
           switch (txt) {
             case 'dashboard':
-              icon = 'apps';
+              txt = 'Dashboard';
               break;
+
             case 'folder':
-              icon = 'folder';
+              icon = 'public/img/icons/unicons/folder.svg';
+              txt = 'Folder';
               break;
+
             case 'panel':
-              icon = 'graph-bar';
+              icon = 'public/img/icons/unicons/graph-bar.svg';
               txt = access.type?.values.get(i) ?? txt;
+              const info = config.panels[txt];
+              if (info?.name) {
+                const v = info.info?.logos.small;
+                if (v && v.endsWith('.svg')) {
+                  icon = v;
+                }
+                txt = info.name;
+              }
+              break;
           }
         }
 
         return (
           <div className={styles.typeText}>
-            <Icon name={icon as any} className={styles.typeIcon} />
+            <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
             {txt}
           </div>
         );
@@ -184,11 +199,30 @@ const generateColumns = (
 
     columns.push({
       Cell: DefaultCell,
-      id: `column-info`,
-      field: access.url!,
+      id: `column-location`,
+      field: access.location ?? access.url,
       Header: 'Location',
       accessor: (row: any, i: number) => {
-        return <div>TODO... location...</div>;
+        const location = access.location?.values.get(i);
+        if (location) {
+          return (
+            <div>
+              {location.map((v, id) => (
+                <span
+                  key={id}
+                  className={styles.locationItem}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert('CLICK: ' + v.name);
+                  }}
+                >
+                  <Icon name={getIconForKind(v.kind)} /> {v.name}
+                </span>
+              ))}
+            </div>
+          );
+        }
+        return null;
       },
       width: Math.max(availableWidth, 100),
     });
@@ -312,6 +346,16 @@ export const Table = ({ data, width }: Props) => {
   );
 };
 
+function getIconForKind(v: string): IconName {
+  if (v === 'dashboard') {
+    return 'apps';
+  }
+  if (v === 'folder') {
+    return 'folder';
+  }
+  return 'question-circle';
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
@@ -355,9 +399,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     typeIcon: css`
       margin-right: 9.5px;
+      vertical-align: middle;
+      display: inline-block;
+      margin-bottom: ${theme.v1.spacing.xxs};
+      fill: ${theme.colors.text.secondary};
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
+    `,
+    locationItem: css`
+      color: ${theme.colors.text.secondary};
+      margin-right: 12px;
     `,
     checkboxHeader: css`
       display: flex;
