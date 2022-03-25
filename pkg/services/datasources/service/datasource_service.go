@@ -11,11 +11,14 @@ import (
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,9 +26,11 @@ import (
 )
 
 type Service struct {
-	Bus            bus.Bus
-	SQLStore       *sqlstore.SQLStore
-	SecretsService secrets.Service
+	Bus                bus.Bus
+	SQLStore           *sqlstore.SQLStore
+	SecretsService     secrets.Service
+	features           featuremgmt.FeatureToggles
+	permissionsService accesscontrol.PermissionsService
 
 	ptc               proxyTransportCache
 	dsDecryptionCache secureJSONDecryptionCache
@@ -51,7 +56,10 @@ type cachedDecryptedJSON struct {
 	json    map[string]string
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, ac accesscontrol.AccessControl) *Service {
+func ProvideService(
+	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
+	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+) *Service {
 	s := &Service{
 		Bus:            bus,
 		SQLStore:       store,
@@ -62,6 +70,8 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 		dsDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
+		features:           features,
+		permissionsService: permissionsServices.GetDataSourceService(),
 	}
 
 	s.Bus.AddHandler(s.GetDataSources)
@@ -73,6 +83,7 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
+	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))
 
 	return s
 }
@@ -84,18 +95,17 @@ type DataSourceRetriever interface {
 }
 
 // NewNameScopeResolver provides an AttributeScopeResolver able to
-// translate a scope prefixed with "datasources:name:" into an id based scope.
+// translate a scope prefixed with "datasources:name:" into an uid based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
-	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
-		dsNames := strings.Split(initialScope, ":")
-		if dsNames[0] != "datasources" || len(dsNames) != 3 {
+	prefix := datasources.ScopeProvider.GetResourceScopeName("")
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		dsName := dsNames[2]
-		// Special wildcard case
-		if dsName == "*" {
-			return accesscontrol.Scope("datasources", "id", "*"), nil
+		dsName := initialScope[len(prefix):]
+		if dsName == "" {
+			return "", accesscontrol.ErrInvalidScope
 		}
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
@@ -103,10 +113,36 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", err
 		}
 
-		return accesscontrol.Scope("datasources", "id", fmt.Sprintf("%v", query.Result.Id)), nil
+		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
 	}
+}
 
-	return "datasources:name:", dsNameResolver
+// NewIDScopeResolver provides an AttributeScopeResolver able to
+// translate a scope prefixed with "datasources:id:" into an uid based scope.
+func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+	prefix := datasources.ScopeProvider.GetResourceScope("")
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if !strings.HasPrefix(initialScope, prefix) {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		id := initialScope[len(prefix):]
+		if id == "" {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		dsID, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		query := models.GetDataSourceQuery{Id: dsID, OrgId: orgID}
+		if err := db.GetDataSource(ctx, &query); err != nil {
+			return "", err
+		}
+
+		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
+	}
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
@@ -128,7 +164,29 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 		return err
 	}
 
-	return s.SQLStore.AddDataSource(ctx, cmd)
+	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+		return err
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		// This belongs in Data source permissions, and we probably want
+		// to do this with a hook in the store and rollback on fail.
+		// We can't use events, because there's no way to communicate
+		// failure, and we want "not being able to set default perms"
+		// to fail the creation.
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: "Viewer", Permission: "Query"},
+			{BuiltinRole: "Editor", Permission: "Query"},
+		}
+		if cmd.UserId != 0 {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
+		}
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {

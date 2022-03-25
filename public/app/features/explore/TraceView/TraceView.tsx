@@ -5,7 +5,9 @@ import {
   DataSourceApi,
   Field,
   LinkModel,
+  LoadingState,
   mapInternalLinkToExplore,
+  PanelData,
   SplitOpen,
   TraceSpanRow,
 } from '@grafana/data';
@@ -19,12 +21,12 @@ import {
   transformTraceData,
   TTraceTimeline,
 } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -43,6 +45,8 @@ type Props = {
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
   scrollElement?: Element;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  queryResponse: PanelData;
 };
 
 export function TraceView(props: Props) {
@@ -57,6 +61,7 @@ export function TraceView(props: Props) {
     detailLogsToggle,
     detailProcessToggle,
     detailReferencesToggle,
+    detailReferenceItemToggle,
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
@@ -87,6 +92,11 @@ export function TraceView(props: Props) {
     datasource,
   });
 
+  const createLinkToExternalSpan = (traceId: string, spanId: string) => {
+    const link = createFocusSpanLink(traceId, spanId);
+    return link.href;
+  };
+
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
       childrenHiddenIDs,
@@ -98,6 +108,12 @@ export function TraceView(props: Props) {
     }),
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
+
+  useEffect(() => {
+    if (props.queryResponse.state === LoadingState.Done) {
+      props.topOfExploreViewRef?.current?.scrollIntoView();
+    }
+  }, [props.queryResponse, props.topOfExploreViewRef]);
 
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
@@ -144,7 +160,7 @@ export function TraceView(props: Props) {
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
         focusSpan={noop}
-        createLinkToExternalSpan={noop as any}
+        createLinkToExternalSpan={createLinkToExternalSpan}
         setSpanNameColumnWidth={setSpanNameColumnWidth}
         collapseAll={collapseAll}
         collapseOne={collapseOne}
@@ -157,6 +173,7 @@ export function TraceView(props: Props) {
         detailWarningsToggle={detailWarningsToggle}
         detailStackTracesToggle={detailStackTracesToggle}
         detailReferencesToggle={detailReferencesToggle}
+        detailReferenceItemToggle={detailReferenceItemToggle}
         detailProcessToggle={detailProcessToggle}
         detailTagsToggle={detailTagsToggle}
         detailToggle={toggleDetail}
@@ -169,6 +186,7 @@ export function TraceView(props: Props) {
         scrollElement={props.scrollElement}
         focusedSpanId={focusedSpanId}
         createFocusSpanLink={createFocusSpanLink}
+        topOfExploreViewRef={props.topOfExploreViewRef}
       />
     </>
   );
@@ -203,13 +221,20 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
     traceID: view.get(0).traceID,
     processes,
     spans: view.toArray().map((s, index) => {
+      const references = [];
+      if (s.parentSpanID) {
+        references.push({ refType: 'CHILD_OF' as const, spanID: s.parentSpanID, traceID: s.traceID });
+      }
+      if (s.references) {
+        references.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
+      }
       return {
         ...s,
         duration: s.duration * 1000,
         startTime: s.startTime * 1000,
         processID: s.spanID,
         flags: 0,
-        references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
+        references,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
         dataFrameRowIndex: index,
       };

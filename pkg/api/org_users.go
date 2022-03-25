@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -113,19 +112,6 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	return response.JSON(200, result)
 }
 
-func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, resourceIDs map[string]bool) (map[string]accesscontrol.Metadata, error) {
-	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
-	}
-
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
-	if err != nil || len(userPermissions) == 0 {
-		return nil, err
-	}
-
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "users", resourceIDs), nil
-}
-
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
@@ -164,17 +150,12 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetO
 		filteredUsers = append(filteredUsers, user)
 	}
 
-	accessControlMetadata, errAC := hs.getUserAccessControlMetadata(c, userIDs)
-	if errAC != nil {
-		hs.log.Error("Failed to get access control metadata", "error", errAC)
-
-		return filteredUsers, nil
-	} else if accessControlMetadata == nil {
-		return filteredUsers, nil
-	}
-
-	for i := range filteredUsers {
-		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserId)]
+	// Get accesscontrol metadata for users in the target org
+	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgId, "users:id:", userIDs)
+	if len(accessControlMetadata) > 0 {
+		for i := range filteredUsers {
+			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserId)]
+		}
 	}
 
 	return filteredUsers, nil

@@ -1,4 +1,4 @@
-import React, { CSSProperties, FC, ReactNode, useState, useEffect } from 'react';
+import React, { CSSProperties, ReactNode, useState, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from '@emotion/css';
@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
@@ -25,71 +25,15 @@ export interface Props {
   width?: number | string;
   /** Should the Drawer be expandable to full width */
   expandable?: boolean;
-
+  /** Tabs */
+  tabs?: React.ReactNode;
   /** Set to true if the component rendered within in drawer content has its own scroll */
   scrollableContent?: boolean;
-
   /** Callback for closing the drawer */
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, scrollableContent: boolean) => {
-  return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    `,
-    drawer: css`
-      .drawer-content {
-        background-color: ${theme.colors.background.primary};
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      &.drawer-open .drawer-mask {
-        background-color: ${theme.components.overlay.background};
-        backdrop-filter: blur(1px);
-        opacity: 1;
-      }
-      .drawer-mask {
-        background-color: ${theme.components.overlay.background};
-        backdrop-filter: blur(1px);
-      }
-      .drawer-open .drawer-content-wrapper {
-        box-shadow: ${theme.shadows.z3};
-      }
-      z-index: ${theme.zIndex.dropdown};
-    `,
-    header: css`
-      background-color: ${theme.colors.background.canvas};
-      z-index: 1;
-      flex-grow: 0;
-      padding-top: ${theme.spacing(0.5)};
-    `,
-    actions: css`
-      display: flex;
-      align-items: baseline;
-      justify-content: flex-end;
-    `,
-    titleWrapper: css`
-      margin-bottom: ${theme.spacing(3)};
-      padding: ${theme.spacing(0, 1, 0, 3)};
-      overflow-wrap: break-word;
-    `,
-    titleSpacing: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    content: css`
-      padding: ${theme.spacing(2)};
-      flex: 1;
-      overflow: ${!scrollableContent ? 'hidden' : 'auto'};
-      z-index: 0;
-    `,
-  };
-});
-
-export const Drawer: FC<Props> = ({
+export function Drawer({
   children,
   inline = false,
   onClose,
@@ -99,9 +43,9 @@ export const Drawer: FC<Props> = ({
   subtitle,
   width = '40%',
   expandable = false,
-}) => {
-  const theme = useTheme2();
-  const drawerStyles = getStyles(theme, scrollableContent);
+  tabs,
+}: Props) {
+  const drawerStyles = useStyles2(getStyles);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const currentWidth = isExpanded ? '100%' : width;
@@ -118,6 +62,8 @@ export const Drawer: FC<Props> = ({
   useEffect(() => {
     setIsOpen(true);
   }, []);
+
+  const content = <div className={drawerStyles.content}>{children}</div>;
 
   return (
     <RcDrawer
@@ -172,15 +118,76 @@ export const Drawer: FC<Props> = ({
                 <h3 {...titleProps}>{title}</h3>
                 {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
                 {typeof subtitle !== 'string' && subtitle}
+                {tabs && <div className={drawerStyles.tabsWrapper}>{tabs}</div>}
               </div>
             </div>
           )}
           {typeof title !== 'string' && title}
-          <div className={drawerStyles.content}>
-            {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
+          <div className={drawerStyles.contentScroll}>
+            {!scrollableContent ? content : <CustomScrollbar autoHeightMin="100%">{content}</CustomScrollbar>}
           </div>
         </div>
       </FocusScope>
     </RcDrawer>
   );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      flex: 1 1 0;
+    `,
+    drawer: css`
+      .drawer-content {
+        background-color: ${theme.colors.background.primary};
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      &.drawer-open .drawer-mask {
+        background-color: ${theme.components.overlay.background};
+        backdrop-filter: blur(1px);
+        opacity: 1;
+      }
+      .drawer-mask {
+        background-color: ${theme.components.overlay.background};
+        backdrop-filter: blur(1px);
+      }
+      .drawer-open .drawer-content-wrapper {
+        box-shadow: ${theme.shadows.z3};
+      }
+      z-index: ${theme.zIndex.dropdown};
+    `,
+    header: css`
+      background-color: ${theme.colors.background.canvas};
+      flex-grow: 0;
+      padding-top: ${theme.spacing(0.5)};
+    `,
+    actions: css`
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+    `,
+    titleWrapper: css`
+      margin-bottom: ${theme.spacing(3)};
+      padding: ${theme.spacing(0, 1, 0, 3)};
+      overflow-wrap: break-word;
+    `,
+    content: css({
+      padding: theme.spacing(2),
+      height: '100%',
+      flexGrow: 1,
+    }),
+    contentScroll: css({
+      minHeight: 0,
+      flex: 1,
+    }),
+    tabsWrapper: css({
+      paddingLeft: theme.spacing(2),
+      margin: theme.spacing(3, -1, -3, -3),
+    }),
+  };
 };

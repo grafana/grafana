@@ -59,7 +59,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "[FIRING:1]  (val1)",
 						TitleLink:  "http://localhost/alerting/list",
-						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
@@ -94,7 +94,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "[FIRING:1]  (val1)",
 						TitleLink:  "http://localhost/alerting/list",
-						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
@@ -136,7 +136,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "2 firing, 0 resolved",
 						TitleLink:  "http://localhost/alerting/list",
-						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 						Fallback:   "2 firing, 0 resolved",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
@@ -152,13 +152,49 @@ func TestSlackNotifier(t *testing.T) {
 			settings: `{
 				"recipient": "#testchannel"
 			}`,
-			expInitError: `failed to validate receiver "slack_testing" of type "slack": token must be specified when using the Slack chat API`,
+			expInitError: `token must be specified when using the Slack chat API`,
 		}, {
 			name: "Missing recipient",
 			settings: `{
 				"token": "1234"
 			}`,
-			expInitError: `failed to validate receiver "slack_testing" of type "slack": recipient must be specified when using the Slack chat API`,
+			expInitError: `recipient must be specified when using the Slack chat API`,
+		},
+		{
+			name: "Custom endpoint url",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"endpointUrl": "https://slack-custom.com/api/",
+				"icon_emoji": ":emoji:"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+			expMsgError: nil,
 		},
 	}
 
@@ -177,7 +213,7 @@ func TestSlackNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewSlackNotifier(m, tmpl, decryptFn)
+			cfg, err := NewSlackConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -196,6 +232,12 @@ func TestSlackNotifier(t *testing.T) {
 					_ = request.Body.Close()
 				}()
 
+				url := settingsJSON.Get("url").MustString()
+				if len(url) == 0 {
+					endpointUrl := settingsJSON.Get("endpointUrl").MustString(SlackAPIEndpoint)
+					require.Equal(t, endpointUrl, request.URL.String())
+				}
+
 				b, err := io.ReadAll(request.Body)
 				require.NoError(t, err)
 				body = string(b)
@@ -204,6 +246,7 @@ func TestSlackNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewSlackNotifier(cfg, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.Error(t, err)

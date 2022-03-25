@@ -39,6 +39,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardPreviewsAdmin",
+			Description: "Manage the dashboard previews crawler process from the UI",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "live-config",
 			Description: "Save grafana live configuration in SQL tables",
 			State:       FeatureStateAlpha,
@@ -59,6 +64,12 @@ var (
 			Description:  "Use grafana live websocket to execute backend queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "panelTitleSearch",
+			Description:     "Search for dashboards using panel title",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // only supported in dev mode right now
 		},
 		{
 			Name:         "tempoSearch",
@@ -82,13 +93,6 @@ var (
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "fullRangeLogsVolume",
-			Description:  "Show full range logs volume in explore",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "accesscontrol",
@@ -129,6 +133,11 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "lokiLive",
+			Description: "support websocket streaming for loki (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -137,6 +146,39 @@ var (
 			Name:        "featureHighlights",
 			Description: "Highlight Enterprise features",
 			State:       FeatureStateStable,
+		},
+		{
+			Name:        "dashboardComments",
+			Description: "Enable dashboard-wide comments",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "annotationComments",
+			Description: "Enable annotation comments",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "migrationLocking",
+			Description: "Lock database during migrations",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "storage",
+			Description: "Configurable storage for dashboards, datasources, and resources",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "storageLocalUpload",
+			Description:     "allow uploads to local storage",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "azureMonitorResourcePickerForMetrics",
+			Description:     "New UI for Azure Monitor Metrics Query",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
 		},
 	}
 )

@@ -3,14 +3,12 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -48,31 +46,10 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 		query.Result.IsExternal = true
 	}
 
-	accessControlMetadata, errAC := hs.getGlobalUserAccessControlMetadata(c, userID)
-	if errAC != nil {
-		hs.log.Error("Failed to get access control metadata", "error", errAC)
-	}
-
-	query.Result.AccessControl = accessControlMetadata
+	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, "global.users:id:", strconv.FormatInt(userID, 10))
 	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
 
 	return response.JSON(200, query.Result)
-}
-
-func (hs *HTTPServer) getGlobalUserAccessControlMetadata(c *models.ReqContext, userID int64) (accesscontrol.Metadata, error) {
-	if hs.AccessControl == nil || hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
-	}
-
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
-	if err != nil || len(userPermissions) == 0 {
-		return nil, err
-	}
-
-	key := fmt.Sprintf("%d", userID)
-	userIDs := map[string]bool{key: true}
-
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "global:users", userIDs)[key], nil
 }
 
 // GET /api/users/lookup

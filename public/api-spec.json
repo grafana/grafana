@@ -3544,15 +3544,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -4596,6 +4596,39 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdatePrefsCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/addOrgUser"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["org_preferences"],
+        "summary": "Patch Current Org Prefs.",
+        "operationId": "patchOrgPreferences",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchPrefsCmd"
             }
           }
         ],
@@ -6425,14 +6458,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -6440,6 +6465,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -6473,16 +6506,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -7098,6 +7131,36 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdatePrefsCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["user_preferences"],
+        "summary": "Patch user preferences.",
+        "operationId": "patchUserPreferences",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchPrefsCmd"
             }
           }
         ],
@@ -8333,7 +8396,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "BrandingOptions": {
+    "BrandingOptionsDTO": {
       "type": "object",
       "properties": {
         "emailFooterLink": {
@@ -8436,7 +8499,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "orgId": {
           "type": "integer",
@@ -8452,10 +8515,11 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "$ref": "#/definitions/State"
+          "type": "string",
+          "x-go-name": "State"
         },
         "templateVars": {
           "type": "object",
@@ -8636,7 +8700,7 @@
           "x-go-name": "Name"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "recipients": {
           "type": "string",
@@ -8647,7 +8711,7 @@
           "x-go-name": "ReplyTo"
         },
         "schedule": {
-          "$ref": "#/definitions/Schedule"
+          "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
           "type": "string",
@@ -8684,6 +8748,10 @@
         "group": {
           "type": "string",
           "x-go-name": "Group"
+        },
+        "hidden": {
+          "type": "boolean",
+          "x-go-name": "Hidden"
         },
         "name": {
           "type": "string",
@@ -8917,6 +8985,10 @@
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
         },
         "canEdit": {
           "type": "boolean",
@@ -9695,6 +9767,10 @@
           "type": "boolean",
           "x-go-name": "CanAdmin"
         },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
         "canEdit": {
           "type": "boolean",
           "x-go-name": "CanEdit"
@@ -10367,6 +10443,41 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "NavLink": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "target": {
+          "type": "string",
+          "x-go-name": "Target"
+        },
+        "text": {
+          "type": "string",
+          "x-go-name": "Text"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "NavbarPreference": {
+      "type": "object",
+      "properties": {
+        "savedItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavLink"
+          },
+          "x-go-name": "SavedItems"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "NewApiKeyResult": {
       "type": "object",
       "properties": {
@@ -10584,6 +10695,36 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
     },
+    "PatchPrefsCmd": {
+      "type": "object",
+      "properties": {
+        "homeDashboardId": {
+          "description": "The numerical :id of a favorited dashboard",
+          "type": "integer",
+          "format": "int64",
+          "default": 0,
+          "x-go-name": "HomeDashboardID"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark"],
+          "x-go-name": "Theme"
+        },
+        "timezone": {
+          "type": "string",
+          "enum": ["utc", "browser"],
+          "x-go-name": "Timezone"
+        },
+        "weekStart": {
+          "type": "string",
+          "x-go-name": "WeekStart"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "PauseAlertCommand": {
       "type": "object",
       "properties": {
@@ -10709,6 +10850,9 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "HomeDashboardID"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "theme": {
           "type": "string",
@@ -10839,7 +10983,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
-    "ReportOptions": {
+    "ReportOptionsDTO": {
       "type": "object",
       "properties": {
         "layout": {
@@ -10899,6 +11043,10 @@
         "group": {
           "type": "string",
           "x-go-name": "Group"
+        },
+        "hidden": {
+          "type": "boolean",
+          "x-go-name": "Hidden"
         },
         "name": {
           "type": "string",
@@ -10971,7 +11119,7 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "Schedule": {
+    "ScheduleDTO": {
       "type": "object",
       "properties": {
         "day": {
@@ -11089,6 +11237,10 @@
           "type": "boolean",
           "x-go-name": "Global"
         },
+        "includeHidden": {
+          "type": "boolean",
+          "x-go-name": "IncludeHidden"
+        },
         "roleUids": {
           "type": "array",
           "items": {
@@ -11113,7 +11265,7 @@
       "type": "object",
       "properties": {
         "branding": {
-          "$ref": "#/definitions/BrandingOptions"
+          "$ref": "#/definitions/BrandingOptionsDTO"
         },
         "id": {
           "type": "integer",
@@ -11131,10 +11283,6 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
-    },
-    "State": {
-      "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
     },
     "Status": {
@@ -11861,6 +12009,9 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
+        },
         "theme": {
           "type": "string",
           "enum": ["light", "dark"],
@@ -11896,6 +12047,10 @@
         "group": {
           "type": "string",
           "x-go-name": "Group"
+        },
+        "hidden": {
+          "type": "boolean",
+          "x-go-name": "Hidden"
         },
         "name": {
           "type": "string",

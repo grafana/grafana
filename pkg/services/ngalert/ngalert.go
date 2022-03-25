@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
@@ -29,7 +31,8 @@ import (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
+	folderService dashboards.FolderService, ac accesscontrol.AccessControl) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -41,8 +44,10 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		QuotaService:        quotaService,
 		SecretsService:      secretsService,
 		Metrics:             m,
-		NotificationService: notificationService,
 		Log:                 log.New("ngalert"),
+		NotificationService: notificationService,
+		folderService:       folderService,
+		accesscontrol:       ac,
 	}
 
 	if ng.IsDisabled() {
@@ -72,9 +77,11 @@ type AlertNG struct {
 	Log                 log.Logger
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
+	folderService       dashboards.FolderService
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	accesscontrol        accesscontrol.AccessControl
 }
 
 func (ng *AlertNG) init() error {
@@ -82,9 +89,10 @@ func (ng *AlertNG) init() error {
 
 	store := &store.DBstore{
 		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
-		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultAlertForDuration,
+		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
+		FolderService:   ng.folderService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
@@ -136,16 +144,18 @@ func (ng *AlertNG) init() error {
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		SecretsService:       ng.SecretsService,
+		TransactionManager:   store,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		AccessControl:        ng.accesscontrol,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	return nil
+	return DeclareFixedRoles(ng.accesscontrol)
 }
 
 // Run starts the scheduler and Alertmanager.

@@ -9,7 +9,8 @@ import { VariablePickerProps } from '../types';
 import { QueryVariableModel, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { queryBuilder } from '../../shared/testing/builders';
 import { optionPickerFactory } from './OptionsPicker';
-import { initialState, OptionsPickerState } from './reducer';
+import { initialOptionPickerState, OptionsPickerState } from './reducer';
+import { getPreloadedState } from '../../state/helpers';
 
 interface Args {
   pickerState?: Partial<OptionsPickerState>;
@@ -18,6 +19,7 @@ interface Args {
 
 const defaultVariable = queryBuilder()
   .withId('query0')
+  .withRootStateKey('key')
   .withName('query0')
   .withMulti()
   .withCurrent(['A', 'C'])
@@ -35,17 +37,16 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
     onVariableChange,
   };
   const Picker = optionPickerFactory();
-  const optionsPicker: OptionsPickerState = { ...initialState, ...pickerState };
+  const optionsPicker: OptionsPickerState = { ...initialOptionPickerState, ...pickerState };
   const dispatch = jest.fn();
   const subscribe = jest.fn();
-  const getState = jest.fn().mockReturnValue({
-    templating: {
-      variables: {
-        [v.id]: { ...v },
-      },
-      optionsPicker,
+  const templatingState = {
+    variables: {
+      [v.id]: { ...v },
     },
-  });
+    optionsPicker,
+  };
+  const getState = jest.fn().mockReturnValue(getPreloadedState('key', templatingState));
   const store: any = { getState, dispatch, subscribe };
   const { rerender } = render(
     <Provider store={store}>

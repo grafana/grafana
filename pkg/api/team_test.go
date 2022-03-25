@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,39 +39,69 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		hs.SQLStore = store
 		mock := &mockstore.SQLStoreMock{}
 
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
-			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
-			require.NoError(t, err)
-			_, err = hs.SQLStore.CreateTeam("team2", "", 1)
-			require.NoError(t, err)
+		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
+			models.ROLE_ADMIN, func(sc *scenarioContext) {
+				_, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				require.NoError(t, err)
+				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+				require.NoError(t, err)
 
-			sc.handlerFunc = hs.SearchTeams
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-			require.Equal(t, http.StatusOK, sc.resp.Code)
-			var resp models.SearchTeamQueryResult
-			err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
-			require.NoError(t, err)
+				sc.handlerFunc = hs.SearchTeams
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+				require.Equal(t, http.StatusOK, sc.resp.Code)
+				var resp models.SearchTeamQueryResult
+				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+				require.NoError(t, err)
 
-			assert.EqualValues(t, 2, resp.TotalCount)
-			assert.Equal(t, 2, len(resp.Teams))
-		}, mock)
+				assert.EqualValues(t, 2, resp.TotalCount)
+				assert.Equal(t, 2, len(resp.Teams))
+			}, mock)
 
-		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
-			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
-			require.NoError(t, err)
-			_, err = hs.SQLStore.CreateTeam("team2", "", 1)
-			require.NoError(t, err)
+		loggedInUserScenario(t, "When editor (with editors_can_admin) is calling GET on", "/api/teams/search",
+			"/api/teams/search", func(sc *scenarioContext) {
+				team1, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				require.NoError(t, err)
+				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+				require.NoError(t, err)
 
-			sc.handlerFunc = hs.SearchTeams
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
-			require.Equal(t, http.StatusOK, sc.resp.Code)
-			var resp models.SearchTeamQueryResult
-			err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
-			require.NoError(t, err)
+				// Adding the test user to the teams in order for him to list them
+				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				require.NoError(t, err)
 
-			assert.EqualValues(t, 2, resp.TotalCount)
-			assert.Equal(t, 0, len(resp.Teams))
-		}, mock)
+				sc.handlerFunc = hs.SearchTeams
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+				require.Equal(t, http.StatusOK, sc.resp.Code)
+				var resp models.SearchTeamQueryResult
+				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+				require.NoError(t, err)
+
+				assert.EqualValues(t, 1, resp.TotalCount)
+				assert.Equal(t, 1, len(resp.Teams))
+			}, mock)
+
+		loggedInUserScenario(t, "When editor (with editors_can_admin) calling GET with pagination on",
+			"/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
+				team1, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				require.NoError(t, err)
+				team2, err := hs.SQLStore.CreateTeam("team2", "", 1)
+				require.NoError(t, err)
+
+				// Adding the test user to the teams in order for him to list them
+				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				require.NoError(t, err)
+				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team2.Id, false, 0)
+				require.NoError(t, err)
+
+				sc.handlerFunc = hs.SearchTeams
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
+				require.Equal(t, http.StatusOK, sc.resp.Code)
+				var resp models.SearchTeamQueryResult
+				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+				require.NoError(t, err)
+
+				assert.EqualValues(t, 2, resp.TotalCount)
+				assert.Equal(t, 0, len(resp.Teams))
+			}, mock)
 	})
 
 	t.Run("When creating team with API key", func(t *testing.T) {
@@ -82,7 +111,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		addTeamMemberCalled := 0
-		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64,
+		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.PermissionsService, userID, orgID, teamID int64,
 			permission string) error {
 			addTeamMemberCalled++
 			return nil
@@ -188,8 +217,6 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 
 func TestTeamAPIEndpoint_SearchTeams_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
-
 	// Seed three teams
 	for i := 1; i <= 3; i++ {
 		_, err := sc.db.CreateTeam(fmt.Sprintf("team%d", i), fmt.Sprintf("team%d@example.org", i), 1)

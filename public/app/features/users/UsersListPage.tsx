@@ -6,20 +6,23 @@ import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
-import InviteesTable from './InviteesTable';
+import InviteesTable from '../invites/InviteesTable';
 import { OrgUser, OrgRole, StoreState } from 'app/types';
-import { loadInvitees, loadUsers, removeUser, updateUser } from './state/actions';
+import { loadUsers, removeUser, updateUser } from './state/actions';
+import { fetchInvitees } from '../invites/state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getInvitees, getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selectors';
+import { getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selectors';
 import { setUsersSearchQuery, setUsersSearchPage } from './state/reducers';
+import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
 function mapStateToProps(state: StoreState) {
+  const searchQuery = getUsersSearchQuery(state.users);
   return {
     navModel: getNavModel(state.navIndex, 'users'),
     users: getUsers(state.users),
     searchQuery: getUsersSearchQuery(state.users),
     searchPage: getUsersSearchPage(state.users),
-    invitees: getInvitees(state.users),
+    invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
     externalUserMngInfo: state.users.externalUserMngInfo,
     hasFetched: state.users.hasFetched,
   };
@@ -27,7 +30,7 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   loadUsers,
-  loadInvitees,
+  fetchInvitees,
   setUsersSearchQuery,
   setUsersSearchPage,
   updateUser,
@@ -69,7 +72,7 @@ export class UsersListPage extends PureComponent<Props, State> {
   }
 
   async fetchInvitees() {
-    return await this.props.loadInvitees();
+    return await this.props.fetchInvitees();
   }
 
   onRoleChange = (role: OrgRole, user: OrgUser) => {

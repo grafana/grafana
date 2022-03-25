@@ -32,7 +32,7 @@ describe('linkSrv', () => {
     _dashboard.refresh = false;
     setTimeSrv(timeSrv);
 
-    templateSrv = initTemplateSrv([
+    templateSrv = initTemplateSrv('key', [
       { type: 'query', name: 'home', current: { value: '127.0.0.1' } },
       { type: 'query', name: 'server1', current: { value: '192.168.0.100' } },
     ]);

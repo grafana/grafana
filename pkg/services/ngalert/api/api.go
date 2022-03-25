@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -62,6 +63,7 @@ type API struct {
 	ExpressionService    *expr.Service
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
+	TransactionManager   store.TransactionManager
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
@@ -70,6 +72,7 @@ type API struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	SecretsService       secrets.Service
+	AccessControl        accesscontrol.AccessControl
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -95,7 +98,16 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		&RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, scheduleService: api.Schedule, store: api.RuleStore, log: logger},
+		&RulerSrv{
+			DatasourceCache: api.DatasourceCache,
+			QuotaService:    api.QuotaService,
+			scheduleService: api.Schedule,
+			store:           api.RuleStore,
+			xactManager:     api.TransactionManager,
+			log:             logger,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			ac:              api.AccessControl,
+		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
 		&TestingApiSrv{

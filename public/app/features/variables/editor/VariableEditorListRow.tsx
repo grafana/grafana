@@ -1,25 +1,26 @@
-import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { Draggable } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
+import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import React, { ReactElement } from 'react';
+import { Draggable } from 'react-beautiful-dnd';
 
-import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { hasOptions, isAdHoc, isQuery } from '../guard';
-import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableModel } from '../types';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export interface VariableEditorListRowProps {
   index: number;
   variable: VariableModel;
   usageTree: VariableUsageTree[];
   usagesNetwork: UsagesToNetwork[];
-  onEdit: (identifier: VariableIdentifier) => void;
-  onDuplicate: (identifier: VariableIdentifier) => void;
-  onDelete: (identifier: VariableIdentifier) => void;
+  onEdit: (identifier: KeyedVariableIdentifier) => void;
+  onDuplicate: (identifier: KeyedVariableIdentifier) => void;
+  onDelete: (identifier: KeyedVariableIdentifier) => void;
 }
 
 export function VariableEditorListRow({
@@ -36,7 +37,7 @@ export function VariableEditorListRow({
   const definition = getDefinition(variable);
   const usages = getVariableUsages(variable.id, usageTree);
   const passed = usages > 0 || isAdHoc(variable);
-  const identifier = toVariableIdentifier(variable);
+  const identifier = toKeyedVariableIdentifier(variable);
 
   return (
     <Draggable draggableId={JSON.stringify(identifier)} index={index}>
@@ -51,7 +52,9 @@ export function VariableEditorListRow({
           }}
         >
           <td className={styles.column}>
-            <span
+            <Button
+              size="xs"
+              fill="text"
               onClick={(event) => {
                 event.preventDefault();
                 propsOnEdit(identifier);
@@ -60,7 +63,7 @@ export function VariableEditorListRow({
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
             >
               {variable.name}
-            </span>
+            </Button>
           </td>
           <td
             className={styles.definitionColumn}

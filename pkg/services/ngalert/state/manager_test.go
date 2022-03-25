@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -17,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
@@ -27,6 +28,53 @@ import (
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
+
+func TestDashboardAnnotations(t *testing.T) {
+	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, 1)
+
+	sqlStore := mockstore.NewSQLStoreMock()
+	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, sqlStore)
+
+	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
+	annotations.SetRepository(fakeAnnoRepo)
+
+	const mainOrgID int64 = 1
+
+	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, dbstore, 600, mainOrgID, map[string]string{
+		"test1": "testValue1",
+		"test2": "{{ $labels.instance_label }}",
+	})
+
+	st.Warm(ctx)
+	_ = st.ProcessEvalResults(ctx, rule, eval.Results{{
+		Instance:    data.Labels{"instance_label": "testValue2"},
+		State:       eval.Alerting,
+		EvaluatedAt: evaluationTime,
+	}})
+
+	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - Alerting"}
+	sort.Strings(expected)
+	require.Eventuallyf(t, func() bool {
+		var actual []string
+		for _, next := range fakeAnnoRepo.Items {
+			actual = append(actual, next.Text)
+		}
+		sort.Strings(actual)
+		if len(expected) != len(actual) {
+			return false
+		}
+		for i := 0; i < len(expected); i++ {
+			if expected[i] != actual[i] {
+				return false
+			}
+		}
+		return true
+	}, time.Second, 100*time.Millisecond, "unexpected annotations")
+}
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
@@ -504,7 +552,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedAnnotations: 2,
+			expectedAnnotations: 3,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -530,7 +578,7 @@ func TestProcessEvalResults(t *testing.T) {
 							Values:          make(map[string]*float64),
 						},
 					},
-					StartsAt:           evaluationTime,
+					StartsAt:           evaluationTime.Add(20 * time.Second),
 					EndsAt:             evaluationTime.Add(30 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(30 * time.Second),
 					EvaluationDuration: evaluationDuration,
@@ -1482,9 +1530,9 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		ss := mockstore.NewSQLStoreMock()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{}, ss)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, ss)
 		t.Run(tc.desc, func(t *testing.T) {
-			fakeAnnoRepo := schedule.NewFakeAnnotationsRepo()
+			fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
 
 			for _, res := range tc.evalResults {

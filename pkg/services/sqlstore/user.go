@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -28,7 +27,7 @@ func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.SetUsingOrg)
 	bus.AddHandler("sql", ss.UpdateUserLastSeenAt)
 	bus.AddHandler("sql", ss.GetUserProfile)
-	bus.AddHandler("sql", SearchUsers)
+	bus.AddHandler("sql", ss.SearchUsers)
 	bus.AddHandler("sql", ss.GetUserOrgList)
 	bus.AddHandler("sql", ss.DisableUser)
 	bus.AddHandler("sql", ss.BatchDisableUsers)
@@ -113,17 +112,18 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 
 	// create user
 	user = models.User{
-		Email:         args.Email,
-		Name:          args.Name,
-		Login:         args.Login,
-		Company:       args.Company,
-		IsAdmin:       args.IsAdmin,
-		IsDisabled:    args.IsDisabled,
-		OrgId:         orgID,
-		EmailVerified: args.EmailVerified,
-		Created:       time.Now(),
-		Updated:       time.Now(),
-		LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+		Email:            args.Email,
+		Name:             args.Name,
+		Login:            args.Login,
+		Company:          args.Company,
+		IsAdmin:          args.IsAdmin,
+		IsDisabled:       args.IsDisabled,
+		OrgId:            orgID,
+		EmailVerified:    args.EmailVerified,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		IsServiceAccount: false,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -183,43 +183,6 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	}
 
 	return user, nil
-}
-
-func (ss *SQLStore) CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error) {
-	cmd := models.CreateUserCommand{
-		Login:            "Service-Account-" + uuid.New().String(),
-		Email:            uuid.New().String(),
-		Password:         "Password-" + uuid.New().String(),
-		Name:             siUser.Name + "-Service-Account-" + uuid.New().String(),
-		OrgId:            siUser.OrgId,
-		IsServiceAccount: true,
-	}
-
-	newuser, err := ss.CreateUser(ctx, cmd)
-	if err != nil {
-		ss.log.Warn("user not cloned", "err", err)
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	return newuser, err
-}
-
-func (ss *SQLStore) CreateServiceAccountForApikey(ctx context.Context, orgId int64, keyname string, role models.RoleType) (*models.User, error) {
-	prefix := "Service-Account-Autogen-"
-	cmd := models.CreateUserCommand{
-		Login:            fmt.Sprintf("%v-%v-%v", prefix, orgId, keyname),
-		Name:             prefix + keyname,
-		OrgId:            orgId,
-		DefaultOrgRole:   string(role),
-		IsServiceAccount: true,
-	}
-
-	newuser, err := ss.CreateUser(ctx, cmd)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	return newuser, err
 }
 
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
@@ -320,10 +283,19 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 	return user, err
 }
 
-func (ss SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
-	return withDbSession(ctx, x, func(sess *DBSession) error {
+func notServiceAccountFilter(ss *SQLStore) string {
+	return fmt.Sprintf("%s.is_service_account = %s",
+		ss.Dialect.Quote("user"),
+		ss.Dialect.BooleanStr(false))
+}
+
+func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		user := new(models.User)
-		has, err := sess.ID(query.Id).Get(user)
+
+		has, err := sess.ID(query.Id).
+			Where(notServiceAccountFilter(ss)).
+			Get(user)
 
 		if err != nil {
 			return err
@@ -346,7 +318,7 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 		// Try and find the user by login first.
 		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
 		user := &models.User{Login: query.LoginOrEmail}
-		has, err := sess.Get(user)
+		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
 
 		if err != nil {
 			return err
@@ -378,7 +350,7 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 		}
 
 		user := &models.User{Email: query.Email}
-		has, err := sess.Get(user)
+		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
 
 		if err != nil {
 			return err
@@ -402,7 +374,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.ID(cmd.UserId).Update(&user); err != nil {
+		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
 			return err
 		}
 
@@ -425,7 +397,7 @@ func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUs
 			Updated:  time.Now(),
 		}
 
-		_, err := sess.ID(cmd.UserId).Update(&user)
+		_, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user)
 		return err
 	})
 }
@@ -476,7 +448,7 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var user models.User
-		has, err := sess.ID(query.UserId).Get(&user)
+		has, err := sess.ID(query.UserId).Where(notServiceAccountFilter(ss)).Get(&user)
 
 		if err != nil {
 			return err
@@ -523,15 +495,19 @@ func (o byOrgName) Less(i, j int) bool {
 }
 
 func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
-	query.Result = make([]*models.UserOrgDTO, 0)
-	sess := x.Table("org_user")
-	sess.Join("INNER", "org", "org_user.org_id=org.id")
-	sess.Where("org_user.user_id=?", query.UserId)
-	sess.Cols("org.name", "org_user.role", "org_user.org_id")
-	sess.OrderBy("org.name")
-	err := sess.Find(&query.Result)
-	sort.Sort(byOrgName(query.Result))
-	return err
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		query.Result = make([]*models.UserOrgDTO, 0)
+		sess := dbSess.Table("org_user")
+		sess.Join("INNER", "org", "org_user.org_id=org.id")
+		sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess.Where("org_user.user_id=?", query.UserId)
+		sess.Where(notServiceAccountFilter(ss))
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		sess.OrderBy("org.name")
+		err := sess.Find(&query.Result)
+		sort.Sort(byOrgName(query.Result))
+		return err
+	})
 }
 
 func newSignedInUserCacheKey(orgID, userID int64) string {
@@ -557,12 +533,13 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 }
 
 func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	orgId := "u.org_id"
-	if query.OrgId > 0 {
-		orgId = strconv.FormatInt(query.OrgId, 10)
-	}
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		orgId := "u.org_id"
+		if query.OrgId > 0 {
+			orgId = strconv.FormatInt(query.OrgId, 10)
+		}
 
-	var rawSQL = `SELECT
+		var rawSQL = `SELECT
 		u.id             as user_id,
 		u.is_admin       as is_grafana_admin,
 		u.email          as email,
@@ -578,164 +555,168 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
-	sess := x.Table("user")
-	sess = sess.Context(ctx)
-	switch {
-	case query.UserId > 0:
-		sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
-	case query.Login != "":
-		sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
-	case query.Email != "":
-		sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
-	}
+		sess := dbSess.Table("user")
+		sess = sess.Context(ctx)
+		switch {
+		case query.UserId > 0:
+			sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
+		case query.Login != "":
+			sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+		case query.Email != "":
+			sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+		}
 
-	var user models.SignedInUser
-	has, err := sess.Get(&user)
-	if err != nil {
+		var user models.SignedInUser
+		has, err := sess.Get(&user)
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrUserNotFound
+		}
+
+		if user.OrgRole == "" {
+			user.OrgId = -1
+			user.OrgName = "Org missing"
+		}
+
+		getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
+		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
+		if err != nil {
+			return err
+		}
+
+		user.Teams = make([]int64, len(getTeamsByUserQuery.Result))
+		for i, t := range getTeamsByUserQuery.Result {
+			user.Teams[i] = t.Id
+		}
+
+		query.Result = &user
 		return err
-	} else if !has {
-		return models.ErrUserNotFound
-	}
-
-	if user.OrgRole == "" {
-		user.OrgId = -1
-		user.OrgName = "Org missing"
-	}
-
-	getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
-	err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
-	if err != nil {
-		return err
-	}
-
-	user.Teams = make([]int64, len(getTeamsByUserQuery.Result))
-	for i, t := range getTeamsByUserQuery.Result {
-		user.Teams[i] = t.Id
-	}
-
-	query.Result = &user
-	return err
+	})
 }
 
-func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
-	query.Result = models.SearchUserQueryResult{
-		Users: make([]*models.UserSearchHitDTO, 0),
-	}
+func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		query.Result = models.SearchUserQueryResult{
+			Users: make([]*models.UserSearchHitDTO, 0),
+		}
 
-	queryWithWildcards := "%" + query.Query + "%"
+		queryWithWildcards := "%" + query.Query + "%"
 
-	whereConditions := make([]string, 0)
-	whereParams := make([]interface{}, 0)
-	sess := x.Table("user").Alias("u")
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
+		sess := dbSess.Table("user").Alias("u")
 
-	// TODO: add to chore, for cleaning up after we have created
-	// service accounts table in the modelling
-	whereConditions = append(whereConditions, "u.is_service_account = false")
+		whereConditions = append(whereConditions, "u.is_service_account = ?")
+		whereParams = append(whereParams, dialect.BooleanStr(false))
 
-	// Join with only most recent auth module
-	joinCondition := `(
+		// Join with only most recent auth module
+		joinCondition := `(
 		SELECT id from user_auth
 			WHERE user_auth.user_id = u.id
 			ORDER BY user_auth.created DESC `
-	joinCondition = "user_auth.id=" + joinCondition + dialect.Limit(1) + ")"
-	sess.Join("LEFT", "user_auth", joinCondition)
-	if query.OrgId > 0 {
-		whereConditions = append(whereConditions, "org_id = ?")
-		whereParams = append(whereParams, query.OrgId)
-	}
-
-	if query.Query != "" {
-		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
-		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
-	}
-
-	if query.IsDisabled != nil {
-		whereConditions = append(whereConditions, "is_disabled = ?")
-		whereParams = append(whereParams, query.IsDisabled)
-	}
-
-	if query.AuthModule != "" {
-		whereConditions = append(whereConditions, `auth_module=?`)
-		whereParams = append(whereParams, query.AuthModule)
-	}
-
-	if len(whereConditions) > 0 {
-		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-	}
-
-	for _, filter := range query.Filters {
-		if jc := filter.JoinCondition(); jc != nil {
-			sess.Join(jc.Operator, jc.Table, jc.Params)
+		joinCondition = "user_auth.id=" + joinCondition + dialect.Limit(1) + ")"
+		sess.Join("LEFT", "user_auth", joinCondition)
+		if query.OrgId > 0 {
+			whereConditions = append(whereConditions, "org_id = ?")
+			whereParams = append(whereParams, query.OrgId)
 		}
-		if ic := filter.InCondition(); ic != nil {
-			sess.In(ic.Condition, ic.Params)
-		}
-		if wc := filter.WhereCondition(); wc != nil {
-			sess.Where(wc.Condition, wc.Params)
-		}
-	}
 
-	if query.Limit > 0 {
-		offset := query.Limit * (query.Page - 1)
-		sess.Limit(query.Limit, offset)
-	}
+		if query.Query != "" {
+			whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
 
-	sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
-	sess.Asc("u.login", "u.email")
-	if err := sess.Find(&query.Result.Users); err != nil {
+		if query.IsDisabled != nil {
+			whereConditions = append(whereConditions, "is_disabled = ?")
+			whereParams = append(whereParams, query.IsDisabled)
+		}
+
+		if query.AuthModule != "" {
+			whereConditions = append(whereConditions, `auth_module=?`)
+			whereParams = append(whereParams, query.AuthModule)
+		}
+
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+
+		for _, filter := range query.Filters {
+			if jc := filter.JoinCondition(); jc != nil {
+				sess.Join(jc.Operator, jc.Table, jc.Params)
+			}
+			if ic := filter.InCondition(); ic != nil {
+				sess.In(ic.Condition, ic.Params)
+			}
+			if wc := filter.WhereCondition(); wc != nil {
+				sess.Where(wc.Condition, wc.Params)
+			}
+		}
+
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
+
+		sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
+		sess.Asc("u.login", "u.email")
+		if err := sess.Find(&query.Result.Users); err != nil {
+			return err
+		}
+
+		// get total
+		user := models.User{}
+		countSess := dbSess.Table("user").Alias("u")
+
+		// Join with user_auth table if users filtered by auth_module
+		if query.AuthModule != "" {
+			countSess.Join("LEFT", "user_auth", joinCondition)
+		}
+
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+
+		for _, filter := range query.Filters {
+			if jc := filter.JoinCondition(); jc != nil {
+				countSess.Join(jc.Operator, jc.Table, jc.Params)
+			}
+			if ic := filter.InCondition(); ic != nil {
+				countSess.In(ic.Condition, ic.Params)
+			}
+			if wc := filter.WhereCondition(); wc != nil {
+				countSess.Where(wc.Condition, wc.Params)
+			}
+		}
+
+		count, err := countSess.Count(&user)
+		query.Result.TotalCount = count
+
+		for _, user := range query.Result.Users {
+			user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+		}
+
 		return err
-	}
-
-	// get total
-	user := models.User{}
-	countSess := x.Table("user").Alias("u")
-
-	// Join with user_auth table if users filtered by auth_module
-	if query.AuthModule != "" {
-		countSess.Join("LEFT", "user_auth", joinCondition)
-	}
-
-	if len(whereConditions) > 0 {
-		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-	}
-
-	for _, filter := range query.Filters {
-		if jc := filter.JoinCondition(); jc != nil {
-			countSess.Join(jc.Operator, jc.Table, jc.Params)
-		}
-		if ic := filter.InCondition(); ic != nil {
-			countSess.In(ic.Condition, ic.Params)
-		}
-		if wc := filter.WhereCondition(); wc != nil {
-			countSess.Where(wc.Condition, wc.Params)
-		}
-	}
-
-	count, err := countSess.Count(&user)
-	query.Result.TotalCount = count
-
-	for _, user := range query.Result.Users {
-		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
-	}
-
-	return err
+	})
 }
 
 func (ss *SQLStore) DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
-	user := models.User{}
-	sess := x.Table("user")
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		user := models.User{}
+		sess := dbSess.Table("user")
 
-	if has, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		if has, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
+			return err
+		} else if !has {
+			return models.ErrUserNotFound
+		}
+
+		user.IsDisabled = cmd.IsDisabled
+		sess.UseBool("is_disabled")
+
+		_, err := sess.ID(cmd.UserId).Update(&user)
 		return err
-	} else if !has {
-		return models.ErrUserNotFound
-	}
-
-	user.IsDisabled = cmd.IsDisabled
-	sess.UseBool("is_disabled")
-
-	_, err := sess.ID(cmd.UserId).Update(&user)
-	return err
+	})
 }
 
 func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
@@ -754,41 +735,78 @@ func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisa
 			disableParams = append(disableParams, v)
 		}
 
-		_, err := sess.Exec(disableParams...)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Where(notServiceAccountFilter(ss)).Exec(disableParams...)
+		return err
 	})
 }
 
 func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		return deleteUserInTransaction(sess, cmd)
+		return deleteUserInTransaction(ss, sess, cmd)
 	})
 }
 
-func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) error {
+func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	user := models.User{Id: cmd.UserId}
-	has, err := sess.Get(&user)
+	has, err := sess.Where(notServiceAccountFilter(ss)).Get(&user)
 	if err != nil {
 		return err
 	}
 	if !has {
 		return models.ErrUserNotFound
 	}
-	for _, sql := range userDeletions() {
+	for _, sql := range UserDeletions() {
 		_, err := sess.Exec(sql, cmd.UserId)
 		if err != nil {
 			return err
 		}
 	}
+
+	return deleteUserAccessControl(sess, cmd.UserId)
+}
+
+func deleteUserAccessControl(sess *DBSession, userID int64) error {
+	// Delete user role assignments
+	if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
+		return err
+	}
+
+	// Delete permissions that are scoped to user
+	if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
+		return err
+	}
+
+	var roleIDs []int64
+	if err := sess.SQL("SELECT id FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
+		return err
+	}
+
+	if len(roleIDs) == 0 {
+		return nil
+	}
+
+	query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+	args := make([]interface{}, 0, len(roleIDs)+1)
+	args = append(args, query)
+	for _, id := range roleIDs {
+		args = append(args, id)
+	}
+
+	// Delete managed user permissions
+	if _, err := sess.Exec(args...); err != nil {
+		return err
+	}
+
+	// Delete managed user roles
+	if _, err := sess.Exec("DELETE FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func userDeletions() []string {
+func UserDeletions() []string {
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",
 		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
@@ -803,18 +821,11 @@ func userDeletions() []string {
 	return deletes
 }
 
-func ServiceAccountDeletions() []string {
-	deletes := []string{
-		"DELETE FROM api_key WHERE service_account_id = ?",
-	}
-	deletes = append(deletes, userDeletions()...)
-	return deletes
-}
-
+// UpdateUserPermissions sets the user Server Admin flag
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		var user models.User
-		if _, err := sess.ID(userID).Get(&user); err != nil {
+		if _, err := sess.ID(userID).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		}
 
@@ -848,8 +859,8 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 	})
 }
 
+// validateOneAdminLeft validate that there is an admin user left
 func validateOneAdminLeft(sess *DBSession) error {
-	// validate that there is an admin user left
 	count, err := sess.Where("is_admin=?", true).Count(&models.User{})
 	if err != nil {
 		return err

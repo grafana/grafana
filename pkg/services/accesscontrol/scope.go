@@ -14,12 +14,25 @@ import (
 )
 
 const (
-	ttl           = 30 * time.Second
-	cleanInterval = 2 * time.Minute
+	ttl            = 30 * time.Second
+	cleanInterval  = 2 * time.Minute
+	maxPrefixParts = 2
 )
 
 func GetResourceScope(resource string, resourceID string) string {
 	return Scope(resource, "id", resourceID)
+}
+
+func GetResourceScopeUID(resource string, resourceID string) string {
+	return Scope(resource, "uid", resourceID)
+}
+
+func GetResourceScopeName(resource string, resourceID string) string {
+	return Scope(resource, "name", resourceID)
+}
+
+func GetResourceScopeType(resource string, typeName string) string {
+	return Scope(resource, "type", typeName)
 }
 
 func GetResourceAllScope(resource string) string {
@@ -144,10 +157,15 @@ func (s *ScopeResolver) GetResolveAttributeScopeMutator(orgID int64) ScopeMutato
 	}
 }
 
+// scopePrefix returns the prefix associated to a given scope
+// we assume prefixes are all in the form <resource>:<attribute>:<value>
+// ex: "datasources:name:test" returns "datasources:name:"
 func scopePrefix(scope string) string {
 	parts := strings.Split(scope, ":")
-	n := len(parts) - 1
-	parts[n] = ""
+	// We assume prefixes don't have more than maxPrefixParts parts
+	if len(parts) > maxPrefixParts {
+		parts = append(parts[:maxPrefixParts], "")
+	}
 	return strings.Join(parts, ":")
 }
 
@@ -164,4 +182,55 @@ func ScopeInjector(params ScopeParams) ScopeMutator {
 		}
 		return buf.String(), nil
 	}
+}
+
+// ScopeProvider provides methods that construct scopes
+type ScopeProvider interface {
+	GetResourceScope(resourceID string) string
+	GetResourceScopeUID(resourceID string) string
+	GetResourceScopeName(resourceID string) string
+	GetResourceScopeType(typeName string) string
+	GetResourceAllScope() string
+	GetResourceAllIDScope() string
+}
+
+type scopeProviderImpl struct {
+	root string
+}
+
+// NewScopeProvider creates a new ScopeProvider that is configured with specific root scope
+func NewScopeProvider(root string) ScopeProvider {
+	return &scopeProviderImpl{
+		root: root,
+	}
+}
+
+// GetResourceScope returns scope that has the format "<rootScope>:id:<resourceID>"
+func (s scopeProviderImpl) GetResourceScope(resourceID string) string {
+	return GetResourceScope(s.root, resourceID)
+}
+
+// GetResourceScopeUID returns scope that has the format "<rootScope>:uid:<resourceID>"
+func (s scopeProviderImpl) GetResourceScopeUID(resourceID string) string {
+	return GetResourceScopeUID(s.root, resourceID)
+}
+
+// GetResourceScopeName returns scope that has the format "<rootScope>:name:<resourceID>"
+func (s scopeProviderImpl) GetResourceScopeName(resourceID string) string {
+	return GetResourceScopeName(s.root, resourceID)
+}
+
+// GetResourceScopeType returns scope that has the format "<rootScope>:type:<typeName>"
+func (s scopeProviderImpl) GetResourceScopeType(typeName string) string {
+	return GetResourceScopeType(s.root, typeName)
+}
+
+// GetResourceAllScope returns scope that has the format "<rootScope>:*"
+func (s scopeProviderImpl) GetResourceAllScope() string {
+	return GetResourceAllScope(s.root)
+}
+
+// GetResourceAllIDScope returns scope that has the format "<rootScope>:id:*"
+func (s scopeProviderImpl) GetResourceAllIDScope() string {
+	return GetResourceAllIDScope(s.root)
 }

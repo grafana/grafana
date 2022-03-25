@@ -26,6 +26,16 @@ func (ds *dummyService) Enabled() bool {
 	return false
 }
 
+func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
+	return dashboardPreviewsSetupConfig{
+		SystemRequirements: dashboardPreviewsSystemRequirements{
+			Met:                                false,
+			RequiredImageRendererPluginVersion: "",
+		},
+		ThumbnailsExist: false,
+	}
+}
+
 func (ds *dummyService) StartCrawler(c *models.ReqContext) response.Response {
 	result := make(map[string]string)
 	result["error"] = "Not enabled"

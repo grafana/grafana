@@ -76,6 +76,18 @@ func getTeamSelectSQLBase(filteredUsers []string) string {
 		` FROM team as team `
 }
 
+func getTeamSelectWithPermissionsSQLBase(filteredUsers []string) string {
+	return `SELECT
+		team.id AS id,
+		team.org_id,
+		team.name AS name,
+		team.email AS email,
+		team_member.permission, ` +
+		getTeamMemberCount(filteredUsers) +
+		` FROM team AS team
+		INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ? `
+}
+
 func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, error) {
 	team := models.Team{
 		Name:    name,
@@ -188,14 +200,14 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 	params := make([]interface{}, 0)
 
 	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
-	sql.WriteString(getTeamSelectSQLBase(filteredUsers))
-
 	for _, user := range filteredUsers {
 		params = append(params, user)
 	}
 
-	if query.UserIdFilter != models.FilterIgnoreUser {
-		sql.WriteString(` INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`)
+	if query.UserIdFilter == models.FilterIgnoreUser {
+		sql.WriteString(getTeamSelectSQLBase(filteredUsers))
+	} else {
+		sql.WriteString(getTeamSelectWithPermissionsSQLBase(filteredUsers))
 		params = append(params, query.UserIdFilter)
 	}
 
@@ -217,7 +229,7 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		err      error
 	)
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		acFilter, err = ac.Filter(ctx, "team.id", "teams", ac.ActionTeamsRead, query.SignedInUser)
+		acFilter, err = ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
 		if err != nil {
 			return err
 		}
@@ -516,10 +528,8 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
 	// If the signed in user is not set no member will be returned
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		*acFilter, err = ac.Filter(ctx,
-			fmt.Sprintf("%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id")),
-			"users", ac.ActionOrgUsersRead, query.SignedInUser,
-		)
+		sqlID := fmt.Sprintf("%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id"))
+		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
 		if err != nil {
 			return err
 		}

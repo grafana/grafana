@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"context"
 	"errors"
 	"strconv"
 	"strings"
@@ -10,11 +9,15 @@ import (
 )
 
 var sqlIDAcceptList = map[string]struct{}{
-	"org_user.user_id": {},
-	"role.id":          {},
-	"team.id":          {},
-	"\"user\".\"id\"":  {}, // For Postgres
-	"`user`.`id`":      {}, // For MySQL and SQLite
+	"org_user.user_id":    {},
+	"role.id":             {},
+	"t.id":                {},
+	"team.id":             {},
+	"u.id":                {},
+	"\"user\".\"id\"":     {}, // For Postgres
+	"`user`.`id`":         {}, // For MySQL and SQLite
+	"dashboard.id":        {},
+	"dashboard.folder_id": {},
 }
 
 var (
@@ -22,10 +25,15 @@ var (
 	allowAllQuery = SQLFilter{" 1 = 1", nil}
 )
 
+type SQLFilter struct {
+	Where string
+	Args  []interface{}
+}
+
 // Filter creates a where clause to restrict the view of a query based on a users permissions
-// Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
-// is the id to generate scope from e.g. user.id
-func Filter(ctx context.Context, sqlID, prefix, action string, user *models.SignedInUser) (SQLFilter, error) {
+// Scopes that exists for all actions will be parsed and compared against the supplied sqlID
+// Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")
+func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}
@@ -33,22 +41,33 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 		return denyQuery, errors.New("missing permissions")
 	}
 
-	var hasWildcard bool
-	var ids []interface{}
-	for _, scope := range user.Permissions[user.OrgId][action] {
-		if strings.HasPrefix(scope, prefix) || scope == "*" {
-			if id := strings.TrimPrefix(scope, prefix); id == "*" || id == ":*" || id == ":id:*" {
-				hasWildcard = true
-				break
-			}
-			if id, err := parseScopeID(scope); err == nil {
-				ids = append(ids, id)
-			}
+	wildcards := 0
+	result := make(map[interface{}]int)
+	for _, a := range actions {
+		ids, hasWildcard := parseScopes(prefix, user.Permissions[user.OrgId][a])
+		if hasWildcard {
+			wildcards += 1
+			continue
+		}
+		if len(ids) == 0 {
+			return denyQuery, nil
+		}
+		for id := range ids {
+			result[id] += 1
 		}
 	}
 
-	if hasWildcard {
+	// return early if every action has wildcard scope
+	if wildcards == len(actions) {
 		return allowAllQuery, nil
+	}
+
+	var ids []interface{}
+	for id, count := range result {
+		// if an id exist for every action include it in the filter
+		if count+wildcards == len(actions) {
+			ids = append(ids, id)
+		}
 	}
 
 	if len(ids) == 0 {
@@ -66,8 +85,50 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 	return SQLFilter{query.String(), ids}, nil
 }
 
-func parseScopeID(scope string) (int64, error) {
+func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
+	ids = make(map[interface{}]struct{})
+
+	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
+	if !ok {
+		return nil, false
+	}
+
+	parser := parseStringAttribute
+	if strings.HasSuffix(prefix, ":id:") {
+		parser = parseIntAttribute
+	}
+
+	allScope := rootPrefix + "*"
+	allAttributeScope := attributePrefix + "*"
+
+	for _, scope := range scopes {
+		if scope == "*" {
+			return nil, true
+		}
+
+		if strings.HasPrefix(scope, rootPrefix) {
+			if scope == allScope || scope == allAttributeScope {
+				return nil, true
+			}
+
+			if !strings.HasPrefix(scope, prefix) {
+				continue
+			}
+
+			if id, err := parser(scope); err == nil {
+				ids[id] = struct{}{}
+			}
+		}
+	}
+	return ids, false
+}
+
+func parseIntAttribute(scope string) (interface{}, error) {
 	return strconv.ParseInt(scope[strings.LastIndex(scope, ":")+1:], 10, 64)
+}
+
+func parseStringAttribute(scope string) (interface{}, error) {
+	return scope[strings.LastIndex(scope, ":")+1:], nil
 }
 
 // SetAcceptListForTest allow us to mutate the list for blackbox testing

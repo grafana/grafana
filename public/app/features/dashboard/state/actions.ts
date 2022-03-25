@@ -106,9 +106,9 @@ export function importDashboard(data: any, dashboardTitle: string): ThunkResult<
   };
 }
 
-export function removeDashboard(uri: string): ThunkResult<void> {
+export function removeDashboard(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/dashboards/${uri}`);
+    await getBackendSrv().delete(`/api/dashboards/uid/${uid}`);
     dispatch(loadPluginDashboards());
   };
 }
@@ -119,24 +119,24 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
 
   if (dashboard) {
     dashboard.destroy();
+    dispatch(cancelVariables(dashboard.uid));
   }
 
   getTimeSrv().stopAutoRefresh();
 
   dispatch(cleanUpDashboard());
-  dispatch(cancelVariables());
 };
 
 export const updateTimeZoneDashboard =
   (timeZone: TimeZone): ThunkResult<void> =>
   (dispatch) => {
     dispatch(updateTimeZoneForSession(timeZone));
-    getTimeSrv().refreshDashboard();
+    getTimeSrv().refreshTimeModel();
   };
 
 export const updateWeekStartDashboard =
   (weekStart: string): ThunkResult<void> =>
   (dispatch) => {
     dispatch(updateWeekStartForSession(weekStart));
-    getTimeSrv().refreshDashboard();
+    getTimeSrv().refreshTimeModel();
   };

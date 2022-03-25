@@ -104,6 +104,17 @@ export function matcherFieldToMatcher(field: MatcherFieldValue): Matcher {
   };
 }
 
+export function matchersToString(matchers: Matcher[]) {
+  const matcherFields = matchers.map(matcherToMatcherField);
+
+  const combinedMatchers = matcherFields.reduce((acc, current) => {
+    const currentMatcherString = `${current.name}${current.operator}"${current.value}"`;
+    return acc ? `${acc},${currentMatcherString}` : currentMatcherString;
+  }, '');
+
+  return `{${combinedMatchers}}`;
+}
+
 export const matcherFieldOptions: SelectableValue[] = [
   { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
   { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
@@ -117,14 +128,6 @@ const matcherOperators = [
   MatcherOperator.notEqual,
   MatcherOperator.equal,
 ];
-
-function unescapeMatcherValue(value: string) {
-  let trimmed = value.trim().replace(/\\"/g, '"');
-  if (trimmed.startsWith('"') && trimmed.endsWith('"') && !trimmed.endsWith('\\"')) {
-    trimmed = trimmed.substr(1, trimmed.length - 2);
-  }
-  return trimmed.replace(/\\"/g, '"');
-}
 
 export function parseMatcher(matcher: string): Matcher {
   const trimmed = matcher.trim();
@@ -141,7 +144,7 @@ export function parseMatcher(matcher: string): Matcher {
   }
   const [operator, idx] = operatorsFound[0];
   const name = trimmed.substr(0, idx).trim();
-  const value = unescapeMatcherValue(trimmed.substr(idx + operator.length).trim());
+  const value = trimmed.substr(idx + operator.length).trim();
   if (!name) {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }

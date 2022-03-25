@@ -183,6 +183,13 @@ export class PanelQueryRunner {
             return of(data);
           }
 
+          const replace = (option: string): string => {
+            return getTemplateSrv().replace(option, data?.request?.scopedVars);
+          };
+          transformations.forEach((transform: any) => {
+            transform.replace = replace;
+          });
+
           return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
         })
       );

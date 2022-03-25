@@ -39,6 +39,8 @@ const (
 	varRateIntervalAlt = "${__rate_interval}"
 )
 
+const legendFormatAuto = "__auto"
+
 type TimeSeriesQueryType string
 
 const (
@@ -106,6 +108,11 @@ func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*P
 			return &result, err
 		}
 
+		// The ExecutedQueryString can be viewed in QueryInspector in UI
+		for _, frame := range frames {
+			frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+		}
+
 		result.Responses[query.RefId] = backend.DataResponse{
 			Frames: frames,
 		}
@@ -132,11 +139,14 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
-	var legend string
+	var legend = metric.String()
 
-	if query.LegendFormat == "" {
-		legend = metric.String()
-	} else {
+	if query.LegendFormat == legendFormatAuto {
+		// If we have labels set legend to empty string to utilize the auto naming system
+		if len(metric) > 0 {
+			legend = ""
+		}
+	} else if query.LegendFormat != "" {
 		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
 			labelName := strings.Replace(string(in), "{{", "", 1)
 			labelName = strings.Replace(labelName, "}}", "", 1)
@@ -318,7 +328,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
 
 		for i, k := range v.Values {
-			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			timeField.Set(i, k.Timestamp.Time().UTC())
 			value := float64(k.Value)
 
 			if !math.IsNaN(value) {
@@ -330,8 +340,12 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		timeField.Name = data.TimeSeriesTimeFieldName
 		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
 		valueField.Labels = tags
+
+		if name != "" {
+			valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		}
+
 		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
 	}
 
@@ -339,7 +353,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 }
 
 func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, frames data.Frames) data.Frames {
-	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
+	timeVector := []time.Time{scalar.Timestamp.Time().UTC()}
 	values := []float64{float64(scalar.Value)}
 	name := fmt.Sprintf("%g", values[0])
 
@@ -358,7 +372,7 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
 		tags := make(map[string]string, len(v.Metric))
-		timeVector := []time.Time{time.Unix(v.Timestamp.Unix(), 0).UTC()}
+		timeVector := []time.Time{v.Timestamp.Time().UTC()}
 		values := []float64{float64(v.Value)}
 
 		for k, v := range v.Metric {
@@ -387,7 +401,7 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
 			event := ExemplarEvent{}
-			exemplarTime := time.Unix(exemplar.Timestamp.Unix(), 0).UTC()
+			exemplarTime := exemplar.Timestamp.Time().UTC()
 			event.Time = exemplarTime
 			event.Value = float64(exemplar.Value)
 			event.Labels = make(map[string]string)

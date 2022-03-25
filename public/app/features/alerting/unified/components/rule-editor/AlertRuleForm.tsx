@@ -1,5 +1,5 @@
 import React, { FC, useMemo, useState } from 'react';
-import { GrafanaTheme2, AppEvents } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, ConfirmModal } from '@grafana/ui';
 import { css } from '@emotion/css';
 
@@ -18,8 +18,8 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { appEvents } from 'app/core/core';
 import { CloudConditionsStep } from './CloudConditionsStep';
 import { GrafanaConditionsStep } from './GrafanaConditionsStep';
 import * as ruleId from '../../utils/rule-id';
@@ -31,6 +31,7 @@ type Props = {
 export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
+  const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
@@ -44,6 +45,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
+      type: RuleFormType.grafana,
     };
   }, [existing, queryParams]);
 
@@ -98,7 +100,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   };
 
   const onInvalid = () => {
-    appEvents.emit(AppEvents.alertError, ['There are errors in the form. Please correct them and try again!']);
+    notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
   return (

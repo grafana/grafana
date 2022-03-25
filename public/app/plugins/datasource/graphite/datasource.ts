@@ -417,7 +417,7 @@ export class GraphiteDatasource
   }
 
   targetContainsTemplate(target: GraphiteQuery) {
-    return this.templateSrv.variableExists(target.target ?? '');
+    return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {
@@ -768,6 +768,15 @@ export class GraphiteDatasource
             }
           } else {
             this.funcDefs = gfunc.parseFuncDefs(results.data);
+          }
+
+          // When /functions endpoint returns application/json response but containing invalid JSON the fix above
+          // wont' be triggered due to the changes in https://github.com/grafana/grafana/pull/45598 (parsing happens
+          // in fetch and Graphite receives an empty object and no error). In such cases, when the provided JSON
+          // seems empty we fallback to the hardcoded list of functions.
+          // See also: https://github.com/grafana/grafana/issues/45948
+          if (Object.keys(this.funcDefs).length === 0) {
+            this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
           }
           return this.funcDefs;
         }),

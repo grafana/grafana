@@ -172,7 +172,6 @@ export function handleMetricsAutoCompleteError(
   state: GraphiteQueryEditorState,
   error: Error
 ): GraphiteQueryEditorState {
-  console.error(error);
   if (!state.metricAutoCompleteErrorShown) {
     state.metricAutoCompleteErrorShown = true;
     dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
@@ -184,7 +183,6 @@ export function handleMetricsAutoCompleteError(
  * When tags autocomplete fails - the error is shown, but only once per page view
  */
 export function handleTagsAutoCompleteError(state: GraphiteQueryEditorState, error: Error): GraphiteQueryEditorState {
-  console.error(error);
   if (!state.tagsAutoCompleteErrorShown) {
     state.tagsAutoCompleteErrorShown = true;
     dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));

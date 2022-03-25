@@ -10,7 +10,7 @@ import {
   isValidGoDuration,
   LoadingState,
 } from '@grafana/data';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -45,6 +45,9 @@ export interface TempoJsonData extends DataSourceJsonData {
     hide?: boolean;
   };
   nodeGraph?: NodeGraphOptions;
+  lokiSearch?: {
+    datasourceUid?: string;
+  };
 }
 
 export interface TempoQuery extends DataQuery {
@@ -81,6 +84,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     hide?: boolean;
   };
   nodeGraph?: NodeGraphOptions;
+  lokiSearch?: {
+    datasourceUid?: string;
+  };
   uploadedJson?: string | ArrayBuffer | null = null;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
@@ -89,6 +95,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
+    this.lokiSearch = instanceSettings.jsonData.lokiSearch;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -100,11 +107,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return of({ data: [], state: LoadingState.Done });
     }
 
+    const logsDatasourceUid = this.getLokiSearchDS();
+
     // Run search queries on linked datasource
-    if (this.tracesToLogs?.datasourceUid && targets.search?.length > 0) {
+    if (logsDatasourceUid && targets.search?.length > 0) {
       const dsSrv = getDatasourceSrv();
       subQueries.push(
-        from(dsSrv.get(this.tracesToLogs.datasourceUid)).pipe(
+        from(dsSrv.get(logsDatasourceUid)).pipe(
           mergeMap((linkedDatasource: DataSourceApi) => {
             // Wrap linked query into a data request based on original request
             const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
@@ -300,6 +309,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
     return ds.getTagValues!({ key });
   }
+
+  // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
+  getLokiSearchDS = (): string | undefined => {
+    const legacyLogsDatasourceUid =
+      this.tracesToLogs?.lokiSearch !== false && this.lokiSearch === undefined
+        ? this.tracesToLogs?.datasourceUid
+        : undefined;
+    return this.lokiSearch?.datasourceUid ?? legacyLogsDatasourceUid;
+  };
 }
 
 function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {

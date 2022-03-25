@@ -274,7 +274,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[2], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
-				err = testHelperUpdateDashboardAcl(t, sqlStore, 1, models.DashboardAcl{
+				err = updateDashboardAcl(t, sqlStore, 1, &models.DashboardAcl{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupId,
 				})
 				require.NoError(t, err)
@@ -396,8 +396,7 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
@@ -456,9 +455,7 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 	}
 
-	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
-
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	setup(store)
 
 	type getTeamMembersTestCase struct {

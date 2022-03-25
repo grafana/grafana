@@ -37,7 +37,7 @@ const (
 	// are negative to ensure that the default items are placed above
 	// any items with default weight.
 
-	WeightHome = (iota - 20) * 100
+	WeightSavedItems = (iota - 20) * 100
 	WeightCreate
 	WeightDashboard
 	WeightExplore
@@ -71,6 +71,7 @@ type NavLink struct {
 	HideFromTabs  bool       `json:"hideFromTabs,omitempty"`
 	Children      []*NavLink `json:"children,omitempty"`
 	HighlightText string     `json:"highlightText,omitempty"`
+	HighlightID   string     `json:"highlightId,omitempty"`
 }
 
 // NavIDCfg is the id for org configuration navigation node

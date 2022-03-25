@@ -3,6 +3,7 @@ package serviceaccounts
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -22,30 +23,47 @@ type ServiceAccount struct {
 	Id int64
 }
 
-type CreateServiceaccountForm struct {
-	OrgID int64  `json:"-"`
-	Name  string `json:"name" binding:"Required"`
+type UpdateServiceAccountForm struct {
+	Name       *string          `json:"name"`
+	Role       *models.RoleType `json:"role"`
+	IsDisabled *bool            `json:"isDisabled"`
 }
 
 type ServiceAccountDTO struct {
-	Id            int64           `json:"id"`
-	Name          string          `json:"name"`
-	Login         string          `json:"login"`
-	OrgId         int64           `json:"orgId"`
+	Id            int64           `json:"id" xorm:"user_id"`
+	Name          string          `json:"name" xorm:"name"`
+	Login         string          `json:"login" xorm:"login"`
+	OrgId         int64           `json:"orgId" xorm:"org_id"`
+	IsDisabled    bool            `json:"isDisabled" xorm:"is_disabled"`
+	Role          string          `json:"role" xorm:"role"`
 	Tokens        int64           `json:"tokens"`
-	Role          string          `json:"role"`
 	AvatarUrl     string          `json:"avatarUrl"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
+}
+type SearchServiceAccountsResult struct {
+	TotalCount      int64                `json:"totalCount"`
+	ServiceAccounts []*ServiceAccountDTO `json:"serviceAccounts"`
+	Page            int                  `json:"page"`
+	PerPage         int                  `json:"perPage"`
 }
 
 type ServiceAccountProfileDTO struct {
-	Id            int64           `json:"id"`
-	Name          string          `json:"name"`
-	Login         string          `json:"login"`
-	OrgId         int64           `json:"orgId"`
-	IsDisabled    bool            `json:"isDisabled"`
-	UpdatedAt     time.Time       `json:"updatedAt"`
-	CreatedAt     time.Time       `json:"createdAt"`
-	AvatarUrl     string          `json:"avatarUrl"`
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	Id            int64           `json:"id" xorm:"user_id"`
+	Name          string          `json:"name" xorm:"name"`
+	Login         string          `json:"login" xorm:"login"`
+	OrgId         int64           `json:"orgId" xorm:"org_id"`
+	IsDisabled    bool            `json:"isDisabled" xorm:"is_disabled"`
+	Created       time.Time       `json:"createdAt" xorm:"created"`
+	Updated       time.Time       `json:"updatedAt" xorm:"updated"`
+	AvatarUrl     string          `json:"avatarUrl" xorm:"-"`
+	Role          string          `json:"role" xorm:"role"`
+	Teams         []string        `json:"teams" xorm:"-"`
+	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
+
+type ServiceAccountFilter string // used for filtering
+
+const (
+	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	FilterIncludeAll        ServiceAccountFilter = "all"
+)

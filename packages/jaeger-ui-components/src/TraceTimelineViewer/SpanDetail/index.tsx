@@ -26,23 +26,24 @@ import DetailState from './DetailState';
 import { formatDuration } from '../utils';
 import LabeledList from '../../common/LabeledList';
 import { SpanLinkFunc, TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
+import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
 import { autoColor } from '../../Theme';
+import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 import { Divider } from '../../common/Divider';
-import {
-  uAlignIcon,
-  ubFlex,
-  ubFlexAuto,
-  ubItemsCenter,
-  ubM0,
-  ubMb1,
-  ubMy1,
-  ubTxRightAlign,
-} from '../../uberUtilityStyles';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    header: css`
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0 1rem;
+      margin-bottom: 0.25rem;
+    `,
+    listWrapper: css`
+      overflow: hidden;
+    `,
     debugInfo: css`
       label: debugInfo;
       display: block;
@@ -110,6 +111,7 @@ type SpanDetailProps = {
   traceStartTime: number;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
+  referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   referencesToggle: (spanID: string) => void;
   focusSpan: (uiFind: string) => void;
   createSpanLink?: SpanLinkFunc;
@@ -130,6 +132,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     warningsToggle,
     stackTracesToggle,
     referencesToggle,
+    referenceItemToggle,
     focusSpan,
     createSpanLink,
     createFocusSpanLink,
@@ -139,7 +142,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     isProcessOpen,
     logs: logsState,
     isWarningsOpen,
-    isReferencesOpen,
+    references: referencesState,
     isStackTracesOpen,
   } = detailState;
   const {
@@ -171,6 +174,15 @@ export default function SpanDetail(props: SpanDetailProps) {
       label: 'Start Time:',
       value: formatDuration(relativeStartTime),
     },
+    ...(span.childSpanCount > 0
+      ? [
+          {
+            key: 'child_count',
+            label: 'Child Count:',
+            value: span.childSpanCount,
+          },
+        ]
+      : []),
   ];
   const styles = useStyles2(getStyles);
   const link = createSpanLink?.(span);
@@ -178,9 +190,11 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   return (
     <div>
-      <div className={cx(ubFlex, ubItemsCenter, ubMb1)}>
-        <h2 className={cx(ubFlexAuto, ubM0)}>{operationName}</h2>
-        <LabeledList className={ubTxRightAlign} items={overviewItems} />
+      <div className={styles.header}>
+        <h2 className={cx(ubM0)}>{operationName}</h2>
+        <div className={styles.listWrapper}>
+          <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+        </div>
       </div>
       {link ? (
         <DataLinkButton link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
@@ -258,8 +272,10 @@ export default function SpanDetail(props: SpanDetailProps) {
         {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
           <AccordianReferences
             data={references}
-            isOpen={isReferencesOpen}
+            isOpen={referencesState.isOpen}
+            openedItems={referencesState.openedItems}
             onToggle={() => referencesToggle(spanID)}
+            onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
             focusSpan={focusSpan}
           />
         )}
