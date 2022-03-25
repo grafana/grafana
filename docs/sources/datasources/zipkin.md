@@ -31,12 +31,12 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
-- **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
-- **Map tag names -** When enabled, allows configuring how Zipkin tag names map to Loki label names. For example, map `service.name` to `service`.
-- **Span start time shift -** Shift in the start time for the Loki query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
-- **Span end time shift -** Shift in the end time for the Loki query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
-- **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
-- **Filter by Span ID -** Toggle to append the span ID to the Loki query.
+- **Tags -** The tags that will be used in the Loki or Splunk query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+- **Map tag names -** When enabled, allows configuring how Zipkin tag names map to Loki or Splunk label names. For example, map `service.name` to `service`.
+- **Span start time shift -** Shift in the start time for the Loki or Splunk query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
+- **Span end time shift -** Shift in the end time for the Loki or Splunk query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
+- **Filter by Trace ID -** Toggle to append the trace ID to the Loki or Splunk query.
+- **Filter by Span ID -** Toggle to append the span ID to the Loki or Splunk query.
 
 ![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
 
@@ -98,4 +98,6 @@ Here is an example JSON:
 
 ## Linking Trace ID from logs
 
-You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki#derived-fields" >}}) for details.
+You can link to Zipkin trace from logs in Loki or Splunk by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki#derived-fields" >}}) for details.
+
+You can link to Zipkin trace from logs in Splunk by configuring a derived field with internal link. See the [Derived fields]({{< relref "splunk.md#derived-fields" >}}) section in the [Splunk data source]({{< relref "splunk.md" >}}) documentation for details.
