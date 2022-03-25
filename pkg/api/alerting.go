@@ -89,7 +89,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 			Limit:        1000,
 			OrgId:        c.OrgId,
 			DashboardIds: dashboardIDs,
-			Type:         string(search.DashHitDB),
+			Type:         string(models.DashHitDB),
 			FolderIds:    folderIDs,
 			Permission:   models.PERMISSION_VIEW,
 		}
@@ -100,7 +100,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 		}
 
 		for _, d := range searchQuery.Result {
-			if d.Type == search.DashHitDB && d.ID > 0 {
+			if d.Type == models.DashHitDB && d.ID > 0 {
 				dashboardIDs = append(dashboardIDs, d.ID)
 			}
 		}

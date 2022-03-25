@@ -167,7 +167,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Saved Items",
 			Id:         "saved-items",
-			Icon:       "heart",
+			Icon:       "bookmark",
 			SortWeight: dtos.WeightSavedItems,
 			Section:    dtos.NavSectionCore,
 			Children:   savedItemsLinks,

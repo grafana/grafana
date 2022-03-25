@@ -6,10 +6,11 @@ import (
 )
 
 type SetResourcePermissionCommand struct {
-	Actions    []string
-	Resource   string
-	ResourceID string
-	Permission string
+	Actions           []string
+	Resource          string
+	ResourceID        string
+	ResourceAttribute string
+	Permission        string
 }
 
 type SetResourcePermissionsCommand struct {
@@ -21,10 +22,11 @@ type SetResourcePermissionsCommand struct {
 }
 
 type GetResourcePermissionsQuery struct {
-	Actions         []string
-	Resource        string
-	ResourceID      string
-	OnlyManaged     bool
-	InheritedScopes []string
-	User            *models.SignedInUser
+	Actions           []string
+	Resource          string
+	ResourceID        string
+	ResourceAttribute string
+	OnlyManaged       bool
+	InheritedScopes   []string
+	User              *models.SignedInUser
 }
