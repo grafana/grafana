@@ -22,12 +22,6 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 | -------------------- | ------------------------- |
 | serviceaccounts:read | global:serviceaccounts:\* |
 
-<!-- const ( -->
-<!-- 	ActionRead   = "serviceaccounts:read" -->
-<!-- 	ActionWrite  = "serviceaccounts:write" -->
-<!-- 	ActionCreate = "serviceaccounts:create" -->
-<!-- 	ActionDelete = "serviceaccounts:delete" -->
-<!-- ) -->
 
 **Example Request**:
 
