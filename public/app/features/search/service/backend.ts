@@ -27,6 +27,20 @@ export async function getRawIndexData(): Promise<RawIndexData> {
   for (const f of rsp.data) {
     const frame = f as DataFrame;
     for (const field of frame.fields) {
+      // Parse tags from JSON string
+      if (field.name === 'Tags') {
+        const values = field.values.toArray().map((v) => {
+          if (v?.length) {
+            try {
+              const arr = JSON.parse(v);
+              return arr.length ? arr : undefined;
+            } catch {}
+          }
+          return undefined;
+        });
+        field.values = new ArrayVector(values);
+      }
+
       field.display = getDisplayProcessor({ field, theme: config.theme2 });
     }
     frame.meta = {

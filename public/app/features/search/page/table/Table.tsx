@@ -9,8 +9,6 @@ import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 import SVG from 'react-inlinesvg';
 
-// HACK
-import { getNextWord } from 'app/plugins/datasource/testdata/LogIpsum';
 import { config } from '@grafana/runtime';
 import { LocationInfo } from '../../service';
 
@@ -49,6 +47,9 @@ function getFieldAccess(frame: DataFrame): FieldAccess {
         break;
       case 'type':
         a.type = f;
+        break;
+      case 'tags':
+        a.tags = f;
         break;
       case 'url':
         a.url = f;
@@ -130,9 +131,11 @@ const generateColumns = (
       field: access.name!,
       Header: 'Tags',
       accessor: (row: any, i: number) => {
-        const tags: string[] = [];
-        tags.push(getNextWord());
-        return <TagList tags={tags} onClick={(v) => console.log('CLICKED TAG', v)} />;
+        const tags = access.tags?.values.get(i);
+        if (tags) {
+          return <TagList tags={tags} onClick={(v) => console.log('CLICKED TAG', v)} />;
+        }
+        return null;
       },
       width,
     });
@@ -196,6 +199,26 @@ const generateColumns = (
       width,
     });
     availableWidth -= width;
+
+    // Show tags if we have any
+    if (access.tags && hasTagValue(access.tags)) {
+      width = 200;
+      columns.push({
+        Cell: DefaultCell,
+        id: `column-tags`,
+        field: access.name!,
+        Header: 'Tags',
+        accessor: (row: any, i: number) => {
+          const tags = access.tags?.values.get(i);
+          if (tags) {
+            return <TagList tags={tags} onClick={(v) => console.log('CLICKED TAG', v)} />;
+          }
+          return null;
+        },
+        width,
+      });
+      availableWidth -= width;
+    }
 
     columns.push({
       Cell: DefaultCell,
@@ -345,6 +368,16 @@ export const Table = ({ data, width }: Props) => {
     </div>
   );
 };
+
+function hasTagValue(field: Field): boolean {
+  for (let i = 0; i < field.values.length; i++) {
+    const v = field.values.get(i);
+    if (v && v.length) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function getIconForKind(v: string): IconName {
   if (v === 'dashboard') {

@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
 import { getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
 import { LocationInfo } from '.';
+import { isArray, isString } from 'lodash';
 
 export type SearchResultKind = keyof RawIndexData;
 
@@ -22,7 +23,7 @@ interface InputDoc {
   dashboardID?: Vector<number>;
   location?: Vector<LocationInfo[]>;
   type?: Vector<string>;
-  tags?: Vector<string>; // JSON strings?
+  tags?: Vector<string[]>; // JSON strings?
 }
 
 interface CompositeKey {
@@ -45,7 +46,7 @@ export class MiniSearcher implements GrafanaSearcher {
 
     const searcher = new MiniSearch<InputDoc>({
       idField: '__id',
-      fields: ['name', 'description', 'tags'], // fields to index for full-text search
+      fields: ['name', 'description', 'tags', 'type', 'tags'], // fields to index for full-text search
       searchOptions: {
         boost: {
           name: 3,
@@ -71,13 +72,20 @@ export class MiniSearcher implements GrafanaSearcher {
           return {
             kind: doc.kind,
             index: doc.index,
-          };
+          } as any;
         }
         const values = (doc as any)[name] as Vector;
         if (!values) {
-          return undefined;
+          return '';
         }
-        return values.get(doc.index);
+        const value = values.get(doc.index);
+        if (isString(value)) {
+          return value as string;
+        }
+        if (isArray(value)) {
+          return value.join(' ');
+        }
+        return JSON.stringify(value);
       },
     });
 
@@ -166,6 +174,7 @@ export class MiniSearcher implements GrafanaSearcher {
     const kind: string[] = [];
     const type: string[] = [];
     const name: string[] = [];
+    const tags: string[][] = [];
     const location: LocationInfo[][] = [];
     const info: any[] = [];
     const score: number[] = [];
@@ -180,6 +189,7 @@ export class MiniSearcher implements GrafanaSearcher {
 
       url.push(input.url?.get(index) ?? '?');
       location.push(input.location?.get(index) as any);
+      tags.push(input.tags?.get(index) as any);
       kind.push(key.kind);
       name.push(input.name?.get(index) ?? '?');
       type.push(input.type?.get(index) ?? '?');
@@ -197,6 +207,7 @@ export class MiniSearcher implements GrafanaSearcher {
       },
       { name: 'type', config: {}, type: FieldType.string, values: new ArrayVector(type) },
       { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
+      { name: 'tags', config: {}, type: FieldType.other, values: new ArrayVector(tags) },
       { name: 'location', config: {}, type: FieldType.other, values: new ArrayVector(location) },
       { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
     ];
@@ -238,6 +249,10 @@ function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc {
       case 'id':
       case 'ID':
         input.id = field.values;
+        break;
+      case 'Tags':
+      case 'tags':
+        input.tags = field.values;
         break;
       case 'DashboardID':
       case 'dashboardID':
