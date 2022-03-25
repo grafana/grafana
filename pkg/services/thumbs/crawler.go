@@ -65,15 +65,16 @@ func (r *simpleCrawler) next(ctx context.Context) (*models.DashboardWithStaleThu
 	v := r.queue[0]
 	r.queue = r.queue[1:]
 
-	if renderingSession, ok := r.renderingSessionByOrgId[v.OrgId]; ok {
-		return v, renderingSession, rendering.AuthOpts{}, nil
-	}
-
 	authOpts := rendering.AuthOpts{
 		OrgID:   v.OrgId,
 		UserID:  r.opts.AuthOpts.UserID,
 		OrgRole: r.opts.AuthOpts.OrgRole,
 	}
+
+	if renderingSession, ok := r.renderingSessionByOrgId[v.OrgId]; ok {
+		return v, renderingSession, authOpts, nil
+	}
+
 	renderingSession, err := r.renderService.CreateRenderingSession(ctx, authOpts, rendering.SessionOpts{
 		Expiry:                     5 * time.Minute,
 		RefreshExpiryOnEachRequest: true,
