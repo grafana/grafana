@@ -119,12 +119,12 @@ type AzureMonitorJSONQuery struct {
 		TimeGrain        string                        `json:"timeGrain"`
 		Top              string                        `json:"top"`
 
+		// Legecy "resource" fields from before the resource picker provided just a single ResourceURI
+		// These are used for pre-resource picker queries to reconstruct a resource URI
 		MetricDefinition string `json:"metricDefinition"`
 		ResourceGroup    string `json:"resourceGroup"`
 		ResourceName     string `json:"resourceName"`
 
-		// Legecy "resource" fields from before the resource picker provided just a single ResourceURI
-		// These are used for pre-resource picker queries to reconstruct a resource URI
 		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
 		Dimension           string  `json:"dimension"`       // old model
 		DimensionFilter     string  `json:"dimensionFilter"` // old model
