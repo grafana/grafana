@@ -30,6 +30,9 @@ func TestListFiles(t *testing.T) {
 	}
 
 	store := newStandardStorageService(roots)
+	store.authService = newStaticStorageAuthService(map[string][]string{
+		"public": {ActionFilesRead},
+	})
 	frame, err := store.List(context.Background(), nil, "public/testdata")
 	require.NoError(t, err)
 
