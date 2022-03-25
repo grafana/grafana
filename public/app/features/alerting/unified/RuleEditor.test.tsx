@@ -143,7 +143,6 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalled());
 
     await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
     userEvent.type(await ui.inputs.name.find(), 'my great new rule');
