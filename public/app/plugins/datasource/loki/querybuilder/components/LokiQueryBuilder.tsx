@@ -36,7 +36,8 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
     }
 
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-    return await datasource.languageProvider.fetchSeriesLabels(expr);
+    const series = await datasource.languageProvider.fetchSeriesLabels(expr);
+    return Object.keys(series).sort();
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {

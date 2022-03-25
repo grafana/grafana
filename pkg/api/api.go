@@ -174,7 +174,7 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqSignedInNoAnonymous)
 
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
-			userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
+			userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
 			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
@@ -437,7 +437,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		apiRoute.Get("/annotations", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead, ac.ScopeAnnotationsAll)), routing.Wrap(hs.GetAnnotations))
-		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, routing.Wrap(hs.DeleteAnnotations))
+		apiRoute.Post("/annotations/mass-delete", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
 			annotationsRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsCreate)), routing.Wrap(hs.PostAnnotation))
@@ -516,7 +516,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
-		userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
+		userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
 
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
 		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))

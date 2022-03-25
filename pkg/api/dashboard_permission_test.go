@@ -47,12 +47,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			})
 
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
-
-			getDashboardQueryResult := models.NewDashboard("Dash")
-			mockSQLStore := mockstore.NewSQLStoreMock()
-			mockSQLStore.ExpectedDashboard = getDashboardQueryResult
-			mockSQLStore.ExpectedError = nil
-			hs.SQLStore = mockSQLStore
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					callGetDashboardPermissions(sc, hs)
@@ -95,10 +89,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: models.PERMISSION_ADMIN},
 				},
 			})
-
-			mockSQLStore := mockstore.NewSQLStoreMock()
-			mockSQLStore.ExpectedDashboard = models.NewDashboard("Dash")
-			hs.SQLStore = mockSQLStore
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {

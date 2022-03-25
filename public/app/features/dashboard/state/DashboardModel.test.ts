@@ -506,8 +506,10 @@ describe('DashboardModel', () => {
 
   describe('Given model with time', () => {
     let model: DashboardModel;
+    let consoleWarnSpy: jest.SpyInstance;
 
     beforeEach(() => {
+      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       model = new DashboardModel({
         time: {
           from: 'now-6h',
@@ -519,6 +521,10 @@ describe('DashboardModel', () => {
         from: 'now-3h',
         to: 'now-1h',
       };
+    });
+
+    afterEach(() => {
+      consoleWarnSpy.mockRestore();
     });
 
     it('hasTimeChanged should be true', () => {

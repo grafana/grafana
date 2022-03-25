@@ -129,7 +129,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 
 	var allRoles []*ac.Role
 	rolesToCreate := []*ac.Role{}
-	assignments := map[int64]map[string]struct{}{}
 	for orgID, roles := range permissionMap {
 		for name := range roles {
 			role, err := m.findRole(orgID, name)
@@ -138,10 +137,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 			}
 			if role.ID == 0 {
 				rolesToCreate = append(rolesToCreate, &ac.Role{OrgID: orgID, Name: name})
-				if _, ok := assignments[orgID]; !ok {
-					assignments[orgID] = map[string]struct{}{}
-				}
-				assignments[orgID][name] = struct{}{}
 			} else {
 				allRoles = append(allRoles, &role)
 			}
@@ -153,16 +148,11 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		return err
 	}
 
-	rolesToAssign := map[int64]map[string]*ac.Role{}
 	for i := range createdRoles {
-		if _, ok := rolesToAssign[createdRoles[i].OrgID]; !ok {
-			rolesToAssign[createdRoles[i].OrgID] = map[string]*ac.Role{}
-		}
-		rolesToAssign[createdRoles[i].OrgID][createdRoles[i].Name] = createdRoles[i]
 		allRoles = append(allRoles, createdRoles[i])
 	}
 
-	if err := m.bulkAssignRoles(rolesToAssign, assignments); err != nil {
+	if err := m.bulkAssignRoles(createdRoles); err != nil {
 		return err
 	}
 
