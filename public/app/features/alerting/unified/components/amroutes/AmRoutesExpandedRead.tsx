@@ -1,22 +1,21 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useMemo } from 'react';
 import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyRoute } from '../../utils/amroutes';
 import { AmRoutesTable } from './AmRoutesTable';
 import { getGridStyles } from './gridStyles';
 import { MuteTimingsTable } from './MuteTimingsTable';
-import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
 import { Authorize } from '../Authorize';
-import { AccessControlAction } from 'app/types';
+import { getNotificationsPermissions } from '../../utils/access-control';
 
 export interface AmRoutesExpandedReadProps {
   onChange: (routes: FormAmRoute) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
   readOnly?: boolean;
-  isGrafanaAM: boolean;
+  alertManagerSourceName: string;
 }
 
 export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
@@ -24,11 +23,11 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
   receivers,
   routes,
   readOnly = false,
-  isGrafanaAM,
+  alertManagerSourceName,
 }) => {
   const styles = useStyles2(getStyles);
   const gridStyles = useStyles2(getGridStyles);
-  const [alertManagerSourceName] = useAlertManagerSourceName();
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
 
   const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
   const groupInterval = routes.groupIntervalValue
@@ -75,19 +74,13 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
             }}
             receivers={receivers}
             routes={subroutes}
-            isGrafanaAM={isGrafanaAM}
+            alertManagerSourceName={alertManagerSourceName}
           />
         ) : (
           <p>No nested policies configured.</p>
         )}
         {!isAddMode && !readOnly && (
-          <Authorize
-            actions={
-              isGrafanaAM
-                ? [AccessControlAction.AlertingNotificationsCreate]
-                : [AccessControlAction.AlertingNotificationsExternalWrite]
-            }
-          >
+          <Authorize actions={[permissions.create]}>
             <Button
               className={styles.addNestedRoutingBtn}
               icon="plus"

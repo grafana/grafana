@@ -11,10 +11,9 @@ import { MatcherFilter } from '../alert-groups/MatcherFilter';
 import { EmptyArea } from '../EmptyArea';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { AmRoutesTable } from './AmRoutesTable';
-import { isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../../components/Authorize';
-import { AccessControlAction } from 'app/types';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getNotificationsPermissions } from '../../utils/access-control';
 
 export interface AmSpecificRoutingProps {
   alertManagerSourceName: string;
@@ -40,12 +39,8 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
 }) => {
   const [actualRoutes, setActualRoutes] = useState([...routes.routes]);
   const [isAddMode, setIsAddMode] = useState(false);
-  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
-  const canCreateNotifications = contextSrv.hasPermission(
-    isGrafanaAM
-      ? AccessControlAction.AlertingNotificationsCreate
-      : AccessControlAction.AlertingNotificationsExternalWrite
-  );
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
+  const canCreateNotifications = contextSrv.hasPermission(permissions.create);
 
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -145,13 +140,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             )}
 
             {!isAddMode && !readOnly && (
-              <Authorize
-                actions={
-                  isGrafanaAM
-                    ? [AccessControlAction.AlertingNotificationsCreate]
-                    : [AccessControlAction.AlertingRuleExternalWrite]
-                }
-              >
+              <Authorize actions={[permissions.create]}>
                 <div className={styles.addMatcherBtnRow}>
                   <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
                     New policy
@@ -168,7 +157,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             receivers={receivers}
             routes={actualRoutes}
             filters={{ queryString, contactPoint }}
-            isGrafanaAM={isGrafanaAM}
+            alertManagerSourceName={alertManagerSourceName}
           />
         </>
       ) : readOnly ? (

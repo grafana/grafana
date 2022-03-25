@@ -8,7 +8,6 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { deleteMuteTimingAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
 import { AsyncRequestState, initialAsyncRequestState } from '../../utils/redux';
-import { isGrafanaRulesSource } from '../../utils/datasource';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
 import {
   getTimeString,
@@ -18,9 +17,9 @@ import {
   getYearsString,
 } from '../../utils/alertmanager';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
-import { AccessControlAction } from 'app/types';
 import { Authorize } from '../../components/Authorize';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getNotificationsPermissions } from '../../utils/access-control';
 
 interface Props {
   alertManagerSourceName: string;
@@ -31,7 +30,7 @@ interface Props {
 export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTimingNames, hideActions }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const [muteTimingName, setMuteTimingName] = useState<string>('');
   const { result }: AsyncRequestState<AlertManagerCortexConfig> =
@@ -61,13 +60,7 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
         </p>
       )}
       {!hideActions && items.length > 0 && (
-        <Authorize
-          actions={
-            isGrafanaAM
-              ? [AccessControlAction.AlertingNotificationsCreate]
-              : [AccessControlAction.AlertingNotificationsExternalWrite]
-          }
-        >
+        <Authorize actions={[permissions.create]}>
           <LinkButton
             className={styles.addMuteButton}
             icon="plus"
@@ -87,11 +80,7 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
           buttonIcon="plus"
           buttonSize="lg"
           href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-          showButton={contextSrv.hasPermission(
-            isGrafanaAM
-              ? AccessControlAction.AlertingNotificationsCreate
-              : AccessControlAction.AlertingNotificationsExternalWrite
-          )}
+          showButton={contextSrv.hasPermission(permissions.create)}
         />
       ) : (
         <p>No mute timings configured</p>
@@ -111,17 +100,10 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false, setMuteTimingName: (name: string) => void) {
-  const isGrafanaAM = isGrafanaRulesSource(alertManagerSourceName);
-  const userHasEditPermissions = contextSrv.hasPermission(
-    isGrafanaAM
-      ? AccessControlAction.AlertingNotificationsUpdate
-      : AccessControlAction.AlertingNotificationsExternalWrite
-  );
-  const userHasDeletePermissions = contextSrv.hasPermission(
-    isGrafanaAM
-      ? AccessControlAction.AlertingNotificationsDelete
-      : AccessControlAction.AlertingNotificationsExternalWrite
-  );
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
+
+  const userHasEditPermissions = contextSrv.hasPermission(permissions.update);
+  const userHasDeletePermissions = contextSrv.hasPermission(permissions.delete);
   const showActions = !hideActions && (userHasEditPermissions || userHasDeletePermissions);
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
     const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
@@ -146,13 +128,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
         renderCell: function renderActions({ data }) {
           return (
             <div>
-              <Authorize
-                actions={
-                  isGrafanaAM
-                    ? [AccessControlAction.AlertingNotificationsUpdate]
-                    : [AccessControlAction.AlertingNotificationsExternalWrite]
-                }
-              >
+              <Authorize actions={[permissions.update]}>
                 <Link
                   href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
                     muteName: data.name,
@@ -161,13 +137,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
                   <IconButton name="edit" title="Edit mute timing" />
                 </Link>
               </Authorize>
-              <Authorize
-                actions={
-                  isGrafanaAM
-                    ? [AccessControlAction.AlertingNotificationsDelete]
-                    : [AccessControlAction.AlertingNotificationsExternalWrite]
-                }
-              >
+              <Authorize actions={[permissions.delete]}>
                 <IconButton
                   name={'trash-alt'}
                   title="Delete mute timing"
@@ -181,7 +151,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
       });
     }
     return columns;
-  }, [alertManagerSourceName, setMuteTimingName, showActions, isGrafanaAM]);
+  }, [alertManagerSourceName, setMuteTimingName, showActions, permissions]);
 }
 
 function renderTimeIntervals(timeIntervals: TimeInterval[]) {

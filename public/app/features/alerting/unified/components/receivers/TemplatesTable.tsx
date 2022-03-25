@@ -10,9 +10,8 @@ import { makeAMLink } from '../../utils/misc';
 import { useDispatch } from 'react-redux';
 import { deleteTemplateAction } from '../../state/actions';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
-import { isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../../components/Authorize';
+import { getNotificationsPermissions } from '../../utils/access-control';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -23,7 +22,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
-  const isGrafanaAM = isGrafanaRulesSource(alertManagerName);
+  const permissions = getNotificationsPermissions(alertManagerName);
 
   const templateRows = useMemo(() => Object.entries(config.template_files), [config]);
   const [templateToDelete, setTemplateToDelete] = useState<string>();
@@ -41,11 +40,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
       description="Templates construct the messages that get sent to the contact points."
       addButtonLabel="New template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
-      showButton={contextSrv.hasPermission(
-        isGrafanaAM
-          ? AccessControlAction.AlertingNotificationsCreate
-          : AccessControlAction.AlertingNotificationsExternalWrite
-      )}
+      showButton={contextSrv.hasPermission(permissions.create)}
     >
       <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
@@ -57,13 +52,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
           <tr>
             <th></th>
             <th>Template</th>
-            <Authorize
-              actions={
-                isGrafanaAM
-                  ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
-                  : [AccessControlAction.AlertingNotificationsExternalWrite]
-              }
-            >
+            <Authorize actions={[permissions.update, permissions.delete]}>
               <th>Actions</th>
             </Authorize>
           </tr>
@@ -86,17 +75,27 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                     />
                   </td>
                   <td>{name}</td>
-                  <td className={tableStyles.actionsCell}>
-                    <ActionIcon
-                      to={makeAMLink(
-                        `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
-                        alertManagerName
-                      )}
-                      tooltip="edit template"
-                      icon="pen"
-                    />
-                    <ActionIcon onClick={() => setTemplateToDelete(name)} tooltip="delete template" icon="trash-alt" />
-                  </td>
+                  <Authorize actions={[permissions.update, permissions.delete]}>
+                    <td className={tableStyles.actionsCell}>
+                      <Authorize actions={[permissions.update]}>
+                        <ActionIcon
+                          to={makeAMLink(
+                            `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                            alertManagerName
+                          )}
+                          tooltip="edit template"
+                          icon="pen"
+                        />
+                      </Authorize>
+                      <Authorize actions={[permissions.delete]}>
+                        <ActionIcon
+                          onClick={() => setTemplateToDelete(name)}
+                          tooltip="delete template"
+                          icon="trash-alt"
+                        />
+                      </Authorize>
+                    </td>
+                  </Authorize>
                 </tr>
                 {isExpanded && (
                   <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>

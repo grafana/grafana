@@ -10,7 +10,7 @@ import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { intersectionWith, isEqual } from 'lodash';
 import { EmptyArea } from '../EmptyArea';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { getNotificationsPermissions } from '../../utils/access-control';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;
@@ -20,7 +20,7 @@ export interface AmRoutesTableProps {
   routes: FormAmRoute[];
   filters?: { queryString?: string; contactPoint?: string };
   readOnly?: boolean;
-  isGrafanaAM: boolean;
+  alertManagerSourceName: string;
 }
 
 type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
@@ -72,20 +72,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   routes,
   filters,
   readOnly = false,
-  isGrafanaAM = true,
+  alertManagerSourceName,
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [expandedId, setExpandedId] = useState<string | number>();
-  const canEditRoutes = contextSrv.hasPermission(
-    isGrafanaAM
-      ? AccessControlAction.AlertingNotificationsUpdate
-      : AccessControlAction.AlertingNotificationsExternalWrite
-  );
-  const canDeleteRoutes = contextSrv.hasPermission(
-    isGrafanaAM
-      ? AccessControlAction.AlertingNotificationsDelete
-      : AccessControlAction.AlertingNotificationsExternalWrite
-  );
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
+  const canEditRoutes = contextSrv.hasPermission(permissions.update);
+  const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
 
   const showActions = !readOnly && (canEditRoutes || canDeleteRoutes);
 
@@ -228,7 +221,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
             receivers={receivers}
             routes={item.data}
             readOnly={readOnly}
-            isGrafanaAM={isGrafanaAM}
+            alertManagerSourceName={alertManagerSourceName}
           />
         )
       }

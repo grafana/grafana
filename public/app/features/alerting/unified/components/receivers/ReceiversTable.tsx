@@ -12,10 +12,10 @@ import { css } from '@emotion/css';
 import { isReceiverUsed } from '../../utils/alertmanager';
 import { useDispatch } from 'react-redux';
 import { deleteReceiverAction } from '../../state/actions';
-import { isVanillaPrometheusAlertManagerDataSource, isGrafanaRulesSource } from '../../utils/datasource';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { Authorize } from '../../components/Authorize';
-import { AccessControlAction } from 'app/types';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getNotificationsPermissions } from '../../utils/access-control';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -27,7 +27,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const tableStyles = useStyles2(getAlertTableStyles);
   const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
-  const isGrafanaAM = isGrafanaRulesSource(alertManagerName);
+  const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
@@ -70,14 +70,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
       className={styles.section}
       title="Contact points"
       description="Define where the notifications will be sent to, for example email or Slack."
-      showButton={
-        !isVanillaAM &&
-        contextSrv.hasPermission(
-          isGrafanaAM
-            ? AccessControlAction.AlertingNotificationsCreate
-            : AccessControlAction.AlertingNotificationsExternalWrite
-        )
-      }
+      showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
       addButtonLabel="New contact point"
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
@@ -85,13 +78,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
         <colgroup>
           <col />
           <col />
-          <Authorize
-            actions={
-              isGrafanaAM
-                ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
-                : [AccessControlAction.AlertingNotificationsExternalWrite]
-            }
-          >
+          <Authorize actions={[permissions.update, permissions.delete]}>
             <col />
           </Authorize>
         </colgroup>
@@ -99,13 +86,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
           <tr>
             <th>Contact point name</th>
             <th>Type</th>
-            <Authorize
-              actions={
-                isGrafanaAM
-                  ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
-                  : [AccessControlAction.AlertingNotificationsExternalWrite]
-              }
-            >
+            <Authorize actions={[permissions.update, permissions.delete]}>
               <th>Actions</th>
             </Authorize>
           </tr>
@@ -120,23 +101,11 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
             <tr key={receiver.name} className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
               <td>{receiver.name}</td>
               <td>{receiver.types.join(', ')}</td>
-              <Authorize
-                actions={
-                  isGrafanaAM
-                    ? [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsDelete]
-                    : [AccessControlAction.AlertingNotificationsExternalWrite]
-                }
-              >
+              <Authorize actions={[permissions.update, permissions.delete]}>
                 <td className={tableStyles.actionsCell}>
                   {!isVanillaAM && (
                     <>
-                      <Authorize
-                        actions={
-                          isGrafanaAM
-                            ? [AccessControlAction.AlertingNotificationsUpdate]
-                            : [AccessControlAction.AlertingNotificationsExternalWrite]
-                        }
-                      >
+                      <Authorize actions={[permissions.update]}>
                         <ActionIcon
                           aria-label="Edit"
                           data-testid="edit"
@@ -148,13 +117,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
                           icon="pen"
                         />
                       </Authorize>
-                      <Authorize
-                        actions={
-                          isGrafanaAM
-                            ? [AccessControlAction.AlertingNotificationsDelete]
-                            : [AccessControlAction.AlertingNotificationsExternalWrite]
-                        }
-                      >
+                      <Authorize actions={[permissions.delete]}>
                         <ActionIcon
                           onClick={() => onClickDeleteReceiver(receiver.name)}
                           tooltip="Delete contact point"
@@ -164,7 +127,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
                     </>
                   )}
                   {isVanillaAM && (
-                    <Authorize actions={[AccessControlAction.AlertingNotificationsExternalWrite]}>
+                    <Authorize actions={[permissions.update]}>
                       <ActionIcon
                         data-testid="view"
                         to={makeAMLink(
