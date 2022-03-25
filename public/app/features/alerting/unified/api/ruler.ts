@@ -94,20 +94,14 @@ export async function fetchRulerRulesNamespace(rulerConfig: RulerDataSourceConfi
 
 // fetch a particular rule group
 // will throw with { status: 404 } if rule group does not exist
-export async function fetchRulerRulesGroup(
-  dataSourceName: string,
-  namespace: string,
-  group: string
-): Promise<RulerRuleGroupDTO | null> {
+export async function fetchTestRulerRulesGroup(dataSourceName: string): Promise<RulerRuleGroupDTO | null> {
   return rulerGetRequest<RulerRuleGroupDTO | null>(
-    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
-      namespace
-    )}/${encodeURIComponent(group)}`,
+    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/test/test`,
     null
   );
 }
 
-export async function fetchRulerRulesGroupV2(
+export async function fetchRulerRulesGroup(
   rulerConfig: RulerDataSourceConfig,
   namespace: string,
   group: string

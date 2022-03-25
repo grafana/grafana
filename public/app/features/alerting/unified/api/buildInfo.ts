@@ -5,7 +5,7 @@ import { isFetchError } from '../utils/alertmanager';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { getDataSourceByName } from '../utils/datasource';
 import { fetchRules } from './prometheus';
-import { fetchRulerRulesGroup } from './ruler';
+import { fetchTestRulerRulesGroup } from './ruler';
 
 export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: string }): Promise<PromBuildInfo> {
   const { url, name } = dsSettings;
@@ -74,7 +74,7 @@ async function hasPromRulesSupport(dataSourceName: string) {
 
 async function hasRulerSupport(dataSourceName: string) {
   try {
-    await fetchRulerRulesGroup(dataSourceName, 'test', 'test');
+    await fetchTestRulerRulesGroup(dataSourceName);
     return true;
   } catch (e) {
     if (errorIndicatesMissingRulerSupport(e)) {
