@@ -102,7 +102,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 		query.Result = make([]*models.OrgUserDTO, 0)
 
 		sess := dbSession.Table("org_user")
-		sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 
 		whereConditions := make([]string, 0)
 		whereParams := make([]interface{}, 0)
@@ -173,7 +173,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 		}
 
 		sess := dbSession.Table("org_user")
-		sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 
 		whereConditions := make([]string, 0)
 		whereParams := make([]interface{}, 0)
@@ -181,7 +181,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, query.OrgID)
 
-		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %s", x.Dialect().Quote("user"), ss.Dialect.BooleanStr(false)))
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %s", ss.Dialect.Quote("user"), ss.Dialect.BooleanStr(false)))
 
 		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
@@ -225,7 +225,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 		// get total count
 		orgUser := models.OrgUser{}
 		countSess := dbSession.Table("org_user").
-			Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+			Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 
 		if len(whereConditions) > 0 {
 			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
