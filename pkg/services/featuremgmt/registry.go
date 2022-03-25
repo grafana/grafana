@@ -180,5 +180,11 @@ var (
 			RequiresDevMode: true,
 			FrontendOnly:    true,
 		},
+		{
+			Name:            "storageAccesscontrol",
+			Description:     "Use the new accesscontrol module for storage authorization",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
 	}
 )

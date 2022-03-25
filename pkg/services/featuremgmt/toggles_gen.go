@@ -134,4 +134,8 @@ const (
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
+
+	// FlagStorageAccesscontrol
+	// Use the new accesscontrol module for storage authorization
+	FlagStorageAccesscontrol = "storageAccesscontrol"
 )
