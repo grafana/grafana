@@ -17,5 +17,5 @@ To create service accounts:
 
 1. Hover your mouse over the organizatino icon in the sidebar.
 1. Click Service accounts. Grafana opens the Service accounts tab.
-1. Create new service account.
+1. Create **New service account**.
 1. Enter a display name, this will be unique within the organization and then Create Service account.
