@@ -51,7 +51,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &fakePluginStore{
+		service := &fakePluginRegistry{
 			plugins: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
@@ -76,7 +76,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
+		service := &fakePluginRegistry{
 			plugins: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
@@ -99,7 +99,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
+		service := &fakePluginRegistry{
 			plugins: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
@@ -124,7 +124,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
+		service := &fakePluginRegistry{
 			plugins: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
@@ -147,7 +147,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &fakePluginStore{
+		service := &fakePluginRegistry{
 			plugins: map[string]plugins.PluginDTO{},
 		}
 		l := &logger{}
@@ -168,7 +168,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &fakePluginStore{
+		service := &fakePluginRegistry{
 			plugins: map[string]plugins.PluginDTO{
 				pluginID: {
 					Class: plugins.Core,
@@ -215,15 +215,15 @@ func callGetPluginAsset(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginStore plugins.Store,
+func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginRegistry plugins.Registry,
 	logger log.Logger, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
-			Cfg:         setting.NewCfg(),
-			pluginStore: pluginStore,
-			log:         logger,
+			Cfg:            setting.NewCfg(),
+			pluginRegistry: pluginRegistry,
+			log:            logger,
 		}
 
 		sc := setupScenarioContext(t, url)

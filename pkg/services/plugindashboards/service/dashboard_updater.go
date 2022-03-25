@@ -14,21 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
+func ProvideDashboardUpdater(bus bus.Bus, pluginRegistry plugins.Registry, pluginDashboardService plugindashboards.Service,
 	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service,
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
-	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
+	du := newDashboardUpdater(bus, pluginRegistry, pluginDashboardService, dashboardImportService,
 		pluginSettingsService, dashboardPluginService, dashboardService)
 	du.updateAppDashboards()
 	return du
 }
 
-func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
+func newDashboardUpdater(bus bus.Bus, pluginRegistry plugins.Registry,
 	pluginDashboardService plugindashboards.Service, dashboardImportService dashboardimport.Service,
 	pluginSettingsService pluginsettings.Service, dashboardPluginService dashboards.PluginService,
 	dashboardService dashboards.DashboardService) *DashboardUpdater {
 	s := &DashboardUpdater{
-		pluginStore:            pluginStore,
+		pluginRegistry:         pluginRegistry,
 		pluginDashboardService: pluginDashboardService,
 		dashboardImportService: dashboardImportService,
 		pluginSettingsService:  pluginSettingsService,
@@ -42,7 +42,7 @@ func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
 }
 
 type DashboardUpdater struct {
-	pluginStore            plugins.Store
+	pluginRegistry         plugins.Registry
 	pluginDashboardService plugindashboards.Service
 	dashboardImportService dashboardimport.Service
 	pluginSettingsService  pluginsettings.Service
@@ -66,7 +66,7 @@ func (du *DashboardUpdater) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exists := du.pluginStore.Plugin(context.Background(), pluginSetting.PluginID); exists {
+		if pluginDef, exists := du.pluginRegistry.Plugin(context.Background(), pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
 				du.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgID)
 			}
@@ -134,7 +134,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 	du.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
-		p, exists := du.pluginStore.Plugin(ctx, event.PluginId)
+		p, exists := du.pluginRegistry.Plugin(ctx, event.PluginId)
 		if !exists {
 			return fmt.Errorf("plugin %s not found. Could not sync plugin dashboards", event.PluginId)
 		}

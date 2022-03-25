@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginRegistry plugifaces.Registry,
 	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
 	dashboardService dashboardservice.DashboardProvisioningService,
 	datasourceService datasourceservice.DataSourceService,
@@ -33,7 +33,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		SQLStore:                sqlStore,
-		pluginStore:             pluginStore,
+		pluginRegistry:          pluginRegistry,
 		EncryptionService:       encryptionService,
 		NotificationService:     notificatonService,
 		log:                     log.New("provisioning"),
@@ -76,7 +76,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, utils.OrgStore) error,
-	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error,
+	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Registry, pluginsettings.Service) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -90,7 +90,7 @@ func newProvisioningServiceImpl(
 type ProvisioningServiceImpl struct {
 	Cfg                     *setting.Cfg
 	SQLStore                *sqlstore.SQLStore
-	pluginStore             plugifaces.Store
+	pluginRegistry          plugifaces.Registry
 	EncryptionService       encryption.Internal
 	NotificationService     *notifications.NotificationService
 	log                     log.Logger
@@ -99,7 +99,7 @@ type ProvisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources    func(context.Context, string, datasources.Store, utils.OrgStore) error
-	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
+	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Registry, pluginsettings.Service) error
 	mutex                   sync.Mutex
 	dashboardService        dashboardservice.DashboardProvisioningService
 	datasourceService       datasourceservice.DataSourceService
@@ -167,7 +167,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	if err := ps.provisionPlugins(ctx, appPath, ps.SQLStore, ps.pluginStore, ps.pluginsSettings); err != nil {
+	if err := ps.provisionPlugins(ctx, appPath, ps.SQLStore, ps.pluginRegistry, ps.pluginsSettings); err != nil {
 		err = errutil.Wrap("app provisioning error", err)
 		ps.log.Error("Failed to provision plugins", "error", err)
 		return err

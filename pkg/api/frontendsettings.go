@@ -280,7 +280,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.DataSource) {
+	for _, ds := range hs.pluginRegistry.Plugins(c.Req.Context(), plugins.DataSource) {
 		if ds.BuiltIn {
 			dto := plugins.DataSourceDTO{
 				Type:     string(ds.Type),
@@ -366,7 +366,7 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	}
 
 	apps := make(map[string]plugins.PluginDTO)
-	for _, app := range hs.pluginStore.Plugins(ctx, plugins.App) {
+	for _, app := range hs.pluginRegistry.Plugins(ctx, plugins.App) {
 		if b, exists := pluginSettingMap[app.ID]; exists {
 			app.Pinned = b.Pinned
 			apps[app.ID] = app
@@ -375,7 +375,7 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	ep[plugins.App] = apps
 
 	dataSources := make(map[string]plugins.PluginDTO)
-	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.DataSource) {
+	for _, ds := range hs.pluginRegistry.Plugins(ctx, plugins.DataSource) {
 		if _, exists := pluginSettingMap[ds.ID]; exists {
 			dataSources[ds.ID] = ds
 		}
@@ -383,7 +383,7 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	ep[plugins.DataSource] = dataSources
 
 	panels := make(map[string]plugins.PluginDTO)
-	for _, p := range hs.pluginStore.Plugins(ctx, plugins.Panel) {
+	for _, p := range hs.pluginRegistry.Plugins(ctx, plugins.Panel) {
 		if _, exists := pluginSettingMap[p.ID]; exists {
 			panels[p.ID] = p
 		}
@@ -406,7 +406,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	}
 
 	// fill settings from app plugins
-	for _, plugin := range hs.pluginStore.Plugins(ctx, plugins.App) {
+	for _, plugin := range hs.pluginRegistry.Plugins(ctx, plugins.App) {
 		// ignore settings that already exist
 		if _, exists := pluginSettings[plugin.ID]; exists {
 			continue
@@ -424,7 +424,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	}
 
 	// fill settings from all remaining plugins (including potential app child plugins)
-	for _, plugin := range hs.pluginStore.Plugins(ctx) {
+	for _, plugin := range hs.pluginRegistry.Plugins(ctx) {
 		// ignore settings that already exist
 		if _, exists := pluginSettings[plugin.ID]; exists {
 			continue

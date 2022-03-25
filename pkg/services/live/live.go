@@ -67,7 +67,7 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginStore plugins.Store, cacheService *localcache.CacheService,
+	pluginRegistry plugins.Registry, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
 	bus bus.Bus) (*GrafanaLive, error) {
@@ -76,7 +76,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		Features:              toggles,
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
-		pluginStore:           pluginStore,
+		pluginRegistry:        pluginRegistry,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
@@ -405,7 +405,7 @@ type GrafanaLive struct {
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
 	SecretsService        secrets.Service
-	pluginStore           plugins.Store
+	pluginRegistry        plugins.Registry
 	queryDataService      *query.Service
 	bus                   bus.Bus
 
@@ -437,7 +437,7 @@ type GrafanaLive struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (backend.StreamHandler, error) {
-	plugin, exists := g.pluginStore.Plugin(ctx, pluginID)
+	plugin, exists := g.pluginRegistry.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}

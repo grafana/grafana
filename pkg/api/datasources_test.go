@@ -44,8 +44,8 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 
 		// handler func being tested
 		hs := &HTTPServer{
-			Cfg:         setting.NewCfg(),
-			pluginStore: &fakePluginStore{},
+			Cfg:            setting.NewCfg(),
+			pluginRegistry: &fakePluginRegistry{},
 			DataSourcesService: &dataSourcesServiceMock{
 				expectedDatasources: ds,
 			},
@@ -68,8 +68,8 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		"/api/datasources/name/12345", "/api/datasources/name/:name", func(sc *scenarioContext) {
 			// handler func being tested
 			hs := &HTTPServer{
-				Cfg:         setting.NewCfg(),
-				pluginStore: &fakePluginStore{},
+				Cfg:            setting.NewCfg(),
+				pluginRegistry: &fakePluginRegistry{},
 			}
 			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()

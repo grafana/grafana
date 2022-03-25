@@ -179,7 +179,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
 			err := pm.Add(context.Background(), testPluginID, "1.0.0")
-			assert.Equal(t, plugins.DuplicateError{
+			require.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
 			}, err)

@@ -22,13 +22,13 @@ import (
 )
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
-	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
+	pluginRegistry plugins.Registry, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
-		pluginStore:            pluginStore,
+		pluginRegistry:         pluginRegistry,
 		Cfg:                    cfg,
 		HTTPClientProvider:     httpClientProvider,
 		OAuthTokenService:      oauthTokenService,
@@ -41,7 +41,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator m
 type DataSourceProxyService struct {
 	DataSourceCache        datasources.CacheService
 	PluginRequestValidator models.PluginRequestValidator
-	pluginStore            plugins.Store
+	pluginRegistry         plugins.Registry
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
@@ -83,7 +83,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	}
 
 	// find plugin
-	plugin, exists := p.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	plugin, exists := p.pluginRegistry.Plugin(c.Req.Context(), ds.Type)
 	if !exists {
 		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource plugin", err)
 		return

@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
@@ -24,6 +23,7 @@ const (
 
 var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
+var _ plugins.Registry = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
@@ -82,32 +82,6 @@ func (m *PluginManager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (m *PluginManager) plugin(pluginID string) (*plugins.Plugin, bool) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	p, exists := m.store[pluginID]
-
-	if !exists || (p.IsDecommissioned()) {
-		return nil, false
-	}
-
-	return p, true
-}
-
-func (m *PluginManager) plugins() []*plugins.Plugin {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-
-	res := make([]*plugins.Plugin, 0)
-	for _, p := range m.store {
-		if !p.IsDecommissioned() {
-			res = append(res, p)
-		}
-	}
-
-	return res
-}
-
 func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, paths ...string) error {
 	if len(paths) == 0 {
 		return nil
@@ -133,15 +107,6 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 	}
 
 	return nil
-}
-
-func (m *PluginManager) registeredPlugins() map[string]struct{} {
-	pluginsByID := make(map[string]struct{})
-	for _, p := range m.plugins() {
-		pluginsByID[p.ID] = struct{}{}
-	}
-
-	return pluginsByID
 }
 
 func (m *PluginManager) Renderer() *plugins.Plugin {
@@ -308,27 +273,7 @@ func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Pl
 		return err
 	}
 
-	if !m.isRegistered(plugin.ID) {
-		return fmt.Errorf("plugin %s is not registered", plugin.ID)
-	}
-
 	return m.start(ctx, plugin)
-}
-
-func (m *PluginManager) register(p *plugins.Plugin) error {
-	if m.isRegistered(p.ID) {
-		return fmt.Errorf("plugin %s is already registered", p.ID)
-	}
-
-	m.pluginsMu.Lock()
-	m.store[p.ID] = p
-	m.pluginsMu.Unlock()
-
-	if !p.IsCorePlugin() {
-		m.log.Info("Plugin registered", "pluginId", p.ID)
-	}
-
-	return nil
 }
 
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {

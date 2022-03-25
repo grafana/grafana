@@ -47,8 +47,8 @@ func TestGetHomeDashboard(t *testing.T) {
 
 	hs := &HTTPServer{
 		Cfg: cfg, Bus: bus.New(),
-		pluginStore: &fakePluginStore{},
-		SQLStore:    mockstore.NewSQLStoreMock(),
+		pluginRegistry: &fakePluginRegistry{},
+		SQLStore:       mockstore.NewSQLStoreMock(),
 	}
 
 	tests := []struct {
@@ -118,10 +118,10 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore.ExpectedDashboard = fakeDash
 
 		hs := &HTTPServer{
-			Cfg:         setting.NewCfg(),
-			pluginStore: &fakePluginStore{},
-			SQLStore:    mockSQLStore,
-			Features:    featuremgmt.WithFeatures(),
+			Cfg:            setting.NewCfg(),
+			pluginRegistry: &fakePluginRegistry{},
+			SQLStore:       mockSQLStore,
+			Features:       featuremgmt.WithFeatures(),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -1010,7 +1010,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
-			pluginStore:           &fakePluginStore{},
+			pluginRegistry:        &fakePluginRegistry{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			dashboardService:      dashboardService,

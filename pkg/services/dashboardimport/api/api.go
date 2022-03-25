@@ -20,17 +20,17 @@ type ImportDashboardAPI struct {
 	dashboardImportService dashboardimport.Service
 	quotaService           QuotaService
 	schemaLoaderService    SchemaLoaderService
-	pluginStore            plugins.Store
+	pluginRegistry         plugins.Registry
 	ac                     accesscontrol.AccessControl
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	schemaLoaderService SchemaLoaderService, pluginStore plugins.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
+	schemaLoaderService SchemaLoaderService, pluginRegistry plugins.Registry, ac accesscontrol.AccessControl) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
 		schemaLoaderService:    schemaLoaderService,
-		pluginStore:            pluginStore,
+		pluginRegistry:         pluginRegistry,
 		ac:                     ac,
 	}
 }
@@ -76,7 +76,7 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 	req.User = c.SignedInUser
 	resp, err := api.dashboardImportService.ImportDashboard(c.Req.Context(), &req)
 	if err != nil {
-		return apierrors.ToDashboardErrorResponse(c.Req.Context(), api.pluginStore, err)
+		return apierrors.ToDashboardErrorResponse(c.Req.Context(), api.pluginRegistry, err)
 	}
 
 	return response.JSON(http.StatusOK, resp)

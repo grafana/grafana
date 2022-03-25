@@ -11,14 +11,17 @@ import (
 
 // Store is the storage for plugins.
 type Store interface {
-	// Plugin finds a plugin by its ID.
-	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
-	// Plugins returns plugins by their requested type.
-	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
+}
+
+type Registry interface {
+	// Plugin finds a plugin by its ID.
+	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
+	// Plugins returns plugins by their requested type.
+	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 }
 
 // Loader is responsible for loading plugins from the file system.

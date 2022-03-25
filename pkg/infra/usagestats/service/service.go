@@ -16,12 +16,12 @@ import (
 )
 
 type UsageStats struct {
-	Cfg           *setting.Cfg
-	SQLStore      sqlstore.Store
-	pluginStore   plugins.Store
-	SocialService social.Service
-	kvStore       *kvstore.NamespacedKVStore
-	RouteRegister routing.RouteRegister
+	Cfg            *setting.Cfg
+	SQLStore       sqlstore.Store
+	pluginRegistry plugins.Registry
+	SocialService  social.Service
+	kvStore        *kvstore.NamespacedKVStore
+	RouteRegister  routing.RouteRegister
 
 	log log.Logger
 
@@ -32,7 +32,7 @@ type UsageStats struct {
 	sendReportCallbacks      []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugins.Store,
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginRegistry plugins.Registry,
 	socialService social.Service, kvStore kvstore.KVStore, routeRegister routing.RouteRegister,
 ) *UsageStats {
 	s := &UsageStats{
@@ -40,7 +40,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		SQLStore:       sqlStore,
 		oauthProviders: socialService.GetOAuthProviders(),
 		RouteRegister:  routeRegister,
-		pluginStore:    pluginStore,
+		pluginRegistry: pluginRegistry,
 		kvStore:        kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:            log.New("infra.usagestats"),
 		startTime:      time.Now(),
