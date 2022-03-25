@@ -21,7 +21,9 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
 
   const rulerPath = `${grafanaServerPath}/api/v1/rules`;
   const rulerSearchParams = new URLSearchParams();
-
+  if (rulerConfig.customRulerEnabled) {
+    rulerSearchParams.set('source', 'ruler');
+  }
   rulerSearchParams.set('subtype', rulerConfig.apiVersion === 'legacy' ? '2' : '3');
 
   return {

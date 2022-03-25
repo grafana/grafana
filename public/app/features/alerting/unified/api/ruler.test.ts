@@ -14,6 +14,7 @@ describe('rulerUrlBuilder', () => {
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex',
       apiVersion: 'legacy',
+      customRulerEnabled: false,
     };
 
     mocks.getDatasourceAPIId.mockReturnValue('ds-uid');
@@ -41,6 +42,7 @@ describe('rulerUrlBuilder', () => {
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex v2',
       apiVersion: 'config',
+      customRulerEnabled: false,
     };
 
     mocks.getDatasourceAPIId.mockReturnValue('ds-uid');
@@ -68,6 +70,7 @@ describe('rulerUrlBuilder', () => {
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex v2',
       apiVersion: 'config',
+      customRulerEnabled: true,
     };
 
     mocks.getDatasourceAPIId.mockReturnValue('ds-uid');
@@ -80,9 +83,9 @@ describe('rulerUrlBuilder', () => {
     const group = builder.namespaceGroup('test-ns', 'test-gr');
 
     // Assert
-    expect(rules.params).toMatchObject({ subtype: '3' });
-    expect(namespace.params).toMatchObject({ subtype: '3' });
-    expect(group.params).toMatchObject({ subtype: '3' });
+    expect(rules.params).toMatchObject({ source: 'ruler', subtype: '3' });
+    expect(namespace.params).toMatchObject({ source: 'ruler', subtype: '3' });
+    expect(group.params).toMatchObject({ source: 'ruler', subtype: '3' });
   });
 
   it('Should append dashboard_uid and panel_id for rules endpoint when specified', () => {
@@ -90,6 +93,7 @@ describe('rulerUrlBuilder', () => {
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex v2',
       apiVersion: 'config',
+      customRulerEnabled: false,
     };
 
     mocks.getDatasourceAPIId.mockReturnValue('ds-uid');

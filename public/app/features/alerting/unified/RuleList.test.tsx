@@ -550,7 +550,7 @@ describe('RuleList', () => {
       expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
       expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
         1,
-        { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
         'super namespace',
         {
           ...someRulerRules['namespace1'][0],
@@ -560,12 +560,12 @@ describe('RuleList', () => {
       );
       expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
         2,
-        { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
         'super namespace',
         someRulerRules['namespace1'][1]
       );
       expect(mocks.api.deleteNamespace).toHaveBeenLastCalledWith(
-        { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
         'namespace1'
       );
     });
@@ -587,7 +587,7 @@ describe('RuleList', () => {
       expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
       expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
         1,
-        { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
         'namespace1',
         {
           ...someRulerRules['namespace1'][0],
@@ -596,7 +596,7 @@ describe('RuleList', () => {
         }
       );
       expect(mocks.api.deleteGroup).toHaveBeenLastCalledWith(
-        { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
         'namespace1',
         'group1'
       );
@@ -617,7 +617,7 @@ describe('RuleList', () => {
       expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
       expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
         1,
-        { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
+        { dataSourceName: testDatasources.prom.name, customRulerEnabled: false, apiVersion: 'legacy' },
         'namespace1',
         {
           ...someRulerRules['namespace1'][0],

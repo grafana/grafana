@@ -1,3 +1,4 @@
+import { AlertingDataSourceJsonData } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
@@ -94,7 +95,10 @@ export const fetchPromRulesAction = createAsyncThunk(
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
-    return await withSerializedError(fetchRules(rulesSourceName, filter));
+    const dsConfig = getDataSourceConfig(thunkAPI.getState, rulesSourceName);
+    const customRulerEnabled = dsConfig.rulerConfig?.customRulerEnabled ?? false;
+
+    return await withSerializedError(fetchRules(rulesSourceName, filter, customRulerEnabled));
   }
 );
 
@@ -217,6 +221,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         rulerConfig: {
           dataSourceName: GRAFANA_RULES_SOURCE_NAME,
           apiVersion: 'legacy',
+          customRulerEnabled: false,
         },
       };
     }
@@ -226,12 +231,14 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
       throw new Error(`Missing data source configuration for ${rulesSourceName}`);
     }
 
-    const { id, name } = ds;
+    const { id, name, jsonData } = ds;
     const buildInfo = await fetchBuildInfo(name);
+    const customRulerConfig = (jsonData as AlertingDataSourceJsonData).ruler;
 
     const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
       ? {
           dataSourceName: name,
+          customRulerEnabled: Boolean(customRulerConfig?.url),
           apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
         }
       : undefined;
