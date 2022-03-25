@@ -60,8 +60,9 @@ const generateColumns = (
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
 
-  let width = Math.max(availableWidth * 0.2, 200);
-
+  availableWidth -= 10; // ???
+  let width = 50;
+  // checkbox column
   columns.push({
     id: `column-checkbox`,
     Header: () => (
@@ -76,9 +77,12 @@ const generateColumns = (
     ),
     accessor: 'check',
     field: access.name!,
-    width: 60,
+    width,
   });
+  availableWidth -= width;
 
+  // Name column
+  width = Math.max(availableWidth * 0.2, 200);
   columns.push({
     Cell: DefaultCell,
     id: `column-name`,
@@ -113,6 +117,7 @@ const generateColumns = (
     availableWidth -= width;
 
     // tags...
+    width = 100;
     columns.push({
       Cell: DefaultCell,
       id: `column-tags`,
@@ -123,6 +128,7 @@ const generateColumns = (
       },
       width,
     });
+    availableWidth -= width;
   } else {
     // The type column
     width = 150;
@@ -158,7 +164,20 @@ const generateColumns = (
       },
       width,
     });
+    availableWidth -= width;
   }
+
+  columns.push({
+    Cell: DefaultCell,
+    id: `column-url`,
+    field: access.url!,
+    Header: 'Location',
+    accessor: (row: any, i: number) => {
+      return <div>TODO... location</div>;
+    },
+    width: Math.max(availableWidth, 100),
+  });
+
   return columns;
 };
 

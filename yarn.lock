@@ -10536,16 +10536,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.10":
-  version: 7.7.10
-  resolution: "@types/react-table@npm:7.7.10"
-  dependencies:
-    "@types/react": "*"
-  checksum: 840f845c226c37c3f13f023974c37b4e941b7588c42dc5fcd5165463fd25005a9504a2c0d48df3325c0a63c2dc99c60fe1dfee4654b501b781ec2df3a4abfa64
-  languageName: node
-  linkType: hard
-
-"@types/react-table@npm:^7":
+"@types/react-table@npm:7.7.10, @types/react-table@npm:^7":
   version: 7.7.10
   resolution: "@types/react-table@npm:7.7.10"
   dependencies:
