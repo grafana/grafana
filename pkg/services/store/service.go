@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -69,10 +68,14 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		s.authService = newAccessControlStorageAuthService()
 	} else {
 		storeAuthMainLogger.Info("Initializing static storage auth service")
-		s.authService = newStaticStorageAuthService(map[string][]string{
-			RootPublicStatic: {ac.ActionFilesRead},
-			RootUpload:       {ac.ActionFilesRead, ac.ActionFilesWrite},
-		})
+		staticAuthRules := map[string][]string{
+			RootPublicStatic: {ActionFilesRead},
+		}
+		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
+			staticAuthRules[RootUpload] = []string{ActionFilesRead, ActionFilesWrite}
+		}
+
+		s.authService = newStaticStorageAuthService(staticAuthRules)
 	}
 
 	return s
