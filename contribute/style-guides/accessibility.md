@@ -17,7 +17,7 @@ properly labelled. For that a `label` element has to be associated with the resp
 do that is to provide `for` attribute to the label that matches the `id` attribute of the form control.
 
 The form components from grafana/ui provide an easier way to achieve that. The form elements, used inside `Field`
-components, will get the `label` properly associated with them given that the element has `id` specified.
+components, will get the `label` properly associated with them given that the element has `id` (in case of `Select` the prop is `inputId`) specified.
 
 As an example, this code
 
@@ -37,7 +37,6 @@ will be rendered as (simplified)
 ```
 
 As long as the form element has a unique `id` attribute specified, it will be automatically accessible when rendered.
-Unfortunately this does not work for all grafana/ui components, most notable exception being `Select`. In those cases adding `aria-label` attribute to the form element is a good option.
 
 ### Writing tests with accessibility in mind
 
