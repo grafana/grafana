@@ -101,7 +101,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -171,7 +171,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -234,7 +234,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -340,7 +340,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -615,7 +615,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:             "viewer request should fail",
 			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"message": "user does not have permissions to edit the namespace: user does not have permissions to edit the namespace"}`,
+			expectedResponse: `{"message": "Permission denied"}`,
 		},
 		{
 			desc:             "editor request should succeed",

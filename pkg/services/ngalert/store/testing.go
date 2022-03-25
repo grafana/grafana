@@ -10,13 +10,11 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
@@ -270,59 +268,6 @@ func (f *FakeRuleStore) UpsertAlertRules(_ context.Context, q []UpsertRule) erro
 	if err := f.Hook(q); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd UpdateRuleGroupCmd) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, cmd)
-	if err := f.Hook(cmd); err != nil {
-		return err
-	}
-	existingRules := f.Rules[cmd.OrgID]
-
-	for _, r := range cmd.RuleGroupConfig.Rules {
-		// TODO: Not sure why this is not being set properly, where is the code that sets this?
-		for i := range r.GrafanaManagedAlert.Data {
-			r.GrafanaManagedAlert.Data[i].DatasourceUID = "-100"
-		}
-
-		newRule := &models.AlertRule{
-			OrgID:           cmd.OrgID,
-			Title:           r.GrafanaManagedAlert.Title,
-			Condition:       r.GrafanaManagedAlert.Condition,
-			Data:            r.GrafanaManagedAlert.Data,
-			UID:             util.GenerateShortUID(),
-			IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-			NamespaceUID:    cmd.NamespaceUID,
-			RuleGroup:       cmd.RuleGroupConfig.Name,
-			NoDataState:     models.NoDataState(r.GrafanaManagedAlert.NoDataState),
-			ExecErrState:    models.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-			Version:         1,
-		}
-
-		if r.ApiRuleNode != nil {
-			newRule.For = time.Duration(r.ApiRuleNode.For)
-			newRule.Annotations = r.ApiRuleNode.Annotations
-			newRule.Labels = r.ApiRuleNode.Labels
-		}
-
-		if newRule.NoDataState == "" {
-			newRule.NoDataState = models.NoData
-		}
-
-		if newRule.ExecErrState == "" {
-			newRule.ExecErrState = models.AlertingErrState
-		}
-
-		err := newRule.PreSave(time.Now)
-		require.NoError(f.t, err)
-
-		existingRules = append(existingRules, newRule)
-	}
-
-	f.Rules[cmd.OrgID] = existingRules
 	return nil
 }
 
