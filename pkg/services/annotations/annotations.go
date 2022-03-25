@@ -16,8 +16,8 @@ type Repository interface {
 	Save(item *Item) error
 	Update(ctx context.Context, item *Item) error
 	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
-	Delete(params *DeleteParams) error
-	FindTags(query *TagsQuery) (FindTagsResult, error)
+	Delete(ctx context.Context, params *DeleteParams) error
+	FindTags(ctx context.Context, query *TagsQuery) (FindTagsResult, error)
 }
 
 // AnnotationCleaner is responsible for cleaning up old annotations
