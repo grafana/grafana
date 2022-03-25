@@ -43,8 +43,8 @@ var (
 )
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespace := web.Params(c.Req)[":Namespace"]
+	folder, err := srv.store.GetFolderByTitle(c.Req.Context(), namespace, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toGroupNameErrorResponse(err)
 	}
