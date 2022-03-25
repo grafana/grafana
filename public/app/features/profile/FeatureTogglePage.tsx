@@ -8,8 +8,8 @@ export default function FeatureTogglePage() {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h1>Profile is not enabled</h1>
-        To enable profile, enable it in the Grafana config:
+        <h1>Profile is not enabled.</h1>
+       Enable profile in the Grafana config file.
         <div>
           <pre>
             {`[profile]
