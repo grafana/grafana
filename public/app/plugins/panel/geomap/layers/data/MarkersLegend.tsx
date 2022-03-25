@@ -12,14 +12,13 @@ import { StyleConfigState } from '../../style/types';
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
   layerName?: string;
-  styleConfig: StyleConfigState;
+  styleConfig?: StyleConfigState;
 }
 
 export function MarkersLegend(props: MarkersLegendProps) {
   const { layerName, styleConfig } = props;
   const theme = useTheme2();
   const style = getStyles(theme);
-
 
   if (!styleConfig) {
     return <>No style</>;
@@ -29,17 +28,19 @@ export function MarkersLegend(props: MarkersLegendProps) {
 
   const colorField = styleConfig.dims?.color?.field;
 
-  if (color && symbol) {
+  if (color && symbol && !colorField) {
     return (
-      <div className={style.fixedColorContainer}>
-        <SVG
-          src={`public/${symbol}`}
-          className={style.legendSymbol}
-          title={'Symbol'}
-          style={{ fill: color, opacity: opacity }}
-        />
-        <span>{layerName}</span>
-      </div>
+      <div className={style.infoWrap}>
+        <div className={style.fixedColorContainer}>
+          <SVG
+            src={`public/${symbol}`}
+            className={style.legendSymbol}
+            title={'Symbol'}
+            style={{ fill: color, opacity: opacity }}
+          />
+          <span>{layerName}</span>
+        </div>
+    </div>
     )
   }
 
@@ -122,15 +123,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     white-space: nowrap;
   `,
   fixedColorContainer: css`
-    display: flex;
-    max-width: 200px;
+    min-width: 80px;
     font-size: ${theme.typography.bodySmall.fontSize};
-    padding: ${theme.spacing(0, 0.5)};
   `,
   legendSymbol: css`
     height: 10px;
     width: 10px;
     margin: auto;
+    margin-right: 4px;
   `,
   gradientContainer: css`
     min-width: 200px;

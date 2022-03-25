@@ -93,12 +93,14 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         // TODO -- add opacity check
       }
 
-      builder.addBooleanSwitch({
-        path: 'tooltip',
-        name: 'Display tooltip',
-        description: 'Show the tooltip for layer',
-        defaultValue: true,
-      });
+      if (opts.category === ['Data layer']) {
+        builder.addBooleanSwitch({
+          path: 'tooltip',
+          name: 'Display tooltip',
+          description: 'Show the tooltip for layer',
+          defaultValue: true,
+        });
+      }
     },
   };
 }
