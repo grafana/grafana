@@ -1,4 +1,4 @@
-package storeauth
+package store
 
 import (
 	"context"
@@ -23,11 +23,11 @@ func TestAuth(t *testing.T) {
 	}
 
 	backends := []struct {
-		service StorageAuthService
+		service storageAuthService
 		name    string
 	}{
 		{
-			service: NewStorageAuthService(),
+			service: newAccessControlStorageAuthService(),
 			name:    "authService",
 		},
 	}
@@ -157,14 +157,13 @@ func TestAuth(t *testing.T) {
 				for _, tt := range tests {
 					testName := backend.name + ":[" + prefix + "]" + action + " -  " + tt.name
 					t.Run(testName, func(t *testing.T) {
-
 						var scopes []string
 						for _, scope := range tt.scopes {
 							scopes = append(scopes, addPrefixToFileScope(scope, prefix))
 						}
 
 						permissions := map[int64]map[string][]string{0: {action: scopes}}
-						guardian := backend.service.NewGuardian(context.Background(), &models.SignedInUser{
+						guardian := backend.service.newGuardian(context.Background(), &models.SignedInUser{
 							UserId:      0,
 							OrgId:       0,
 							Permissions: permissions,

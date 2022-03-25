@@ -11,15 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	storeauth "github.com/grafana/grafana/pkg/services/store/auth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
 const RootPublicStatic = "public-static"
+const RootUpload = "upload"
 
 type StorageService interface {
 	registry.BackgroundService
@@ -32,8 +33,9 @@ type StorageService interface {
 }
 
 type standardStorageService struct {
-	sql  *sqlstore.SQLStore
-	tree *nestedTree
+	sql         *sqlstore.SQLStore
+	tree        *nestedTree
+	authService storageAuthService
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
@@ -61,6 +63,18 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 	s := newStandardStorageService(roots)
 	s.sql = sql
+
+	if features.IsEnabled(featuremgmt.FlagAccesscontrol) && features.IsEnabled(featuremgmt.FlagStorageAccesscontrol) {
+		grafanaStorageLogger.Info("Initializing accesscontrol storage auth service")
+		s.authService = newAccessControlStorageAuthService()
+	} else {
+		storeAuthMainLogger.Info("Initializing static storage auth service")
+		s.authService = newStaticStorageAuthService(map[string][]string{
+			RootPublicStatic: {ac.ActionFilesRead},
+			RootUpload:       {ac.ActionFilesRead, ac.ActionFilesWrite},
+		})
+	}
+
 	return s
 }
 
@@ -80,14 +94,14 @@ func (s *standardStorageService) Run(ctx context.Context) error {
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
-	guardian := storeauth.NewGuardian(ctx, user, s.tree.getRootPrefix(path))
-	return s.tree.ListFolder(ctx, path, guardian.GetViewPathFilters())
+	guardian := s.authService.newGuardian(ctx, user, s.tree.getRootPrefix(path))
+	return s.tree.ListFolder(ctx, path, guardian.getViewPathFilter())
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
 	rootPrefix := s.tree.getRootPrefix(path)
-	guardian := storeauth.NewGuardian(ctx, user, rootPrefix)
-	allowed := guardian.CanView(path)
+	guardian := s.authService.newGuardian(ctx, user, rootPrefix)
+	allowed := guardian.canView(path)
 	if !allowed {
 		grafanaStorageLogger.Warn("read access denied", "path", path, "rootPrefix", rootPrefix)
 		return nil, errors.New("not found")
