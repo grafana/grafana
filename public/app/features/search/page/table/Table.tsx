@@ -129,6 +129,17 @@ const generateColumns = (
       width,
     });
     availableWidth -= width;
+
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-info`,
+      field: access.url!,
+      Header: 'Info',
+      accessor: (row: any, i: number) => {
+        return <div>TODO... info...</div>;
+      },
+      width: Math.max(availableWidth, 100),
+    });
   } else {
     // The type column
     width = 150;
@@ -165,18 +176,18 @@ const generateColumns = (
       width,
     });
     availableWidth -= width;
-  }
 
-  columns.push({
-    Cell: DefaultCell,
-    id: `column-url`,
-    field: access.url!,
-    Header: 'Location',
-    accessor: (row: any, i: number) => {
-      return <div>TODO... location</div>;
-    },
-    width: Math.max(availableWidth, 100),
-  });
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-info`,
+      field: access.url!,
+      Header: 'Location',
+      accessor: (row: any, i: number) => {
+        return <div>TODO... location...</div>;
+      },
+      width: Math.max(availableWidth, 100),
+    });
+  }
 
   return columns;
 };
@@ -198,7 +209,7 @@ export const Table = ({ data, width }: Props) => {
   // React-table column definitions
   const access = useMemo(() => getFieldAccess(data), [data]);
   const memoizedColumns = useMemo(() => {
-    const isDashboardList = data.meta?.type === DataFrameType.TimeSeriesLong;
+    const isDashboardList = data.meta?.type === DataFrameType.DirectoryListing;
     return generateColumns(access, isDashboardList, width, styles);
   }, [data.meta?.type, access, width, styles]);
 

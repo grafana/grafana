@@ -1,4 +1,4 @@
-import { DataFrame, getDisplayProcessor } from '@grafana/data';
+import { DataFrame, DataFrameType, getDisplayProcessor } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { lastValueFrom } from 'rxjs';
@@ -29,6 +29,9 @@ export async function getRawIndexData(): Promise<RawIndexData> {
     for (const field of frame.fields) {
       field.display = getDisplayProcessor({ field, theme: config.theme2 });
     }
+    frame.meta = {
+      type: DataFrameType.DirectoryListing,
+    };
 
     switch (frame.name) {
       case 'dashboards':
