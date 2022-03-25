@@ -66,25 +66,25 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	return result, nil
 }
 
-func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) (definitions.Route, error) {
+func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
 	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
-		return definitions.Route{}, err
+		return err
 	}
 
 	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
-		return definitions.Route{}, err
+		return err
 	}
 
 	cfg.AlertmanagerConfig.Config.Route = &tree
 
 	serialized, err := SerializeAlertmanagerConfig(*cfg)
 	if err != nil {
-		return definitions.Route{}, err
+		return err
 	}
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
@@ -108,10 +108,10 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return nil
 	})
 	if err != nil {
-		return definitions.Route{}, err
+		return err
 	}
 
-	return tree, nil
+	return nil
 }
 
 type provenanceOrgAdapter struct {

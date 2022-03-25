@@ -26,7 +26,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Re
 }
 
 func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimodels.Route) response.Response {
-	_, err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, domain.ProvenanceApi)
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, domain.ProvenanceApi)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

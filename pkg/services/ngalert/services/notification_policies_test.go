@@ -24,7 +24,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		newRoute := createTestRoutingTree()
 
-		_, err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
 		require.NoError(t, err)
 
 		updated, err := sut.GetPolicyTree(context.Background(), 1)
@@ -45,7 +45,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		newRoute := createTestRoutingTree()
 
-		_, err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceApi)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceApi)
 		require.NoError(t, err)
 
 		updated, err := sut.GetPolicyTree(context.Background(), 1)
