@@ -118,7 +118,7 @@ func TestDashboardDataAccess(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, false, "delete this")
 
-		err := sqlStore.DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
+		err := dashboardStore.DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
 			Id:    dash.Id,
 			OrgId: 1,
 		})
@@ -193,21 +193,21 @@ func TestDashboardDataAccess(t *testing.T) {
 		emptyFolder := insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
-		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
+		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 	})
 
 	t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
-		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
+		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
 	})
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
-		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
+		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
 		query := models.FindPersistedDashboardsQuery{

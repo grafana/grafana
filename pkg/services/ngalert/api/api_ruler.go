@@ -139,12 +139,12 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	}
 
 	ruleGroup := web.Params(c.Req)[":Groupname"]
-	q := ngmodels.ListRuleGroupAlertRulesQuery{
+	q := ngmodels.GetAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
 		NamespaceUID: namespace.Uid,
-		RuleGroup:    ruleGroup,
+		RuleGroup:    &ruleGroup,
 	}
-	if err := srv.store.GetRuleGroupAlertRules(c.Req.Context(), &q); err != nil {
+	if err := srv.store.GetAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
@@ -262,41 +262,53 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	return srv.updateAlertRulesInGroup(c, namespace, ruleGroupConfig.Name, rules)
 }
 
+// updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
+// All operations are performed in a single transaction
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
-	var groupChanges *changes = nil
+	var authorizedChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
-
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
-		var err error
-		groupChanges, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
+		logger := srv.log.New("namespace_uid", namespace.Uid, "group", groupName, "org_id", c.OrgId, "user_id", c.UserId)
+
+		groupChanges, err := calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
 		if err != nil {
 			return err
 		}
 
 		if groupChanges.isEmpty() {
-			srv.log.Info("no changes detected in the request. Do nothing")
+			authorizedChanges = groupChanges
+			logger.Info("no changes detected in the request. Do nothing")
 			return nil
 		}
 
-		err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+		authorizedChanges, err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 			return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 		})
 		if err != nil {
 			return err
 		}
 
-		srv.log.Debug("updating database with the changes", "group", groupName, "namespace", namespace.Uid, "add", len(groupChanges.New), "update", len(groupChanges.New), "delete", len(groupChanges.Delete))
+		if authorizedChanges.isEmpty() {
+			logger.Info("no authorized changes detected in the request. Do nothing", "not_authorized_add", len(groupChanges.New), "not_authorized_update", len(groupChanges.Update), "not_authorized_delete", len(groupChanges.Delete))
+			return nil
+		}
 
-		if len(groupChanges.Update) > 0 || len(groupChanges.New) > 0 {
-			upsert := make([]store.UpsertRule, 0, len(groupChanges.Update)+len(groupChanges.New))
-			for _, update := range groupChanges.Update {
-				srv.log.Debug("updating rule", "uid", update.New.UID, "diff", update.Diff.String())
+		if len(groupChanges.Delete) > len(authorizedChanges.Delete) {
+			logger.Info("user is not authorized to delete one or many rules in the group. those rules will be skipped", "expected", len(groupChanges.Delete), "authorized", len(authorizedChanges.Delete))
+		}
+
+		logger.Debug("updating database with the authorized changes", "add", len(authorizedChanges.New), "update", len(authorizedChanges.New), "delete", len(authorizedChanges.Delete))
+
+		if len(authorizedChanges.Update) > 0 || len(authorizedChanges.New) > 0 {
+			upsert := make([]store.UpsertRule, 0, len(authorizedChanges.Update)+len(authorizedChanges.New))
+			for _, update := range authorizedChanges.Update {
+				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
 				upsert = append(upsert, store.UpsertRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})
 			}
-			for _, rule := range groupChanges.New {
+			for _, rule := range authorizedChanges.New {
 				upsert = append(upsert, store.UpsertRule{
 					Existing: nil,
 					New:      *rule,
@@ -308,13 +320,18 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		for _, rule := range groupChanges.Delete {
-			if err = srv.store.DeleteAlertRuleByUID(tranCtx, c.SignedInUser.OrgId, rule.UID); err != nil {
-				return fmt.Errorf("failed to delete rule %d with UID %s: %w", rule.ID, rule.UID, err)
+		if len(authorizedChanges.Delete) > 0 {
+			UIDs := make([]string, 0, len(authorizedChanges.Delete))
+			for _, rule := range authorizedChanges.Delete {
+				UIDs = append(UIDs, rule.UID)
+			}
+
+			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.OrgId, UIDs...); err != nil {
+				return fmt.Errorf("failed to delete rules: %w", err)
 			}
 		}
 
-		if len(groupChanges.New) > 0 {
+		if len(authorizedChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
 				OrgId:  c.OrgId,
 				UserId: c.UserId,
@@ -342,21 +359,21 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, rule := range groupChanges.Update {
+	for _, rule := range authorizedChanges.Update {
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
 		})
 	}
 
-	for _, rule := range groupChanges.Delete {
+	for _, rule := range authorizedChanges.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.UID,
 		})
 	}
 
-	if groupChanges.isEmpty() {
+	if authorizedChanges.isEmpty() {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
 
@@ -419,12 +436,12 @@ func (c *changes) isEmpty() bool {
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
 func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*changes, error) {
-	q := &ngmodels.ListRuleGroupAlertRulesQuery{
+	q := &ngmodels.GetAlertRulesQuery{
 		OrgID:        orgId,
 		NamespaceUID: namespace.Uid,
-		RuleGroup:    ruleGroupName,
+		RuleGroup:    &ruleGroupName,
 	}
-	if err := ruleStore.GetRuleGroupAlertRules(ctx, q); err != nil {
+	if err := ruleStore.GetAlertRules(ctx, q); err != nil {
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", ruleGroupName, err)
 	}
 	existingGroupRules := q.Result
