@@ -38,7 +38,7 @@ type pathFilterFileGuardian struct {
 }
 
 func (a *pathFilterFileGuardian) getSavePathFilter() filestorage.PathFilter {
-	if filter, ok := a.pathFilterByAction[ac.ActionFilesWrite]; ok {
+	if filter, ok := a.pathFilterByAction[ActionFilesWrite]; ok {
 		return filter
 	}
 
@@ -46,7 +46,7 @@ func (a *pathFilterFileGuardian) getSavePathFilter() filestorage.PathFilter {
 }
 
 func (a *pathFilterFileGuardian) getViewPathFilter() filestorage.PathFilter {
-	if filter, ok := a.pathFilterByAction[ac.ActionFilesRead]; ok {
+	if filter, ok := a.pathFilterByAction[ActionFilesRead]; ok {
 		return filter
 	}
 
@@ -54,11 +54,11 @@ func (a *pathFilterFileGuardian) getViewPathFilter() filestorage.PathFilter {
 }
 
 func (a *pathFilterFileGuardian) canSave(path string) bool {
-	return a.can(ac.ActionFilesWrite, path)
+	return a.can(ActionFilesWrite, path)
 }
 
 func (a *pathFilterFileGuardian) canView(path string) bool {
-	return a.can(ac.ActionFilesRead, path)
+	return a.can(ActionFilesRead, path)
 }
 
 func (a *pathFilterFileGuardian) can(action string, path string) bool {
@@ -66,14 +66,14 @@ func (a *pathFilterFileGuardian) can(action string, path string) bool {
 	allow := false
 
 	switch action {
-	case ac.ActionFilesCreate:
+	case ActionFilesCreate:
 		fallthrough
-	case ac.ActionFilesWrite:
+	case ActionFilesWrite:
 		fallthrough
-	case ac.ActionFilesDelete:
-		allow = a.pathFilterByAction[ac.ActionFilesWrite].IsAllowed(path)
-	case ac.ActionFilesRead:
-		allow = a.pathFilterByAction[ac.ActionFilesRead].IsAllowed(path)
+	case ActionFilesDelete:
+		allow = a.pathFilterByAction[ActionFilesWrite].IsAllowed(path)
+	case ActionFilesRead:
+		allow = a.pathFilterByAction[ActionFilesRead].IsAllowed(path)
 	default:
 		storeAuthMainLogger.Warn("Unsupported action", "action", action, "path", path)
 		allow = false

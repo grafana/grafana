@@ -6,14 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAuth(t *testing.T) {
 	actions := []string{
-		ac.ActionFilesWrite,
-		ac.ActionFilesRead,
+		ActionFilesWrite,
+		ActionFilesRead,
 	}
 
 	prefixes := []string{
