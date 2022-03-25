@@ -28,12 +28,17 @@ export const NotificationChannelOptions: FC<Props> = ({
   return (
     <>
       {selectedChannelOptions.map((option: NotificationChannelOption, index: number) => {
+        let selectedOptionValue;
         const key = `${option.label}-${index}`;
-        // Some options can be dependent on other options, this determines what is selected in the dependency options
-        // I think this needs more thought.
-        const selectedOptionValue =
-          currentFormValues[`settings.${option.showWhen.field}`] &&
-          (currentFormValues[`settings.${option.showWhen.field}`] as SelectableValue<string>).value;
+        if (typeof currentFormValues[`settings`][option.showWhen.field] === 'string') {
+          selectedOptionValue =
+            currentFormValues[`settings`][option.showWhen.field] &&
+            (currentFormValues[`settings`][option.showWhen.field] as String);
+        } else {
+          selectedOptionValue =
+            currentFormValues[`settings`][option.showWhen.field] &&
+            (currentFormValues[`settings`][option.showWhen.field] as SelectableValue<string>).value;
+        }
 
         if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
           return null;
