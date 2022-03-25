@@ -105,10 +105,6 @@ func (r *radixTreePathFilter) asSQLFilter() accesscontrol.SQLFilter {
 	}
 }
 
-func (r *radixTreePathFilter) getTree() *radix.Tree {
-	return r.tree
-}
-
 func (r *radixTreePathFilter) ToString() string {
 	builder := strings.Builder{}
 	r.tree.Walk(func(s string, v interface{}) bool {
