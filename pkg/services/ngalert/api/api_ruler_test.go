@@ -221,7 +221,7 @@ func TestCalculateChanges(t *testing.T) {
 		expectedErr := errors.New("TEST ERROR")
 		fakeStore.Hook = func(cmd interface{}) error {
 			switch cmd.(type) {
-			case models.ListRuleGroupAlertRulesQuery:
+			case models.GetAlertRulesQuery:
 				return expectedErr
 			}
 			return nil
