@@ -5,7 +5,7 @@ import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
+import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
 import { locationService } from '@grafana/runtime';
 import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
 import {
@@ -200,7 +200,7 @@ export class KeybindingSrv {
       if (dashboard.meta.canSave) {
         appEvents.publish(
           new ShowModalReactEvent({
-            component: SaveDashboardDrawer,
+            component: SaveDashboardProxy,
             props: {
               dashboard,
             },

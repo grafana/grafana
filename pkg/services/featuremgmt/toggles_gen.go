@@ -123,6 +123,10 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
+	// FlagSaveDashboardDrawer
+	// Use a drawer to show save dashboard dialog
+	FlagSaveDashboardDrawer = "saveDashboardDrawer"
+
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
