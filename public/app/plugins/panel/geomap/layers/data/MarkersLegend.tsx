@@ -115,7 +115,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   fixedColorContainer: css`
     display: flex;
-    min-width: 70px;
+    max-width: 200px;
     font-size: ${theme.typography.bodySmall.fontSize};
     padding: ${theme.spacing(0, 0.5)};
   `,

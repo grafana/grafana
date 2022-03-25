@@ -115,7 +115,7 @@ export class GeomapPanel extends Component<Props, State> {
     return true; // always?
   }
 
-  /** This funciton will actually update the JSON model */
+  /** This function will actually update the JSON model */
   private doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
@@ -134,6 +134,8 @@ export class GeomapPanel extends Component<Props, State> {
         actions: this.actions,
       });
     }
+
+    this.setState({ legends: this.getLegends() });
   }
 
   getNextLayerName = () => {
@@ -603,6 +605,17 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     this.setState({ topRight });
+  }
+
+  getLegends() {
+    const legends: ReactNode[] = [];
+    for (const state of this.layers) {
+      if (state.handler.legend) {
+        legends.push(<div key={Math.random()}>{state.handler.legend}</div>);
+      }
+    }
+
+    return legends;
   }
 
   render() {
