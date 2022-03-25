@@ -15,7 +15,6 @@ import (
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -426,7 +425,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				for _, rule := range rulesInFolder {
 					for _, query := range rule.Data {
 						permissions = append(permissions, &accesscontrol.Permission{
-							Action: datasources.ActionQuery, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID),
+							Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
 						})
 					}
 				}
@@ -459,7 +458,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				for _, rule := range authorizedRulesInFolder {
 					for _, query := range rule.Data {
 						permissions = append(permissions, &accesscontrol.Permission{
-							Action: datasources.ActionQuery, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID),
+							Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
 						})
 					}
 				}
@@ -494,7 +493,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				for _, rule := range authorizedRulesInGroup {
 					for _, query := range rule.Data {
 						permissions = append(permissions, &accesscontrol.Permission{
-							Action: datasources.ActionQuery, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID),
+							Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
 						})
 					}
 				}
