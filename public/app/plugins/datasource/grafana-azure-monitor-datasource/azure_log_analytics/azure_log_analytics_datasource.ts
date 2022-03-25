@@ -109,8 +109,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getKustoSchema(resourceUri: string) {
-    const metadata = await this.getMetadata(resourceUri);
-    return transformMetadataToKustoSchema(metadata, resourceUri);
+    const templateSrv = getTemplateSrv();
+    const interpolatedUri = templateSrv.replace(resourceUri, {}, interpolateVariable);
+    const metadata = await this.getMetadata(interpolatedUri);
+    return transformMetadataToKustoSchema(metadata, interpolatedUri);
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {

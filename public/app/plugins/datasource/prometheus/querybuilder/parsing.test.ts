@@ -505,6 +505,71 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('handles binary operation with vector matchers', () => {
+    expect(buildVisualQueryFromString('foo * on(foo, bar) metric')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            vectorMatches: 'foo, bar',
+            vectorMatchesType: 'on',
+            query: { metric: 'metric', labels: [], operations: [] },
+          },
+        ],
+      },
+    });
+
+    expect(buildVisualQueryFromString('foo * ignoring(foo) metric')).toEqual({
+      errors: [],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '*',
+            vectorMatches: 'foo',
+            vectorMatchesType: 'ignoring',
+            query: { metric: 'metric', labels: [], operations: [] },
+          },
+        ],
+      },
+    });
+  });
+
+  it('reports error on parenthesis', () => {
+    expect(buildVisualQueryFromString('foo / (bar + baz)')).toEqual({
+      errors: [
+        {
+          from: 6,
+          parentType: 'Expr',
+          text: '(bar + baz)',
+          to: 17,
+        },
+      ],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              binaryQueries: [{ operator: '+', query: { labels: [], metric: 'baz', operations: [] } }],
+              metric: 'bar',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {

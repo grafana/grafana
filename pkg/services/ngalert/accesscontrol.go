@@ -28,7 +28,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
@@ -56,11 +56,10 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
 	}
 
 	instancesReaderRole = accesscontrol.RoleRegistration{
@@ -77,11 +76,10 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingInstancesExternalRead,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
 	instancesEditorRole = accesscontrol.RoleRegistration{
@@ -100,11 +98,10 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingInstancesExternalWrite,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
 	}
 
 	notificationsReaderRole = accesscontrol.RoleRegistration{
@@ -120,11 +117,10 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalRead,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
 	notificationsEditorRole = accesscontrol.RoleRegistration{
@@ -146,11 +142,10 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
-					Scope:  datasources.ScopeDatasourcesAll,
+					Scope:  datasources.ScopeAll,
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
 	}
 
 	alertingReaderRole = accesscontrol.RoleRegistration{

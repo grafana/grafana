@@ -134,6 +134,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
     <fieldset>
       <div className={styles.header}>
         <button
+          type={'button'}
           className={styles.expandButton}
           onClick={() => {
             if (!hideQuickRanges) {

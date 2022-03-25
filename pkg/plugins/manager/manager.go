@@ -33,15 +33,20 @@ type PluginManager struct {
 	pluginInstaller plugins.Installer
 	pluginLoader    plugins.Loader
 	pluginsMu       sync.RWMutex
-	pluginPaths     map[plugins.Class][]string
+	pluginSources   []PluginSource
 	log             log.Logger
 }
 
+type PluginSource struct {
+	Class plugins.Class
+	Paths []string
+}
+
 func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), map[plugins.Class][]string{
-		plugins.Core:     corePluginPaths(grafanaCfg),
-		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
-		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), []PluginSource{
+		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
+		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
 	}, pluginLoader)
 	if err := pm.Init(); err != nil {
 		return nil, err
@@ -49,11 +54,11 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*Plug
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader) *PluginManager {
+func New(cfg *plugins.Cfg, pluginSources []PluginSource, pluginLoader plugins.Loader) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
-		pluginPaths:     pluginPaths,
+		pluginSources:   pluginSources,
 		store:           make(map[string]*plugins.Plugin),
 		log:             log.New("plugin.manager"),
 		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
@@ -61,8 +66,8 @@ func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader 
 }
 
 func (m *PluginManager) Init() error {
-	for class, paths := range m.pluginPaths {
-		err := m.loadPlugins(context.Background(), class, paths...)
+	for _, ps := range m.pluginSources {
+		err := m.loadPlugins(context.Background(), ps.Class, ps.Paths...)
 		if err != nil {
 			return err
 		}
