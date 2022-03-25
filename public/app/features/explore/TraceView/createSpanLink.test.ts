@@ -230,75 +230,56 @@ describe('createSpanLinkFactory', () => {
       setTemplateSrv(new TemplateSrv());
     });
 
-    it('the `query` keyword is used in the link rather than `expr`, which loki uses', () => {
+    it('the `query` keyword is used in the link rather than `expr` that loki uses', () => {
       const createLink = setupSpanLinkFactory({
-        tags: ['ip'],
+        datasourceUid: splunkUID,
       });
-      const linkDef = createLink!(
-        createTraceSpan({
-          process: {
-            serviceName: 'Splunk 8',
-            tags: [{ key: 'ip', value: '192.168.0.1' }],
-          },
-        })
-      );
-      expect(linkDef!.href).toContain(
-        `${encodeURIComponent(
-          '"datasource":"Splunk 8","queries":[{"query":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
-        )}`
-      );
-      expect(linkDef!.href).not.toContain(
-        `${encodeURIComponent(
-          '"datasource":"Splunk 8","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
-        )}`
-      );
+      const linkDef = createLink!(createTraceSpan());
+      expect(linkDef!.href).toContain(`${encodeURIComponent('datasource":"Splunk 8","queries":[{"query"')}`);
+      expect(linkDef!.href).not.toContain(`${encodeURIComponent('datasource":"Splunk 8","queries":[{"expr"')}`);
     });
 
     it('automatically timeshifts the timerange by one second in a splunk query', () => {
       const createLink = setupSpanLinkFactory({
-        tags: ['ip'],
+        datasourceUid: splunkUID,
       });
-      const linkDef = createLink!(
-        createTraceSpan({
-          process: {
-            serviceName: 'Splunk 8',
-            tags: [{ key: 'ip', value: '192.168.0.1' }],
-          },
-        })
+      const linkDef = createLink!(createTraceSpan());
+      expect(linkDef!.href).toContain(
+        `${encodeURIComponent('{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"}')}`
       );
-      expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
-        )}`
-      );
-      expect(linkDef!.href).not.toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:00.000Z"},"datasource":"Splunk 8","queries":[{"query":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
-        )}`
+      expect(linkDef!.href).not.toContain(
+        `${encodeURIComponent('{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:00.000Z"}')}`
       );
     });
 
     it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
       const createLink = setupSpanLinkFactory({
+        datasourceUid: splunkUID,
         filterByTraceID: true,
         filterBySpanID: true,
       });
+
       expect(createLink).toBeDefined();
       const linkDef = createLink!(createTraceSpan());
 
-      expect(linkDef!.href).toContain(`${encodeURIComponent('TraceID=7946b05c2e2e4e5a')}`);
-      expect(linkDef!.href).toContain(`${encodeURIComponent('TraceID=7946b05c2e2e4e5a SpanID=6605c7b08e715d6c')}`);
+      expect(linkDef!.href).toContain(`${encodeURIComponent(' TraceID=7946b05c2e2e4e5a')}`);
+      expect(linkDef!.href).toContain(`${encodeURIComponent(' TraceID=7946b05c2e2e4e5a SpanID=6605c7b08e715d6c')}`);
       expect(linkDef!.href).not.toContain(`${encodeURIComponent(' |=7946b05c2e2e4e5a')}`);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" TraceID=7946b05c2e2e4e5a SpanID=6605c7b08e715d6c","refId":""}],"panelsState":{}}'
+        )}`
+      );
     });
   });
 });
 
-function setupSpanLinkFactory(options: Partial<TraceToLogsOptions> = {}) {
+function setupSpanLinkFactory(options: Partial<TraceToLogsOptions> = {}, datasourceUid = 'lokiUid') {
   const splitOpenFn = jest.fn();
   return createSpanLinkFactory({
     splitOpenFn,
     traceToLogsOptions: {
-      datasourceUid: 'lokiUid',
+      datasourceUid,
       ...options,
     },
   });

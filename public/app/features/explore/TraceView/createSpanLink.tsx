@@ -137,7 +137,6 @@ function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceTo
 
   // In order, try to use mapped tags -> tags -> default tags
   const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
-
   // Build tag portion of query
   const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
     if (mapTagNamesEnabled) {
@@ -153,14 +152,20 @@ function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceTo
     return acc;
   }, [] as string[]);
 
-  // If no tags found and is Loki query, return undefined to prevent an invalid Loki query
+  /** If no tags are found and it's a Loki query, return undefined to prevent
+   * an invalid Loki query. However tags arent required for splunk queries.
+   */
   if (!tags.length && !isSplunkDS) {
     return undefined;
   }
 
   let query = '';
-  if (tags.length > 0 && !isSplunkDS) {
-    query += `{${tags.join(', ')}}`;
+  if (tags.length > 0) {
+    if (!isSplunkDS) {
+      query += `{${tags.join(', ')}}`;
+    } else {
+      query += `${tags.join(' ')}`;
+    }
   }
 
   if (filterByTraceID && span.traceID && !isSplunkDS) {
