@@ -23,13 +23,13 @@ const (
 
 var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
-var _ plugins.Registry = (*PluginManager)(nil)
+var _ plugins.ExtRegistry = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg             *plugins.Cfg
-	store           map[string]*plugins.Plugin
+	pluginRegistry  plugins.IntRegistry
 	pluginInstaller plugins.Installer
 	pluginLoader    plugins.Loader
 	pluginsMu       sync.RWMutex
@@ -42,8 +42,8 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), []PluginSource{
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry plugins.IntRegistry, pluginLoader plugins.Loader) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
@@ -54,12 +54,12 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*Plug
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginSources []PluginSource, pluginLoader plugins.Loader) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry plugins.IntRegistry, pluginSources []PluginSource, pluginLoader plugins.Loader) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
-		store:           make(map[string]*plugins.Plugin),
+		pluginRegistry:  pluginRegistry,
 		log:             log.New("plugin.manager"),
 		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
@@ -94,7 +94,7 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 		}
 	}
 
-	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, m.registeredPlugins())
+	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, m.registeredPlugins(ctx))
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err
@@ -110,8 +110,8 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 }
 
 func (m *PluginManager) Renderer() *plugins.Plugin {
-	for _, p := range m.plugins() {
-		if p.IsRenderer() {
+	for _, p := range m.availablePlugins(context.TODO()) {
+		if p.IsRenderer() && !p.IsDecommissioned() {
 			return p
 		}
 	}
@@ -119,15 +119,44 @@ func (m *PluginManager) Renderer() *plugins.Plugin {
 	return nil
 }
 
+func (m *PluginManager) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, err := m.plugin(ctx, pluginID)
+	if err != nil {
+		return plugins.PluginDTO{}, false
+	}
+
+	return p.ToDTO(), true
+}
+
+func (m *PluginManager) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	// if no types passed, assume all
+	if len(pluginTypes) == 0 {
+		pluginTypes = plugins.PluginTypes
+	}
+
+	var requestedTypes = make(map[plugins.Type]struct{})
+	for _, pt := range pluginTypes {
+		requestedTypes[pt] = struct{}{}
+	}
+
+	pluginsList := make([]plugins.PluginDTO, 0)
+	for _, p := range m.availablePlugins(ctx) {
+		if _, exists := requestedTypes[p.Type]; exists {
+			pluginsList = append(pluginsList, p.ToDTO())
+		}
+	}
+	return pluginsList
+}
+
 func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
-	if !exists {
+	p, err := m.plugin(ctx, req.PluginContext.PluginID)
+	if err != nil {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.QueryDataResponse
-	err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
-		resp, innerErr = plugin.QueryData(ctx, req)
+	err = instrumentation.InstrumentQueryDataRequest(p.ID, func() (innerErr error) {
+		resp, innerErr = p.QueryData(ctx, req)
 		return
 	})
 
@@ -156,12 +185,12 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p, exists := m.plugin(req.PluginContext.PluginID)
-	if !exists {
-		return backendplugin.ErrPluginNotRegistered
+	p, err := m.plugin(ctx, req.PluginContext.PluginID)
+	if err != nil {
+		return err
 	}
 
-	err := instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
+	err = instrumentation.InstrumentCallResourceRequest(p.ID, func() error {
 		if err := p.CallResource(ctx, req, sender); err != nil {
 			return err
 		}
@@ -176,13 +205,13 @@ func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResou
 }
 
 func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	p, exists := m.plugin(req.PluginContext.PluginID)
-	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+	p, err := m.plugin(ctx, req.PluginContext.PluginID)
+	if err != nil {
+		return nil, err
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
+	err = instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx, req)
 		return
 	})
@@ -194,13 +223,13 @@ func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.Collect
 }
 
 func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p, exists := m.plugin(req.PluginContext.PluginID)
-	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+	p, err := m.plugin(ctx, req.PluginContext.PluginID)
+	if err != nil {
+		return nil, err
 	}
 
 	var resp *backend.CheckHealthResult
-	err := instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err = instrumentation.InstrumentCheckHealthRequest(p.ID, func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, req)
 		return
 	})
@@ -221,45 +250,36 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 }
 
 func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
-	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+	p, err := m.plugin(ctx, req.PluginContext.PluginID)
+	if err != nil {
+		return nil, err
 	}
 
-	return plugin.SubscribeStream(ctx, req)
+	return p.SubscribeStream(ctx, req)
 }
 
 func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
-	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+	p, err := m.plugin(ctx, req.PluginContext.PluginID)
+	if err != nil {
+		return nil, err
 	}
 
-	return plugin.PublishStream(ctx, req)
+	return p.PublishStream(ctx, req)
 }
 
 func (m *PluginManager) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
-	if !exists {
-		return backendplugin.ErrPluginNotRegistered
+	plugin, err := m.plugin(ctx, req.PluginContext.PluginID)
+	if err != nil {
+		return err
 	}
 
 	return plugin.RunStream(ctx, req, sender)
 }
 
-func (m *PluginManager) isRegistered(pluginID string) bool {
-	p, exists := m.plugin(pluginID)
-	if !exists {
-		return false
-	}
-
-	return !p.IsDecommissioned()
-}
-
 func (m *PluginManager) Routes() []*plugins.StaticRoute {
 	staticRoutes := make([]*plugins.StaticRoute, 0)
 
-	for _, p := range m.plugins() {
+	for _, p := range m.availablePlugins(context.TODO()) {
 		if p.StaticRoute() != nil {
 			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}
@@ -268,8 +288,7 @@ func (m *PluginManager) Routes() []*plugins.StaticRoute {
 }
 
 func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Plugin) error {
-	err := m.register(plugin)
-	if err != nil {
+	if err := m.pluginRegistry.Add(ctx, plugin); err != nil {
 		return err
 	}
 
@@ -289,7 +308,9 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 		return err
 	}
 
-	delete(m.store, p.ID)
+	if err := m.pluginRegistry.Remove(ctx, p.ID); err != nil {
+		return err
+	}
 
 	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
 	return nil
@@ -301,7 +322,7 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 		return nil
 	}
 
-	if !m.isRegistered(p.ID) {
+	if _, exists := m.pluginRegistry.Plugin(ctx, p.ID); !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
@@ -363,7 +384,7 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 // shutdown stops all backend plugin processes
 func (m *PluginManager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range m.plugins() {
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()
@@ -375,6 +396,41 @@ func (m *PluginManager) shutdown(ctx context.Context) {
 		}(p, ctx)
 	}
 	wg.Wait()
+}
+
+// availablePlugins returns all non-decommissioned plugins from the registry
+func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, error) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	if p.IsDecommissioned() {
+		return nil, backendplugin.ErrPluginDecommissioned
+	}
+
+	return p, nil
+}
+
+// availablePlugins returns all non-decommissioned plugins from the registry
+func (m *PluginManager) availablePlugins(ctx context.Context) []*plugins.Plugin {
+	var res []*plugins.Plugin
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		if !p.IsDecommissioned() {
+			res = append(res, p)
+		}
+	}
+	return res
+}
+
+// registeredPlugins returns all registered plugins from the registry
+func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct{} {
+	pluginsByID := make(map[string]struct{})
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		pluginsByID[p.ID] = struct{}{}
+	}
+
+	return pluginsByID
 }
 
 // corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()

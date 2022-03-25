@@ -19,7 +19,7 @@ import (
 
 func ProvideService(routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
-	pluginDashboardService plugindashboards.Service, pluginRegistry plugins.Registry,
+	pluginDashboardService plugindashboards.Service, pluginRegistry plugins.ExtRegistry,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
 	ac accesscontrol.AccessControl,
 ) *ImportDashboardService {

@@ -14,7 +14,7 @@ import (
 )
 
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
-func ToDashboardErrorResponse(ctx context.Context, pluginRegistry plugins.Registry, err error) response.Response {
+func ToDashboardErrorResponse(ctx context.Context, pluginRegistry plugins.ExtRegistry, err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		if body := dashboardErr.Body(); body != nil {

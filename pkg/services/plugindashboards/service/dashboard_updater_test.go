@@ -339,7 +339,7 @@ func TestDashboardUpdater(t *testing.T) {
 }
 
 type pluginRegistryMock struct {
-	plugins.Registry
+	plugins.ExtRegistry
 	pluginFunc func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool)
 }
 
@@ -454,7 +454,7 @@ type scenarioContext struct {
 	t                              *testing.T
 	bus                            bus.Bus
 	pluginSettingsService          *pluginsSettingsServiceMock
-	pluginRegistry                 plugins.Registry
+	pluginRegistry                 plugins.ExtRegistry
 	pluginDashboardService         plugindashboards.Service
 	importDashboardService         dashboardimport.Service
 	dashboardPluginService         *dashboardPluginServiceMock

@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginRegistry plugifaces.Registry,
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginRegistry plugifaces.ExtRegistry,
 	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
 	dashboardService dashboardservice.DashboardProvisioningService,
 	datasourceService datasourceservice.DataSourceService,
@@ -76,7 +76,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, utils.OrgStore) error,
-	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Registry, pluginsettings.Service) error,
+	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.ExtRegistry, pluginsettings.Service) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -90,7 +90,7 @@ func newProvisioningServiceImpl(
 type ProvisioningServiceImpl struct {
 	Cfg                     *setting.Cfg
 	SQLStore                *sqlstore.SQLStore
-	pluginRegistry          plugifaces.Registry
+	pluginRegistry          plugifaces.ExtRegistry
 	EncryptionService       encryption.Internal
 	NotificationService     *notifications.NotificationService
 	log                     log.Logger
@@ -99,7 +99,7 @@ type ProvisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources    func(context.Context, string, datasources.Store, utils.OrgStore) error
-	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Registry, pluginsettings.Service) error
+	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.ExtRegistry, pluginsettings.Service) error
 	mutex                   sync.Mutex
 	dashboardService        dashboardservice.DashboardProvisioningService
 	datasourceService       datasourceservice.DataSourceService

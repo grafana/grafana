@@ -19,10 +19,10 @@ type configReader interface {
 
 type configReaderImpl struct {
 	log            log.Logger
-	pluginRegistry plugins.Registry
+	pluginRegistry plugins.ExtRegistry
 }
 
-func newConfigReader(logger log.Logger, pluginRegistry plugins.Registry) configReader {
+func newConfigReader(logger log.Logger, pluginRegistry plugins.ExtRegistry) configReader {
 	return &configReaderImpl{log: logger, pluginRegistry: pluginRegistry}
 }
 

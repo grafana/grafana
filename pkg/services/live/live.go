@@ -67,7 +67,7 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginRegistry plugins.Registry, cacheService *localcache.CacheService,
+	pluginRegistry plugins.ExtRegistry, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
 	bus bus.Bus) (*GrafanaLive, error) {
@@ -405,7 +405,7 @@ type GrafanaLive struct {
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
 	SecretsService        secrets.Service
-	pluginRegistry        plugins.Registry
+	pluginRegistry        plugins.ExtRegistry
 	queryDataService      *query.Service
 	bus                   bus.Bus
 

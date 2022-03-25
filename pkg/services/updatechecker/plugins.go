@@ -21,13 +21,13 @@ type PluginsService struct {
 
 	enabled        bool
 	grafanaVersion string
-	pluginRegistry plugins.Registry
+	pluginRegistry plugins.ExtRegistry
 	httpClient     httpClient
 	mutex          sync.RWMutex
 	log            log.Logger
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginRegistry plugins.Registry) *PluginsService {
+func ProvidePluginsService(cfg *setting.Cfg, pluginRegistry plugins.ExtRegistry) *PluginsService {
 	return &PluginsService{
 		enabled:          cfg.CheckForUpdates,
 		grafanaVersion:   cfg.BuildVersion,

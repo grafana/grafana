@@ -3,60 +3,96 @@ package manager
 import (
 	"context"
 	"fmt"
+	"sync"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := m.plugin(pluginID)
+var _ plugins.IntRegistry = (*PluginRegistry)(nil)
 
-	if !exists {
-		return plugins.PluginDTO{}, false
-	}
-
-	return p.ToDTO(), true
+type PluginRegistry struct {
+	cfg   *plugins.Cfg
+	store map[string]*plugins.Plugin
+	mu    sync.RWMutex
+	log   log.Logger
 }
 
-func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	// if no types passed, assume all
-	if len(pluginTypes) == 0 {
-		pluginTypes = plugins.PluginTypes
+func ProvidePluginRegistry(grafanaCfg *setting.Cfg) (*PluginRegistry, error) {
+	return &PluginRegistry{
+		cfg:   plugins.FromGrafanaCfg(grafanaCfg),
+		store: make(map[string]*plugins.Plugin),
+		log:   log.New("int.plugin.registry"),
+	}, nil
+}
+
+func (r *PluginRegistry) Plugin(_ context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := r.plugin(pluginID)
+
+	if !exists {
+		return nil, false
 	}
 
-	var requestedTypes = make(map[plugins.Type]struct{})
-	for _, pt := range pluginTypes {
-		requestedTypes[pt] = struct{}{}
-	}
+	return p, true
+}
 
-	pluginsList := make([]plugins.PluginDTO, 0)
-	for _, p := range m.plugins() {
-		if _, exists := requestedTypes[p.Type]; exists {
-			pluginsList = append(pluginsList, p.ToDTO())
-		}
+func (r *PluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
+	pluginsList := make([]*plugins.Plugin, 0)
+	for _, p := range r.plugins() {
+		pluginsList = append(pluginsList, p)
 	}
 	return pluginsList
 }
 
-func (m *PluginManager) register(p *plugins.Plugin) error {
-	if m.isRegistered(p.ID) {
+func (r *PluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
+	if r.isRegistered(p.ID) {
 		return fmt.Errorf("plugin %s is already registered", p.ID)
 	}
 
-	m.pluginsMu.Lock()
-	m.store[p.ID] = p
-	m.pluginsMu.Unlock()
+	r.mu.Lock()
+	r.store[p.ID] = p
+	r.mu.Unlock()
 
 	if !p.IsCorePlugin() {
-		m.log.Info("Plugin registered", "pluginId", p.ID)
+		r.log.Info("Plugin registered", "pluginId", p.ID)
 	}
 
 	return nil
 }
 
-func (m *PluginManager) plugin(pluginID string) (*plugins.Plugin, bool) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	p, exists := m.store[pluginID]
+func (r *PluginRegistry) Remove(_ context.Context, pluginID string) error {
+	if !r.isRegistered(pluginID) {
+		return fmt.Errorf("plugin %s is already unregistered", pluginID)
+	}
+
+	r.mu.Lock()
+	delete(r.store, pluginID)
+	r.mu.Unlock()
+
+	return nil
+}
+
+func (r *PluginRegistry) register(p *plugins.Plugin) error {
+	if r.isRegistered(p.ID) {
+		return fmt.Errorf("plugin %s is already registered", p.ID)
+	}
+
+	r.mu.Lock()
+	r.store[p.ID] = p
+	r.mu.Unlock()
+
+	if !p.IsCorePlugin() {
+		r.log.Info("Plugin registered", "pluginId", p.ID)
+	}
+
+	return nil
+}
+
+func (r *PluginRegistry) plugin(pluginID string) (*plugins.Plugin, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	p, exists := r.store[pluginID]
 
 	if !exists || (p.IsDecommissioned()) {
 		return nil, false
@@ -65,12 +101,12 @@ func (m *PluginManager) plugin(pluginID string) (*plugins.Plugin, bool) {
 	return p, true
 }
 
-func (m *PluginManager) plugins() []*plugins.Plugin {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
+func (r *PluginRegistry) plugins() []*plugins.Plugin {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
 	res := make([]*plugins.Plugin, 0)
-	for _, p := range m.store {
+	for _, p := range r.store {
 		if !p.IsDecommissioned() {
 			res = append(res, p)
 		}
@@ -79,11 +115,20 @@ func (m *PluginManager) plugins() []*plugins.Plugin {
 	return res
 }
 
-func (m *PluginManager) registeredPlugins() map[string]struct{} {
+func (r *PluginRegistry) registeredPlugins() map[string]struct{} {
 	pluginsByID := make(map[string]struct{})
-	for _, p := range m.plugins() {
+	for _, p := range r.plugins() {
 		pluginsByID[p.ID] = struct{}{}
 	}
 
 	return pluginsByID
+}
+
+func (r *PluginRegistry) isRegistered(pluginID string) bool {
+	p, exists := r.plugin(pluginID)
+	if !exists {
+		return false
+	}
+
+	return !p.IsDecommissioned()
 }

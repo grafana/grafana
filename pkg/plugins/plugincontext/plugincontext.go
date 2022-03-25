@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginRegistry plugins.Registry,
+func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginRegistry plugins.ExtRegistry,
 	dataSourceCache datasources.CacheService, secretsService secrets.Service,
 	pluginSettingsService pluginsettings.Service) *Provider {
 	return &Provider{
@@ -37,7 +37,7 @@ func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginRe
 type Provider struct {
 	bus                   bus.Bus
 	cacheService          *localcache.CacheService
-	pluginRegistry        plugins.Registry
+	pluginRegistry        plugins.ExtRegistry
 	dataSourceCache       datasources.CacheService
 	secretsService        secrets.Service
 	pluginSettingsService pluginsettings.Service

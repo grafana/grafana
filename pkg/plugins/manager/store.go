@@ -9,36 +9,35 @@ import (
 )
 
 func (m *PluginManager) Add(ctx context.Context, pluginID, version string) error {
-	var pluginZipURL string
+	plugin, err := m.plugin(ctx, pluginID)
+	if err != nil {
+		return err
+	}
 
-	if plugin, exists := m.plugin(pluginID); exists {
-		if !plugin.IsExternalPlugin() {
-			return plugins.ErrInstallCorePlugin
-		}
+	if !plugin.IsExternalPlugin() {
+		return plugins.ErrInstallCorePlugin
+	}
 
-		if plugin.Info.Version == version {
-			return plugins.DuplicateError{
-				PluginID:          plugin.ID,
-				ExistingPluginDir: plugin.PluginDir,
-			}
-		}
-
-		// get plugin update information to confirm if upgrading is possible
-		updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, grafanaComURL)
-		if err != nil {
-			return err
-		}
-
-		pluginZipURL = updateInfo.PluginZipURL
-
-		// remove existing installation of plugin
-		err = m.Remove(ctx, plugin.ID)
-		if err != nil {
-			return err
+	if plugin.Info.Version == version {
+		return plugins.DuplicateError{
+			PluginID:          plugin.ID,
+			ExistingPluginDir: plugin.PluginDir,
 		}
 	}
 
-	err := m.pluginInstaller.Install(ctx, pluginID, version, m.cfg.PluginsPath, pluginZipURL, grafanaComURL)
+	// get plugin update information to confirm if upgrading is possible
+	updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, grafanaComURL)
+	if err != nil {
+		return err
+	}
+
+	// remove existing installation of plugin
+	err = m.Remove(ctx, plugin.ID)
+	if err != nil {
+		return err
+	}
+
+	err = m.pluginInstaller.Install(ctx, pluginID, version, m.cfg.PluginsPath, updateInfo.PluginZipURL, grafanaComURL)
 	if err != nil {
 		return err
 	}
@@ -52,9 +51,9 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string) error
 }
 
 func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugin(pluginID)
-	if !exists {
-		return plugins.ErrPluginNotInstalled
+	plugin, err := m.plugin(ctx, pluginID)
+	if err != nil {
+		return err
 	}
 
 	if !plugin.IsExternalPlugin() {

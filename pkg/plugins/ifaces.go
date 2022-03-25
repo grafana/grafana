@@ -17,11 +17,22 @@ type Store interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type Registry interface {
+type ExtRegistry interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
+}
+
+type IntRegistry interface {
+	// Plugin finds a plugin by its ID.
+	Plugin(ctx context.Context, id string) (*Plugin, bool)
+	// Plugins returns all plugins.
+	Plugins(ctx context.Context) []*Plugin
+	// Add adds the provided plugin to the registry.
+	Add(ctx context.Context, plugin *Plugin) error
+	// Remove deletes the requested plugin from the registry.
+	Remove(ctx context.Context, id string) error
 }
 
 // Loader is responsible for loading plugins from the file system.

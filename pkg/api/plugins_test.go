@@ -215,7 +215,7 @@ func callGetPluginAsset(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginRegistry plugins.Registry,
+func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginRegistry plugins.ExtRegistry,
 	logger log.Logger, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
