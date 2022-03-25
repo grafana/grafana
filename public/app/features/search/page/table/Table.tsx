@@ -2,11 +2,14 @@ import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
 import { DataFrame, DataFrameType, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, TagList, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
+
+// HACK
+import { getNextWord } from 'app/plugins/datasource/testdata/LogIpsum';
 
 type Props = {
   data: DataFrame;
@@ -117,14 +120,16 @@ const generateColumns = (
     availableWidth -= width;
 
     // tags...
-    width = 100;
+    width = 200;
     columns.push({
       Cell: DefaultCell,
       id: `column-tags`,
       field: access.name!,
       Header: 'Tags',
       accessor: (row: any, i: number) => {
-        return <div>[TAGS]</div>;
+        const tags: string[] = [];
+        tags.push(getNextWord());
+        return <TagList tags={tags} onClick={(v) => console.log('CLICKED TAG', v)} />;
       },
       width,
     });
