@@ -313,7 +313,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 				WithFiles:    false,
 				WithFolders:  true,
 				WithContents: false,
-				PathFilters:  nil,
+				Filter:       nil,
 			}
 		} else {
 			opts.WithFolders = true

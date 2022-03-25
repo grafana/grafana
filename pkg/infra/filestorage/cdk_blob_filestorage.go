@@ -24,11 +24,11 @@ type cdkBlobStorage struct {
 	bucket *blob.Bucket
 }
 
-func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, pathFilters *PathFilters) FileStorage {
+func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, filter PathFilter) FileStorage {
 	return newWrapper(log, &cdkBlobStorage{
 		log:    log,
 		bucket: bucket,
-	}, pathFilters, rootFolder)
+	}, filter, rootFolder)
 }
 
 func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error) {
@@ -266,7 +266,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 
 		path := obj.Key
 		lowerPath := strings.ToLower(path)
-		allowed := options.IsAllowed(lowerPath)
+		allowed := options.Filter.IsAllowed(lowerPath)
 
 		if obj.IsDir && recursive && !visitedFolders[lowerPath] {
 			iterators = append([]*blob.ListIterator{c.bucket.List(&blob.ListOptions{
