@@ -31,6 +31,10 @@ type EmbeddedRoutingTree struct {
 	Provenance models.Provenance
 }
 
+func (nps *NotificationPolicyService) GetAMConfigStore() AMConfigStore {
+	return nps.amStore
+}
+
 func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (EmbeddedRoutingTree, error) {
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
@@ -75,6 +79,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return err
 	}
 
+	concurrencyToken := q.Result.ConfigurationHash
 	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return err
@@ -89,6 +94,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
 		ConfigurationVersion:      q.Result.ConfigurationVersion,
+		FetchedConfigurationHash:  concurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
 	}

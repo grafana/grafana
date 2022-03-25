@@ -52,6 +52,23 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceApi, updated.Provenance)
 	})
+
+	t.Run("service respects concurrency token when updating", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+		newRoute := createTestRoutingTree()
+		q := models.GetLatestAlertmanagerConfigurationQuery{
+			OrgID: 1,
+		}
+		sut.GetAMConfigStore().GetLatestAlertmanagerConfiguration(context.Background(), &q)
+		expectedConcurrencyToken := q.Result.ConfigurationHash
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceApi)
+		require.NoError(t, err)
+
+		fake := sut.GetAMConfigStore().(*fakeAMConfigStore)
+		intercepted := fake.lastSaveCommand
+		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
+	})
 }
 
 func createNotificationPolicyServiceSut() *NotificationPolicyService {

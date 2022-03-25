@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -51,7 +53,8 @@ const defaultAlertmanagerConfigJSON = `
 `
 
 type fakeAMConfigStore struct {
-	config models.AlertConfiguration
+	config          models.AlertConfiguration
+	lastSaveCommand *models.SaveAlertmanagerConfigurationCmd
 }
 
 func newFakeAMConfigStore() *fakeAMConfigStore {
@@ -62,12 +65,14 @@ func newFakeAMConfigStore() *fakeAMConfigStore {
 			Default:                   true,
 			OrgID:                     1,
 		},
+		lastSaveCommand: nil,
 	}
 }
 
 func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
 	query.Result = &f.config
 	query.Result.OrgID = query.OrgID
+	query.Result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.config.AlertmanagerConfiguration)))
 	return nil
 }
 
@@ -78,6 +83,7 @@ func (f *fakeAMConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, c
 		Default:                   cmd.Default,
 		OrgID:                     cmd.OrgID,
 	}
+	f.lastSaveCommand = cmd
 	return nil
 }
 
