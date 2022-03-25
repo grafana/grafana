@@ -174,10 +174,34 @@ def lint_drone_step():
         ],
     }
 
-
-def enterprise_downstream_step(edition):
+def enterprise_init_downstream_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
+
+    return {
+        'name': 'init-enterprise-downstream',
+        'image': build_image,
+        'commands': [
+            './bin/grabpl init-downstream-enterprise',
+        ],
+        'depends_on': [
+            'initialize',
+        ],
+    }
+
+def enterprise_downstream_step(edition, ver_mode):
+    if edition in ('enterprise', 'enterprise2'):
+        return None
+
+    repo = 'grafana/grafana-enterprise@'
+    if ver_mode == 'pr':
+        repo += DRONE_BRANCH
+    else:
+        repo += 'main'
+
+    dependencies = []
+    if ver_mode == 'pr':
+        dependencies = [ 'init-enterprise-downstream' ]
 
     return {
         'name': 'trigger-enterprise-downstream',
@@ -186,13 +210,14 @@ def enterprise_downstream_step(edition):
             'server': 'https://drone.grafana.net',
             'token': from_secret(drone_token),
             'repositories': [
-                'grafana/grafana-enterprise@main',
+                repo,
             ],
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
             ],
         },
+        'depends_on': dependencies,
     }
 
 

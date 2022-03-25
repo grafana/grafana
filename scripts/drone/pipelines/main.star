@@ -77,7 +77,7 @@ def get_steps(edition, is_downstream=False):
         test_frontend_step(),
     ]
     build_steps = [
-        enterprise_downstream_step(edition=edition),
+        enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
