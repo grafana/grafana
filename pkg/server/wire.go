@@ -229,6 +229,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
+	authproxy.ProvideAuthProxy,
 )
 
 var wireSet = wire.NewSet(
@@ -242,7 +243,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
-	authproxy.ProvideAuthProxy,
 )
 
 var wireTestSet = wire.NewSet(
