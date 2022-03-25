@@ -21,9 +21,14 @@ func TestAnnotations(t *testing.T) {
 
 	t.Run("Testing annotation create, read, update and delete", func(t *testing.T) {
 		t.Cleanup(func() {
-			_, err := x.Exec("DELETE FROM annotation WHERE 1=1")
-			assert.NoError(t, err)
-			_, err = x.Exec("DELETE FROM annotation_tag WHERE 1=1")
+			err := repo.sql.WithDbSession(context.Background(), func(dbSession *DBSession) error {
+				_, err := dbSession.Exec("DELETE FROM annotation WHERE 1=1")
+				if err != nil {
+					return err
+				}
+				_, err = dbSession.Exec("DELETE FROM annotation_tag WHERE 1=1")
+				return err
+			})
 			assert.NoError(t, err)
 		})
 
