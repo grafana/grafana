@@ -1,4 +1,4 @@
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { DataSourceInstanceSettings } from '../../../../../../packages/grafana-data/src';
 import {
