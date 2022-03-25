@@ -40,14 +40,14 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
 
     const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
       const original = dashboard.getSaveModelClone();
-      setState({ original });
+      setState({ originalPath, original });
     });
 
     return () => {
       clearTimeout(timeoutId);
       savedEventUnsub.unsubscribe();
     };
-  }, [dashboard]);
+  }, [dashboard, originalPath]);
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
