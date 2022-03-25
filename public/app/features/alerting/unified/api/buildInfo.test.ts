@@ -2,7 +2,7 @@ import { PromApplication } from 'app/types/unified-alerting-dto';
 import { of, throwError } from 'rxjs';
 import { fetchDataSourceBuildInfo } from './buildInfo';
 import { fetchRules } from './prometheus';
-import { fetchRulerRulesGroup } from './ruler';
+import { fetchTestRulerRulesGroup } from './ruler';
 
 const fetch = jest.fn();
 
@@ -14,7 +14,7 @@ jest.mock('@grafana/runtime', () => ({
 
 const mocks = {
   fetchRules: jest.mocked(fetchRules),
-  fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
+  fetchTestRulerRulesGroup: jest.mocked(fetchTestRulerRulesGroup),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -38,7 +38,7 @@ describe('buildInfo', () => {
       expect(response.application).toBe(PromApplication.Prometheus);
       expect(response.features.rulerApiEnabled).toBe(false);
       expect(mocks.fetchRules).not.toHaveBeenCalled();
-      expect(mocks.fetchRulerRulesGroup).not.toHaveBeenCalled();
+      expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
     });
 
     it.each([true, false])(
@@ -65,7 +65,7 @@ describe('buildInfo', () => {
         expect(response.application).toBe(PromApplication.Prometheus);
         expect(response.features.rulerApiEnabled).toBe(rulerApiEnabled);
         expect(mocks.fetchRules).not.toHaveBeenCalled();
-        expect(mocks.fetchRulerRulesGroup).not.toHaveBeenCalled();
+        expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
       }
     );
   });
@@ -78,7 +78,7 @@ describe('buildInfo', () => {
         }))
       );
 
-      mocks.fetchRulerRulesGroup.mockRejectedValue({
+      mocks.fetchTestRulerRulesGroup.mockRejectedValue({
         status: 404,
         data: {
           message: 'page not found',
@@ -91,22 +91,21 @@ describe('buildInfo', () => {
       expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(false);
 
-      expect(mocks.fetchRulerRulesGroup).toHaveBeenCalledTimes(1);
-      expect(mocks.fetchRulerRulesGroup).toHaveBeenCalledWith('Cortex', 'test', 'test');
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex');
 
       expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
       expect(mocks.fetchRules).toHaveBeenCalledWith('Cortex');
     });
 
     it('Should return cortex with ruler API enabled when prom rules works and ruler api returns cortex error', async () => {
-      console.log('hello');
       fetch.mockReturnValue(
         throwError(() => ({
           status: 404,
         }))
       );
 
-      mocks.fetchRulerRulesGroup.mockResolvedValue(null);
+      mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
       mocks.fetchRules.mockResolvedValue([]);
 
       const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Cortex' });
@@ -114,8 +113,8 @@ describe('buildInfo', () => {
       expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(true);
 
-      expect(mocks.fetchRulerRulesGroup).toHaveBeenCalledTimes(1);
-      expect(mocks.fetchRulerRulesGroup).toHaveBeenCalledWith('Cortex', 'test', 'test');
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Cortex');
 
       expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
       expect(mocks.fetchRules).toHaveBeenCalledWith('Cortex');

@@ -2,7 +2,7 @@ import { RuleIdentifier, RulerDataSourceConfig, RuleWithLocation } from 'app/typ
 import { PostableRulerRuleGroupDTO, RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import {
   deleteRulerRulesGroup,
-  fetchRulerRulesGroupV2,
+  fetchRulerRulesGroup,
   fetchRulerRulesNamespace,
   fetchRulerRules,
   setRulerRuleGroup,
@@ -59,7 +59,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
 
     if (isCloudRuleIdentifier(ruleIdentifier)) {
       const { ruleSourceName, namespace, groupName } = ruleIdentifier;
-      const group = await fetchRulerRulesGroupV2(rulerConfig, namespace, groupName);
+      const group = await fetchRulerRulesGroup(rulerConfig, namespace, groupName);
 
       if (!group) {
         return null;
@@ -138,7 +138,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
 
       // if creating new rule or existing rule was in a different namespace/group, create new rule in target group
 
-      const targetGroup = await fetchRulerRulesGroupV2(rulerConfig, namespace, group);
+      const targetGroup = await fetchRulerRulesGroup(rulerConfig, namespace, group);
 
       const payload: RulerRuleGroupDTO = targetGroup
         ? {
@@ -201,7 +201,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     await setRulerRuleGroup(rulerConfig, folder.title, payload);
 
     // now refetch this group to get the uid, hah
-    const result = await fetchRulerRulesGroupV2(rulerConfig, folder.title, groupName);
+    const result = await fetchRulerRulesGroup(rulerConfig, folder.title, groupName);
     const newUid = (result?.rules[0] as RulerGrafanaRuleDTO)?.grafana_alert?.uid;
     if (newUid) {
       // if folder has changed, delete the old one

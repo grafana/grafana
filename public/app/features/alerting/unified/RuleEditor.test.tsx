@@ -585,7 +585,7 @@ describe('RuleEditor', () => {
       throw new Error(`${dataSourceName} not handled`);
     });
 
-    mocks.api.fetchRulerRulesGroup.mockImplementation(async (dataSourceName: string) => {
+    mocks.api.fetchRulerRulesGroup.mockImplementation(async ({ dataSourceName }) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return null;
       }
