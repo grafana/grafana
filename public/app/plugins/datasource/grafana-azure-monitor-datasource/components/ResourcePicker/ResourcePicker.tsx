@@ -33,7 +33,7 @@ const ResourcePicker = ({
   const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(resourceURI?.includes('$'));
   // Sync the resourceURI prop to internal state
   useEffect(() => {
     setInternalSelectedURI(resourceURI);
@@ -160,6 +160,7 @@ const ResourcePicker = ({
                   noHeader={true}
                   selectableEntryTypes={selectableEntryTypes}
                 />
+                <Space v={2} />
               </>
             )}
             <Collapse
@@ -174,17 +175,15 @@ const ResourcePicker = ({
                   <Tooltip
                     content={
                       <>
-                        <p>
-                          You can manually edit the{' '}
-                          <a
-                            href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
-                            rel="noopener noreferrer"
-                            target="_blank"
-                          >
-                            resource uri{' '}
-                          </a>
-                          or use template variables:
-                        </p>
+                        Manually edit the{' '}
+                        <a
+                          href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          resource uri.{' '}
+                        </a>
+                        Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)
                       </>
                     }
                     placement="right"

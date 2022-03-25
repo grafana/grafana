@@ -153,14 +153,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       throw new Error('Invalid resource URI passed');
     }
 
-    if (getTemplateSrv().containsTemplate(resourceURI)) {
-      return {
-        subscriptionName: subscriptionID,
-        resourceGroupName: resourceGroup,
-        resourceName: resource,
-      };
-    }
-
     // resourceGroupURI and resourceURI could be invalid values, but that's okay because the join
     // will just silently fail as expected
     const subscriptionURI = `/subscriptions/${subscriptionID}`;
@@ -194,7 +186,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       throw new Error('unable to fetch resource details');
     }
 
-    return response[0];
+    const { subscriptionName, resourceGroupName, resourceName } = response[0];
+    // if the name is undefined it could be because the id is undefined or because we are using a template variable.
+    // Either way we can use it as a fallback. We don't really want to interpolate these variables because we want
+    // to show the user when they are using template variables `$sub/$rg/$resource`
+    return {
+      subscriptionName: subscriptionName || subscriptionID,
+      resourceGroupName: resourceGroupName || resourceGroup,
+      resourceName: resourceName || resource,
+    };
   }
 
   async getResourceURIFromWorkspace(workspace: string) {
