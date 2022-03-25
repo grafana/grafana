@@ -311,6 +311,8 @@ export class GeomapPanel extends Component<Props, State> {
         actions: this.actions,
       });
     }
+
+    this.setState({ legends: this.getLegends() });
   };
 
   clearTooltip = () => {
@@ -485,11 +487,6 @@ export class GeomapPanel extends Component<Props, State> {
       options.name = this.getNextLayerName();
     }
 
-    // @TODO update legend on delete/update
-    if (handler.legend) {
-      this.setState({ legends: [...this.state.legends, <div key={options.name}>{handler.legend}</div>] });
-    }
-
     const UID = options.name;
     const state: MapLayerState<any> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
@@ -611,7 +608,7 @@ export class GeomapPanel extends Component<Props, State> {
     const legends: ReactNode[] = [];
     for (const state of this.layers) {
       if (state.handler.legend) {
-        legends.push(<div key={Math.random()}>{state.handler.legend}</div>);
+        legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
       }
     }
 
