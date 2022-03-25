@@ -109,7 +109,7 @@ type AzureResponseTable struct {
 // AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
-		ResourceURI     string `json:"resource"`
+		ResourceURI     string `json:"resourceUri"`
 		MetricNamespace string `json:"metricNamespace"`
 		MetricName      string `json:"metricName"`
 
