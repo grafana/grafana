@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -91,12 +91,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should call onApply with a new subscription uri when a user types it', async () => {
     const onApply = jest.fn();
-    render(
-      <ResourcePicker
-        {...defaultProps}
-        onApply={onApply}
-      />
-    );
+    render(<ResourcePicker {...defaultProps} onApply={onApply} />);
     const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
     expect(subscriptionCheckbox).toBeInTheDocument();
     expect(subscriptionCheckbox).not.toBeChecked();
