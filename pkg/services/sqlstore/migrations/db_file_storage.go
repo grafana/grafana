@@ -39,9 +39,3 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create file_meta table", migrator.NewAddTableMigration(fileMetaTable))
 	mg.AddMigration("file table idx: path key", migrator.NewAddIndexMigration(fileMetaTable, fileMetaTable.Indices[0]))
 }
-
-// TODO: REMOVE THIS BEFORE MERGING
-func addDbFileStorageCleanUpMigration(mg *migrator.Migrator) {
-	mg.AddMigration("clean up 'file' table", migrator.NewRawSQLMigration("DELETE FROM file"))
-	mg.AddMigration("clean up 'file_meta' table", migrator.NewRawSQLMigration("DELETE FROM file_meta"))
-}
