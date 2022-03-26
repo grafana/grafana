@@ -265,7 +265,7 @@ func createCoreEmailService(t *testing.T) *notifications.NotificationService {
 	cfg.Smtp.Host = "localhost:1234"
 	mailer := notifications.NewFakeMailer()
 
-	ns, err := notifications.ProvideService(bus, cfg, mailer)
+	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
 	require.NoError(t, err)
 
 	return ns

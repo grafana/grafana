@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -38,8 +37,10 @@ type SQLStoreMock struct {
 	ExpectedDataSources            []*models.DataSource
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
-
-	ExpectedError error
+	ExpectedPersistedDashboards    models.HitList
+	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedUserStars              map[int64]bool
+	ExpectedError                  error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -179,10 +180,12 @@ func (m *SQLStoreMock) GetUserOrgList(ctx context.Context, query *models.GetUser
 }
 
 func (m *SQLStoreMock) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	query.Result = m.ExpectedSignedInUser
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
+	query.Result = m.ExpectedSignedInUser
 	return m.ExpectedError
 }
 
@@ -322,6 +325,7 @@ func (m *SQLStoreMock) UnstarDashboard(ctx context.Context, cmd *models.UnstarDa
 }
 
 func (m *SQLStoreMock) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
+	query.Result = m.ExpectedUserStars
 	return m.ExpectedError
 }
 
@@ -380,6 +384,7 @@ func (m *SQLStoreMock) DeleteExpiredVersions(ctx context.Context, cmd *models.De
 }
 
 func (m SQLStoreMock) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	query.Result = m.ExpectedDashboardAclInfoList
 	return m.ExpectedError
 }
 
@@ -468,18 +473,13 @@ func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashbo
 	return m.ExpectedError
 }
 
-func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
+func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
+	query.Result = m.ExpectedPersistedDashboards
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return nil // TODO: Implement
-}
-
-func (m *SQLStoreMock) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-	cmd.Id = m.ExpectedDashboard.Id
-	cmd.OrgId = m.ExpectedDashboard.OrgId
-	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
