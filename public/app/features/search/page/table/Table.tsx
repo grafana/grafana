@@ -70,26 +70,28 @@ const generateColumns = (
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
 
-  availableWidth -= 10; // ???
+  availableWidth -= 8; // ???
   let width = 50;
-  // checkbox column
-  columns.push({
-    id: `column-checkbox`,
-    Header: () => (
-      <div className={styles.checkboxHeader}>
-        <Checkbox onChange={() => {}} />
-      </div>
-    ),
-    Cell: () => (
-      <div className={styles.checkbox}>
-        <Checkbox onChange={() => {}} />
-      </div>
-    ),
-    accessor: 'check',
-    field: access.name!,
-    width,
-  });
-  availableWidth -= width;
+  if (false) {
+    // checkbox column
+    columns.push({
+      id: `column-checkbox`,
+      Header: () => (
+        <div className={styles.checkboxHeader}>
+          <Checkbox onChange={() => {}} />
+        </div>
+      ),
+      Cell: () => (
+        <div className={styles.checkbox}>
+          <Checkbox onChange={() => {}} />
+        </div>
+      ),
+      accessor: 'check',
+      field: access.name!,
+      width: 30,
+    });
+    availableWidth -= width;
+  }
 
   // Name column
   width = Math.max(availableWidth * 0.2, 200);
@@ -136,7 +138,7 @@ const generateColumns = (
       accessor: (row: any, i: number) => {
         const tags = access.tags?.values.get(i);
         if (tags) {
-          return <TagList tags={tags} onClick={(v) => console.log('CLICKED TAG', v)} />;
+          return <TagList tags={tags} onClick={(v) => alert('UPDATE query.... tag:' + v)} />;
         }
         return null;
       },
@@ -452,13 +454,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-right: 12px;
     `,
     checkboxHeader: css`
-      display: flex;
-      justify-content: flex-start;
-      width: 50px;
+      // display: flex;
+      // justify-content: flex-start;
     `,
     checkbox: css`
-      width: 55px;
       margin-left: 10px;
+      margin-right: 10px;
       margin-top: 5px;
     `,
   };
