@@ -164,28 +164,32 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, resource string, ids map[string]bool) map[string]Metadata {
-	allScope := GetResourceAllScope(resource)
-	allIDScope := GetResourceAllIDScope(resource)
+func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, prefix string, resourceIDs map[string]bool) map[string]Metadata {
+	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
+	if !ok {
+		return map[string]Metadata{}
+	}
 
-	// prefix of ID based scopes (resource:id)
-	idPrefix := Scope(resource, "id")
-	// index of the ID in the scope
-	idIndex := len(idPrefix) + 1
+	allScope := GetResourceAllScope(strings.TrimSuffix(rootPrefix, ":"))
+	allAttributeScope := Scope(strings.TrimSuffix(attributePrefix, ":"), "*")
+
+	// index of the attribute in the scope
+	attributeIndex := len(attributePrefix)
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
+
 	for action, scopes := range permissions {
 		for _, scope := range scopes {
-			if scope == "*" || scope == allScope || scope == allIDScope {
+			if scope == "*" || scope == allScope || scope == allAttributeScope {
 				// Add global action to all resources
-				for id := range ids {
+				for id := range resourceIDs {
 					result = addActionToMetadata(result, action, id)
 				}
 			} else {
-				if len(scope) > idIndex && strings.HasPrefix(scope, idPrefix) && ids[scope[idIndex:]] {
+				if len(scope) > attributeIndex && strings.HasPrefix(scope, attributePrefix) && resourceIDs[scope[attributeIndex:]] {
 					// Add action to a specific resource
-					result = addActionToMetadata(result, action, scope[idIndex:])
+					result = addActionToMetadata(result, action, scope[attributeIndex:])
 				}
 			}
 		}
@@ -204,4 +208,14 @@ func ManagedTeamRoleName(teamID int64) string {
 
 func ManagedBuiltInRoleName(builtInRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
+}
+
+func extractPrefixes(prefix string) (string, string, bool) {
+	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	rootPrefix := parts[0] + ":"
+	attributePrefix := rootPrefix + parts[1] + ":"
+	return rootPrefix, attributePrefix, true
 }

@@ -82,8 +82,9 @@ func ProvideTeamPermissions(
 	ac accesscontrol.AccessControl, store resourcepermissions.Store,
 ) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
-		Resource:    "teams",
-		OnlyManaged: true,
+		Resource:          "teams",
+		ResourceAttribute: "id",
+		OnlyManaged:       true,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			id, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
@@ -161,7 +162,8 @@ func provideDashboardService(
 	}
 
 	options := resourcepermissions.Options{
-		Resource: "dashboards",
+		Resource:          "dashboards",
+		ResourceAttribute: "id",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
@@ -217,7 +219,8 @@ func provideFolderService(
 	accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store,
 ) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
-		Resource: "folders",
+		Resource:          "folders",
+		ResourceAttribute: "id",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			id, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {

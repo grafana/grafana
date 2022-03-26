@@ -104,7 +104,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			scheduleService: api.Schedule,
 			store:           api.RuleStore,
 			xactManager:     api.TransactionManager,
-			log:             logger, cfg: &api.Cfg.UnifiedAlerting},
+			log:             logger,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			ac:              api.AccessControl,
+		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
 		&TestingApiSrv{

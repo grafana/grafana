@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse, Label } from '@grafana/ui';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
@@ -13,7 +13,7 @@ import { addResources, findRow, parseResourceURI } from './utils';
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
-  templateVariables: string[];
+  selectableEntryTypes: ResourceRowType[];
 
   onApply: (resourceURI: string | undefined) => void;
   onCancel: () => void;
@@ -22,21 +22,21 @@ interface ResourcePickerProps {
 const ResourcePicker = ({
   resourcePickerData,
   resourceURI,
-  templateVariables,
   onApply,
   onCancel,
+  selectableEntryTypes,
 }: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
 
   type LoadingStatus = 'NotStarted' | 'Started' | 'Done';
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('NotStarted');
   const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
-  const [internalSelected, setInternalSelected] = useState<string | undefined>(resourceURI);
+  const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(resourceURI?.includes('$'));
   // Sync the resourceURI prop to internal state
   useEffect(() => {
-    setInternalSelected(resourceURI);
+    setInternalSelectedURI(resourceURI);
   }, [resourceURI]);
 
   // Request initial data on first mount
@@ -46,13 +46,13 @@ const ResourcePicker = ({
         try {
           setLoadingStatus('Started');
           let resources = await resourcePickerData.getSubscriptions();
-          if (!internalSelected) {
+          if (!internalSelectedURI) {
             setAzureRows(resources);
             setLoadingStatus('Done');
             return;
           }
 
-          const parsedURI = parseResourceURI(internalSelected ?? '');
+          const parsedURI = parseResourceURI(internalSelectedURI ?? '');
           if (parsedURI) {
             const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
 
@@ -61,7 +61,7 @@ const ResourcePicker = ({
               const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId(
                 parsedURI.subscriptionID
               );
-              resources = addResources(resources, parsedURI.subscriptionID, resourceGroups);
+              resources = addResources(resources, `/subscriptions/${parsedURI.subscriptionID}`, resourceGroups);
             }
 
             // if a resource was previously selected, but the resources under the parent resource group have not been loaded yet
@@ -80,16 +80,12 @@ const ResourcePicker = ({
 
       loadInitialData();
     }
-  }, [resourcePickerData, internalSelected, azureRows, loadingStatus]);
-
-  const rows = useMemo(() => {
-    const templateVariableRow = resourcePickerData.transformVariablesToRow(templateVariables);
-    return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
-  }, [resourcePickerData, azureRows, templateVariables]);
+  }, [resourcePickerData, internalSelectedURI, azureRows, loadingStatus]);
 
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
-    const found = internalSelected && findRow(rows, internalSelected);
+    const found = internalSelectedURI && findRow(azureRows, internalSelectedURI);
+
     return found
       ? [
           {
@@ -98,7 +94,7 @@ const ResourcePicker = ({
           },
         ]
       : [];
-  }, [internalSelected, rows]);
+  }, [internalSelectedURI, azureRows]);
 
   // Request resources for a expanded resource group
   const requestNestedRows = useCallback(
@@ -106,12 +102,8 @@ const ResourcePicker = ({
       // clear error message (also when loading cached resources)
       setErrorMessage(undefined);
 
-      // If we already have children, we don't need to re-fetch them. Also abort if we're expanding the special
-      // template variable group, though that shouldn't happen in practice
-      if (
-        resourceGroupOrSubscription.children?.length ||
-        resourceGroupOrSubscription.id === ResourcePickerData.templateVariableGroupID
-      ) {
+      // If we already have children, we don't need to re-fetch them.
+      if (resourceGroupOrSubscription.children?.length) {
         return;
       }
 
@@ -121,7 +113,7 @@ const ResourcePicker = ({
             ? await resourcePickerData.getResourceGroupsBySubscriptionId(resourceGroupOrSubscription.id)
             : await resourcePickerData.getResourcesForResourceGroup(resourceGroupOrSubscription.id);
 
-        const newRows = addResources(azureRows, resourceGroupOrSubscription.id, rows);
+        const newRows = addResources(azureRows, resourceGroupOrSubscription.uri, rows);
 
         setAzureRows(newRows);
       } catch (error) {
@@ -132,14 +124,13 @@ const ResourcePicker = ({
     [resourcePickerData, azureRows]
   );
 
-  // Select
   const handleSelectionChanged = useCallback((row: ResourceRow, isSelected: boolean) => {
-    isSelected ? setInternalSelected(row.id) : setInternalSelected(undefined);
+    isSelected ? setInternalSelectedURI(row.uri) : setInternalSelectedURI(undefined);
   }, []);
 
   const handleApply = useCallback(() => {
-    onApply(internalSelected);
-  }, [internalSelected, onApply]);
+    onApply(internalSelectedURI);
+  }, [internalSelectedURI, onApply]);
 
   return (
     <div>
@@ -150,16 +141,16 @@ const ResourcePicker = ({
       ) : (
         <>
           <NestedResourceTable
-            rows={rows}
+            rows={azureRows}
             requestNestedRows={requestNestedRows}
             onRowSelectedChange={handleSelectionChanged}
             selectedRows={selectedResourceRows}
+            selectableEntryTypes={selectableEntryTypes}
           />
 
           <div className={styles.selectionFooter}>
             {selectedResourceRows.length > 0 && (
               <>
-                <Space v={2} />
                 <h5>Selection</h5>
                 <NestedResourceTable
                   rows={selectedResourceRows}
@@ -167,16 +158,56 @@ const ResourcePicker = ({
                   onRowSelectedChange={handleSelectionChanged}
                   selectedRows={selectedResourceRows}
                   noHeader={true}
+                  selectableEntryTypes={selectableEntryTypes}
                 />
+                <Space v={2} />
               </>
             )}
-
+            <Collapse
+              collapsible
+              label="Advanced"
+              isOpen={isAdvancedOpen}
+              onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
+            >
+              <Label htmlFor={`input-${internalSelectedURI}`}>
+                <h6>
+                  Resource URI{' '}
+                  <Tooltip
+                    content={
+                      <>
+                        Manually edit the{' '}
+                        <a
+                          href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          resource uri.{' '}
+                        </a>
+                        Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)
+                      </>
+                    }
+                    placement="right"
+                    interactive={true}
+                  >
+                    <Icon name="info-circle" />
+                  </Tooltip>
+                </h6>
+              </Label>
+              <Input
+                id={`input-${internalSelectedURI}`}
+                value={internalSelectedURI}
+                onChange={(event) => setInternalSelectedURI(event.currentTarget.value)}
+                placeholder="ex: /subscriptions/$subId"
+              />
+            </Collapse>
             <Space v={2} />
 
             <Button disabled={!!errorMessage} onClick={handleApply}>
               Apply
             </Button>
+
             <Space layout="inline" h={1} />
+
             <Button onClick={onCancel} variant="secondary">
               Cancel
             </Button>
