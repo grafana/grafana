@@ -181,7 +181,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       li {
         margin-bottom: 0;
       }
-      div:first-child {
+      div:not(:only-child):first-child {
         flex-grow: 0.6;
       }
     `,

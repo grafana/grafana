@@ -253,6 +253,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
     let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
+    const isSmall = width < 500;
     if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
     }
@@ -262,13 +263,15 @@ export const Table: FC<Props> = memo((props: Props) => {
           <Pagination
             currentPage={state.pageIndex + 1}
             numberOfPages={pageOptions.length}
-            showSmallVersion={width < 500}
+            showSmallVersion={isSmall}
             onNavigate={onNavigate}
           />
         </div>
-        <div className={tableStyles.paginationSummary}>
-          {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
-        </div>
+        {isSmall ? null : (
+          <div className={tableStyles.paginationSummary}>
+            {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
+          </div>
+        )}
       </div>
     );
   }
