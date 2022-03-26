@@ -9,6 +9,6 @@ describe('Pagination component', () => {
   });
   it('should only show 3 buttons when showSmallVersion is true', () => {
     render(<Pagination currentPage={1} numberOfPages={90} onNavigate={() => {}} showSmallVersion />);
-    expect(screen.getAllByRole('button')).toHaveLength(3);
+    expect(screen.getAllByRole('button')).toHaveLength(4);
   });
 });
