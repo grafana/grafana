@@ -116,7 +116,7 @@ export const UpgradeContent = ({
           ))}
         </ul>
         {featureUrl && (
-          <LinkButton fill={'text'} href={featureUrl} className={styles.link}>
+          <LinkButton fill={'text'} href={featureUrl} className={styles.link} target="_blank" rel="noreferrer noopener">
             Learn more
           </LinkButton>
         )}
