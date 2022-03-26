@@ -68,7 +68,7 @@ func TestSlackNotifier(t *testing.T) {
                       "recipient": "#ds-opentsdb",
                       "username": "Grafana Alerts",
                       "icon_emoji": ":smile:",
-                      "icon_url": "https://grafana.com/img/fav32.png",
+                      "icon_url": "https://grafana.com/img/axon-logo.png",
                       "mentionUsers": "user1, user2",
                       "mentionGroups": "group1, group2",
                       "mentionChannel": "here",
@@ -92,7 +92,7 @@ func TestSlackNotifier(t *testing.T) {
 		assert.Equal(t, "#ds-opentsdb", slackNotifier.recipient)
 		assert.Equal(t, "Grafana Alerts", slackNotifier.username)
 		assert.Equal(t, ":smile:", slackNotifier.iconEmoji)
-		assert.Equal(t, "https://grafana.com/img/fav32.png", slackNotifier.iconURL)
+		assert.Equal(t, "https://grafana.com/img/axon-logo.png", slackNotifier.iconURL)
 		assert.Equal(t, []string{"user1", "user2"}, slackNotifier.mentionUsers)
 		assert.Equal(t, []string{"group1", "group2"}, slackNotifier.mentionGroups)
 		assert.Equal(t, "here", slackNotifier.mentionChannel)
@@ -106,7 +106,7 @@ func TestSlackNotifier(t *testing.T) {
                       "recipient": "#ds-opentsdb",
                       "username": "Grafana Alerts",
                       "icon_emoji": ":smile:",
-                      "icon_url": "https://grafana.com/img/fav32.png",
+                      "icon_url": "https://grafana.com/img/axon-logo.png",
                       "mentionUsers": "user1, user2",
                       "mentionGroups": "group1, group2",
                       "mentionChannel": "here",
@@ -140,7 +140,7 @@ func TestSlackNotifier(t *testing.T) {
 		assert.Equal(t, "#ds-opentsdb", slackNotifier.recipient)
 		assert.Equal(t, "Grafana Alerts", slackNotifier.username)
 		assert.Equal(t, ":smile:", slackNotifier.iconEmoji)
-		assert.Equal(t, "https://grafana.com/img/fav32.png", slackNotifier.iconURL)
+		assert.Equal(t, "https://grafana.com/img/axon-logo.png", slackNotifier.iconURL)
 		assert.Equal(t, []string{"user1", "user2"}, slackNotifier.mentionUsers)
 		assert.Equal(t, []string{"group1", "group2"}, slackNotifier.mentionGroups)
 		assert.Equal(t, "here", slackNotifier.mentionChannel)

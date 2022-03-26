@@ -4,7 +4,7 @@ import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
 // Components
 import PageHeader from '../PageHeader/PageHeader';
-import { Footer } from '../Footer/Footer';
+// import { Footer } from '../Footer/Footer';
 import { PageContents } from './PageContents';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
@@ -39,7 +39,7 @@ export const Page: PageType = ({ navModel, children, className, ...otherProps })
         <div className="page-scrollbar-content">
           {navModel && <PageHeader model={navModel} />}
           {children}
-          <Footer />
+          {/* <Footer /> */}
         </div>
       </CustomScrollbar>
     </div>

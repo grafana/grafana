@@ -3,7 +3,7 @@ import { cx, css, keyframes } from '@emotion/css';
 import { useStyles2, styleMixins } from '@grafana/ui';
 import { Branding } from '../Branding/Branding';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Footer } from '../Footer/Footer';
+// import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
   enterAnimation?: boolean;
@@ -32,7 +32,7 @@ export const LoginLayout: FC = ({ children }) => {
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </Branding.LoginBackground>
   );
 };

@@ -667,14 +667,14 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		NewGrafanaVersionExists: hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        "app-grafana",
-		FavIcon:                 "public/img/fav32.png",
+		FavIcon:                 "public/img/axon-logo.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
 		NavTree:                 navTree,
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
 		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
-		LoadingLogo:             "public/img/grafana_icon.svg",
+		LoadingLogo:             "public/img/axon-logo.png",
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
