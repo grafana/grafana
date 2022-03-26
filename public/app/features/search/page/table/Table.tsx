@@ -30,6 +30,7 @@ interface FieldAccess {
   tags?: Field<any>;
   location?: Field<LocationInfo[]>; // the folder name
   score?: Field<number>;
+  panelCount?: Field<number>;
 }
 
 function getFieldAccess(frame: DataFrame): FieldAccess {
@@ -54,6 +55,8 @@ function getFieldAccess(frame: DataFrame): FieldAccess {
       case 'url':
         a.url = f;
         break;
+      case 'panelcount':
+        a.panelCount = f;
     }
   }
   return a;
@@ -147,7 +150,11 @@ const generateColumns = (
       field: access.url!,
       Header: 'Info',
       accessor: (row: any, i: number) => {
-        return <div>TODO... info...</div>;
+        const count = access.panelCount?.values.get(i);
+        if (count) {
+          return <span>Panels: {count}</span>;
+        }
+        return null;
       },
       width: Math.max(availableWidth, 100),
     });

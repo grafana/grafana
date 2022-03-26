@@ -189,10 +189,12 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	folderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	folderUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	folderName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	folderDashCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 
 	folderID.Name = "ID"
 	folderUID.Name = "UID"
 	folderName.Name = "Name"
+	folderDashCount.Name = "DashCount"
 
 	dashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -204,6 +206,9 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashUpdated := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	dashSchemaVersion := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashTags := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
+	dashPanelCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashVarCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashDSCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 
 	dashID.Name = "ID"
 	dashUID.Name = "UID"
@@ -220,6 +225,9 @@ func metaToFrame(meta []dashMeta) data.Frames {
 			{Title: "link", URL: "${__value.text}"},
 		},
 	}
+	dashPanelCount.Name = "PanelCount"
+	dashVarCount.Name = "VarCount"
+	dashDSCount.Name = "DSCount"
 
 	dashTags.Config = &data.FieldConfig{
 		Custom: map[string]interface{}{
@@ -248,12 +256,15 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		values: make(map[string]int64, 30),
 	}
 
+	folderCounter := make(map[int64]int64, 20)
+
 	var tags *string
 	for _, row := range meta {
 		if row.is_folder {
 			folderID.Append(row.id)
 			folderUID.Append(row.dash.UID)
 			folderName.Append(row.dash.Title)
+			folderDashCount.Append(int64(0)) // filled in later
 			continue
 		}
 
@@ -265,6 +276,13 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		dashSchemaVersion.Append(row.dash.SchemaVersion)
 		dashCreated.Append(row.created)
 		dashUpdated.Append(row.updated)
+
+		// Increment the folder counter
+		fcount, ok := folderCounter[row.folder_id]
+		if !ok {
+			fcount = 0
+		}
+		folderCounter[row.folder_id] = fcount + 1
 
 		url := fmt.Sprintf("/d/%s/%s", row.dash.UID, row.slug)
 		dashURL.Append(url)
@@ -282,6 +300,9 @@ func metaToFrame(meta []dashMeta) data.Frames {
 			}
 		}
 		dashTags.Append(tags)
+		dashPanelCount.Append(int64(len(row.dash.Panels)))
+		dashVarCount.Append(int64(len(row.dash.TemplateVars)))
+		dashDSCount.Append(int64(len(row.dash.Datasource)))
 
 		// Row for each panel
 		for _, panel := range row.dash.Panels {
@@ -294,9 +315,21 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		}
 	}
 
+	// Update the folder counts
+	for i := 0; i < folderID.Len(); i++ {
+		id, ok := folderID.At(i).(int64)
+		if ok {
+			folderDashCount.Set(i, folderCounter[id])
+		}
+	}
+
 	return data.Frames{
-		data.NewFrame("folders", folderID, folderUID, folderName),
-		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
+		data.NewFrame("folders", folderID, folderUID, folderName, folderDashCount),
+		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID,
+			dashName, dashDescr, dashTags,
+			dashSchemaVersion,
+			dashPanelCount, dashVarCount, dashDSCount,
+			dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
 		panelTypeCounter.toFrame("panel-type-counts"),
 		schemaVersionCounter.toFrame("schema-version-counts"),
