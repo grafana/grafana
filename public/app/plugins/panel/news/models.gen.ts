@@ -3,6 +3,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+import {PROXY_PREFIX} from "./constants";
+
 export const modelVersion = Object.freeze([0, 0]);
 
 
@@ -10,8 +12,10 @@ export interface PanelOptions {
   feedUrl?: string;
   showImage?: boolean;
   useProxy?: boolean;
+  proxyUrl?: string;
 }
 
 export const defaultPanelOptions: PanelOptions = {
   showImage: true,
+  proxyUrl: PROXY_PREFIX
 };

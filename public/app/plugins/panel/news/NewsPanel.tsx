@@ -12,7 +12,7 @@ import { loadFeed } from './feed';
 import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
 import { NewsItem } from './types';
 import { PanelOptions } from './models.gen';
-import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
+import { DEFAULT_FEED_URL } from './constants';
 import { css, cx } from '@emotion/css';
 import { RefreshEvent } from '@grafana/runtime';
 import { Unsubscribable } from 'rxjs';
@@ -52,7 +52,7 @@ export class NewsPanel extends PureComponent<Props, State> {
     try {
       const url = options.feedUrl
         ? options.useProxy
-          ? `${PROXY_PREFIX}${options.feedUrl}`
+          ? `${options.proxyUrl}${options.feedUrl}`
           : options.feedUrl
         : DEFAULT_FEED_URL;
 

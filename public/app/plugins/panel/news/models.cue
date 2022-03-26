@@ -23,6 +23,7 @@ Panel: {
                     feedUrl?: string
                     useProxy?: bool
                     showImage?: bool | *true
+                    proxyUrl?: string
                 }
             }
         ]

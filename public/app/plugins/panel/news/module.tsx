@@ -2,7 +2,7 @@ import { isString } from 'lodash';
 import { PanelPlugin } from '@grafana/data';
 import { NewsPanel } from './NewsPanel';
 import { PanelOptions, defaultPanelOptions } from './models.gen';
-import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
+import { DEFAULT_FEED_URL, PROXY_PREFIX, PROXY_PREFIX_PLACEHOLDER } from './constants';
 
 export const plugin = new PanelPlugin<PanelOptions>(NewsPanel).setPanelOptions((builder) => {
   builder
@@ -32,5 +32,16 @@ export const plugin = new PanelPlugin<PanelOptions>(NewsPanel).setPanelOptions((
         return isString(currentConfig.feedUrl) && !currentConfig.feedUrl.startsWith(PROXY_PREFIX);
       },
       defaultValue: defaultPanelOptions.useProxy,
+    })
+    .addTextInput({
+      path: 'proxyUrl',
+      name: 'Proxy Url',
+      description: 'Custom Proxy Url',
+      showIf: (currentConfig: PanelOptions) => {
+        return currentConfig.useProxy;
+      },
+      settings: {
+        placeholder: PROXY_PREFIX_PLACEHOLDER,
+      },
     });
 });
