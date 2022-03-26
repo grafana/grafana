@@ -3,11 +3,11 @@ package login
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
