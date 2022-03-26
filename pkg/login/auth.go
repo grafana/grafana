@@ -3,7 +3,6 @@ package login
 import (
 	"context"
 	"errors"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,6 +20,7 @@ var (
 	ErrAbsoluteRedirectTo    = errors.New("absolute URLs are not allowed for redirect_to cookie value")
 	ErrInvalidRedirectTo     = errors.New("invalid redirect_to cookie value")
 	ErrForbiddenRedirectTo   = errors.New("forbidden redirect_to cookie value")
+	ErrNoAuthProvider        = errors.New("enable at least one login provider")
 )
 
 var loginLogger = log.New("login")
@@ -41,9 +41,15 @@ func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 		return err
 	}
 
-	err := loginUsingGrafanaDB(ctx, query)
-	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
-		!errors.Is(err, ErrUserDisabled)) {
+	isGrafanaLoginEnabled := !query.Cfg.DisableLogin
+	var err error
+
+	if isGrafanaLoginEnabled {
+		err = loginUsingGrafanaDB(ctx, query)
+	}
+
+	if isGrafanaLoginEnabled && (err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+		!errors.Is(err, ErrUserDisabled))) {
 		query.AuthModule = "grafana"
 		return err
 	}
@@ -66,6 +72,10 @@ func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 		}
 
 		return ErrInvalidCredentials
+	}
+
+	if !isGrafanaLoginEnabled && !ldapEnabled {
+		return ErrNoAuthProvider
 	}
 
 	return err
