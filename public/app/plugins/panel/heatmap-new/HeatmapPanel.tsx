@@ -1,14 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import {
-  Field,
-  formattedValueToString,
-  GrafanaTheme2,
-  LinkModel,
-  PanelProps,
-  reduceField,
-  ReducerID,
-} from '@grafana/data';
+import { Field, formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -17,6 +9,7 @@ import {
   VizLayout,
   VizTooltipContainer,
   LegendDisplayMode,
+  usePanelContext,
 } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
@@ -28,6 +21,7 @@ import { HeatmapHoverView } from './HeatmapHoverView';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from './ColorScale';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -47,8 +41,14 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const styles = useStyles2(getStyles);
 
   const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
+  const exemplars = useMemo(
+    () => data.annotations && prepareHeatmapData(data.annotations, options, theme),
+    [data, options, theme]
+  );
+  console.log('info', info, 'exemplars', exemplars);
 
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+  const { onSplitOpen } = usePanelContext();
 
   //console.log(facets);
 
@@ -99,6 +99,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
+  };
+
   const renderLegend = () => {
     if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
       return null;
@@ -125,15 +129,12 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
             {/*children ? children(config, alignedFrame) : null*/}
-            {data.annotations && (
+            {exemplars && (
               <ExemplarsPlugin
                 config={builder}
-                exemplars={data.annotations}
+                exemplars={exemplars}
                 timeZone={timeZone}
-                getFieldLinks={(field: Field, rowIndex: number): Array<LinkModel<Field>> => {
-                  console.log('getFieldLinks Called', field, rowIndex);
-                  return [];
-                }}
+                getFieldLinks={getFieldLinks}
               />
             )}
           </UPlotChart>

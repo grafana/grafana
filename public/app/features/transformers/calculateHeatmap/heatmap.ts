@@ -163,8 +163,6 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
 }
 
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
-  //console.time('calculateHeatmapFromData');
-
   let xs: number[] = [];
   let ys: number[] = [];
 

@@ -94,7 +94,6 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
               <table className={styles.exemplarsTable}>
                 <tbody>
                   {dataFrame.fields.map((field, i) => {
-                    console.log('field', field);
                     const value = field.values.get(dataFrameFieldIndex.fieldIndex);
                     const links = field.config.links?.length
                       ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
@@ -251,6 +250,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       display: block;
       opacity: 0.5;
       transition: transform 0.15s ease-out;
+      fill: rgb(115, 191, 105);
     `,
     activeMarble: css`
       transform: scale(1.3);
