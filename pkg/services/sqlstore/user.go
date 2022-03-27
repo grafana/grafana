@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -757,6 +758,47 @@ func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUs
 			return err
 		}
 	}
+
+	return deleteUserAccessControl(sess, cmd.UserId)
+}
+
+func deleteUserAccessControl(sess *DBSession, userID int64) error {
+	// Delete user role assignments
+	if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
+		return err
+	}
+
+	// Delete permissions that are scoped to user
+	if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
+		return err
+	}
+
+	var roleIDs []int64
+	if err := sess.SQL("SELECT id FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
+		return err
+	}
+
+	if len(roleIDs) == 0 {
+		return nil
+	}
+
+	query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+	args := make([]interface{}, 0, len(roleIDs)+1)
+	args = append(args, query)
+	for _, id := range roleIDs {
+		args = append(args, id)
+	}
+
+	// Delete managed user permissions
+	if _, err := sess.Exec(args...); err != nil {
+		return err
+	}
+
+	// Delete managed user roles
+	if _, err := sess.Exec("DELETE FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
