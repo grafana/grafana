@@ -34,6 +34,7 @@ import appEvents from 'app/core/app_events';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { Unsubscribable } from 'rxjs';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
+import { NoData } from './NoData';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -213,6 +214,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderNoData() {
+    return (
+      <div className="explore-container">
+        <NoData />
+      </div>
+    );
+  }
+
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -382,6 +391,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                          {!graphResult && !showTable && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>
                       )}
                       {showRichHistory && (
