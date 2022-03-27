@@ -195,7 +195,6 @@ type ScopeParams struct {
 // can perform against specific resource.
 type ResourcePermission struct {
 	ID          int64
-	ResourceID  string
 	RoleName    string
 	Actions     []string
 	Scope       string
@@ -206,12 +205,9 @@ type ResourcePermission struct {
 	TeamEmail   string
 	Team        string
 	BuiltInRole string
+	IsManaged   bool
 	Created     time.Time
 	Updated     time.Time
-}
-
-func (p *ResourcePermission) IsManaged() bool {
-	return strings.HasPrefix(p.RoleName, "managed:")
 }
 
 func (p *ResourcePermission) Contains(targetActions []string) bool {
@@ -246,6 +242,7 @@ type SetResourcePermissionCommand struct {
 
 const (
 	GlobalOrgID = 0
+
 	// Permission actions
 
 	ActionAPIKeyRead   = "apikeys:read"
@@ -299,7 +296,7 @@ const (
 	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
-	ScopeGlobalUsersAll = "global:users:*"
+	ScopeGlobalUsersAll = "global.users:*"
 
 	// APIKeys scope
 	ScopeAPIKeysAll = "apikeys:*"
@@ -322,11 +319,11 @@ const (
 	ScopeTeamsAll = "teams:*"
 
 	// Annotations related actions
+	ActionAnnotationsCreate   = "annotations:create"
+	ActionAnnotationsDelete   = "annotations:delete"
 	ActionAnnotationsRead     = "annotations:read"
+	ActionAnnotationsWrite    = "annotations:write"
 	ActionAnnotationsTagsRead = "annotations.tags:read"
-
-	ScopeAnnotationsAll     = "annotations:*"
-	ScopeAnnotationsTagsAll = "annotations:tags:*"
 
 	// Dashboard actions
 	ActionDashboardsCreate           = "dashboards:create"
@@ -376,6 +373,17 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	// Annotation scopes
+	ScopeAnnotationsRoot             = "annotations"
+	ScopeAnnotationsProvider         = NewScopeProvider(ScopeAnnotationsRoot)
+	ScopeAnnotationsAll              = ScopeAnnotationsProvider.GetResourceAllScope()
+	ScopeAnnotationsID               = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
+	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
+	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType("organization")
+
+	// Annotation tag scopes
+	ScopeAnnotationsTagsAll = "annotations:tags:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

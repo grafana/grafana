@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -87,5 +88,5 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingSer
 				m,
 			),
 		)
-	})
+	}, middleware.ReqSignedIn)
 }
