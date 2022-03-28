@@ -216,9 +216,6 @@ func loadDatasoureLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStor
 			}
 			key = ref.UID
 		}
-		if ref.Type != "" {
-			// ?? get default by type
-		}
 		if key == "" {
 			return defaultDS
 		}
