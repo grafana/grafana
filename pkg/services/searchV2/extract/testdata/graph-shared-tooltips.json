@@ -6,18 +6,36 @@
     "panel-tests",
     "graph-ng"
   ],
+  "datasource": [
+    "default.uid"
+  ],
+  "datasourceType": [
+    "default.type"
+  ],
   "panels": [
     {
       "id": 4,
       "title": "two units",
       "type": "timeseries",
-      "pluginVersion": "7.5.0-pre"
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ]
     },
     {
       "id": 13,
       "title": "Speed vs Temperature (XY)",
       "type": "xychart",
       "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ],
       "transformations": [
         "seriesToColumns",
         "organize"
@@ -27,37 +45,73 @@
       "id": 2,
       "title": "Cursor info",
       "type": "debug",
-      "pluginVersion": "7.5.0-pre"
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ]
     },
     {
       "id": 5,
       "title": "Only temperature",
       "type": "timeseries",
-      "pluginVersion": "7.5.0-pre"
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ]
     },
     {
       "id": 9,
       "title": "Only Speed",
       "type": "timeseries",
-      "pluginVersion": "7.5.0-pre"
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ]
     },
     {
       "id": 11,
       "title": "Panel Title",
       "type": "timeseries",
-      "pluginVersion": "7.5.0-pre"
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ]
     },
     {
       "id": 8,
       "title": "flot panel (temperature)",
       "type": "graph",
-      "pluginVersion": "7.5.0-pre"
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ]
     },
     {
       "id": 10,
       "title": "flot panel (no units)",
       "type": "graph",
-      "pluginVersion": "7.5.0-pre"
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        "default.uid"
+      ],
+      "datasourceType": [
+        "default.type"
+      ]
     }
   ],
   "schemaVersion": 28,

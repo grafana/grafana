@@ -12,7 +12,7 @@ func logf(format string, a ...interface{}) {
 
 // nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
-func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo {
+func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
 	dash := &DashboardInfo{}
 
@@ -73,7 +73,7 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 
 		case "panels":
 			for iter.ReadArray() {
-				dash.Panels = append(dash.Panels, readPanelInfo(iter))
+				dash.Panels = append(dash.Panels, readPanelInfo(iter, lookup))
 			}
 
 		case "rows":
@@ -129,16 +129,30 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 		logf("All dashbaords should have a UID defined")
 	}
 
+	targets := newTargetInfo(lookup)
+	for _, panel := range dash.Panels {
+		targets.addPanel(panel)
+	}
+	dash.Datasource = targets.GetDatasourceList()
+	dash.DatasourceType = targets.GetDatasourceTypes()
+
 	return dash
 }
 
 // will always return strings for now
-func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
+func readPanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelInfo {
 	panel := PanelInfo{}
 
+	targets := newTargetInfo(lookup)
+
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
-		// Skip null values so we don't need special int handling
 		if iter.WhatIsNext() == jsoniter.NilValue {
+			if l1Field == "datasource" {
+				targets.addDatasource(iter)
+				continue
+			}
+
+			// Skip null values so we don't need special int handling
 			iter.Skip()
 			continue
 		}
@@ -160,13 +174,11 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 			panel.PluginVersion = iter.ReadString() // since 7x (the saved version for the plugin model)
 
 		case "datasource":
-			v := iter.Read()
-			logf(">>Panel.datasource = %v\n", v) // string or object!!!
+			targets.addDatasource(iter)
 
 		case "targets":
 			for iter.ReadArray() {
-				v := iter.Read()
-				logf("[Panel.TARGET] %v\n", v)
+				targets.addTarget(iter)
 			}
 
 		case "transformations":
@@ -183,7 +195,7 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 		// Rows have nested panels
 		case "panels":
 			for iter.ReadArray() {
-				panel.Collapsed = append(panel.Collapsed, readPanelInfo(iter))
+				panel.Collapsed = append(panel.Collapsed, readPanelInfo(iter, lookup))
 			}
 
 		case "options":
@@ -200,6 +212,9 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 			logf("[PANEL] support key: %s / %v\n", l1Field, v)
 		}
 	}
+
+	panel.Datasource = targets.GetDatasourceList()
+	panel.DatasourceType = targets.GetDatasourceTypes()
 
 	return panel
 }

@@ -106,10 +106,17 @@ type dashDataQueryResult struct {
 	Updated  time.Time
 }
 
+type dsQueryResult struct {
+	UID       string `xorm:"uid"`
+	Type      string `xorm:"type"`
+	Name      string `xorm:"name"`
+	IsDefault bool   `xorm:"is_default"`
+}
+
 func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
 	meta := make([]dashMeta, 0, 200)
 
-	// Add the root folder ID
+	// Add the root folder ID (does not exist in SQL)
 	meta = append(meta, dashMeta{
 		id:        0,
 		is_folder: true,
@@ -126,11 +133,12 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	})
 
 	// key will allow name or uid
-	lookup := func(key string) *extract.DatasourceInfo {
-		return nil // TODO!
+	lookup, err := loadDatasoureLookup(ctx, orgID, sql)
+	if err != nil {
+		return meta, err
 	}
 
-	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rows := make([]*dashDataQueryResult, 0)
 
 		sess.Table("dashboard").
@@ -160,6 +168,75 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	})
 
 	return meta, err
+}
+
+func loadDatasoureLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
+	byUID := make(map[string]*extract.DataSourceRef, 50)
+	byName := make(map[string]*extract.DataSourceRef, 50)
+	var defaultDS *extract.DataSourceRef
+
+	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rows := make([]*dsQueryResult, 0)
+		sess.Table("data_source").
+			Where("org_id = ?", orgID).
+			Cols("uid", "name", "type", "is_default")
+
+		err := sess.Find(&rows)
+		if err != nil {
+			return err
+		}
+
+		for _, row := range rows {
+			ds := &extract.DataSourceRef{
+				UID:  row.UID,
+				Name: row.Name,
+				Type: row.Type,
+			}
+			byUID[row.UID] = ds
+			byName[row.Name] = ds
+			if row.IsDefault {
+				defaultDS = ds
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Lookup by UID or name
+	return func(ref *extract.DataSourceRef) *extract.DataSourceRef {
+		if ref == nil {
+			return defaultDS
+		}
+		key := ""
+		if ref.UID != "" {
+			ds, ok := byUID[ref.UID]
+			if ok {
+				return ds
+			}
+			key = ref.UID
+		}
+		if ref.Name != "" {
+			ds, ok := byUID[ref.Name]
+			if ok {
+				return ds
+			}
+			key = ref.Name
+		}
+		if ref.Type != "" {
+			// ?? get default by type
+		}
+		if key == "" {
+			return defaultDS
+		}
+		ds, ok := byUID[key]
+		if ok {
+			return ds
+		}
+		return byName[key]
+	}, err
 }
 
 type simpleCounter struct {
@@ -209,6 +286,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashPanelCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashVarCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashDSCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashDSTypes := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 
 	dashID.Name = "ID"
 	dashUID.Name = "UID"
@@ -228,6 +306,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashPanelCount.Name = "PanelCount"
 	dashVarCount.Name = "VarCount"
 	dashDSCount.Name = "DSCount"
+	dashDSTypes.Name = "DSTypes"
 
 	dashTags.Config = &data.FieldConfig{
 		Custom: map[string]interface{}{
@@ -258,7 +337,6 @@ func metaToFrame(meta []dashMeta) data.Frames {
 
 	folderCounter := make(map[int64]int64, 20)
 
-	var tags *string
 	for _, row := range meta {
 		if row.is_folder {
 			folderID.Append(row.id)
@@ -290,19 +368,11 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		// stats
 		schemaVersionCounter.add(strconv.FormatInt(row.dash.SchemaVersion, 10))
 
-		// Send tags as JSON array
-		tags = nil
-		if len(row.dash.Tags) > 0 {
-			b, err := json.Marshal(row.dash.Tags)
-			if err == nil {
-				s := string(b)
-				tags = &s
-			}
-		}
-		dashTags.Append(tags)
+		dashTags.Append(toJSONString(row.dash.Tags))
 		dashPanelCount.Append(int64(len(row.dash.Panels)))
 		dashVarCount.Append(int64(len(row.dash.TemplateVars)))
 		dashDSCount.Append(int64(len(row.dash.Datasource)))
+		dashDSTypes.Append(toJSONString(row.dash.DatasourceType))
 
 		// Row for each panel
 		for _, panel := range row.dash.Panels {
@@ -328,10 +398,22 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID,
 			dashName, dashDescr, dashTags,
 			dashSchemaVersion,
-			dashPanelCount, dashVarCount, dashDSCount,
+			dashPanelCount, dashVarCount, dashDSCount, dashDSTypes,
 			dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
 		panelTypeCounter.toFrame("panel-type-counts"),
 		schemaVersionCounter.toFrame("schema-version-counts"),
 	}
+}
+
+func toJSONString(vals []string) *string {
+	if len(vals) < 1 {
+		return nil
+	}
+	b, err := json.Marshal(vals)
+	if err == nil {
+		s := string(b)
+		return &s
+	}
+	return nil
 }

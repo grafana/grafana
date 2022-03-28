@@ -30,7 +30,11 @@ interface FieldAccess {
   tags?: Field<any>;
   location?: Field<LocationInfo[]>; // the folder name
   score?: Field<number>;
+
+  // Count info
   panelCount?: Field<number>;
+  dsCount?: Field<number>;
+  dsTypes?: Field<string>;
 }
 
 function getFieldAccess(frame: DataFrame): FieldAccess {
@@ -57,6 +61,10 @@ function getFieldAccess(frame: DataFrame): FieldAccess {
         break;
       case 'panelcount':
         a.panelCount = f;
+      case 'dscount':
+        a.dsCount = f;
+      case 'dstypes':
+        a.dsTypes = f;
     }
   }
   return a;
@@ -152,11 +160,14 @@ const generateColumns = (
       field: access.url!,
       Header: 'Info',
       accessor: (row: any, i: number) => {
-        const count = access.panelCount?.values.get(i);
-        if (count) {
-          return <span>Panels: {count}</span>;
-        }
-        return null;
+        const panelCount = access.panelCount?.values.get(i);
+        const dsCount = access.dsCount?.values.get(i);
+        return (
+          <div className={styles.infoWrap}>
+            {panelCount != null && <span>Panels: {panelCount}</span>}
+            {dsCount != null && <span>Data sources: {dsCount}</span>}
+          </div>
+        );
       },
       width: Math.max(availableWidth, 100),
     });
@@ -461,6 +472,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: 10px;
       margin-right: 10px;
       margin-top: 5px;
+    `,
+    infoWrap: css`
+      span {
+        margin-right: 10px;
+      }
     `,
   };
 };

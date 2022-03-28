@@ -1,13 +1,12 @@
 package extract
 
-type DatasourceLookup = func(key string) *DatasourceInfo
+// empty everything will return the default
+type DatasourceLookup = func(ref *DataSourceRef) *DataSourceRef
 
-type DatasourceInfo struct {
-	UID     string `json:"uid"`
-	Name    string `json:"name"`
-	Type    string `json:"type"` // plugin name
-	Version string `json:"version"`
-	Access  string `json:"access,omitempty"` // proxy, direct, or empty
+type DataSourceRef struct {
+	UID  string `json:"uid"`
+	Name string `json:"name"`
+	Type string `json:"type"` // plugin name
 }
 
 type PanelInfo struct {

@@ -28,7 +28,7 @@ export async function getRawIndexData(): Promise<RawIndexData> {
     const frame = f as DataFrame;
     for (const field of frame.fields) {
       // Parse tags from JSON string
-      if (field.name === 'Tags') {
+      if (field.name === 'Tags' || field.name === 'DSTypes') {
         const values = field.values.toArray().map((v) => {
           if (v?.length) {
             try {
@@ -38,6 +38,7 @@ export async function getRawIndexData(): Promise<RawIndexData> {
           }
           return undefined;
         });
+        field.type = FieldType.other; // []string
         field.values = new ArrayVector(values);
       }
 

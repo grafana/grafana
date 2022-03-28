@@ -17,8 +17,15 @@ func TestReadDashboard(t *testing.T) {
 	}
 
 	// key will allow name or uid
-	ds := func(key string) *DatasourceInfo {
-		return nil // TODO!
+	ds := func(ref *DataSourceRef) *DataSourceRef {
+		if ref == nil || ref.UID == "" {
+			return &DataSourceRef{
+				UID:  "default.uid",
+				Name: "default.name",
+				Type: "default.type",
+			}
+		}
+		return ref
 	}
 
 	for _, input := range inputs {
