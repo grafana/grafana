@@ -77,7 +77,10 @@ func validateUserEmailCode(cfg *setting.Cfg, user *models.User, code string) (bo
 	}
 	if hmac.Equal([]byte(code), []byte(expectedCode)) && minutes > 0 {
 		// check time is expired or not
-		before, _ := time.ParseInLocation("200601021504", startStr, time.Local)
+		before, err := time.ParseInLocation("200601021504", startStr, time.Local)
+		if err != nil {
+			return false, err
+		}
 		now := time.Now()
 		if before.Add(time.Minute*time.Duration(minutes)).Unix() > now.Unix() {
 			return true, nil
