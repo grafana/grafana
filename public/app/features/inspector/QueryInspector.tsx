@@ -264,7 +264,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div className={styles.wrap}>
         <div aria-label={selectors.components.PanelInspector.Query.content}>
           <h3 className="section-heading">Query inspector</h3>
           <p className="small muted">
@@ -306,7 +306,7 @@ export class QueryInspector extends PureComponent<Props, State> {
           )}
           <div className="flex-grow-1" />
         </div>
-        <div className={styles.contentQueryInspector}>
+        <div className={styles.content}>
           {isLoading && <LoadingPlaceholder text="Loading query inspector..." />}
           {!isLoading && haveData && (
             <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
@@ -315,7 +315,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             <p className="muted">No request and response collected yet. Hit refresh button</p>
           )}
         </div>
-      </>
+      </div>
     );
   }
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
@@ -147,7 +146,7 @@ providers:
 		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		dashboardList := &search.HitList{}
+		dashboardList := &models.HitList{}
 		err = json.Unmarshal(b, dashboardList)
 		require.NoError(t, err)
 		assert.Equal(t, 1, dashboardList.Len())

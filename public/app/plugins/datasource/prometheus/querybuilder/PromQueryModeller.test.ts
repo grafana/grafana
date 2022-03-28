@@ -258,26 +258,6 @@ describe('PromQueryModeller', () => {
     ).toBe('(metric_a * 1000) / metric_b');
   });
 
-  it('Can render with binary queries with vectorMatches expression', () => {
-    expect(
-      modeller.renderQuery({
-        metric: 'metric_a',
-        labels: [],
-        operations: [],
-        binaryQueries: [
-          {
-            operator: '/',
-            vectorMatches: 'on(le)',
-            query: {
-              metric: 'metric_b',
-              labels: [],
-              operations: [],
-            },
-          },
-        ],
-      })
-    ).toBe('metric_a / on(le) metric_b');
-  });
   it('Can render functions that require a range as a parameter', () => {
     expect(
       modeller.renderQuery({
@@ -305,6 +285,7 @@ describe('PromQueryModeller', () => {
       })
     ).toBe('label_join(metric_a, "label_1", ",", "label_2")');
   });
+
   it('Can render label_join with extra parameters', () => {
     expect(
       modeller.renderQuery({
@@ -313,5 +294,27 @@ describe('PromQueryModeller', () => {
         operations: [{ id: 'label_join', params: ['label_1', ', ', 'label_2', 'label_3', 'label_4', 'label_5'] }],
       })
     ).toBe('label_join(metric_a, "label_1", ", ", "label_2", "label_3", "label_4", "label_5")');
+  });
+
+  it('can render vector matchers', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            vectorMatches: 'le, foo',
+            vectorMatchesType: 'on',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / on(le, foo) metric_b');
   });
 });

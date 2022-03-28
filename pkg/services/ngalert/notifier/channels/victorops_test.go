@@ -78,7 +78,7 @@ func TestVictoropsNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing, no URL",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "victorops_testing" of type "victorops": could not find victorops url property in settings`,
+			expInitError: `could not find victorops url property in settings`,
 		},
 	}
 
@@ -94,7 +94,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			pn, err := NewVictoropsNotifier(m, webhookSender, tmpl)
+			cfg, err := NewVictorOpsConfig(m)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -104,6 +104,7 @@ func TestVictoropsNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewVictoropsNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

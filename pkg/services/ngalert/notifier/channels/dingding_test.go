@@ -82,7 +82,7 @@ func TestDingdingNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "dingding_testing" of type "dingding": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
 		},
 	}
 
@@ -98,7 +98,7 @@ func TestDingdingNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			pn, err := NewDingDingNotifier(m, webhookSender, tmpl)
+			cfg, err := NewDingDingConfig(m)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -107,6 +107,7 @@ func TestDingdingNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewDingDingNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

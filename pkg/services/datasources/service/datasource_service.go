@@ -83,6 +83,7 @@ func ProvideService(
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
+	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))
 
 	return s
 }
@@ -94,18 +95,17 @@ type DataSourceRetriever interface {
 }
 
 // NewNameScopeResolver provides an AttributeScopeResolver able to
-// translate a scope prefixed with "datasources:name:" into an id based scope.
+// translate a scope prefixed with "datasources:name:" into an uid based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
-	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
-		dsNames := strings.Split(initialScope, ":")
-		if dsNames[0] != datasources.ScopeDatasourcesRoot || len(dsNames) != 3 {
+	prefix := datasources.ScopeProvider.GetResourceScopeName("")
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		dsName := dsNames[2]
-		// Special wildcard case
-		if dsName == "*" {
-			return datasources.ScopeDatasourcesProvider.GetResourceAllIDScope(), nil
+		dsName := initialScope[len(prefix):]
+		if dsName == "" {
+			return "", accesscontrol.ErrInvalidScope
 		}
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
@@ -113,10 +113,36 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", err
 		}
 
-		return datasources.ScopeDatasourcesProvider.GetResourceScope(fmt.Sprintf("%v", query.Result.Id)), nil
+		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
 	}
+}
 
-	return datasources.ScopeDatasourcesProvider.GetResourceScopeName(""), dsNameResolver
+// NewIDScopeResolver provides an AttributeScopeResolver able to
+// translate a scope prefixed with "datasources:id:" into an uid based scope.
+func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+	prefix := datasources.ScopeProvider.GetResourceScope("")
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if !strings.HasPrefix(initialScope, prefix) {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		id := initialScope[len(prefix):]
+		if id == "" {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		dsID, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		query := models.GetDataSourceQuery{Id: dsID, OrgId: orgID}
+		if err := db.GetDataSource(ctx, &query); err != nil {
+			return "", err
+		}
+
+		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
+	}
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
@@ -143,13 +169,19 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Viewer",
-			Permission:  "Query",
-		}, accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Editor",
-			Permission:  "Query",
-		}); err != nil {
+		// This belongs in Data source permissions, and we probably want
+		// to do this with a hook in the store and rollback on fail.
+		// We can't use events, because there's no way to communicate
+		// failure, and we want "not being able to set default perms"
+		// to fail the creation.
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: "Viewer", Permission: "Query"},
+			{BuiltinRole: "Editor", Permission: "Query"},
+		}
+		if cmd.UserId != 0 {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
+		}
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
 			return err
 		}
 	}

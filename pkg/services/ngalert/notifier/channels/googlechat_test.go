@@ -149,7 +149,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "googlechat_testing" of type "googlechat": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
 		}, {
 			name:     "Customized message",
 			settings: `{"url": "http://localhost", "message": "I'm a custom template and you have {{ len .Alerts.Firing }} firing alert."}`,
@@ -273,7 +273,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			pn, err := NewGoogleChatNotifier(m, webhookSender, tmpl)
+			cfg, err := NewGoogleChatConfig(m)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -283,6 +283,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewGoogleChatNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

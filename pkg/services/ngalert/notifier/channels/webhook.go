@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -28,37 +29,62 @@ type WebhookNotifier struct {
 	orgID      int64
 }
 
+type WebhookConfig struct {
+	*NotificationChannelConfig
+	URL        string
+	User       string
+	Password   string
+	HTTPMethod string
+	MaxAlerts  int
+}
+
+func WebHookFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewWebHookConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewWebHookNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*WebhookConfig, error) {
+	url := config.Settings.Get("url").MustString()
+	if url == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
+	return &WebhookConfig{
+		NotificationChannelConfig: config,
+		URL:                       url,
+		User:                      config.Settings.Get("username").MustString(),
+		Password:                  decryptFunc(context.Background(), config.SecureSettings, "password", config.Settings.Get("password").MustString()),
+		HTTPMethod:                config.Settings.Get("httpMethod").MustString("POST"),
+		MaxAlerts:                 config.Settings.Get("maxAlerts").MustInt(0),
+	}, nil
+}
+
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
-	}
+func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, t *template.Template) *WebhookNotifier {
 	return &WebhookNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		orgID:      model.OrgID,
-		URL:        url,
-		User:       model.Settings.Get("username").MustString(),
-		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString()),
-		HTTPMethod: model.Settings.Get("httpMethod").MustString("POST"),
-		MaxAlerts:  model.Settings.Get("maxAlerts").MustInt(0),
+		orgID:      config.OrgID,
+		URL:        config.URL,
+		User:       config.User,
+		Password:   config.Password,
+		HTTPMethod: config.HTTPMethod,
+		MaxAlerts:  config.MaxAlerts,
 		log:        log.New("alerting.notifier.webhook"),
 		ns:         ns,
 		tmpl:       t,
-	}, nil
+	}
 }
 
 // webhookMessage defines the JSON object send to webhook endpoints.
