@@ -130,13 +130,6 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
 
-	// Validate our silence to avoid panics
-	//
-	// Question for reviewers: do we care about the format registry? My reading
-	// of the code is that an empty format registry means "all data validates,
-	// but required fields must be present." Since we didn't evaluate before,
-	// that's the existing behavior. If we want an empty registry, I think we can
-	// just create it on each API call - it's not a very high-throughput API.
 	err := postableSilence.Validate(strfmt.Default)
 	if err != nil {
 		srv.log.Error("argument failed validation", "err", err)
