@@ -177,21 +177,23 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
 
+	if !opts.isDev {
+		if err := setBuildEnv(opts); err != nil {
+			return err
+		}
+		runPrint("go", "version")
+		libcPart = ""
+		if opts.libc != "" {
+			libcPart = fmt.Sprintf("/%s", opts.libc)
+		}
+		fmt.Printf("Targeting %s/%s%s\n", opts.goos, opts.goarch, libcPart)
+	}
+
 	runPrint("go", args...)
 
 	if opts.isDev {
 		return nil
 	}
-
-	if err := setBuildEnv(opts); err != nil {
-		return err
-	}
-	runPrint("go", "version")
-	libcPart = ""
-	if opts.libc != "" {
-		libcPart = fmt.Sprintf("/%s", opts.libc)
-	}
-	fmt.Printf("Targeting %s/%s%s\n", opts.goos, opts.goarch, libcPart)
 
 	// Create an md5 checksum of the binary, to be included in the archive for
 	// automatic upgrades.
