@@ -16,7 +16,9 @@ import { FunctionalVector } from '../vector/FunctionalVector';
 export class DataFrameView<T = any> extends FunctionalVector<T> {
   private index = 0;
   private obj: T;
-  readonly fields: Record<keyof T, Field<any>>; // any should be value type
+  readonly fields: {
+    readonly [Property in keyof T]: Field<T[Property]>;
+  };
 
   constructor(private data: DataFrame) {
     super();
@@ -25,8 +27,12 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
-      const getter = () => field.values.get(this.index);
+      if (!field.name) {
+        continue; // unsupported
+      }
+
       fields[field.name] = field;
+      const getter = () => field.values.get(this.index);
 
       if (!(obj as any).hasOwnProperty(field.name)) {
         Object.defineProperty(obj, field.name, {

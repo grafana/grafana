@@ -20,18 +20,18 @@ export type TableColumn = Column & {
 };
 
 interface FieldAccess {
-  kind?: string; // panel, dashboard, folder
-  name?: string;
-  description?: string;
-  url?: string; // link to value (unique)
-  type?: string; // graph
-  tags?: string[];
-  location?: LocationInfo[]; // the folder name
-  score?: number;
+  kind: string; // panel, dashboard, folder
+  name: string;
+  description: string;
+  url: string; // link to value (unique)
+  type: string; // graph
+  tags: string[];
+  location: LocationInfo[]; // the folder name
+  score: number;
 
   // Count info
-  panelCount?: number;
-  dsList?: DataSourceRef[];
+  panelCount: number;
+  dsList: DataSourceRef[];
 }
 
 const generateColumns = (
