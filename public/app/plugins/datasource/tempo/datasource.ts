@@ -9,9 +9,17 @@ import {
   DataSourceJsonData,
   isValidGoDuration,
   LoadingState,
+  ScopedVars,
 } from '@grafana/data';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import {
+  config,
+  BackendSrvRequest,
+  DataSourceWithBackend,
+  getBackendSrv,
+  TemplateSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
@@ -89,7 +97,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
@@ -187,6 +198,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     return merge(...subQueries);
+  }
+
+  applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars): Record<string, any> {
+    query = this.applyVariables(query, scopedVars, scopedVars);
+
+    return query;
+  }
+
+  applyVariables(query: TempoQuery, scopedVars: ScopedVars, rest: ScopedVars) {
+    const expandedQuery = { ...query };
+
+    return {
+      ...expandedQuery,
+      query: this.templateSrv.replace(query.query ?? '', rest),
+    };
   }
 
   /**
