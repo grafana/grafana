@@ -517,6 +517,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   render() {
     const styles = getStyles();
+    const { topOfExploreViewRef } = this.props;
     const { scrollElement } = this.props;
     return (
       <>
@@ -533,13 +534,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           windowScroller={false}
           scrollElement={scrollElement}
         />
-
-        <ToolbarButton
-          className={styles.scrollToTopButton}
-          onClick={this.scrollToTop}
-          title="Scroll to top"
-          icon="arrow-up"
-        ></ToolbarButton>
+        {topOfExploreViewRef ? (
+          <ToolbarButton
+            className={styles.scrollToTopButton}
+            onClick={this.scrollToTop}
+            title="Scroll to top"
+            icon="arrow-up"
+          ></ToolbarButton>
+        ) : null}
       </>
     );
   }

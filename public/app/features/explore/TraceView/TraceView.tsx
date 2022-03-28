@@ -42,8 +42,8 @@ function noop(): {} {
 
 type Props = {
   dataFrames: DataFrame[];
-  splitOpenFn: SplitOpen;
-  exploreId: ExploreId;
+  splitOpenFn?: SplitOpen;
+  exploreId?: ExploreId;
   scrollElement?: Element;
   topOfExploreViewRef?: RefObject<HTMLDivElement>;
   queryResponse: PanelData;
@@ -83,12 +83,12 @@ export function TraceView(props: Props) {
   const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
 
   const datasource = useSelector(
-    (state: StoreState) => state.explore[props.exploreId]?.datasourceInstance ?? undefined
+    (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
   );
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: frame?.refId,
-    exploreId: props.exploreId,
+    exploreId: props.exploreId!,
     datasource,
   });
 
@@ -118,7 +118,7 @@ export function TraceView(props: Props) {
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
   const createSpanLink = useMemo(
-    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
+    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn!, traceToLogsOptions, dataFrame: frame }),
     [props.splitOpenFn, traceToLogsOptions, frame]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
