@@ -1,5 +1,7 @@
 import { Action, locationService } from '@grafana/runtime';
 
+// static global actions for the entire app go here
+
 const globalActions: Action[] = [
   {
     id: 'go/home',
