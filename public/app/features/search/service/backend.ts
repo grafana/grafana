@@ -27,8 +27,8 @@ export async function getRawIndexData(): Promise<RawIndexData> {
   for (const f of rsp.data) {
     const frame = f as DataFrame;
     for (const field of frame.fields) {
-      // Parse tags from JSON string
-      if (field.name === 'Tags' || field.name === 'DSTypes') {
+      // Parse tags/ds from JSON string
+      if (field.name === 'tags' || field.name === 'dsList') {
         const values = field.values.toArray().map((v) => {
           if (v?.length) {
             try {

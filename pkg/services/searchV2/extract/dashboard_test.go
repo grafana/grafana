@@ -12,8 +12,9 @@ import (
 
 func TestReadDashboard(t *testing.T) {
 	inputs := []string{
-		"all-panels.json",
-		"panel-graph/graph-shared-tooltips.json",
+		"check-string-datasource-id",
+		"all-panels",
+		"panel-graph/graph-shared-tooltips",
 	}
 
 	// key will allow name or uid
@@ -21,17 +22,26 @@ func TestReadDashboard(t *testing.T) {
 		if ref == nil || ref.UID == "" {
 			return &DataSourceRef{
 				UID:  "default.uid",
-				Name: "default.name",
 				Type: "default.type",
 			}
 		}
 		return ref
 	}
 
+	devdash := "../../../../devenv/dev-dashboards/"
+
 	for _, input := range inputs {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning because this is a test with hardcoded input values
-		f, err := os.Open("../../../../devenv/dev-dashboards/" + input)
+		f, err := os.Open(filepath.Join(devdash, input) + ".json")
+		if err == nil {
+			input = "devdash-" + filepath.Base(input)
+		}
+		if err != nil {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning because this is a test with hardcoded input values
+			f, err = os.Open(filepath.Join("testdata", input) + ".json")
+		}
 		require.NoError(t, err)
 
 		dash := ReadDashboard(f, ds)
@@ -39,7 +49,7 @@ func TestReadDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		update := false
-		savedPath := "testdata/" + filepath.Base(input)
+		savedPath := "testdata/" + input + "-info.json"
 		saved, err := os.ReadFile(savedPath)
 		if err != nil {
 			update = true

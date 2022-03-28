@@ -7,10 +7,10 @@
     "graph-ng"
   ],
   "datasource": [
-    "default.uid"
-  ],
-  "datasourceType": [
-    "default.type"
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
   ],
   "panels": [
     {
@@ -19,10 +19,10 @@
       "type": "timeseries",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ]
     },
     {
@@ -31,10 +31,10 @@
       "type": "xychart",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ],
       "transformations": [
         "seriesToColumns",
@@ -47,10 +47,10 @@
       "type": "debug",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ]
     },
     {
@@ -59,10 +59,10 @@
       "type": "timeseries",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ]
     },
     {
@@ -71,10 +71,10 @@
       "type": "timeseries",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ]
     },
     {
@@ -83,10 +83,10 @@
       "type": "timeseries",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ]
     },
     {
@@ -95,10 +95,10 @@
       "type": "graph",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ]
     },
     {
@@ -107,10 +107,10 @@
       "type": "graph",
       "pluginVersion": "7.5.0-pre",
       "datasource": [
-        "default.uid"
-      ],
-      "datasourceType": [
-        "default.type"
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
       ]
     }
   ],

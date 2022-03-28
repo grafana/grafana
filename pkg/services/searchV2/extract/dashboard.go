@@ -133,8 +133,7 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
 	for _, panel := range dash.Panels {
 		targets.addPanel(panel)
 	}
-	dash.Datasource = targets.GetDatasourceList()
-	dash.DatasourceType = targets.GetDatasourceTypes()
+	dash.Datasource = targets.GetDatasourceInfo()
 
 	return dash
 }
@@ -213,8 +212,7 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelInfo {
 		}
 	}
 
-	panel.Datasource = targets.GetDatasourceList()
-	panel.DatasourceType = targets.GetDatasourceTypes()
+	panel.Datasource = targets.GetDatasourceInfo()
 
 	return panel
 }

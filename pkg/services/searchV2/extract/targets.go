@@ -6,33 +6,21 @@ import (
 
 type targetInfo struct {
 	lookup DatasourceLookup
-	uids   map[string]bool
-	types  map[string]bool
+	uids   map[string]*DataSourceRef
 }
 
 func newTargetInfo(lookup DatasourceLookup) targetInfo {
 	return targetInfo{
 		lookup: lookup,
-		uids:   make(map[string]bool),
-		types:  make(map[string]bool),
+		uids:   make(map[string]*DataSourceRef),
 	}
 }
 
-func (s *targetInfo) GetDatasourceList() []string {
-	keys := make([]string, len(s.uids))
+func (s *targetInfo) GetDatasourceInfo() []DataSourceRef {
+	keys := make([]DataSourceRef, len(s.uids))
 	i := 0
-	for k := range s.uids {
-		keys[i] = k
-		i++
-	}
-	return keys
-}
-
-func (s *targetInfo) GetDatasourceTypes() []string {
-	keys := make([]string, len(s.types))
-	i := 0
-	for k := range s.types {
-		keys[i] = k
+	for _, v := range s.uids {
+		keys[i] = *v
 		i++
 	}
 	return keys
@@ -44,10 +32,8 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 
 	case jsoniter.StringValue:
 		key := iter.ReadString()
-		ds := s.lookup(&DataSourceRef{UID: key, Name: key})
-		if !s.addRef(ds) {
-			s.uids[key] = true
-		}
+		ds := s.lookup(&DataSourceRef{UID: key})
+		s.addRef(ds)
 
 	case jsoniter.NilValue:
 		s.addRef(s.lookup(nil))
@@ -57,9 +43,7 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 		ref := &DataSourceRef{}
 		iter.ReadVal(ref)
 		ds := s.lookup(ref)
-		if !s.addRef(ds) && ref.UID != "" {
-			s.uids[ref.UID] = true
-		}
+		s.addRef(ds)
 
 	default:
 		v := iter.Read()
@@ -67,17 +51,10 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 	}
 }
 
-func (s *targetInfo) addRef(ref *DataSourceRef) bool {
-	if ref == nil {
-		return false
+func (s *targetInfo) addRef(ref *DataSourceRef) {
+	if ref != nil && ref.UID != "" {
+		s.uids[ref.UID] = ref
 	}
-	if ref.UID != "" {
-		s.uids[ref.UID] = true
-	}
-	if ref.Type != "" {
-		s.types[ref.Type] = true
-	}
-	return true
 }
 
 func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
@@ -98,9 +75,8 @@ func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
 
 func (s *targetInfo) addPanel(panel PanelInfo) {
 	for _, v := range panel.Datasource {
-		s.uids[v] = true
-	}
-	for _, v := range panel.DatasourceType {
-		s.types[v] = true
+		if v.UID != "" {
+			s.uids[v.UID] = &v
+		}
 	}
 }

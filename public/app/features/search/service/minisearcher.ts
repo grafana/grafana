@@ -1,5 +1,5 @@
 import MiniSearch from 'minisearch';
-import { ArrayVector, DataFrame, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
+import { ArrayVector, DataFrame, DataSourceRef, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
@@ -22,6 +22,7 @@ interface InputDoc {
   description?: Vector<string>;
   dashboardID?: Vector<number>;
   location?: Vector<LocationInfo[]>;
+  dsList?: Vector<DataSourceRef[]>;
   type?: Vector<string>;
   tags?: Vector<string[]>; // JSON strings?
 }
@@ -176,6 +177,7 @@ export class MiniSearcher implements GrafanaSearcher {
     const name: string[] = [];
     const tags: string[][] = [];
     const location: LocationInfo[][] = [];
+    const dsList: DataSourceRef[][] = [];
     const info: any[] = [];
     const score: number[] = [];
 
@@ -189,6 +191,7 @@ export class MiniSearcher implements GrafanaSearcher {
 
       url.push(input.url?.get(index) ?? '?');
       location.push(input.location?.get(index) as any);
+      dsList.push(input.dsList?.get(index) as any);
       tags.push(input.tags?.get(index) as any);
       kind.push(key.kind);
       name.push(input.name?.get(index) ?? '?');
@@ -197,10 +200,10 @@ export class MiniSearcher implements GrafanaSearcher {
       score.push(res.score);
     }
     const fields: Field[] = [
-      { name: 'Kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
-      { name: 'Name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
+      { name: 'kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
+      { name: 'name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
       {
-        name: 'URL',
+        name: 'url',
         config: {},
         type: FieldType.string,
         values: new ArrayVector(url),
@@ -209,6 +212,7 @@ export class MiniSearcher implements GrafanaSearcher {
       { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
       { name: 'tags', config: {}, type: FieldType.other, values: new ArrayVector(tags) },
       { name: 'location', config: {}, type: FieldType.other, values: new ArrayVector(location) },
+      { name: 'dsList', config: {}, type: FieldType.other, values: new ArrayVector(dsList) },
       { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
     ];
     for (const field of fields) {

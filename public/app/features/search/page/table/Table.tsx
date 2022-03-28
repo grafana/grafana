@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
-import { DataFrame, DataFrameType, Field, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, DataFrameType, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Checkbox, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
@@ -22,61 +22,29 @@ type TableColumn = Column & {
 };
 
 interface FieldAccess {
-  kind?: Field<string>; // panel, dashboard, folder
-  name?: Field<string>;
-  description?: Field<string>;
-  url?: Field<string>; // link to value (unique)
-  type?: Field<string>; // graph
-  tags?: Field<any>;
-  location?: Field<LocationInfo[]>; // the folder name
-  score?: Field<number>;
+  kind?: string; // panel, dashboard, folder
+  name?: string;
+  description?: string;
+  url?: string; // link to value (unique)
+  type?: string; // graph
+  tags?: string[];
+  location?: LocationInfo[]; // the folder name
+  score?: number;
 
   // Count info
-  panelCount?: Field<number>;
-  dsCount?: Field<number>;
-  dsTypes?: Field<string>;
-}
-
-function getFieldAccess(frame: DataFrame): FieldAccess {
-  const a: FieldAccess = {};
-  for (const f of frame.fields) {
-    switch (f.name.toLowerCase()) {
-      case 'name':
-        a.name = f;
-        break;
-      case 'kind':
-        a.kind = f;
-        break;
-      case 'location':
-        a.location = f;
-        break;
-      case 'type':
-        a.type = f;
-        break;
-      case 'tags':
-        a.tags = f;
-        break;
-      case 'url':
-        a.url = f;
-        break;
-      case 'panelcount':
-        a.panelCount = f;
-      case 'dscount':
-        a.dsCount = f;
-      case 'dstypes':
-        a.dsTypes = f;
-    }
-  }
-  return a;
+  panelCount?: number;
+  dsList?: DataSourceRef[];
 }
 
 const generateColumns = (
-  access: FieldAccess,
+  data: DataFrameView<FieldAccess>,
   isDashboardList: boolean,
   availableWidth: number,
   styles: { [key: string]: string }
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
+  const urlField = data.fields.url!;
+  const access = data.fields;
 
   availableWidth -= 8; // ???
   let width = 50;
@@ -95,7 +63,7 @@ const generateColumns = (
         </div>
       ),
       accessor: 'check',
-      field: access.name!,
+      field: urlField,
       width: 30,
     });
     availableWidth -= width;
@@ -161,11 +129,11 @@ const generateColumns = (
       Header: 'Info',
       accessor: (row: any, i: number) => {
         const panelCount = access.panelCount?.values.get(i);
-        const dsCount = access.dsCount?.values.get(i);
+        const dsList = access.dsList?.values.get(i);
         return (
           <div className={styles.infoWrap}>
             {panelCount != null && <span>Panels: {panelCount}</span>}
-            {dsCount != null && <span>Data sources: {dsCount}</span>}
+            {dsList != null && <span>Data sources: {dsList.length}</span>}
           </div>
         );
       },
@@ -246,7 +214,7 @@ const generateColumns = (
       field: access.location ?? access.url,
       Header: 'Location',
       accessor: (row: any, i: number) => {
-        const location = access.location?.values.get(i);
+        const location = access.location?.values.get(i) as LocationInfo[];
         if (location) {
           return (
             <div>
@@ -289,7 +257,7 @@ export const Table = ({ data, width }: Props) => {
   }, [data]);
 
   // React-table column definitions
-  const access = useMemo(() => getFieldAccess(data), [data]);
+  const access = useMemo(() => new DataFrameView<FieldAccess>(data), [data]);
   const memoizedColumns = useMemo(() => {
     const isDashboardList = data.meta?.type === DataFrameType.DirectoryListing;
     return generateColumns(access, isDashboardList, width, styles);
@@ -310,7 +278,7 @@ export const Table = ({ data, width }: Props) => {
       const row = rows[rowIndex];
       prepareRow(row);
 
-      const url = access.url?.values.get(rowIndex);
+      const url = access.fields.url?.values.get(rowIndex);
 
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
@@ -346,7 +314,7 @@ export const Table = ({ data, width }: Props) => {
         </div>
       );
     },
-    [rows, prepareRow, access.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
+    [rows, prepareRow, access.fields.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
   );
 
   return (

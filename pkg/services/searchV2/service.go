@@ -126,7 +126,6 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 		updated:   time.Now(),
 		dash: &extract.DashboardInfo{
 			ID:    0,
-			Path:  "",
 			UID:   "",
 			Title: "General",
 		},
@@ -189,7 +188,6 @@ func loadDatasoureLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStor
 		for _, row := range rows {
 			ds := &extract.DataSourceRef{
 				UID:  row.UID,
-				Name: row.Name,
 				Type: row.Type,
 			}
 			byUID[row.UID] = ds
@@ -217,13 +215,6 @@ func loadDatasoureLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStor
 				return ds
 			}
 			key = ref.UID
-		}
-		if ref.Name != "" {
-			ds, ok := byUID[ref.Name]
-			if ok {
-				return ds
-			}
-			key = ref.Name
 		}
 		if ref.Type != "" {
 			// ?? get default by type
@@ -268,9 +259,9 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	folderName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	folderDashCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 
-	folderID.Name = "ID"
-	folderUID.Name = "UID"
-	folderName.Name = "Name"
+	folderID.Name = "id"
+	folderUID.Name = "uid"
+	folderName.Name = "name"
 	folderDashCount.Name = "DashCount"
 
 	dashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
@@ -285,28 +276,26 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashTags := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 	dashPanelCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashVarCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	dashDSCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	dashDSTypes := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
+	dashDSList := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 
-	dashID.Name = "ID"
-	dashUID.Name = "UID"
-	dashFolderID.Name = "FolderID"
-	dashName.Name = "Name"
-	dashDescr.Name = "Description"
-	dashTags.Name = "Tags"
+	dashID.Name = "id"
+	dashUID.Name = "uid"
+	dashFolderID.Name = "folderID"
+	dashName.Name = "name"
+	dashDescr.Name = "description"
+	dashTags.Name = "tags"
 	dashSchemaVersion.Name = "SchemaVersion"
 	dashCreated.Name = "Created"
 	dashUpdated.Name = "Updated"
-	dashURL.Name = "URL"
+	dashURL.Name = "url"
 	dashURL.Config = &data.FieldConfig{
 		Links: []data.DataLink{
 			{Title: "link", URL: "${__value.text}"},
 		},
 	}
-	dashPanelCount.Name = "PanelCount"
-	dashVarCount.Name = "VarCount"
-	dashDSCount.Name = "DSCount"
-	dashDSTypes.Name = "DSTypes"
+	dashPanelCount.Name = "panelCount"
+	dashVarCount.Name = "varCount"
+	dashDSList.Name = "dsList"
 
 	dashTags.Config = &data.FieldConfig{
 		Custom: map[string]interface{}{
@@ -321,11 +310,11 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	panelDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	panelType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 
-	panelDashID.Name = "DashboardID"
-	panelID.Name = "ID"
-	panelName.Name = "Name"
-	panelDescr.Name = "Description"
-	panelType.Name = "Type"
+	panelDashID.Name = "dashboardID"
+	panelID.Name = "id"
+	panelName.Name = "name"
+	panelDescr.Name = "description"
+	panelType.Name = "type"
 
 	panelTypeCounter := simpleCounter{
 		values: make(map[string]int64, 30),
@@ -371,8 +360,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		dashTags.Append(toJSONString(row.dash.Tags))
 		dashPanelCount.Append(int64(len(row.dash.Panels)))
 		dashVarCount.Append(int64(len(row.dash.TemplateVars)))
-		dashDSCount.Append(int64(len(row.dash.Datasource)))
-		dashDSTypes.Append(toJSONString(row.dash.DatasourceType))
+		dashDSList.Append(dsAsJSONString(row.dash.Datasource))
 
 		// Row for each panel
 		for _, panel := range row.dash.Panels {
@@ -398,7 +386,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID,
 			dashName, dashDescr, dashTags,
 			dashSchemaVersion,
-			dashPanelCount, dashVarCount, dashDSCount, dashDSTypes,
+			dashPanelCount, dashVarCount, dashDSList,
 			dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
 		panelTypeCounter.toFrame("panel-type-counts"),
@@ -407,6 +395,18 @@ func metaToFrame(meta []dashMeta) data.Frames {
 }
 
 func toJSONString(vals []string) *string {
+	if len(vals) < 1 {
+		return nil
+	}
+	b, err := json.Marshal(vals)
+	if err == nil {
+		s := string(b)
+		return &s
+	}
+	return nil
+}
+
+func dsAsJSONString(vals []extract.DataSourceRef) *string {
 	if len(vals) < 1 {
 		return nil
 	}
