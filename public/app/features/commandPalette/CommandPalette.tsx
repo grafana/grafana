@@ -11,8 +11,8 @@ import {
   useRegisterActions,
   useKBar,
 } from 'kbar';
-import getGlobalActions from './global.actions';
-import getDashboardNavActions from './dashboard.nav.actions';
+import getGlobalActions from './actions/global.static.actions';
+import getDashboardNavActions from './actions/dashboard.nav.actions';
 
 /**
  * Wrap all the components from KBar here.
@@ -25,7 +25,7 @@ export const CommandPalette = () => {
   const { query } = useKBar();
 
   useEffect(() => {
-    const regDashboardActions = async () => {
+    const addDashboardActions = async () => {
       //const staticActions = getGlobalActions();
       const dashAct = await getDashboardNavActions();
       console.log('add dashboard actions', query);
@@ -33,7 +33,7 @@ export const CommandPalette = () => {
       setActions([...actions, ...dashAct]);
       return dashAct;
     };
-    regDashboardActions();
+    addDashboardActions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
