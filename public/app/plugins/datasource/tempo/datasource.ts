@@ -201,9 +201,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars): Record<string, any> {
-    query = this.applyVariables(query, scopedVars, scopedVars);
+    return this.applyVariables(query, scopedVars, scopedVars);
+  }
 
-    return query;
+  interpolateVariablesInQueries(queries: TempoQuery[], scopedVars: ScopedVars): TempoQuery[] {
+    if (!queries || queries.length === 0) {
+      return [];
+    }
+
+    return queries.map((query) => {
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars, scopedVars),
+      };
+    });
   }
 
   applyVariables(query: TempoQuery, scopedVars: ScopedVars, rest: ScopedVars) {
