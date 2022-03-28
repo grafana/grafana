@@ -16,7 +16,7 @@ import { FunctionalVector } from '../vector/FunctionalVector';
 export class DataFrameView<T = any> extends FunctionalVector<T> {
   private index = 0;
   private obj: T;
-  readonly fields: Record<keyof T, Field>;
+  readonly fields: Record<keyof T, Field<any>>; // any should be value type
 
   constructor(private data: DataFrame) {
     super();

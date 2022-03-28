@@ -195,7 +195,7 @@ export class MiniSearcher implements GrafanaSearcher {
       tags.push(input.tags?.get(index) as any);
       kind.push(key.kind);
       name.push(input.name?.get(index) ?? '?');
-      type.push(input.type?.get(index) ?? '?');
+      type.push(input.type?.get(index)!);
       info.push(res.match); // ???
       score.push(res.score);
     }
@@ -266,8 +266,13 @@ function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc {
       case 'type':
         input.type = field.values;
         break;
+      case 'folderID':
       case 'FolderID':
         input.folder = field.values;
+        break;
+      case 'dsList':
+      case 'DSList':
+        input.dsList = field.values;
         break;
     }
   }

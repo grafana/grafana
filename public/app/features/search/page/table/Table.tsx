@@ -2,22 +2,20 @@ import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
 import { DataFrame, DataFrameType, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Checkbox, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
-import SVG from 'react-inlinesvg';
-
-import { config } from '@grafana/runtime';
 import { LocationInfo } from '../../service';
+import { makeDataSourceColumn, makeTagsColumn, makeTypeColumn } from './columns';
 
 type Props = {
   data: DataFrame;
   width: number;
 };
 
-type TableColumn = Column & {
+export type TableColumn = Column & {
   field?: Field;
 };
 
@@ -104,23 +102,19 @@ const generateColumns = (
     });
     availableWidth -= width;
 
-    // tags...
-    width = 200;
-    columns.push({
-      Cell: DefaultCell,
-      id: `column-tags`,
-      field: access.name!,
-      Header: 'Tags',
-      accessor: (row: any, i: number) => {
-        const tags = access.tags?.values.get(i);
-        if (tags) {
-          return <TagList tags={tags} onClick={(v) => alert('UPDATE query.... tag:' + v)} />;
-        }
-        return null;
-      },
-      width,
-    });
-    availableWidth -= width;
+    // Show tags if we have any
+    if (access.tags && hasFieldValue(access.tags)) {
+      width = 200;
+      columns.push(makeTagsColumn(access.tags, width));
+      availableWidth -= width;
+    }
+
+    // Show tags if we have any
+    if (access.dsList && hasFieldValue(access.dsList)) {
+      width = 200;
+      columns.push(makeDataSourceColumn(access.dsList, width, styles.typeIcon));
+      availableWidth -= width;
+    }
 
     columns.push({
       Cell: DefaultCell,
@@ -129,82 +123,27 @@ const generateColumns = (
       Header: 'Info',
       accessor: (row: any, i: number) => {
         const panelCount = access.panelCount?.values.get(i);
-        const dsList = access.dsList?.values.get(i);
-        return (
-          <div className={styles.infoWrap}>
-            {panelCount != null && <span>Panels: {panelCount}</span>}
-            {dsList != null && <span>Data sources: {dsList.length}</span>}
-          </div>
-        );
+        return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
       },
       width: Math.max(availableWidth, 100),
     });
   } else {
     // The type column
     width = 150;
-    columns.push({
-      Cell: DefaultCell,
-      id: `column-type`,
-      field: access.kind ?? access.url!,
-      Header: 'Type',
-      accessor: (row: any, i: number) => {
-        let icon = 'public/img/icons/unicons/apps.svg';
-        let txt = 'Dashboard';
-        if (access.kind) {
-          txt = access.kind.values.get(i);
-          switch (txt) {
-            case 'dashboard':
-              txt = 'Dashboard';
-              break;
-
-            case 'folder':
-              icon = 'public/img/icons/unicons/folder.svg';
-              txt = 'Folder';
-              break;
-
-            case 'panel':
-              icon = 'public/img/icons/unicons/graph-bar.svg';
-              txt = access.type?.values.get(i) ?? txt;
-              const info = config.panels[txt];
-              if (info?.name) {
-                const v = info.info?.logos.small;
-                if (v && v.endsWith('.svg')) {
-                  icon = v;
-                }
-                txt = info.name;
-              }
-              break;
-          }
-        }
-
-        return (
-          <div className={styles.typeText}>
-            <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
-            {txt}
-          </div>
-        );
-      },
-      width,
-    });
+    columns.push(makeTypeColumn(access.kind, access.type, width, styles.typeText, styles.typeIcon));
     availableWidth -= width;
 
     // Show tags if we have any
-    if (access.tags && hasTagValue(access.tags)) {
+    if (access.tags && hasFieldValue(access.tags)) {
       width = 200;
-      columns.push({
-        Cell: DefaultCell,
-        id: `column-tags`,
-        field: access.name!,
-        Header: 'Tags',
-        accessor: (row: any, i: number) => {
-          const tags = access.tags?.values.get(i);
-          if (tags) {
-            return <TagList tags={tags} onClick={(v) => console.log('CLICKED TAG', v)} />;
-          }
-          return null;
-        },
-        width,
-      });
+      columns.push(makeTagsColumn(access.tags, width));
+      availableWidth -= width;
+    }
+
+    // Show tags if we have any
+    if (access.dsList && hasFieldValue(access.dsList)) {
+      width = 200;
+      columns.push(makeDataSourceColumn(access.dsList, width, styles.typeIcon));
       availableWidth -= width;
     }
 
@@ -357,7 +296,7 @@ export const Table = ({ data, width }: Props) => {
   );
 };
 
-function hasTagValue(field: Field): boolean {
+function hasFieldValue(field: Field): boolean {
   for (let i = 0; i < field.values.length; i++) {
     const v = field.values.get(i);
     if (v && v.length) {
