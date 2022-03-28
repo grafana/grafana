@@ -24685,9 +24685,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"kbar@npm:^0.1.0-beta.30":
-  version: 0.1.0-beta.30
-  resolution: "kbar@npm:0.1.0-beta.30"
+"kbar@portal:/Users/kristinadurivage/development/kbar::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "kbar@portal:/Users/kristinadurivage/development/kbar::locator=grafana%40workspace%3A."
   dependencies:
     "@reach/portal": ^0.16.0
     fast-equals: ^2.0.3
@@ -24697,9 +24697,8 @@ __metadata:
   peerDependencies:
     react: ^16.0.0 || ^17.0.0
     react-dom: ^16.0.0 || ^17.0.0
-  checksum: 452614ea4ebaf0f0a707c4aafbf9f587e18d46a80c7792d68631184e1d6966989b0c909c5d049df570f3c83ccd21c1bd268ea543314afd941d3851cf5712dd8d
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "keycharm@npm:^0.2.0":
   version: 0.2.0
