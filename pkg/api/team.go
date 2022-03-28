@@ -141,7 +141,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		teamIDs[strconv.FormatInt(team.Id, 10)] = true
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
+	metadata := hs.getMultiAccessControlMetadata(c, c.OrgId, "teams:id:", teamIDs)
 	if len(metadata) > 0 {
 		for _, team := range query.Result.Teams {
 			team.AccessControl = metadata[strconv.FormatInt(team.Id, 10)]
@@ -195,7 +195,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	}
 
 	// Add accesscontrol metadata
-	query.Result.AccessControl = hs.getAccessControlMetadata(c, "teams:id:", strconv.FormatInt(query.Result.Id, 10))
+	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, "teams:id:", strconv.FormatInt(query.Result.Id, 10))
 
 	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
 	return response.JSON(200, &query.Result)
