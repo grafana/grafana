@@ -111,10 +111,15 @@ export class GeomapPanel extends Component<Props, State> {
       this.dataChanged(nextProps.data);
     }
 
+    // Options changed
+    if (this.props.options !== nextProps.options) {
+      this.optionsChanged(nextProps.options);
+    }
+
     return true; // always?
   }
 
-  /** This funciton will actually update the JSON model */
+  /** This function will actually update the JSON model */
   private doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
