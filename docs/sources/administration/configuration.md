@@ -20,7 +20,7 @@ Depending on your OS, your custom configuration file is either the `$WORKING_DIR
 
 ### Linux
 
-If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
+If you installed Grafana using the `deb` or `rpm` packages, defaults will be in `/usr/share/grafana/conf/defaults.ini` and the grafana daemon will be started as a system service with `--config` set to `/etc/grafana/grafana.ini`. Any custom overrides should be set in `/etc/grafana/grafana.ini`.
 
 ### Docker
 
