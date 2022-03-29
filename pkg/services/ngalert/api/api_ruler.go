@@ -104,21 +104,24 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 
 	result := apimodels.NamespaceConfigResponse{}
 	ruleGroupConfigs := make(map[string]apimodels.GettableRuleGroupConfig)
-	for _, r := range q.Result {
-		// TODO r.RuleGroup is the folder ID here, needs to be the folder name
-		ruleGroupConfig, ok := ruleGroupConfigs[r.RuleGroup]
-		if !ok {
-			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
-			ruleGroupConfigs[r.RuleGroup] = apimodels.GettableRuleGroupConfig{
-				Name:     r.RuleGroup, // TODO this needs to be the name of the folder
-				Interval: ruleGroupInterval,
-				Rules: []apimodels.GettableExtendedRuleNode{
-					toGettableExtendedRuleNode(*r),
-				},
+
+	for groupName, rules := range q.Result {
+		for _, rule := range rules {
+			// TODO r.RuleGroup is the folder ID here, needs to be the folder name
+			ruleGroupConfig, ok := ruleGroupConfigs[groupName]
+			if !ok {
+				ruleGroupInterval := model.Duration(time.Duration(rule.IntervalSeconds) * time.Second)
+				ruleGroupConfigs[groupName] = apimodels.GettableRuleGroupConfig{
+					Name:     groupName, // TODO this needs to be the name of the folder
+					Interval: ruleGroupInterval,
+					Rules: []apimodels.GettableExtendedRuleNode{
+						toGettableExtendedRuleNode(*rule),
+					},
+				}
+			} else {
+				ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*rule))
+				ruleGroupConfigs[groupName] = ruleGroupConfig
 			}
-		} else {
-			ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r))
-			ruleGroupConfigs[r.RuleGroup] = ruleGroupConfig
 		}
 	}
 

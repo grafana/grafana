@@ -305,17 +305,39 @@ func (st DBstore) GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAler
 	})
 }
 
+type AlertRuleWithGroupName struct {
+	Rule      ngmodels.AlertRule `xorm:"extends"`
+	GroupName string             `xorm:"group_name"`
+}
+
 // GetNamespaceAlertRules is a handler for retrieving namespace alert rules of specific organisation.
 func (st DBstore) GetNamespaceAlertRules(ctx context.Context, query *ngmodels.ListNamespaceAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		// TODO rewrite using group by namespace_uid, rule_group
-		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ?"
-		if err := sess.SQL(q, query.OrgID, query.NamespaceUID).Find(&alertRules); err != nil {
+		rules := make([]*AlertRuleWithGroupName, 0)
+		results := make(map[string][]*ngmodels.AlertRule, 0)
+
+		q := `
+			SELECT *, dashboard.title as group_name
+			FROM alert_rule
+			INNER JOIN dashboard
+				ON dashboard.uid = alert_rule.rule_group
+			WHERE alert_rule.org_id = ? and namespace_uid = ?
+		`
+		err := sess.SQL(q, query.OrgID, query.NamespaceUID).Find(&rules)
+		if err != nil {
 			return err
 		}
 
-		query.Result = alertRules
+		for _, rule := range rules {
+			_, ok := results[rule.GroupName]
+			if !ok {
+				results[rule.GroupName] = make([]*ngmodels.AlertRule, 0)
+			}
+			results[rule.GroupName] = append(results[rule.GroupName], &rule.Rule)
+		}
+
+		query.Result = results
+
 		return nil
 	})
 }
