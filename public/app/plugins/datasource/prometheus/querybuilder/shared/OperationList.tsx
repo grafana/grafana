@@ -115,7 +115,9 @@ export function OperationList<T extends QueryWithOperations>({
               placeholder={'Search'}
             />
           ) : (
-            <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} title={'Add operation'} />
+            <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} title={'Add operation'}>
+              Operations
+            </Button>
           )}
         </div>
       </Stack>
@@ -126,17 +128,20 @@ export function OperationList<T extends QueryWithOperations>({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     heading: css({
+      label: 'heading',
       fontSize: 12,
       fontWeight: theme.typography.fontWeightMedium,
       marginBottom: 0,
     }),
     operationList: css({
+      label: 'operationList',
       display: 'flex',
       flexWrap: 'wrap',
       gap: theme.spacing(2),
     }),
     addButton: css({
-      width: 150,
+      label: 'addButton',
+      width: 126,
       paddingBottom: theme.spacing(1),
     }),
   };

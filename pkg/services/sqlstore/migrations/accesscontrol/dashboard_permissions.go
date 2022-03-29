@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -35,21 +36,21 @@ var dashboardPermissionTranslation = map[models.PermissionType][]string{
 
 var folderPermissionTranslation = map[models.PermissionType][]string{
 	models.PERMISSION_VIEW: append(dashboardPermissionTranslation[models.PERMISSION_VIEW], []string{
-		ac.ActionFoldersRead,
+		dashboards.ActionFoldersRead,
 	}...),
 	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
-		ac.ActionFoldersRead,
-		ac.ActionFoldersWrite,
-		ac.ActionFoldersCreate,
-		ac.ActionFoldersDelete,
+		dashboards.ActionFoldersRead,
+		dashboards.ActionFoldersWrite,
+		dashboards.ActionFoldersCreate,
+		dashboards.ActionFoldersDelete,
 	}...),
 	models.PERMISSION_ADMIN: append(dashboardPermissionTranslation[models.PERMISSION_ADMIN], []string{
-		ac.ActionFoldersRead,
-		ac.ActionFoldersWrite,
-		ac.ActionFoldersCreate,
-		ac.ActionFoldersDelete,
-		ac.ActionFoldersPermissionsRead,
-		ac.ActionFoldersPermissionsWrite,
+		dashboards.ActionFoldersRead,
+		dashboards.ActionFoldersWrite,
+		dashboards.ActionFoldersCreate,
+		dashboards.ActionFoldersDelete,
+		dashboards.ActionFoldersPermissionsRead,
+		dashboards.ActionFoldersPermissionsWrite,
 	}...),
 }
 
@@ -128,7 +129,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 
 	var allRoles []*ac.Role
 	rolesToCreate := []*ac.Role{}
-	assignments := map[int64]map[string]struct{}{}
 	for orgID, roles := range permissionMap {
 		for name := range roles {
 			role, err := m.findRole(orgID, name)
@@ -137,10 +137,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 			}
 			if role.ID == 0 {
 				rolesToCreate = append(rolesToCreate, &ac.Role{OrgID: orgID, Name: name})
-				if _, ok := assignments[orgID]; !ok {
-					assignments[orgID] = map[string]struct{}{}
-				}
-				assignments[orgID][name] = struct{}{}
 			} else {
 				allRoles = append(allRoles, &role)
 			}
@@ -152,16 +148,11 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		return err
 	}
 
-	rolesToAssign := map[int64]map[string]*ac.Role{}
 	for i := range createdRoles {
-		if _, ok := rolesToAssign[createdRoles[i].OrgID]; !ok {
-			rolesToAssign[createdRoles[i].OrgID] = map[string]*ac.Role{}
-		}
-		rolesToAssign[createdRoles[i].OrgID][createdRoles[i].Name] = createdRoles[i]
 		allRoles = append(allRoles, createdRoles[i])
 	}
 
-	if err := m.bulkAssignRoles(rolesToAssign, assignments); err != nil {
+	if err := m.bulkAssignRoles(createdRoles); err != nil {
 		return err
 	}
 
@@ -202,7 +193,7 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.PermissionType, isFolder bool) []*ac.Permission {
 	if isFolder {
 		actions := folderPermissionTranslation[p]
-		scope := ac.Scope("folders", "id", strconv.FormatInt(id, 10))
+		scope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
 		permissions := make([]*ac.Permission, 0, len(actions))
 		for _, action := range actions {
 			permissions = append(permissions, &ac.Permission{Action: action, Scope: scope})

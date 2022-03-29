@@ -197,7 +197,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.test.tsx:2536713486": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.test.tsx:4134073823": [
+    "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.test.tsx:1262111696": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1044891955": [
@@ -227,20 +227,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:2556927610": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/ErrorContainer.test.tsx:2082593062": [
-      [2, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/Explore.test.tsx:2684077338": [
-      [11, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/ExploreDrawer.test.tsx:2094071178": [
-      [1, 17, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/explore/LiveLogs.test.tsx:1667605379": [
       [2, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/MetaInfoText.test.tsx:802018588": [
-      [1, 27, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/RichHistory/RichHistory.test.tsx:409631018": [
       [1, 17, 13, "RegExp match", "2409514259"]
@@ -353,7 +341,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:1231427": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1206229922": [
+    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1527575498": [
       [1, 31, 13, "RegExp match", "2409514259"]
     ]
   }`

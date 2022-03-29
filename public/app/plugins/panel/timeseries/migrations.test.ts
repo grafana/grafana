@@ -406,6 +406,24 @@ describe('Graph Migrations', () => {
       expect(panel.fieldConfig).toMatchSnapshot();
     });
   });
+
+  describe('transforms', () => {
+    test.each(['negative-Y', 'constant'])('should preserve %p transform', (transform) => {
+      const old: any = {
+        angular: {
+          seriesOverrides: [
+            {
+              alias: 'out',
+              transform,
+            },
+          ],
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig).toMatchSnapshot();
+    });
+  });
 });
 
 const customColor = {

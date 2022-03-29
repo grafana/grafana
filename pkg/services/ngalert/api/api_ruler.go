@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 
 	"github.com/prometheus/common/model"
 
@@ -26,64 +28,96 @@ import (
 )
 
 type RulerSrv struct {
+	xactManager     store.TransactionManager
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
 	QuotaService    *quota.QuotaService
 	scheduleService schedule.ScheduleService
 	log             log.Logger
 	cfg             *setting.UnifiedAlertingSettings
+	ac              accesscontrol.AccessControl
 }
 
 var (
 	errQuotaReached = errors.New("quota has been exceeded")
 )
 
-func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
+// RouteDeleteAlertRules deletes all alert rules user is authorized to access in the namespace (request parameter :Namespace)
+// or, if specified, a group of rules (request parameter :Groupname) in the namespace
+func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
+	var loggerCtx = []interface{}{
+		"namespace",
+		namespace.Title,
+	}
+	var ruleGroup *string
+	if group, ok := web.Params(c.Req)[":Groupname"]; ok {
+		ruleGroup = &group
+		loggerCtx = append(loggerCtx, "group", group)
+	}
+	logger := srv.log.New(loggerCtx...)
 
-	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid)
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
+	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 	}
 
-	for _, uid := range uids {
-		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
-			OrgID: c.SignedInUser.OrgId,
-			UID:   uid,
-		})
-	}
+	var canDelete, cannotDelete []string
+	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		q := ngmodels.GetAlertRulesQuery{
+			OrgID:        c.SignedInUser.OrgId,
+			NamespaceUID: namespace.Uid,
+			RuleGroup:    ruleGroup,
+		}
+		if err = srv.store.GetAlertRules(ctx, &q); err != nil {
+			return err
+		}
 
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
-}
+		if len(q.Result) == 0 {
+			logger.Debug("no alert rules to delete from namespace/group")
+			return nil
+		}
 
-func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+		canDelete = make([]string, 0, len(q.Result))
+		for _, rule := range q.Result {
+			if authorizeDatasourceAccessForRule(rule, hasAccess) {
+				canDelete = append(canDelete, rule.UID)
+				continue
+			}
+			cannotDelete = append(cannotDelete, rule.UID)
+		}
+
+		if len(canDelete) == 0 {
+			return fmt.Errorf("%w to delete rules because user is not authorized to access data sources used by the rules", ErrAuthorization)
+		}
+
+		if len(cannotDelete) > 0 {
+			logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(q.Result), "authorized", len(canDelete), "unauthorized", cannotDelete)
+		}
+
+		return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgId, canDelete...)
+	})
+
 	if err != nil {
-		return toNamespaceErrorResponse(err)
-	}
-	ruleGroup := web.Params(c.Req)[":Groupname"]
-	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
-
-	if err != nil {
-		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "failed to delete rule group")
+		if errors.Is(err, ErrAuthorization) {
+			return ErrResp(http.StatusUnauthorized, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
 
-	for _, uid := range uids {
+	logger.Debug("rules have been deleted from the store. updating scheduler")
+
+	for _, uid := range canDelete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   uid,
 		})
 	}
 
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
 }
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
@@ -135,12 +169,12 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	}
 
 	ruleGroup := web.Params(c.Req)[":Groupname"]
-	q := ngmodels.ListRuleGroupAlertRulesQuery{
+	q := ngmodels.GetAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
 		NamespaceUID: namespace.Uid,
-		RuleGroup:    ruleGroup,
+		RuleGroup:    &ruleGroup,
 	}
-	if err := srv.store.GetRuleGroupAlertRules(c.Req.Context(), &q); err != nil {
+	if err := srv.store.GetAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
@@ -258,30 +292,76 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	return srv.updateAlertRulesInGroup(c, namespace, ruleGroupConfig.Name, rules)
 }
 
+// updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
+// All operations are performed in a single transaction
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
-	// TODO add create rules authz logic
+	var authorizedChanges *changes
+	hasAccess := accesscontrol.HasAccess(srv.ac, c)
+	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
+		logger := srv.log.New("namespace_uid", namespace.Uid, "group", groupName, "org_id", c.OrgId, "user_id", c.UserId)
 
-	var changes *RuleChanges = nil
-	err := srv.store.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
-		var err error
-		changes, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
+		groupChanges, err := calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
 		if err != nil {
 			return err
 		}
 
-		// TODO add update/delete authz logic
-		err = srv.store.UpsertAlertRules(tranCtx, changes.Upsert)
-		if err != nil {
-			return fmt.Errorf("failed to add or update rules: %w", err)
+		if groupChanges.isEmpty() {
+			authorizedChanges = groupChanges
+			logger.Info("no changes detected in the request. Do nothing")
+			return nil
 		}
 
-		for _, rule := range changes.Delete {
-			if err = srv.store.DeleteAlertRuleByUID(tranCtx, c.SignedInUser.OrgId, rule.UID); err != nil {
-				return fmt.Errorf("failed to delete rule %d with UID %s: %w", rule.ID, rule.UID, err)
+		authorizedChanges, err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+			return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
+		})
+		if err != nil {
+			return err
+		}
+
+		if authorizedChanges.isEmpty() {
+			logger.Info("no authorized changes detected in the request. Do nothing", "not_authorized_add", len(groupChanges.New), "not_authorized_update", len(groupChanges.Update), "not_authorized_delete", len(groupChanges.Delete))
+			return nil
+		}
+
+		if len(groupChanges.Delete) > len(authorizedChanges.Delete) {
+			logger.Info("user is not authorized to delete one or many rules in the group. those rules will be skipped", "expected", len(groupChanges.Delete), "authorized", len(authorizedChanges.Delete))
+		}
+
+		logger.Debug("updating database with the authorized changes", "add", len(authorizedChanges.New), "update", len(authorizedChanges.New), "delete", len(authorizedChanges.Delete))
+
+		if len(authorizedChanges.Update) > 0 || len(authorizedChanges.New) > 0 {
+			upsert := make([]store.UpsertRule, 0, len(authorizedChanges.Update)+len(authorizedChanges.New))
+			for _, update := range authorizedChanges.Update {
+				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
+				upsert = append(upsert, store.UpsertRule{
+					Existing: update.Existing,
+					New:      *update.New,
+				})
+			}
+			for _, rule := range authorizedChanges.New {
+				upsert = append(upsert, store.UpsertRule{
+					Existing: nil,
+					New:      *rule,
+				})
+			}
+			err = srv.store.UpsertAlertRules(tranCtx, upsert)
+			if err != nil {
+				return fmt.Errorf("failed to add or update rules: %w", err)
 			}
 		}
 
-		if changes.newRules > 0 {
+		if len(authorizedChanges.Delete) > 0 {
+			UIDs := make([]string, 0, len(authorizedChanges.Delete))
+			for _, rule := range authorizedChanges.Delete {
+				UIDs = append(UIDs, rule.UID)
+			}
+
+			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.OrgId, UIDs...); err != nil {
+				return fmt.Errorf("failed to delete rules: %w", err)
+			}
+		}
+
+		if len(authorizedChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
 				OrgId:  c.OrgId,
 				UserId: c.UserId,
@@ -303,25 +383,28 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, errQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
+		} else if errors.Is(err, ErrAuthorization) {
+			return ErrResp(http.StatusUnauthorized, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	// TODO uncomment when rules that are not changed will be filter out from the upsert list.
-	// for _, rule := range changes.Upsert {
-	// 	if rule.Existing != nil {
-	// 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
-	// 			OrgID: c.SignedInUser.OrgId,
-	// 			UID:   rule.Existing.UID,
-	// 		})
-	// 	}
-	// }
+	for _, rule := range authorizedChanges.Update {
+		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   rule.Existing.UID,
+		})
+	}
 
-	for _, rule := range changes.Delete {
+	for _, rule := range authorizedChanges.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.UID,
 		})
+	}
+
+	if authorizedChanges.isEmpty() {
+		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
@@ -364,21 +447,31 @@ func toNamespaceErrorResponse(err error) response.Response {
 	return apierrors.ToFolderErrorResponse(err)
 }
 
-type RuleChanges struct {
-	newRules int
-	Upsert   []store.UpsertRule
-	Delete   []*ngmodels.AlertRule
+type ruleUpdate struct {
+	Existing *ngmodels.AlertRule
+	New      *ngmodels.AlertRule
+	Diff     cmputil.DiffReport
+}
+
+type changes struct {
+	New    []*ngmodels.AlertRule
+	Update []ruleUpdate
+	Delete []*ngmodels.AlertRule
+}
+
+func (c *changes) isEmpty() bool {
+	return len(c.Update)+len(c.New)+len(c.Delete) == 0
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
-func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*RuleChanges, error) {
-	q := &ngmodels.ListRuleGroupAlertRulesQuery{
+func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*changes, error) {
+	q := &ngmodels.GetAlertRulesQuery{
 		OrgID:        orgId,
 		NamespaceUID: namespace.Uid,
-		RuleGroup:    ruleGroupName,
+		RuleGroup:    &ruleGroupName,
 	}
-	if err := ruleStore.GetRuleGroupAlertRules(ctx, q); err != nil {
+	if err := ruleStore.GetAlertRules(ctx, q); err != nil {
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", ruleGroupName, err)
 	}
 	existingGroupRules := q.Result
@@ -388,9 +481,8 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		existingGroupRulesUIDs[r.UID] = r
 	}
 
-	upsert := make([]store.UpsertRule, 0, len(submittedRules))
-	toDelete := make([]*ngmodels.AlertRule, 0, len(submittedRules))
-	newRules := 0
+	var toAdd, toDelete []*ngmodels.AlertRule
+	var toUpdate []ruleUpdate
 	for _, r := range submittedRules {
 		var existing *ngmodels.AlertRule = nil
 
@@ -414,19 +506,21 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		}
 
 		if existing == nil {
-			upsert = append(upsert, store.UpsertRule{
-				Existing: nil,
-				New:      *r,
-			})
-			newRules++
+			toAdd = append(toAdd, r)
 			continue
 		}
 
 		ngmodels.PatchPartialAlertRule(existing, r)
-		// TODO diff between patched and existing, as well as between submitted
-		upsert = append(upsert, store.UpsertRule{
+
+		diff := existing.Diff(r, alertRuleFieldsToIgnoreInDiff...)
+		if len(diff) == 0 {
+			continue
+		}
+
+		toUpdate = append(toUpdate, ruleUpdate{
 			Existing: existing,
-			New:      *r,
+			New:      r,
+			Diff:     diff,
 		})
 		continue
 	}
@@ -435,9 +529,12 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		toDelete = append(toDelete, rule)
 	}
 
-	return &RuleChanges{
-		Upsert:   upsert,
-		Delete:   toDelete,
-		newRules: newRules,
+	return &changes{
+		New:    toAdd,
+		Delete: toDelete,
+		Update: toUpdate,
 	}, nil
 }
+
+// alertRuleFieldsToIgnoreInDiff contains fields that the AlertRule.Diff should ignore
+var alertRuleFieldsToIgnoreInDiff = []string{"ID", "Version", "Updated"}

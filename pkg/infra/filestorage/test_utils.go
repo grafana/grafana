@@ -137,6 +137,7 @@ type queryListFiles struct {
 
 type queryListFoldersInput struct {
 	path    string
+	paging  *Paging
 	options *ListOptions
 }
 
@@ -221,7 +222,7 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 	}
 
 	switch o := output.(type) {
-	case File:
+	case *File:
 		for _, check := range checks {
 			checkName := interfaceName(check)
 			if fileContentsCheck, ok := check.(fileContentsCheck); ok {
@@ -234,7 +235,7 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 		for _, check := range checks {
 			runFileMetadataCheck(o, check, interfaceName(check))
 		}
-	case ListFilesResponse:
+	case ListResponse:
 		for _, check := range checks {
 			c := check
 			checkName := interfaceName(c)
@@ -249,13 +250,14 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 				t.Fatalf("unrecognized list check %s", checkName)
 			}
 		}
+
 	default:
 		t.Fatalf("unrecognized output %s", interfaceName(output))
 	}
 
 }
 
-func formatPathStructure(files []FileMetadata) string {
+func formatPathStructure(files []*File) string {
 	if len(files) == 0 {
 		return "<<EMPTY>>"
 	}
@@ -278,13 +280,13 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		if q.checks != nil && len(q.checks) > 0 {
 			require.NotNil(t, file, "%s %s", queryName, inputPath)
 			require.Equal(t, strings.ToLower(inputPath), strings.ToLower(file.FullPath), "%s %s", queryName, inputPath)
-			runChecks(t, queryName, inputPath, *file, q.checks)
+			runChecks(t, queryName, inputPath, file, q.checks)
 		} else {
 			require.Nil(t, file, "%s %s", queryName, inputPath)
 		}
 	case queryListFiles:
 		inputPath := q.input.path
-		resp, err := fs.ListFiles(ctx, inputPath, q.input.paging, q.input.options)
+		resp, err := fs.List(ctx, inputPath, q.input.paging, q.input.options)
 		require.NoError(t, err, "%s: should be able to list files in %s", queryName, inputPath)
 		require.NotNil(t, resp)
 		if q.list != nil && len(q.list) > 0 {
@@ -304,17 +306,33 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		}
 	case queryListFolders:
 		inputPath := q.input.path
-		resp, err := fs.ListFolders(ctx, inputPath, q.input.options)
+		opts := q.input.options
+		if opts == nil {
+			opts = &ListOptions{
+				Recursive:    true,
+				WithFiles:    false,
+				WithFolders:  true,
+				WithContents: false,
+				PathFilters:  nil,
+			}
+		} else {
+			opts.WithFolders = true
+			opts.WithFiles = false
+		}
+		resp, err := fs.List(ctx, inputPath, &Paging{
+			After: "",
+			First: 100000,
+		}, opts)
 		require.NotNil(t, resp)
 		require.NoError(t, err, "%s: should be able to list folders in %s", queryName, inputPath)
 
 		if q.checks != nil {
-			require.Equal(t, len(resp), len(q.checks), "%s: expected a check for each actual folder at path: \"%s\". actual: %s", queryName, inputPath, formatPathStructure(resp))
-			for i, file := range resp {
+			require.Equal(t, len(resp.Files), len(q.checks), "%s: expected a check for each actual folder at path: \"%s\". actual: %s", queryName, inputPath, formatPathStructure(resp.Files))
+			for i, file := range resp.Files {
 				runChecks(t, queryName, inputPath, file, q.checks[i])
 			}
 		} else {
-			require.Equal(t, 0, len(resp), "%s %s", queryName, inputPath)
+			require.Equal(t, 0, len(resp.Files), "%s %s", queryName, inputPath)
 		}
 	default:
 		t.Fatalf("unrecognized query %s", queryName)

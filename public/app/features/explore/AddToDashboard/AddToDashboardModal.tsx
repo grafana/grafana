@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { DataQuery } from '@grafana/data';
 import { Alert, Button, Field, Input, InputControl, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { useForm } from 'react-hook-form';
@@ -22,8 +21,6 @@ type FormDTO = SaveToNewDashboardDTO;
 
 interface Props {
   onClose: () => void;
-  queries: DataQuery[];
-  visualization: string;
   onSave: (data: FormDTO, redirect: boolean) => Promise<void | ErrorResponse>;
 }
 
@@ -31,7 +28,7 @@ function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}
   return async (...args: T) => fn(redirect, ...args);
 }
 
-export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }: Props) => {
+export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
   const [submissionError, setSubmissionError] = useState<string>();
   const {
     register,
@@ -39,7 +36,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
     control,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormDTO>({ defaultValues: { queries, visualization } });
+  } = useForm<FormDTO>();
 
   const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
@@ -66,9 +63,6 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
   return (
     <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
       <form>
-        <input type="hidden" {...register('queries')} />
-        <input type="hidden" {...register('visualization')} />
-
         <p>Create a new dashboard and add a panel with the explored queries.</p>
 
         <Field

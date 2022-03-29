@@ -25,7 +25,7 @@ import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { OptionsPane } from './OptionsPane';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
+import { SaveDashboardDrawer } from '../SaveDashboard/SaveDashboardDrawer';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
@@ -145,7 +145,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onSaveDashboard = () => {
     appEvents.publish(
       new ShowModalReactEvent({
-        component: SaveDashboardModalProxy,
+        component: SaveDashboardDrawer,
         props: { dashboard: this.props.dashboard },
       })
     );

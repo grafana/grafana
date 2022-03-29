@@ -13,7 +13,7 @@ import { AddToDashboardModal, ErrorResponse } from './AddToDashboardModal';
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
 
-const getMainVisualization = (
+const getMainPanel = (
   queries: DataQuery[],
   graphFrames?: DataFrame[],
   logsFrames?: DataFrame[],
@@ -46,16 +46,26 @@ export const AddToDashboard = ({ exploreId }: Props) => {
   const dispatch = useDispatch();
   const selectExploreItem = getExploreItemSelector(exploreId);
 
-  const { queries, mainVisualization } = useSelector((state: StoreState) => {
-    const queries = selectExploreItem(state)?.queries || [];
-    const { graphFrames, logsFrames, nodeGraphFrames } = selectExploreItem(state)?.queryResponse || {};
+  const { queries, panel, datasource } = useSelector((state: StoreState) => {
+    const exploreItem = selectExploreItem(state);
+    const queries = exploreItem?.queries || [];
+    const datasource = exploreItem?.datasourceInstance;
+    const { graphFrames, logsFrames, nodeGraphFrames } = exploreItem?.queryResponse || {};
 
-    return { queries, mainVisualization: getMainVisualization(queries, graphFrames, logsFrames, nodeGraphFrames) };
+    return {
+      queries,
+      datasource: { type: datasource?.type, uid: datasource?.uid },
+      panel: getMainPanel(queries, graphFrames, logsFrames, nodeGraphFrames),
+    };
   });
 
   const handleSave = async (data: SaveToNewDashboardDTO, redirect: boolean): Promise<void | ErrorResponse> => {
     try {
-      const redirectURL = await addToDashboard(data);
+      const redirectURL = await addToDashboard(data, {
+        queries,
+        datasource,
+        panel,
+      });
 
       if (redirect) {
         locationService.push(redirectURL);
@@ -80,14 +90,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
         Add to dashboard
       </ToolbarButton>
 
-      {isOpen && (
-        <AddToDashboardModal
-          onClose={() => setIsOpen(false)}
-          queries={queries}
-          visualization={mainVisualization}
-          onSave={handleSave}
-        />
-      )}
+      {isOpen && <AddToDashboardModal onClose={() => setIsOpen(false)} onSave={handleSave} />}
     </>
   );
 };

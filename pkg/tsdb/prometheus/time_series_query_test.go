@@ -731,7 +731,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			&p.Sample{
 				Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
 				Value:     1,
-				Timestamp: 1000,
+				Timestamp: 123,
 			},
 		}
 		query := &PrometheusQuery{
@@ -754,13 +754,14 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
+		require.Equal(t, int64(123), testValue.(time.Time).UnixMilli())
 	})
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
 		value := make(map[TimeSeriesQueryType]interface{})
 		value[RangeQueryType] = &p.Scalar{
 			Value:     1,
-			Timestamp: 1000,
+			Timestamp: 123,
 		}
 
 		query := &PrometheusQuery{}
@@ -778,6 +779,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
+		require.Equal(t, int64(123), testValue.(time.Time).UnixMilli())
 	})
 }
 
