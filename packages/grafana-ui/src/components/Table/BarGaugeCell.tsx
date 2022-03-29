@@ -72,7 +72,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   };
 
   return (
-    <div {...cellProps}>
+    <div {...cellProps} className={tableStyles.cellContainer}>
       {hasLinks && (
         <DataLinksContextMenu links={getLinks} config={config}>
           {(api) => renderComponent(api)}
