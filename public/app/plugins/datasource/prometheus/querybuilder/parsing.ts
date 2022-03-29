@@ -155,6 +155,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     default: {
+      if (node.name === 'ParenExpr') {
+        // We don't support parenthesis in the query to group expressions. We just report error but go on with the
+        // parsing.
+        context.errors.push(makeError(expr, node));
+      }
       // Any other nodes we just ignore and go to it's children. This should be fine as there are lot's of wrapper
       // nodes that can be skipped.
       // TODO: there are probably cases where we will just skip nodes we don't support and we should be able to

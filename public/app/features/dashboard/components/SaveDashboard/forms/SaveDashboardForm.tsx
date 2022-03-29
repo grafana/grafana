@@ -51,8 +51,9 @@ export const SaveDashboardForm = ({
             dashboard.resetOriginalTime();
           }
           onSuccess();
+        } else {
+          setSaving(false);
         }
-        setSaving(false);
       }}
     >
       {({ register, errors }) => (
@@ -96,7 +97,7 @@ export const SaveDashboardForm = ({
               icon={saving ? 'fa fa-spinner' : undefined}
               aria-label={selectors.pages.SaveDashboardModal.save}
             >
-              {saving ? '' : 'Save'}
+              Save
             </Button>
             {!saveModel.hasChanges && <div>No changes to save</div>}
           </Stack>

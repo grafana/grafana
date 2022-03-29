@@ -26,6 +26,17 @@ func (api *API) authorize(method, path string) web.Handler {
 	authorize := acmiddleware.Middleware(api.AccessControl)
 	var eval ac.Evaluator = nil
 
+	// Most routes follow this general authorization approach as a fallback. Exceptions are overridden directly in the below block.
+	var fallback web.Handler
+	switch method {
+	case http.MethodPost, http.MethodPut, http.MethodDelete:
+		fallback = middleware.ReqEditorRole
+	case http.MethodGet:
+		fallback = middleware.ReqSignedIn
+	default:
+		fallback = middleware.ReqSignedIn
+	}
+
 	switch method + path {
 	// Alert Rules
 
@@ -55,9 +66,11 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana Rules Testing Paths
 	case http.MethodPost + "/api/v1/rule/test/grafana":
+		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/v1/eval":
+		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
@@ -81,6 +94,7 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Lotex Rules testing
 	case http.MethodPost + "/api/v1/rule/test/{Recipient}":
+		fallback = middleware.ReqSignedIn
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":Recipient")))
 
 	// Alert Instances and Silences
@@ -136,6 +150,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodDelete + "/api/alertmanager/grafana/config/api/v1/alerts": // reset alertmanager config to the default
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsDelete)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/alerts":
+		fallback = middleware.ReqEditorRole
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
@@ -143,6 +158,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		// additional authorization is done in the request handler
 		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsUpdate), ac.EvalPermission(ac.ActionAlertingNotificationsCreate), ac.EvalPermission(ac.ActionAlertingNotificationsDelete))
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/receivers/test":
+		fallback = middleware.ReqEditorRole
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 
 	// External Alertmanager Paths
@@ -166,67 +182,86 @@ func (api *API) authorize(method, path string) web.Handler {
 	}
 
 	if eval != nil {
-		return authorize(middleware.ReqSignedIn, eval)
+		return authorize(fallback, eval)
 	}
 
 	panic(fmt.Sprintf("no authorization handler for method [%s] of endpoint [%s]", method, path))
 }
 
-// GetDatasourceScopesFromAlertRule extracts data source scopes from an alert rule
-func getEvaluatorForAlertRule(rule *ngmodels.AlertRule) ac.Evaluator {
-	scopes := make([]ac.Evaluator, 0, len(rule.Data))
+// authorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
+func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
 	for _, query := range rule.Data {
 		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.OldDatasourceUID {
 			continue
 		}
-		scopes = append(scopes, ac.EvalPermission(datasources.ActionQuery, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID)))
+		if !evaluator(ac.EvalPermission(datasources.ActionQuery, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))) {
+			return false
+		}
 	}
-	return ac.EvalAll(scopes...)
+	return true
 }
 
-// authorizeRuleChanges analyzes changes in the rule group, determines what actions the user is trying to perform and check whether those actions are authorized.
-// If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized. If the evaluator function returns an error, the function returns it.
-func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator func(evaluator ac.Evaluator) bool) error {
+// authorizeRuleChanges analyzes changes in the rule group, and checks whether the changes are authorized.
+// NOTE: if there are rules for deletion, and the user does not have access to data sources that a rule uses, the rule is removed from the list.
+// If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.
+// Return changes that the user is authorized to perform or ErrAuthorization
+func authorizeRuleChanges(namespace *models.Folder, change *changes, evaluator func(evaluator ac.Evaluator) bool) (*changes, error) {
+	var result = &changes{
+		New:    change.New,
+		Update: change.Update,
+		Delete: change.Delete,
+	}
+
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(namespace.Id, 10))
-	if len(changes.Delete) > 0 {
-		allowed := evaluator(ac.EvalPermission(ac.ActionAlertingRuleDelete, namespaceScope))
-		if !allowed {
-			return fmt.Errorf("%w user cannot delete alert rules that belong to folder %s", ErrAuthorization, namespace.Title)
+	if len(change.Delete) > 0 {
+		var allowedToDelete []*ngmodels.AlertRule
+		for _, rule := range change.Delete {
+			dsAllowed := authorizeDatasourceAccessForRule(rule, evaluator)
+			if dsAllowed {
+				allowedToDelete = append(allowedToDelete, rule)
+			}
 		}
+		if len(allowedToDelete) > 0 {
+			allowed := evaluator(ac.EvalPermission(ac.ActionAlertingRuleDelete, namespaceScope))
+			if !allowed {
+				return nil, fmt.Errorf("%w to delete alert rules that belong to folder %s", ErrAuthorization, namespace.Title)
+			}
+		}
+		result.Delete = allowedToDelete
 	}
 
 	var addAuthorized, updateAuthorized bool
 
-	if len(changes.New) > 0 {
+	if len(change.New) > 0 {
 		addAuthorized = evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
 		if !addAuthorized {
-			return fmt.Errorf("%w user cannot create alert rules in the folder %s", ErrAuthorization, namespace.Title)
+			return nil, fmt.Errorf("%w to create alert rules in the folder %s", ErrAuthorization, namespace.Title)
 		}
-		for _, rule := range changes.New {
-			dsAllowed := evaluator(getEvaluatorForAlertRule(rule))
+		for _, rule := range change.New {
+			dsAllowed := authorizeDatasourceAccessForRule(rule, evaluator)
 			if !dsAllowed {
-				return fmt.Errorf("%w to create a new alert rule '%s' because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Title)
+				return nil, fmt.Errorf("%w to create a new alert rule '%s' because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Title)
 			}
 		}
 	}
 
-	for _, rule := range changes.Update {
-		dsAllowed := evaluator(getEvaluatorForAlertRule(rule.New))
+	for _, rule := range change.Update {
+		dsAllowed := authorizeDatasourceAccessForRule(rule.New, evaluator)
 		if !dsAllowed {
-			return fmt.Errorf("%w to update alert rule '%s' (UID: %s) because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Existing.Title, rule.Existing.UID)
+			return nil, fmt.Errorf("%w to update alert rule '%s' (UID: %s) because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.Existing.Title, rule.Existing.UID)
 		}
 
 		// Check if the rule is moved from one folder to the current. If yes, then the user must have the authorization to delete rules from the source folder and add rules to the target folder.
 		if rule.Existing.NamespaceUID != rule.New.NamespaceUID {
 			allowed := evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID))))
 			if !allowed {
-				return fmt.Errorf("%w to delete alert rules from folder UID %s", ErrAuthorization, rule.Existing.NamespaceUID)
+				return nil, fmt.Errorf("%w to delete alert rules from folder UID %s", ErrAuthorization, rule.Existing.NamespaceUID)
 			}
 
 			if !addAuthorized {
 				addAuthorized = evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
 				if !addAuthorized {
-					return fmt.Errorf("%w to create alert rules in the folder '%s'", ErrAuthorization, namespace.Title)
+					return nil, fmt.Errorf("%w to create alert rules in the folder '%s'", ErrAuthorization, namespace.Title)
 				}
 			}
 			continue
@@ -235,9 +270,9 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 		if !updateAuthorized { // if it is false then the authorization was not checked. If it is true then the user is authorized to update rules
 			updateAuthorized = evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleUpdate, namespaceScope)))
 			if !updateAuthorized {
-				return fmt.Errorf("%w to update alert rules that belong to folder %s", ErrAuthorization, namespace.Title)
+				return nil, fmt.Errorf("%w to update alert rules that belong to folder %s", ErrAuthorization, namespace.Title)
 			}
 		}
 	}
-	return nil
+	return result, nil
 }
