@@ -34,71 +34,9 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
         <nav className={styles.content}>
           <CustomScrollbar hideHorizontalTrack>
             <ul className={styles.itemList}>
-              {navItems.map((link) =>
-                linkHasChildren(link) ? (
-                  <MenuItem key={link.text} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
-                    <ul>
-                      {link.children.map(
-                        (childLink) =>
-                          !childLink.divider && (
-                            <NavBarMenuItem
-                              key={`${link.text}-${childLink.text}`}
-                              isActive={activeItem === childLink}
-                              isDivider={childLink.divider}
-                              onClick={() => {
-                                childLink.onClick?.();
-                                onClose();
-                              }}
-                              styleOverrides={styles.item}
-                              target={childLink.target}
-                              text={childLink.text}
-                              url={childLink.url}
-                              isMobile={true}
-                            />
-                          )
-                      )}
-                    </ul>
-                  </MenuItem>
-                ) : link.id === 'saved-items' ? (
-                  <MenuItem
-                    key={link.text}
-                    link={link}
-                    isActive={isMatchOrChildMatch(link, activeItem)}
-                    className={styles.savedItems}
-                  >
-                    <em className={styles.savedItemsText}>No saved items</em>
-                  </MenuItem>
-                ) : (
-                  <li key={link.text} className={styles.flex}>
-                    <NavBarItemWithoutMenu
-                      className={styles.itemWithoutMenu}
-                      elClassName={styles.fullWidth}
-                      label={link.text}
-                      url={link.url}
-                      target={link.target}
-                      onClick={() => {
-                        link.onClick?.();
-                        onClose();
-                      }}
-                      isActive={link === activeItem}
-                    >
-                      <div className={styles.savedItemsMenuItemWrapper}>
-                        {link.img && (
-                          <img
-                            src={link.img}
-                            alt={`${link.text} logo`}
-                            height="24"
-                            width="24"
-                            style={{ borderRadius: '50%' }}
-                          />
-                        )}
-                        {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                        <span className={styles.linkText}>{link.text}</span>
-                      </div>
-                    </NavBarItemWithoutMenu>
-                  </li>
-                )
-              )}
+              {navItems.map((link) => (
+                <NavItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
+              ))}
             </ul>
           </CustomScrollbar>
         </nav>
@@ -108,52 +46,6 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
 }
 
 NavBarMenu.displayName = 'NavBarMenu';
-
-function MenuItem({
-  link,
-  isActive,
-  children,
-  className,
-}: {
-  link: NavModelItem;
-  isActive?: boolean;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <li className={cx(styles.menuItem, className)}>
-      <NavBarItemWithoutMenu
-        isActive={isActive}
-        label={link.text}
-        url={link.url}
-        target={link.target}
-        onClick={link.onClick}
-        className={styles.collapsableMenuItem}
-      >
-        {link.img && (
-          <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-        )}
-        {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-      </NavBarItemWithoutMenu>
-      <div className={styles.collapsableSectionWrapper}>
-        <CollapsableSection
-          isOpen={false}
-          className={styles.collapseWrapper}
-          contentClassName={styles.collapseContent}
-          label={
-            <div className={cx(styles.labelWrapper, { [styles.primary]: isActive })}>
-              <span className={styles.linkText}>{link.text}</span>
-            </div>
-          }
-        >
-          {children}
-        </CollapsableSection>
-      </div>
-    </li>
-  );
-}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const fadeIn = keyframes`
@@ -167,28 +59,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }`;
 
   return {
-    collapseContent: css({
-      padding: 0,
-      paddingLeft: theme.spacing(1.25),
-    }),
-    collapseWrapper: css({
-      borderRadius: theme.shape.borderRadius(2),
-      paddingRight: theme.spacing(4.25),
-      height: theme.spacing(6),
-      alignItems: 'center',
-    }),
-    menuItem: css({
-      position: 'relative',
-      display: 'flex',
-    }),
-    itemWithoutMenu: css({
-      position: 'relative',
-      placeItems: 'inherit',
-      justifyContent: 'start',
-      display: 'flex',
-      flexGrow: 1,
-      alignItems: 'center',
-    }),
     container: css({
       animation: `150ms ease-in 0s 1 normal forwards ${fadeIn}`,
       bottom: 0,
@@ -206,9 +76,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         right: 'unset',
       },
     }),
-    primary: css({
-      color: theme.colors.text.primary,
-    }),
     content: css({
       display: 'flex',
       flexDirection: 'column',
@@ -218,54 +85,206 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'grid',
       gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
     }),
-    item: css({
-      padding: `${theme.spacing(1)} 0`,
-      '&::before': {
-        display: 'none',
-      },
-    }),
-    linkText: css({
-      fontSize: theme.typography.pxToRem(14),
-      justifySelf: 'start',
-    }),
-    labelWrapper: css({
-      fontSize: '15px',
-      color: theme.colors.text.secondary,
-    }),
-    savedItems: css({
-      background: theme.colors.background.secondary,
-    }),
-    savedItemsText: css({
-      display: 'block',
-      paddingBottom: theme.spacing(2),
-      color: theme.colors.text.secondary,
-    }),
-    savedItemsMenuItemWrapper: css({
-      display: 'grid',
-      gridAutoFlow: 'column',
-      gridTemplateColumns: `${theme.spacing(7)} auto`,
-      alignItems: 'center',
-    }),
-    flex: css({
-      display: 'flex',
-    }),
-    fullWidth: css({
-      width: '100%',
-    }),
-    collapsableMenuItem: css({
-      height: theme.spacing(6),
-      width: theme.spacing(7),
-      display: 'grid',
-      placeContent: 'center',
-    }),
-    collapsableSectionWrapper: css({
-      display: 'flex',
-      flexGrow: 1,
-      alignSelf: 'start',
-      flexDirection: 'column',
-    }),
   };
 };
+
+function NavItem({
+  link,
+  activeItem,
+  onClose,
+}: {
+  link: NavModelItem;
+  activeItem?: NavModelItem;
+  onClose: () => void;
+}) {
+  const styles = useStyles2(getNavItemStyles);
+
+  if (linkHasChildren(link)) {
+    return (
+      <CollapsibleNavItem link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
+        <ul>
+          {link.children.map(
+            (childLink) =>
+              !childLink.divider && (
+                <NavBarMenuItem
+                  key={`${link.text}-${childLink.text}`}
+                  isActive={activeItem === childLink}
+                  isDivider={childLink.divider}
+                  onClick={() => {
+                    childLink.onClick?.();
+                    onClose();
+                  }}
+                  styleOverrides={styles.item}
+                  target={childLink.target}
+                  text={childLink.text}
+                  url={childLink.url}
+                  isMobile={true}
+                />
+              )
+          )}
+        </ul>
+      </CollapsibleNavItem>
+    );
+  } else if (link.id === 'saved-items') {
+    return (
+      <CollapsibleNavItem link={link} isActive={isMatchOrChildMatch(link, activeItem)} className={styles.savedItems}>
+        <em className={styles.savedItemsText}>No saved items</em>
+      </CollapsibleNavItem>
+    );
+  } else {
+    return (
+      <li className={styles.flex}>
+        <NavBarItemWithoutMenu
+          className={styles.itemWithoutMenu}
+          elClassName={styles.fullWidth}
+          label={link.text}
+          url={link.url}
+          target={link.target}
+          onClick={() => {
+            link.onClick?.();
+            onClose();
+          }}
+          isActive={link === activeItem}
+        >
+          <div className={styles.savedItemsMenuItemWrapper}>
+            {link.img && (
+              <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
+            )}
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            <span className={styles.linkText}>{link.text}</span>
+          </div>
+        </NavBarItemWithoutMenu>
+      </li>
+    );
+  }
+}
+
+const getNavItemStyles = (theme: GrafanaTheme2) => ({
+  item: css({
+    padding: `${theme.spacing(1)} 0`,
+    '&::before': {
+      display: 'none',
+    },
+  }),
+  savedItems: css({
+    background: theme.colors.background.secondary,
+  }),
+  savedItemsText: css({
+    display: 'block',
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
+  flex: css({
+    display: 'flex',
+  }),
+  itemWithoutMenu: css({
+    position: 'relative',
+    placeItems: 'inherit',
+    justifyContent: 'start',
+    display: 'flex',
+    flexGrow: 1,
+    alignItems: 'center',
+  }),
+  fullWidth: css({
+    width: '100%',
+  }),
+  savedItemsMenuItemWrapper: css({
+    display: 'grid',
+    gridAutoFlow: 'column',
+    gridTemplateColumns: `${theme.spacing(7)} auto`,
+    alignItems: 'center',
+  }),
+  linkText: css({
+    fontSize: theme.typography.pxToRem(14),
+    justifySelf: 'start',
+  }),
+});
+
+function CollapsibleNavItem({
+  link,
+  isActive,
+  children,
+  className,
+}: {
+  link: NavModelItem;
+  isActive?: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const styles = useStyles2(getCollapsibleStyles);
+
+  return (
+    <li className={cx(styles.menuItem, className)}>
+      <NavBarItemWithoutMenu
+        isActive={isActive}
+        label={link.text}
+        url={link.url}
+        target={link.target}
+        onClick={link.onClick}
+        className={styles.collapsibleMenuItem}
+      >
+        {link.img && (
+          <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
+        )}
+        {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+      </NavBarItemWithoutMenu>
+      <div className={styles.collapsibleSectionWrapper}>
+        <CollapsableSection
+          isOpen={false}
+          className={styles.collapseWrapper}
+          contentClassName={styles.collapseContent}
+          label={
+            <div className={cx(styles.labelWrapper, { [styles.primary]: isActive })}>
+              <span className={styles.linkText}>{link.text}</span>
+            </div>
+          }
+        >
+          {children}
+        </CollapsableSection>
+      </div>
+    </li>
+  );
+}
+
+const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
+  menuItem: css({
+    position: 'relative',
+    display: 'flex',
+  }),
+  collapsibleMenuItem: css({
+    height: theme.spacing(6),
+    width: theme.spacing(7),
+    display: 'grid',
+    placeContent: 'center',
+  }),
+  collapsibleSectionWrapper: css({
+    display: 'flex',
+    flexGrow: 1,
+    alignSelf: 'start',
+    flexDirection: 'column',
+  }),
+  collapseWrapper: css({
+    borderRadius: theme.shape.borderRadius(2),
+    paddingRight: theme.spacing(4.25),
+    height: theme.spacing(6),
+    alignItems: 'center',
+  }),
+  collapseContent: css({
+    padding: 0,
+    paddingLeft: theme.spacing(1.25),
+  }),
+  labelWrapper: css({
+    fontSize: '15px',
+    color: theme.colors.text.secondary,
+  }),
+  primary: css({
+    color: theme.colors.text.primary,
+  }),
+  linkText: css({
+    fontSize: theme.typography.pxToRem(14),
+    justifySelf: 'start',
+  }),
+});
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);

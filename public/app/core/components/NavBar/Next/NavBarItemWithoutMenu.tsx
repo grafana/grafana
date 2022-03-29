@@ -40,35 +40,29 @@ export function NavBarItemWithoutMenu({
 
   const elStyle = cx(styles.element, elClassName);
 
-  return (
-    <div className={cx(styles.container, className)}>
-      {!url && (
+  const renderContents = () => {
+    if (!url) {
+      return (
         <button className={elStyle} onClick={onClick} aria-label={label}>
           {content}
         </button>
-      )}
-      {url && (
-        <>
-          {!target && url.startsWith('/') ? (
-            <Link
-              className={elStyle}
-              href={url}
-              target={target}
-              aria-label={label}
-              onClick={onClick}
-              aria-haspopup="true"
-            >
-              {content}
-            </Link>
-          ) : (
-            <a href={url} target={target} className={elStyle} onClick={onClick} aria-label={label}>
-              {content}
-            </a>
-          )}
-        </>
-      )}
-    </div>
-  );
+      );
+    } else if (!target && url.startsWith('/')) {
+      return (
+        <Link className={elStyle} href={url} target={target} aria-label={label} onClick={onClick} aria-haspopup="true">
+          {content}
+        </Link>
+      );
+    } else {
+      return (
+        <a href={url} target={target} className={elStyle} onClick={onClick} aria-label={label}>
+          {content}
+        </a>
+      );
+    }
+  };
+
+  return <div className={cx(styles.container, className)}>{renderContents()}</div>;
 }
 
 export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: boolean) {

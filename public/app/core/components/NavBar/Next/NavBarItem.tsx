@@ -65,82 +65,71 @@ const NavBarItem = ({
   const translationKey = link.id && menuItemTranslations[link.id];
   const linkText = translationKey ? i18n._(translationKey) : link.text;
 
-  return showMenu ? (
-    <li className={cx(styles.container, className)}>
-      <NavBarItemMenuTrigger item={section} isActive={isActive} label={linkText}>
-        <NavBarItemMenu
-          items={items}
-          reverseMenuDirection={reverseMenuDirection}
-          adjustHeightForBorder={adjustHeightForBorder}
-          disabledKeys={['divider', 'subtitle']}
-          aria-label={section.text}
-          onNavigate={onNavigate}
-        >
-          {(item: NavModelItem) => {
-            const translationKey = item.id && menuItemTranslations[item.id];
-            const itemText = translationKey ? i18n._(translationKey) : item.text;
+  if (!showMenu) {
+    return (
+      <NavBarItemWithoutMenu
+        label={link.text}
+        className={className}
+        isActive={isActive}
+        url={link.url}
+        onClick={link.onClick}
+        target={link.target}
+        highlightText={link.highlightText}
+      >
+        {children}
+      </NavBarItemWithoutMenu>
+    );
+  } else {
+    return (
+      <li className={cx(styles.container, className)}>
+        <NavBarItemMenuTrigger item={section} isActive={isActive} label={linkText}>
+          <NavBarItemMenu
+            items={items}
+            reverseMenuDirection={reverseMenuDirection}
+            adjustHeightForBorder={adjustHeightForBorder}
+            disabledKeys={['divider', 'subtitle']}
+            aria-label={section.text}
+            onNavigate={onNavigate}
+          >
+            {(item: NavModelItem) => {
+              const translationKey = item.id && menuItemTranslations[item.id];
+              const itemText = translationKey ? i18n._(translationKey) : item.text;
+              const isSection = item.menuItemType === NavMenuItemType.Section;
 
-            if (item.menuItemType === NavMenuItemType.Section) {
               return (
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
+                    isDivider={!isSection && item.divider}
+                    icon={isSection ? undefined : (item.icon as IconName)}
                     target={item.target}
                     text={itemText}
                     url={item.url}
                     onClick={item.onClick}
-                    styleOverrides={styles.header}
+                    styleOverrides={cx(styles.primaryText, { [styles.header]: isSection })}
                   />
                 </Item>
               );
-            }
-
-            return (
-              <Item key={getNavModelItemKey(item)} textValue={item.text}>
-                <NavBarMenuItem
-                  isDivider={item.divider}
-                  icon={item.icon as IconName}
-                  onClick={item.onClick}
-                  target={item.target}
-                  text={itemText}
-                  url={item.url}
-                  styleOverrides={styles.item}
-                />
-              </Item>
-            );
-          }}
-        </NavBarItemMenu>
-      </NavBarItemMenuTrigger>
-    </li>
-  ) : (
-    <NavBarItemWithoutMenu
-      label={link.text}
-      className={className}
-      isActive={isActive}
-      url={link.url}
-      onClick={link.onClick}
-      target={link.target}
-      highlightText={link.highlightText}
-    >
-      {children}
-    </NavBarItemWithoutMenu>
-  );
+            }}
+          </NavBarItemMenu>
+        </NavBarItemMenuTrigger>
+      </li>
+    );
+  }
 };
 
 export default NavBarItem;
 
 const getStyles = (theme: GrafanaTheme2, adjustHeightForBorder: boolean, isActive?: boolean) => ({
   ...getNavBarItemWithoutMenuStyles(theme, isActive),
-  header: css({
-    label: 'gabobo',
+  primaryText: css({
     color: theme.colors.text.primary,
+  }),
+  header: css({
     height: `calc(${theme.spacing(6)} - ${adjustHeightForBorder ? 2 : 1}px)`,
     fontSize: theme.typography.h4.fontSize,
     fontWeight: theme.typography.h4.fontWeight,
     padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     whiteSpace: 'nowrap',
     width: '100%',
-  }),
-  item: css({
-    color: theme.colors.text.primary,
   }),
 });
