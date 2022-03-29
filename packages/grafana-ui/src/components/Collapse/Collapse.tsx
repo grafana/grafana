@@ -60,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   header: css`
     label: collapse__header;
-    padding: ${theme.spacing(1, 2, 0.5, 2)};
+    padding: ${theme.spacing(1, 2, 1, 2)};
     display: flex;
     cursor: inherit;
     transition: all 0.1s linear;
@@ -68,7 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   headerCollapsed: css`
     label: collapse__header--collapsed;
-    padding: ${theme.spacing(1, 2, 0.5, 2)};
+    padding: ${theme.spacing(1, 2, 1, 2)};
   `,
   headerLabel: css`
     label: collapse__header-label;
