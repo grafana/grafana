@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DataFrame, DataQuery } from '@grafana/data';
+import { DataFrame, DataQuery, locationUtil } from '@grafana/data';
 import { ExploreId, ExplorePanelData, StoreState } from 'app/types';
 import { useSelector } from 'react-redux';
 import { getExploreItemSelector } from '../state/selectors';
@@ -68,7 +68,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
 
       setIsOpen(false);
       if (redirect) {
-        locationService.push(url);
+        locationService.push(locationUtil.stripBaseFromUrl(url));
       } else {
         success(`Panel saved to ${name}`);
       }
