@@ -3,13 +3,16 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/util"
 
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -27,6 +30,7 @@ func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 		Hook: func(interface{}) error {
 			return nil
 		},
+		Folders: map[int64][]*models2.Folder{},
 	}
 }
 
@@ -38,6 +42,12 @@ type FakeRuleStore struct {
 	Rules       map[int64][]*models.AlertRule
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
+	Folders     map[int64][]*models2.Folder
+}
+
+type GenericRecordedQuery struct {
+	Name   string
+	Params []interface{}
 }
 
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
@@ -55,6 +65,23 @@ mainloop:
 		}
 		rgs = append(rgs, r)
 		f.Rules[r.OrgID] = rgs
+
+		var existing *models2.Folder
+		folders := f.Folders[r.OrgID]
+		for _, folder := range folders {
+			if folder.Uid == r.NamespaceUID {
+				existing = folder
+				break
+			}
+		}
+		if existing == nil {
+			folders = append(folders, &models2.Folder{
+				Id:    rand.Int63(),
+				Uid:   r.NamespaceUID,
+				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+			})
+			f.Folders[r.OrgID] = folders
+		}
 	}
 }
 
@@ -74,15 +101,33 @@ func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (int
 	return result
 }
 
-func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, _ int64, _ ...string) error {
+func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "DeleteAlertRulesByUID",
+		Params: []interface{}{orgID, UIDs},
+	})
+
+	rules := f.Rules[orgID]
+
+	var result = make([]*models.AlertRule, 0, len(rules))
+
+	for _, rule := range rules {
+		add := true
+		for _, UID := range UIDs {
+			if rule.UID == UID {
+				add = false
+				break
+			}
+		}
+		if add {
+			result = append(result, rule)
+		}
+	}
+
+	f.Rules[orgID] = result
 	return nil
 }
-func (f *FakeRuleStore) DeleteNamespaceAlertRules(_ context.Context, _ int64, _ string) ([]string, error) {
-	return []string{}, nil
-}
-func (f *FakeRuleStore) DeleteRuleGroupAlertRules(_ context.Context, _ int64, _ string, _ string) ([]string, error) {
-	return []string{}, nil
-}
+
 func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
 	return nil
 }
@@ -179,8 +224,14 @@ func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2
 	}
 	return namespacesMap, nil
 }
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
-	return nil, nil
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+	folders := f.Folders[orgID]
+	for _, folder := range folders {
+		if folder.Title == title {
+			return folder, nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
 }
 func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRuleGroupsQuery) error {
 	f.mtx.Lock()
@@ -385,7 +436,7 @@ func (repo *FakeAnnotationsRepo) Len() int {
 	return len(repo.Items)
 }
 
-func (repo *FakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
 	return nil
 }
 
@@ -405,7 +456,7 @@ func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.Item
 	return annotations, nil
 }
 
-func (repo *FakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	result := annotations.FindTagsResult{
 		Tags: []*annotations.TagsDTO{},
 	}
