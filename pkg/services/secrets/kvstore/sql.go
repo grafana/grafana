@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+	"encoding/base64"
 	"sync"
 	"time"
 
@@ -28,6 +29,8 @@ type cachedDecrypted struct {
 	value   string
 }
 
+var b64 = base64.RawStdEncoding
+
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	item := Item{
@@ -49,7 +52,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 			return nil
 		}
 		isFound = true
-		kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace, "value", item.Value)
+		kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace)
 		return nil
 	})
 
@@ -61,7 +64,18 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 			return cache.value, isFound, err
 		}
 
-		decryptedValue, err = kv.secretsService.Decrypt(ctx, []byte(item.Value))
+		decodedValue, err := b64.DecodeString(item.Value)
+		if err != nil {
+			kv.log.Debug("error decoding secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			return string(decryptedValue), isFound, err
+		}
+
+		decryptedValue, err = kv.secretsService.Decrypt(ctx, decodedValue)
+		if err != nil {
+			kv.log.Debug("error decrypting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			return string(decryptedValue), isFound, err
+		}
+
 		kv.decryptionCache.cache[item.Id] = cachedDecrypted{
 			updated: item.Updated,
 			value:   string(decryptedValue),
@@ -96,7 +110,7 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			return nil
 		}
 
-		item.Value = string(encryptedValue)
+		item.Value = b64.EncodeToString(encryptedValue)
 		item.Updated = time.Now()
 
 		if has {
