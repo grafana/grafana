@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import React, { RefObject } from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
@@ -117,6 +117,7 @@ type SpanDetailProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -136,6 +137,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     focusSpan,
     createSpanLink,
     createFocusSpanLink,
+    topOfExploreViewRef,
   } = props;
   const {
     isTagsOpen,
@@ -279,7 +281,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             focusSpan={focusSpan}
           />
         )}
-        {link && (
+        {topOfExploreViewRef && (
           <small className={styles.debugInfo}>
             <a
               {...focusSpanLink}

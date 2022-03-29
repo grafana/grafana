@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import React, { RefObject } from 'react';
 import { css } from '@emotion/css';
 
 import SpanDetail from './SpanDetail';
@@ -92,6 +92,7 @@ type SpanDetailRowProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -127,6 +128,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
+      topOfExploreViewRef,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -169,6 +171,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
+              topOfExploreViewRef={topOfExploreViewRef}
             />
           </div>
         </TimelineRow.Cell>
