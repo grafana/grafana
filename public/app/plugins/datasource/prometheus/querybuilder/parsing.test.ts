@@ -541,6 +541,35 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('reports error on parenthesis', () => {
+    expect(buildVisualQueryFromString('foo / (bar + baz)')).toEqual({
+      errors: [
+        {
+          from: 6,
+          parentType: 'Expr',
+          text: '(bar + baz)',
+          to: 17,
+        },
+      ],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              binaryQueries: [{ operator: '+', query: { labels: [], metric: 'baz', operations: [] } }],
+              metric: 'bar',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {

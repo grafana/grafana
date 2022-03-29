@@ -1,7 +1,5 @@
-import {
-  functionRendererLeft,
-  getPromAndLokiOperationDisplayName,
-} from '../../prometheus/querybuilder/shared/operationUtils';
+import { createAggregationOperation } from '../../prometheus/querybuilder/aggregations';
+import { getPromAndLokiOperationDisplayName } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -12,6 +10,20 @@ import { FUNCTIONS } from '../syntax';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
+  const aggregations = [
+    LokiOperationId.Sum,
+    LokiOperationId.Min,
+    LokiOperationId.Max,
+    LokiOperationId.Avg,
+    LokiOperationId.TopK,
+    LokiOperationId.BottomK,
+  ].flatMap((opId) =>
+    createAggregationOperation(opId, {
+      addOperationHandler: addLokiOperation,
+      orderRank: LokiOperationOrder.Last,
+    })
+  );
+
   const list: QueryBuilderOperationDef[] = [
     createRangeOperation(LokiOperationId.Rate),
     createRangeOperation(LokiOperationId.CountOverTime),
@@ -19,10 +31,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     createRangeOperation(LokiOperationId.BytesRate),
     createRangeOperation(LokiOperationId.BytesOverTime),
     createRangeOperation(LokiOperationId.AbsentOverTime),
-    createAggregationOperation(LokiOperationId.Sum),
-    createAggregationOperation(LokiOperationId.Avg),
-    createAggregationOperation(LokiOperationId.Min),
-    createAggregationOperation(LokiOperationId.Max),
+    ...aggregations,
     {
       id: LokiOperationId.Json,
       name: 'Json',
@@ -223,24 +232,6 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
       } else {
         return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
       }
-    },
-  };
-}
-
-function createAggregationOperation(name: string): QueryBuilderOperationDef {
-  return {
-    id: name,
-    name: getPromAndLokiOperationDisplayName(name),
-    params: [],
-    defaultParams: [],
-    alternativesKey: 'plain aggregation',
-    category: LokiVisualQueryOperationCategory.Aggregations,
-    orderRank: LokiOperationOrder.Last,
-    renderer: functionRendererLeft,
-    addOperationHandler: addLokiOperation,
-    explainHandler: (op, def) => {
-      const opDocs = FUNCTIONS.find((x) => x.insertText === op.id);
-      return `${opDocs?.documentation}.`;
     },
   };
 }

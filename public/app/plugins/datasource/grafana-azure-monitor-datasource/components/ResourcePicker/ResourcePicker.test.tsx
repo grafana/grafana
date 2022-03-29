@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import ResourcePicker from '.';
@@ -87,21 +88,25 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(onApply).toBeCalledTimes(1);
     expect(onApply).toBeCalledWith('/subscriptions/def-123');
   });
-  it('should call onApply with a template variable when a user selects it', async () => {
+
+  it('should call onApply with a new subscription uri when a user types it', async () => {
     const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} templateVariables={['$workspace']} onApply={onApply} />);
+    render(<ResourcePicker {...defaultProps} onApply={onApply} />);
+    const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
+    expect(subscriptionCheckbox).toBeInTheDocument();
+    expect(subscriptionCheckbox).not.toBeChecked();
 
-    const expandButton = await screen.findByLabelText('Expand Template variables');
-    expandButton.click();
+    const advancedSection = screen.getByText('Advanced');
+    advancedSection.click();
 
-    const workSpaceCheckbox = await screen.findByLabelText('$workspace');
-    workSpaceCheckbox.click();
+    const advancedInput = await screen.findByLabelText('Resource URI');
+    userEvent.type(advancedInput, '/subscriptions/def-123');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     applyButton.click();
 
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith('$workspace');
+    expect(onApply).toBeCalledWith('/subscriptions/def-123');
   });
 
   describe('when rendering resource picker without any selectable entry types', () => {
