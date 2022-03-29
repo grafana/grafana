@@ -9,7 +9,6 @@ import Page from 'app/core/components/Page/Page';
 import { useAsync } from 'react-use';
 import { getGrafanaSearcher, QueryFilters } from '../service';
 import { Table } from './table/Table';
-import { RawResultsView } from './RawResultsView';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { getTermCounts } from '../service/backend';
 
@@ -59,8 +58,6 @@ export default function SearchPage() {
                 return (
                   <>
                     <Table data={results.value!.body} width={width} />
-                    <br />
-                    <RawResultsView width={width} frame={results.value!.body} />
                   </>
                 );
               }}
