@@ -42,6 +42,9 @@ type Avatar struct {
 
 var alog = log.New("avatar")
 
+// Represents a singleton AvatarCacheServer instance
+var csi *AvatarCacheServer
+
 func New(hash string) *Avatar {
 	return &Avatar{
 		hash: hash,
@@ -70,7 +73,7 @@ func (a *Avatar) Update() (err error) {
 	return err
 }
 
-type CacheServer struct {
+type AvatarCacheServer struct {
 	cfg      *setting.Cfg
 	notFound *Avatar
 	cache    *gocache.Cache
@@ -78,7 +81,7 @@ type CacheServer struct {
 
 var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
 
-func (a *CacheServer) Handler(ctx *models.ReqContext) {
+func (a *AvatarCacheServer) Handler(ctx *models.ReqContext) {
 	hash := web.Params(ctx.Req)[":hash"]
 
 	if len(hash) != 32 || !validMD5.MatchString(hash) {
@@ -124,8 +127,19 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	}
 }
 
-func NewCacheServer(cfg *setting.Cfg) *CacheServer {
-	return &CacheServer{
+var once sync.Once
+
+// Access cache server singleton instance
+func ProvideAvatarCacheServer(cfg *setting.Cfg) *AvatarCacheServer {
+	once.Do(func() {
+		csi = newCacheServer(cfg)
+	})
+
+	return csi
+}
+
+func newCacheServer(cfg *setting.Cfg) *AvatarCacheServer {
+	return &AvatarCacheServer{
 		cfg:      cfg,
 		notFound: newNotFound(cfg),
 		cache:    gocache.New(time.Hour, time.Hour*2),
