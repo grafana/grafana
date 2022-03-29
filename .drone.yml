@@ -130,7 +130,7 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6 --no-pull-enterprise
+    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
   depends_on:
   - initialize
   environment: {}
@@ -138,7 +138,6 @@ steps:
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -147,7 +146,6 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -182,7 +180,7 @@ steps:
   name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
   depends_on:
   - build-plugins
   - build-backend
@@ -460,7 +458,6 @@ steps:
   name: lint-docs
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -544,7 +541,6 @@ steps:
   name: lint-docs
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -740,7 +736,6 @@ steps:
       from_secret: drone_token
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment: {}
@@ -748,7 +743,6 @@ steps:
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -757,7 +751,6 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -793,8 +786,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
-    --sign
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
   - build-plugins
   - build-backend
@@ -1346,7 +1338,7 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
-    --no-pull-enterprise ${DRONE_TAG}
+    ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1356,7 +1348,7 @@ steps:
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --edition
-    oss --no-pull-enterprise ${DRONE_TAG}
+    oss ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1365,7 +1357,7 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
-    --edition oss --no-pull-enterprise ${DRONE_TAG}
+    --edition oss ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1401,8 +1393,8 @@ steps:
   image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
-    --sign ${DRONE_TAG}
+  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --sign
+    ${DRONE_TAG}
   depends_on:
   - build-plugins
   - build-backend
@@ -1940,7 +1932,7 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
-    --no-pull-enterprise ${DRONE_TAG}
+    ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1950,7 +1942,7 @@ steps:
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --edition
-    enterprise --no-pull-enterprise ${DRONE_TAG}
+    enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1959,7 +1951,7 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
-    --edition enterprise --no-pull-enterprise ${DRONE_TAG}
+    --edition enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1996,7 +1988,7 @@ steps:
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
-    --no-pull-enterprise ${DRONE_TAG}
+    ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -2006,7 +1998,7 @@ steps:
   name: build-backend-enterprise2
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
-    --no-pull-enterprise --sign ${DRONE_TAG}
+    --sign ${DRONE_TAG}
   depends_on:
   - build-plugins
   - build-backend
@@ -2164,7 +2156,7 @@ steps:
   name: upload-packages
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
-    --no-pull-enterprise --sign ${DRONE_TAG}
+    --sign ${DRONE_TAG}
   depends_on:
   - build-plugins
   - build-backend
@@ -3110,7 +3102,6 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment: {}
@@ -3118,7 +3109,6 @@ steps:
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -3127,7 +3117,6 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -3163,8 +3152,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
-    --sign
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
   - build-plugins
   - build-backend
@@ -3631,7 +3619,6 @@ steps:
   name: initialize
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment: {}
@@ -3639,7 +3626,6 @@ steps:
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -3648,7 +3634,7 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+    ${DRONE_BUILD_NUMBER}
   depends_on:
   - initialize
   environment:
@@ -3685,7 +3671,7 @@ steps:
   name: ensure-cuetsified
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64 --no-pull-enterprise
+    --variants linux-amd64
   depends_on:
   - initialize
   environment: {}
@@ -3693,7 +3679,7 @@ steps:
   name: build-backend-enterprise2
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise --sign
+    --sign
   depends_on:
   - build-plugins
   - build-backend
@@ -3860,7 +3846,7 @@ steps:
   name: upload-packages
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise --variants linux-amd64 --sign
+    --variants linux-amd64 --sign
   depends_on:
   - build-plugins
   - build-backend
@@ -4411,6 +4397,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b2bbfc7f49fd92055470a95583e6836c19d7a11078b200a16ac48bee69a0feb8
+hmac: 2e953ba2ff9084896e8799be6438b69a8445bfcbf9f614259fc8325e31189ba0
 
 ...
