@@ -70,7 +70,7 @@ func extractEvalString(frame *data.Frame) (s string) {
 
 // extractValues returns the RefID and value for all classic conditions, reduce, and math expressions in the frame.
 // For classic conditions the same refID can have multiple values due to multiple conditions, for them we use the index of
-// the condition in addition to the refID to distinguish between them.
+// the condition in addition to the refID to distinguish between different values.
 // It returns nil if there are no results in the frame.
 func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	if frame == nil {
