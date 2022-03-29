@@ -70,7 +70,7 @@ export const generateColumns = (
       Header: 'Type',
       accessor: (row: any, i: number) => {
         return (
-          <div>
+          <div className={styles.typeText}>
             <Icon name={'apps'} className={styles.typeIcon} />
             Dashboard
           </div>
