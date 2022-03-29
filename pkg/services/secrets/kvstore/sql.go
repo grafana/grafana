@@ -36,7 +36,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 		Namespace: &namespace,
 		Type:      &typ,
 	}
-	var itemFound bool
+	var isFound bool
 	var decryptedValue []byte
 
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -49,17 +49,17 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 			kv.log.Debug("secret value not found", "orgId", orgId, "type", typ, "namespace", namespace)
 			return nil
 		}
-		itemFound = true
+		isFound = true
 		kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace, "value", item.Value)
 		return nil
 	})
 
-	if err == nil && itemFound {
+	if err == nil && isFound {
 		kv.decryptionCache.Lock()
 		defer kv.decryptionCache.Unlock()
 
 		if cache, present := kv.decryptionCache.cache[item.Id]; present && item.Updated.Equal(cache.updated) {
-			return cache.value, itemFound, err
+			return cache.value, isFound, err
 		}
 
 		decryptedValue, err = kv.secretsService.Decrypt(ctx, []byte(item.Value))
@@ -69,7 +69,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 		}
 	}
 
-	return string(decryptedValue), itemFound, err
+	return string(decryptedValue), isFound, err
 }
 
 // Set an item in the store
