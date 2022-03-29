@@ -101,6 +101,7 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 		item.Updated = time.Now()
 
 		if has {
+			// if item already exists we update it
 			_, err = dbSession.ID(item.Id).Update(&item)
 			if err != nil {
 				kv.log.Debug("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
@@ -114,6 +115,7 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			return err
 		}
 
+		// if item doesn't exist we create it
 		item.Created = item.Updated
 		_, err = dbSession.Insert(&item)
 		if err != nil {
