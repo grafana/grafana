@@ -155,23 +155,6 @@ func (ss *SQLStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 	})
 }
 
-func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
-	alerts := make([]*models.Alert, 0)
-	if err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts); err != nil {
-		return err
-	}
-
-	for _, alert := range alerts {
-		if err := deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
-			// If we return an error, the current transaction gets rolled back, so no use
-			// trying to delete more
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
