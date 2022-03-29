@@ -34,7 +34,7 @@ type Evaluation struct {
 	EvaluationState eval.State
 	// Values contains the RefID and value of reduce and math expressions.
 	// Classic conditions can have different values for the same RefID as they can include multiple conditions.
-	// For those, we use the index of the condition in addition RefID as the key e.g. "A0, A1, A2, etc.".
+	// For these, we use the index of the condition in addition RefID as the key e.g. "A0, A1, A2, etc.".
 	Values map[string]*float64
 }
 
