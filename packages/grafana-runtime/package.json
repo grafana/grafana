@@ -40,7 +40,7 @@
     "@rollup/plugin-node-resolve": "13.1.3",
     "@testing-library/dom": "8.12.0",
     "@testing-library/react": "12.1.4",
-    "@testing-library/user-event": "^13.5.0",
+    "@testing-library/user-event": "14.0.0",
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
     "@types/jest": "27.4.1",

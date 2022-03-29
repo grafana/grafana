@@ -119,7 +119,7 @@
     "@testing-library/jest-dom": "5.16.2",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "7.0.2",
-    "@testing-library/user-event": "13.5.0",
+    "@testing-library/user-event": "14.0.0",
     "@types/classnames": "2.3.0",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "7.1.0",

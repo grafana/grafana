@@ -51,7 +51,7 @@
     "@testing-library/jest-dom": "5.16.2",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "7.0.2",
-    "@testing-library/user-event": "13.5.0",
+    "@testing-library/user-event": "14.0.0",
     "@types/history": "4.7.11",
     "@types/jest": "27.4.1",
     "@types/jquery": "3.5.14",
