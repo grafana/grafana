@@ -203,17 +203,11 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
 	testDB := sqlutil.SQLite3TestDB()
 
-	const query = `select count(*) as count from migration_log`
-	result := struct{ Count int }{}
-
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
-
-	_, err = x.SQL(query).Get(&result)
-	require.Error(t, err)
 
 	mg := migrator.NewMigrator(x, &setting.Cfg{
 		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
