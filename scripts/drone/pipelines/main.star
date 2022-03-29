@@ -1,6 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
     'download_grabpl_step',
+    'build_image',
     'initialize_step',
     'lint_drone_step',
     'lint_backend_step',
@@ -60,6 +61,9 @@ load(
     'docs_pipelines',
 )
 
+load('scripts/drone/vault.star', 'from_secret')
+
+
 ver_mode = 'main'
 
 def get_steps(edition, is_downstream=False):
@@ -77,6 +81,7 @@ def get_steps(edition, is_downstream=False):
         test_frontend_step(),
     ]
     build_steps = [
+        trigger_test_release(),
         enterprise_downstream_step(edition=edition),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
@@ -149,6 +154,35 @@ def get_steps(edition, is_downstream=False):
         ]
 
     return test_steps, build_steps, integration_test_steps, windows_steps, store_steps
+
+def trigger_test_release():
+    return {
+        'name': 'trigger-test-release',
+        'image': build_image,
+        'environment': {
+            'GITHUB_TOKEN': from_secret('github_token'),
+            'DOWNSTREAM_REPO': from_secret('downstream'),
+            'TEST_TAG': 'v0.0.0-test',
+        },
+        'commands': [
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
+            'cd grafana-enterprise',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
+            'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
+            'cd -',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
+            'git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git',
+            'git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet',
+        ],
+        'failure': 'ignore',
+        'when': {
+            'paths': {
+                'include': [
+                    '.drone.yml',
+                ]
+            }
+        }
+    }
 
 def main_pipelines(edition):
     services = integration_test_services(edition)
