@@ -87,7 +87,7 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 		for i, match := range matches {
 			// In classic conditions we use refID and the condition position as a way to distinguish between values.
 			// We can guarantee determinism as conditions are ordered and this order is preserved when marshaling.
-			refID := fmt.Sprintf("%s%v", frame.RefID, i)
+			refID := fmt.Sprintf("%s%d", frame.RefID, i)
 			v[refID] = NumberValueCapture{
 				Var:    frame.RefID,
 				Labels: match.Labels,
