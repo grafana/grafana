@@ -116,32 +116,33 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		creator = hs.getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
-	var canEditOrganizationAnnotation bool
+	annotationPermissions := &dtos.AnnotationPermission{}
+
 	if !hs.AccessControl.IsDisabled() {
-		evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, accesscontrol.ScopeAnnotationsTypeOrganization)
-		canEditOrganizationAnnotation, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 	}
 
 	meta := dtos.DashboardMeta{
-		IsStarred:                      isStarred,
-		Slug:                           dash.Slug,
-		Type:                           models.DashTypeDB,
-		CanStar:                        c.IsSignedIn,
-		CanSave:                        canSave,
-		CanEdit:                        canEdit,
-		CanAdmin:                       canAdmin,
-		CanDelete:                      canDelete,
-		Created:                        dash.Created,
-		Updated:                        dash.Updated,
-		UpdatedBy:                      updater,
-		CreatedBy:                      creator,
-		Version:                        dash.Version,
-		HasAcl:                         dash.HasAcl,
-		IsFolder:                       dash.IsFolder,
-		FolderId:                       dash.FolderId,
-		Url:                            dash.GetUrl(),
-		FolderTitle:                    "General",
-		CanEditOrganizationAnnotations: canEditOrganizationAnnotation,
+		IsStarred:              isStarred,
+		Slug:                   dash.Slug,
+		Type:                   models.DashTypeDB,
+		CanStar:                c.IsSignedIn,
+		CanSave:                canSave,
+		CanEdit:                canEdit,
+		CanAdmin:               canAdmin,
+		CanDelete:              canDelete,
+		Created:                dash.Created,
+		Updated:                dash.Updated,
+		UpdatedBy:              updater,
+		CreatedBy:              creator,
+		Version:                dash.Version,
+		HasAcl:                 dash.HasAcl,
+		IsFolder:               dash.IsFolder,
+		FolderId:               dash.FolderId,
+		Url:                    dash.GetUrl(),
+		FolderTitle:            "General",
+		AnnotationsPermissions: annotationPermissions,
 	}
 
 	// lookup folder title
@@ -196,6 +197,20 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(200, dto)
+}
+
+func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, actions *dtos.AnnotationActions, scope string) {
+	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsRead, scope)
+	actions.CanRead, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+
+	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
+	actions.CanDelete, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+
+	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
+	actions.CanCreate, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+
+	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, scope)
+	actions.CanEdit, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
 }
 
 func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
