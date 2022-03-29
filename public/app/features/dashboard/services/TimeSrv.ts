@@ -384,10 +384,8 @@ export class TimeSrv {
   private getTimeout = (callback: any, timeout: number, ...args: any): NodeJS.Timeout => {
     const MAX_32_BIT_SIGNED = 2147483647;
     if (timeout / MAX_32_BIT_SIGNED > 1) {
-      console.log('longTimeout');
       return this.setLongTimeout(callback, timeout, args);
     } else {
-      console.log('timeout');
       return setTimeout(callback, timeout);
     }
   };
