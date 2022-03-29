@@ -1,6 +1,6 @@
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
-import '@types/mousetrap/plugins/global-bind/mousetrap-global-bind';
+import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
