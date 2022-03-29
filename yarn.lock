@@ -4002,7 +4002,7 @@ __metadata:
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/marked": 4.0.3
     "@types/node": 16.11.26
     "@types/papaparse": 5.3.2
@@ -4173,7 +4173,7 @@ __metadata:
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/react": 17.0.42
     "@types/react-dom": 17.0.14
     "@types/systemjs": ^0.20.6
@@ -4388,7 +4388,7 @@ __metadata:
     "@types/is-hotkey": 0.1.7
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.26
     "@types/prismjs": 1.26.0
@@ -4585,7 +4585,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/prop-types": ^15
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
@@ -10144,6 +10144,13 @@ __metadata:
   version: 4.14.180
   resolution: "@types/lodash@npm:4.14.180"
   checksum: fc42ae3473695cac6e91553f832fef8eb51a31c1c0381cafa81b00dc3efe18e279786bdda77caf0b90a8340ba2ba7aa46ae6541d69870565f775d04c89128bc1
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:4.14.181":
+  version: 4.14.181
+  resolution: "@types/lodash@npm:4.14.181"
+  checksum: 0d1863d8383fd2f8bb42e9e3fc1d6255bb88ff034d6df848941063698944313dae944fc1270315613e3d303fae7c7a9a86085ad3235ed6204c56c4b0b3699aa9
   languageName: node
   linkType: hard
 
@@ -20486,7 +20493,7 @@ __metadata:
     "@types/jquery": 3.5.14
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/logfmt": ^1.2.1
     "@types/mousetrap": 1.6.9
     "@types/node": 16.11.26
