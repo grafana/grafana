@@ -68,9 +68,13 @@ func TestAuth(t *testing.T) {
 			scopes: []string{
 				fileScope("/*"),
 				fileScope("!/a/b/c/d/e.jpg"),
+				fileScope("!/x/*"),
 			},
 			expectedDeny: []string{
 				"/a/b/c/d/e.jpg",
+				"/x/",
+				"/x/a.jpg",
+				"/x/a/b.jpg",
 			},
 			expectedAllow: []string{
 				"/a/b/c/d/x.jpg",
@@ -148,13 +152,40 @@ func TestAuth(t *testing.T) {
 				"/a/b/c/f.jpg",
 			},
 		},
+		{
+			name: "multiple rules",
+			scopes: []string{
+				fileScope("/gitA/dashboard2.json"),
+				fileScope("/gitB/*"),
+				fileScope("/s3/folder/*"),
+				fileScope("!/s3/folder/nested/*"),
+				fileScope("/gitC/*"),
+				fileScope("!/gitC/nestedC/"),
+			},
+			expectedAllow: []string{
+				"/gitA/dashboard2.json",
+				"/gitB/",
+				"/gitB/nested/",
+				"/gitB/nested/dashboard.json",
+				"/gitB/nested2/dashboard2.json",
+				"/gitC/",
+				"/gitC/nestedC/dashboardC.json",
+				"/s3/", // allowed implicitly with "/s3/folder/*" prefix
+			},
+			expectedDeny: []string{
+				"/gitA/dashboard.json",             // not explicitly allowed
+				"/s3/folder/nested/dashboard.json", // denied with '/s3/folder/nested/' prefix
+				"/s3/nestedC/",                     // not explicitly allowed
+				"/s3/anyFile.jpg",                  // not explicitly allowed
+			},
+		},
 	}
 
 	for _, backend := range backends {
 		for _, prefix := range prefixes {
 			for _, action := range actions {
 				for _, tt := range tests {
-					testName := backend.name + ":[" + prefix + "]" + action + " -  " + tt.name
+					testName := backend.name + ":prefix[" + prefix + "]" + action + " -  " + tt.name
 					t.Run(testName, func(t *testing.T) {
 						var scopes []string
 						for _, scope := range tt.scopes {
