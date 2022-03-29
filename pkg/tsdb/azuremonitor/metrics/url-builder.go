@@ -9,7 +9,7 @@ import (
 type urlBuilder struct {
 	ResourceURI string
 
-	// Following fields are deprecated and are not included in new queries.
+	// Following fields will be deprecated in grafana 9 and will not included in new queries.
 	// For backwards compat, we recreate the ResourceURI using these fields
 	DefaultSubscription string
 	Subscription        string
@@ -23,7 +23,7 @@ type urlBuilder struct {
 func (params *urlBuilder) BuildMetricsURL() string {
 	resourceURI := params.ResourceURI
 
-	// We have a legacy query from before the resource picker, so we manually create the resource URI
+	// Prior to Grafana 9, we had a legacy query object rather than a resourceURI, so we manually create the resource URI
 	if resourceURI == "" {
 		subscription := params.Subscription
 
