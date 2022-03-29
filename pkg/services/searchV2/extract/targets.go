@@ -29,7 +29,6 @@ func (s *targetInfo) GetDatasourceInfo() []DataSourceRef {
 // the node will either be string (name|uid) OR ref
 func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 	switch iter.WhatIsNext() {
-
 	case jsoniter.StringValue:
 		key := iter.ReadString()
 		ds := s.lookup(&DataSourceRef{UID: key})
