@@ -10231,10 +10231,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.3":
-  version: 1.6.3
-  resolution: "@types/mousetrap@npm:1.6.3"
-  checksum: ac2fc9d55ecee6aae6724d76750dfff14f7145fcc1823db9f4644d321c443081e01b66f14f75b52b4611d40c0d581889b52ef1ffaab80df4ea11a43cbbb5fd74
+"@types/mousetrap@npm:1.6.9":
+  version: 1.6.9
+  resolution: "@types/mousetrap@npm:1.6.9"
+  checksum: 9362f0aadf4b66deb39e506159248592ec422583fe8c1b3e6e98a6ba193828b4221b50b832829333089e577729d967423165c692a995b1deafa85934b2b63125
   languageName: node
   linkType: hard
 
@@ -20505,7 +20505,7 @@ __metadata:
     "@types/lingui__macro": ^3
     "@types/lodash": 4.14.149
     "@types/logfmt": ^1.2.1
-    "@types/mousetrap": 1.6.3
+    "@types/mousetrap": 1.6.9
     "@types/node": 16.11.26
     "@types/papaparse": 5.3.2
     "@types/pluralize": ^0.0.29
