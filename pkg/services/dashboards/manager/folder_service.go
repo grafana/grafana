@@ -133,7 +133,13 @@ func (f *FolderServiceImpl) GetFolderByTitle(ctx context.Context, user *models.S
 func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
 	dashFolder := models.NewDashboardFolder(title)
 	dashFolder.OrgId = orgID
-	dashFolder.SetUid(strings.TrimSpace(uid))
+
+	trimmedUID := strings.TrimSpace(uid)
+	if trimmedUID == accesscontrol.GeneralFolderUID {
+		return nil, models.ErrFolderInvalidUID
+	}
+
+	dashFolder.SetUid(trimmedUID)
 	userID := user.UserId
 	if userID == 0 {
 		userID = -1
