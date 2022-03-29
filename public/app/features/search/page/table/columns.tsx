@@ -20,6 +20,8 @@ export const generateColumns = (
 
   availableWidth -= 8; // ???
   let width = 50;
+
+  // TODO: Add optional checkbox support
   if (false) {
     // checkbox column
     columns.push({
