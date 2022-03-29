@@ -19,14 +19,16 @@ Decisions applicable to all options:
 3. All paths are in the format of `/<storage_name>/<path_in_storage>` where `<path_in_storage>` can contain one or more folders
 4. Paths do not include `org_id` - storages are defined per organization
 
-New actions:
+
+### Option #1 - Introduce new actions representing operations on files
+
 - `files:create`
 - `files:update`
 - `files:delete`
 - `files:read`
 
 
-### Option #1 - file scopes support paths - no prefixes, no denies
+#### Option #1.1 - file scopes support paths - no prefixes, no denies
 
 ```
 permissions:
@@ -50,7 +52,7 @@ cons:
 - we need to add permissions each time a new file is added which can be problematic with external storages
 - does not support 
 
-### Option #2 - file scopes support paths and folder-level prefixes, no denies
+#### Option #1.2 - file scopes support paths and folder-level prefixes, no denies
 
 ```
 permissions:
@@ -76,7 +78,7 @@ cons:
    - grant access to `/dashboards/my-folder/dash.json` and `/dashboards/my-folder/dash.jpg` without using `/dashboards/my-folder/*`
 
 
-### Option #3 - file scopes support paths, folder-level prefixes, denies 
+#### Option #1.3 - file scopes support paths, folder-level prefixes, denies (this PR)
 
 ```
 permissions:
@@ -109,7 +111,7 @@ cons:
 
 note: that's the option implemented in this PR
 
-### Option #4 - file scopes support paths, folder- & file-level prefixes, denies
+#### Option #1.4 - file scopes support paths, folder- & file-level prefixes, denies
 
 ```
 permissions:
@@ -129,6 +131,12 @@ pros:
 
 cons:
 - on top of the first con from option #3, this option adds even more complexity to the evaluation engine
+
+### Option #2 - use existing actions with `path:*` (rather than `id:*`) scopes
+
+TODO
+
+
 
 ## Predefined roles 
 
