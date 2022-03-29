@@ -77,7 +77,11 @@ export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDe
   const params: QueryBuilderOperationParamDef[] = [{ name: 'Value', type: 'number' }];
   const defaultParams: any[] = [2];
   if (opDef.comparison) {
-    params.unshift({ name: 'Bool', type: 'boolean' });
+    params.unshift({
+      name: 'Bool',
+      type: 'boolean',
+      description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
+    });
     defaultParams.unshift(false);
   }
 

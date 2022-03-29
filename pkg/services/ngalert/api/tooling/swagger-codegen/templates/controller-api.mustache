@@ -44,6 +44,6 @@ func (api *API) Register{{classname}}Endpoints(srv {{classname}}ForkingService, 
 			m,
 		),
   ){{/operation}}{{/operations}}
-	})
+	}, middleware.ReqSignedIn)
 }{{#operation}}
 {{/operation}}{{/operations}}

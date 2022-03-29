@@ -13,6 +13,7 @@ func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetPreferences)
 	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", ss.SavePreferences)
+	bus.AddHandler("sql", ss.PatchPreferences)
 }
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
@@ -46,6 +47,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
 			WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
 			HomeDashboardId: 0,
+			JsonData:        &models.PreferencesJsonData{},
 		}
 
 		for _, p := range prefs {
@@ -60,6 +62,9 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			}
 			if p.HomeDashboardId != 0 {
 				res.HomeDashboardId = p.HomeDashboardId
+			}
+			if p.JsonData != nil {
+				res.JsonData = p.JsonData
 			}
 		}
 
@@ -106,9 +111,23 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
+				JsonData:        &models.PreferencesJsonData{},
+			}
+
+			if cmd.Navbar != nil {
+				prefs.JsonData.Navbar = *cmd.Navbar
 			}
 			_, err = sess.Insert(&prefs)
 			return err
+		}
+		// Wrap this in an if statement to maintain backwards compatibility
+		if cmd.Navbar != nil {
+			if prefs.JsonData == nil {
+				prefs.JsonData = &models.PreferencesJsonData{}
+			}
+			if cmd.Navbar.SavedItems != nil {
+				prefs.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
+			}
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
 		prefs.Timezone = cmd.Timezone
@@ -117,6 +136,61 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 		prefs.Updated = time.Now()
 		prefs.Version += 1
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
+		return err
+	})
+}
+
+func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		var prefs models.Preferences
+		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			prefs = models.Preferences{
+				UserId:   cmd.UserId,
+				OrgId:    cmd.OrgId,
+				TeamId:   cmd.TeamId,
+				Created:  time.Now(),
+				JsonData: &models.PreferencesJsonData{},
+			}
+		}
+
+		if cmd.Navbar != nil {
+			if prefs.JsonData == nil {
+				prefs.JsonData = &models.PreferencesJsonData{}
+			}
+			if cmd.Navbar.SavedItems != nil {
+				prefs.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
+			}
+		}
+
+		if cmd.HomeDashboardId != nil {
+			prefs.HomeDashboardId = *cmd.HomeDashboardId
+		}
+
+		if cmd.Timezone != nil {
+			prefs.Timezone = *cmd.Timezone
+		}
+
+		if cmd.WeekStart != nil {
+			prefs.WeekStart = *cmd.WeekStart
+		}
+
+		if cmd.Theme != nil {
+			prefs.Theme = *cmd.Theme
+		}
+
+		prefs.Updated = time.Now()
+		prefs.Version += 1
+
+		if exists {
+			_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
+		} else {
+			_, err = sess.Insert(&prefs)
+		}
 		return err
 	})
 }

@@ -37,7 +37,7 @@ const frame: DataFrame = {
       values: new ArrayVector(['1645029699311000500', '1645029699312000500', '1645029699313000500']),
     },
   ],
-  length: 1,
+  length: 3,
 };
 
 function makeRequest(expr: string): DataQueryRequest<LokiQuery> {
@@ -78,6 +78,16 @@ describe('loki backendResultTransformer', () => {
       searchWords: ['thing1'],
     };
     expectedFrame.fields[2].type = FieldType.time;
+    expectedFrame.fields.push({
+      name: 'id',
+      type: FieldType.string,
+      config: {},
+      values: new ArrayVector([
+        '6b099923-25a6-5336-96fa-c84a14b7c351_A',
+        '0e1b7c47-a956-5cf2-a803-d487679745bd_A',
+        '6f9a840c-6a00-525b-9ed4-cceea29e62af_A',
+      ]),
+    });
 
     const expected: DataQueryResponse = { data: [expectedFrame] };
 

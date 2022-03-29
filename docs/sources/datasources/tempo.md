@@ -57,6 +57,12 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
 
+### Loki Search
+
+This is a configuration for the Loki search query type.
+
+-- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
+
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
@@ -81,7 +87,7 @@ You must also configure your Tempo data source to use this feature.Refer to the 
 
 ### Loki search
 
-You can search for traces if you set up the trace to logs setting in the data source configuration page. To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
+To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the search tab" >}}
 
@@ -197,11 +203,12 @@ datasources:
         spanEndTimeShift: '1h'
         filterByTraceID: false
         filterBySpanID: false
-        lokiSearch: true
       serviceMap:
         datasourceUid: 'prometheus'
       search:
         hide: false
       nodeGraph:
         enabled: true
+      lokiSearch:
+        datasourceUid: 'loki'
 ```

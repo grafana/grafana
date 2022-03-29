@@ -88,6 +88,87 @@ describe('preparePlotData', () => {
         ]
       `);
     });
+
+    it('negative-y transform with null/undefined values', () => {
+      const df = new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+          { name: 'a', values: [-10, 20, 10, 30] },
+          { name: 'b', values: [10, 10, 10, null] },
+          { name: 'c', values: [null, 20, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
+          { name: 'd', values: [20, 20, 20, null], config: { custom: { transform: GraphTransform.NegativeY } } },
+          { name: 'e', values: [20, null, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
+          { name: 'f', values: [10, 10, 10, undefined] },
+          { name: 'g', values: [undefined, 20, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
+          { name: 'h', values: [20, 20, 20, undefined], config: { custom: { transform: GraphTransform.NegativeY } } },
+          { name: 'i', values: [20, undefined, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
+        ],
+      });
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+            undefined,
+          ],
+          Array [
+            -10,
+            20,
+            10,
+            30,
+          ],
+          Array [
+            10,
+            10,
+            10,
+            null,
+          ],
+          Array [
+            null,
+            -20,
+            -20,
+            -20,
+          ],
+          Array [
+            -20,
+            -20,
+            -20,
+            null,
+          ],
+          Array [
+            -20,
+            null,
+            -20,
+            -20,
+          ],
+          Array [
+            10,
+            10,
+            10,
+            undefined,
+          ],
+          Array [
+            undefined,
+            -20,
+            -20,
+            -20,
+          ],
+          Array [
+            -20,
+            -20,
+            -20,
+            undefined,
+          ],
+          Array [
+            -20,
+            undefined,
+            -20,
+            -20,
+          ],
+        ]
+      `);
+    });
     it('constant transform', () => {
       const df = new MutableDataFrame({
         fields: [
