@@ -19,12 +19,16 @@ type PluginRegistry struct {
 	log   log.Logger
 }
 
-func ProvidePluginRegistry(grafanaCfg *setting.Cfg) (*PluginRegistry, error) {
+func ProvidePluginRegistry(grafanaCfg *setting.Cfg) *PluginRegistry {
+	return NewPluginRegistry(grafanaCfg)
+}
+
+func NewPluginRegistry(grafanaCfg *setting.Cfg) *PluginRegistry {
 	return &PluginRegistry{
 		cfg:   plugins.FromGrafanaCfg(grafanaCfg),
 		store: make(map[string]*plugins.Plugin),
 		log:   log.New("int.plugin.registry"),
-	}, nil
+	}
 }
 
 func (r *PluginRegistry) Plugin(_ context.Context, pluginID string) (*plugins.Plugin, bool) {
@@ -38,11 +42,17 @@ func (r *PluginRegistry) Plugin(_ context.Context, pluginID string) (*plugins.Pl
 }
 
 func (r *PluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
-	pluginsList := make([]*plugins.Plugin, 0)
-	for _, p := range r.plugins() {
-		pluginsList = append(pluginsList, p)
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	res := make([]*plugins.Plugin, 0)
+	for _, p := range r.store {
+		if !p.IsDecommissioned() {
+			res = append(res, p)
+		}
 	}
-	return pluginsList
+
+	return res
 }
 
 func (r *PluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
@@ -73,22 +83,6 @@ func (r *PluginRegistry) Remove(_ context.Context, pluginID string) error {
 	return nil
 }
 
-func (r *PluginRegistry) register(p *plugins.Plugin) error {
-	if r.isRegistered(p.ID) {
-		return fmt.Errorf("plugin %s is already registered", p.ID)
-	}
-
-	r.mu.Lock()
-	r.store[p.ID] = p
-	r.mu.Unlock()
-
-	if !p.IsCorePlugin() {
-		r.log.Info("Plugin registered", "pluginId", p.ID)
-	}
-
-	return nil
-}
-
 func (r *PluginRegistry) plugin(pluginID string) (*plugins.Plugin, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -99,29 +93,6 @@ func (r *PluginRegistry) plugin(pluginID string) (*plugins.Plugin, bool) {
 	}
 
 	return p, true
-}
-
-func (r *PluginRegistry) plugins() []*plugins.Plugin {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	res := make([]*plugins.Plugin, 0)
-	for _, p := range r.store {
-		if !p.IsDecommissioned() {
-			res = append(res, p)
-		}
-	}
-
-	return res
-}
-
-func (r *PluginRegistry) registeredPlugins() map[string]struct{} {
-	pluginsByID := make(map[string]struct{})
-	for _, p := range r.plugins() {
-		pluginsByID[p.ID] = struct{}{}
-	}
-
-	return pluginsByID
 }
 
 func (r *PluginRegistry) isRegistered(pluginID string) bool {

@@ -23,7 +23,7 @@ const (
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
-		pm := New(&plugins.Cfg{}, []PluginSource{
+		pm := New(&plugins.Cfg{}, newRegistry(), []PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
@@ -481,7 +481,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, nil, &fakeLoader{})
+	pm := New(&plugins.Cfg{}, newRegistry(), nil, &fakeLoader{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -535,7 +535,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
 	loader := &fakeLoader{}
-	manager := New(cfg, nil, loader)
+	manager := New(cfg, newRegistry(), nil, loader)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
@@ -729,5 +729,40 @@ type fakeSender struct {
 func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
 	s.resp = crr
 
+	return nil
+}
+
+type fakeInternalRegistry struct {
+	store map[string]*plugins.Plugin
+}
+
+func newRegistry() *fakeInternalRegistry {
+	return &fakeInternalRegistry{
+		store: make(map[string]*plugins.Plugin),
+	}
+}
+
+func (f *fakeInternalRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
+	p, exists := f.store[id]
+	return p, exists
+}
+
+func (f *fakeInternalRegistry) Plugins(_ context.Context) []*plugins.Plugin {
+	var res []*plugins.Plugin
+
+	for _, p := range f.store {
+		res = append(res, p)
+	}
+
+	return res
+}
+
+func (f *fakeInternalRegistry) Add(_ context.Context, p *plugins.Plugin) error {
+	f.store[p.ID] = p
+	return nil
+}
+
+func (f *fakeInternalRegistry) Remove(_ context.Context, id string) error {
+	delete(f.store, id)
 	return nil
 }

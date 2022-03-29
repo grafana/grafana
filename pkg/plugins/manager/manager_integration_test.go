@@ -92,7 +92,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	pm, err := ProvideService(cfg, NewPluginRegistry(cfg), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
 		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
 
@@ -174,7 +174,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expPanels, p.ID)
-		assert.Contains(t, pm.registeredPlugins(), p.ID)
+		assert.Contains(t, pm.registeredPlugins(context.Background()), p.ID)
 	}
 
 	dataSources := pm.Plugins(context.Background(), plugins.DataSource)
@@ -184,7 +184,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
-		assert.Contains(t, pm.registeredPlugins(), ds.ID)
+		assert.Contains(t, pm.registeredPlugins(context.Background()), ds.ID)
 	}
 
 	apps := pm.Plugins(context.Background(), plugins.App)
@@ -194,7 +194,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expApps, app.ID)
-		assert.Contains(t, pm.registeredPlugins(), app.ID)
+		assert.Contains(t, pm.registeredPlugins(context.Background()), app.ID)
 	}
 
 	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins(context.Background())))
