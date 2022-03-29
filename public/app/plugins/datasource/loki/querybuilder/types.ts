@@ -41,6 +41,8 @@ export enum LokiOperationId {
   Avg = 'avg',
   Min = 'min',
   Max = 'max',
+  TopK = 'topk',
+  BottomK = 'bottomk',
   LineContains = '__line_contains',
   LineContainsNot = '__line_contains_not',
   LineMatchesRegex = '__line_matches_regex',
