@@ -2,7 +2,6 @@ package kvstore
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -130,10 +129,30 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 // Del deletes an item from the store.
 func (kv *secretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		kv.log.Debug("deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace)
-		query := fmt.Sprintf("DELETE FROM secrets WHERE org_id=? and type=? and %s=?", kv.sqlStore.Quote("namespace"))
-		_, err := dbSession.Exec(query, orgId, typ, namespace)
-		return err
+		item := Item{
+			OrgId:     &orgId,
+			Namespace: &namespace,
+			Type:      &typ,
+		}
+
+		has, err := dbSession.Get(&item)
+		if err != nil {
+			kv.log.Debug("error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			return err
+		}
+
+		if has {
+			// if item exists we delete it
+			_, err = dbSession.ID(item.Id).Delete(&item)
+			if err != nil {
+				kv.log.Debug("error deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			} else {
+				delete(kv.decryptionCache.cache, item.Id)
+				kv.log.Debug("secret value deleted", "orgId", orgId, "type", typ, "namespace", namespace)
+			}
+			return err
+		}
+		return nil
 	})
 	return err
 }
