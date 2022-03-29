@@ -384,14 +384,16 @@ export class TimeSrv {
   private getTimeout = (callback: any, timeout: number, ...args: any): NodeJS.Timeout => {
     const MAX_32_BIT_SIGNED = 2147483647;
     if (timeout / MAX_32_BIT_SIGNED > 1) {
+      console.log('longTimeout');
       return this.setLongTimeout(callback, timeout, args);
     } else {
+      console.log('timeout');
       return setTimeout(callback, timeout);
     }
   };
 
   //
-  // this was taken from https://stackoverflow.com/a/67351415.
+  // this was taken from https://stackoverflow.com/a/67351415 and modified accordingly.
   // it is needed to avoid overflow on auto refresh timer, for more than ~24 days,
   // due to the max delay value mentioned here:
   // https://developer.mozilla.org/en-US/docs/Web/API/setTimeout#maximum_delay_value
@@ -399,14 +401,33 @@ export class TimeSrv {
     let count = 0;
     let handle: NodeJS.Timeout;
     const MAX_32_BIT_SIGNED = 2147483647;
-    const maxIterations = timeout / MAX_32_BIT_SIGNED;
+    const maxIterations = Math.floor(timeout / MAX_32_BIT_SIGNED);
 
-    const onInterval = () => {
-      ++count;
-      if (count > maxIterations) {
-        count = 0;
-        clearInterval(handle);
+    if (maxIterations < 1) {
+      return setTimeout(() => {
         callback(args);
+      }, timeout);
+    }
+    const leftover = timeout - MAX_32_BIT_SIGNED * Math.floor(maxIterations);
+    const onInterval = async () => {
+      ++count;
+      if (count > maxIterations - 1) {
+        if (leftover === 0) {
+          count = 0;
+          clearInterval(handle);
+          callback(args);
+          return;
+        }
+        if (leftover !== 0) {
+          await new Promise(() => {
+            setTimeout(() => {
+              count = 0;
+              clearInterval(handle);
+              callback(args);
+              Promise.resolve();
+            }, leftover);
+          });
+        }
       }
     };
 
