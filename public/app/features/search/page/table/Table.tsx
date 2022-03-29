@@ -82,9 +82,13 @@ const generateColumns = (
   });
   availableWidth -= width;
 
+  const TYPE_COLUMN_WIDTH = 130;
+  const DATASOURCE_COLUMN_WIDTH = 200;
+  const INFO_COLUMN_WIDTH = 100;
+  const LOCATION_COLUMN_WIDTH = 200;
+
+  width = TYPE_COLUMN_WIDTH;
   if (isDashboardList) {
-    // The type column
-    width = 150;
     columns.push({
       Cell: DefaultCell,
       id: `column-type`,
@@ -101,21 +105,20 @@ const generateColumns = (
       width,
     });
     availableWidth -= width;
+  } else {
+    columns.push(makeTypeColumn(access.kind, access.type, width, styles.typeText, styles.typeIcon));
+    availableWidth -= width;
+  }
 
-    // Show tags if we have any
-    if (access.tags && hasFieldValue(access.tags)) {
-      width = 200;
-      columns.push(makeTagsColumn(access.tags, width));
-      availableWidth -= width;
-    }
+  // Show datasources if we have any
+  if (access.datasource && hasFieldValue(access.datasource)) {
+    width = DATASOURCE_COLUMN_WIDTH;
+    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
+    availableWidth -= width;
+  }
 
-    // Show tags if we have any
-    if (access.datasource && hasFieldValue(access.datasource)) {
-      width = 200;
-      columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
-      availableWidth -= width;
-    }
-
+  if (isDashboardList) {
+    width = INFO_COLUMN_WIDTH;
     columns.push({
       Cell: DefaultCell,
       id: `column-info`,
@@ -125,28 +128,10 @@ const generateColumns = (
         const panelCount = access.panelCount?.values.get(i);
         return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
       },
-      width: Math.max(availableWidth, 100),
+      width: width,
     });
-  } else {
-    // The type column
-    width = 150;
-    columns.push(makeTypeColumn(access.kind, access.type, width, styles.typeText, styles.typeIcon));
     availableWidth -= width;
-
-    // Show tags if we have any
-    if (access.tags && hasFieldValue(access.tags)) {
-      width = 200;
-      columns.push(makeTagsColumn(access.tags, width));
-      availableWidth -= width;
-    }
-
-    // Show tags if we have any
-    if (access.datasource && hasFieldValue(access.datasource)) {
-      width = 200;
-      columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
-      availableWidth -= width;
-    }
-
+  } else {
     columns.push({
       Cell: DefaultCell,
       id: `column-location`,
@@ -174,8 +159,15 @@ const generateColumns = (
         }
         return null;
       },
-      width: Math.max(availableWidth, 100),
+      width: LOCATION_COLUMN_WIDTH,
     });
+    availableWidth -= width;
+  }
+
+  // Show tags if we have any
+  if (access.tags && hasFieldValue(access.tags)) {
+    width = Math.max(availableWidth, 250);
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList));
   }
 
   return columns;
@@ -382,6 +374,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       span {
         margin-right: 10px;
       }
+    `,
+    tagList: css`
+      justify-content: flex-start;
     `,
   };
 };

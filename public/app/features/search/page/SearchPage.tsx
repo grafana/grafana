@@ -37,7 +37,7 @@ export default function SearchPage() {
 
   const getTagOptions = (): Promise<TermCount[]> => {
     const tags = results.value?.body.fields.find((f) => f.name === 'tags');
-    console.log('GET TAGS', results);
+
     if (tags) {
       return Promise.resolve(getTermCounts(tags));
     }

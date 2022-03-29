@@ -97,7 +97,7 @@ export function makeTypeColumn(
   };
 }
 
-export function makeTagsColumn(field: Field<string[]>, width: number): TableColumn {
+export function makeTagsColumn(field: Field<string[]>, width: number, tagListClass: string): TableColumn {
   return {
     Cell: DefaultCell,
     id: `column-tags`,
@@ -106,7 +106,7 @@ export function makeTagsColumn(field: Field<string[]>, width: number): TableColu
     accessor: (row: any, i: number) => {
       const tags = field.values.get(i);
       if (tags) {
-        return <TagList tags={tags} onClick={(v) => alert('CLICKED TAG: ' + v)} />;
+        return <TagList className={tagListClass} tags={tags} onClick={(v) => alert('CLICKED TAG: ' + v)} />;
       }
       return null;
     },
