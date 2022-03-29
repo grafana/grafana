@@ -211,7 +211,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 func TestValidateRuleNode_NoUID(t *testing.T) {
 	orgId := rand.Int63()
 	folder := randFolder()
-	name := util.GenerateShortUID()
+	namespace := util.GenerateShortUID()
 	var cfg = config(t)
 	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10)+1)
 
@@ -236,10 +236,10 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, int64(interval.Seconds()), alert.IntervalSeconds)
 				require.Equal(t, int64(0), alert.Version)
 				require.Equal(t, api.GrafanaManagedAlert.UID, alert.UID)
-				require.Equal(t, strconv.FormatInt(orgId, 10), alert.NamespaceUID)
+				require.Equal(t, namespace, alert.NamespaceUID)
 				require.Nil(t, alert.DashboardUID)
 				require.Nil(t, alert.PanelID)
-				require.Equal(t, name, alert.RuleGroup)
+				require.Equal(t, folder.Uid, alert.RuleGroup)
 				require.Equal(t, alertmodels.NoDataState(api.GrafanaManagedAlert.NoDataState), alert.NoDataState)
 				require.Equal(t, alertmodels.ExecutionErrorState(api.GrafanaManagedAlert.ExecErrState), alert.ExecErrState)
 				require.Equal(t, time.Duration(api.ApiRuleNode.For), alert.For)
@@ -306,7 +306,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			r := testCase.rule()
 			r.GrafanaManagedAlert.UID = ""
 
-			alert, err := validateRuleNode(r, 1, name, interval, folder, func(condition alertmodels.Condition) error {
+			alert, err := validateRuleNode(r, orgId, namespace, interval, folder, func(condition alertmodels.Condition) error {
 				return nil
 			}, cfg)
 			require.NoError(t, err)
@@ -314,13 +314,13 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 		})
 	}
 
-	t.Run("accepts empty group name", func(t *testing.T) {
+	t.Run("accepts empty namespace", func(t *testing.T) {
 		r := validRule()
-		alert, err := validateRuleNode(&r, 1, "", interval, folder, func(condition alertmodels.Condition) error {
+		alert, err := validateRuleNode(&r, orgId, "", interval, folder, func(condition alertmodels.Condition) error {
 			return nil
 		}, cfg)
 		require.NoError(t, err)
-		require.Equal(t, "", alert.RuleGroup)
+		require.Equal(t, folder.Uid, alert.RuleGroup)
 	})
 }
 
@@ -555,13 +555,13 @@ func TestValidateRuleNode_UID(t *testing.T) {
 		})
 	}
 
-	t.Run("accepts empty group name", func(t *testing.T) {
+	t.Run("accepts empty namespace", func(t *testing.T) {
 		r := validRule()
 		alert, err := validateRuleNode(&r, 1, "", interval, folder, func(condition alertmodels.Condition) error {
 			return nil
 		}, cfg)
 		require.NoError(t, err)
-		require.Equal(t, "", alert.RuleGroup)
+		require.Equal(t, folder.Uid, alert.RuleGroup)
 	})
 }
 

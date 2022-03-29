@@ -19,7 +19,7 @@ func validateRuleNode(
 	orgId int64,
 	namespace string,
 	interval time.Duration,
-	groupName *models.Folder,
+	group *models.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
 	intervalSeconds := int64(interval.Seconds())
@@ -105,7 +105,7 @@ func validateRuleNode(
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
 		NamespaceUID:    namespace,
-		RuleGroup:       groupName.Uid,
+		RuleGroup:       group.Uid,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
 	}
@@ -141,7 +141,7 @@ func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
 	namespace string,
-	groupName *models.Folder,
+	group *models.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, error) {
 	if ruleGroupConfig.Name == "" {
@@ -167,7 +167,7 @@ func validateRuleGroup(
 	result := make([]*ngmodels.AlertRule, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
-		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], orgId, namespace, interval, groupName, conditionValidator, cfg)
+		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], orgId, namespace, interval, group, conditionValidator, cfg)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
 			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
