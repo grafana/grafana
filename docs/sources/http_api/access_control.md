@@ -64,6 +64,10 @@ Gets all existing roles. The response contains all global and organization local
 
 Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.
 
+Query Parameters:
+
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
+
 #### Required permissions
 
 | Action     | Scope    |
@@ -258,6 +262,7 @@ Content-Type: application/json
 | description | string     | No       | Description of the role.                                                                                                                                                                                                                                            |
 | displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                                        |
 | group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                                 |
+| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                                    |
 | permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                                   |
 
 **Permission**
@@ -349,14 +354,15 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name  | Data Type           | Required | Description                                                         |
-| ----------- | ------------------- | -------- | ------------------------------------------------------------------- |
-| version     | number              | Yes      | Version of the role. Must be incremented for update to work.        |
-| name        | string              | Yes      | Name of the role.                                                   |
-| description | string              | No       | Description of the role.                                            |
-| displayName | string              | No       | Display name of the role, visible in the UI.                        |
-| group       | string              | No       | The group name the role belongs to.                                 |
-| permissions | List of Permissions | No       | The full list of permissions the role should have after the update. |
+| Field Name  | Data Type           | Required | Description                                                                                                                                                                      |
+| ----------- | ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| version     | number              | Yes      | Version of the role. Must be incremented for update to work.                                                                                                                     |
+| name        | string              | Yes      | Name of the role.                                                                                                                                                                |
+| description | string              | No       | Description of the role.                                                                                                                                                         |
+| displayName | string              | No       | Display name of the role, visible in the UI.                                                                                                                                     |
+| group       | string              | No       | The group name the role belongs to.                                                                                                                                              |
+| hidden      | boolean             | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified. |
+| permissions | List of Permissions | No       | The full list of permissions for the role after the update.                                                                                                                      |
 
 **Permission**
 
@@ -465,6 +471,10 @@ Content-Type: application/json; charset=UTF-8
 `GET /api/access-control/users/:userId/roles`
 
 Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
+
+Query Parameters:
+
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
 
@@ -702,10 +712,11 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name | Date Type | Required | Description                                                                                                                                          |
-| ---------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| global     | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. |
-| roleUids   | list      | Yes      | List of role UIDs.                                                                                                                                   |
+| Field Name    | Date Type | Required | Description                                                                                                                                          |
+| ------------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| global        | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. |
+| roleUids      | list      | Yes      | List of role UIDs.                                                                                                                                   |
+| includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated.                                                                                       |
 
 #### Example response
 
@@ -734,6 +745,10 @@ Content-Type: application/json; charset=UTF-8
 `GET /api/access-control/teams/:teamId/roles`
 
 Lists the roles that have been directly assigned to a given team.
+
+Query Parameters:
+
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
 
@@ -832,7 +847,7 @@ Content-Type: application/json; charset=UTF-8
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-## Remove a user role assignment
+## Remove a team role assignment
 
 `DELETE /api/access-control/teams/:teams/roles/:roleUID`
 
@@ -915,9 +930,10 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name | Date Type | Required | Description        |
-| ---------- | --------- | -------- | ------------------ |
-| roleUids   | list      | Yes      | List of role UIDs. |
+| Field Name    | Date Type | Required | Description                                                    |
+| ------------- | --------- | -------- | -------------------------------------------------------------- |
+| roleUids      | list      | Yes      | List of role UIDs.                                             |
+| includeHidden | boolean   | No       | Specify whether the hidden role assignments should be updated. |
 
 #### Example response
 
@@ -948,6 +964,10 @@ API set allows to create or remove [built-in role assignments]({{< relref "../en
 `GET /api/access-control/builtin-roles`
 
 Gets all built-in role assignments.
+
+Query Parameters:
+
+- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
 

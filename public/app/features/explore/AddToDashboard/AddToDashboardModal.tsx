@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { DataQuery } from '@grafana/data';
 import { Alert, Button, Field, Input, InputControl, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { useForm } from 'react-hook-form';
@@ -10,12 +9,18 @@ export interface ErrorResponse {
   message?: string;
 }
 
+const ERRORS = {
+  NAME_REQUIRED: 'Dashboard name is required.',
+  NAME_EXISTS: 'A dashboard with the same name already exists in this folder.',
+  INVALID_FIELD: 'This field is invalid.',
+  UNKNOWN_ERROR: 'An unknown error occurred while saving the dashboard. Please try again.',
+  INVALID_FOLDER: 'Select a valid folder to save your dashboard in.',
+};
+
 type FormDTO = SaveToNewDashboardDTO;
 
 interface Props {
   onClose: () => void;
-  queries: DataQuery[];
-  visualization: string;
   onSave: (data: FormDTO, redirect: boolean) => Promise<void | ErrorResponse>;
 }
 
@@ -23,7 +28,7 @@ function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}
   return async (...args: T) => fn(redirect, ...args);
 }
 
-export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }: Props) => {
+export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
   const [submissionError, setSubmissionError] = useState<string>();
   const {
     register,
@@ -31,7 +36,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
     control,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormDTO>({ defaultValues: { queries, visualization } });
+  } = useForm<FormDTO>();
 
   const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
@@ -39,16 +44,18 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
 
     if (error) {
       switch (error.status) {
-        case 'name-exists':
-        case 'empty-name':
         case 'name-match':
           // error.message should always be defined here
-          setError('dashboardName', { message: error.message ?? 'This field is invalid' });
+          setError('dashboardName', { message: error.message ?? ERRORS.INVALID_FIELD });
+          break;
+        case 'empty-name':
+          setError('dashboardName', { message: ERRORS.NAME_REQUIRED });
+          break;
+        case 'name-exists':
+          setError('dashboardName', { message: ERRORS.NAME_EXISTS });
           break;
         default:
-          setSubmissionError(
-            error.message ?? 'An unknown error occurred while saving the dashboard. Please try again.'
-          );
+          setSubmissionError(error.message ?? ERRORS.UNKNOWN_ERROR);
       }
     }
   };
@@ -56,14 +63,11 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
   return (
     <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
       <form>
-        <input type="hidden" {...register('queries')} />
-        <input type="hidden" {...register('visualization')} />
-
-        <p>Create a new dashboard and add a panel with explored queries.</p>
+        <p>Create a new dashboard and add a panel with the explored queries.</p>
 
         <Field
           label="Dashboard name"
-          description="Choose the name of the new dashboard"
+          description="Choose a name for the new dashboard."
           error={errors.dashboardName?.message}
           invalid={!!errors.dashboardName}
         >
@@ -71,7 +75,10 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             id="dashboard_name"
             {...register('dashboardName', {
               shouldUnregister: true,
-              required: { value: true, message: 'This field is required' },
+              required: { value: true, message: ERRORS.NAME_REQUIRED },
+              setValueAs(value: string) {
+                return value.trim();
+              },
             })}
             // we set default value here instead of in useForm because this input will be unregistered when switching
             // to "Existing Dashboard" and default values are not populated with manually registered
@@ -82,7 +89,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
 
         <Field
           label="Folder"
-          description="Select where the dashboard will be created"
+          description="Select where the dashboard will be created."
           error={errors.folderId?.message}
           invalid={!!errors.folderId}
         >
@@ -93,7 +100,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             control={control}
             name="folderId"
             shouldUnregister
-            rules={{ required: { value: true, message: 'Select a valid folder to save your dashboard in' } }}
+            rules={{ required: { value: true, message: ERRORS.INVALID_FOLDER } }}
           />
         </Field>
 
@@ -120,7 +127,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             type="submit"
             onClick={handleSubmit(withRedirect(onSubmit, true))}
             variant="primary"
-            icon="plus"
+            icon="apps"
             disabled={isSubmitting}
           >
             Save and go to dashboard

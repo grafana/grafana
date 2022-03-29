@@ -1,70 +1,107 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { Button, Checkbox, Form, Modal, TextArea } from '@grafana/ui';
+import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { SaveDashboardFormProps } from '../types';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { SaveDashboardData, SaveDashboardOptions } from '../types';
+import { Stack } from '@grafana/experimental';
 
-interface SaveDashboardFormDTO {
+interface FormDTO {
   message: string;
-  saveVariables: boolean;
-  saveTimerange: boolean;
 }
 
-export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel, onSuccess, onSubmit }) => {
+type Props = {
+  dashboard: DashboardModel; // original
+  saveModel: SaveDashboardData; // already cloned
+  onCancel: () => void;
+  onSuccess: () => void;
+  onSubmit?: (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  options: SaveDashboardOptions;
+  onOptionsChange: (opts: SaveDashboardOptions) => void;
+};
+
+export const SaveDashboardForm = ({
+  dashboard,
+  saveModel,
+  options,
+  onSubmit,
+  onCancel,
+  onSuccess,
+  onOptionsChange,
+}: Props) => {
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
+  const [saving, setSaving] = useState(false);
+
   return (
     <Form
-      onSubmit={async (data: SaveDashboardFormDTO) => {
+      onSubmit={async (data: FormDTO) => {
         if (!onSubmit) {
           return;
         }
-
-        const result = await onSubmit(dashboard.getSaveModelClone(data), data, dashboard);
+        setSaving(true);
+        const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
-          if (data.saveVariables) {
+          if (options.saveVariables) {
             dashboard.resetOriginalVariables();
           }
-          if (data.saveTimerange) {
+          if (options.saveTimerange) {
             dashboard.resetOriginalTime();
           }
           onSuccess();
+        } else {
+          setSaving(false);
         }
       }}
     >
       {({ register, errors }) => (
-        <>
-          <div>
-            {hasTimeChanged && (
-              <Checkbox
-                {...register('saveTimerange')}
-                label="Save current time range as dashboard default"
-                aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-              />
-            )}
-            {hasVariableChanged && (
-              <Checkbox
-                {...register('saveVariables')}
-                label="Save current variable values as dashboard default"
-                aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-              />
-            )}
-            {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
+        <Stack direction="column" gap={2}>
+          {hasTimeChanged && (
+            <Checkbox
+              checked={options.saveTimerange}
+              onChange={() =>
+                onOptionsChange({
+                  ...options,
+                  saveTimerange: !options.saveTimerange,
+                })
+              }
+              label="Save current time range as dashboard default"
+              aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+            />
+          )}
+          {hasVariableChanged && (
+            <Checkbox
+              checked={options.saveVariables}
+              onChange={() =>
+                onOptionsChange({
+                  ...options,
+                  saveVariables: !options.saveVariables,
+                })
+              }
+              label="Save current variable values as dashboard default"
+              aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+            />
+          )}
 
-            <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus />
-          </div>
+          <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus rows={5} />
 
-          <Modal.ButtonRow>
+          <Stack alignItems="center">
             <Button variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
-            <Button type="submit" aria-label={selectors.pages.SaveDashboardModal.save}>
+            <Button
+              type="submit"
+              disabled={!saveModel.hasChanges}
+              icon={saving ? 'fa fa-spinner' : undefined}
+              aria-label={selectors.pages.SaveDashboardModal.save}
+            >
               Save
             </Button>
-          </Modal.ButtonRow>
-        </>
+            {!saveModel.hasChanges && <div>No changes to save</div>}
+          </Stack>
+        </Stack>
       )}
     </Form>
   );

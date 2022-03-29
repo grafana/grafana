@@ -9,8 +9,12 @@ weight = 700
 
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
 
-- [Create the Azure AD application](#create-the-azure-ad-application)
-- [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
+- [Azure AD OAuth2 authentication](#azure-ad-oauth2-authentication)
+  - [Create the Azure AD application](#create-the-azure-ad-application)
+  - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
+    - [Configure allowed groups](#configure-allowed-groups)
+    - [Configure allowed domains](#configure-allowed-domains)
+    - [Team Sync (Enterprise only)](#team-sync-enterprise-only)
 
 ## Create the Azure AD application
 
@@ -44,46 +48,46 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Include the unique ID in the configuration file:
 
-```json
-     "appRoles": [
-     		{
-     			"allowedMemberTypes": [
-     				"User"
-     			],
-     			"description": "Grafana admin Users",
-     			"displayName": "Grafana Admin",
-     			"id": "SOME_UNIQUE_ID",
-     			"isEnabled": true,
-     			"lang": null,
-     			"origin": "Application",
-     			"value": "Admin"
-     		},
-     		{
-     			"allowedMemberTypes": [
-     				"User"
-     			],
-     			"description": "Grafana read only Users",
-     			"displayName": "Grafana Viewer",
-     			"id": "SOME_UNIQUE_ID",
-     			"isEnabled": true,
-     			"lang": null,
-     			"origin": "Application",
-     			"value": "Viewer"
-     		},
-     		{
-     			"allowedMemberTypes": [
-     				"User"
-     			],
-     			"description": "Grafana Editor Users",
-     			"displayName": "Grafana Editor",
-     			"id": "SOME_UNIQUE_ID",
-     			"isEnabled": true,
-     			"lang": null,
-     			"origin": "Application",
-     			"value": "Editor"
-     		}
-     	],
-```
+   ```json
+   	"appRoles": [
+   			{
+   				"allowedMemberTypes": [
+   					"User"
+   				],
+   				"description": "Grafana admin Users",
+   				"displayName": "Grafana Admin",
+   				"id": "SOME_UNIQUE_ID",
+   				"isEnabled": true,
+   				"lang": null,
+   				"origin": "Application",
+   				"value": "Admin"
+   			},
+   			{
+   				"allowedMemberTypes": [
+   					"User"
+   				],
+   				"description": "Grafana read only Users",
+   				"displayName": "Grafana Viewer",
+   				"id": "SOME_UNIQUE_ID",
+   				"isEnabled": true,
+   				"lang": null,
+   				"origin": "Application",
+   				"value": "Viewer"
+   			},
+   			{
+   				"allowedMemberTypes": [
+   					"User"
+   				],
+   				"description": "Grafana Editor Users",
+   				"displayName": "Grafana Editor",
+   				"id": "SOME_UNIQUE_ID",
+   				"isEnabled": true,
+   				"lang": null,
+   				"origin": "Application",
+   				"value": "Editor"
+   			}
+   		],
+   ```
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
@@ -105,6 +109,7 @@ auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
 allowed_domains =
 allowed_groups =
+role_attribute_strict = false
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:

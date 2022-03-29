@@ -1,4 +1,12 @@
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Diffs } from '../VersionHistory/utils';
+
+export interface SaveDashboardData {
+  clone: DashboardModel; // cloned copy
+  diff: Diffs;
+  diffCount: number; // cumulative count
+  hasChanges: boolean; // not new and has changes
+}
 
 export interface SaveDashboardOptions extends CloneOptions {
   folderId?: number;
@@ -18,4 +26,5 @@ export interface SaveDashboardModalProps {
   dashboard: DashboardModel;
   onDismiss: () => void;
   onSaveSuccess?: () => void;
+  isCopy?: boolean;
 }

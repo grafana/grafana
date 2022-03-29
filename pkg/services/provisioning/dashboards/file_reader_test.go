@@ -91,12 +91,11 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 }
 
 func TestDashboardFileReader(t *testing.T) {
-	logger := log.New("test.logger")
+	logger := log.New("test-logger")
 	cfg := &config{}
 
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
-
 	setup := func() {
 		bus.ClearBusHandlers()
 		bus.AddHandler("test", mockGetDashboardQuery)

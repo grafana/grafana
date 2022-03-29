@@ -28,8 +28,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
 	dashboardService dashboardservice.DashboardProvisioningService,
 	datasourceService datasourceservice.DataSourceService,
-	alertingService *alerting.AlertNotificationService,
-	pluginSettings pluginsettings.Service,
+	alertingService *alerting.AlertNotificationService, pluginSettings pluginsettings.Service,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,

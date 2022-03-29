@@ -7,10 +7,182 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
+	settings, err := hs.getFrontendSettingsMap(c)
+	if err != nil {
+		c.JsonApiErr(400, "Failed to get frontend settings", err)
+		return
+	}
+
+	c.JSON(200, settings)
+}
+
+// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
+func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
+	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return nil, err
+	}
+
+	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
+	for _, app := range enabledPlugins[plugins.App] {
+		if app.Preload {
+			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
+				Path:    app.Module,
+				Version: app.Info.Version,
+			})
+		}
+	}
+
+	dataSources, err := hs.getFSDataSources(c, enabledPlugins)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultDS := "-- Grafana --"
+	for n, ds := range dataSources {
+		if ds.IsDefault {
+			defaultDS = n
+		}
+	}
+
+	panels := make(map[string]plugins.PanelDTO)
+	for _, panel := range enabledPlugins[plugins.Panel] {
+		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
+			continue
+		}
+
+		panels[panel.ID] = plugins.PanelDTO{
+			ID:            panel.ID,
+			Name:          panel.Name,
+			Info:          panel.Info,
+			Module:        panel.Module,
+			BaseURL:       panel.BaseURL,
+			SkipDataQuery: panel.SkipDataQuery,
+			HideFromList:  panel.HideFromList,
+			ReleaseState:  string(panel.State),
+			Signature:     string(panel.Signature),
+			Sort:          getPanelSort(panel.ID),
+		}
+	}
+
+	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	buildstamp := setting.BuildStamp
+
+	if hideVersion {
+		version = ""
+		commit = ""
+		buildstamp = 0
+	}
+
+	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+
+	jsonObj := map[string]interface{}{
+		"defaultDatasource":                   defaultDS,
+		"datasources":                         dataSources,
+		"minRefreshInterval":                  setting.MinRefreshInterval,
+		"panels":                              panels,
+		"appUrl":                              hs.Cfg.AppURL,
+		"appSubUrl":                           hs.Cfg.AppSubURL,
+		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":                    setting.AuthProxyEnabled,
+		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
+		"alertingEnabled":                     setting.AlertingEnabled,
+		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
+		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":                 setting.AlertingMinInterval,
+		"liveEnabled":                         hs.Cfg.LiveMaxConnections != 0,
+		"autoAssignOrg":                       setting.AutoAssignOrg,
+		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
+		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
+		"exploreEnabled":                      setting.ExploreEnabled,
+		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
+		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
+		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
+		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
+		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
+		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
+		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
+		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
+		"disableLoginForm":                    setting.DisableLoginForm,
+		"disableUserSignUp":                   !setting.AllowUserSignUp,
+		"loginHint":                           setting.LoginHint,
+		"passwordHint":                        setting.PasswordHint,
+		"externalUserMngInfo":                 setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
+		"viewersCanEdit":                      setting.ViewersCanEdit,
+		"angularSupportEnabled":               hs.Cfg.AngularSupportEnabled,
+		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
+		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
+		"pluginsToPreload":                    pluginsToPreload,
+		"buildInfo": map[string]interface{}{
+			"hideVersion":   hideVersion,
+			"version":       version,
+			"commit":        commit,
+			"buildstamp":    buildstamp,
+			"edition":       hs.License.Edition(),
+			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
+			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
+			"env":           setting.Env,
+		},
+		"licenseInfo": map[string]interface{}{
+			"expiry":          hs.License.Expiry(),
+			"stateInfo":       hs.License.StateInfo(),
+			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
+			"edition":         hs.License.Edition(),
+			"enabledFeatures": hs.License.EnabledFeatures(),
+		},
+		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
+		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"rendererVersion":                  hs.RenderService.Version(),
+		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                           hs.Cfg.Sentry,
+		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
+		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
+		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		"pluginCatalogHiddenPlugins":       hs.Cfg.PluginCatalogHiddenPlugins,
+		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
+		"azure": map[string]interface{}{
+			"cloud":                  hs.Cfg.Azure.Cloud,
+			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+		},
+		"caching": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+		},
+		"recordedQueries": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
+		},
+		"reporting": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
+		},
+		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+	}
+
+	if hs.ThumbService != nil {
+		jsonObj["dashboardPreviews"] = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
+	}
+
+	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
+		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
+	}
+	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+		jsonObj["geomapDisableCustomBaseLayer"] = true
+	}
+
+	return jsonObj, nil
+}
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*models.DataSource, 0)
@@ -132,163 +304,6 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 	return dataSources, nil
 }
 
-// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
-	if err != nil {
-		return nil, err
-	}
-
-	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
-	for _, app := range enabledPlugins[plugins.App] {
-		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
-				Path:    app.Module,
-				Version: app.Info.Version,
-			})
-		}
-	}
-
-	dataSources, err := hs.getFSDataSources(c, enabledPlugins)
-	if err != nil {
-		return nil, err
-	}
-
-	defaultDS := "-- Grafana --"
-	for n, ds := range dataSources {
-		if ds.IsDefault {
-			defaultDS = n
-		}
-	}
-
-	panels := make(map[string]plugins.PanelDTO)
-	for _, panel := range enabledPlugins[plugins.Panel] {
-		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
-			continue
-		}
-
-		panels[panel.ID] = plugins.PanelDTO{
-			ID:            panel.ID,
-			Name:          panel.Name,
-			Info:          panel.Info,
-			Module:        panel.Module,
-			BaseURL:       panel.BaseURL,
-			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  panel.HideFromList,
-			ReleaseState:  string(panel.State),
-			Signature:     string(panel.Signature),
-			Sort:          getPanelSort(panel.ID),
-		}
-	}
-
-	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
-	version := setting.BuildVersion
-	commit := setting.BuildCommit
-	buildstamp := setting.BuildStamp
-
-	if hideVersion {
-		version = ""
-		commit = ""
-		buildstamp = 0
-	}
-
-	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-
-	jsonObj := map[string]interface{}{
-		"defaultDatasource":                   defaultDS,
-		"datasources":                         dataSources,
-		"minRefreshInterval":                  setting.MinRefreshInterval,
-		"panels":                              panels,
-		"appUrl":                              hs.Cfg.AppURL,
-		"appSubUrl":                           hs.Cfg.AppSubURL,
-		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":                    setting.AuthProxyEnabled,
-		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
-		"alertingEnabled":                     setting.AlertingEnabled,
-		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
-		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
-		"alertingMinInterval":                 setting.AlertingMinInterval,
-		"liveEnabled":                         hs.Cfg.LiveMaxConnections != 0,
-		"autoAssignOrg":                       setting.AutoAssignOrg,
-		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
-		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
-		"exploreEnabled":                      setting.ExploreEnabled,
-		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
-		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
-		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
-		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
-		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
-		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
-		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
-		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
-		"disableLoginForm":                    setting.DisableLoginForm,
-		"disableUserSignUp":                   !setting.AllowUserSignUp,
-		"loginHint":                           setting.LoginHint,
-		"passwordHint":                        setting.PasswordHint,
-		"externalUserMngInfo":                 setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
-		"viewersCanEdit":                      setting.ViewersCanEdit,
-		"angularSupportEnabled":               hs.Cfg.AngularSupportEnabled,
-		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
-		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
-		"pluginsToPreload":                    pluginsToPreload,
-		"buildInfo": map[string]interface{}{
-			"hideVersion":   hideVersion,
-			"version":       version,
-			"commit":        commit,
-			"buildstamp":    buildstamp,
-			"edition":       hs.License.Edition(),
-			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
-			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
-			"env":           setting.Env,
-		},
-		"licenseInfo": map[string]interface{}{
-			"expiry":          hs.License.Expiry(),
-			"stateInfo":       hs.License.StateInfo(),
-			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
-			"edition":         hs.License.Edition(),
-			"enabledFeatures": hs.License.EnabledFeatures(),
-		},
-		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
-		"rendererAvailable":                hs.RenderService.IsAvailable(),
-		"rendererVersion":                  hs.RenderService.Version(),
-		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":                           hs.Cfg.Sentry,
-		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
-		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
-		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
-		"pluginCatalogHiddenPlugins":       hs.Cfg.PluginCatalogHiddenPlugins,
-		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
-		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
-		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
-		"azure": map[string]interface{}{
-			"cloud":                  hs.Cfg.Azure.Cloud,
-			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
-		},
-		"caching": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
-		},
-		"recordedQueries": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
-		},
-		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
-	}
-
-	if hs.ThumbService != nil {
-		jsonObj["dashboardPreviews"] = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
-	}
-
-	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
-		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
-	}
-	if !hs.Cfg.GeomapEnableCustomBaseLayers {
-		jsonObj["geomapDisableCustomBaseLayer"] = true
-	}
-
-	return jsonObj, nil
-}
-
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
@@ -328,16 +343,6 @@ func getPanelSort(id string) int {
 		sort = 17
 	}
 	return sort
-}
-
-func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
-	settings, err := hs.getFrontendSettingsMap(c)
-	if err != nil {
-		c.JsonApiErr(400, "Failed to get frontend settings", err)
-		return
-	}
-
-	c.JSON(200, settings)
 }
 
 // EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
@@ -388,15 +393,15 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	return ep, nil
 }
 
-func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	pluginSettings := make(map[string]*models.PluginSettingInfoDTO)
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.DTO, error) {
+	pluginSettings := make(map[string]*pluginsettings.DTO)
 
 	// fill settings from database
-	if pss, err := hs.SQLStore.GetPluginSettings(ctx, orgID); err != nil {
+	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{OrgID: orgID}); err != nil {
 		return nil, err
 	} else {
 		for _, ps := range pss {
-			pluginSettings[ps.PluginId] = ps
+			pluginSettings[ps.PluginID] = ps
 		}
 	}
 
@@ -408,9 +413,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled depending on if AutoEnabled: true
-		pluginSetting := &models.PluginSettingInfoDTO{
-			PluginId: plugin.ID,
-			OrgId:    orgID,
+		pluginSetting := &pluginsettings.DTO{
+			PluginID: plugin.ID,
+			OrgID:    orgID,
 			Enabled:  plugin.AutoEnabled,
 			Pinned:   plugin.AutoEnabled,
 		}
@@ -426,9 +431,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled by default
-		pluginSetting := &models.PluginSettingInfoDTO{
-			PluginId: plugin.ID,
-			OrgId:    orgID,
+		pluginSetting := &pluginsettings.DTO{
+			PluginID: plugin.ID,
+			OrgID:    orgID,
 			Enabled:  true,
 		}
 

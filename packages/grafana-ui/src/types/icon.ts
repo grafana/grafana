@@ -1,6 +1,6 @@
 import { Field, FieldType } from '@grafana/data';
 import { ComponentSize } from './size';
-export type IconType = 'mono' | 'default';
+export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export const getAvailableIcons = () =>
@@ -28,6 +28,7 @@ export const getAvailableIcons = () =>
     'bell-slash',
     'bolt',
     'book',
+    'bookmark',
     'book-open',
     'brackets-curly',
     'building',

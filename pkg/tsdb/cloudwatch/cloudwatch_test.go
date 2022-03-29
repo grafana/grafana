@@ -2,8 +2,10 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	awsrequest "github.com/aws/aws-sdk-go/aws/request"
@@ -106,7 +108,7 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -128,7 +130,7 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -149,7 +151,7 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -167,7 +169,7 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
 			return nil, fmt.Errorf("some sessions error")
 		}})
 
@@ -180,5 +182,68 @@ func Test_CheckHealth(t *testing.T) {
 			Status:  backend.HealthStatusError,
 			Message: "1. CloudWatch metrics query failed: some sessions error\n2. CloudWatch logs query failed: some sessions error",
 		}, resp)
+	})
+}
+func Test_executeLogAlertQuery(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
+
+	var cli fakeCWLogsClient
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return &cli
+	}
+
+	t.Run("getCWLogsClient is called with region from input JSON", func(t *testing.T) {
+		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		sess := fakeSessionCache{}
+		executor := newExecutor(im, newTestConfig(), &sess)
+
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{"FromAlert": "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs",
+						"region": "some region"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"some region"}, sess.calledRegions)
+	})
+
+	t.Run("getCWLogsClient is called with region from instance manager when region is default", func(t *testing.T) {
+		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{region: "instance manager's region"}, nil
+		})
+		sess := fakeSessionCache{}
+
+		executor := newExecutor(im, newTestConfig(), &sess)
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{"FromAlert": "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs",
+						"region": "default"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"instance manager's region"}, sess.calledRegions)
 	})
 }
