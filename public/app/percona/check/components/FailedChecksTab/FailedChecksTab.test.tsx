@@ -1,5 +1,5 @@
 import { logger } from '@percona/platform-core';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { CheckService } from 'app/percona/check/Check.service';
@@ -17,7 +17,7 @@ jest.mock('@percona/platform-core', () => {
 });
 
 describe('FailedChecksTab::', () => {
-  let getAlertsSpy = jest.spyOn(CheckService, 'getActiveAlerts').mockImplementation(() => Promise.resolve([]));
+  let getAlertsSpy = jest.spyOn(CheckService, 'getAllFailedChecks').mockImplementation(() => Promise.resolve([]));
 
   afterEach(() => getAlertsSpy.mockClear());
 
@@ -26,8 +26,8 @@ describe('FailedChecksTab::', () => {
       render(<FailedChecksTab />);
     });
 
-    await screen.findByTestId('db-checks-failed-checks-toggle-silenced');
-    expect(CheckService.getActiveAlerts).toHaveBeenCalledTimes(1);
+    await screen.findByTestId('db-check-panel-actions');
+    expect(CheckService.getAllFailedChecks).toHaveBeenCalledTimes(1);
   });
 
   it('should render a spinner at startup, while loading', async () => {
@@ -37,7 +37,7 @@ describe('FailedChecksTab::', () => {
 
     expect(screen.queryByTestId('db-checks-failed-checks-spinner')).toBeInTheDocument();
 
-    await screen.findByTestId('db-checks-failed-checks-toggle-silenced');
+    await screen.findByTestId('db-check-panel-actions');
 
     expect(screen.queryByTestId('db-checks-failed-checks-spinner')).not.toBeInTheDocument();
   });
@@ -52,7 +52,7 @@ describe('FailedChecksTab::', () => {
       render(<FailedChecksTab />);
     });
 
-    await screen.findByTestId('db-checks-failed-checks-toggle-silenced');
+    await screen.findByTestId('db-check-panel-actions');
 
     expect(loggerSpy).toBeCalledTimes(1);
 
@@ -69,13 +69,19 @@ describe('FailedChecksTab::', () => {
       render(<FailedChecksTab />);
     });
 
-    await screen.findByTestId('db-checks-failed-checks-toggle-silenced');
+    await screen.findByTestId('db-check-panel-actions');
 
     const runChecksButton = screen.getByRole('button');
 
     fireEvent.click(runChecksButton);
+    expect(screen.queryByText('Run DB checks')).not.toBeInTheDocument();
 
-    expect(loggerSpy).toBeCalledTimes(1);
+    await waitFor(() => {
+      expect(loggerSpy).toBeCalledTimes(1);
+    });
+
+    expect(await screen.findByText('Run DB checks')).toBeInTheDocument();
+
     loggerSpy.mockClear();
   });
 
@@ -85,13 +91,20 @@ describe('FailedChecksTab::', () => {
       render(<FailedChecksTab />);
     });
 
-    await screen.findByTestId('db-checks-failed-checks-toggle-silenced');
+    await screen.findByTestId('db-check-panel-actions');
 
     const runChecksButton = screen.getByRole('button');
 
     expect(runChecksSpy).toBeCalledTimes(0);
     fireEvent.click(runChecksButton);
-    expect(runChecksSpy).toBeCalledTimes(1);
+
+    expect(screen.queryByText('Run DB checks')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(runChecksSpy).toBeCalledTimes(1);
+    });
+
+    expect(await screen.findByText('Run DB checks')).toBeInTheDocument();
 
     runChecksSpy.mockClear();
   });
@@ -103,8 +116,8 @@ describe('FailedChecksTab::', () => {
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
 
-    await screen.findByTestId('db-checks-failed-checks-toggle-silenced');
+    await screen.findByTestId('db-check-panel-actions');
 
-    expect(screen.queryByTestId('db-check-panel-table-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('table-no-data')).toBeInTheDocument();
   });
 });

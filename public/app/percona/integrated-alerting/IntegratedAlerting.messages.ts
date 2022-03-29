@@ -9,6 +9,10 @@ export const Messages = {
   alerts: {
     silenceAllAction: 'Silence All',
     unsilenceAllAction: 'Unsilence All',
+    activateSuccess: 'Alert activated',
+    silenceSuccess: 'Alert silenced',
+    activateTitle: 'Activate',
+    silenceTitle: 'Silence',
     table: {
       noData: 'No alerts',
       columns: {

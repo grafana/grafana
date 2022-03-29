@@ -1,40 +1,59 @@
 import { LoaderButton, logger } from '@percona/platform-core';
-import React, { FC, useEffect, useState, useCallback } from 'react';
+import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
+import { Cell, Column, Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
-import { Spinner, Switch, useStyles } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { locationService } from '@grafana/runtime';
+import { Spinner, useStyles2 } from '@grafana/ui';
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
-import { Table } from 'app/percona/integrated-alerting/components/Table';
+import { FailedCheckSummary } from 'app/percona/check/types';
+import { ExtendedTableCellProps, ExtendedTableRowProps, Table } from 'app/percona/integrated-alerting/components/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
-import { COLUMNS } from '../../CheckPanel.constants';
-import { ActiveCheck } from '../../types';
+import { appEvents } from '../../../../core/app_events';
 
 import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';
 import { Messages } from './FailedChecksTab.messages';
 import { getStyles } from './FailedChecksTab.styles';
-import { loadShowSilencedValue, saveShowSilencedValue } from './FailedChecksTab.utils';
+import { stripServiceId } from './FailedChecksTab.utils';
 
 export const FailedChecksTab: FC = () => {
   const [fetchAlertsPending, setFetchAlertsPending] = useState(true);
   const [runChecksPending, setRunChecksPending] = useState(false);
-  const [showSilenced, setShowSilenced] = useState(loadShowSilencedValue());
-  const [dataSource, setDataSource] = useState<ActiveCheck[] | undefined>();
-  const styles = useStyles(getStyles);
+  const [data, setData] = useState<FailedCheckSummary[]>([]);
+  const styles = useStyles2(getStyles);
   const [generateToken] = useCancelToken();
+
+  const columns = useMemo(
+    (): Array<Column<FailedCheckSummary>> => [
+      {
+        Header: 'Service Name',
+        accessor: 'serviceName',
+      },
+      {
+        Header: 'Critical',
+        accessor: 'criticalCount',
+      },
+      {
+        Header: 'Warning',
+        accessor: 'warningCount',
+      },
+      {
+        Header: 'Notice',
+        accessor: 'noticeCount',
+      },
+    ],
+    []
+  );
 
   const fetchAlerts = useCallback(async (): Promise<void> => {
     setFetchAlertsPending(true);
 
     try {
-      const dataSource = await CheckService.getActiveAlerts(
-        showSilenced,
-        generateToken(GET_ACTIVE_ALERTS_CANCEL_TOKEN)
-      );
-      setDataSource(dataSource);
+      const checks = await CheckService.getAllFailedChecks(generateToken(GET_ACTIVE_ALERTS_CANCEL_TOKEN));
+      setData(checks);
     } catch (e) {
       if (isApiCancelError(e)) {
         return;
@@ -43,7 +62,7 @@ export const FailedChecksTab: FC = () => {
     }
     setFetchAlertsPending(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSilenced]);
+  }, []);
 
   const handleRunChecksClick = async () => {
     setRunChecksPending(true);
@@ -57,26 +76,27 @@ export const FailedChecksTab: FC = () => {
     }
   };
 
-  const toggleShowSilenced = () => {
-    setShowSilenced((currentValue) => !currentValue);
-  };
+  const getRowProps = (row: Row<FailedCheckSummary>): ExtendedTableRowProps => ({
+    key: row.original.serviceId,
+    className: styles.row,
+    onClick: () =>
+      locationService.push(`/pmm-database-checks/service-checks/${stripServiceId(row.original.serviceId)}`),
+  });
+
+  const getCellProps = (cellInfo: Cell<FailedCheckSummary>): ExtendedTableCellProps => ({
+    key: `${cellInfo.row.original.serviceId}-${cellInfo.row.id}`,
+    className: styles.cell,
+  });
 
   useEffect(() => {
     fetchAlerts();
-    saveShowSilencedValue(showSilenced);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSilenced]);
+  }, []);
 
   return (
     <>
       <div className={styles.header}>
         <div className={styles.actionButtons} data-testid="db-check-panel-actions">
-          <span className={styles.showAll}>
-            <span data-testid="db-checks-failed-checks-toggle-silenced">
-              <Switch value={showSilenced} onChange={toggleShowSilenced} />
-            </span>
-            <span>{Messages.showAll}</span>
-          </span>
           <LoaderButton
             type="button"
             size="md"
@@ -94,7 +114,15 @@ export const FailedChecksTab: FC = () => {
             <Spinner />
           </div>
         ) : (
-          <Table data={dataSource} columns={COLUMNS} />
+          <Table
+            totalItems={data.length}
+            data={data}
+            getRowProps={getRowProps}
+            getCellProps={getCellProps}
+            columns={columns}
+            pendingRequest={fetchAlertsPending}
+            emptyMessage={Messages.noChecks}
+          />
         )}
       </AlertsReloadContext.Provider>
     </>

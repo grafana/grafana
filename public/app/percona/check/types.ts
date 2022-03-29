@@ -1,36 +1,52 @@
-import { FC } from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import { AlertRuleSeverity } from '../integrated-alerting/components/AlertRules/AlertRules.types';
+import { PaginatedPayload, PrioritizedLabels } from '../shared/core/types';
 
-export interface CheckPanelOptions {
-  title?: string;
+interface CheckResultSummary {
+  service_name: string;
+  service_id: string;
+  critical_count: number;
+  warning_count: number;
+  notice_count: number;
 }
 
-export interface Column {
-  title: string;
-  dataIndex: string;
-  key: string;
-  render?: (text: any, record: Record<string, any>) => React.ReactNode;
-  width?: number;
+export interface CheckResultSummaryPayload extends PaginatedPayload {
+  result: CheckResultSummary[];
 }
 
-export enum Severity {
-  error = 'error',
-  warning = 'warning',
-  notice = 'notice',
+export interface FailedCheckSummary {
+  serviceName: string;
+  serviceId: string;
+  criticalCount: number;
+  warningCount: number;
+  noticeCount: number;
 }
 
-export type FailedChecks = [number, number, number];
+interface CheckResultForService {
+  summary: string;
+  description: string;
+  severity: keyof typeof AlertRuleSeverity;
+  labels: { [key: string]: string };
+  read_more_url: string;
+  service_name: string;
+  check_name: string;
+  silenced: boolean;
+  alert_id: string;
+}
 
-export interface ActiveCheck {
-  key: string;
-  name: string;
-  failed: FailedChecks;
-  details: Array<{
-    description: string;
-    labels: { [key: string]: string };
-    silenced: boolean;
-    readMoreUrl?: string;
-  }>;
+export interface CheckResultForServicePayload extends PaginatedPayload {
+  results: CheckResultForService[];
+}
+
+export interface ServiceFailedCheck {
+  summary: string;
+  description: string;
+  severity: AlertRuleSeverity;
+  labels: PrioritizedLabels;
+  readMoreUrl: string;
+  serviceName: string;
+  checkName: string;
+  silenced: boolean;
+  alertId: string;
 }
 
 export enum AlertState {
@@ -68,87 +84,9 @@ export interface ChangeCheckBody {
 }
 
 export enum TabKeys {
-  allChecks = 'allChecks',
-  failedChecks = 'failedChecks',
+  allChecks = 'all-checks',
+  failedChecks = 'failed-checks',
   rootChecks = 'root-checks',
-}
-
-export interface TabEntry {
-  label: string;
-  key: TabKeys;
-  component: React.ReactNode;
-}
-
-export type CheckPanelProps = { component: FC } & RouteComponentProps;
-
-export type SeverityMap = Record<Severity, string>;
-
-export interface Alert {
-  annotations: {
-    description: string;
-    summary: string;
-    read_more_url?: string;
-  };
-  labels: {
-    stt_check?: string;
-    service_name: string;
-    severity: Severity;
-  };
-  status: {
-    state: AlertState;
-  };
-}
-
-export interface AlertRequestParams {
-  active?: boolean;
-  silenced?: boolean;
-  filter?: string;
-}
-
-export interface Settings {
-  settings: {
-    stt_enabled?: boolean;
-    telemetry_enabled?: boolean;
-  };
-}
-
-interface SilenceMatcher {
-  name: string;
-  value: string;
-  isRegex: boolean;
-}
-
-export interface SilenceBody {
-  matchers: SilenceMatcher[];
-  startsAt: string;
-  endsAt: string;
-  createdBy: string;
-  comment: string;
-  id: string;
-}
-
-export interface SilenceResponse {
-  silenceID: string;
-}
-
-export type Labels = { [key: string]: string };
-
-export interface DetailProps {
-  details: {
-    description: string;
-    labels: Labels;
-  };
-}
-
-export interface DetailsItem {
-  description: string;
-  labels: Labels;
-  silenced: boolean;
-  readMoreUrl?: string;
-}
-
-export interface TableDataAlertDetailsProps {
-  detailsItem: DetailsItem;
 }
 
 export interface AlertsReload {

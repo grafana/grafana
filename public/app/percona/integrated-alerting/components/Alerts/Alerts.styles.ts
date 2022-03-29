@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 
 export const getStyles = ({ colors, spacing }: GrafanaTheme) => {
   return {
-    actionsWrapper: css`
+    generalActionsWrapper: css`
       display: flex;
       justify-content: flex-end;
       margin-bottom: ${spacing.sm};
@@ -33,6 +33,10 @@ export const getStyles = ({ colors, spacing }: GrafanaTheme) => {
     `,
     silencedSeverity: css`
       color: inherit;
+    `,
+    actionsWrapper: css`
+      display: flex;
+      justify-content: center;
     `,
   };
 };
