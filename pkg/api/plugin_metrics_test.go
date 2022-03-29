@@ -34,7 +34,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 		s.Mux.Use(hs.pluginMetricsEndpoint)
 
 		t.Run("Endpoint matches and plugin is registered", func(t *testing.T) {
-			req := s.NewGetRequest("/metrics/plugins/test-plugin")
+			req := s.NewRequest("GET", "/metrics/plugins/test-plugin", nil)
 			resp, err := s.Send(req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
@@ -48,7 +48,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 		})
 
 		t.Run("Endpoint matches and plugin is not registered", func(t *testing.T) {
-			req := s.NewGetRequest("/metrics/plugins/plugin-not-registered")
+			req := s.NewRequest("GET", "/metrics/plugins/plugin-not-registered", nil)
 			resp, err := s.Send(req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
@@ -61,7 +61,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 		})
 
 		t.Run("Endpoint does not match", func(t *testing.T) {
-			req := s.NewGetRequest("/foo")
+			req := s.NewRequest("GET", "/foo", nil)
 			resp, err := s.Send(req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
@@ -88,7 +88,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 		s.Mux.Use(hs.pluginMetricsEndpoint)
 
 		t.Run("When plugin is registered, wrong basic auth credentials should return 401", func(t *testing.T) {
-			req := s.NewGetRequest("/metrics/plugins/test-plugin")
+			req := s.NewRequest("GET", "/metrics/plugins/test-plugin", nil)
 			req.SetBasicAuth("user2", "pwd2")
 			resp, err := s.Send(req)
 			require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 		})
 
 		t.Run("When plugin is registered, correct basic auth credentials should return 200", func(t *testing.T) {
-			req := s.NewGetRequest("/metrics/plugins/test-plugin")
+			req := s.NewRequest("GET", "/metrics/plugins/test-plugin", nil)
 			req.SetBasicAuth("user", "pwd")
 			resp, err := s.Send(req)
 			require.NoError(t, err)
@@ -131,7 +131,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 		s.Mux.Use(hs.pluginMetricsEndpoint)
 
 		t.Run("When plugin is registered, should return 404", func(t *testing.T) {
-			req := s.NewGetRequest("/metrics/plugins/test-plugin")
+			req := s.NewRequest("GET", "/metrics/plugins/test-plugin", nil)
 			resp, err := s.Send(req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
@@ -147,8 +147,8 @@ type fakePluginClientMetrics struct {
 	store map[string][]byte
 }
 
-func (c *fakePluginClientMetrics) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	metrics, exists := c.store[req.PluginContext.PluginID]
+func (c *fakePluginClientMetrics) CollectMetrics(_ context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
+	metrics, exists := c.store[pluginID]
 
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
