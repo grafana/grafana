@@ -122,7 +122,6 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		}
 	}
 
-	u := tmpl(dd.URL)
 	if tmplErr != nil {
 		dd.log.Warn("failed to template DingDing message", "err", tmplErr.Error())
 	}
@@ -133,7 +132,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:  u,
+		Url:  dd.URL,
 		Body: string(body),
 	}
 

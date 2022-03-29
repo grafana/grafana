@@ -118,7 +118,6 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	ruleURL := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)
 	bodyJSON.Set("alert_url", ruleURL)
 
-	u := tmpl(vn.URL)
 	if tmplErr != nil {
 		vn.log.Warn("failed to template VictorOps message", "err", tmplErr.Error())
 	}
@@ -128,7 +127,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, err
 	}
 	cmd := &models.SendWebhookSync{
-		Url:  u,
+		Url:  vn.URL,
 		Body: string(b),
 	}
 
