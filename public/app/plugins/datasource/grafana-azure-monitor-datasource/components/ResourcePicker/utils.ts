@@ -48,9 +48,12 @@ export function addResources(rows: ResourceRowGroup, targetParentId: string, new
   return produce(rows, (draftState) => {
     const draftRow = findRow(draftState, targetParentId);
 
+    // we can't find the selected resource in our list of resources,
+    // probably means user has either mistyped in the input field
+    // or is using template variables.
+    // either way no need to throw, just show that none of the resources are checked
     if (!draftRow) {
-      // This case shouldn't happen often because we're usually coming here from a resource we already have
-      throw new Error('Unable to find resource');
+      return;
     }
 
     draftRow.children = newResources;
