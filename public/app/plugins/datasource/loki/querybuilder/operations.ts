@@ -7,6 +7,7 @@ import {
   VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
 import { FUNCTIONS } from '../syntax';
+import { binaryScalarOperations } from './binaryScalarOperations';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
@@ -208,6 +209,16 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
         return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.`;
       },
     },
+    ...binaryScalarOperations,
+    {
+      id: LokiOperationId.NestedQuery,
+      name: 'Binary operation with query',
+      params: [],
+      defaultParams: [],
+      category: LokiVisualQueryOperationCategory.BinaryOps,
+      renderer: (model, def, innerExpr) => innerExpr,
+      addOperationHandler: addNestedQueryHandler,
+    },
   ];
 
   return list;
@@ -354,5 +365,18 @@ export function addLokiOperation(
   return {
     ...query,
     operations,
+  };
+}
+
+function addNestedQueryHandler(def: QueryBuilderOperationDef, query: LokiVisualQuery): LokiVisualQuery {
+  return {
+    ...query,
+    binaryQueries: [
+      ...(query.binaryQueries ?? []),
+      {
+        operator: '/',
+        query,
+      },
+    ],
   };
 }

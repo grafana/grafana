@@ -7,6 +7,7 @@ import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/
 import React, { useCallback, useState } from 'react';
 import { LokiQueryEditorProps } from '../../components/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { getQueryWithDefaults } from '../state';
 import { getDefaultEmptyQuery, LokiVisualQuery } from '../types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplaind';
@@ -14,8 +15,9 @@ import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
-  const { query, onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
+  const query = getQueryWithDefaults(props.query);
   const [visualQuery, setVisualQuery] = useState<LokiVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
 
   const onEditorModeChange = useCallback(

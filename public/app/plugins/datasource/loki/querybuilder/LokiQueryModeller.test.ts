@@ -121,6 +121,33 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} | line_format "{{.status_code}}"');
   });
 
+  it('Can render simply binary operation with scalar', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.MultiplyBy, params: [1000] }],
+      })
+    ).toBe('{app="grafana"} * 1000');
+  });
+
+  it('Can render query with simple binary query', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Rate, params: ['5m'] }],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              labels: [{ label: 'job', op: '=', value: 'backup' }],
+              operations: [{ id: LokiOperationId.CountOverTime, params: ['5m'] }],
+            },
+          },
+        ],
+      })
+    ).toBe('rate({app="grafana"} [5m]) / count_over_time({job="backup"} [5m])');
+  });
+
   describe('On add operation handlers', () => {
     it('When adding function without range vector param should automatically add rate', () => {
       const query = {
