@@ -16,7 +16,7 @@ import React from 'react';
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiQuery } from '../../loki/types';
 import { TempoDatasource, TempoQuery, TempoQueryType } from '../datasource';
-import LokiDatasource from '../../loki/datasource';
+import { LokiDatasource } from '../../loki/datasource';
 import useAsync from 'react-use/lib/useAsync';
 import NativeSearch from './NativeSearch';
 import { getDS } from './utils';

@@ -1,5 +1,6 @@
-import { SelectableValue, toOption } from '@grafana/data';
+import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
+import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
 import React, { useState } from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -44,15 +45,28 @@ export function LabelParamEditor({
 
 async function loadGroupByLabels(
   query: PromVisualQuery,
-  datasource: PrometheusDatasource
+  datasource: DataSourceApi
 ): Promise<Array<SelectableValue<any>>> {
-  const labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
-  const expr = promQueryModeller.renderLabels(labels);
+  if (datasource instanceof PrometheusDatasource) {
+    const labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
+    const expr = promQueryModeller.renderLabels(labels);
+    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
 
-  const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+    return Object.keys(result).map((x) => ({
+      label: x,
+      value: x,
+    }));
+  }
 
-  return Object.keys(result).map((x) => ({
-    label: x,
-    value: x,
-  }));
+  if (datasource instanceof LokiDatasource) {
+    const expr = promQueryModeller.renderLabels(query.labels);
+    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+
+    return Object.keys(result).map((x) => ({
+      label: x,
+      value: x,
+    }));
+  }
+
+  return [];
 }
