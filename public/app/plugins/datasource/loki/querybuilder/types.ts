@@ -1,3 +1,4 @@
+import { VisualQueryBinary } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
 
 /**
@@ -9,11 +10,8 @@ export interface LokiVisualQuery {
   binaryQueries?: LokiVisualQueryBinary[];
 }
 
-export interface LokiVisualQueryBinary {
-  operator: string;
-  vectorMatches?: string;
-  query: LokiVisualQuery;
-}
+export type LokiVisualQueryBinary = VisualQueryBinary<LokiVisualQuery>;
+
 export interface LokiQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
