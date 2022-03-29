@@ -40,7 +40,7 @@ export async function getRawIndexData(): Promise<RawIndexData> {
     const frame = f as DataFrame;
     for (const field of frame.fields) {
       // Parse tags/ds from JSON string
-      if (field.name === 'tags' || field.name === 'dsList') {
+      if (field.name === 'tags' || field.name === 'datasource') {
         const values = field.values.toArray().map((v) => {
           if (v?.length) {
             try {

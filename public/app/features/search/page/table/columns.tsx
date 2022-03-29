@@ -9,7 +9,7 @@ import { TagList } from '@grafana/ui';
 export function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, iconClass: string): TableColumn {
   return {
     Cell: DefaultCell,
-    id: `column-dsList`,
+    id: `column-datasource`,
     field,
     Header: 'Data source',
     accessor: (row: any, i: number) => {

@@ -31,7 +31,7 @@ interface FieldAccess {
 
   // Count info
   panelCount: number;
-  dsList: DataSourceRef[];
+  datasource: DataSourceRef[];
 }
 
 const generateColumns = (
@@ -110,9 +110,9 @@ const generateColumns = (
     }
 
     // Show tags if we have any
-    if (access.dsList && hasFieldValue(access.dsList)) {
+    if (access.datasource && hasFieldValue(access.datasource)) {
       width = 200;
-      columns.push(makeDataSourceColumn(access.dsList, width, styles.typeIcon));
+      columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
       availableWidth -= width;
     }
 
@@ -141,9 +141,9 @@ const generateColumns = (
     }
 
     // Show tags if we have any
-    if (access.dsList && hasFieldValue(access.dsList)) {
+    if (access.datasource && hasFieldValue(access.datasource)) {
       width = 200;
-      columns.push(makeDataSourceColumn(access.dsList, width, styles.typeIcon));
+      columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
       availableWidth -= width;
     }
 
