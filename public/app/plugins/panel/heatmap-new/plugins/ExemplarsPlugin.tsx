@@ -1,5 +1,5 @@
 import { DataFrame, DataFrameFieldIndex, Field, LinkModel, TimeZone } from '@grafana/data';
-import { EventsCanvas, UPlotConfigBuilder } from '@grafana/ui';
+import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
 import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
 import uPlot from 'uplot';
@@ -37,35 +37,28 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
       }
 
       // Filter x, y scales out
-      // const yScale =
-      //   Object.keys(plotInstance.current.scales).find((scale) => 'y' === scale) ?? FIXED_UNIT;
+      const yScale = Object.keys(plotInstance.current.scales).find((scale) => 'y' === scale) ?? FIXED_UNIT;
 
-      // const yMax = plotInstance.current.scales[yScale].max;
+      const yMax = plotInstance.current.scales[yScale].max;
       //console.log("layout", exemplars);
-      if (exemplars.xBucketCount && exemplars.yBucketCount) {
-        // let xIndex = Math.floor(dataFrameFieldIndex.fieldIndex / exemplars.yBucketCount);
-        // let yIndex = dataFrameFieldIndex.fieldIndex % exemplars.yBucketCount;
+      if (exemplars.xBucketSize && exemplars.yBucketSize) {
         let xStart = xMin.values.get(dataFrameFieldIndex.fieldIndex);
-        // let xEnd = xMin.values.get(dataFrameFieldIndex.fieldIndex + exemplars.yBucketCount);
         let yStart = yMin.values.get(dataFrameFieldIndex.fieldIndex);
-        // let yEnd = yMin.values.get(dataFrameFieldIndex.fieldIndex + 1);
 
-        let x = xStart; // + ((xEnd - xStart) / 2);
-        let y = yStart; // + ((yEnd - yStart) / 2);
+        let x = xStart + exemplars.xBucketSize / 2;
+        let y = yStart + exemplars.yBucketSize / 2;
         // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
-        // if (yMin != null && y < yMin) {
-        //   y = yMin;
-        // }
-        // if (yMax != null && y > yMax) {
-        //   y = yMax;
-        // }
+        if (yMin != null && y < yMin) {
+          y = yMin;
+        }
+        if (yMax != null && y > yMax) {
+          y = yMax;
+        }
 
         // Don't render a merker if the count is zero
         if (!count.values.get(dataFrameFieldIndex.fieldIndex)) {
           return undefined;
         }
-
-        //console.log("x", x, "y", y, "xEnd", xEnd, "xStart", xStart, "xDiff", xEnd - xStart, "yDiff", yEnd - yStart, "xIndex", xIndex, "yIndex", yIndex, "yMax", yMax);
 
         return {
           x: Math.round(plotInstance.current.valToPos(x, 'x')),
