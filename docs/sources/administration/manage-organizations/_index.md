@@ -5,9 +5,8 @@ description: 'Describes how to use organizations to isolate dashboard to users a
 weight: 300
 aliases:
   [
-    docs/sources/manage-users/server-admin/_index.md,
-    docs/sources/manage-users/server-admin/server-admin-manage-orgs.md,
-    docs/sources/administration/manage-organizations/_index.md,
+    docs/grafana/latest/manage-users/server-admin/_index.md,
+    docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs.md
   ]
 keywords:
   - organizations
