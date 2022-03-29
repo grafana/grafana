@@ -296,7 +296,7 @@ const (
 	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
-	ScopeGlobalUsersAll = "global:users:*"
+	ScopeGlobalUsersAll = "global.users:*"
 
 	// APIKeys scope
 	ScopeAPIKeysAll = "apikeys:*"

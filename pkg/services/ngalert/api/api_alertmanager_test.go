@@ -2,11 +2,12 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,8 +19,6 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
 )
 
 func TestContextWithTimeoutFromRequest(t *testing.T) {
@@ -160,8 +159,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			SignedInUser: &models.SignedInUser{
-				OrgRole: models.ROLE_EDITOR,
-				OrgId:   12,
+				OrgId: 12,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -172,32 +170,13 @@ func TestAlertmanagerConfig(t *testing.T) {
 		require.Contains(t, string(response.Body()), "Alertmanager does not exist for this organization")
 	})
 
-	t.Run("assert 403 Forbidden when applying config while not Editor", func(t *testing.T) {
-		rc := models.ReqContext{
-			Context: &web.Context{
-				Req: &http.Request{},
-			},
-			SignedInUser: &models.SignedInUser{
-				OrgRole: models.ROLE_VIEWER,
-				OrgId:   1,
-			},
-		}
-		request := createAmConfigRequest(t)
-
-		response := sut.RoutePostAlertingConfig(&rc, request)
-
-		require.Equal(t, 403, response.Status())
-		require.Contains(t, string(response.Body()), "permission denied")
-	})
-
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
 		rc := models.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
 			SignedInUser: &models.SignedInUser{
-				OrgRole: models.ROLE_EDITOR,
-				OrgId:   1,
+				OrgId: 1,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -214,8 +193,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			SignedInUser: &models.SignedInUser{
-				OrgRole: models.ROLE_EDITOR,
-				OrgId:   3, // Org 3 was initialized with broken config.
+				OrgId: 3, // Org 3 was initialized with broken config.
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -258,8 +236,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
-	tmpDir, err := ioutil.TempDir("", "test")
-	require.NoError(t, err)
+	tmpDir := t.TempDir()
 	kvStore := notifier.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
@@ -276,16 +253,9 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 
 	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
-	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
 	return mam
-}
-
-func cleanOrgDirectories(path string, t *testing.T) func() {
-	return func() {
-		require.NoError(t, os.RemoveAll(path))
-	}
 }
 
 var validConfig = setting.GetAlertmanagerDefaultConfiguration()

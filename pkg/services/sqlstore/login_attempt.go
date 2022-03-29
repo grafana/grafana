@@ -14,7 +14,7 @@ var getTimeNow = time.Now
 func (ss *SQLStore) addLoginAttemptQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.CreateLoginAttempt)
 	bus.AddHandler("sql", ss.DeleteOldLoginAttempts)
-	bus.AddHandler("sql", GetUserLoginAttemptCount)
+	bus.AddHandler("sql", ss.GetUserLoginAttemptCount)
 }
 
 func (ss *SQLStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
@@ -65,19 +65,21 @@ func (ss *SQLStore) DeleteOldLoginAttempts(ctx context.Context, cmd *models.Dele
 	})
 }
 
-func GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
-	loginAttempt := new(models.LoginAttempt)
-	total, err := x.
-		Where("username = ?", query.Username).
-		And("created >= ?", query.Since.Unix()).
-		Count(loginAttempt)
+func (ss *SQLStore) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		loginAttempt := new(models.LoginAttempt)
+		total, err := dbSession.
+			Where("username = ?", query.Username).
+			And("created >= ?", query.Since.Unix()).
+			Count(loginAttempt)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	query.Result = total
-	return nil
+		query.Result = total
+		return nil
+	})
 }
 
 func toInt64(i interface{}) int64 {
