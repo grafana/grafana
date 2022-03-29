@@ -1,8 +1,20 @@
-import { ArrayVector, DataFrame, DataFrameType, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataFrameType,
+  DataFrameView,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  Vector,
+} from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { lastValueFrom } from 'rxjs';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { QueryFilters } from './types';
+import { QueryResult } from '.';
 
 // The raw restuls from query server
 export interface RawIndexData {
@@ -95,4 +107,87 @@ export function buildStatsTable(field?: Field): DataFrame {
     ],
     length: keys.length,
   };
+}
+
+export function getTermCounts(field?: Field): TermCount[] {
+  if (!field) {
+    return [];
+  }
+
+  const counts = new Map<any, number>();
+  for (let i = 0; i < field.values.length; i++) {
+    const k = field.values.get(i);
+    if (k == null || !k.length) {
+      continue;
+    }
+    if (Array.isArray(k)) {
+      for (const sub of k) {
+        const v = counts.get(sub) ?? 0;
+        counts.set(sub, v + 1);
+      }
+    } else {
+      const v = counts.get(k) ?? 0;
+      counts.set(k, v + 1);
+    }
+  }
+
+  // Sort largest first
+  counts[Symbol.iterator] = function* () {
+    yield* [...this.entries()].sort((a, b) => b[1] - a[1]);
+  };
+
+  const terms: TermCount[] = [];
+  for (let [term, count] of counts) {
+    terms.push({
+      term,
+      count,
+    });
+  }
+
+  return terms;
+}
+
+export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame {
+  if (!filter) {
+    return frame;
+  }
+  const view = new DataFrameView<QueryResult>(frame);
+  const keep: number[] = [];
+
+  let ok = true;
+  for (let i = 0; i < view.length; i++) {
+    ok = true;
+    const row = view.get(i);
+    if (filter.tags) {
+      const tags = row.tags;
+      if (!tags) {
+        ok = false;
+        continue;
+      }
+      for (const t of filter.tags) {
+        if (!tags.includes(t)) {
+          ok = false;
+          break;
+        }
+      }
+    }
+    if (ok) {
+      keep.push(i);
+    }
+  }
+
+  return {
+    meta: frame.meta,
+    name: frame.name,
+    fields: frame.fields.map((f) => ({ ...f, values: filterValues(keep, f.values) })),
+    length: keep.length,
+  };
+}
+
+function filterValues(keep: number[], raw: Vector<any>): Vector<any> {
+  const values = new Array(keep.length);
+  for (let i = 0; i < keep.length; i++) {
+    values[i] = raw.get(keep[i]);
+  }
+  return new ArrayVector(values);
 }

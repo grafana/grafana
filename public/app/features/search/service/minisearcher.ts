@@ -1,9 +1,9 @@
-import MiniSearch from 'minisearch';
+import MiniSearch, { SearchOptions, SearchResult } from 'minisearch';
 import { ArrayVector, DataFrame, DataSourceRef, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
-import { getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
+import { filterFrame, getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
 import { LocationInfo } from '.';
 import { isArray, isString } from 'lodash';
 
@@ -22,7 +22,7 @@ interface InputDoc {
   description?: Vector<string>;
   dashboardID?: Vector<number>;
   location?: Vector<LocationInfo[]>;
-  dsList?: Vector<DataSourceRef[]>;
+  datasource?: Vector<DataSourceRef[]>;
   type?: Vector<string>;
   tags?: Vector<string[]>; // JSON strings?
 }
@@ -161,14 +161,35 @@ export class MiniSearcher implements GrafanaSearcher {
       await this.initIndex();
     }
 
-    // empty query can return everything
-    if (!query && this.data.dashboard) {
-      return {
-        body: this.data.dashboard,
+    let opts: SearchOptions | undefined = undefined;
+    if (filter) {
+      opts = {
+        filter: (res: SearchResult) => {
+          console.log('filter?:', res);
+          const key = res.id as CompositeKey;
+          const input = this.lookup.get(key.kind);
+          if (!input) {
+            return true;
+          }
+          const index = key.index;
+          if (filter.tags) {
+            const tags = input.tags?.get(index);
+            console.log('CHECK:' + tags);
+            return false;
+          }
+          return true;
+        },
       };
     }
 
-    const found = this.index!.search(query);
+    // empty query can return everything
+    if (!query && this.data.dashboard) {
+      return {
+        body: filterFrame(this.data.dashboard, filter),
+      };
+    }
+
+    const found = this.index!.search(query, opts);
 
     // frame fields
     const url: string[] = [];
@@ -177,7 +198,7 @@ export class MiniSearcher implements GrafanaSearcher {
     const name: string[] = [];
     const tags: string[][] = [];
     const location: LocationInfo[][] = [];
-    const dsList: DataSourceRef[][] = [];
+    const datasource: DataSourceRef[][] = [];
     const info: any[] = [];
     const score: number[] = [];
 
@@ -191,7 +212,7 @@ export class MiniSearcher implements GrafanaSearcher {
 
       url.push(input.url?.get(index) ?? '?');
       location.push(input.location?.get(index) as any);
-      dsList.push(input.dsList?.get(index) as any);
+      datasource.push(input.datasource?.get(index) as any);
       tags.push(input.tags?.get(index) as any);
       kind.push(key.kind);
       name.push(input.name?.get(index) ?? '?');
@@ -212,7 +233,7 @@ export class MiniSearcher implements GrafanaSearcher {
       { name: 'info', config: {}, type: FieldType.other, values: new ArrayVector(info) },
       { name: 'tags', config: {}, type: FieldType.other, values: new ArrayVector(tags) },
       { name: 'location', config: {}, type: FieldType.other, values: new ArrayVector(location) },
-      { name: 'dsList', config: {}, type: FieldType.other, values: new ArrayVector(dsList) },
+      { name: 'datasource', config: {}, type: FieldType.other, values: new ArrayVector(datasource) },
       { name: 'score', config: {}, type: FieldType.number, values: new ArrayVector(score) },
     ];
     for (const field of fields) {
@@ -270,9 +291,10 @@ function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc {
       case 'FolderID':
         input.folder = field.values;
         break;
+      case 'datasource':
       case 'dsList':
       case 'DSList':
-        input.dsList = field.values;
+        input.datasource = field.values;
         break;
     }
   }

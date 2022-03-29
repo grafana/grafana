@@ -292,7 +292,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	}
 	dashPanelCount.Name = "panelCount"
 	dashVarCount.Name = "varCount"
-	dashDSList.Name = "dsList"
+	dashDSList.Name = "datasource"
 
 	dashTags.Config = &data.FieldConfig{
 		Custom: map[string]interface{}{

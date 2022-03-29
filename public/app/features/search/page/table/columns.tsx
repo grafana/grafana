@@ -106,7 +106,7 @@ export function makeTagsColumn(field: Field<string[]>, width: number): TableColu
     accessor: (row: any, i: number) => {
       const tags = field.values.get(i);
       if (tags) {
-        return <TagList tags={tags} onClick={(v) => console.log('CLICKED TAG', v)} />;
+        return <TagList tags={tags} onClick={(v) => alert('CLICKED TAG: ' + v)} />;
       }
       return null;
     },
