@@ -4070,7 +4070,7 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.2
     "@rollup/plugin-node-resolve": 13.1.3
     "@types/chrome-remote-interface": 0.31.4
-    "@types/lodash": 4.14.180
+    "@types/lodash": 4.14.181
     "@types/node": 16.11.26
     "@types/uuid": 8.3.4
     babel-loader: 8.2.4
@@ -10137,13 +10137,6 @@ __metadata:
   version: 4.14.149
   resolution: "@types/lodash@npm:4.14.149"
   checksum: 6caf68cf38d9672851490cdb0a9ef25a90495c05903ca16e62d1d78ebb8b12ee46b20c2a5e29b7667612baedca0087c10f56debc305e486aba08b3dbefb93865
-  languageName: node
-  linkType: hard
-
-"@types/lodash@npm:4.14.180":
-  version: 4.14.180
-  resolution: "@types/lodash@npm:4.14.180"
-  checksum: fc42ae3473695cac6e91553f832fef8eb51a31c1c0381cafa81b00dc3efe18e279786bdda77caf0b90a8340ba2ba7aa46ae6541d69870565f775d04c89128bc1
   languageName: node
   linkType: hard
 
