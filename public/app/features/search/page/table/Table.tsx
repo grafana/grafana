@@ -339,9 +339,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     cellWrapper: css`
       display: flex;
-      > div {
-        border: none !important;
-      }
+      pointer-events: none;
     `,
     headerCell: css`
       padding-top: 2px;
