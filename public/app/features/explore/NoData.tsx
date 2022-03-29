@@ -10,7 +10,7 @@ export const NoData = () => {
   return (
     <>
       <div className={cx([css.wrapper, 'panel-container'])}>
-        <span className={cx([css.message])}>{'No Data'}</span>
+        <span className={cx([css.message])}>{'No data'}</span>
       </div>
     </>
   );
