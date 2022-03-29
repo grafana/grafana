@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dateTime } from '@grafana/data';
+import { dateTime, TimeRange } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
 
 import { DebugSection } from './DebugSection';
@@ -38,6 +38,7 @@ describe('DebugSection', () => {
       containsTemplate() {
         return false;
       },
+      updateTimeRange(timeRange: TimeRange) {},
     });
   });
 

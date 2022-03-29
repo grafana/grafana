@@ -195,6 +195,25 @@ describe('createSpanLinkFactory', () => {
         )}`
       );
     });
+
+    it('handles empty queries', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [],
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+      expect(linkDef).toBeUndefined();
+    });
   });
 });
 

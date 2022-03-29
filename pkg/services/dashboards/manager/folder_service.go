@@ -6,15 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,12 +25,13 @@ type FolderServiceImpl struct {
 	searchService    *search.SearchService
 	features         featuremgmt.FeatureToggles
 	permissions      accesscontrol.PermissionsService
+	sqlStore         sqlstore.Store
 }
 
 func ProvideFolderService(
 	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
 	searchService *search.SearchService, features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
-	ac accesscontrol.AccessControl,
+	ac accesscontrol.AccessControl, sqlStore sqlstore.Store,
 ) *FolderServiceImpl {
 	ac.RegisterAttributeScopeResolver(dashboards.NewNameScopeResolver(dashboardStore))
 	ac.RegisterAttributeScopeResolver(dashboards.NewUidScopeResolver(dashboardStore))
@@ -44,6 +44,7 @@ func ProvideFolderService(
 		searchService:    searchService,
 		features:         features,
 		permissions:      permissionsServices.GetFolderService(),
+		sqlStore:         sqlStore,
 	}
 }
 
@@ -185,9 +186,14 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
 	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
-	dashFolder, err := getFolder(ctx, query)
-	if err != nil {
+	if err := f.sqlStore.GetDashboard(ctx, &query); err != nil {
 		return toFolderError(err)
+	}
+
+	dashFolder := query.Result
+
+	if !dashFolder.IsFolder {
+		return models.ErrFolderNotFound
 	}
 
 	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserId)
@@ -243,18 +249,6 @@ func (f *FolderServiceImpl) DeleteFolder(ctx context.Context, user *models.Signe
 
 func (f *FolderServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
 	return f.dashboardService.MakeUserAdmin(ctx, orgID, userID, folderID, setViewAndEditPermissions)
-}
-
-func getFolder(ctx context.Context, query models.GetDashboardQuery) (*models.Dashboard, error) {
-	if err := bus.Dispatch(ctx, &query); err != nil {
-		return nil, toFolderError(err)
-	}
-
-	if !query.Result.IsFolder {
-		return nil, models.ErrFolderNotFound
-	}
-
-	return query.Result, nil
 }
 
 func toFolderError(err error) error {

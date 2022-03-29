@@ -75,11 +75,16 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     return undefined;
   }
 
-  return function SpanLink(span: TraceSpan): SpanLinkDef {
+  return function SpanLink(span: TraceSpan): SpanLinkDef | undefined {
     // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
+
+    const expr = getLokiQueryFromSpan(span, traceToLogsOptions);
+    if (!expr) {
+      return undefined;
+    }
 
     const dataLink: DataLink<LokiQuery> = {
       title: dataSourceSettings.name,
@@ -88,7 +93,7 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
         datasourceUid: dataSourceSettings.uid,
         datasourceName: dataSourceSettings.name,
         query: {
-          expr: getLokiQueryFromSpan(span, traceToLogsOptions),
+          expr,
           refId: '',
         },
       },
@@ -122,7 +127,7 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
  */
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
 
-function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): string {
+function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): string | undefined {
   const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
 
   // In order, try to use mapped tags -> tags -> default tags
@@ -142,6 +147,11 @@ function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): str
     }
     return acc;
   }, [] as string[]);
+
+  // If no tags found, return undefined to prevent an invalid Loki query
+  if (!tags.length) {
+    return undefined;
+  }
 
   let query = `{${tags.join(', ')}}`;
 

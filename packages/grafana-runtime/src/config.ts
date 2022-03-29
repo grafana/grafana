@@ -44,6 +44,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
+  helpEnabled = false;
+  profileEnabled = false;
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
@@ -106,6 +108,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   featureHighlights = {
     enabled: false,
+  };
+  reporting = {
+    enabled: true,
   };
 
   constructor(options: GrafanaBootConfig) {
