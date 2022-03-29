@@ -69,7 +69,6 @@ func TestAuthorize(t *testing.T) {
 }
 
 func TestAuthorizeRuleChanges(t *testing.T) {
-	// TODO fix this test
 	t.Skip()
 
 	namespace := randNamespace()

@@ -107,12 +107,11 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 
 	for groupName, rules := range q.Result {
 		for _, rule := range rules {
-			// TODO r.RuleGroup is the folder ID here, needs to be the folder name
 			ruleGroupConfig, ok := ruleGroupConfigs[groupName]
 			if !ok {
 				ruleGroupInterval := model.Duration(time.Duration(rule.IntervalSeconds) * time.Second)
 				ruleGroupConfigs[groupName] = apimodels.GettableRuleGroupConfig{
-					Name:     groupName, // TODO this needs to be the name of the folder
+					Name:     groupName,
 					Interval: ruleGroupInterval,
 					Rules: []apimodels.GettableExtendedRuleNode{
 						toGettableExtendedRuleNode(*rule),
