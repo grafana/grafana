@@ -1,5 +1,6 @@
 import { AccessControlAction } from 'app/types';
 import { isGrafanaRulesSource } from './datasource';
+import { contextSrv } from 'app/core/services/context_srv';
 
 function getAMversion(alertManagerSourceName: string) {
   return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
@@ -67,5 +68,11 @@ export function getNotificationsPermissions(alertManagerSourceName: string) {
     create: permissions.create[amVersion],
     update: permissions.update[amVersion],
     delete: permissions.delete[amVersion],
+  };
+}
+
+export function evaluateAccess(actions: AccessControlAction[], fallBackUserRoles: string[]) {
+  return () => {
+    return contextSrv.evaluatePermission(() => fallBackUserRoles, actions);
   };
 }

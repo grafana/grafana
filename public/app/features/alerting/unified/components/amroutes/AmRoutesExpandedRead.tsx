@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import React, { FC, useState, useMemo } from 'react';
+import React, { FC, useState } from 'react';
 import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyRoute } from '../../utils/amroutes';
