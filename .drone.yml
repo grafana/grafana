@@ -711,9 +711,9 @@ steps:
     && git push origin $${TEST_TAG}
   - cd -
   - git fetch origin "refs/tags/*:refs/tags/*"
-  - git remote add downstream https://github.com/grafana/$${DOWNSTREAM_REPO}.git
-  - git tag -d $${TEST_TAG} && git push --delete downstream $${TEST_TAG} && git tag
-    $${TEST_TAG} && git push downstream $${TEST_TAG}
+  - git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git
+  - git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} &&
+    git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
@@ -4411,6 +4411,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 5f82aa734bb1ff2eb4ade414cb781fb22c04df23030a63220b7bf210d5867390
+hmac: 7b8d6e6cb7f6b8846de99626b8e0e61c795e93f1a02b32103ec13547c9007f5e
 
 ...
