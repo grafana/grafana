@@ -183,7 +183,7 @@ export class TeamPages extends PureComponent<Props, State> {
                   'Stop managing user access in two places - assign users to groups in SAML, LDAP or Oauth, and manage access at a Team level in Grafana',
                   'Update users’ permissions immediately when you add or remove them from an LDAP group, with no need for them to sign out and back in',
                 ]}
-                image={theme.isLight ? '1Il2-2RlvJz90Vxru6BieaDasxcAq1ncp' : '1DQAInGqcYG4Q6BLJFa8GXfVfqSzQ6k5w'}
+                image={`team-sync-${theme.isLight ? 'light' : 'dark'}.png`}
                 featureName={'team sync'}
                 featureUrl={'https://grafana.com/docs/grafana/latest/enterprise/team-sync'}
                 description={

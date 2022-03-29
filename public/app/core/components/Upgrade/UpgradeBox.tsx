@@ -219,11 +219,10 @@ const getContentVerticalStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-// Get Gdrive URL by item id
 const getImgUrl = (urlOrId: string) => {
   if (urlOrId.startsWith('http')) {
     return urlOrId;
   }
 
-  return 'https://drive.google.com/uc?export=download&id=' + urlOrId;
+  return '/public/img/enterprise/highlights/' + urlOrId;
 };
