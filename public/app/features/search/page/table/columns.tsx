@@ -1,12 +1,173 @@
 import React from 'react';
-import { DataSourceRef, Field } from '@grafana/data';
+import { DataFrameView, DataSourceRef, Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
-import { TableColumn } from './Table';
 import SVG from 'react-inlinesvg';
-import { TagList } from '@grafana/ui';
+import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
+import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
-export function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, iconClass: string): TableColumn {
+import { FieldAccess, TableColumn } from './Table';
+import { LocationInfo } from '../../service';
+
+export const generateColumns = (
+  data: DataFrameView<FieldAccess>,
+  isDashboardList: boolean,
+  availableWidth: number,
+  styles: { [key: string]: string }
+): TableColumn[] => {
+  const columns: TableColumn[] = [];
+  const urlField = data.fields.url!;
+  const access = data.fields;
+
+  availableWidth -= 8; // ???
+  let width = 50;
+  if (false) {
+    // checkbox column
+    columns.push({
+      id: `column-checkbox`,
+      Header: () => (
+        <div className={styles.checkboxHeader}>
+          <Checkbox onChange={() => {}} />
+        </div>
+      ),
+      Cell: () => (
+        <div className={styles.checkbox}>
+          <Checkbox onChange={() => {}} />
+        </div>
+      ),
+      accessor: 'check',
+      field: urlField,
+      width: 30,
+    });
+    availableWidth -= width;
+  }
+
+  // Name column
+  width = Math.max(availableWidth * 0.2, 200);
+  columns.push({
+    Cell: DefaultCell,
+    id: `column-name`,
+    field: access.name!,
+    Header: 'Name',
+    accessor: (row: any, i: number) => {
+      const name = access.name!.values.get(i);
+      return name;
+    },
+    width,
+  });
+  availableWidth -= width;
+
+  const TYPE_COLUMN_WIDTH = 130;
+  const DATASOURCE_COLUMN_WIDTH = 200;
+  const INFO_COLUMN_WIDTH = 100;
+  const LOCATION_COLUMN_WIDTH = 200;
+
+  width = TYPE_COLUMN_WIDTH;
+  if (isDashboardList) {
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-type`,
+      field: access.name!,
+      Header: 'Type',
+      accessor: (row: any, i: number) => {
+        return (
+          <div>
+            <Icon name={'apps'} className={styles.typeIcon} />
+            Dashboard
+          </div>
+        );
+      },
+      width,
+    });
+    availableWidth -= width;
+  } else {
+    columns.push(makeTypeColumn(access.kind, access.type, width, styles.typeText, styles.typeIcon));
+    availableWidth -= width;
+  }
+
+  // Show datasources if we have any
+  if (access.datasource && hasFieldValue(access.datasource)) {
+    width = DATASOURCE_COLUMN_WIDTH;
+    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
+    availableWidth -= width;
+  }
+
+  if (isDashboardList) {
+    width = INFO_COLUMN_WIDTH;
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-info`,
+      field: access.url!,
+      Header: 'Info',
+      accessor: (row: any, i: number) => {
+        const panelCount = access.panelCount?.values.get(i);
+        return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
+      },
+      width: width,
+    });
+    availableWidth -= width;
+  } else {
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-location`,
+      field: access.location ?? access.url,
+      Header: 'Location',
+      accessor: (row: any, i: number) => {
+        const location = access.location?.values.get(i) as LocationInfo[];
+        if (location) {
+          return (
+            <div>
+              {location.map((v, id) => (
+                <span
+                  key={id}
+                  className={styles.locationItem}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert('CLICK: ' + v.name);
+                  }}
+                >
+                  <Icon name={getIconForKind(v.kind)} /> {v.name}
+                </span>
+              ))}
+            </div>
+          );
+        }
+        return null;
+      },
+      width: LOCATION_COLUMN_WIDTH,
+    });
+    availableWidth -= width;
+  }
+
+  // Show tags if we have any
+  if (access.tags && hasFieldValue(access.tags)) {
+    width = Math.max(availableWidth, 250);
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList));
+  }
+
+  return columns;
+};
+
+function hasFieldValue(field: Field): boolean {
+  for (let i = 0; i < field.values.length; i++) {
+    const v = field.values.get(i);
+    if (v && v.length) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getIconForKind(v: string): IconName {
+  if (v === 'dashboard') {
+    return 'apps';
+  }
+  if (v === 'folder') {
+    return 'folder';
+  }
+  return 'question-circle';
+}
+
+function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, iconClass: string): TableColumn {
   return {
     Cell: DefaultCell,
     id: `column-datasource`,
@@ -40,7 +201,7 @@ export function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: numbe
   };
 }
 
-export function makeTypeColumn(
+function makeTypeColumn(
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
@@ -97,7 +258,7 @@ export function makeTypeColumn(
   };
 }
 
-export function makeTagsColumn(field: Field<string[]>, width: number, tagListClass: string): TableColumn {
+function makeTagsColumn(field: Field<string[]>, width: number, tagListClass: string): TableColumn {
   return {
     Cell: DefaultCell,
     id: `column-tags`,
