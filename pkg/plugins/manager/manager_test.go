@@ -242,7 +242,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		err := pm.loadPlugins(context.Background(), plugins.Core, "test/path")
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, pc.startCount)
+		assert.Equal(t, 0, pc.startCount)
 		assert.Equal(t, 0, pc.stopCount)
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
