@@ -187,6 +187,8 @@ export const getAvailableIcons = () =>
     'percona-network',
     'percona-process',
     'percona-setting',
+    'percona-bell',
+    'percona-bell-slash',
   ] as const;
 
 type BrandIconNames = 'google' | 'microsoft' | 'github' | 'gitlab' | 'okta';

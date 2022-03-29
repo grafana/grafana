@@ -415,6 +415,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "ChecksPage" */ 'app/percona/check/CheckPanel')),
     },
     {
+      path: '/pmm-database-checks/service-checks/:service',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ServiceChecksPage" */ 'app/percona/check/components/ServiceChecks/ServiceChecks')
+      ),
+    },
+    {
       path: '/settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')

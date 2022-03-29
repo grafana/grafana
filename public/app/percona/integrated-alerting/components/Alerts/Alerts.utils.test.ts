@@ -1,6 +1,6 @@
 import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
-import { Alert, AlertLabels } from './Alerts.types';
-import { formatAlert, formatAlerts, formatLabel, formatLabels } from './Alerts.utils';
+import { Alert } from './Alerts.types';
+import { formatAlert, formatAlerts } from './Alerts.utils';
 import { alertsStubs } from './__mocks__/alertsStubs';
 
 const moment = jest.requireActual('moment-timezone');
@@ -33,18 +33,6 @@ const expectedAlertResult2: Alert = {
 };
 
 describe('AlertRulesTable utils', () => {
-  test('formatLabel', () => {
-    expect(formatLabel(['testKey', '1337'])).toEqual('testKey=1337');
-  });
-
-  test('formatLabels', () => {
-    expect(formatLabels({})).toEqual<AlertLabels>({ primary: [], secondary: [] });
-    expect(formatLabels({ testKey: '1337', testKey2: 'testValue' })).toEqual<AlertLabels>({
-      primary: [],
-      secondary: ['testKey=1337', 'testKey2=testValue'],
-    });
-  });
-
   test('formatAlert', () => {
     expect(formatAlert(alertsStubs.alerts[0])).toEqual<Alert>(expectedAlertResult1);
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ palette, colors, isLight }: GrafanaTheme) => {
+export const getStyles = ({ v1: { palette, colors }, isLight }: GrafanaTheme2) => {
   const borderColor = isLight ? palette.gray85 : palette.dark7;
 
   return {

@@ -1,3 +1,4 @@
+import { PrioritizedLabels } from 'app/percona/shared/core';
 import { AlertRulesListResponseRule, AlertRuleSeverity, AlertRule } from '../AlertRules/AlertRules.types';
 
 export enum AlertStatus {
@@ -8,19 +9,10 @@ export enum AlertStatus {
   SILENCED = 'Silenced',
 }
 
-export interface AlertsListResponseLabel {
-  [K: string]: string;
-}
-
-export interface AlertLabels {
-  primary: string[];
-  secondary: string[];
-}
-
 export interface Alert {
   alertId: string;
   activeSince: string;
-  labels: AlertLabels;
+  labels: PrioritizedLabels;
   lastNotified: string;
   severity: AlertRuleSeverity;
   status: AlertStatus[keyof AlertStatus];
@@ -36,7 +28,7 @@ interface AlertsTotals {
 export interface AlertsListResponseAlert {
   created_at?: string;
   alert_id: string;
-  labels: AlertsListResponseLabel;
+  labels: { [K: string]: string };
   updated_at?: string;
   rule?: AlertRulesListResponseRule;
   severity: keyof typeof AlertRuleSeverity;

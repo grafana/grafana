@@ -1,49 +1,105 @@
-import { API } from 'app/percona/shared/core';
+import { API, PaginatedFomattedResponse } from 'app/percona/shared/core';
 import { api } from 'app/percona/shared/helpers/api';
 import { CancelToken } from 'axios';
 import {
-  ActiveCheck,
-  Alert,
-  AlertRequestParams,
-  AlertState,
   AllChecks,
   ChangeCheckBody,
   CheckDetails,
-  FailedChecks,
-  Settings,
-  Severity,
-  SilenceBody,
-  SilenceResponse,
+  CheckResultForServicePayload,
+  CheckResultSummaryPayload,
+  FailedCheckSummary,
+  ServiceFailedCheck,
 } from 'app/percona/check/types';
-import { SEVERITIES_ORDER } from 'app/percona/check/CheckPanel.constants';
+import { AlertRuleSeverity } from '../integrated-alerting/components/AlertRules/AlertRules.types';
+import { formatLabels } from '../shared/helpers/labels';
 
 export const makeApiUrl: (segment: string) => string = (segment) => `${API.ALERTMANAGER}/${segment}`;
+const order = {
+  [AlertRuleSeverity.SEVERITY_CRITICAL]: 1,
+  [AlertRuleSeverity.SEVERITY_ERROR]: 2,
+  [AlertRuleSeverity.SEVERITY_WARNING]: 3,
+  [AlertRuleSeverity.SEVERITY_NOTICE]: 4,
+};
+const BASE_URL = '/v1/management/SecurityChecks';
 
 /**
  * A service-like object to store the API methods
  */
 export const CheckService = {
-  async getActiveAlerts(includeSilenced = false, token?: CancelToken): Promise<ActiveCheck[] | undefined> {
-    const data = await api.get<Alert[], AlertRequestParams>(makeApiUrl('alerts'), {
-      params: { active: true, silenced: includeSilenced, filter: 'stt_check=1' },
-      cancelToken: token,
-    });
+  async getAllFailedChecks(token?: CancelToken): Promise<FailedCheckSummary[]> {
+    const { result = [] } = await api.post<CheckResultSummaryPayload, Object>(
+      `${BASE_URL}/ListFailedServices`,
+      {},
+      false,
+      token
+    );
 
-    return Array.isArray(data) && data.length ? processData(data as Alert[]) : undefined;
+    return result.map(({ service_name, service_id, critical_count = 0, warning_count = 0, notice_count = 0 }) => ({
+      serviceName: service_name,
+      serviceId: service_id,
+      criticalCount: critical_count,
+      warningCount: warning_count,
+      noticeCount: notice_count,
+    }));
   },
-  async getFailedChecks(token?: CancelToken): Promise<FailedChecks | undefined> {
-    const data = await api.get<Alert[], AlertRequestParams>(makeApiUrl('alerts'), {
-      params: { active: true, silenced: false, filter: 'stt_check=1' },
-      cancelToken: token,
-    });
+  async getFailedCheckForService(
+    serviceId: string,
+    pageSize: number,
+    pageIndex: number,
+    token?: CancelToken
+  ): Promise<PaginatedFomattedResponse<ServiceFailedCheck[]>> {
+    const {
+      results = [],
+      page_totals: { total_items: totalItems = 0, total_pages: totalPages = 1 },
+    } = await api.post<CheckResultForServicePayload, Object>(
+      `${BASE_URL}/FailedChecks`,
+      { service_id: serviceId, page_params: { page_size: pageSize, index: pageIndex } },
+      false,
+      token
+    );
 
-    return Array.isArray(data) && data.length ? sumFailedChecks(processData(data as Alert[])) : undefined;
+    return {
+      totals: {
+        totalItems,
+        totalPages,
+      },
+      data: results
+        .map(
+          ({
+            summary,
+            description,
+            severity,
+            labels = {},
+            read_more_url,
+            service_name,
+            check_name,
+            silenced,
+            alert_id,
+          }) => ({
+            summary,
+            description,
+            severity: AlertRuleSeverity[severity],
+            labels: formatLabels(labels),
+            readMoreUrl: read_more_url,
+            serviceName: service_name,
+            checkName: check_name,
+            silenced: !!silenced,
+            alertId: alert_id,
+          })
+        )
+        .sort((a, b) => order[a.severity] - order[b.severity]),
+    };
   },
-  async getSettings(token?: CancelToken) {
-    return api.post<Settings, {}>(API.SETTINGS, {}, true, token);
-  },
-  silenceAlert(body: SilenceBody, token?: CancelToken): Promise<void | SilenceResponse> {
-    return api.post<SilenceResponse, SilenceBody>(makeApiUrl('silences'), body, false, token);
+  async silenceAlert(alertId: string, silence: boolean, token?: CancelToken) {
+    return api.post<void, any>(
+      `${BASE_URL}/ToggleCheckAlert`,
+      {
+        alert_id: alertId,
+        silence,
+      },
+      false,
+      token
+    );
   },
   runDbChecks(token?: CancelToken): Promise<void | {}> {
     return api.post<{}, {}>('/v1/management/SecurityChecks/Start', {}, false, token);
@@ -57,99 +113,3 @@ export const CheckService = {
     return api.post<{}, ChangeCheckBody>('/v1/management/SecurityChecks/Change', body, false, token);
   },
 };
-
-export const processData = (data: Alert[]): ActiveCheck[] => {
-  const result: Record<
-    string,
-    Array<{
-      summary: string;
-      description: string;
-      severity: string;
-      labels: { [key: string]: string };
-      silenced: boolean;
-      readMoreUrl: string;
-    }>
-  > = data
-    .filter((alert) => !!alert.labels.stt_check)
-    .reduce((acc, alert) => {
-      const {
-        labels,
-        annotations: { summary, description, read_more_url },
-        status: { state },
-      } = alert;
-      const serviceName = labels.service_name;
-
-      if (!serviceName) {
-        return acc;
-      }
-
-      const item = {
-        summary,
-        description,
-        severity: labels.severity,
-        labels,
-        silenced: state === AlertState.suppressed,
-        readMoreUrl: read_more_url,
-      };
-
-      acc[serviceName] = (acc[serviceName] ?? []).concat(item);
-
-      return acc;
-    }, {} as any);
-
-  return Object.entries(result).map(([name, value], i) => {
-    const failed = value.reduce(
-      (acc, val) => {
-        if (val.severity === 'error') {
-          acc[SEVERITIES_ORDER.error] += 1;
-        }
-
-        if (val.severity === 'warning') {
-          acc[SEVERITIES_ORDER.warning] += 1;
-        }
-
-        if (val.severity === 'notice') {
-          acc[SEVERITIES_ORDER.notice] += 1;
-        }
-
-        return acc;
-      },
-      [0, 0, 0] as FailedChecks
-    );
-
-    const details = value
-      .map((val) => ({
-        description: `${val.summary}${val.description ? `: ${val.description}` : ''}`,
-        labels: val.labels ?? [],
-        silenced: val.silenced,
-        readMoreUrl: val.readMoreUrl,
-      }))
-      .sort((a, b) => {
-        const aSeverity: Severity = a.labels.severity as Severity;
-        const bSeverity: Severity = b.labels.severity as Severity;
-
-        return SEVERITIES_ORDER[aSeverity] - SEVERITIES_ORDER[bSeverity];
-      });
-
-    return {
-      key: String(i),
-      name,
-      failed,
-      details,
-    };
-  });
-};
-
-export const sumFailedChecks = (checks: ActiveCheck[]): FailedChecks =>
-  checks
-    .map((rec) => rec.failed)
-    .reduce(
-      (acc, failed) => {
-        acc[0] += failed[0];
-        acc[1] += failed[1];
-        acc[2] += failed[2];
-
-        return acc;
-      },
-      [0, 0, 0]
-    );

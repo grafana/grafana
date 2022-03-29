@@ -1,8 +1,4 @@
-import { saveShowSilencedValue, loadShowSilencedValue } from './FailedChecksTab.utils';
-import { SHOW_SILENCED_VALUE_KEY, SHOW_SILENCED_DEFAULT } from './FailedChecksTab.constants';
-
-let getItemSpy: jest.SpyInstance;
-let setItemSpy: jest.SpyInstance;
+import { stripServiceId, formatServiceId } from './FailedChecksTab.utils';
 
 const originalPlatformCore = jest.requireActual('@percona/platform-core');
 
@@ -14,32 +10,20 @@ jest.mock('@percona/platform-core', () => ({
 }));
 
 describe('FailedChecksTab::utils', () => {
-  beforeEach(() => {
-    getItemSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => 'true');
-    setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
-  });
-
   afterEach(() => {
     jest.resetAllMocks();
   });
 
-  test('saveShowSilencedValue calls localStorage.setItem', () => {
-    saveShowSilencedValue(true);
-
-    expect(setItemSpy).toBeCalledTimes(1);
-    expect(setItemSpy).toBeCalledWith(SHOW_SILENCED_VALUE_KEY, 'true');
+  test('stripServiceId', () => {
+    expect(stripServiceId('')).toBe('');
+    expect(stripServiceId('service_id/service1')).toBe('');
+    expect(stripServiceId('/service_idservice1')).toBe('');
+    expect(stripServiceId('/service_id/')).toBe('');
+    expect(stripServiceId('/service_id/service1')).toBe('service1');
   });
 
-  test('loadShowSilencedValue calls localStorage.getItem', () => {
-    expect(loadShowSilencedValue()).toEqual(true);
-    expect(getItemSpy).toBeCalledTimes(1);
-  });
-
-  test('loadShowSilencedValue the default value if localStorage is not available', () => {
-    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw Error('test error');
-    });
-
-    expect(loadShowSilencedValue()).toBe(SHOW_SILENCED_DEFAULT);
+  test('formatServiceId', () => {
+    expect(formatServiceId('')).toBe('/service_id/');
+    expect(formatServiceId('service1')).toBe('/service_id/service1');
   });
 });

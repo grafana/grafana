@@ -31,3 +31,16 @@ export const OPERATOR_FULL_LABELS = {
   [Databases.mariadb]: '',
   [Databases.haproxy]: '',
 };
+
+export const PRIMARY_LABELS = [
+  'node_name',
+  'type',
+  'container_name',
+  'region',
+  'az',
+  'service_name',
+  'environment',
+  'cluster',
+  'replication_set',
+];
+export const HIDDEN_LABELS = ['alertname', 'job', 'rule_id', 'template_name', 'severity', 'ia'];

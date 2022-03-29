@@ -5,12 +5,10 @@ import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { CheckDetails } from 'app/percona/check/types';
 import { CheckService } from 'app/percona/check/Check.service';
-import { Spinner, useTheme, useStyles } from '@grafana/ui';
-// TODO: make a shared table style
-import { getStyles as getTableStyles } from 'app/percona/check/components/Table/Table.styles';
+import { Spinner, useStyles2 } from '@grafana/ui';
 import { getStyles as getCheckPanelStyles } from 'app/percona/check/CheckPanel.styles';
+import { getStyles as getMainStyles } from './AllChecksTab.styles';
 import { Messages } from './AllChecksTab.messages';
-import * as styles from './AllChecksTab.styles';
 import { GET_ALL_CHECKS_CANCEL_TOKEN } from './AllChecksTab.constants';
 import { FetchChecks } from './types';
 import { CheckTableRow } from './CheckTableRow';
@@ -19,9 +17,8 @@ import { ChecksReloadContext } from './AllChecks.context';
 export const AllChecksTab: FC = () => {
   const [fetchChecksPending, setFetchChecksPending] = useState(false);
   const [checks, setChecks] = useState<CheckDetails[] | undefined>();
-  const theme = useTheme();
-  const tableStyles = getTableStyles(theme);
-  const checkPanelStyles = useStyles(getCheckPanelStyles);
+  const mainStyles = useStyles2(getMainStyles);
+  const checkPanelStyles = useStyles2(getCheckPanelStyles);
   const [generateToken] = useCancelToken();
 
   const updateUI = (check: CheckDetails) => {
@@ -61,19 +58,19 @@ export const AllChecksTab: FC = () => {
   }, []);
 
   return (
-    <div className={cx(tableStyles.wrapper, styles.wrapper)} data-testid="db-checks-all-checks-wrapper">
+    <div className={cx(mainStyles.tableWrapper, mainStyles.wrapper)} data-testid="db-checks-all-checks-wrapper">
       {fetchChecksPending ? (
         <div className={checkPanelStyles.spinner} data-testid="db-checks-all-checks-spinner">
           <Spinner />
         </div>
       ) : (
-        <table className={tableStyles.table} data-testid="db-checks-all-checks-table">
+        <table className={mainStyles.table} data-testid="db-checks-all-checks-table">
           <colgroup>
-            <col className={styles.nameColumn} />
+            <col className={mainStyles.nameColumn} />
             <col />
-            <col className={styles.statusColumn} />
-            <col className={styles.intervalColumn} />
-            <col className={styles.actionsColumn} />
+            <col className={mainStyles.statusColumn} />
+            <col className={mainStyles.intervalColumn} />
+            <col className={mainStyles.actionsColumn} />
           </colgroup>
           <thead data-testid="db-checks-all-checks-thead">
             <tr>

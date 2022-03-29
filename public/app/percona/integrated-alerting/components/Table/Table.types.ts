@@ -12,6 +12,18 @@ import {
   HeaderGroup,
 } from 'react-table';
 
+export interface ExtendedTableRowProps extends TableRowProps {
+  onClick?: () => void;
+}
+
+export interface ExtendedTableCellProps extends TableCellProps {
+  onClick?: () => void;
+}
+
+export interface ExtendedTableHeaderProps extends TableHeaderProps {
+  onClick?: () => void;
+}
+
 export interface TableProps {
   data: object[];
   columns: Array<Column<any>>;
@@ -29,10 +41,10 @@ export interface TableProps {
   onPaginationChanged?: (pageSize: number, pageIndex: number) => void;
   children?: (rows: Row[], table: TableInstance) => React.ReactNode;
   renderExpandedRow?: (row: Row<any>) => React.ReactNode;
-  getHeaderProps?: (column: HeaderGroup) => TableHeaderProps;
-  getRowProps?: (row: Row<any>) => TableRowProps;
-  getColumnProps?: (column: ColumnInstance) => TableCellProps;
-  getCellProps?: (cell: Cell<any, any>) => TableCellProps;
+  getHeaderProps?: (column: HeaderGroup) => ExtendedTableHeaderProps;
+  getRowProps?: (row: Row<any>) => ExtendedTableRowProps;
+  getColumnProps?: (column: ColumnInstance) => ExtendedTableCellProps;
+  getCellProps?: (cell: Cell<any, any>) => ExtendedTableCellProps;
 }
 
 export interface PaginatedTableState extends TableState {
