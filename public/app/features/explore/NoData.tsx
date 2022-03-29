@@ -9,8 +9,8 @@ export const NoData = () => {
   const css = useStyles2(getStyles);
   return (
     <>
-      <div className={cx([css.wrapper])}>
-        <span className={cx([css.message])}>{'No Data'}</span>
+      <div className={cx([css.wrapper, 'panel-container'])}>
+        <span className={cx([css.message])}>{'No data'}</span>
       </div>
     </>
   );
@@ -31,5 +31,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   message: css`
     margin-bottom: ${theme.spacing(3)};
     font-size: 2em;
+    padding: 6em 1em;
+    color: ${theme.colors.text.disabled};
   `,
 });

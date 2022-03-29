@@ -215,11 +215,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderNoData() {
-    return (
-      <div className="explore-container">
-        <NoData />
-      </div>
-    );
+    return <NoData />;
   }
 
   renderGraphPanel(width: number) {
@@ -391,7 +387,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                          {!graphResult && !showTable && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
+                          {!graphResult && !showTable && !showLogs && (
+                            <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>
+                          )}
                         </>
                       )}
                       {showRichHistory && (
