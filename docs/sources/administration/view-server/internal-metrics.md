@@ -136,4 +136,4 @@ These instructions assume you have already added Prometheus as a data source in 
 1. Restart Prometheus. Your new job should appear on the Targets tab.
 1. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
 1. Select the **Prometheus** data source.
-1. On the Dashboards tab, **Import** a Go processes dashboard.
+1. Import a Golang application metrics dashboard - for example [Go Processes](https://grafana.com/grafana/dashboards/6671).
