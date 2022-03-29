@@ -1,4 +1,4 @@
-import MiniSearch, { SearchOptions, SearchResult } from 'minisearch';
+import MiniSearch from 'minisearch';
 import { ArrayVector, DataFrame, DataSourceRef, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -161,27 +161,6 @@ export class MiniSearcher implements GrafanaSearcher {
       await this.initIndex();
     }
 
-    let opts: SearchOptions | undefined = undefined;
-    if (filter) {
-      opts = {
-        filter: (res: SearchResult) => {
-          console.log('filter?:', res);
-          const key = res.id as CompositeKey;
-          const input = this.lookup.get(key.kind);
-          if (!input) {
-            return true;
-          }
-          const index = key.index;
-          if (filter.tags) {
-            const tags = input.tags?.get(index);
-            console.log('CHECK:' + tags);
-            return false;
-          }
-          return true;
-        },
-      };
-    }
-
     // empty query can return everything
     if (!query && this.data.dashboard) {
       return {
@@ -189,7 +168,7 @@ export class MiniSearcher implements GrafanaSearcher {
       };
     }
 
-    const found = this.index!.search(query, opts);
+    const found = this.index!.search(query);
 
     // frame fields
     const url: string[] = [];
@@ -207,6 +186,10 @@ export class MiniSearcher implements GrafanaSearcher {
       const index = key.index;
       const input = this.lookup.get(key.kind);
       if (!input) {
+        continue;
+      }
+
+      if (filter && !shouldKeep(filter, input, index)) {
         continue;
       }
 
@@ -246,6 +229,21 @@ export class MiniSearcher implements GrafanaSearcher {
       },
     };
   }
+}
+
+function shouldKeep(filter: QueryFilters, doc: InputDoc, index: number): boolean {
+  if (filter.tags) {
+    const tags = doc.tags?.get(index);
+    if (!tags?.length) {
+      return false;
+    }
+    for (const t of filter.tags) {
+      if (!tags.includes(t)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc {
