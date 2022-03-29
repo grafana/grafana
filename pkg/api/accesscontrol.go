@@ -314,8 +314,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create dashboard in general folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("general")},
-				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("general")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},

@@ -276,7 +276,7 @@ func (a *AccessControlDashboardGuardian) loadDashboard() error {
 func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*models.Dashboard, error) {
 	if folderID == 0 {
 		// TODO: do we need a reserved uid for folder 0
-		return &models.Dashboard{Uid: "general"}, nil
+		return &models.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
 	}
 	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
 	if err := a.store.GetDashboard(a.ctx, folderQuery); err != nil {

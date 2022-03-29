@@ -62,7 +62,7 @@ func NewIDScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
 		}
 
 		if id == 0 {
-			return ScopeFoldersProvider.GetResourceScopeUID("general"), nil
+			return ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID), nil
 		}
 
 		folder, err := db.GetFolderByID(ctx, orgID, id)
