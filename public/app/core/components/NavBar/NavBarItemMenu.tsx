@@ -34,12 +34,6 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const section = allItems.find((item) => item.value.menuItemType === NavMenuItemType.Section);
 
   useEffect(() => {
-    // console.log(menuHasFocus);
-    // console.log('selectedKeys', { ...state.selectionManager.selectedKeys });
-    // console.log('focusedKey', state.selectionManager.focusedKey );
-    // console.log('disabledKeys', state.disabledKeys );
-
-    // console.log('focused key ' + state.selectionManager.focusedKey);
     if (menuHasFocus && !state.selectionManager.isFocused) {
       state.selectionManager.setFocusedKey(section?.key ?? '');
       state.selectionManager.setFocused(true);

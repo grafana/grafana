@@ -51,10 +51,6 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
       if (e.key === 'ArrowLeft') {
         onLeft();
       }
-      //console.info('keyboard tab', e.key);
-      if (e.key === 'ArrowDown') {
-        //onTab();
-      }
       e.continuePropagation();
     },
   });

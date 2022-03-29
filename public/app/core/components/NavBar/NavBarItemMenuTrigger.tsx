@@ -63,15 +63,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     }
   }, [menuIdOpen]);
 
-  const { focusWithinProps } = useFocusWithin({
-    onFocusWithin: (e) => {
-      if (e.target.id === ref.current?.id) {
-        // If focussing on the trigger itself, set the menu id that is open
-        setMenuIdOpen(ref.current?.id);
-      }
-    },
-  });
-
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
       switch (e.key) {
@@ -80,6 +71,9 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
             state.open();
           }
           setMenuHasFocus(true);
+          break;
+        case 'Tab':
+          setMenuIdOpen(null);
           break;
         default:
           break;
@@ -142,7 +136,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       );
   }
 
-  const overlayRef = React.useRef(null);
+  const overlayRef = React.useRef<HTMLDivElement>(null);
   const { dialogProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
@@ -157,6 +151,22 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     overlayRef,
     placement: reverseMenuDirection ? 'right bottom' : 'right top',
     isOpen: state.isOpen,
+  });
+
+  const { focusWithinProps } = useFocusWithin({
+    onFocusWithin: (e) => {
+      if (e.target.id === ref.current?.id) {
+        // If focussing on the trigger itself, set the menu id that is open
+        setMenuIdOpen(ref.current?.id);
+      }
+    },
+    onBlurWithin: (e) => {
+      if (e.target?.getAttribute('role') === 'menuitem' && !overlayRef.current?.contains(e.relatedTarget)) {
+        // If it is blurring from a menuitem to an element outside the current overlay
+        // close the menu that is open
+        setMenuIdOpen(null);
+      }
+    },
   });
 
   return (
