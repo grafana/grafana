@@ -187,7 +187,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSo
 	if err != nil {
 		return err
 	}
-	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, "datasource")
+	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
@@ -211,7 +211,7 @@ func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDef
 		return err
 	}
 
-	secret, exist, err := s.SecretsStore.Get(ctx, query.OrgId, query.Result.Name, "datasource")
+	secret, exist, err := s.SecretsStore.Get(ctx, query.OrgId, query.Result.Name, secretType)
 	if err != nil {
 		return err
 	}
