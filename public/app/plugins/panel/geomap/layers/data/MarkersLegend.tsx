@@ -21,7 +21,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   const style = getStyles(theme);
 
   if (!styleConfig) {
-    return <>No style</>;
+    return <></>;
   }
   const { color, opacity} = styleConfig?.base ?? {};
   const symbol = styleConfig?.config.symbol?.fixed;
@@ -40,7 +40,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
           />
           <span>{layerName}</span>
         </div>
-    </div>
+      </div>
     )
   }
 

@@ -452,6 +452,9 @@ export class GeomapPanel extends Component<Props, State> {
       return false;
     }
 
+    // Just to trigger a state update
+    this.setState({ legends: [] });
+
     this.layers = layers;
     this.doOptionsUpdate(layerIndex);
     return true;
