@@ -48,6 +48,34 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
         `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expressions and used as values for a range aggregation via the unwrap operation. `,
     },
     {
+      id: LokiOperationId.LineFormat,
+      name: 'Line format',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: '{{.status_code}}',
+          description: 'A line template that can refer to stream labels and extracted labels.',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | line_format "${model.params[0]}"`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
+
+        Example: \`{{.status_code}} - {{.message}}\`
+
+        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
+        `,
+    },
+
+    {
       id: LokiOperationId.LineContains,
       name: 'Line contains',
       params: [
