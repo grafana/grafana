@@ -233,7 +233,7 @@ export class TimeSrv {
     const validInterval = this.contextSrv.getValidInterval(interval);
     const intervalMs = rangeUtil.intervalToMs(validInterval);
 
-    this.refreshTimer = setTimeout(() => {
+    this.refreshTimer = this.getTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
       this.refreshTimeModel();
     }, intervalMs);
@@ -250,7 +250,7 @@ export class TimeSrv {
   }
 
   private startNextRefreshTimer(afterMs: number) {
-    this.refreshTimer = setTimeout(() => {
+    this.refreshTimer = this.getTimeout(() => {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
         this.refreshTimeModel();
@@ -380,6 +380,39 @@ export class TimeSrv {
 
     return false;
   }
+
+  private getTimeout = (callback: any, timeout: number, ...args: any): NodeJS.Timeout => {
+    const MAX_32_BIT_SIGNED = 2147483647;
+    if (timeout / MAX_32_BIT_SIGNED > 1) {
+      return this.setLongTimeout(callback, timeout, args);
+    } else {
+      return setTimeout(callback, timeout);
+    }
+  };
+
+  //
+  // this was taken from https://stackoverflow.com/a/67351415.
+  // it is needed to avoid overflow on auto refresh timer, for more than ~24 days,
+  // due to the max delay value mentioned here:
+  // https://developer.mozilla.org/en-US/docs/Web/API/setTimeout#maximum_delay_value
+  private setLongTimeout = (callback: any, timeout: number, ...args: any): NodeJS.Timeout => {
+    let count = 0;
+    let handle: NodeJS.Timeout;
+    const MAX_32_BIT_SIGNED = 2147483647;
+    const maxIterations = timeout / MAX_32_BIT_SIGNED;
+
+    const onInterval = () => {
+      ++count;
+      if (count > maxIterations) {
+        count = 0;
+        clearInterval(handle);
+        callback(args);
+      }
+    };
+
+    handle = setInterval(onInterval, Math.min(timeout, MAX_32_BIT_SIGNED));
+    return handle;
+  };
 }
 
 let singleton: TimeSrv | undefined;
