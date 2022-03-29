@@ -15,22 +15,38 @@ const tabs = [{ label: 'Yaml', value: 'yaml' }];
 
 export const RuleInspector: FC<Props> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('yaml');
-  const { setValue } = useFormContext();
-  const onApply = (formValues: RuleFormValues) => {
+  const { setValue, getValues } = useFormContext<RuleFormValues>();
+  const styles = useStyles2(drawerStyles);
+
+  const defaultValue = dump(getValues());
+  const [yaml, setYaml] = useState<string>(defaultValue);
+
+  const onApply = () => {
+    const formValues = load(yaml) as RuleFormValues;
+
     // Need to loop through all values and set them individually
-    Object.entries(formValues).map(([key, value]) => {
-      setValue(key, value);
-    });
+    // TODO this is not type-safe :(
+    for (const key in formValues) {
+      // @ts-ignore
+      setValue(key, formValues[key]);
+    }
     onClose();
   };
 
   return (
     <Drawer
       title="Inspect Alert rule"
-      subtitle={<RuleInspectorSubtitle setActiveTab={setActiveTab} activeTab={activeTab} />}
+      subtitle={
+        <div className={styles.subtitle}>
+          <RuleInspectorSubtitle setActiveTab={setActiveTab} activeTab={activeTab} />
+          <Button type="button" onClick={onApply}>
+            Apply
+          </Button>
+        </div>
+      }
       onClose={onClose}
     >
-      {activeTab === 'yaml' && <InspectorYamlTab onSubmit={onApply} />}
+      {activeTab === 'yaml' && <InspectorYamlTab defaultValue={yaml} onBlur={setYaml} />}
     </Drawer>
   );
 };
@@ -59,39 +75,32 @@ const RuleInspectorSubtitle: FC<SubtitleProps> = ({ activeTab, setActiveTab }) =
 };
 
 interface YamlTabProps {
-  onSubmit: (newModel: RuleFormValues) => void;
+  defaultValue: string;
+  onBlur: (value: string) => void;
 }
 
-const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
+const InspectorYamlTab: FC<YamlTabProps> = ({ defaultValue, onBlur }) => {
   const styles = useStyles2(yamlTabStyle);
-  const { getValues } = useFormContext<RuleFormValues>();
-  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(getValues()));
-
-  const onApply = () => {
-    onSubmit(load(alertRuleAsYaml) as RuleFormValues);
-  };
 
   return (
-    <>
-      <div className={styles.applyButton}>
-        <Button type="button" onClick={onApply}>
-          Apply
-        </Button>
-      </div>
-      <div className={styles.content}>
-        <AutoSizer disableWidth>
-          {({ height }) => (
-            <CodeEditor
-              width="100%"
-              height={height}
-              language="yaml"
-              value={alertRuleAsYaml}
-              onBlur={setAlertRuleAsYaml}
-            />
-          )}
-        </AutoSizer>
-      </div>
-    </>
+    <div className={styles.content}>
+      <AutoSizer disableWidth>
+        {({ height }) => (
+          <CodeEditor
+            width="100%"
+            height={height}
+            language="yaml"
+            value={defaultValue}
+            onBlur={onBlur}
+            monacoOptions={{
+              minimap: {
+                enabled: false,
+              },
+            }}
+          />
+        )}
+      </AutoSizer>
+    </div>
   );
 };
 
@@ -102,8 +111,12 @@ const yamlTabStyle = (theme: GrafanaTheme2) => ({
     padding-bottom: 16px;
     margin-bottom: ${theme.spacing(2)};
   `,
-  applyButton: css`
+});
+
+const drawerStyles = (theme: GrafanaTheme2) => ({
+  subtitle: css`
     display: flex;
-    flex-grow: 0;
+    align-items: center;
+    justify-content: space-between;
   `,
 });
