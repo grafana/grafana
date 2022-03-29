@@ -92,7 +92,7 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.getSubscriptions();
         throw Error('expected getSubscriptions to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch subscriptions');
+        expect(err.message).toEqual('No subscriptions were found');
       }
     });
   });
@@ -161,17 +161,6 @@ describe('AzureMonitor resourcePickerData', () => {
         uri: '/subscriptions/abc-123/resourceGroups/prod',
         children: [],
       });
-    });
-
-    it('throws an error if it does not receive data', async () => {
-      const mockResponse = { data: [] };
-      const { resourcePickerData } = createResourcePickerData([mockResponse]);
-      try {
-        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
-        throw Error('expected getSubscriptions to fail but it succeeded');
-      } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource groups');
-      }
     });
 
     it('throws an error if it recieves data with a malformed uri', async () => {

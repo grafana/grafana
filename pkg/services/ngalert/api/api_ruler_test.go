@@ -4,15 +4,24 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	models2 "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestCalculateChanges(t *testing.T) {
@@ -253,6 +262,266 @@ func TestCalculateChanges(t *testing.T) {
 		_, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, []*models.AlertRule{submitted})
 		require.Error(t, err, expectedErr)
 	})
+}
+
+func TestRouteDeleteAlertRules(t *testing.T) {
+	createService := func(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
+		return &RulerSrv{
+			xactManager:     store,
+			store:           store,
+			DatasourceCache: nil,
+			QuotaService:    nil,
+			scheduleService: scheduler,
+			log:             log.New("test"),
+			cfg:             nil,
+			ac:              ac,
+		}
+	}
+
+	getRecordedCommand := func(ruleStore *store.FakeRuleStore) []store.GenericRecordedQuery {
+		results := ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
+			c, ok := cmd.(store.GenericRecordedQuery)
+			if !ok || c.Name != "DeleteAlertRulesByUID" {
+				return nil, false
+			}
+			return c, ok
+		})
+		var result []store.GenericRecordedQuery
+		for _, cmd := range results {
+			result = append(result, cmd.(store.GenericRecordedQuery))
+		}
+		return result
+	}
+
+	assertRulesDeleted := func(t *testing.T, expectedRules []*models.AlertRule, ruleStore *store.FakeRuleStore, scheduler *schedule.FakeScheduleService) {
+		deleteCommands := getRecordedCommand(ruleStore)
+		require.Len(t, deleteCommands, 1)
+		cmd := deleteCommands[0]
+		actualUIDs := cmd.Params[1].([]string)
+		require.Len(t, actualUIDs, len(expectedRules))
+		for _, rule := range expectedRules {
+			require.Containsf(t, actualUIDs, rule.UID, "Rule %s was expected to be deleted but it wasn't", rule.UID)
+		}
+
+		require.Len(t, scheduler.Calls, len(expectedRules))
+		for _, call := range scheduler.Calls {
+			require.Equal(t, "DeleteAlertRule", call.Method)
+			key, ok := call.Arguments.Get(0).(models.AlertRuleKey)
+			require.Truef(t, ok, "Expected AlertRuleKey but got something else")
+			found := false
+			for _, rule := range expectedRules {
+				if rule.GetKey() == key {
+					found = true
+					break
+				}
+			}
+			require.Truef(t, found, "Key %v was not expected to be submitted to scheduler", key)
+		}
+	}
+
+	t.Run("when fine-grained access is disabled", func(t *testing.T) {
+		t.Run("viewer should not be authorized", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			orgID := rand.Int63()
+			folder := randFolder()
+			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+
+			scheduler := &schedule.FakeScheduleService{}
+			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
+
+			ac := acMock.New().WithDisabled()
+			request := createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
+				":Namespace": folder.Title,
+			})
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
+
+			scheduler.AssertNotCalled(t, "DeleteAlertRule")
+			require.Empty(t, getRecordedCommand(ruleStore))
+		})
+		t.Run("editor should be able to delete all rules in folder", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			orgID := rand.Int63()
+			folder := randFolder()
+			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+			rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+			ruleStore.PutRule(context.Background(), rulesInFolder...)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+
+			scheduler := &schedule.FakeScheduleService{}
+			scheduler.On("DeleteAlertRule", mock.Anything)
+
+			ac := acMock.New().WithDisabled()
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
+				":Namespace": folder.Title,
+			})
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+			assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
+		})
+		t.Run("editor should be able to delete rules in a group in a folder", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			orgID := rand.Int63()
+			groupName := util.GenerateShortUID()
+			folder := randFolder()
+			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+			rulesInFolderInGroup := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+			ruleStore.PutRule(context.Background(), rulesInFolderInGroup...)
+			// rules in different groups but in the same namespace
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+			// rules in the same group but different folder
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withGroup(groupName)))...)
+
+			scheduler := &schedule.FakeScheduleService{}
+			scheduler.On("DeleteAlertRule", mock.Anything)
+
+			ac := acMock.New().WithDisabled()
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
+				":Namespace": folder.Title,
+				":Groupname": groupName,
+			})
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+			assertRulesDeleted(t, rulesInFolderInGroup, ruleStore, scheduler)
+		})
+	})
+	t.Run("when fine-grained access is enabled", func(t *testing.T) {
+		t.Run("and user does not have access to any of data sources used by alert rules", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			orgID := rand.Int63()
+			folder := randFolder()
+			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+
+			scheduler := &schedule.FakeScheduleService{}
+			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
+
+			ac := acMock.New()
+			request := createRequestContext(orgID, "None", map[string]string{
+				":Namespace": folder.Title,
+			})
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
+
+			scheduler.AssertNotCalled(t, "DeleteAlertRule")
+			require.Empty(t, getRecordedCommand(ruleStore))
+		})
+		t.Run("and user has access to all alert rules", func(t *testing.T) {
+			t.Run("should delete all rules", func(t *testing.T) {
+				ruleStore := store.NewFakeRuleStore(t)
+				orgID := rand.Int63()
+				folder := randFolder()
+				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+				rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+				ruleStore.PutRule(context.Background(), rulesInFolder...)
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+
+				scheduler := &schedule.FakeScheduleService{}
+				scheduler.On("DeleteAlertRule", mock.Anything)
+
+				var permissions []*accesscontrol.Permission
+				for _, rule := range rulesInFolder {
+					for _, query := range rule.Data {
+						permissions = append(permissions, &accesscontrol.Permission{
+							Action: datasources.ActionQuery, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID),
+						})
+					}
+				}
+				ac := acMock.New().WithPermissions(permissions)
+				request := createRequestContext(orgID, "None", map[string]string{
+					":Namespace": folder.Title,
+				})
+
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
+			})
+		})
+		t.Run("and user has access to data sources of some of alert rules", func(t *testing.T) {
+			t.Run("should delete only those that are accessible in folder", func(t *testing.T) {
+				ruleStore := store.NewFakeRuleStore(t)
+				orgID := rand.Int63()
+				folder := randFolder()
+				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+				authorizedRulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+				// more rules in the same namespace but user does not have access to them
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+
+				scheduler := &schedule.FakeScheduleService{}
+				scheduler.On("DeleteAlertRule", mock.Anything)
+
+				var permissions []*accesscontrol.Permission
+				for _, rule := range authorizedRulesInFolder {
+					for _, query := range rule.Data {
+						permissions = append(permissions, &accesscontrol.Permission{
+							Action: datasources.ActionQuery, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID),
+						})
+					}
+				}
+				ac := acMock.New().WithPermissions(permissions)
+				request := createRequestContext(orgID, "None", map[string]string{
+					":Namespace": folder.Title,
+				})
+
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore, scheduler)
+			})
+			t.Run("should delete only rules in a group that are authorized", func(t *testing.T) {
+				ruleStore := store.NewFakeRuleStore(t)
+				orgID := rand.Int63()
+				groupName := util.GenerateShortUID()
+				folder := randFolder()
+				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+				authorizedRulesInGroup := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
+				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
+				// more rules in the same group but user is not authorized to access them
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))...)
+				// rules in different groups but in the same namespace
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+				// rules in the same group but different folder
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withGroup(groupName)))...)
+
+				scheduler := &schedule.FakeScheduleService{}
+				scheduler.On("DeleteAlertRule", mock.Anything)
+
+				var permissions []*accesscontrol.Permission
+				for _, rule := range authorizedRulesInGroup {
+					for _, query := range rule.Data {
+						permissions = append(permissions, &accesscontrol.Permission{
+							Action: datasources.ActionQuery, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID),
+						})
+					}
+				}
+				ac := acMock.New().WithPermissions(permissions)
+				request := createRequestContext(orgID, "None", map[string]string{
+					":Namespace": folder.Title,
+					":Groupname": groupName,
+				})
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, authorizedRulesInGroup, ruleStore, scheduler)
+			})
+		})
+	})
+}
+
+func createRequestContext(orgID int64, role models2.RoleType, params map[string]string) *models2.ReqContext {
+	ctx := web.Context{Req: &http.Request{}}
+	ctx.Req = web.SetURLParams(ctx.Req, params)
+
+	return &models2.ReqContext{
+		SignedInUser: &models2.SignedInUser{
+			OrgRole: role,
+			OrgId:   orgID,
+		},
+		Context: &ctx,
+	}
 }
 
 func withOrgID(orgId int64) func(rule *models.AlertRule) {
