@@ -381,7 +381,7 @@ export enum VariableQueryType {
 }
 
 export interface VariableQuery extends DataQuery {
-  queryType: string;
+  queryType: VariableQueryType;
   namespace: string;
   region: string;
   metricName: string;

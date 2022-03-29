@@ -87,6 +87,10 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     resourceType: '',
     tags: '',
   };
+  if (rawQuery === '') {
+    return newQuery;
+  }
+
   if (rawQuery.match(/^regions\(\)/)) {
     return newQuery;
   }
@@ -153,5 +157,5 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.Statistics;
     return newQuery;
   }
-  return newQuery;
+  throw new Error('unable to parse old variable query');
 }
