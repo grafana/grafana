@@ -240,9 +240,9 @@ describe('RuleEditor', () => {
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, 'Folder A', {
+    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, 'default', {
       interval: '1m',
-      name: 'my great new rule',
+      name: 'Folder A',
       rules: [
         {
           annotations: { description: 'some description', summary: 'some summary' },
@@ -350,6 +350,7 @@ describe('RuleEditor', () => {
 
   it('can edit grafana managed rule', async () => {
     const uid = 'FOOBAR123';
+    const namespace = 'namespace';
     const folder = {
       title: 'Folder A',
       uid: 'abcd',
@@ -376,10 +377,10 @@ describe('RuleEditor', () => {
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.api.fetchRulerRules.mockResolvedValue({
-      [folder.title]: [
+      [namespace]: [
         {
           interval: '1m',
-          name: 'my great new rule',
+          name: folder.title,
           rules: [
             {
               annotations: { description: 'some description', summary: 'some summary' },
@@ -387,8 +388,8 @@ describe('RuleEditor', () => {
               for: '5m',
               grafana_alert: {
                 uid,
-                namespace_uid: 'abcd',
-                rule_group: '123',
+                namespace_uid: namespace,
+                rule_group: folder.uid,
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Alerting,
@@ -425,9 +426,9 @@ describe('RuleEditor', () => {
     userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, 'Folder A', {
+    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, namespace, {
       interval: '1m',
-      name: 'my great new rule',
+      name: folder.title,
       rules: [
         {
           annotations: { description: 'some description', summary: 'some summary', custom: 'value' },

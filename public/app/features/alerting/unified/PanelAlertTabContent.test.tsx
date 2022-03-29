@@ -283,7 +283,7 @@ describe('PanelAlertTabContent', () => {
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults).toEqual({
       type: 'grafana',
-      folder: { id: 1, title: 'super folder' },
+      folder: { id: '1', title: 'super folder' },
       queries: [
         {
           refId: 'A',

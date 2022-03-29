@@ -182,10 +182,10 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(5);
 
     expect(groups[0]).toHaveTextContent('foofolder');
-    expect(groups[1]).toHaveTextContent('default > group-1');
-    expect(groups[2]).toHaveTextContent('default > group-1');
-    expect(groups[3]).toHaveTextContent('default > group-2');
-    expect(groups[4]).toHaveTextContent('lokins > group-1');
+    expect(groups[1]).toHaveTextContent('defaultgroup-1');
+    expect(groups[2]).toHaveTextContent('defaultgroup-1');
+    expect(groups[3]).toHaveTextContent('defaultgroup-2');
+    expect(groups[4]).toHaveTextContent('lokinsgroup-1');
 
     const errors = await ui.cloudRulesSourceErrors.find();
 
