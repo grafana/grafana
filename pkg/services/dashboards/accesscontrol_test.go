@@ -106,6 +106,21 @@ func TestNewIDScopeResolver(t *testing.T) {
 		_, err := resolver(context.Background(), rand.Int63(), "folders:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
+
+	t.Run("resolver should convert id 0 to general uid scope", func(t *testing.T) {
+		var (
+			dashboardStore = &FakeDashboardStore{}
+			orgId          = rand.Int63()
+			scope          = "folders:id:0"
+			_, resolver    = NewIDScopeResolver(dashboardStore)
+		)
+
+		resolvedScope, err := resolver(context.Background(), orgId, scope)
+		require.NoError(t, err)
+
+		require.Equal(t, "folders:uid:general", resolvedScope)
+	})
+
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 		_, resolver := NewIDScopeResolver(dashboardStore)
