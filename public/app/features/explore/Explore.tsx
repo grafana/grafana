@@ -339,6 +339,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
+    const ranQueryExists =
+      queryResponse.state === LoadingState.Done &&
+      (queryResponse?.request?.targets.some((target) => (target as any).query && (target as any).query !== '') ||
+        queryResponse?.request?.targets.some((target) => (target as any).expr && (target as any).expr !== ''));
+    const showNoData =
+      datasourceInstance && ranQueryExists && !graphResult && !showTable && !showLogs && !showMetrics && !showTrace;
 
     return (
       <CustomScrollbar
@@ -387,9 +393,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                          {!graphResult && !showTable && !showLogs && (
-                            <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>
-                          )}
+                          {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>
                       )}
                       {showRichHistory && (
