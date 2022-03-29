@@ -11,7 +11,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
       LokiVisualQueryOperationCategory.Aggregations,
       LokiVisualQueryOperationCategory.RangeFunctions,
       LokiVisualQueryOperationCategory.Formats,
-      //LokiVisualQueryOperationCategory.Functions,
+      LokiVisualQueryOperationCategory.BinaryOps,
       LokiVisualQueryOperationCategory.LabelFilters,
       LokiVisualQueryOperationCategory.LineFilters,
     ]);
@@ -25,13 +25,31 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
     return super.renderLabels(labels);
   }
 
-  renderQuery(query: LokiVisualQuery) {
+  renderQuery(query: LokiVisualQuery, nested?: boolean) {
     let queryString = `${this.renderLabels(query.labels)}`;
     queryString = this.renderOperations(queryString, query.operations);
+
+    if (!nested && this.hasBinaryOp(query) && Boolean(query.binaryQueries?.length)) {
+      queryString = `(${queryString})`;
+    }
+
     queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
+
+    if (nested && (this.hasBinaryOp(query) || Boolean(query.binaryQueries?.length))) {
+      queryString = `(${queryString})`;
+    }
+
     return queryString;
   }
 
+  hasBinaryOp(query: LokiVisualQuery): boolean {
+    return (
+      query.operations.find((op) => {
+        const def = this.getOperationDef(op.id);
+        return def?.category === LokiVisualQueryOperationCategory.BinaryOps;
+      }) !== undefined
+    );
+  }
   getQueryPatterns(): LokiQueryPattern[] {
     return [
       {

@@ -26,6 +26,7 @@ export enum LokiVisualQueryOperationCategory {
   Formats = 'Formats',
   LineFilters = 'Line filters',
   LabelFilters = 'Label filters',
+  BinaryOps = 'Binary operations',
 }
 
 export enum LokiOperationId {
@@ -48,6 +49,20 @@ export enum LokiOperationId {
   LabelFilter = '__label_filter',
   LabelFilterNoErrors = '__label_filter_no_errors',
   Unwrap = 'unwrap',
+  // Binary ops
+  Addition = '__addition',
+  Subtraction = '__subtraction',
+  MultiplyBy = '__multiply_by',
+  DivideBy = '__divide_by',
+  Modulo = '__modulo',
+  Exponent = '__exponent',
+  NestedQuery = '__nested_query',
+  EqualTo = '__equal_to',
+  NotEqualTo = '__not_equal_to',
+  GreaterThan = '__greater_than',
+  LessThan = '__less_than',
+  GreaterOrEqual = '__greater_or_equal',
+  LessOrEqual = '__less_or_equal',
 }
 
 export enum LokiOperationOrder {
