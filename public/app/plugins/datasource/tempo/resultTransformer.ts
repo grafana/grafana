@@ -528,7 +528,6 @@ function getOTLPReferences(
     }
     links.push(link);
   }
-  console.log({ links });
   return links;
 }
 
