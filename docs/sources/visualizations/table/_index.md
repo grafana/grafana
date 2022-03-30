@@ -108,4 +108,4 @@ You can temporarily change how column data is displayed. For example, you can or
 
 ## Pagination
 
-Change the enable pagination option to enable or disable pagination. This is a front-end option and does not affect the backend data. The page size is automatically adjusted to the height of table.
+Change the enable pagination option to turn pagination on or off. This is a front-end option and does not affect the queries. The page size is automatically adjusted to the height of the table.
