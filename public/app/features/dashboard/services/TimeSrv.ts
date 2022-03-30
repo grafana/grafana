@@ -390,6 +390,7 @@ export class TimeSrv {
     }
   };
 
+  //
   // this was taken from https://stackoverflow.com/a/67351415 and modified accordingly.
   // it is needed to avoid overflow on auto refresh timer, for more than ~24 days,
   // due to the max delay value mentioned here:
