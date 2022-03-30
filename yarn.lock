@@ -10536,7 +10536,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.10":
+"@types/react-table@npm:7.7.10, @types/react-table@npm:^7":
   version: 7.7.10
   resolution: "@types/react-table@npm:7.7.10"
   dependencies:
@@ -20502,6 +20502,7 @@ __metadata:
     "@types/react-loadable": 5.5.6
     "@types/react-redux": 7.1.23
     "@types/react-router-dom": 5.3.3
+    "@types/react-table": ^7
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.4
     "@types/react-virtualized-auto-sizer": 1.0.1
@@ -20650,6 +20651,7 @@ __metadata:
     react-select: 5.2.2
     react-select-event: ^5.1.0
     react-split-pane: 0.1.92
+    react-table: ^7.7.0
     react-test-renderer: 17.0.2
     react-transition-group: 4.4.2
     react-use: 17.3.2
@@ -31187,7 +31189,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-table@npm:7.7.0":
+"react-table@npm:7.7.0, react-table@npm:^7.7.0":
   version: 7.7.0
   resolution: "react-table@npm:7.7.0"
   peerDependencies:

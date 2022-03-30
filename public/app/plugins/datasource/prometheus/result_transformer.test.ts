@@ -246,10 +246,10 @@ describe('Prometheus Result Transformer', () => {
       } as unknown as DataQueryResponse;
 
       const series = transformV2(response, options, {});
-      expect(series.data[0].fields.length).toEqual(2);
+      expect(series.data[0].fields.length).toEqual(4);
       expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
-      expect(series.data[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
-      expect(series.data[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
     });
   });
   describe('transformDFToTable', () => {
@@ -513,10 +513,8 @@ describe('Prometheus Result Transformer', () => {
         const result = transform({ data: response } as any, { query: options, target: options } as any);
         expect(result[0].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
         expect(result[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
-        expect(result[1].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
-        expect(result[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
-        expect(result[2].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
-        expect(result[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+        expect(result[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
+        expect(result[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
       });
 
       it('should handle missing datapoints', () => {
@@ -546,8 +544,8 @@ describe('Prometheus Result Transformer', () => {
         ]);
         const result = transform({ data: response } as any, { query: options, target: options } as any);
         expect(result[0].fields[1].values.toArray()).toEqual([1, 2]);
-        expect(result[1].fields[1].values.toArray()).toEqual([1, 3, 1]);
-        expect(result[2].fields[1].values.toArray()).toEqual([1, 2]);
+        expect(result[0].fields[2].values.toArray()).toEqual([1, 3, 1]);
+        expect(result[0].fields[3].values.toArray()).toEqual([1, 2]);
       });
     });
 

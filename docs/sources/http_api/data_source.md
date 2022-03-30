@@ -604,13 +604,106 @@ Content-Type: application/json
 
 Proxies all calls to the actual data source.
 
-## Query a data source by ID
+## Query a data source
 
-Queries a data source having backend implementation.
+Queries a data source having a backend implementation.
+
+`POST /api/ds/query`
+
+> **Note:** Grafana's built-in data sources usually have a backend implementation.
+
+**Example request for the Test data source**:
+
+```http
+POST /api/ds/query HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+   "queries":[
+      {
+         "refId":"A",
+         "scenarioId":"csv_metric_values",
+         "datasource":{
+            "uid":"PD8C576611E62080A"
+         },
+         "format": "table"
+         "maxDataPoints":1848,
+         "intervalMs":200,
+         "stringInput":"1,20,90,30,5,0",
+      }
+   ],
+   "from":"now-5m",
+   "to":"now"
+}
+```
+
+JSON Body schema:
+
+- **from/to** – Specifies the time range for the queries. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
+- **queries** – Specifies one or more queries. Must contain at least 1.
+- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each query in the request must have a unique `datasource`.
+- **queries.refId** – Specifies an identifier of the query. Defaults to "A".
+- **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
+- **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Defaults to 100.
+- **queries.intervalMs** - Specifies the time series time interval in milliseconds. Defaults to 1000.
+
+In addition, specific properties of each data source should be added in a request (for example **queries.stringInput** as shown in the request above). To better understand how to form a query for a certain data source, use the Developer Tools in your browser of choice and inspect the HTTP requests being made to `/api/ds/query`.
+
+**Example Test data source time series query response:**
+
+```json
+{
+  "results": {
+    "A": {
+      "frames": [
+        {
+          "schema": {
+            "refId": "A",
+            "fields": [
+              {
+                "name": "time",
+                "type": "time",
+                "typeInfo": {
+                  "frame": "time.Time"
+                }
+              },
+              {
+                "name": "A-series",
+                "type": "number",
+                "typeInfo": {
+                  "frame": "int64",
+                  "nullable": true
+                }
+              }
+            ]
+          },
+          "data": {
+            "values": [
+              [1644488152084, 1644488212084, 1644488272084, 1644488332084, 1644488392084, 1644488452084],
+              [1, 20, 90, 30, 5, 0]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## Deprecated resources
+
+The following resources have been deprecated. They will be removed in a future release.
+
+### Query a data source by ID
+
+> **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
+
+Queries a data source having a backend implementation.
 
 `POST /api/tsdb/query`
 
-> **Note:** Most of Grafana's builtin data sources have backend implementation.
+> **Note:** Grafana's built-in data sources usually have a backend implementation.
 
 **Example Request**:
 
@@ -635,17 +728,16 @@ Content-Type: application/json
 }
 ```
 
-> **Note:** The `from`, `to`, and `queries` properties are required.
-
 JSON Body schema:
 
-- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-1h`.
-- **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
-- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have an unique `datasourceId`.
-- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
-- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+- **from/to** – Specifies the time range for the queries. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
+- **queries.refId** – Specifies an identifier of the query. Defaults to "A".
+- **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
+- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have a unique `datasourceId`.
+- **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Defaults to 100.
+- **queries.intervalMs** - Specifies the time series time interval in milliseconds. Defaults to 1000.
 
-In addition, each data source has its own specific properties that should be added in a request.
+In addition, specific properties of each data source should be added in a request. To better understand how to form a query for a certain data source, use the Developer Tools in your browser of choice and inspect the HTTP requests being made to `/api/tsdb/query`.
 
 **Example request for the MySQL data source:**
 
