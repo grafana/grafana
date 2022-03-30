@@ -216,7 +216,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged) {
+    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {

@@ -36,8 +36,6 @@ type UpsertRule struct {
 // Store is the interface for persisting alert rules and instances
 type RuleStore interface {
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
-	DeleteNamespaceAlertRules(ctx context.Context, orgID int64, namespaceUID string) ([]string, error)
-	DeleteRuleGroupAlertRules(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) ([]string, error)
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
@@ -86,76 +84,6 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 		logger.Debug("deleted alert instances", "count", rows)
 		return nil
 	})
-}
-
-// DeleteNamespaceAlertRules is a handler for deleting namespace alert rules. A list of deleted rule UIDs are returned.
-func (st DBstore) DeleteNamespaceAlertRules(ctx context.Context, orgID int64, namespaceUID string) ([]string, error) {
-	ruleUIDs := []string{}
-
-	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if err := sess.SQL("SELECT uid FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID).Find(&ruleUIDs); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_namespace_uid = ?", orgID, namespaceUID); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
-			SELECT uid FROM alert_rule where org_id = ?
-		)`, orgID, orgID); err != nil {
-			return err
-		}
-
-		return nil
-	})
-	return ruleUIDs, err
-}
-
-// DeleteRuleGroupAlertRules is a handler for deleting rule group alert rules. A list of deleted rule UIDs are returned.
-func (st DBstore) DeleteRuleGroupAlertRules(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) ([]string, error) {
-	ruleUIDs := []string{}
-
-	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if err := sess.SQL("SELECT uid FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?",
-			orgID, namespaceUID, ruleGroup).Find(&ruleUIDs); err != nil {
-			return err
-		}
-		exist, err := sess.Exist(&ngmodels.AlertRule{OrgID: orgID, NamespaceUID: namespaceUID, RuleGroup: ruleGroup})
-		if err != nil {
-			return err
-		}
-
-		if !exist {
-			return ngmodels.ErrRuleGroupNamespaceNotFound
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?", orgID, namespaceUID, ruleGroup); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_namespace_uid = ? and rule_group = ?", orgID, namespaceUID, ruleGroup); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
-			SELECT uid FROM alert_rule where org_id = ?
-		)`, orgID, orgID); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return ruleUIDs, err
 }
 
 // DeleteAlertInstanceByRuleUID is a handler for deleting alert instances by alert rule UID when a rule has been updated

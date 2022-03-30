@@ -57,7 +57,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       }
       const resourceResponse = await this.makeResourceGraphRequest<RawAzureSubscriptionItem[]>(query, 1, options);
       if (!resourceResponse.data.length) {
-        throw new Error('unable to fetch subscriptions');
+        throw new Error('No subscriptions were found');
       }
       resources = resources.concat(resourceResponse.data);
       $skipToken = resourceResponse.$skipToken;
@@ -100,9 +100,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         };
       }
       const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, options);
-      if (!resourceResponse.data.length) {
-        throw new Error('unable to fetch resource groups');
-      }
       resourceGroups = resourceGroups.concat(resourceResponse.data);
       $skipToken = resourceResponse.$skipToken;
       allFetched = !$skipToken;
@@ -150,7 +147,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
   // used to make the select resource button that launches the resource picker show a nicer file path to users
   async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
-    const { subscriptionID, resourceGroup } = parseResourceURI(resourceURI) ?? {};
+    const { subscriptionID, resourceGroup, resource } = parseResourceURI(resourceURI) ?? {};
 
     if (!subscriptionID) {
       throw new Error('Invalid resource URI passed');
@@ -189,7 +186,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       throw new Error('unable to fetch resource details');
     }
 
-    return response[0];
+    const { subscriptionName, resourceGroupName, resourceName } = response[0];
+    // if the name is undefined it could be because the id is undefined or because we are using a template variable.
+    // Either way we can use it as a fallback. We don't really want to interpolate these variables because we want
+    // to show the user when they are using template variables `$sub/$rg/$resource`
+    return {
+      subscriptionName: subscriptionName || subscriptionID,
+      resourceGroupName: resourceGroupName || resourceGroup,
+      resourceName: resourceName || resource,
+    };
   }
 
   async getResourceURIFromWorkspace(workspace: string) {
