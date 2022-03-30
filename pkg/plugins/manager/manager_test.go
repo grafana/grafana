@@ -599,8 +599,6 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 }
 
 type fakePluginInstaller struct {
-	plugins.Installer
-
 	installCount   int
 	uninstallCount int
 }
@@ -624,20 +622,12 @@ type fakeLoader struct {
 	mockedFactoryLoadedPlugin *plugins.Plugin
 
 	loadedPaths []string
-
-	plugins.Loader
 }
 
 func (l *fakeLoader) Load(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
 	l.loadedPaths = append(l.loadedPaths, paths...)
 
 	return l.mockedLoadedPlugins, nil
-}
-
-func (l *fakeLoader) LoadWithFactory(_ context.Context, _ plugins.Class, path string, _ backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	l.loadedPaths = append(l.loadedPaths, path)
-
-	return l.mockedFactoryLoadedPlugin, nil
 }
 
 type fakePluginClient struct {

@@ -26,9 +26,9 @@ var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg             *plugins.Cfg
-	pluginRegistry  plugins.PrivateRegistry
-	pluginInstaller plugins.Installer
-	pluginLoader    plugins.Loader
+	pluginRegistry  PluginRegistry
+	pluginInstaller pluginInstaller
+	pluginLoader    PluginLoader
 	pluginsMu       sync.RWMutex
 	pluginSources   []PluginSource
 	log             log.Logger
@@ -39,7 +39,7 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry plugins.PrivateRegistry, pluginLoader plugins.Loader) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry PluginRegistry, pluginLoader PluginLoader) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
@@ -51,14 +51,14 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry plugins.PrivateRegis
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry plugins.PrivateRegistry, pluginSources []PluginSource, pluginLoader plugins.Loader) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []PluginSource, pluginLoader PluginLoader) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
 		log:             log.New("plugin.manager"),
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
+		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.pluginInstaller", true)),
 	}
 }
 

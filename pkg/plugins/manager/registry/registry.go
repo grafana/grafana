@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ plugins.PrivateRegistry = (*PluginRegistry)(nil)
-
 type PluginRegistry struct {
 	cfg   *plugins.Cfg
 	store map[string]*plugins.Plugin
@@ -19,7 +17,7 @@ type PluginRegistry struct {
 	log   log.Logger
 }
 
-func ProvidePluginRegistry(grafanaCfg *setting.Cfg) *PluginRegistry {
+func ProvideService(grafanaCfg *setting.Cfg) *PluginRegistry {
 	return NewPluginRegistry(plugins.FromGrafanaCfg(grafanaCfg))
 }
 
