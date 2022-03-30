@@ -3,7 +3,6 @@ import {
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
-  KBarProvider,
   KBarResults,
   KBarSearch,
   useMatches,
@@ -25,18 +24,18 @@ import { css } from '@emotion/css';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
 
-  const [actions, setActions] = useState<Action[]>(getGlobalActions());
-  //const [actions, setActions] = useState<Action[]>([]);
+  //const [actions, setActions] = useState<Action[]>(getGlobalActions());
+  const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
 
   useEffect(() => {
     const addDashboardActions = async () => {
-      //const staticActions = getGlobalActions();
+      const staticActions = getGlobalActions();
       const dashAct = await getDashboardNavActions();
       console.log('add dashboard actions', query);
-      //setActions([...staticActions, dashAct]);
-      setActions([...actions, ...dashAct]);
-      return dashAct;
+      setActions([...staticActions, ...dashAct]);
+      //setActions([...actions, ...dashAct]);
+      //return dashAct;
     };
     addDashboardActions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,7 +44,7 @@ export const CommandPalette = () => {
   useRegisterActions(!query ? [] : actions, [actions, query]);
 
   return (
-    <KBarProvider actions={actions} options={{ enableHistory: true }}>
+    <>
       <div className={styles.backdrop} />
       <KBarPortal>
         <KBarPositioner className={styles.positioner}>
@@ -55,7 +54,7 @@ export const CommandPalette = () => {
           </KBarAnimator>
         </KBarPositioner>
       </KBarPortal>
-    </KBarProvider>
+    </>
   );
 };
 
