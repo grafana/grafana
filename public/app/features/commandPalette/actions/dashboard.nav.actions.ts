@@ -4,7 +4,7 @@ async function getDashboardNav(): Promise<Action[]> {
   const data: Array<{ type: string; title: string; url: string }> = await getBackendSrv().get('/api/search');
 
   const parentAction: Action = {
-    id: 'dashboards/go-to',
+    id: 'go/dashboard',
     name: 'Go to dashboard',
   };
 
@@ -12,7 +12,7 @@ async function getDashboardNav(): Promise<Action[]> {
     .filter((item) => item.type === 'dash-db')
     .map((item) => ({
       parent: parentAction.id,
-      id: `dashboard/go-to/${item.url}`,
+      id: `go/dashboard/${item.url}`,
       name: `Go to dashboard ${item.title}`,
       perform: () => {
         locationService.push(item.url);
