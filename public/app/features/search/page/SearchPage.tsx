@@ -67,7 +67,7 @@ export default function SearchPage() {
               {({ width }) => {
                 return (
                   <>
-                    <Table data={results.value!.body} width={width} />
+                    <Table data={results.value!.body} width={width} tags={query.tag} onTagFilterChange={onTagChange} />
                   </>
                 );
               }}

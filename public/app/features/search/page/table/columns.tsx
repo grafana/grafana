@@ -12,7 +12,9 @@ export const generateColumns = (
   data: DataFrameView<FieldAccess>,
   isDashboardList: boolean,
   availableWidth: number,
-  styles: { [key: string]: string }
+  styles: { [key: string]: string },
+  tags: string[],
+  onTagFilterChange: (tags: string[]) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const urlField = data.fields.url!;
@@ -143,7 +145,7 @@ export const generateColumns = (
   // Show tags if we have any
   if (access.tags && hasFieldValue(access.tags)) {
     width = Math.max(availableWidth, 250);
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList));
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
   }
 
   return columns;
@@ -260,7 +262,19 @@ function makeTypeColumn(
   };
 }
 
-function makeTagsColumn(field: Field<string[]>, width: number, tagListClass: string): TableColumn {
+function makeTagsColumn(
+  field: Field<string[]>,
+  width: number,
+  tagListClass: string,
+  currentTagFilter: string[],
+  onTagFilterChange: (tags: string[]) => void
+): TableColumn {
+  const updateTagFilter = (tag: string) => {
+    if (!currentTagFilter.includes(tag)) {
+      onTagFilterChange([...currentTagFilter, tag]);
+    }
+  };
+
   return {
     Cell: DefaultCell,
     id: `column-tags`,
@@ -269,7 +283,7 @@ function makeTagsColumn(field: Field<string[]>, width: number, tagListClass: str
     accessor: (row: any, i: number) => {
       const tags = field.values.get(i);
       if (tags) {
-        return <TagList className={tagListClass} tags={tags} onClick={(v) => alert('CLICKED TAG: ' + v)} />;
+        return <TagList className={tagListClass} tags={tags} onClick={updateTagFilter} />;
       }
       return null;
     },
