@@ -42,4 +42,20 @@ export default class UrlBuilder {
       `&metricnamespace=${encodeURIComponent(metricNamespace)}`
     );
   }
+
+  static newBuildAzureMonitorGetMetricNamespacesUrl(baseUrl: string, resourceUri: string, apiVersion: string) {
+    return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}`;
+  }
+
+  static newBuildAzureMonitorGetMetricNamesUrl(
+    baseUrl: string,
+    resourceUri: string,
+    metricNamespace: string,
+    apiVersion: string
+  ) {
+    return (
+      `${baseUrl}${resourceUri}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}` +
+      `&metricnamespace=${encodeURIComponent(metricNamespace)}`
+    );
+  }
 }

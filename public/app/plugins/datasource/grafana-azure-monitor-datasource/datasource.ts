@@ -233,6 +233,13 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     );
   }
 
+  newGetMetricNames(resourceUri: string, metricNamespace: string) {
+    return this.azureMonitorDatasource.newGetMetricNames(
+      this.replaceTemplateVariable(resourceUri),
+      this.replaceTemplateVariable(metricNamespace)
+    );
+  }
+
   getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
     return this.azureMonitorDatasource.getMetricNamespaces(
       this.replaceTemplateVariable(subscriptionId),
@@ -240,6 +247,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.replaceTemplateVariable(metricDefinition),
       this.replaceTemplateVariable(resourceName)
     );
+  }
+
+  newGetMetricNamespaces(resourceUri: string) {
+    return this.azureMonitorDatasource.newGetMetricNamespaces(this.replaceTemplateVariable(resourceUri));
   }
 
   getMetricMetadata(
@@ -255,6 +266,14 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.replaceTemplateVariable(resourceGroup),
       this.replaceTemplateVariable(metricDefinition),
       this.replaceTemplateVariable(resourceName),
+      this.replaceTemplateVariable(metricNamespace),
+      this.replaceTemplateVariable(metricName)
+    );
+  }
+
+  newGetMetricMetadata(resourceUri: string, metricNamespace: string, metricName: string) {
+    return this.azureMonitorDatasource.newGetMetricMetadata(
+      this.replaceTemplateVariable(resourceUri),
       this.replaceTemplateVariable(metricNamespace),
       this.replaceTemplateVariable(metricName)
     );
