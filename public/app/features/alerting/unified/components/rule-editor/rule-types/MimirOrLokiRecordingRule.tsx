@@ -3,30 +3,26 @@ import { RuleType, SharedProps } from './RuleType';
 import { DisabledTooltip } from './DisabledTooltip';
 import { RuleFormType } from '../../../types/rule-form';
 
-interface Props extends SharedProps {
-  onClick: (value: RuleFormType) => void;
-}
-
-const CortexFlavoredType: FC<Props> = ({ selected = false, disabled = false, onClick }) => {
+const RecordingRuleType: FC<SharedProps> = ({ selected = false, disabled = false, onClick }) => {
   return (
     <DisabledTooltip visible={disabled}>
       <RuleType
-        name="Cortex or Loki alert"
+        name="Mimir or Loki recording rule"
         description={
           <span>
-            Use a Cortex or Loki datasource.
+            Precompute expressions.
             <br />
-            Expressions are not supported.
+            Should be combined with an alert rule.
           </span>
         }
-        image="/public/img/alerting/cortex_logo.svg"
+        image="/public/img/alerting/mimir_logo_recording.svg"
         selected={selected}
         disabled={disabled}
-        value={RuleFormType.cloudAlerting}
+        value={RuleFormType.cloudRecording}
         onClick={onClick}
       />
     </DisabledTooltip>
   );
 };
 
-export { CortexFlavoredType };
+export { RecordingRuleType };
