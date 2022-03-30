@@ -27,7 +27,9 @@ const createDashboard = (
 const addPanelToDashboard = async (uid: string, queries: DataQuery[], datasource: DataSourceRef, panel: string) => {
   const dashboardData = await backendSrv.getDashboardByUid(uid);
 
-  const dashboard = new DashboardModel(dashboardData.dashboard, dashboardData.meta);
+  const dashboard = new DashboardModel(dashboardData.dashboard, dashboardData.meta, () => {
+    return dashboardData.dashboard.templating.list;
+  });
 
   dashboard.addPanel({ targets: queries, type: panel, title: 'New Panel', datasource });
 

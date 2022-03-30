@@ -1,6 +1,7 @@
 import { DashboardAcl } from './acl';
 import { DataQuery } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { VariableModel } from 'app/features/variables/types';
 
 export interface DashboardDTO {
   redirectUri?: string;
@@ -40,6 +41,9 @@ export interface DashboardMeta {
 export interface DashboardDataDTO {
   title: string;
   uid: string;
+  templating: {
+    list: VariableModel[];
+  };
 }
 
 export enum DashboardRoutes {
