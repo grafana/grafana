@@ -569,6 +569,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -670,6 +672,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -702,6 +706,31 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    --depth=1
+  - cd grafana-enterprise
+  - git fetch origin "refs/tags/*:refs/tags/*"
+  - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
+    && git push origin $${TEST_TAG}
+  - cd -
+  - git fetch origin "refs/tags/*:refs/tags/*"
+  - git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git
+  - git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} &&
+    git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet
+  environment:
+    DOWNSTREAM_REPO:
+      from_secret: downstream
+    GITHUB_TOKEN:
+      from_secret: github_token
+    TEST_TAG: v0.0.0-test
+  failure: ignore
+  image: grafana/build-container:1.5.3
+  name: trigger-test-release
+  when:
+    paths:
+      include:
+      - .drone.yml
 - image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
@@ -1027,6 +1056,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1109,6 +1140,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1172,6 +1205,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1256,6 +1291,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1288,6 +1325,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
   status:
   - failure
 type: docker
@@ -3308,6 +3347,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3408,6 +3449,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3493,6 +3536,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3549,6 +3594,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3880,6 +3927,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4023,6 +4072,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4155,6 +4206,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4235,6 +4288,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4386,6 +4441,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a14708e4946492b73da169e1d7719ced3508da27df8d1ecd1e3caf0985daad58
+hmac: b5191e597c2ea7a1152ab18ca2c4aece939024ceb8fd5c76581c087a64ae6ad3
 
 ...

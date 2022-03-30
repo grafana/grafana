@@ -41,6 +41,8 @@ export enum LokiOperationId {
   Avg = 'avg',
   Min = 'min',
   Max = 'max',
+  TopK = 'topk',
+  BottomK = 'bottomk',
   LineContains = '__line_contains',
   LineContainsNot = '__line_contains_not',
   LineMatchesRegex = '__line_matches_regex',
@@ -48,6 +50,16 @@ export enum LokiOperationId {
   LabelFilter = '__label_filter',
   LabelFilterNoErrors = '__label_filter_no_errors',
   Unwrap = 'unwrap',
+}
+
+export enum LokiOperationOrder {
+  LineFilters = 1,
+  LineFormats = 2,
+  LabelFilters = 3,
+  Unwrap = 4,
+  NoErrors = 5,
+  RangeVectorFunction = 5,
+  Last = 6,
 }
 
 export function getDefaultEmptyQuery(): LokiVisualQuery {

@@ -837,5 +837,3 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
-
-export default LokiDatasource;

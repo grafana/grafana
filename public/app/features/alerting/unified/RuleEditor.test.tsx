@@ -132,6 +132,7 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalled());
 
     userEvent.type(await ui.inputs.name.find(), 'my great new rule');
     userEvent.click(await ui.buttons.lotexAlert.get());

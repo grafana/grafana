@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/go-openapi/loads"
@@ -81,23 +82,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		permissions func(c *changes) map[string][]string
 	}{
 		{
-			name: "if there are rules to delete it should check delete action and access to data sources",
-			changes: func() *changes {
-				return &changes{
-					New:    nil,
-					Update: nil,
-					Delete: models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace))),
-				}
-			},
-			permissions: func(c *changes) map[string][]string {
-				return map[string][]string{
-					ac.ActionAlertingRuleDelete: {
-						namespaceIdScope,
-					},
-				}
-			},
-		},
-		{
 			name: "if there are rules to add it should check create action and query for datasource",
 			changes: func() *changes {
 				return &changes{
@@ -110,7 +94,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				var scopes []string
 				for _, rule := range c.New {
 					for _, query := range rule.Data {
-						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 					}
 				}
 				return map[string][]string{
@@ -145,7 +129,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				var scopes []string
 				for _, update := range c.Update {
 					for _, query := range update.New.Data {
-						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 					}
 				}
 
@@ -183,7 +167,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				var scopes []string
 				for _, update := range c.Update {
 					for _, query := range update.New.Data {
-						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 					}
 				}
 				return map[string][]string{
@@ -205,19 +189,20 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 			groupChanges := testCase.changes()
 
-			err := authorizeRuleChanges(folder, groupChanges, func(evaluator ac.Evaluator) bool {
+			result, err := authorizeRuleChanges(folder, groupChanges, func(evaluator ac.Evaluator) bool {
 				response, err := evaluator.Evaluate(make(map[string][]string))
 				require.False(t, response)
 				require.NoError(t, err)
 				executed = true
 				return false
 			})
+			require.Nil(t, result)
 			require.Error(t, err)
 			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
 
 			permissions := testCase.permissions(groupChanges)
 			executed = false
-			err = authorizeRuleChanges(folder, groupChanges, func(evaluator ac.Evaluator) bool {
+			result, err = authorizeRuleChanges(folder, groupChanges, func(evaluator ac.Evaluator) bool {
 				response, err := evaluator.Evaluate(permissions)
 				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", testCase.permissions, evaluator.GoString())
 				require.NoError(t, err)
@@ -225,42 +210,214 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				return true
 			})
 			require.NoError(t, err)
+			require.Equal(t, groupChanges, result)
 			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
 		})
 	}
 }
 
-func TestGetEvaluatorForAlertRule(t *testing.T) {
-	t.Run("should not consider expressions", func(t *testing.T) {
-		rule := models.AlertRuleGen()()
+func TestAuthorizeRuleDelete(t *testing.T) {
+	folder := randFolder()
+	namespace := randNamespace()
+	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(folder.Id, 10))
 
-		expressionByType := models.GenerateAlertQuery()
-		expressionByType.QueryType = expr.DatasourceType
-		expressionByUID := models.GenerateAlertQuery()
-		expressionByUID.DatasourceUID = expr.OldDatasourceUID
-
-		var data []models.AlertQuery
+	getScopes := func(rules []*models.AlertRule) []string {
 		var scopes []string
-		for i := 0; i < rand.Intn(3)+2; i++ {
-			q := models.GenerateAlertQuery()
-			scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.DatasourceUID))
-			data = append(data, q)
+		for _, rule := range rules {
+			for _, query := range rule.Data {
+				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+			}
+		}
+		return scopes
+	}
+
+	testCases := []struct {
+		name        string
+		changes     func() *changes
+		permissions func(c *changes) map[string][]string
+		assert      func(t *testing.T, orig, authz *changes, err error)
+	}{
+		{
+			name: "should validate check access to data source and folder",
+			changes: func() *changes {
+				return &changes{
+					New:    nil,
+					Update: nil,
+					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+				}
+			},
+			permissions: func(c *changes) map[string][]string {
+				return map[string][]string{
+					ac.ActionAlertingRuleDelete: {
+						namespaceIdScope,
+					},
+					datasources.ActionQuery: getScopes(c.Delete),
+				}
+			},
+			assert: func(t *testing.T, orig, authz *changes, err error) {
+				require.NoError(t, err)
+				require.Equal(t, orig, authz)
+			},
+		},
+		{
+			name: "should remove rules user does not have access to data source",
+			changes: func() *changes {
+				return &changes{
+					New:    nil,
+					Update: nil,
+					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+				}
+			},
+			permissions: func(c *changes) map[string][]string {
+				return map[string][]string{
+					ac.ActionAlertingRuleDelete: {
+						namespaceIdScope,
+					},
+					datasources.ActionQuery: {
+						getScopes(c.Delete[:1])[0],
+					},
+				}
+			},
+			assert: func(t *testing.T, orig, authz *changes, err error) {
+				require.NoError(t, err)
+				require.Greater(t, len(orig.Delete), len(authz.Delete))
+			},
+		},
+		{
+			name: "should not fail if no changes other than unauthorized",
+			changes: func() *changes {
+				return &changes{
+					New:    nil,
+					Update: nil,
+					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+				}
+			},
+			permissions: func(c *changes) map[string][]string {
+				return map[string][]string{
+					ac.ActionAlertingRuleDelete: {
+						namespaceIdScope,
+					},
+				}
+			},
+			assert: func(t *testing.T, orig, authz *changes, err error) {
+				require.NoError(t, err)
+				require.False(t, orig.isEmpty())
+				require.True(t, authz.isEmpty())
+			},
+		},
+		{
+			name: "should not fail if there are changes and no rules can be deleted",
+			changes: func() *changes {
+				return &changes{
+					New:    models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+					Update: nil,
+					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+				}
+			},
+			permissions: func(c *changes) map[string][]string {
+				return map[string][]string{
+					ac.ActionAlertingRuleDelete: {
+						namespaceIdScope,
+					},
+					ac.ActionAlertingRuleCreate: {
+						namespaceIdScope,
+					},
+					datasources.ActionQuery: getScopes(c.New),
+				}
+			},
+			assert: func(t *testing.T, _, c *changes, err error) {
+				require.NoError(t, err)
+				require.Empty(t, c.Delete)
+			},
+		},
+		{
+			name: "should fail if no access to folder",
+			changes: func() *changes {
+				return &changes{
+					New:    nil,
+					Update: nil,
+					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+				}
+			},
+			permissions: func(c *changes) map[string][]string {
+				return map[string][]string{
+					datasources.ActionQuery: getScopes(c.Delete),
+				}
+			},
+			assert: func(t *testing.T, _, c *changes, err error) {
+				require.ErrorIs(t, err, ErrAuthorization)
+				require.Nil(t, c)
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			groupChanges := testCase.changes()
+			permissions := testCase.permissions(groupChanges)
+			result, err := authorizeRuleChanges(folder, groupChanges, func(evaluator ac.Evaluator) bool {
+				response, err := evaluator.Evaluate(permissions)
+				require.NoError(t, err)
+				return response
+			})
+
+			testCase.assert(t, groupChanges, result, err)
+		})
+	}
+}
+
+func TestCheckDatasourcePermissionsForRule(t *testing.T) {
+	rule := models.AlertRuleGen()()
+
+	expressionByType := models.GenerateAlertQuery()
+	expressionByType.QueryType = expr.DatasourceType
+	expressionByUID := models.GenerateAlertQuery()
+	expressionByUID.DatasourceUID = expr.OldDatasourceUID
+
+	var data []models.AlertQuery
+	var scopes []string
+	expectedExecutions := rand.Intn(3) + 2
+	for i := 0; i < expectedExecutions; i++ {
+		q := models.GenerateAlertQuery()
+		scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(q.DatasourceUID))
+		data = append(data, q)
+	}
+
+	data = append(data, expressionByType, expressionByUID)
+	rand.Shuffle(len(data), func(i, j int) {
+		data[j], data[i] = data[i], data[j]
+	})
+
+	rule.Data = data
+
+	t.Run("should check only expressions", func(t *testing.T) {
+		permissions := map[string][]string{
+			datasources.ActionQuery: scopes,
 		}
 
-		data = append(data, expressionByType, expressionByUID)
-		rand.Shuffle(len(data), func(i, j int) {
-			data[j], data[i] = data[i], data[j]
+		executed := 0
+
+		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
+			response, err := evaluator.Evaluate(permissions)
+			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
+			require.NoError(t, err)
+			executed++
+			return true
 		})
 
-		rule.Data = data
+		require.True(t, eval)
+		require.Equal(t, expectedExecutions, executed)
+	})
 
-		eval := getEvaluatorForAlertRule(rule)
+	t.Run("should return on first negative evaluation", func(t *testing.T) {
+		executed := 0
 
-		allowed, err := eval.Evaluate(map[string][]string{
-			datasources.ActionQuery: scopes,
+		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
+			executed++
+			return false
 		})
 
-		require.NoError(t, err)
-		require.True(t, allowed)
+		require.False(t, eval)
+		require.Equal(t, 1, executed)
 	})
 }
