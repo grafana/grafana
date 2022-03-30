@@ -15,9 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -430,16 +428,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rules...)
 			ruleStore.PutRule(context.Background(), ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))...)
 
-			var permissions []*accesscontrol.Permission
-			for _, rule := range rules {
-				for _, query := range rule.Data {
-					permissions = append(permissions, &accesscontrol.Permission{
-						Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
-					})
-				}
-			}
-
-			acMock := acmock.New().WithPermissions(permissions)
+			acMock := acmock.New().WithPermissions(createPermissionsForRules(rules))
 
 			api := PrometheusSrv{
 				log:     log.NewNopLogger(),

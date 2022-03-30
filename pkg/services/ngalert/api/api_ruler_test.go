@@ -421,15 +421,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler := &schedule.FakeScheduleService{}
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
-				var permissions []*accesscontrol.Permission
-				for _, rule := range rulesInFolder {
-					for _, query := range rule.Data {
-						permissions = append(permissions, &accesscontrol.Permission{
-							Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
-						})
-					}
-				}
-				ac := acMock.New().WithPermissions(permissions)
+				ac := acMock.New().WithPermissions(createPermissionsForRules(rulesInFolder))
 				request := createRequestContext(orgID, "None", map[string]string{
 					":Namespace": folder.Title,
 				})
@@ -454,15 +446,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler := &schedule.FakeScheduleService{}
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
-				var permissions []*accesscontrol.Permission
-				for _, rule := range authorizedRulesInFolder {
-					for _, query := range rule.Data {
-						permissions = append(permissions, &accesscontrol.Permission{
-							Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
-						})
-					}
-				}
-				ac := acMock.New().WithPermissions(permissions)
+				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInFolder))
 				request := createRequestContext(orgID, "None", map[string]string{
 					":Namespace": folder.Title,
 				})
@@ -489,15 +473,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler := &schedule.FakeScheduleService{}
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
-				var permissions []*accesscontrol.Permission
-				for _, rule := range authorizedRulesInGroup {
-					for _, query := range rule.Data {
-						permissions = append(permissions, &accesscontrol.Permission{
-							Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
-						})
-					}
-				}
-				ac := acMock.New().WithPermissions(permissions)
+				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInGroup))
 				request := createRequestContext(orgID, "None", map[string]string{
 					":Namespace": folder.Title,
 					":Groupname": groupName,
@@ -521,6 +497,18 @@ func createRequestContext(orgID int64, role models2.RoleType, params map[string]
 		},
 		Context: &ctx,
 	}
+}
+
+func createPermissionsForRules(rules []*models.AlertRule) []*accesscontrol.Permission {
+	var permissions []*accesscontrol.Permission
+	for _, rule := range rules {
+		for _, query := range rule.Data {
+			permissions = append(permissions, &accesscontrol.Permission{
+				Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
+			})
+		}
+	}
+	return permissions
 }
 
 func withOrgID(orgId int64) func(rule *models.AlertRule) {
