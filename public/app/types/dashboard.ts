@@ -44,6 +44,7 @@ export interface DashboardDataDTO {
   templating: {
     list: VariableModel[];
   };
+  panels?: any[];
 }
 
 export enum DashboardRoutes {

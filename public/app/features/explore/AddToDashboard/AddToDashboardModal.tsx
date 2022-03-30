@@ -1,128 +1,81 @@
 import React, { useState } from 'react';
-import { Alert, Button, InputControl, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { FormProvider, useForm } from 'react-hook-form';
-import { SaveToNewDashboard } from './Forms/SaveToNewDashboard';
-import { SaveToExistingDashboard } from './Forms/SaveToExistingDashboard';
+import { Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { ErrorResponse, FormDTO, SaveTarget } from './types';
-import { css } from '@emotion/css';
-
-const ERRORS = {
-  NAME_REQUIRED: 'Dashboard name is required.',
-  NAME_EXISTS: 'A dashboard with the same name already exists in this folder.',
-  NAME_MATCH: "Dashboard name cannot be the same as its folder's name.",
-  INVALID_FIELD: 'This field is invalid.',
-  UNKNOWN_ERROR: 'An unknown error occurred while saving the dashboard. Please try again.',
-  PROVISIONED_DASHBOARD: "Can't save a provisioned dashboard",
-};
+import { addPanelToDashboard, SaveTarget } from './addToDashboard';
+import { useSelector } from 'react-redux';
+import { ExploreId, StoreState } from 'app/types';
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
 const SAVE_TARGETS: Array<SelectableValue<SaveTarget>> = [
   {
     label: 'New Dashboard',
-    value: 'new_dashboard',
+    value: SaveTarget.NewDashboard,
   },
   {
     label: 'Existing Dashboard',
-    value: 'existing_dashboard',
+    value: SaveTarget.ExistingDashboard,
   },
 ];
 
-function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}, redirect: boolean) {
-  return async (...args: T) => fn(redirect, ...args);
-}
-
 interface Props {
   onClose: () => void;
-  onSave: (data: FormDTO, redirect: boolean) => Promise<void | ErrorResponse>;
+  exploreId: ExploreId;
 }
 
-export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
-  const [submissionError, setSubmissionError] = useState<string>();
-  const methods = useForm<FormDTO>({ defaultValues: { saveTarget: 'new_dashboard' } });
-  const {
-    handleSubmit,
-    formState: { isSubmitting },
-    control,
-    setError,
-    watch,
-  } = methods;
-  const FormComponent = watch('saveTarget') === 'new_dashboard' ? SaveToNewDashboard : SaveToExistingDashboard;
-  const radioGroupStyles = useStyles2(
-    (theme) => css`
-      margin-bottom: ${theme.spacing(2)};
-    `
-  );
+export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
+  const [targetMode, setTargetMode] = useState<SaveTarget>(SaveTarget.NewDashboard);
+  const [dashboardUid, setDashboardUid] = useState<string | undefined>(undefined);
+  const state = useSelector((state: StoreState) => state);
 
-  const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
-    setSubmissionError(undefined);
-    const error = await onSave(data, withRedirect);
-
-    if (error) {
-      switch (error.status) {
-        case 'name-match':
-          setError('dashboardName', { message: ERRORS.NAME_MATCH });
-          break;
-        case 'empty-name':
-          setError('dashboardName', { message: ERRORS.NAME_REQUIRED });
-          break;
-        case 'name-exists':
-          setError('dashboardName', { message: ERRORS.NAME_EXISTS });
-          break;
-        case 'cannot-save-provisioned-dashboard':
-          setError('dashboard', { message: ERRORS.PROVISIONED_DASHBOARD });
-          break;
-        default:
-          setSubmissionError(error.message ?? ERRORS.UNKNOWN_ERROR);
-      }
-    }
+  const onOpen = () => {
+    addPanelToDashboard({
+      exploreItem: state.explore[exploreId]!,
+      targetMode,
+      dashboardUid,
+    });
+    onClose();
   };
+
+  const onOpenInNewTab = () => {
+    addPanelToDashboard({
+      exploreItem: state.explore[exploreId]!,
+      openInNewTab: true,
+      targetMode,
+      dashboardUid,
+    });
+    onClose();
+  };
+
+  // If we are not in new dashboard mode we have to have picked a dashboard
+  const isValid = targetMode === SaveTarget.NewDashboard || dashboardUid !== undefined;
 
   return (
     <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
-      <form>
-        <InputControl
-          render={({ field: { ref, ...field } }) => (
-            <RadioButtonGroup options={SAVE_TARGETS} {...field} className={radioGroupStyles} />
-          )}
-          control={control}
-          name="saveTarget"
-          shouldUnregister
-        />
+      <Field>
+        <RadioButtonGroup options={SAVE_TARGETS} value={targetMode} onChange={setTargetMode} />
+      </Field>
 
-        <FormProvider {...methods}>
-          <FormComponent />
-        </FormProvider>
+      {targetMode === SaveTarget.ExistingDashboard && (
+        <Field label="Dashboard" description="Select in which dashboard the panel will be created.">
+          <DashboardPicker
+            value={dashboardUid}
+            onChange={(value) => setDashboardUid(value?.uid)}
+            inputId="e2d-dashboard-picker"
+          />
+        </Field>
+      )}
 
-        {submissionError && (
-          <Alert severity="error" title="Unknown error">
-            {submissionError}
-          </Alert>
-        )}
-
-        <Modal.ButtonRow>
-          <Button type="reset" onClick={onClose} fill="outline" variant="secondary" disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit(withRedirect(onSubmit, false))}
-            variant="secondary"
-            icon="compass"
-            disabled={isSubmitting}
-          >
-            Save and keep exploring
-          </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit(withRedirect(onSubmit, true))}
-            variant="primary"
-            icon="apps"
-            disabled={isSubmitting}
-          >
-            Save and go to dashboard
-          </Button>
-        </Modal.ButtonRow>
-      </form>
+      <Modal.ButtonRow>
+        <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
+          Cancel
+        </Button>
+        <Button onClick={onOpenInNewTab} variant="secondary" disabled={!isValid}>
+          Open in new tab
+        </Button>
+        <Button onClick={onOpen} variant="primary" disabled={!isValid}>
+          Open
+        </Button>
+      </Modal.ButtonRow>
     </Modal>
   );
 };

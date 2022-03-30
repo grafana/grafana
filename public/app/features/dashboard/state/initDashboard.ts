@@ -19,6 +19,7 @@ import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
 import { toStateKey } from 'app/features/variables/utils';
+import store from 'app/core/store';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -73,6 +74,13 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
+        // When creating new dashboard with panel from explore
+        const model = store.getObject<DashboardDTO | null>(NEW_DASHBOARD_MODEL_LS_KEY, null);
+        if (model) {
+          store.delete(NEW_DASHBOARD_MODEL_LS_KEY);
+          return model;
+        }
+
         return getNewDashboardModelData(args.urlFolderId);
       }
       default:
@@ -200,7 +208,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-function getNewDashboardModelData(urlFolderId?: string | null): any {
+export function getNewDashboardModelData(urlFolderId?: string | null): any {
   const data = {
     meta: {
       canStar: false,
@@ -225,4 +233,10 @@ function getNewDashboardModelData(urlFolderId?: string | null): any {
   }
 
   return data;
+}
+
+const NEW_DASHBOARD_MODEL_LS_KEY = 'TEMP_NEW_DASHBOARD_MODEL';
+
+export function setNewDashboardModel(model: DashboardDTO) {
+  store.setObject(NEW_DASHBOARD_MODEL_LS_KEY, model);
 }
