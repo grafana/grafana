@@ -171,6 +171,19 @@ export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame 
         }
       }
     }
+    if (filter.datasource && ok) {
+      ok = false;
+      const dss = row.datasource;
+      if (dss) {
+        for (const ds of dss) {
+          if (ds.uid === filter.datasource) {
+            ok = true;
+            break;
+          }
+        }
+      }
+    }
+
     if (ok) {
       keep.push(i);
     }

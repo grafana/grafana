@@ -25,12 +25,13 @@ export default function SearchPage() {
   const { query, onQueryChange, onTagFilterChange } = useSearchQuery({});
 
   const results = useAsync(() => {
-    const { query: searchQuery, tag: tags } = query;
+    const { query: searchQuery, tag: tags, datasource } = query;
 
     const filters: QueryFilters = {
       tags,
+      datasource,
     };
-    return getGrafanaSearcher().search(searchQuery, tags.length ? filters : undefined);
+    return getGrafanaSearcher().search(searchQuery, tags.length || datasource ? filters : undefined);
   }, [query]);
 
   if (!config.featureToggles.panelTitleSearch) {
