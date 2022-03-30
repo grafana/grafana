@@ -618,8 +618,7 @@ func (f *fakePluginInstaller) GetUpdateInfo(_ context.Context, _, _, _ string) (
 }
 
 type fakeLoader struct {
-	mockedLoadedPlugins       []*plugins.Plugin
-	mockedFactoryLoadedPlugin *plugins.Plugin
+	mockedLoadedPlugins []*plugins.Plugin
 
 	loadedPaths []string
 }
