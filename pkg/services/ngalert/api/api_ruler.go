@@ -42,52 +42,82 @@ var (
 	errQuotaReached = errors.New("quota has been exceeded")
 )
 
-func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
+// RouteDeleteAlertRules deletes all alert rules user is authorized to access in the namespace (request parameter :Namespace)
+// or, if specified, a group of rules (request parameter :Groupname) in the namespace
+func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
+	var loggerCtx = []interface{}{
+		"namespace",
+		namespace.Title,
+	}
+	var ruleGroup *string
+	if group, ok := web.Params(c.Req)[":Groupname"]; ok {
+		ruleGroup = &group
+		loggerCtx = append(loggerCtx, "group", group)
+	}
+	logger := srv.log.New(loggerCtx...)
 
-	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid)
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
+	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 	}
 
-	for _, uid := range uids {
-		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
-			OrgID: c.SignedInUser.OrgId,
-			UID:   uid,
-		})
-	}
+	var canDelete, cannotDelete []string
+	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		q := ngmodels.GetAlertRulesQuery{
+			OrgID:        c.SignedInUser.OrgId,
+			NamespaceUID: namespace.Uid,
+			RuleGroup:    ruleGroup,
+		}
+		if err = srv.store.GetAlertRules(ctx, &q); err != nil {
+			return err
+		}
 
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
-}
+		if len(q.Result) == 0 {
+			logger.Debug("no alert rules to delete from namespace/group")
+			return nil
+		}
 
-func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := web.Params(c.Req)[":Namespace"]
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+		canDelete = make([]string, 0, len(q.Result))
+		for _, rule := range q.Result {
+			if authorizeDatasourceAccessForRule(rule, hasAccess) {
+				canDelete = append(canDelete, rule.UID)
+				continue
+			}
+			cannotDelete = append(cannotDelete, rule.UID)
+		}
+
+		if len(canDelete) == 0 {
+			return fmt.Errorf("%w to delete rules because user is not authorized to access data sources used by the rules", ErrAuthorization)
+		}
+
+		if len(cannotDelete) > 0 {
+			logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(q.Result), "authorized", len(canDelete), "unauthorized", cannotDelete)
+		}
+
+		return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgId, canDelete...)
+	})
+
 	if err != nil {
-		return toNamespaceErrorResponse(err)
-	}
-	ruleGroup := web.Params(c.Req)[":Groupname"]
-	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
-
-	if err != nil {
-		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "failed to delete rule group")
+		if errors.Is(err, ErrAuthorization) {
+			return ErrResp(http.StatusUnauthorized, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
 
-	for _, uid := range uids {
+	logger.Debug("rules have been deleted from the store. updating scheduler")
+
+	for _, uid := range canDelete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   uid,
 		})
 	}
 
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
 }
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {

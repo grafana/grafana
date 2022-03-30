@@ -27,9 +27,11 @@ describe('AzureLogAnalyticsDatasource', () => {
   const ctx: any = {};
 
   beforeEach(() => {
+    templateSrv.init([singleVariable]);
     ctx.instanceSettings = {
       jsonData: { subscriptionId: 'xxx' },
       url: 'http://azureloganalyticsapi',
+      templateSrv: templateSrv,
     };
 
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
@@ -76,10 +78,11 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
-      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+      ctx.mockGetResource = jest.fn().mockImplementation((path: string) => {
         expect(path).toContain('metadata');
         return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
       });
+      ctx.ds.azureLogAnalyticsDatasource.getResource = ctx.mockGetResource;
     });
 
     it('should return a schema to use with monaco-kusto', async () => {
@@ -111,6 +114,11 @@ describe('AzureLogAnalyticsDatasource', () => {
           cslDefaultValue: 'True',
         },
       ]);
+    });
+
+    it('should interpolate variables when making a request for a schema with a uri that contains template variables', async () => {
+      await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace/$var1');
+      expect(ctx.mockGetResource).lastCalledWith('loganalytics/v1myWorkspace/var1-foo/metadata');
     });
   });
 

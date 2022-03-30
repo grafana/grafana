@@ -5,7 +5,6 @@ import { RadioButtonGroup, Select } from '@grafana/ui';
 import { LokiQuery, LokiQueryType } from '../../types';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
-import { getLegendModeLabel } from 'app/plugins/datasource/prometheus/querybuilder/components/PromQueryLegendEditor';
 import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
 import { isMetricsQuery } from '../../datasource';
 
@@ -99,7 +98,9 @@ function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, showMaxLin
 
   const items: string[] = [];
 
-  items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
+  if (query.legendFormat) {
+    items.push(`Legend: ${query.legendFormat}`);
+  }
 
   if (query.resolution) {
     items.push(`Resolution: ${resolutionLabel?.label}`);

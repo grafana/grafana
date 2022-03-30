@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LokiDatasource } from '../../datasource';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import { LokiQuery } from '../../types';
+import { LokiQuery, LokiQueryType } from '../../types';
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
@@ -77,6 +77,7 @@ describe('LokiQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Builder,
       visualQuery: {
         labels: [
@@ -118,6 +119,7 @@ describe('LokiQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Code,
     });
   });
@@ -128,6 +130,7 @@ describe('LokiQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Explain,
     });
   });

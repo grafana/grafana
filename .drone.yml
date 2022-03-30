@@ -569,6 +569,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -670,6 +672,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1052,6 +1056,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1134,6 +1140,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1197,6 +1205,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1281,6 +1291,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1313,6 +1325,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
   status:
   - failure
 type: docker
@@ -3333,6 +3347,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3433,6 +3449,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3518,6 +3536,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3574,6 +3594,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3905,6 +3927,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4048,6 +4072,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4180,6 +4206,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4260,6 +4288,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4411,6 +4441,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 7b8d6e6cb7f6b8846de99626b8e0e61c795e93f1a02b32103ec13547c9007f5e
+hmac: b5191e597c2ea7a1152ab18ca2c4aece939024ceb8fd5c76581c087a64ae6ad3
 
 ...

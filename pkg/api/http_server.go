@@ -497,6 +497,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.healthzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
+	m.Use(hs.pluginMetricsEndpoint)
 
 	m.Use(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg))

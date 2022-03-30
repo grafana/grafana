@@ -9,16 +9,18 @@ import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
 
 import { lokiQueryModeller } from '../LokiQueryModeller';
-import { buildVisualQueryFromString } from '../parsing';
+import { getQueryWithDefaults } from '../state';
 import { getDefaultEmptyQuery, LokiVisualQuery } from '../types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplaind';
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
+import { buildVisualQueryFromString } from '../parsing';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
-  const { query, onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
+  const query = getQueryWithDefaults(props.query);
   const [visualQuery, setVisualQuery] = useState<LokiVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [pendingChange, setPendingChange] = useState<LokiQuery | undefined>(undefined);
