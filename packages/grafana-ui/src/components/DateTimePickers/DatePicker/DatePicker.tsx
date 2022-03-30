@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
-import Calendar from 'react-calendar/dist/entry.nostyle';
-import { css } from 'emotion';
+import Calendar from 'react-calendar';
+import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../themes';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../../Icon/Icon';
-import { getBodyStyles } from '../TimeRangePicker/TimePickerCalendar';
+import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 
 /** @public */
 export interface DatePickerProps {
@@ -45,7 +45,7 @@ const Body = memo<DatePickerProps>(({ value, onChange }) => {
       value={value || new Date()}
       nextLabel={<Icon name="angle-right" />}
       prevLabel={<Icon name="angle-left" />}
-      onChange={(ev) => {
+      onChange={(ev: Date | Date[]) => {
         if (!Array.isArray(ev)) {
           onChange(ev);
         }

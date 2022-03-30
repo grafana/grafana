@@ -57,6 +57,7 @@ export class TeamPicker extends Component<Props, State> {
     return (
       <div className="user-picker" data-testid="teamPicker">
         <AsyncSelect
+          menuShouldPortal
           isLoading={isLoading}
           defaultOptions={true}
           loadOptions={this.debouncedSearch}
@@ -64,6 +65,7 @@ export class TeamPicker extends Component<Props, State> {
           className={className}
           placeholder="Select a team"
           noOptionsMessage="No teams found"
+          aria-label="Team picker"
         />
       </div>
     );

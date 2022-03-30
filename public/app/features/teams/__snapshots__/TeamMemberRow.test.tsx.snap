@@ -8,6 +8,7 @@ exports[`Render should render team members when sync enabled 1`] = `
     className="width-4 text-center"
   >
     <img
+      aria-label="Avatar for team member \\"testName\\""
       className="filter-table__avatar"
       src="some/url/"
     />
@@ -49,6 +50,7 @@ exports[`Render should render team members when sync enabled 1`] = `
     className="text-right"
   >
     <DeleteButton
+      aria-label="Remove team member"
       disabled={true}
       onConfirm={[Function]}
       size="sm"
@@ -65,6 +67,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
     className="width-4 text-center"
   >
     <img
+      aria-label="Avatar for team member \\"testName\\""
       className="filter-table__avatar"
       src="some/url/"
     />
@@ -107,6 +110,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
           isMulti={false}
           isSearchable={false}
           maxMenuHeight={300}
+          menuShouldPortal={true}
           onChange={[Function]}
           openMenuOnFocus={false}
           options={
@@ -139,6 +143,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
     className="text-right"
   >
     <DeleteButton
+      aria-label="Remove team member"
       disabled={false}
       onConfirm={[Function]}
       size="sm"
@@ -155,6 +160,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
     className="width-4 text-center"
   >
     <img
+      aria-label="Avatar for team member \\"testName\\""
       className="filter-table__avatar"
       src="some/url/"
     />
@@ -197,6 +203,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
           isMulti={false}
           isSearchable={false}
           maxMenuHeight={300}
+          menuShouldPortal={true}
           onChange={[Function]}
           openMenuOnFocus={false}
           options={
@@ -229,6 +236,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
     className="text-right"
   >
     <DeleteButton
+      aria-label="Remove team member"
       disabled={false}
       onConfirm={[Function]}
       size="sm"
@@ -245,6 +253,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
     className="width-4 text-center"
   >
     <img
+      aria-label="Avatar for team member \\"testName\\""
       className="filter-table__avatar"
       src="some/url/"
     />
@@ -277,6 +286,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
     className="text-right"
   >
     <DeleteButton
+      aria-label="Remove team member"
       disabled={true}
       onConfirm={[Function]}
       size="sm"

@@ -1,5 +1,6 @@
-import { DataQuery } from './datasource';
+import { DataQuery } from './query';
 import { InterpolateFunction } from './panel';
+import { ExplorePanelsState } from './explore';
 
 /**
  * Callback info for DataLink click events
@@ -44,6 +45,7 @@ export interface InternalDataLink<T extends DataQuery = any> {
   query: T;
   datasourceUid: string;
   datasourceName: string;
+  panelsState?: ExplorePanelsState;
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;
@@ -58,7 +60,7 @@ export interface LinkModel<T = any> {
   origin: T;
 
   // When a click callback exists, this is passed the raw mouse|react event
-  onClick?: (e: any) => void;
+  onClick?: (e: any, origin?: any) => void;
 }
 
 /**

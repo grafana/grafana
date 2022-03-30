@@ -4,6 +4,7 @@ import {
   DisplayValue,
   VizOrientation,
   ThresholdsMode,
+  FALLBACK_COLOR,
   Field,
   FieldType,
   getDisplayProcessor,
@@ -12,6 +13,7 @@ import {
 import {
   BarGauge,
   Props,
+  getCellColor,
   getValueColor,
   getBasicAndGradientStyles,
   getBarGradient,
@@ -74,6 +76,69 @@ function getValue(value: number, title?: string): DisplayValue {
 }
 
 describe('BarGauge', () => {
+  describe('getCellColor', () => {
+    it('returns a fallback if the positionValue is null', () => {
+      const props = getProps();
+      expect(getCellColor(null, props.value, props.display)).toEqual({
+        background: FALLBACK_COLOR,
+        border: FALLBACK_COLOR,
+      });
+    });
+
+    it('does not show as lit if the value is null (somehow)', () => {
+      const props = getProps();
+      expect(getCellColor(1, null as unknown as DisplayValue, props.display)).toEqual(
+        expect.objectContaining({
+          isLit: false,
+        })
+      );
+    });
+
+    it('does not show as lit if the numeric value is NaN', () => {
+      const props = getProps();
+      expect(
+        getCellColor(
+          1,
+          {
+            numeric: NaN,
+            text: '0',
+          },
+          props.display
+        )
+      ).toEqual(
+        expect.objectContaining({
+          isLit: false,
+        })
+      );
+    });
+
+    it('does not show as lit if the positionValue is greater than the numeric value', () => {
+      const props = getProps();
+      expect(getCellColor(75, props.value, props.display)).toEqual(
+        expect.objectContaining({
+          isLit: false,
+        })
+      );
+    });
+
+    it('shows as lit otherwise', () => {
+      const props = getProps();
+      expect(getCellColor(1, props.value, props.display)).toEqual(
+        expect.objectContaining({
+          isLit: true,
+        })
+      );
+    });
+
+    it('returns a fallback if there is no display processor', () => {
+      const props = getProps();
+      expect(getCellColor(null, props.value, undefined)).toEqual({
+        background: FALLBACK_COLOR,
+        border: FALLBACK_COLOR,
+      });
+    });
+  });
+
   describe('Get value color', () => {
     it('should get the threshold color if value is same as a threshold', () => {
       const props = getProps();
@@ -102,6 +167,18 @@ describe('BarGauge', () => {
 
     it('-30 to 30 and value 30', () => {
       expect(getValuePercent(30, -30, 30)).toEqual(1);
+    });
+  });
+
+  describe('Vertical bar', () => {
+    it('should adjust empty region to always have same width as colored bar', () => {
+      const props = getProps({
+        width: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Vertical,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.width).toBe('150px');
     });
   });
 
@@ -153,9 +230,7 @@ describe('BarGauge', () => {
       const styles = getTitleStyles(props);
       expect(styles.wrapper.flexDirection).toBe('column');
     });
-  });
 
-  describe('Horizontal bar with title', () => {
     it('should place below if height < 40', () => {
       const props = getProps({
         height: 30,
@@ -184,6 +259,19 @@ describe('BarGauge', () => {
       expect(styles2.title.width).toBe('43px');
     });
 
+    it('Should limit text length to 40%', () => {
+      const props = getProps({
+        height: 30,
+        value: getValue(
+          100,
+          'saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        ),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.title.width).toBe('119px');
+    });
+
     it('should use alignmentFactors if provided', () => {
       const props = getProps({
         height: 30,
@@ -196,6 +284,16 @@ describe('BarGauge', () => {
       });
       const styles = getTitleStyles(props);
       expect(styles.title.width).toBe('37px');
+    });
+
+    it('should adjust empty region to always have same height as colored bar', () => {
+      const props = getProps({
+        height: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.height).toBe('150px');
     });
   });
 

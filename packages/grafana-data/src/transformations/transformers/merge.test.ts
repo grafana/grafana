@@ -16,6 +16,20 @@ describe('Merge multiple to single', () => {
     mockTransformationsRegistry([mergeTransformer]);
   });
 
+  it('skip combine one serie', async () => {
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Temp', type: FieldType.number, values: [1] },
+      ],
+    });
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(seriesA).toBe(result[0]);
+    });
+  });
+
   it('combine two series into one', async () => {
     const seriesA = toDataFrame({
       name: 'A',

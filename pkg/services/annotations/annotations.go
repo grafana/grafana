@@ -14,9 +14,10 @@ var (
 
 type Repository interface {
 	Save(item *Item) error
-	Update(item *Item) error
-	Find(query *ItemQuery) ([]*ItemDTO, error)
-	Delete(params *DeleteParams) error
+	Update(ctx context.Context, item *Item) error
+	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
+	Delete(ctx context.Context, params *DeleteParams) error
+	FindTags(ctx context.Context, query *TagsQuery) (FindTagsResult, error)
 }
 
 // AnnotationCleaner is responsible for cleaning up old annotations
@@ -40,10 +41,40 @@ type ItemQuery struct {
 	Limit int64 `json:"limit"`
 }
 
+// TagsQuery is the query for a tags search.
+type TagsQuery struct {
+	OrgID int64  `json:"orgId"`
+	Tag   string `json:"tag"`
+
+	Limit int64 `json:"limit"`
+}
+
+// Tag is the DB result of a tags search.
+type Tag struct {
+	Key   string
+	Value string
+	Count int64
+}
+
+// TagsDTO is the frontend DTO for Tag.
+type TagsDTO struct {
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
+}
+
+// FindTagsResult is the result of a tags search.
+type FindTagsResult struct {
+	Tags []*TagsDTO `json:"tags"`
+}
+
+// GetAnnotationTagsResponse is a response struct for FindTagsResult.
+type GetAnnotationTagsResponse struct {
+	Result FindTagsResult `json:"result"`
+}
+
 type DeleteParams struct {
 	OrgId       int64
 	Id          int64
-	AlertId     int64
 	DashboardId int64
 	PanelId     int64
 }
@@ -112,4 +143,18 @@ type ItemDTO struct {
 	Email       string           `json:"email"`
 	AvatarUrl   string           `json:"avatarUrl"`
 	Data        *simplejson.Json `json:"data"`
+}
+
+type annotationType int
+
+const (
+	Organization annotationType = iota
+	Dashboard
+)
+
+func (annotation *ItemDTO) GetType() annotationType {
+	if annotation.DashboardId != 0 {
+		return Dashboard
+	}
+	return Organization
 }

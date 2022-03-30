@@ -11,11 +11,13 @@ list = false
 # What's new in Grafana v2.5
 
 ## Release highlights
+
 This is an exciting release, and we want to share some of the highlights. The release includes many
 fixes and enhancements to all areas of Grafana, like new Data Sources, a new and improved timepicker, user invites, panel
 resize handles and improved InfluxDB and OpenTSDB support.
 
 ### New time range controls
+
 <img src="/static/img/docs/whatsnew_2_5/timepicker.png" alt="New Time picker">
 
 A new timepicker with room for more quick ranges as well as new types of relative ranges, like `Today`,
@@ -60,8 +62,8 @@ metrics directly from Grafana.
 Grafana 2.5 ships with a new Prometheus data source that will allow you to query and visualize data
 stored in Prometheus.
 
-
 ### Mix different data sources
+
 <img src="/static/img/docs/whatsnew_2_5/mixed_data.png" alt="Mix data sources in the same dashboard or in the same graph!">
 
 In previous releases you have been able to mix different data sources on the same dashboard. In v2.5 you
@@ -71,11 +73,13 @@ to plot metrics from different Graphite servers on the same Graph or plot data f
 data from Prometheus. Mixing different data sources on the same graph works for any data source, even custom ones.
 
 ### Panel Resize handles
+
 <img src="/static/img/docs/whatsnew_2_5/panel_resize.gif" alt="">
 
 This release adds resize handles to the bottom right corners of panels making it easy to resize both width and height.
 
 ### User invites
+
 <img src="/static/img/docs/whatsnew_2_5/org_invite.png" alt="">
 
 This version also brings some new features for user management.
@@ -95,14 +99,16 @@ This version also brings some new features for user management.
 - Admin page for all organizations (remove / edit)
 
 ### Breaking changes
+
 There have been some changes to the data source plugin API. If you are using a custom plugin check that there is an update for it before you upgrade. Also
 the new time picker does not currently support custom quick ranges like the last one did. This will likely be added in a
 future release.
 
 ### Changelog
+
 For a detailed list and link to github issues for everything included in the 2.5 release please
 view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.
 
-- - -
+---
 
 ### <a href="https://grafana.com/get">Download Grafana 2.5 now</a>

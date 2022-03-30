@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
-import config from 'app/core/config';
+import { featureEnabled } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
 import { UserProfile } from './UserProfile';
 import { UserPermissions } from './UserPermissions';
@@ -120,7 +119,7 @@ export class UserAdminPage extends PureComponent<Props> {
                 onUserEnable={this.onUserEnable}
                 onPasswordChange={this.onPasswordChange}
               />
-              {isLDAPUser && config.licenseInfo.hasLicense && ldapSyncInfo && canReadLDAPStatus && (
+              {isLDAPUser && featureEnabled('ldapsync') && ldapSyncInfo && canReadLDAPStatus && (
                 <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
               )}
               <UserPermissions isGrafanaAdmin={user.isGrafanaAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
@@ -129,7 +128,9 @@ export class UserAdminPage extends PureComponent<Props> {
 
           {orgs && (
             <UserOrgs
+              user={user}
               orgs={orgs}
+              isExternalUser={user?.isExternal}
               onOrgRemove={this.onOrgRemove}
               onOrgRoleChange={this.onOrgRoleChange}
               onOrgAdd={this.onOrgAdd}
@@ -177,4 +178,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
-export default hot(module)(connector(UserAdminPage));
+export default connector(UserAdminPage);

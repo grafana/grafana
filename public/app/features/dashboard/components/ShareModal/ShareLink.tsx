@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Field, RadioButtonGroup, Switch, ClipboardButton, Icon, Input, FieldSet, Alert } from '@grafana/ui';
-import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
+import { ShareModalTabProps } from './types';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Current', value: 'current' },
@@ -13,10 +13,7 @@ const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Light', value: 'light' },
 ];
 
-export interface Props {
-  dashboard: DashboardModel;
-  panel?: PanelModel;
-}
+export interface Props extends ShareModalTabProps {}
 
 export interface State {
   useCurrentTimeRange: boolean;
@@ -54,11 +51,11 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   buildUrl = async () => {
-    const { panel } = this.props;
+    const { panel, dashboard } = this.props;
     const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
 
     const shareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme, panel, useShortUrl);
-    const imageUrl = buildImageUrl(useCurrentTimeRange, selectedTheme, panel);
+    const imageUrl = buildImageUrl(useCurrentTimeRange, dashboard.uid, selectedTheme, panel);
 
     this.setState({ shareUrl, imageUrl });
   };
@@ -84,10 +81,11 @@ export class ShareLink extends PureComponent<Props, State> {
   };
 
   render() {
-    const { panel } = this.props;
-    const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
+    const { panel, dashboard } = this.props;
+    const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
     const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
     const selectors = e2eSelectors.pages.SharePanelModal;
+    const isDashboardSaved = Boolean(dashboard.id);
 
     return (
       <>
@@ -114,6 +112,7 @@ export class ShareLink extends PureComponent<Props, State> {
 
           <Field label="Link URL">
             <Input
+              id="link-url-input"
               value={shareUrl}
               readOnly
               addonAfter={
@@ -124,13 +123,25 @@ export class ShareLink extends PureComponent<Props, State> {
             />
           </Field>
         </FieldSet>
+
         {panel && config.rendererAvailable && (
-          <div className="gf-form">
-            <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-              <Icon name="camera" /> Direct link rendered image
-            </a>
-          </div>
+          <>
+            {isDashboardSaved && (
+              <div className="gf-form">
+                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+                  <Icon name="camera" /> Direct link rendered image
+                </a>
+              </div>
+            )}
+
+            {!isDashboardSaved && (
+              <Alert severity="info" title="Dashboard is not saved" bottomSpacing={0}>
+                To render a panel image, you must save the dashboard first.
+              </Alert>
+            )}
+          </>
         )}
+
         {panel && !config.rendererAvailable && (
           <Alert severity="info" title="Image renderer plugin not installed" bottomSpacing={0}>
             <>To render a panel image, you must install the </>

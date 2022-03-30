@@ -1,17 +1,16 @@
 import React, { PureComponent } from 'react';
-
+import { lastValueFrom } from 'rxjs';
+import { css, cx } from '@emotion/css';
 import { AnnotationEventMappings, AnnotationQuery, DataQuery, DataSourceApi, LoadingState } from '@grafana/data';
 import { Button, Icon, IconName, Spinner } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { css, cx } from '@emotion/css';
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
-import { executeAnnotationQuery } from '../annotations_srv';
+import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AnnotationQueryResponse } from '../types';
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
-import coreModule from 'app/core/core_module';
 
 interface Props {
   datasource: DataSourceApi;
@@ -64,15 +63,17 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     this.setState({
       running: true,
     });
-    const response = await executeAnnotationQuery(
-      {
-        range: getTimeSrv().timeRange(),
-        panel: {} as PanelModel,
-        dashboard,
-      },
-      datasource,
-      annotation
-    ).toPromise();
+    const response = await lastValueFrom(
+      executeAnnotationQuery(
+        {
+          range: getTimeSrv().timeRange(),
+          panel: {} as PanelModel,
+          dashboard,
+        },
+        datasource,
+        annotation
+      )
+    );
     this.setState({
       running: false,
       response,
@@ -86,7 +87,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
-  onMappingChange = (mappings: AnnotationEventMappings) => {
+  onMappingChange = (mappings?: AnnotationEventMappings) => {
     this.props.onChange({
       ...this.props.annotation,
       mappings,
@@ -175,19 +176,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           data={response?.panelData}
           range={getTimeSrv().timeRange()}
         />
-        {this.renderStatus()}
-
-        <AnnotationFieldMapper response={response} mappings={annotation.mappings} change={this.onMappingChange} />
-        <br />
+        {datasource.type !== 'datasource' && (
+          <>
+            {this.renderStatus()}
+            <AnnotationFieldMapper response={response} mappings={annotation.mappings} change={this.onMappingChange} />
+          </>
+        )}
       </>
     );
   }
 }
-
-// Careful to use a unique directive name!  many plugins already use "annotationEditor" and have conflicts
-coreModule.directive('standardAnnotationEditor', [
-  'reactDirective',
-  (reactDirective: any) => {
-    return reactDirective(StandardAnnotationQueryEditor, ['annotation', 'datasource', 'change']);
-  },
-]);

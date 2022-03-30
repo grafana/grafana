@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import AlertRuleItem from './AlertRuleItem';
@@ -8,14 +7,14 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { AlertRule, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { setSearchQuery } from './state/reducers';
-import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
+import { Button, FilterInput, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ShowModalReactEvent } from '../../types/events';
 import { AlertHowToModal } from './AlertHowToModal';
+import { UnifiedAlertingPromotion } from './components/UnifiedAlertingPromotion';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -102,10 +101,14 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               <FilterInput placeholder="Search alerts" value={search} onChange={this.onSearchQueryChange} />
             </div>
             <div className="gf-form">
-              <label className="gf-form-label">States</label>
+              <label className="gf-form-label" htmlFor="alert-state-filter">
+                States
+              </label>
 
               <div className="width-13">
                 <Select
+                  inputId={'alert-state-filter'}
+                  menuShouldPortal
                   options={this.stateFilters}
                   onChange={this.onStateFilterChanged}
                   value={this.getStateFilter()}
@@ -113,7 +116,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               </div>
             </div>
             <div className="page-action-bar__spacer" />
-            {config.featureToggles.ngalert && (
+            {config.unifiedAlertingEnabled && (
               <LinkButton variant="primary" href="alerting/ng/new">
                 Add NG Alert
               </LinkButton>
@@ -122,6 +125,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               How to add an alert
             </Button>
           </div>
+          <UnifiedAlertingPromotion />
           <VerticalGroup spacing="none">
             {alertRules.map((rule) => {
               return (
@@ -140,4 +144,4 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
   }
 }
 
-export default hot(module)(connector(AlertRuleListUnconnected));
+export default connector(AlertRuleListUnconnected);

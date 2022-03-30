@@ -51,7 +51,14 @@ export default class InfluxSeries {
           }
         }
 
-        output.push({ target: seriesName, datapoints: datapoints, meta: this.meta, refId: this.refId });
+        output.push({
+          title: seriesName,
+          target: seriesName,
+          datapoints: datapoints,
+          tags: series.tags,
+          meta: this.meta,
+          refId: this.refId,
+        });
       }
     });
 
@@ -73,7 +80,7 @@ export default class InfluxSeries {
         return series.columns[index];
       }
       if (!isNaN(segIndex)) {
-        return segments[segIndex];
+        return segments[segIndex] ?? match;
       }
       if (group.indexOf('tag_') !== 0) {
         return match;
@@ -164,19 +171,24 @@ export default class InfluxSeries {
       return table;
     }
 
+    // the order is:
+    // - first the first item from the value-array (this is often (always?) the timestamp)
+    // - then all the tag-values
+    // - then the rest of the value-array
+    //
+    // we have to keep this order both in table.columns and table.rows
+
     each(this.series, (series: any, seriesIndex: number) => {
       if (seriesIndex === 0) {
-        j = 0;
-        // Check that the first column is indeed 'time'
-        if (series.columns[0] === 'time') {
-          // Push this now before the tags and with the right type
-          table.columns.push({ text: 'Time', type: FieldType.time });
-          j++;
-        }
+        const firstCol = series.columns[0];
+        // Check the first column's name, if it is `time`, we
+        // mark it as having the type time
+        const firstTableCol = firstCol === 'time' ? { text: 'Time', type: FieldType.time } : { text: firstCol };
+        table.columns.push(firstTableCol);
         each(keys(series.tags), (key) => {
           table.columns.push({ text: key });
         });
-        for (; j < series.columns.length; j++) {
+        for (j = 1; j < series.columns.length; j++) {
           table.columns.push({ text: series.columns[j] });
         }
       }

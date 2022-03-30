@@ -20,6 +20,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   logMessageField?: string;
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
+  includeFrozen?: boolean;
 }
 
 interface MetricConfiguration<T extends MetricAggregationType> {
@@ -71,8 +72,17 @@ export interface ElasticsearchQuery extends DataQuery {
   timeField?: string;
 }
 
+export interface TermsQuery {
+  query?: string;
+  size?: number;
+  field?: string;
+  order?: 'asc' | 'desc';
+  orderBy?: string;
+}
+
 export type DataLinkConfig = {
   field: string;
   url: string;
+  urlDisplayLabel?: string;
   datasourceUid?: string;
 };

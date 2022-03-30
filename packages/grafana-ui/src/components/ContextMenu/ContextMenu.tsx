@@ -11,6 +11,8 @@ export interface ContextMenuProps {
   y: number;
   /** Callback for closing the menu */
   onClose?: () => void;
+  /** On menu open focus the first element */
+  focusOnOpen?: boolean;
   /** RenderProp function that returns menu items to display */
   renderMenuItems?: () => React.ReactNode;
   /** A function that returns header element */
@@ -18,7 +20,7 @@ export interface ContextMenuProps {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
-  ({ x, y, onClose, renderMenuItems, renderHeader }) => {
+  ({ x, y, onClose, focusOnOpen = true, renderMenuItems, renderHeader }) => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [positionStyles, setPositionStyles] = useState({});
 
@@ -41,12 +43,22 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
     }, [x, y]);
 
     useClickAway(menuRef, () => {
-      if (onClose) {
-        onClose();
-      }
+      onClose?.();
     });
-    const header = renderHeader && renderHeader();
-    const menuItems = renderMenuItems && renderMenuItems();
+    const header = renderHeader?.();
+    const menuItems = renderMenuItems?.();
+    const onOpen = (setFocusedItem: (a: number) => void) => {
+      if (focusOnOpen) {
+        setFocusedItem(0);
+      }
+    };
+    const onKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose?.();
+      }
+    };
 
     return (
       <Portal>
@@ -55,7 +67,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
           ref={menuRef}
           style={positionStyles}
           ariaLabel={selectors.components.Menu.MenuComponent('Context')}
+          onOpen={onOpen}
           onClick={onClose}
+          onKeyDown={onKeyDown}
         >
           {menuItems}
         </Menu>

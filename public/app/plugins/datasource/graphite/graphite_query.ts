@@ -3,6 +3,9 @@ import { arrayMove } from 'app/core/utils/arrayMove';
 import { Parser } from './parser';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
+import { FuncInstance } from './gfunc';
+import { GraphiteSegment } from './types';
+import { GraphiteDatasource } from './datasource';
 
 export type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
 
@@ -12,11 +15,22 @@ export type GraphiteTag = {
   value: string;
 };
 
+export type GraphiteTarget = {
+  refId: string | number;
+  target: string;
+  /**
+   * Contains full query after interpolating sub-queries (e.g. "function(#A)" referencing query with refId=A)
+   */
+  targetFull: string;
+  textEditor: boolean;
+  paused: boolean;
+};
+
 export default class GraphiteQuery {
-  datasource: any;
-  target: any;
-  functions: any[] = [];
-  segments: any[] = [];
+  datasource: GraphiteDatasource;
+  target: GraphiteTarget;
+  functions: FuncInstance[] = [];
+  segments: GraphiteSegment[] = [];
   tags: GraphiteTag[] = [];
   error: any;
   seriesByTagUsed = false;
@@ -166,7 +180,7 @@ export default class GraphiteQuery {
     };
 
     if (!this.target.textEditor) {
-      const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
+      const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.?select metric$/, '');
       this.target.target = reduce(this.functions, wrapFunction, metricPath);
     }
 
@@ -178,6 +192,9 @@ export default class GraphiteQuery {
         this.updateRenderedTarget(target, targets);
       }
     }
+
+    // clean-up added param
+    this.functions.forEach((func) => (func.added = false));
   }
 
   updateRenderedTarget(target: { refId: string | number; target: any; targetFull: any }, targets: any) {
@@ -272,12 +289,12 @@ export default class GraphiteQuery {
 
   addTag(tag: { key: any; operator: GraphiteTagOperator; value: string }) {
     const newTagParam = renderTagString(tag);
-    this.getSeriesByTagFunc().params.push(newTagParam);
+    this.getSeriesByTagFunc()!.params.push(newTagParam);
     this.tags.push(tag);
   }
 
   removeTag(index: number) {
-    this.getSeriesByTagFunc().params.splice(index, 1);
+    this.getSeriesByTagFunc()!.params.splice(index, 1);
     this.tags.splice(index, 1);
   }
 
@@ -286,11 +303,15 @@ export default class GraphiteQuery {
 
     if (tag.key === this.removeTagValue) {
       this.removeTag(tagIndex);
+      if (this.tags.length === 0) {
+        this.removeFunction(this.getSeriesByTagFunc());
+        this.checkOtherSegmentsIndex = 0;
+        this.seriesByTagUsed = false;
+      }
       return;
     }
 
-    const newTagParam = renderTagString(tag);
-    this.getSeriesByTagFunc().params[tagIndex] = newTagParam;
+    this.getSeriesByTagFunc()!.params[tagIndex] = renderTagString(tag);
     this.tags[tagIndex] = tag;
   }
 

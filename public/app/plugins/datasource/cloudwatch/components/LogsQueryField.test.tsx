@@ -7,7 +7,9 @@ import { SelectableValue } from '@grafana/data';
 // eslint-disable-next-line lodash/import-scope
 import _, { Cancelable } from 'lodash';
 
-jest.spyOn(_, 'debounce').mockImplementation((func: ((...args: any) => any) & Cancelable, wait: number) => func);
+jest
+  .spyOn(_, 'debounce')
+  .mockImplementation((func: (...args: any) => any, wait?: number) => func as typeof func & Cancelable);
 
 describe('CloudWatchLogsQueryField', () => {
   it('updates upstream query log groups on region change', async () => {
@@ -47,7 +49,6 @@ describe('CloudWatchLogsQueryField', () => {
         onChange={onChange}
       />
     );
-    const getRegionSelect = () => wrapper.find({ label: 'Region' }).props().inputEl;
     const getLogGroupSelect = () => wrapper.find({ label: 'Log Groups' }).props().inputEl;
 
     getLogGroupSelect().props.onChange([{ value: 'log_group_1' }]);
@@ -55,12 +56,12 @@ describe('CloudWatchLogsQueryField', () => {
     expect(getLogGroupSelect().props.value[0].value).toBe('log_group_1');
 
     // We select new region where the selected log group does not exist
-    await getRegionSelect().props.onChange({ value: 'region2' });
+    await (wrapper.instance() as CloudWatchLogsQueryField).onRegionChange('region2');
 
     // We clear the select
     expect(getLogGroupSelect().props.value.length).toBe(0);
     // Make sure we correctly updated the upstream state
-    expect(onChange.mock.calls[onChange.mock.calls.length - 1][0]).toEqual({ region: 'region2', logGroupNames: [] });
+    expect(onChange).toHaveBeenLastCalledWith({ logGroupNames: [] });
   });
 
   it('should merge results of remote log groups search with existing results', async () => {

@@ -1,4 +1,14 @@
-import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, Subscription, throwError } from 'rxjs';
+import {
+  from,
+  lastValueFrom,
+  merge,
+  MonoTypeOperatorFunction,
+  Observable,
+  of,
+  Subject,
+  Subscription,
+  throwError,
+} from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,9 +19,13 @@ import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
-import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
-import { parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
+import {
+  isContentTypeApplicationJson,
+  parseInitFromOptions,
+  parseResponseBody,
+  parseUrlFromOptions,
+} from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
@@ -62,9 +76,7 @@ export class BackendSrv implements BackendService {
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
-    return this.fetch<T>(options)
-      .pipe(map((response: FetchResponse<T>) => response.data))
-      .toPromise();
+    return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
@@ -134,7 +146,7 @@ export class BackendSrv implements BackendService {
   }
 
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
-    return this.fetch(options).toPromise();
+    return lastValueFrom(this.fetch(options));
   }
 
   private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
@@ -180,7 +192,9 @@ export class BackendSrv implements BackendService {
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
 
-        const data = await parseResponseBody<T>(response, options.responseType);
+        const responseType = options.responseType ?? (isContentTypeApplicationJson(headers) ? 'json' : undefined);
+
+        const data = await parseResponseBody<T>(response, responseType);
         const fetchResponse: FetchResponse<T> = {
           status,
           statusText,
@@ -299,14 +313,19 @@ export class BackendSrv implements BackendService {
     ]);
   }
 
-  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError {
+  /**
+   * Processes FetchError to ensure "data" property is an object.
+   *
+   * @see DataQueryError.data
+   */
+  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError<{ message: string; error?: string }> {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
       err.data = {
+        message: err.data,
         error: err.statusText,
         response: err.data,
-        message: err.data,
       };
     }
 
@@ -372,8 +391,8 @@ export class BackendSrv implements BackendService {
     return await this.request({ method: 'GET', url, params, requestId });
   }
 
-  async delete(url: string) {
-    return await this.request({ method: 'DELETE', url });
+  async delete(url: string, data?: any) {
+    return await this.request({ method: 'DELETE', url, data });
   }
 
   async post(url: string, data?: any) {
@@ -412,7 +431,6 @@ export class BackendSrv implements BackendService {
   }
 }
 
-coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;

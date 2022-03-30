@@ -1,14 +1,15 @@
-import { InlineField, Input, Select } from '@grafana/ui';
-import React, { ComponentProps } from 'react';
+import { InlineField, Input } from '@grafana/ui';
+import React, { ComponentProps, useRef } from 'react';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../aggregations';
-import { bucketAggregationConfig, createOrderByOptionsFromMetrics, orderOptions, sizeOptions } from '../utils';
+import { bucketAggregationConfig } from '../utils';
 import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { useDescription } from './useDescription';
-import { useQuery } from '../../ElasticsearchQueryContext';
 import { DateHistogramSettingsEditor } from './DateHistogramSettingsEditor';
+import { TermsSettingsEditor } from './TermsSettingsEditor';
+import { uniqueId } from 'lodash';
 
 export const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
@@ -19,66 +20,27 @@ interface Props {
 }
 
 export const SettingsEditor = ({ bucketAgg }: Props) => {
+  const { current: baseId } = useRef(uniqueId('es-setting-'));
+
   const dispatch = useDispatch();
 
-  const { metrics } = useQuery();
   const settingsDescription = useDescription(bucketAgg);
-  const orderBy = createOrderByOptionsFromMetrics(metrics);
 
   return (
     <SettingsEditorContainer label={settingsDescription}>
-      {bucketAgg.type === 'terms' && (
-        <>
-          <InlineField label="Order" {...inlineFieldProps}>
-            <Select
-              onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'order', e.value!))}
-              options={orderOptions}
-              value={bucketAgg.settings?.order || bucketAggregationConfig[bucketAgg.type].defaultSettings?.order}
-            />
-          </InlineField>
-
-          <InlineField label="Size" {...inlineFieldProps}>
-            <Select
-              onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'size', e.value!))}
-              options={sizeOptions}
-              value={bucketAgg.settings?.size || bucketAggregationConfig[bucketAgg.type].defaultSettings?.size}
-              allowCustomValue
-            />
-          </InlineField>
-
-          <InlineField label="Min Doc Count" {...inlineFieldProps}>
-            <Input
-              onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
-              defaultValue={
-                bucketAgg.settings?.min_doc_count ||
-                bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
-              }
-            />
-          </InlineField>
-
-          <InlineField label="Order By" {...inlineFieldProps}>
-            <Select
-              onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'orderBy', e.value!))}
-              options={orderBy}
-              value={bucketAgg.settings?.orderBy || bucketAggregationConfig[bucketAgg.type].defaultSettings?.orderBy}
-            />
-          </InlineField>
-
-          <InlineField label="Missing" {...inlineFieldProps}>
-            <Input
-              onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'missing', e.target.value!))}
-              defaultValue={
-                bucketAgg.settings?.missing || bucketAggregationConfig[bucketAgg.type].defaultSettings?.missing
-              }
-            />
-          </InlineField>
-        </>
-      )}
+      {bucketAgg.type === 'terms' && <TermsSettingsEditor bucketAgg={bucketAgg} />}
+      {bucketAgg.type === 'date_histogram' && <DateHistogramSettingsEditor bucketAgg={bucketAgg} />}
+      {bucketAgg.type === 'filters' && <FiltersSettingsEditor bucketAgg={bucketAgg} />}
 
       {bucketAgg.type === 'geohash_grid' && (
         <InlineField label="Precision" {...inlineFieldProps}>
           <Input
-            onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'precision', e.target.value!))}
+            id={`${baseId}-geohash_grid-precision`}
+            onBlur={(e) =>
+              dispatch(
+                changeBucketAggregationSetting({ bucketAgg, settingName: 'precision', newValue: e.target.value })
+              )
+            }
             defaultValue={
               bucketAgg.settings?.precision || bucketAggregationConfig[bucketAgg.type].defaultSettings?.precision
             }
@@ -86,13 +48,16 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
         </InlineField>
       )}
 
-      {bucketAgg.type === 'date_histogram' && <DateHistogramSettingsEditor bucketAgg={bucketAgg} />}
-
       {bucketAgg.type === 'histogram' && (
         <>
           <InlineField label="Interval" {...inlineFieldProps}>
             <Input
-              onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.target.value!))}
+              id={`${baseId}-histogram-interval`}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: e.target.value })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval
               }
@@ -101,7 +66,12 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
-              onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+              id={`${baseId}-histogram-min_doc_count`}
+              onBlur={(e) =>
+                dispatch(
+                  changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value })
+                )
+              }
               defaultValue={
                 bucketAgg.settings?.min_doc_count ||
                 bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
@@ -110,8 +80,6 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
           </InlineField>
         </>
       )}
-
-      {bucketAgg.type === 'filters' && <FiltersSettingsEditor value={bucketAgg} />}
     </SettingsEditorContainer>
   );
 };

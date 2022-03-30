@@ -4,7 +4,7 @@ import { ChangePassword } from './ChangePassword';
 import LoginCtrl from '../Login/LoginCtrl';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-interface Props extends GrafanaRouteComponentProps<{}, { code: string }> {}
+export interface Props extends GrafanaRouteComponentProps<{}, { code: string }> {}
 
 export const ChangePasswordPage: FC<Props> = (props) => {
   return (

@@ -5,26 +5,27 @@ import { DataSourceApi } from '@grafana/data';
 
 import { Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
 import { initialQueryVariableModelState } from './reducer';
-import { initialVariableEditorState } from '../editor/reducer';
 import { describe, expect } from '../../../../test/lib/common';
-import { NEW_VARIABLE_ID } from '../state/types';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { NEW_VARIABLE_ID } from '../constants';
+import { VariableModel } from '../types';
+import { KeyedVariableIdentifier } from '../state/types';
 
 const setupTestContext = (options: Partial<Props>) => {
+  const variableDefaults: Partial<VariableModel> = { rootStateKey: 'key' };
+  const extended = {
+    VariableQueryEditor: LegacyVariableQueryEditor,
+    dataSource: {} as unknown as DataSourceApi,
+  };
   const defaults: Props = {
-    variable: { ...initialQueryVariableModelState },
+    variable: { ...initialQueryVariableModelState, ...variableDefaults },
     initQueryVariableEditor: jest.fn(),
     changeQueryVariableDataSource: jest.fn(),
     changeQueryVariableQuery: jest.fn(),
     changeVariableMultiValue: jest.fn(),
-    editor: {
-      ...initialVariableEditorState,
-      extended: {
-        VariableQueryEditor: LegacyVariableQueryEditor,
-        dataSource: ({} as unknown) as DataSourceApi,
-      },
-    },
+    extended,
     onPropChange: jest.fn(),
   };
 
@@ -34,10 +35,22 @@ const setupTestContext = (options: Partial<Props>) => {
   return { rerender, props };
 };
 
-setDataSourceSrv({
-  getInstanceSettings: () => null,
-  getList: () => [],
-} as any);
+const mockDS = mockDataSource({
+  name: 'CloudManager',
+  type: DataSourceType.Alertmanager,
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve(mockDS),
+      getList: () => [mockDS],
+      getInstanceSettings: () => mockDS,
+    }),
+  };
+});
+
+const defaultIdentifier: KeyedVariableIdentifier = { type: 'query', rootStateKey: 'key', id: NEW_VARIABLE_ID };
 
 describe('QueryVariableEditor', () => {
   describe('when the component is mounted', () => {
@@ -45,14 +58,14 @@ describe('QueryVariableEditor', () => {
       const { props } = setupTestContext({});
 
       expect(props.initQueryVariableEditor).toHaveBeenCalledTimes(1);
-      expect(props.initQueryVariableEditor).toHaveBeenCalledWith({ type: 'query', id: NEW_VARIABLE_ID });
+      expect(props.initQueryVariableEditor).toHaveBeenCalledWith(defaultIdentifier);
     });
   });
 
   describe('when the user changes', () => {
     it.each`
       fieldName  | propName                      | expectedArgs
-      ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID }, 't', 't']}
+      ${'query'} | ${'changeQueryVariableQuery'} | ${[defaultIdentifier, 't', 't']}
       ${'regex'} | ${'onPropChange'}             | ${[{ propName: 'regex', propValue: 't', updateOptions: true }]}
     `(
       '$fieldName field and tabs away then $propName should be called with correct args',
@@ -95,7 +108,7 @@ describe('QueryVariableEditor', () => {
 const getQueryField = () =>
   screen.getByRole('textbox', { name: /variable editor form default variable query editor textarea/i });
 
-const getRegExField = () => screen.getByRole('textbox', { name: /variable editor form query regex field/i });
+const getRegExField = () => screen.getByLabelText('Regex');
 
 const fieldAccessors: Record<string, () => HTMLElement> = {
   query: getQueryField,

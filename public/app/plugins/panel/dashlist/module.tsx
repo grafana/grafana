@@ -1,56 +1,73 @@
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { DashList } from './DashList';
-import { DashListOptions } from './types';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import React from 'react';
 import { TagsInput } from '@grafana/ui';
+import {
+  ALL_FOLDER,
+  GENERAL_FOLDER,
+  ReadonlyFolderPicker,
+} from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { config } from '@grafana/runtime';
+import { defaultPanelOptions, PanelLayout, PanelOptions } from './models.gen';
 
-export const plugin = new PanelPlugin<DashListOptions>(DashList)
+export const plugin = new PanelPlugin<PanelOptions>(DashList)
   .setPanelOptions((builder) => {
+    if (config.featureToggles.dashboardPreviews) {
+      builder.addRadio({
+        path: 'layout',
+        name: 'Layout',
+        defaultValue: PanelLayout.List,
+        settings: {
+          options: [
+            { value: PanelLayout.List, label: 'List' },
+            { value: PanelLayout.Previews, label: 'Preview' },
+          ],
+        },
+      });
+    }
+
     builder
       .addBooleanSwitch({
         path: 'showStarred',
         name: 'Starred',
-        defaultValue: true,
+        defaultValue: defaultPanelOptions.showStarred,
       })
       .addBooleanSwitch({
         path: 'showRecentlyViewed',
         name: 'Recently viewed',
-        defaultValue: false,
+        defaultValue: defaultPanelOptions.showRecentlyViewed,
       })
       .addBooleanSwitch({
         path: 'showSearch',
         name: 'Search',
-        defaultValue: false,
+        defaultValue: defaultPanelOptions.showSearch,
       })
       .addBooleanSwitch({
         path: 'showHeadings',
         name: 'Show headings',
-        defaultValue: true,
+        defaultValue: defaultPanelOptions.showHeadings,
       })
       .addNumberInput({
         path: 'maxItems',
         name: 'Max items',
-        defaultValue: 10,
+        defaultValue: defaultPanelOptions.maxItems,
       })
       .addTextInput({
         path: 'query',
         name: 'Query',
-        defaultValue: '',
+        defaultValue: defaultPanelOptions.query,
       })
       .addCustomEditor({
         path: 'folderId',
         name: 'Folder',
         id: 'folderId',
-        defaultValue: null,
-        editor: function RenderFolderPicker(props) {
+        defaultValue: undefined,
+        editor: function RenderFolderPicker({ value, onChange }) {
           return (
-            <FolderPicker
-              initialFolderId={props.value}
-              initialTitle="All"
-              enableReset={true}
-              permissionLevel="View"
-              onChange={({ id }) => props.onChange(id)}
+            <ReadonlyFolderPicker
+              initialFolderId={value}
+              onChange={(folder) => onChange(folder?.id)}
+              extraFolders={[ALL_FOLDER, GENERAL_FOLDER]}
             />
           );
         },
@@ -60,13 +77,13 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         path: 'tags',
         name: 'Tags',
         description: '',
-        defaultValue: [],
+        defaultValue: defaultPanelOptions.tags,
         editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       });
   })
-  .setMigrationHandler((panel: PanelModel<DashListOptions> & Record<string, any>) => {
+  .setMigrationHandler((panel: PanelModel<PanelOptions> & Record<string, any>) => {
     const newOptions = {
       showStarred: panel.options.showStarred ?? panel.starred,
       showRecentlyViewed: panel.options.showRecentlyViewed ?? panel.recent,

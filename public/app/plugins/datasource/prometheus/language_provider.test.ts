@@ -2,16 +2,17 @@ import Plain from 'slate-plain-serializer';
 import { Editor as SlateEditor } from 'slate';
 import LanguageProvider from './language_provider';
 import { PrometheusDatasource } from './datasource';
-import { HistoryItem } from '@grafana/data';
+import { AbstractLabelOperator, HistoryItem } from '@grafana/data';
 import { PromQuery } from './types';
 import Mock = jest.Mock;
 import { SearchFunctionType } from '@grafana/ui';
 
 describe('Language completion provider', () => {
-  const datasource: PrometheusDatasource = ({
+  const datasource: PrometheusDatasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
     getTimeRangeParams: () => ({ start: '0', end: '1' }),
-  } as any) as PrometheusDatasource;
+    interpolateString: (string: string) => string,
+  } as any as PrometheusDatasource;
 
   describe('cleanText', () => {
     const cleanText = new LanguageProvider(datasource).cleanText;
@@ -61,6 +62,56 @@ describe('Language completion provider', () => {
 
     it('removes range syntax', () => {
       expect(cleanText('[1m')).toBe('1m');
+    });
+  });
+
+  describe('fetchSeries', () => {
+    it('should use match[] parameter', () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeries = languageProvider.fetchSeries;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeries('{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {},
+        { end: '1', 'match[]': '{job="grafana"}', start: '0' }
+      );
+    });
+  });
+
+  describe('fetchSeriesLabels', () => {
+    it('should interpolate variable in series', () => {
+      const languageProvider = new LanguageProvider({
+        ...datasource,
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as PrometheusDatasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeriesLabels('$metric');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/api/v1/series', [], {
+        end: '1',
+        'match[]': 'interpolated-metric',
+        start: '0',
+      });
+    });
+  });
+
+  describe('fetchLabelValues', () => {
+    it('should interpolate variable in series', () => {
+      const languageProvider = new LanguageProvider({
+        ...datasource,
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as PrometheusDatasource);
+      const fetchLabelValues = languageProvider.fetchLabelValues;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchLabelValues('$job');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/api/v1/label/interpolated-job/values', [], {
+        end: '1',
+        start: '0',
+      });
     });
   });
 
@@ -124,8 +175,9 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toMatchObject([
         {
           items: [
-            { label: '$__interval', sortValue: '$__interval' }, // TODO: figure out why this row and sortValue is needed
+            { label: '$__interval', sortValue: '$__interval' },
             { label: '$__rate_interval', sortValue: '$__rate_interval' },
+            { label: '$__range', sortValue: '$__range' },
             { label: '1m', sortValue: '00:01:00' },
             { label: '5m', sortValue: '00:05:00' },
             { label: '10m', sortValue: '00:10:00' },
@@ -247,10 +299,11 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on label context and metric', async () => {
-      const datasources: PrometheusDatasource = ({
+      const datasources: PrometheusDatasource = {
         metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
-      } as any) as PrometheusDatasource;
+        interpolateString: (string: string) => string,
+      } as any as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
       const value = Plain.deserialize('metric{}');
       const ed = new SlateEditor({ value });
@@ -268,7 +321,7 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on label context but leaves out labels that already exist', async () => {
-      const datasource: PrometheusDatasource = ({
+      const datasource: PrometheusDatasource = {
         metadataRequest: () => ({
           data: {
             data: [
@@ -283,7 +336,8 @@ describe('Language completion provider', () => {
           },
         }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
-      } as any) as PrometheusDatasource;
+        interpolateString: (string: string) => string,
+      } as any as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
       const ed = new SlateEditor({ value });
@@ -301,12 +355,12 @@ describe('Language completion provider', () => {
     });
 
     it('returns label value suggestions inside a label value context after a negated matching operator', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => {
           return { data: { data: ['value1', 'value2'] } };
         },
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('{job!=}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(6).value;
@@ -328,6 +382,7 @@ describe('Language completion provider', () => {
     });
 
     it('returns a refresher on label context and unavailable metric', async () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('metric{}');
       const ed = new SlateEditor({ value });
@@ -340,13 +395,14 @@ describe('Language completion provider', () => {
       });
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toEqual([]);
+      expect(console.warn).toHaveBeenCalledWith('Server did not return any values for selector = {__name__="metric"}');
     });
 
     it('returns label values on label context when given a metric and a label key', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('metric{bar=ba}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(13).value;
@@ -364,10 +420,10 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on aggregation context and metric w/ selector', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('sum(metric{foo="xx"}) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(26).value;
@@ -384,10 +440,10 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on aggregation context and metric w/o selector', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('sum(metric) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(16).value;
@@ -404,10 +460,10 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions inside a multi-line aggregation context', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('sum(\nmetric\n)\nby ()');
       const aggregationTextBlock = value.document.getBlocks().get(3);
       const ed = new SlateEditor({ value });
@@ -430,10 +486,10 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions inside an aggregation context with a range vector', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('sum(rate(metric[1h])) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(26).value;
@@ -454,10 +510,10 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions inside an aggregation context with a range vector and label', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('sum(rate(metric{label1="value"}[1h])) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(42).value;
@@ -493,10 +549,10 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions inside an aggregation context using alternate syntax', async () => {
-      const instance = new LanguageProvider(({
+      const instance = new LanguageProvider({
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
-      } as any) as PrometheusDatasource);
+      } as any as PrometheusDatasource);
       const value = Plain.deserialize('sum by () (metric)');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(8).value;
@@ -517,10 +573,11 @@ describe('Language completion provider', () => {
     });
 
     it('does not re-fetch default labels', async () => {
-      const datasource: PrometheusDatasource = ({
+      const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
-      } as any) as PrometheusDatasource;
+        interpolateString: (string: string) => string,
+      } as any as PrometheusDatasource;
 
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{}');
@@ -543,11 +600,12 @@ describe('Language completion provider', () => {
   });
   describe('disabled metrics lookup', () => {
     it('does not issue any metadata requests when lookup is disabled', async () => {
-      const datasource: PrometheusDatasource = ({
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: true,
-      } as any) as PrometheusDatasource;
+      } as any as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{}');
       const ed = new SlateEditor({ value });
@@ -564,18 +622,50 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
       await instance.provideCompletionItems(args);
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      expect(console.warn).toHaveBeenCalledWith('Server did not return any values for selector = {}');
     });
     it('issues metadata requests when lookup is not disabled', async () => {
-      const datasource: PrometheusDatasource = ({
+      const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: false,
-      } as any) as PrometheusDatasource;
+        interpolateString: (string: string) => string,
+      } as any as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
 
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
       await instance.start();
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Query imports', () => {
+    it('returns empty queries', async () => {
+      const instance = new LanguageProvider(datasource);
+      const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+      expect(result).toEqual({ refId: 'bar', expr: '', range: true });
+    });
+
+    describe('exporting to abstract query', () => {
+      it('exports labels with metric name', async () => {
+        const instance = new LanguageProvider(datasource);
+        const abstractQuery = instance.exportToAbstractQuery({
+          refId: 'bar',
+          expr: 'metric_name{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+          instant: true,
+          range: false,
+        });
+        expect(abstractQuery).toMatchObject({
+          refId: 'bar',
+          labelMatchers: [
+            { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+            { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+            { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+            { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+            { name: '__name__', operator: AbstractLabelOperator.Equal, value: 'metric_name' },
+          ],
+        });
+      });
     });
   });
 });

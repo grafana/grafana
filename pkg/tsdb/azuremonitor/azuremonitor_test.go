@@ -2,59 +2,105 @@ package azuremonitor
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestProvideService(t *testing.T) {
+	t.Run("it should skip insight analytics and app insights with Grafana 9", func(t *testing.T) {
+		currentV := setting.BuildVersion
+		t.Cleanup(func() {
+			setting.BuildVersion = currentV
+		})
+		versions := []struct {
+			version               string
+			shouldIncludeInsights bool
+		}{
+			{"8.5.0", true},
+			{"9.0.0-beta1", false},
+			{"9.0.0", false},
+		}
+		for _, v := range versions {
+			setting.BuildVersion = v.version
+			s := ProvideService(setting.NewCfg(), httpclient.NewProvider(), nil)
+			if v.shouldIncludeInsights {
+				assert.NotNil(t, s.executors[deprecated.InsightsAnalytics])
+				assert.NotNil(t, s.executors[deprecated.AppInsights])
+			} else {
+				assert.Nil(t, s.executors[deprecated.InsightsAnalytics])
+				assert.Nil(t, s.executors[deprecated.AppInsights])
+			}
+		}
+	})
+}
 
 func TestNewInstanceSettings(t *testing.T) {
 	tests := []struct {
 		name          string
 		settings      backend.DataSourceInstanceSettings
-		expectedModel datasourceInfo
+		expectedModel types.DatasourceInfo
 		Err           require.ErrorAssertionFunc
 	}{
 		{
 			name: "creates an instance",
 			settings: backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cloudName":"azuremonitor"}`),
+				JSONData:                []byte(`{"azureAuthType":"msi"}`),
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				ID:                      40,
 			},
-			expectedModel: datasourceInfo{
-				Settings:                azureMonitorSettings{CloudName: "azuremonitor"},
-				Routes:                  routes["azuremonitor"],
-				JSONData:                map[string]interface{}{"cloudName": string("azuremonitor")},
+			expectedModel: types.DatasourceInfo{
+				Cloud:                   setting.AzurePublic,
+				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
+				Settings:                types.AzureMonitorSettings{},
+				Routes:                  routes[setting.AzurePublic],
+				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				Services:                map[string]types.DatasourceService{},
 			},
 			Err: require.NoError,
 		},
 	}
 
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			Cloud: setting.AzurePublic,
+		},
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewInstanceSettings()
+			factory := NewInstanceSettings(cfg, httpclient.Provider{}, map[string]azDatasourceExecutor{})
 			instance, err := factory(tt.settings)
 			tt.Err(t, err)
-			if !cmp.Equal(instance, tt.expectedModel, cmpopts.IgnoreFields(datasourceInfo{}, "Services", "HTTPCliOpts")) {
+			if !cmp.Equal(instance, tt.expectedModel) {
 				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
 			}
 		})
 	}
 }
 
-type fakeInstance struct{}
+type fakeInstance struct {
+	routes   map[string]types.AzRoute
+	services map[string]types.DatasourceService
+}
 
 func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
-	return datasourceInfo{
-		Services: map[string]datasourceService{},
-		Routes:   routes[azureMonitorPublic],
+	return types.DatasourceInfo{
+		Routes:   f.routes,
+		Services: f.services,
 	}, nil
 }
 
@@ -68,20 +114,22 @@ type fakeExecutor struct {
 	expectedURL string
 }
 
-func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
-	if s, ok := dsInfo.Services[f.queryType]; !ok {
+func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+}
+
+func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {
-		if s.URL != f.expectedURL {
-			f.t.Errorf("Unexpected URL %s wanted %s", s.URL, f.expectedURL)
+		if url != f.expectedURL {
+			f.t.Errorf("Unexpected URL %s wanted %s", url, f.expectedURL)
 		}
 	}
 	return &backend.QueryDataResponse{}, nil
 }
 
-func Test_newExecutor(t *testing.T) {
-	cfg := &setting.Cfg{}
-
+func Test_newMux(t *testing.T) {
 	tests := []struct {
 		name        string
 		queryType   string
@@ -104,14 +152,26 @@ func Test_newExecutor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux := newExecutor(&fakeInstance{}, cfg, map[string]azDatasourceExecutor{
-				tt.queryType: &fakeExecutor{
-					t:           t,
-					queryType:   tt.queryType,
-					expectedURL: tt.expectedURL,
+			s := &Service{
+				im: &fakeInstance{
+					routes: routes[azureMonitorPublic],
+					services: map[string]types.DatasourceService{
+						tt.queryType: {
+							URL:        routes[azureMonitorPublic][tt.queryType].URL,
+							HTTPClient: &http.Client{},
+						},
+					},
 				},
-			})
-			res, err := mux.QueryData(context.TODO(), &backend.QueryDataRequest{
+				executors: map[string]azDatasourceExecutor{
+					tt.queryType: &fakeExecutor{
+						t:           t,
+						queryType:   tt.queryType,
+						expectedURL: tt.expectedURL,
+					},
+				},
+			}
+			mux := s.newQueryMux()
+			res, err := mux.QueryData(context.Background(), &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{},
 				Queries: []backend.DataQuery{
 					{QueryType: tt.queryType},

@@ -69,7 +69,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: input.background,
     },
     tooltip: {
-      background: colors.mode === 'light' ? '#555' : colors.background.secondary,
+      background: colors.mode === 'light' ? '#555' : '#35383e',
       text: colors.mode === 'light' ? '#FFF' : colors.text.primary,
     },
     dashboard: {
@@ -77,10 +77,10 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       padding: 1,
     },
     overlay: {
-      background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
     },
     sidemenu: {
-      width: 60,
+      width: 48,
     },
   };
 }

@@ -1,11 +1,18 @@
 import React from 'react';
-import { DataFrame, DisplayValue, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
+import {
+  DataFrame,
+  DisplayValue,
+  fieldReducers,
+  getFieldDisplayName,
+  getFieldSeriesColor,
+  reduceField,
+} from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { VizLegendItem } from '../VizLegend/types';
-import { VizLegendOptions } from '../VizLegend/models.gen';
-import { AxisPlacement } from './config';
+import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
+import { useTheme2 } from '../../themes';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -22,6 +29,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
   displayMode,
   ...vizLayoutLegendProps
 }) => {
+  const theme = useTheme2();
   const legendItems = config
     .getSeries()
     .map<VizLegendItem | undefined>((s) => {
@@ -40,10 +48,13 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
       }
 
       const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+      const scaleColor = getFieldSeriesColor(field, theme);
+      const seriesColor = scaleColor.color;
+
       return {
-        disabled: !seriesConfig.show ?? false,
+        disabled: !(seriesConfig.show ?? true),
         fieldIndex,
-        color: seriesConfig.lineColor!,
+        color: seriesColor,
         label,
         yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         getDisplayValues: () => {
@@ -57,10 +68,13 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
             reducers: calcs,
           });
 
-          return calcs.map<DisplayValue>((reducer) => {
+          return calcs.map<DisplayValue>((reducerId) => {
+            const fieldReducer = fieldReducers.get(reducerId);
+
             return {
-              ...fmt(fieldCalcs[reducer]),
-              title: fieldReducers.get(reducer).name,
+              ...fmt(fieldCalcs[reducerId]),
+              title: fieldReducer.name,
+              description: fieldReducer.description,
             };
           });
         },
@@ -71,7 +85,13 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
 
   return (
     <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
-      <VizLegend placement={placement} items={legendItems} displayMode={displayMode} />
+      <VizLegend
+        placement={placement}
+        items={legendItems}
+        displayMode={displayMode}
+        sortBy={vizLayoutLegendProps.sortBy}
+        sortDesc={vizLayoutLegendProps.sortDesc}
+      />
     </VizLayout.Legend>
   );
 };

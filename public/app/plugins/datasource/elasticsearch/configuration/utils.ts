@@ -19,6 +19,7 @@ export const coerceOptions = (
         options.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(esVersion),
       logMessageField: options.jsonData.logMessageField || '',
       logLevelField: options.jsonData.logLevelField || '',
+      includeFrozen: options.jsonData.includeFrozen ?? false,
     },
   };
 };
@@ -36,3 +37,7 @@ export const isValidOptions = (options: DataSourceSettings<ElasticsearchOptions,
     options.jsonData.logLevelField !== undefined
   );
 };
+
+type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T;
+
+export const isTruthy = <T>(value: T): value is Truthy<T> => Boolean(value);

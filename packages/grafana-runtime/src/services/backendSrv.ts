@@ -114,7 +114,7 @@ export interface FetchErrorDataProps {
  *
  * @public
  */
-export interface FetchError<T extends FetchErrorDataProps = any> {
+export interface FetchError<T = any> {
   status: number;
   statusText?: string;
   data: T;
@@ -140,23 +140,24 @@ export interface FetchError<T extends FetchErrorDataProps = any> {
  */
 export interface BackendSrv {
   get(url: string, params?: any, requestId?: string): Promise<any>;
-  delete(url: string): Promise<any>;
+  delete(url: string, data?: any): Promise<any>;
   post(url: string, data?: any): Promise<any>;
   patch(url: string, data?: any): Promise<any>;
   put(url: string, data?: any): Promise<any>;
 
   /**
    * @deprecated Use the fetch function instead. If you prefer to work with a promise
-   * call the toPromise() function on the Observable returned by fetch.
+   * wrap the Observable returned by fetch with the lastValueFrom function.
    */
   request(options: BackendSrvRequest): Promise<any>;
 
   /**
-   * @deprecated Use the fetch function instead
    * Special function used to communicate with datasources that will emit core
    * events that the Grafana QueryInspector and QueryEditor is listening for to be able
    * to display datasource query information. Can be skipped by adding `option.silent`
    * when initializing the request.
+   *
+   * @deprecated Use the fetch function instead
    */
   datasourceRequest<T = any>(options: BackendSrvRequest): Promise<FetchResponse<T>>;
 

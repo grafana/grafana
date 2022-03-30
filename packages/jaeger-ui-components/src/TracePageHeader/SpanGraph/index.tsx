@@ -14,6 +14,7 @@
 
 import * as React from 'react';
 import cx from 'classnames';
+import memoizeOne from 'memoize-one';
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
@@ -33,19 +34,13 @@ type SpanGraphProps = {
   updateNextViewRangeTime: (nextUpdate: ViewRangeTimeUpdate) => void;
 };
 
-/**
- * Store `items` in state so they are not regenerated every render. Otherwise,
- * the canvas graph will re-render itself every time.
- */
-type SpanGraphState = {
-  items: Array<{
-    valueOffset: number;
-    valueWidth: number;
-    serviceName: string;
-  }>;
+type SpanItem = {
+  valueOffset: number;
+  valueWidth: number;
+  serviceName: string;
 };
 
-function getItem(span: TraceSpan) {
+function getItem(span: TraceSpan): SpanItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,
@@ -53,36 +48,24 @@ function getItem(span: TraceSpan) {
   };
 }
 
-export default class SpanGraph extends React.PureComponent<SpanGraphProps, SpanGraphState> {
-  state: SpanGraphState;
+function getItems(trace: Trace): SpanItem[] {
+  return trace.spans.map(getItem);
+}
 
+const memoizedGetitems = memoizeOne(getItems);
+
+export default class SpanGraph extends React.PureComponent<SpanGraphProps> {
   static defaultProps = {
     height: DEFAULT_HEIGHT,
   };
-
-  constructor(props: SpanGraphProps) {
-    super(props);
-    const { trace } = props;
-    this.state = {
-      items: trace ? trace.spans.map(getItem) : [],
-    };
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps: SpanGraphProps) {
-    const { trace } = nextProps;
-    if (this.props.trace !== trace) {
-      this.setState({
-        items: trace ? trace.spans.map(getItem) : [],
-      });
-    }
-  }
 
   render() {
     const { height, trace, viewRange, updateNextViewRangeTime, updateViewRangeTime } = this.props;
     if (!trace) {
       return <div />;
     }
-    const { items } = this.state;
+
+    const items = memoizedGetitems(trace);
     return (
       <div className={cx(ubPb2, ubPx2)}>
         <TickLabels numTicks={TIMELINE_TICK_INTERVAL} duration={trace.duration} />

@@ -13,3 +13,4 @@ export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode 
 export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
 export { outerJoinDataFrames } from './transformers/joinDataFrames';
 export * from './transformers/histogram';
+export { ensureTimeField } from './transformers/convertFieldType';

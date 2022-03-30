@@ -1,8 +1,11 @@
 import React from 'react';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
   DataFrame,
+  DashboardCursorSync,
+  DataHoverPayload,
+  DataHoverEvent,
+  DataHoverClearEvent,
   FALLBACK_COLOR,
   Field,
   FieldColorModeId,
@@ -12,7 +15,9 @@ import {
   getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
-  outerJoinDataFrames,
+  getActiveThreshold,
+  Threshold,
+  getFieldConfigWithMinMax,
   ThresholdsMode,
 } from '@grafana/data';
 import {
@@ -21,12 +26,13 @@ import {
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
   VizLegendItem,
-  VizLegendOptions,
 } from '@grafana/ui';
 import { getConfig, TimelineCoreOptions } from './timeline';
-import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
+import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
+import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import uPlot from 'uplot';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -40,41 +46,40 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
   return SeriesVisibilityChangeMode.ToggleSelection;
 }
 
-export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
-  return outerJoinDataFrames({
-    frames: data,
-    joinBy: dimFields.x,
-    keep: dimFields.y,
-    keepOriginIndices: true,
-  });
-}
-
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
   timeZone,
   getTimeRange,
   mode,
+  eventBus,
+  sync,
   rowHeight,
   colWidth,
   showValue,
   alignValue,
+  mergeValues,
+  getValueColor,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
+
+  const xScaleUnit = 'time';
+  const xScaleKey = 'x';
 
   const isDiscrete = (field: Field) => {
     const mode = field.config?.color?.mode;
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const getValueColor = (seriesIdx: number, value: any) => {
+  const getValueColorFn = (seriesIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
 
-    if (field.display) {
-      const disp = field.display(value); // will apply color modes
-      if (disp.color) {
-        return disp.color;
-      }
+    if (
+      field.state?.origin?.fieldIndex !== undefined &&
+      field.state?.origin?.frameIndex !== undefined &&
+      getValueColor
+    ) {
+      return getValueColor(field.state?.origin?.frameIndex, field.state?.origin?.fieldIndex, value);
     }
 
     return FALLBACK_COLOR;
@@ -85,6 +90,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
+    mergeValues,
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
@@ -92,7 +98,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,
-    getValueColor,
+    getValueColor: getValueColorFn,
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
@@ -113,6 +119,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   let hoveredDataIdx: number | null = null;
 
   const coreConfig = getConfig(opts);
+  const payload: DataHoverPayload = {
+    point: {
+      [xScaleUnit]: null,
+      [FIXED_UNIT]: null,
+    },
+    data: frame,
+  };
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
@@ -125,7 +138,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     updateActiveSeriesIdx,
     updateActiveDatapointIdx,
     updateTooltipPosition
-  ) => (u: uPlot) => {
+  ) => {
     if (shouldChangeHover) {
       if (hoveredSeriesIdx != null) {
         updateActiveSeriesIdx(hoveredSeriesIdx);
@@ -140,10 +153,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
   builder.setTooltipInterpolator(interpolateTooltip);
 
+  builder.setPrepData(preparePlotData);
+
   builder.setCursor(coreConfig.cursor);
 
   builder.addScale({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -159,12 +174,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   });
 
   builder.addAxis({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
     timeZone,
     theme,
+    grid: { show: true },
   });
 
   builder.addAxis({
@@ -173,8 +189,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
-    grid: false,
-    ticks: false,
+    grid: { show: false },
+    ticks: { show: false },
     gap: 16,
     theme,
   });
@@ -211,6 +227,37 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
     });
+  }
+
+  if (sync && sync() !== DashboardCursorSync.Off) {
+    let cursor: Partial<uPlot.Cursor> = {};
+
+    cursor.sync = {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
+          payload.rowIndex = dataIdx;
+          if (x < 0 && y < 0) {
+            payload.point[xScaleUnit] = null;
+            payload.point[FIXED_UNIT] = null;
+            eventBus.publish(new DataHoverClearEvent());
+          } else {
+            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
+            payload.down = undefined;
+            eventBus.publish(new DataHoverEvent(payload));
+          }
+          return true;
+        },
+      },
+      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
+      scales: [xScaleKey, null as any],
+    };
+    builder.setSync();
+    builder.setCursor(cursor);
   }
 
   return builder;
@@ -254,10 +301,82 @@ export function unsetSameFutureValues(values: any[]): any[] | undefined {
   return clone;
 }
 
+function getSpanNulls(field: Field) {
+  let spanNulls = field.config.custom?.spanNulls;
+
+  // magic value for join() to leave nulls alone instead of expanding null ranges
+  // should be set to -1 when spanNulls = null|undefined|false|0, which is "retain nulls, without expanding"
+  // Infinity is not optimal here since it causes spanNulls to be more expensive than simply removing all nulls unconditionally
+  return !spanNulls ? -1 : spanNulls === true ? Infinity : spanNulls;
+}
+
+/**
+ * Merge values by the threshold
+ */
+export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undefined {
+  const thresholds = field.config.thresholds;
+  if (field.type !== FieldType.number || !thresholds || !thresholds.steps.length) {
+    return undefined;
+  }
+
+  const items = getThresholdItems(field.config, theme);
+  if (items.length !== thresholds.steps.length) {
+    return undefined; // should not happen
+  }
+
+  const thresholdToText = new Map<Threshold, string>();
+  const textToColor = new Map<string, string>();
+  for (let i = 0; i < items.length; i++) {
+    thresholdToText.set(thresholds.steps[i], items[i].label);
+    textToColor.set(items[i].label, items[i].color!);
+  }
+
+  let input = field.values.toArray();
+  const vals = new Array<String | undefined>(field.values.length);
+  if (thresholds.mode === ThresholdsMode.Percentage) {
+    const { min, max } = getFieldConfigWithMinMax(field);
+    const delta = max! - min!;
+    input = input.map((v) => {
+      if (v == null) {
+        return v;
+      }
+      return ((v - min!) / delta) * 100;
+    });
+  }
+
+  for (let i = 0; i < vals.length; i++) {
+    const v = input[i];
+    if (v == null) {
+      vals[i] = v;
+    } else {
+      vals[i] = thresholdToText.get(getActiveThreshold(v, thresholds.steps));
+    }
+  }
+
+  return {
+    ...field,
+    config: {
+      ...field.config,
+      custom: {
+        ...field.config.custom,
+        spanNulls: getSpanNulls(field),
+      },
+    },
+    type: FieldType.string,
+    values: new ArrayVector(vals),
+    display: (value: string) => ({
+      text: value,
+      color: textToColor.get(value),
+      numeric: NaN,
+    }),
+  };
+}
+
 // This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
-  mergeValues: boolean
+  mergeValues: boolean,
+  theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
@@ -268,7 +387,7 @@ export function prepareTimelineFields(
     let isTimeseries = false;
     let changed = false;
     const fields: Field[] = [];
-    for (const field of frame.fields) {
+    for (let field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;
@@ -276,22 +395,27 @@ export function prepareTimelineFields(
           fields.push(field);
           break;
         case FieldType.number:
-        case FieldType.boolean:
-        case FieldType.string:
-          // magic value for join() to leave nulls alone
-          (field.config.custom = field.config.custom ?? {}).spanNulls = -1;
-
-          if (mergeValues) {
-            let merged = unsetSameFutureValues(field.values.toArray());
-            if (merged) {
-              fields.push({
-                ...field,
-                values: new ArrayVector(merged),
-              });
+          if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
+            const f = mergeThresholdValues(field, theme);
+            if (f) {
+              fields.push(f);
               changed = true;
               continue;
             }
           }
+
+        case FieldType.boolean:
+        case FieldType.string:
+          field = {
+            ...field,
+            config: {
+              ...field.config,
+              custom: {
+                ...field.config.custom,
+                spanNulls: getSpanNulls(field),
+              },
+            },
+          };
           fields.push(field);
           break;
         default:
@@ -320,6 +444,30 @@ export function prepareTimelineFields(
   return { frames };
 }
 
+export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+  const items: VizLegendItem[] = [];
+  const thresholds = fieldConfig.thresholds;
+  if (!thresholds || !thresholds.steps.length) {
+    return items;
+  }
+
+  const steps = thresholds.steps;
+  const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+
+  const fmt = (v: number) => formattedValueToString(disp(v));
+
+  for (let i = 1; i <= steps.length; i++) {
+    const step = steps[i - 1];
+    items.push({
+      label: i === 1 ? `< ${fmt(step.value)}` : `${fmt(step.value)}+`,
+      color: theme.visualization.getColorByName(step.color),
+      yAxis: 1,
+    });
+  }
+
+  return items;
+}
+
 export function prepareTimelineLegendItems(
   frames: DataFrame[] | undefined,
   options: VizLegendOptions,
@@ -329,7 +477,10 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  const fields = allNonTimeFields(frames);
+  return getFieldLegendItem(allNonTimeFields(frames), theme);
+}
+
+export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
   if (!fields.length) {
     return undefined;
   }
@@ -341,21 +492,7 @@ export function prepareTimelineLegendItems(
 
   // If thresholds are enabled show each step in the legend
   if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
-    const steps = thresholds.steps;
-    const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
-
-    const fmt = (v: number) => formattedValueToString(disp(v));
-
-    for (let i = 1; i <= steps.length; i++) {
-      const step = steps[i - 1];
-      items.push({
-        label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
-        color: theme.visualization.getColorByName(step.color),
-        yAxis: 1,
-      });
-    }
-
-    return items;
+    return getThresholdItems(fieldConfig, theme);
   }
 
   // If thresholds are enabled show each step in the legend
@@ -368,7 +505,9 @@ export function prepareTimelineLegendItems(
   fields.forEach((field) => {
     field.values.toArray().forEach((v) => {
       let state = field.display!(v);
-      stateColors.set(state.text, state.color!);
+      if (state.color) {
+        stateColors.set(state.text, state.color!);
+      }
     });
   });
 
@@ -405,18 +544,81 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
     return null;
   }
 
+  const startValue = field.values.get(datapointIdx);
+
   while (end === undefined) {
     if (rightPointer >= field.values.length) {
       return null;
     }
     const rightValue = field.values.get(rightPointer);
 
-    if (rightValue !== undefined) {
-      end = rightPointer;
-    } else {
+    if (rightValue === undefined || rightValue === startValue) {
       rightPointer++;
+    } else {
+      end = rightPointer;
     }
   }
 
   return end;
+}
+
+/**
+ * Returns the precise duration of a time range passed in milliseconds.
+ * This function calculates with 30 days month and 365 days year.
+ * adapted from https://gist.github.com/remino/1563878
+ * @param milliSeconds The duration in milliseconds
+ * @returns A formated string of the duration
+ */
+export function fmtDuration(milliSeconds: number): string {
+  if (milliSeconds < 0 || Number.isNaN(milliSeconds)) {
+    return '';
+  }
+
+  let yr: number, mo: number, wk: number, d: number, h: number, m: number, s: number, ms: number;
+
+  s = Math.floor(milliSeconds / 1000);
+  m = Math.floor(s / 60);
+  s = s % 60;
+  h = Math.floor(m / 60);
+  m = m % 60;
+  d = Math.floor(h / 24);
+  h = h % 24;
+
+  yr = Math.floor(d / 365);
+  if (yr > 0) {
+    d = d % 365;
+  }
+
+  mo = Math.floor(d / 30);
+  if (mo > 0) {
+    d = d % 30;
+  }
+
+  wk = Math.floor(d / 7);
+
+  if (wk > 0) {
+    d = d % 7;
+  }
+
+  ms = Math.round((milliSeconds % 1000) * 1000) / 1000;
+
+  return (
+    yr > 0
+      ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+      : mo > 0
+      ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+      : wk > 0
+      ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
+      : d > 0
+      ? d + 'd ' + (h > 0 ? h + 'h ' : '')
+      : h > 0
+      ? h + 'h ' + (m > 0 ? m + 'm ' : '')
+      : m > 0
+      ? m + 'm ' + (s > 0 ? s + 's ' : '')
+      : s > 0
+      ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
+      : ms > 0
+      ? ms + 'ms '
+      : '0'
+  ).trim();
 }

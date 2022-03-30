@@ -1,15 +1,16 @@
 package guardian
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"runtime"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -680,70 +681,63 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 }
 
 func TestGuardianGetHiddenACL(t *testing.T) {
-	Convey("Get hidden ACL tests", t, func() {
-		bus.ClearBusHandlers()
-
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
-			query.Result = []*models.DashboardAclInfoDTO{
-				{Inherited: false, UserId: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
-				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
-				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
-			}
-			return nil
-		})
+	t.Run("Get hidden ACL tests", func(t *testing.T) {
+		store := mockstore.NewSQLStoreMock()
+		store.ExpectedDashboardAclInfoList = []*models.DashboardAclInfoDTO{
+			{Inherited: false, UserId: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
+			{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
+			{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
+		}
 
 		cfg := setting.NewCfg()
 		cfg.HiddenUsers = map[string]struct{}{"user2": {}}
 
-		Convey("Should get hidden acl", func() {
+		t.Run("Should get hidden acl", func(t *testing.T) {
 			user := &models.SignedInUser{
 				OrgId:  orgID,
 				UserId: 1,
 				Login:  "user1",
 			}
-			g := New(dashboardID, orgID, user)
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(hiddenACL, ShouldHaveLength, 1)
-			So(hiddenACL[0].UserID, ShouldEqual, 2)
+			require.Equal(t, len(hiddenACL), 1)
+			require.Equal(t, hiddenACL[0].UserID, int64(2))
 		})
 
-		Convey("Grafana admin should not get hidden acl", func() {
+		t.Run("Grafana admin should not get hidden acl", func(t *testing.T) {
 			user := &models.SignedInUser{
 				OrgId:          orgID,
 				UserId:         1,
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
-			g := New(dashboardID, orgID, user)
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(hiddenACL, ShouldHaveLength, 0)
+			require.Equal(t, len(hiddenACL), 0)
 		})
 	})
 }
 
 func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
+		store := mockstore.NewSQLStoreMock()
 
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
-			query.Result = []*models.DashboardAclInfoDTO{
-				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
-				{Inherited: false, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
-				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
-				{Inherited: true, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
-				{Inherited: false, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
-				{Inherited: false, UserId: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
-				{Inherited: true, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
-				{Inherited: false, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
-			}
-			return nil
-		})
+		store.ExpectedDashboardAclInfoList = []*models.DashboardAclInfoDTO{
+			{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
+			{Inherited: false, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
+			{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
+			{Inherited: true, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
+			{Inherited: false, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
+			{Inherited: false, UserId: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
+			{Inherited: true, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
+			{Inherited: false, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
+		}
 
 		t.Run("Should get acl without duplicates", func(t *testing.T) {
 			user := &models.SignedInUser{
@@ -751,7 +745,7 @@ func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 				UserId: 1,
 				Login:  "user1",
 			}
-			g := New(dashboardID, orgID, user)
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store)
 
 			acl, err := g.GetACLWithoutDuplicates()
 			require.NoError(t, err)

@@ -29,3 +29,12 @@ func TestExists_Existent(t *testing.T) {
 
 	require.True(t, exists)
 }
+
+func TestExists_Dir(t *testing.T) {
+	f := t.TempDir()
+
+	exists, err := Exists(f)
+
+	require.NoError(t, err)
+	require.True(t, exists)
+}

@@ -1,63 +1,83 @@
 import React, { ChangeEvent } from 'react';
-import { LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
 import { PanelData } from '@grafana/data';
-import { AnnotationQuery } from '../types';
+import { EditorField, EditorHeader, EditorRow, InlineSelect, Space } from '@grafana/experimental';
+import { Input, Switch } from '@grafana/ui';
 import { CloudWatchDatasource } from '../datasource';
-import { QueryField, PanelQueryEditor } from './';
+import { useRegions } from '../hooks';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from '../types';
+import { MetricStatEditor } from './MetricStatEditor';
 
 export type Props = {
-  query: AnnotationQuery;
+  query: CloudWatchAnnotationQuery;
   datasource: CloudWatchDatasource;
-  onChange: (value: AnnotationQuery) => void;
+  onChange: (value: CloudWatchAnnotationQuery) => void;
   data?: PanelData;
 };
 
 export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
-  const { query, onChange } = props;
+  const { query, onChange, datasource } = props;
+
+  const [regions, regionIsLoading] = useRegions(datasource);
 
   return (
     <>
-      <PanelQueryEditor
-        {...props}
-        onChange={(editorQuery: AnnotationQuery) => onChange({ ...query, ...editorQuery })}
-        onRunQuery={() => {}}
-        history={[]}
-      ></PanelQueryEditor>
-      <div className="gf-form-inline">
-        <Switch
-          label="Enable Prefix Matching"
-          labelClass="query-keyword"
-          checked={query.prefixMatching}
-          onChange={() => onChange({ ...query, prefixMatching: !query.prefixMatching })}
+      <EditorHeader>
+        <InlineSelect
+          label="Region"
+          value={regions.find((v) => v.value === query.region)}
+          placeholder="Select region"
+          allowCustomValue
+          onChange={({ value: region }) => region && onChange({ ...query, region })}
+          options={regions}
+          isLoading={regionIsLoading}
         />
-
-        <div className="gf-form gf-form--grow">
-          <QueryField label="Action">
-            <input
-              disabled={!query.prefixMatching}
-              className="gf-form-input width-12"
-              value={query.actionPrefix || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                onChange({ ...query, actionPrefix: event.target.value })
-              }
-            />
-          </QueryField>
-          <QueryField label="Alarm Name">
-            <input
-              disabled={!query.prefixMatching}
-              className="gf-form-input width-12"
-              value={query.alarmNamePrefix || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                onChange({ ...query, alarmNamePrefix: event.target.value })
-              }
-            />
-          </QueryField>
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow" />
-          </div>
-        </div>
-      </div>
+      </EditorHeader>
+      <Space v={0.5} />
+      <MetricStatEditor
+        {...props}
+        disableExpressions={true}
+        onChange={(editorQuery: CloudWatchMetricsQuery) => onChange({ ...query, ...editorQuery })}
+        onRunQuery={() => {}}
+      ></MetricStatEditor>
+      <Space v={0.5} />
+      <EditorRow>
+        <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
+          <Input
+            value={query.period || ''}
+            placeholder="auto"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, period: event.target.value })}
+          />
+        </EditorField>
+        <EditorField label="Enable Prefix Matching" optional={true}>
+          <Switch
+            value={query.prefixMatching}
+            onChange={(e) => {
+              onChange({
+                ...query,
+                prefixMatching: e.currentTarget.checked,
+              });
+            }}
+          />
+        </EditorField>
+        <EditorField label="Action" optional={true}>
+          <Input
+            disabled={!query.prefixMatching}
+            value={query.actionPrefix || ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onChange({ ...query, actionPrefix: event.target.value })
+            }
+          />
+        </EditorField>
+        <EditorField label="Alarm Name" optional={true}>
+          <Input
+            disabled={!query.prefixMatching}
+            value={query.alarmNamePrefix || ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onChange({ ...query, alarmNamePrefix: event.target.value })
+            }
+          />
+        </EditorField>
+      </EditorRow>
     </>
   );
 }

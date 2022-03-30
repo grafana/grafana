@@ -11,8 +11,6 @@
 
   fake-mysql-data:
     image: grafana/fake-data-gen
-    network_mode: bridge
     environment:
       FD_DATASOURCE: mysql
       FD_PORT: 3306
-

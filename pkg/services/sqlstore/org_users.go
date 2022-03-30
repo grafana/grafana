@@ -1,27 +1,30 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func init() {
-	bus.AddHandler("sql", AddOrgUser)
-	bus.AddHandler("sql", RemoveOrgUser)
-	bus.AddHandler("sql", GetOrgUsers)
-	bus.AddHandler("sql", UpdateOrgUser)
+func (ss *SQLStore) addOrgUsersQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.AddOrgUser)
+	bus.AddHandler("sql", ss.RemoveOrgUser)
+	bus.AddHandler("sql", ss.GetOrgUsers)
+	bus.AddHandler("sql", ss.UpdateOrgUser)
 }
 
-func AddOrgUser(cmd *models.AddOrgUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
-		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return models.ErrUserNotFound
@@ -71,8 +74,8 @@ func AddOrgUser(cmd *models.AddOrgUserCommand) error {
 	})
 }
 
-func UpdateOrgUser(cmd *models.UpdateOrgUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var orgUser models.OrgUser
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&orgUser)
 		if err != nil {
@@ -94,124 +97,159 @@ func UpdateOrgUser(cmd *models.UpdateOrgUserCommand) error {
 	})
 }
 
-func GetOrgUsers(query *models.GetOrgUsersQuery) error {
-	query.Result = make([]*models.OrgUserDTO, 0)
+func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		query.Result = make([]*models.OrgUserDTO, 0)
 
-	sess := x.Table("org_user")
-	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 
-	whereConditions := make([]string, 0)
-	whereParams := make([]interface{}, 0)
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
 
-	whereConditions = append(whereConditions, "org_user.org_id = ?")
-	whereParams = append(whereParams, query.OrgId)
+		whereConditions = append(whereConditions, "org_user.org_id = ?")
+		whereParams = append(whereParams, query.OrgId)
 
-	if query.Query != "" {
-		queryWithWildcards := "%" + query.Query + "%"
-		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
-		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
-	}
+		if query.UserID != 0 {
+			whereConditions = append(whereConditions, "org_user.user_id = ?")
+			whereParams = append(whereParams, query.UserID)
+		}
 
-	if len(whereConditions) > 0 {
-		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-	}
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = ?", dialect.Quote("user")))
+		whereParams = append(whereParams, dialect.BooleanStr(false))
 
-	if query.Limit > 0 {
-		sess.Limit(query.Limit, 0)
-	}
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.User != nil {
+			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
 
-	sess.Cols(
-		"org_user.org_id",
-		"org_user.user_id",
-		"user.email",
-		"user.name",
-		"user.login",
-		"org_user.role",
-		"user.last_seen_at",
-	)
-	sess.Asc("user.email", "user.login")
+		if query.Query != "" {
+			queryWithWildcards := "%" + query.Query + "%"
+			whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
 
-	if err := sess.Find(&query.Result); err != nil {
-		return err
-	}
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
 
-	for _, user := range query.Result {
-		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
-	}
+		if query.Limit > 0 {
+			sess.Limit(query.Limit, 0)
+		}
 
-	return nil
+		sess.Cols(
+			"org_user.org_id",
+			"org_user.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"org_user.role",
+			"user.last_seen_at",
+			"user.created",
+			"user.updated",
+		)
+		sess.Asc("user.email", "user.login")
+
+		if err := sess.Find(&query.Result); err != nil {
+			return err
+		}
+
+		for _, user := range query.Result {
+			user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+		}
+
+		return nil
+	})
 }
 
-func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
-	query.Result = models.SearchOrgUsersQueryResult{
-		OrgUsers: make([]*models.OrgUserDTO, 0),
-	}
+func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		query.Result = models.SearchOrgUsersQueryResult{
+			OrgUsers: make([]*models.OrgUserDTO, 0),
+		}
 
-	sess := x.Table("org_user")
-	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 
-	whereConditions := make([]string, 0)
-	whereParams := make([]interface{}, 0)
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
 
-	whereConditions = append(whereConditions, "org_user.org_id = ?")
-	whereParams = append(whereParams, query.OrgID)
+		whereConditions = append(whereConditions, "org_user.org_id = ?")
+		whereParams = append(whereParams, query.OrgID)
 
-	if query.Query != "" {
-		queryWithWildcards := "%" + query.Query + "%"
-		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
-		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
-	}
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %s", ss.Dialect.Quote("user"), ss.Dialect.BooleanStr(false)))
 
-	if len(whereConditions) > 0 {
-		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-	}
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
 
-	if query.Limit > 0 {
-		offset := query.Limit * (query.Page - 1)
-		sess.Limit(query.Limit, offset)
-	}
+		if query.Query != "" {
+			queryWithWildcards := "%" + query.Query + "%"
+			whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
 
-	sess.Cols(
-		"org_user.org_id",
-		"org_user.user_id",
-		"user.email",
-		"user.name",
-		"user.login",
-		"org_user.role",
-		"user.last_seen_at",
-	)
-	sess.Asc("user.email", "user.login")
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
 
-	if err := sess.Find(&query.Result.OrgUsers); err != nil {
-		return err
-	}
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
 
-	// get total count
-	orgUser := models.OrgUser{}
-	countSess := x.Table("org_user")
+		sess.Cols(
+			"org_user.org_id",
+			"org_user.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"org_user.role",
+			"user.last_seen_at",
+		)
+		sess.Asc("user.email", "user.login")
 
-	if len(whereConditions) > 0 {
-		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-	}
+		if err := sess.Find(&query.Result.OrgUsers); err != nil {
+			return err
+		}
 
-	count, err := countSess.Count(&orgUser)
-	if err != nil {
-		return err
-	}
-	query.Result.TotalCount = count
+		// get total count
+		orgUser := models.OrgUser{}
+		countSess := dbSession.Table("org_user").
+			Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 
-	for _, user := range query.Result.OrgUsers {
-		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
-	}
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
 
-	return nil
+		count, err := countSess.Count(&orgUser)
+		if err != nil {
+			return err
+		}
+		query.Result.TotalCount = count
+
+		for _, user := range query.Result.OrgUsers {
+			user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+		}
+
+		return nil
+	})
 }
 
-func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var user models.User
-		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return models.ErrUserNotFound
@@ -264,7 +302,7 @@ func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
 			}
 		} else if cmd.ShouldDeleteOrphanedUser {
 			// no other orgs, delete the full user
-			if err := deleteUserInTransaction(sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
+			if err := deleteUserInTransaction(ss, sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
 				return err
 			}
 
@@ -275,8 +313,8 @@ func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
 	})
 }
 
+// validate that there is an org admin user left
 func validateOneAdminLeftInOrg(orgId int64, sess *DBSession) error {
-	// validate that there is an admin user left
 	res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and role='Admin'", orgId)
 	if err != nil {
 		return err

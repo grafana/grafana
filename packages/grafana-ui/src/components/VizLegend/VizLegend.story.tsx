@@ -5,7 +5,7 @@ import {} from './VizLegendListItem';
 import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VizLegendItem } from './types';
-import { LegendDisplayMode, LegendPlacement } from './models.gen';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 
 export default {
   title: 'Visualizations/VizLegend',

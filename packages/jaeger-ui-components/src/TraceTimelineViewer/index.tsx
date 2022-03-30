@@ -12,25 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import React, { RefObject } from 'react';
 import { css } from '@emotion/css';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView from './VirtualizedTraceView';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
-import { TNil } from '../types';
-import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink } from '../types/trace';
+import { SpanLinkFunc, TNil } from '../types';
+import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
+import { autoColor } from '../Theme';
 import ExternalLinkContext from '../url/externalLinkContext';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     TraceTimelineViewer: css`
       label: TraceTimelineViewer;
@@ -91,6 +93,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   detailWarningsToggle: (spanID: string) => void;
   detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
+  detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
@@ -98,11 +101,12 @@ type TProps = TExtractUiFindFromStateReturn & {
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
-  theme: Theme;
-  createSpanLink?: (
-    span: TraceSpan
-  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  theme: GrafanaTheme2;
+  createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
+  focusedSpanId?: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 type State = {
@@ -158,6 +162,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       createLinkToExternalSpan,
       traceTimeline,
       theme,
+      topOfExploreViewRef,
       ...rest
     } = this.props;
     const { trace } = rest;
@@ -188,6 +193,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
             {...traceTimeline}
             setSpanNameColumnWidth={setSpanNameColumnWidth}
             currentViewRangeTime={viewRange.time.current}
+            topOfExploreViewRef={topOfExploreViewRef}
           />
         </div>
       </ExternalLinkContext.Provider>
@@ -195,4 +201,4 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
   }
 }
 
-export default withTheme(UnthemedTraceTimelineViewer);
+export default withTheme2(UnthemedTraceTimelineViewer);

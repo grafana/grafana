@@ -258,7 +258,7 @@ export default class LogsCheatSheet extends PureComponent<
   render() {
     return (
       <div>
-        <h2>CloudWatch Logs Cheat Sheet</h2>
+        <h3>CloudWatch Logs cheat sheet</h3>
         {CLIQ_EXAMPLES.map((cat, i) => (
           <div key={`cat-${i}`}>
             <div className={`cheat-sheet-item__title ${cx(exampleCategory)}`}>{cat.category}</div>

@@ -12,13 +12,21 @@ the permission of server admin, only users can be given that permission. So in o
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
 > If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-Refer to specific resources to understand what permissions are required.
+> Refer to specific resources to understand what permissions are required.
 
 ## Fetch settings
 
 `GET /api/admin/settings`
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+| Action        | Scope                                                                               |
+| ------------- | ----------------------------------------------------------------------------------- |
+| settings:read | settings:\*_<br>settings:auth.saml:_<br>settings:auth.saml:enabled (property level) |
 
 **Example Request**:
 
@@ -97,8 +105,9 @@ Content-Type: application/json
     "user":"root"
   },
   "emails":{
-    "templates_pattern":"emails/*.html",
-    "welcome_email_on_sign_up":"false"
+    "templates_pattern":"emails/*.html, emails/*.txt",
+    "welcome_email_on_sign_up":"false",
+    "content_types":"text/html"
   },
   "log":{
     "buffer_len":"10000",
@@ -183,6 +192,14 @@ Updates / removes and reloads database settings. You must provide either `update
 
 This endpoint only supports changes to `auth.saml` configuration.
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+| Action         | Scope                                                                               |
+| -------------- | ----------------------------------------------------------------------------------- |
+| settings:write | settings:\*_<br>settings:auth.saml:_<br>settings:auth.saml:enabled (property level) |
+
 **Example request:**
 
 ```http
@@ -229,6 +246,14 @@ Status codes:
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+| Action            | Scope |
+| ----------------- | ----- |
+| server.stats:read | n/a   |
+
 **Example Request**:
 
 ```http
@@ -257,6 +282,46 @@ Content-Type: application/json
 }
 ```
 
+## Grafana Usage Report preview
+
+`GET /api/admin/usage-report-preview`
+
+Preview usage report to be sent to vendor.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
+```http
+GET /api/admin/usage-report-preview
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"version": "8_4_0",
+	"metrics": {
+		"stats.active_admins.count": 1,
+		"stats.active_editors.count": 1,
+		"stats.active_sessions.count": 0,
+		"stats.active_users.count": 2,
+		"stats.active_viewers.count": 0,
+		"stats.admins.count": 1,
+		"stats.alert_rules.count": 0,
+		"stats.alerting.ds.other.count": 0,
+		"stats.alerts.count": 5,
+		"stats.annotations.count": 6,
+		"stats.api_keys.count": 1
+  }
+}
+```
+
 ## Global Users
 
 `POST /api/admin/users`
@@ -267,9 +332,9 @@ Create new user. Only works with Basic Authentication (username and password). S
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope
---- | --- | 
-users:create | n/a
+| Action       | Scope |
+| ------------ | ----- |
+| users:create | n/a   |
 
 **Example Request**:
 
@@ -309,9 +374,9 @@ Change password for a specific user.
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope
---- | --- | 
-users.password:update | global:users:*
+| Action                | Scope           |
+| --------------------- | --------------- |
+| users.password:update | global.users:\* |
 
 **Example Request**:
 
@@ -342,9 +407,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope
---- | --- | 
-users.permissions:update | global:users:*
+| Action                   | Scope           |
+| ------------------------ | --------------- |
+| users.permissions:update | global.users:\* |
 
 **Example Request**:
 
@@ -375,9 +440,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope
---- | --- | 
-users:delete | global:users:*
+| Action       | Scope           |
+| ------------ | --------------- |
+| users:delete | global.users:\* |
 
 **Example Request**:
 
@@ -443,9 +508,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope
---- | --- | 
-users.authtoken:list | global:users:*
+| Action               | Scope           |
+| -------------------- | --------------- |
+| users.authtoken:list | global.users:\* |
 
 **Example Request**:
 
@@ -502,9 +567,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope
---- | --- | 
-users.authtoken:update | global:users:*
+| Action                 | Scope           |
+| ---------------------- | --------------- |
+| users.authtoken:update | global.users:\* |
 
 **Example Request**:
 
@@ -542,9 +607,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope
---- | --- | 
-users.logout | global:users:*
+| Action       | Scope           |
+| ------------ | --------------- |
+| users.logout | global.users:\* |
 
 **Example Request**:
 
@@ -575,7 +640,7 @@ Content-Type: application/json
 
 `POST /api/admin/provisioning/notifications/reload`
 
-`POST /api/admin/provisioning/accesscontrol/reload`
+`POST /api/admin/provisioning/access-control/reload`
 
 Reloads the provisioning config files for specified type and provision entities again. It won't return
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
@@ -587,9 +652,13 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-Action | Scope | Provision entity 
---- | --- | --- 
-provisioning:reload | service:accesscontrol | accesscontrol
+| Action              | Scope                      | Provision entity |
+| ------------------- | -------------------------- | ---------------- |
+| provisioning:reload | provisioners:accesscontrol | accesscontrol    |
+| provisioning:reload | provisioners:dashboards    | dashboards       |
+| provisioning:reload | provisioners:datasources   | datasources      |
+| provisioning:reload | provisioners:plugins       | plugins          |
+| provisioning:reload | provisioners:notifications | notifications    |
 
 **Example Request**:
 

@@ -3,11 +3,13 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type promEndpoints struct {
@@ -76,10 +78,20 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 }
 
 func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error) {
-	ds, err := p.DataProxy.DatasourceCache.GetDatasource(ctx.ParamsInt64("Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("recipient is invalid")
+	}
+
+	ds, err := p.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return nil, err
 	}
+
+	if ds.Url == "" {
+		return nil, fmt.Errorf("URL for this data source is empty")
+	}
+
 	routes, ok := dsTypeToLotexRoutes[ds.Type]
 	if !ok {
 		return nil, fmt.Errorf("unexpected datasource type. expecting loki or prometheus")

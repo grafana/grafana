@@ -4,7 +4,7 @@ import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { AnnotationQueryRunnerOptions } from './types';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as store from '../../../../store/store';
-import * as annotationsSrv from '../../../annotations/annotations_srv';
+import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 import { Observable, of, throwError } from 'rxjs';
 import { toAsyncOfResult } from './testHelpers';
 
@@ -40,6 +40,14 @@ describe('AnnotationsQueryRunner', () => {
       };
 
       expect(runner.canRun(datasource)).toBe(true);
+    });
+  });
+
+  describe('when canWork is called without datasource', () => {
+    it('then it should return false', () => {
+      const datasource: any = undefined;
+
+      expect(runner.canRun(datasource)).toBe(false);
     });
   });
 

@@ -1,8 +1,8 @@
 FROM debian:testing-20210111-slim
 
 # Use ARG so as not to persist environment variable in image
-ARG GOVERSION=1.16.1 \
-  GO_CHECKSUM=3edc22f8332231c3ba8be246f184b736b8d28f06ce24f08168d8ecf052549769 \
+ARG GOVERSION=1.17.8 \
+  GO_CHECKSUM=980e65a863377e69fd9b67df9d8395fd8e93858e7a24c9f55803421e453f4f99 \
   DEBIAN_FRONTEND=noninteractive
 
 ENV PATH=/usr/local/go/bin:$PATH \

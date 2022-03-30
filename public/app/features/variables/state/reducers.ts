@@ -1,27 +1,41 @@
-import { combineReducers } from '@reduxjs/toolkit';
-import { optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
-import { variableEditorReducer, VariableEditorState } from '../editor/reducer';
+import { CombinedState, combineReducers, Reducer } from 'redux';
+import { initialOptionPickerState, optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
+import { initialVariableEditorState, variableEditorReducer, VariableEditorState } from '../editor/reducer';
 import { variablesReducer } from './variablesReducer';
-import { VariableModel } from '../types';
-import { transactionReducer, TransactionState } from './transactionReducer';
-import { variableInspectReducer, VariableInspectState } from '../inspect/reducer';
+import { initialTransactionState, transactionReducer, TransactionState } from './transactionReducer';
+import { initialVariableInspectState, variableInspectReducer, VariableInspectState } from '../inspect/reducer';
+import { initialVariablesState, VariablesState } from './types';
 
 export interface TemplatingState {
-  variables: Record<string, VariableModel>;
-  optionsPicker: OptionsPickerState;
   editor: VariableEditorState;
+  variables: VariablesState;
+  optionsPicker: OptionsPickerState;
   transaction: TransactionState;
   inspect: VariableInspectState;
 }
 
-export const templatingReducers = combineReducers({
-  editor: variableEditorReducer,
-  variables: variablesReducer,
-  optionsPicker: optionsPickerReducer,
-  transaction: transactionReducer,
-  inspect: variableInspectReducer,
-});
+let templatingReducers: Reducer<CombinedState<TemplatingState>>;
 
-export default {
-  templating: templatingReducers,
-};
+export function getTemplatingReducers() {
+  if (!templatingReducers) {
+    templatingReducers = combineReducers({
+      editor: variableEditorReducer,
+      variables: variablesReducer,
+      optionsPicker: optionsPickerReducer,
+      transaction: transactionReducer,
+      inspect: variableInspectReducer,
+    });
+  }
+
+  return templatingReducers;
+}
+
+export function getInitialTemplatingState() {
+  return {
+    editor: initialVariableEditorState,
+    variables: initialVariablesState,
+    optionsPicker: initialOptionPickerState,
+    transaction: initialTransactionState,
+    inspect: initialVariableInspectState,
+  };
+}

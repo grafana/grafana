@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
 	version      *semver.Version
-	interval     interval.Interval
+	interval     intervalv2.Interval
 	index        string
 	size         int
 	sort         map[string]interface{}
@@ -20,7 +20,7 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(version *semver.Version, interval interval.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(version *semver.Version, interval intervalv2.Interval) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		version:     version,
 		interval:    interval,
@@ -129,7 +129,7 @@ func NewMultiSearchRequestBuilder(version *semver.Version) *MultiSearchRequestBu
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval interval.Interval) *SearchRequestBuilder {
+func (m *MultiSearchRequestBuilder) Search(interval intervalv2.Interval) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(m.version, interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b
@@ -235,7 +235,7 @@ func (b *FilterQueryBuilder) Build() ([]Filter, error) {
 }
 
 // AddDateRangeFilter adds a new time range filter
-func (b *FilterQueryBuilder) AddDateRangeFilter(timeField, lte, gte, format string) *FilterQueryBuilder {
+func (b *FilterQueryBuilder) AddDateRangeFilter(timeField string, lte, gte int64, format string) *FilterQueryBuilder {
 	b.filters = append(b.filters, &RangeFilter{
 		Key:    timeField,
 		Lte:    lte,
@@ -340,6 +340,11 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 		builder := newAggBuilder(b.version)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
+	}
+
+	if b.version.Major() >= 8 {
+		innerAgg.FixedInterval = innerAgg.Interval
+		innerAgg.Interval = ""
 	}
 
 	b.aggDefs = append(b.aggDefs, aggDef)

@@ -94,11 +94,11 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
       <img src="/static/img/docs/logos/icon_cloudmonitoring.svg">
       <h5>Google Cloud Monitoring</h5>
     </a>
-    <a href="{{< relref "datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/aws-cloudwatch/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
     </a>
-    <a href="{{< relref "datasources/azuremonitor.md" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/azuremonitor/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
       <h5>Azure Monitor</h5>
     </a>

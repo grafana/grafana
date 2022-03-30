@@ -165,7 +165,7 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
   }
 
   return sections.reduce((result, section) => {
-    if (section?.id !== 0 && section.checked) {
+    if (section?.id !== 0 && section.checked && section.uid) {
       return { ...result, folders: [...result.folders, section.uid] } as UidsToDelete;
     } else {
       return { ...result, dashboards: getCheckedDashboardsUids(sections) } as UidsToDelete;
@@ -227,10 +227,7 @@ export const getSectionIcon = (section: DashboardSection): IconName => {
  * Get storage key for a dashboard folder by its title
  * @param title
  */
-export const getSectionStorageKey = (title: string) => {
-  if (!title) {
-    return '';
-  }
+export const getSectionStorageKey = (title = 'General') => {
   return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
 };
 

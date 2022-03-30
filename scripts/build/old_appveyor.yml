@@ -14,7 +14,7 @@ install:
   # install nodejs and npm
   - ps: Install-Product node $env:nodejs_version
   - npm install -g yarn --silent
-  - yarn install --pure-lockfile --no-progress
+  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
   - npm install -g grunt-cli
   - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.zip
   - 7z x go%GOVERSION%.windows-amd64.zip -y -oC:\ > NUL

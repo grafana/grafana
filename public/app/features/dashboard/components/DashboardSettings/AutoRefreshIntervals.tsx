@@ -63,6 +63,7 @@ export const AutoRefreshIntervals: FC<Props> = ({
       invalid={!!invalidIntervalsMessage}
     >
       <Input
+        id="auto-refresh-input"
         invalid={!!invalidIntervalsMessage}
         value={intervalsString}
         onChange={onIntervalsChange}

@@ -22,7 +22,7 @@ The uid can have a maximum length of 40 characters.
 
 `POST /api/dashboards/db`
 
-Creates a new dashboard or updates an existing dashboard.
+Creates a new dashboard or updates an existing dashboard. When updating existing dashboards, if you do not define the `folderId` or the `folderUid` property, then the dashboard(s) are moved to the General folder. (You need to define only one property, not both).
 
 **Example Request for new dashboard**:
 
@@ -251,7 +251,7 @@ There can be different reasons for this:
 - A dashboard with the same uid already exists, `status=name-exists`
 - The dashboard belongs to plugin `<plugin title>`, `status=plugin-dashboard`
 
- The response body will have the following properties:
+The response body will have the following properties:
 
 ```http
 HTTP/1.1 412 Precondition Failed
@@ -438,4 +438,5 @@ Content-Type: application/json
 ```
 
 ## Dashboard Search
+
 See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}}).

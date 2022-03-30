@@ -10,7 +10,7 @@ export default {
   decorators: [withCenteredStory],
   parameters: {
     controls: {
-      exclude: ['className', 'value', 'fieldNames'],
+      exclude: ['className', 'value', 'fieldNames', 'loadData', 'onChange', 'onPopupVisibleChange'],
     },
   },
   args: {

@@ -1,6 +1,6 @@
 import { debounce, find, indexOf, map, escape, unescape } from 'lodash';
 import $ from 'jquery';
-import coreModule from '../core/core_module';
+import coreModule from './core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 /** @ngInject */

@@ -7,7 +7,7 @@ weight = 120
 
 # Configure Grafana Live
 
-Grafana Live is enabled by default. In Grafana v8.0, it has a strict default for a maximum number of connections per Grafana server instance. 
+Grafana Live is enabled by default. In Grafana v8.0, it has a strict default for a maximum number of connections per Grafana server instance.
 
 ## Max number of connections
 
@@ -18,6 +18,14 @@ WebSocket is a persistent connection that starts with an HTTP Upgrade request (u
 The number of maximum WebSocket connections users can establish with Grafana is limited to 100 by default. See [max_connections]({{< relref "../administration/configuration.md#max_connections" >}}) option.
 
 In case you want to increase this limit, ensure that your server and infrastructure allow handling more connections. The following sections discuss several common problems which could happen when managing persistent connections, in particular WebSocket connections.
+
+## Request origin check
+
+To avoid hijacking of WebSocket connection Grafana Live checks the Origin request header sent by a client in an HTTP Upgrade request. Requests without Origin header pass through without any origin check.
+
+By default, Live accepts connections with Origin header that matches configured [root_url]({{< relref "../administration/configuration.md#root_url" >}}) (which is a public Grafana URL).
+
+It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins]({{< relref "../administration/configuration.md#allowed_origins" >}}) option of Grafana Live configuration.
 
 ### Resource usage
 
@@ -42,7 +50,6 @@ cat /proc/<PROCESS_PID>/limits
 ```
 
 The open files limit shows approximately how many user connections your server can currently handle.
-		
 
 To increase this limit, refer to [these instructions](https://docs.riak.com/riak/kv/2.2.3/using/performance/open-files-limit.1.html)for popular operating systems.
 
@@ -75,18 +82,18 @@ http {
         default upgrade;
         '' close;
     }
- 
+
     upstream grafana {
         server 127.0.0.1:3000;
     }
- 
+
     server {
         listen 8000;
 
         location / {
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "Upgrade";
+            proxy_set_header Connection $connection_upgrade;
             proxy_set_header Host $http_host;
             proxy_pass http://grafana;
         }

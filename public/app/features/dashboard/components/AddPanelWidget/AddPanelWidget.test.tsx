@@ -22,7 +22,7 @@ describe('AddPanelWidget', () => {
 
   it('should render the add panel actions', () => {
     getTestContext();
-    expect(screen.getByText(/Add an empty panel/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add a new panel/i)).toBeInTheDocument();
     expect(screen.getByText(/Add a new row/i)).toBeInTheDocument();
     expect(screen.getByText(/Add a panel from the panel library/i)).toBeInTheDocument();
   });

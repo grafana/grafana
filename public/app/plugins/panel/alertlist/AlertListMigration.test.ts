@@ -107,4 +107,30 @@ describe('AlertList Panel Migration', () => {
     expect(panel).not.toHaveProperty('dashboardTags');
     expect(panel).not.toHaveProperty('stateFilter');
   });
+
+  it('should handle config with no options or stateFilter', () => {
+    const panel: Omit<PanelModel, 'fieldConfig'> & Record<string, any> = {
+      id: 7,
+      links: [],
+      pluginVersion: '7.4.0',
+      targets: [],
+      title: 'Usage',
+      type: 'alertlist',
+      onlyAlertsOnDashboard: false,
+      options: {},
+    };
+
+    const newOptions = alertListPanelMigrationHandler(panel as PanelModel);
+    expect(newOptions).toMatchObject({
+      showOptions: ShowOption.Current,
+      maxItems: 10,
+      sortOrder: SortOrder.AlphaAsc,
+      dashboardAlerts: false,
+      alertName: '',
+      dashboardTitle: '',
+      tags: [],
+      stateFilter: {},
+      folderId: undefined,
+    });
+  });
 });

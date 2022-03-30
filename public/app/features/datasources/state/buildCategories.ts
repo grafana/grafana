@@ -1,6 +1,6 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { config, featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
-import { config } from '../../../core/config';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
@@ -23,14 +23,12 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     categoryIndex[category.id] = category;
   }
 
-  const { edition, hasValidLicense } = config.licenseInfo;
-
   for (const plugin of plugins) {
     const enterprisePlugin = enterprisePlugins.find((item) => item.id === plugin.id);
     // Force category for enterprise plugins
     if (plugin.enterprise || enterprisePlugin) {
       plugin.category = 'enterprise';
-      plugin.unlicensed = edition !== 'Open Source' && !hasValidLicense;
+      plugin.unlicensed = !featureEnabled('enterprise.plugins');
       plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
@@ -164,9 +162,33 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
     }),
     getPhantomPlugin({
       id: 'grafana-honeycomb-datasource',
-      description: 'Honeycomb integration ad datasource',
+      description: 'Honeycomb integration and datasource',
       name: 'Honeycomb',
       imgUrl: 'public/img/plugins/honeycomb.png',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-salesforce-datasource',
+      description: 'Salesforce integration and datasource',
+      name: 'Salesforce',
+      imgUrl: 'public/img/plugins/salesforce.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-jira-datasource',
+      description: 'Jira integration and datasource',
+      name: 'Jira',
+      imgUrl: 'public/img/plugins/jira_logo.png',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-gitlab-datasource',
+      description: 'GitLab integration and datasource',
+      name: 'GitLab',
+      imgUrl: 'public/img/plugins/gitlab.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-splunk-monitoring-datasource',
+      description: 'SignalFx integration and datasource',
+      name: 'Splunk Infrastructure Monitoring',
+      imgUrl: 'public/img/plugins/signalfx-logo.svg',
     }),
   ];
 }

@@ -4,16 +4,21 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
-
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	ol "github.com/opentracing/opentracing-go/log"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	trace "go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -21,11 +26,33 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-func init() {
-	registry.RegisterService(&TracingService{})
+func ProvideService(cfg *setting.Cfg) (Tracer, error) {
+	ts := &Opentracing{
+		Cfg: cfg,
+		log: log.New("tracing"),
+	}
+
+	if err := ts.parseSettings(); err != nil {
+		return nil, err
+	}
+
+	if ts.enabled {
+		return ts, ts.initGlobalTracer()
+	}
+
+	ots := &Opentelemetry{
+		Cfg: cfg,
+		log: log.New("tracing"),
+	}
+
+	if err := ots.parseSettingsOpentelemetry(); err != nil {
+		return nil, err
+	}
+
+	return ots, ots.initOpentelemetryTracer()
 }
 
-type TracingService struct {
+type Opentracing struct {
 	enabled                  bool
 	address                  string
 	customTags               map[string]string
@@ -37,23 +64,14 @@ type TracingService struct {
 	zipkinPropagation        bool
 	disableSharedZipkinSpans bool
 
-	Cfg *setting.Cfg `inject:""`
+	Cfg *setting.Cfg
 }
 
-func (ts *TracingService) Init() error {
-	ts.log = log.New("tracing")
-	if err := ts.parseSettings(); err != nil {
-		return err
-	}
-
-	if ts.enabled {
-		return ts.initGlobalTracer()
-	}
-
-	return nil
+type OpentracingSpan struct {
+	span opentracing.Span
 }
 
-func (ts *TracingService) parseSettings() error {
+func (ts *Opentracing) parseSettings() error {
 	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
 	if err != nil {
 		return err
@@ -80,7 +98,7 @@ func (ts *TracingService) parseSettings() error {
 	return nil
 }
 
-func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
+func (ts *Opentracing) initJaegerCfg() (jaegercfg.Configuration, error) {
 	cfg := jaegercfg.Configuration{
 		ServiceName: "grafana",
 		Disabled:    !ts.enabled,
@@ -102,7 +120,7 @@ func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
 	return cfg, nil
 }
 
-func (ts *TracingService) initGlobalTracer() error {
+func (ts *Opentracing) initGlobalTracer() error {
 	cfg, err := ts.initJaegerCfg()
 	if err != nil {
 		return err
@@ -137,11 +155,10 @@ func (ts *TracingService) initGlobalTracer() error {
 	opentracing.SetGlobalTracer(tracer)
 
 	ts.closer = closer
-
 	return nil
 }
 
-func (ts *TracingService) Run(ctx context.Context) error {
+func (ts *Opentracing) Run(ctx context.Context) error {
 	<-ctx.Done()
 
 	if ts.closer != nil {
@@ -150,6 +167,62 @@ func (ts *TracingService) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
+	opentracingSpan := OpentracingSpan{span: span}
+	return ctx, opentracingSpan
+}
+
+func (ts *Opentracing) Inject(ctx context.Context, header http.Header, span Span) {
+	opentracingSpan, ok := span.(OpentracingSpan)
+	if !ok {
+		logger.Error("Failed to cast opentracing span")
+	}
+	err := opentracing.GlobalTracer().Inject(
+		opentracingSpan.span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(header))
+
+	if err != nil {
+		logger.Error("Failed to inject span context instance", "err", err)
+	}
+}
+
+func (s OpentracingSpan) End() {
+	s.span.Finish()
+}
+
+func (s OpentracingSpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+	s.span.SetTag(key, value)
+}
+
+func (s OpentracingSpan) SetName(name string) {
+	s.span.SetOperationName(name)
+}
+
+func (s OpentracingSpan) SetStatus(code codes.Code, description string) {
+	ext.Error.Set(s.span, true)
+}
+
+func (s OpentracingSpan) RecordError(err error, options ...trace.EventOption) {
+	ext.Error.Set(s.span, true)
+}
+
+func (s OpentracingSpan) AddEvents(keys []string, values []EventValue) {
+	fields := []ol.Field{}
+	for i, v := range values {
+		if v.Str != "" {
+			field := ol.String(keys[i], v.Str)
+			fields = append(fields, field)
+		}
+		if v.Num != 0 {
+			field := ol.Int64(keys[i], v.Num)
+			fields = append(fields, field)
+		}
+	}
+	s.span.LogFields(fields...)
 }
 
 func splitTagSettings(input string) map[string]string {

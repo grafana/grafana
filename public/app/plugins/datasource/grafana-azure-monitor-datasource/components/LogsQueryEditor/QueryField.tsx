@@ -2,6 +2,7 @@ import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
 import { Deferred } from 'app/core/utils/deferred';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AzureQueryEditorFieldProps } from '../../types';
+import { setKustoQuery } from './setQueryValue';
 
 interface MonacoPromise {
   editor: MonacoEditor;
@@ -11,9 +12,7 @@ interface MonacoPromise {
 interface MonacoLanguages {
   kusto: {
     getKustoWorker: () => Promise<
-      (
-        url: any
-      ) => Promise<{
+      (url: any) => Promise<{
         setSchema: (schema: any, clusterUrl: string, name: string) => void;
       }>
     >;
@@ -31,7 +30,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
   }
 
   useEffect(() => {
-    if (!query.azureLogAnalytics.resource) {
+    if (!query.azureLogAnalytics?.resource) {
       return;
     }
 
@@ -42,19 +41,19 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
 
     // the kusto schema call might fail, but its okay for that to happen silently
     Promise.all(promises).then(([schema, { monaco, editor }]) => {
-      const languages = (monaco.languages as unknown) as MonacoLanguages;
+      const languages = monaco.languages as unknown as MonacoLanguages;
 
-      languages.kusto.getKustoWorker().then((kusto) => {
-        const model = editor.getModel();
-        if (!model) {
-          return;
-        }
-        kusto(model.uri).then((worker) => {
-          worker.setSchema(schema, 'https://help.kusto.windows.net', 'Samples');
+      languages.kusto
+        .getKustoWorker()
+        .then((kusto) => {
+          const model = editor.getModel();
+          return model && kusto(model.uri);
+        })
+        .then((worker) => {
+          worker?.setSchema(schema, 'https://help.kusto.windows.net', 'Samples');
         });
-      });
     });
-  }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics.resource]);
+  }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics?.resource]);
 
   const handleEditorMount = useCallback((editor: MonacoEditor, monaco: Monaco) => {
     monacoPromiseRef.current?.resolve?.({ editor, monaco });
@@ -62,20 +61,14 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
 
   const onChange = useCallback(
     (newQuery: string) => {
-      onQueryChange({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          query: newQuery,
-        },
-      });
+      onQueryChange(setKustoQuery(query, newQuery));
     },
     [onQueryChange, query]
   );
 
   return (
     <CodeEditor
-      value={query.azureLogAnalytics.query}
+      value={query.azureLogAnalytics?.query ?? ''}
       language="kusto"
       height={200}
       width="100%"

@@ -47,7 +47,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
 
   e2e().logToConsole('Adding data source with name:', name);
   e2e.pages.AddDataSource.visit();
-  e2e.pages.AddDataSource.dataSourcePlugins(type)
+  e2e.pages.AddDataSource.dataSourcePluginsV2(type)
     .scrollIntoView()
     .should('be.visible') // prevents flakiness
     .click();

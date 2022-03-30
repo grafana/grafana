@@ -27,14 +27,13 @@ To use a custom panel option editor, use the `addCustomEditor` on the `OptionsUI
 **module.ts**
 
 ```ts
-export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions(builder => {
-  return builder
-    .addCustomEditor({
-      id: 'label',
-      path: 'label',
-      name: 'Label',
-      editor: SimpleEditor,
-    });
+export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions((builder) => {
+  return builder.addCustomEditor({
+    id: 'label',
+    path: 'label',
+    name: 'Label',
+    editor: SimpleEditor,
+  });
 });
 ```
 
@@ -52,7 +51,7 @@ interface Settings {
   to: number;
 }
 
-export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>>  = ({ item, value, onChange }) => {
+export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>> = ({ item, value, onChange }) => {
   const options: Array<SelectableValue<number>> = [];
 
   // Default values
@@ -66,25 +65,24 @@ export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>>  = ({
     });
   }
 
-  return <Select options={options} value={value} onChange={selectableValue => onChange(selectableValue.value)} />;
+  return <Select options={options} value={value} onChange={(selectableValue) => onChange(selectableValue.value)} />;
 };
 ```
 
 You can now configure the editor for each option, by configuring the `settings` property in the call to `addCustomEditor`.
 
 ```ts
-export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions(builder => {
-  return builder
-    .addCustomEditor({
-      id: 'index',
-      path: 'index',
-      name: 'Index',
-      editor: SimpleEditor,
-      settings: {
-        from: 1,
-        to: 10,
-      }
-    });
+export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions((builder) => {
+  return builder.addCustomEditor({
+    id: 'index',
+    path: 'index',
+    name: 'Index',
+    editor: SimpleEditor,
+    settings: {
+      from: 1,
+      to: 10,
+    },
+  });
 });
 ```
 
@@ -113,7 +111,7 @@ export const SimpleEditor: React.FC<StandardEditorProps<string>> = ({ item, valu
     }
   }
 
-  return <Select options={options} value={value} onChange={selectableValue => onChange(selectableValue.value)} />;
+  return <Select options={options} value={value} onChange={(selectableValue) => onChange(selectableValue.value)} />;
 };
 ```
 

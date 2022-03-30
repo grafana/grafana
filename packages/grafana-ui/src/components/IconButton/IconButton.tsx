@@ -1,12 +1,12 @@
 import React from 'react';
-import { Icon, getSvgSize } from '../Icon/Icon';
+import { Icon } from '../Icon/Icon';
+import { getSvgSize } from '../Icon/utils';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { TooltipPlacement } from '../Tooltip/PopoverController';
+import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
@@ -21,22 +21,38 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Type od the icon - mono or default */
   iconType?: IconType;
   /** Tooltip content to display on hover */
-  tooltip?: string;
+  tooltip?: PopoverContent;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
   /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
+  /** Text avilable ony for screenscreen readers. Will use tooltip text as fallback. */
+  ariaLabel?: string;
 }
 
 type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, variant = 'secondary', ...restProps }, ref) => {
+  (
+    {
+      name,
+      size = 'md',
+      iconType,
+      tooltip,
+      tooltipPlacement,
+      ariaLabel,
+      className,
+      variant = 'secondary',
+      ...restProps
+    },
+    ref
+  ) => {
     const theme = useTheme2();
     const styles = getStyles(theme, size, variant);
+    const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
     const button = (
-      <button ref={ref} {...restProps} className={cx(styles.button, className)}>
+      <button ref={ref} aria-label={ariaLabel || tooltipString} {...restProps} className={cx(styles.button, className)}>
         <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );
@@ -61,9 +77,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: 
   let iconColor = theme.colors.text.primary;
 
   if (variant === 'primary') {
-    iconColor = theme.colors.primary.main;
+    iconColor = theme.colors.primary.text;
   } else if (variant === 'destructive') {
-    iconColor = theme.colors.error.main;
+    iconColor = theme.colors.error.text;
   }
 
   return {

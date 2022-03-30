@@ -1,6 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { SearchItem, Props } from './SearchItem';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { Props, SearchItem } from './SearchItem';
 import { DashboardSearchItemType } from '../types';
 
 beforeEach(() => {
@@ -35,11 +37,11 @@ const setup = (propOverrides?: Partial<Props>) => {
 describe('SearchItem', () => {
   it('should render the item', () => {
     setup();
-    expect(screen.getAllByLabelText('Dashboard search item Test 1')).toHaveLength(1);
+    expect(screen.getAllByTestId(selectors.components.Search.dashboardItem('Test 1'))).toHaveLength(1);
     expect(screen.getAllByText('Test 1')).toHaveLength(1);
   });
 
-  it('should mark item as checked', () => {
+  it('should toggle items when checked', () => {
     const mockedOnToggleChecked = jest.fn();
     setup({ editable: true, onToggleChecked: mockedOnToggleChecked });
     const checkbox = screen.getByRole('checkbox');
@@ -47,6 +49,10 @@ describe('SearchItem', () => {
     fireEvent.click(checkbox);
     expect(mockedOnToggleChecked).toHaveBeenCalledTimes(1);
     expect(mockedOnToggleChecked).toHaveBeenCalledWith(data);
+  });
+
+  it('should mark items as checked', () => {
+    setup({ editable: true, item: { ...data, checked: true } });
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
 

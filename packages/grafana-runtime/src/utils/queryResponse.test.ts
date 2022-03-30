@@ -1,8 +1,8 @@
 import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
-import { FetchResponse } from 'src/services';
-import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { FetchError, FetchResponse } from 'src/services';
+import { BackendDataSourceResponse, cachedResponseNotice, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
-const resp = ({
+const resp = {
   data: {
     results: {
       A: {
@@ -45,9 +45,9 @@ const resp = ({
       },
     },
   },
-} as any) as FetchResponse<BackendDataSourceResponse>;
+} as any as FetchResponse<BackendDataSourceResponse>;
 
-const resWithError = ({
+const resWithError = {
   data: {
     results: {
       A: {
@@ -73,7 +73,7 @@ const resWithError = ({
       },
     },
   },
-} as any) as FetchResponse<BackendDataSourceResponse>;
+} as any as FetchResponse<BackendDataSourceResponse>;
 
 const emptyResults = {
   data: { results: { '': { refId: '' } } },
@@ -277,6 +277,55 @@ describe('Query Response parser', () => {
     expect(ids).toEqual(['A', 'B']);
   });
 
+  describe('Cache notice', () => {
+    let resp: any;
+
+    beforeEach(() => {
+      resp = {
+        url: '',
+        type: 'basic',
+        config: { url: '' },
+        status: 200,
+        statusText: 'OK',
+        ok: true,
+        redirected: false,
+        headers: new Headers(),
+        data: {
+          results: {
+            A: { frames: [{ schema: { fields: [] } }] },
+          },
+        },
+      };
+    });
+
+    test('adds notice for responses with X-Cache: HIT header', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      resp.headers.set('X-Cache', 'HIT');
+      expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([cachedResponseNotice]);
+    });
+
+    test('does not remove existing notices', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      resp.headers.set('X-Cache', 'HIT');
+      resp.data.results.A.frames[0].schema.meta = { notices: [{ severity: 'info', text: 'Example' }] };
+      expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([
+        { severity: 'info', text: 'Example' },
+        cachedResponseNotice,
+      ]);
+    });
+
+    test('does not add notice for responses with X-Cache: MISS header', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      resp.headers.set('X-Cache', 'MISS');
+      expect(toDataQueryResponse(resp, queries).data[0].meta?.notices).toBeUndefined();
+    });
+
+    test('does not add notice for responses without X-Cache header', () => {
+      const queries: DataQuery[] = [{ refId: 'A' }];
+      expect(toDataQueryResponse(resp, queries).data[0].meta?.notices).toBeUndefined();
+    });
+  });
+
   test('resultWithError', () => {
     // Generated from:
     // qdr.Responses[q.GetRefID()] = backend.DataResponse{
@@ -332,5 +381,45 @@ describe('Query Response parser', () => {
         },
       ]
     `);
+  });
+
+  describe('should convert to TestingStatus', () => {
+    test('from api/ds/query generic errors', () => {
+      const result = toTestingStatus({ status: 500, data: { message: 'message', error: 'error' } } as FetchError);
+      expect(result).toMatchObject({
+        status: 'error',
+        message: 'message',
+        details: { message: 'error' },
+      });
+    });
+    test('from api/ds/query result errors', () => {
+      const result = toTestingStatus({
+        status: 400,
+        data: {
+          results: {
+            A: {
+              error: 'error',
+            },
+          },
+        },
+      } as FetchError);
+      expect(result).toMatchObject({
+        status: 'error',
+        message: 'error',
+      });
+    });
+    test('unknown errors', () => {
+      expect(() => {
+        toTestingStatus({ status: 503, data: 'Fatal Error' } as FetchError);
+      }).toThrow();
+
+      expect(() => {
+        toTestingStatus({ status: 503, data: {} } as FetchError);
+      }).toThrow();
+
+      expect(() => {
+        toTestingStatus({ status: 503 } as FetchError);
+      }).toThrow();
+    });
   });
 });

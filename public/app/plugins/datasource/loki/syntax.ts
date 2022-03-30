@@ -66,6 +66,11 @@ export const PIPE_PARSERS: CompletionItem[] = [
     insertText: 'logfmt',
     documentation: 'Extracting labels from the log line using logfmt parser. Only available in Loki 2.0+.',
   },
+  {
+    label: 'pattern',
+    insertText: 'pattern',
+    documentation: 'Extracting labels from the log line using pattern parser. Only available in Loki 2.3+.',
+  },
 ];
 
 export const PIPE_OPERATORS: CompletionItem[] = [
@@ -75,6 +80,13 @@ export const PIPE_OPERATORS: CompletionItem[] = [
     detail: 'unwrap identifier',
     documentation:
       'Take labels and use the values as sample data for metric aggregations. Only available in Loki 2.0+.',
+  },
+  {
+    label: 'unpack',
+    insertText: 'unpack',
+    detail: 'unpack identifier',
+    documentation:
+      'Parses a JSON log line, unpacking all embedded labels in the pack stage. A special property "_entry" will also be used to replace the original log line. Only available in Loki 2.0+.',
   },
   {
     label: 'label_format',
@@ -157,14 +169,14 @@ export const RANGE_VEC_FUNCTIONS = [
     insertText: 'rate',
     label: 'rate',
     detail: 'rate(v range-vector)',
-    documentation:
-      "Calculates the per-second average rate of increase of the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. Also, the calculation extrapolates to the ends of the time range, allowing for missed scrapes or imperfect alignment of scrape cycles with the range's time period.",
+    documentation: 'Calculates the number of entries per second.',
   },
 ];
 
 export const FUNCTIONS = [...AGGREGATION_OPERATORS, ...RANGE_VEC_FUNCTIONS];
+export const LOKI_KEYWORDS = [...FUNCTIONS, ...PIPE_OPERATORS, ...PIPE_PARSERS].map((keyword) => keyword.label);
 
-const tokenizer: Grammar = {
+export const lokiGrammar: Grammar = {
   comment: {
     pattern: /#.*/,
   },
@@ -187,7 +199,7 @@ const tokenizer: Grammar = {
         pattern: /#.*/,
       },
       'label-key': {
-        pattern: /[a-z_]\w*(?=\s*(=|!=|=~|!~))/,
+        pattern: /[a-zA-Z_]\w*(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
         greedy: true,
       },
@@ -234,9 +246,19 @@ const tokenizer: Grammar = {
       },
     },
   ],
+  quote: {
+    pattern: /"(?:\\.|[^\\"])*"/,
+    alias: 'string',
+    greedy: true,
+  },
+  backticks: {
+    pattern: /`(?:\\.|[^\\`])*`/,
+    alias: 'string',
+    greedy: true,
+  },
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
   operator: /\s?(\|[=~]?|!=?|<(?:=>?|<|>)?|>[>=]?)\s?/i,
-  punctuation: /[{}()`,.]/,
+  punctuation: /[{}(),.]/,
 };
 
-export default tokenizer;
+export default lokiGrammar;

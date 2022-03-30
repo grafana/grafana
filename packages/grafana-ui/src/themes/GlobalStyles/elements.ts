@@ -1,5 +1,6 @@
 import { css } from '@emotion/react';
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
   return css`
@@ -54,6 +55,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     button {
       letter-spacing: ${theme.typography.body.letterSpacing};
 
+      &:focus-visible {
+        outline: ${getFocusStyles(theme)};
+      }
       &:focus {
         outline: none;
       }
@@ -124,6 +128,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
         outline: none;
       }
 
+      &:focus-visible {
+        ${getFocusStyles(theme)}
+      }
+
       &: [disabled] {
         cursor: default;
         pointer-events: none !important;
@@ -156,6 +164,6 @@ export function getVariantStyles(variant: ThemeTypographyVariant) {
     font-weight: ${variant.fontWeight};
     letter-spacing: ${variant.letterSpacing};
     font-family: ${variant.fontFamily};
-    margin-bottom: 0.35em;
+    margin-bottom: 0.45em;
   `;
 }

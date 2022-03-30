@@ -3,6 +3,7 @@ import { Observable, of, throwError } from 'rxjs';
 import {
   ArrayVector,
   CoreApp,
+  DataLink,
   DataQueryRequest,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
@@ -25,7 +26,7 @@ import { createFetchResponse } from '../../../../test/helpers/createFetchRespons
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
@@ -68,8 +69,8 @@ function getTestContext({
   fetchMock.mockImplementation(mockImplementation ?? defaultMock);
 
   const templateSrv: any = {
-    replace: jest.fn((text) => {
-      if (text.startsWith('$')) {
+    replace: jest.fn((text?: string) => {
+      if (text?.startsWith('$')) {
         return `resolvedVariable`;
       } else {
         return text;
@@ -99,6 +100,7 @@ function getTestContext({
     name: 'test-elastic',
     type: 'type',
     uid: 'uid',
+    access: 'proxy',
     url: ELASTICSEARCH_MOCK_URL,
     database,
     jsonData,
@@ -255,14 +257,16 @@ describe('ElasticDatasource', function (this: any) {
           {
             field: 'host',
             url: 'http://localhost:3000/${__value.raw}',
+            urlDisplayLabel: 'Custom Label',
           },
         ],
       });
 
       expect(response.data.length).toBe(1);
-      const links = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
+      const links: DataLink[] = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
+      expect(links[0].title).toBe('Custom Label');
     });
   });
 
@@ -356,7 +360,7 @@ describe('ElasticDatasource', function (this: any) {
         type: 'basic',
         statusText: 'Bad Request',
         redirected: false,
-        headers: ({} as unknown) as Headers,
+        headers: {} as unknown as Headers,
         ok: false,
       };
 
@@ -880,7 +884,7 @@ describe('ElasticDatasource', function (this: any) {
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
   });
 
-  it('should correctly handle empty query strings', () => {
+  it('should correctly handle empty query strings in filters bucket aggregation', () => {
     const { ds } = getTestContext();
     const query: ElasticsearchQuery = {
       refId: 'A',
@@ -891,8 +895,43 @@ describe('ElasticDatasource', function (this: any) {
 
     const interpolatedQuery = ds.interpolateVariablesInQueries([query], {})[0];
 
-    expect(interpolatedQuery.query).toBe('*');
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
+  });
+});
+
+describe('getMultiSearchUrl', () => {
+  describe('When esVersion >= 6.6.0', () => {
+    it('Should add correct params to URL if "includeFrozen" is enabled', () => {
+      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: true, xpack: true } });
+
+      expect(ds.getMultiSearchUrl()).toMatch(/ignore_throttled=false/);
+    });
+
+    it('Should NOT add ignore_throttled if "includeFrozen" is disabled', () => {
+      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: false, xpack: true } });
+
+      expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+    });
+
+    it('Should NOT add ignore_throttled if "xpack" is disabled', () => {
+      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: true, xpack: false } });
+
+      expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+    });
+  });
+
+  describe('When esVersion < 6.6.0', () => {
+    it('Should NOT add ignore_throttled params regardless of includeFrozen', () => {
+      const { ds: dsWithIncludeFrozen } = getTestContext({
+        jsonData: { esVersion: '5.6.0', includeFrozen: false, xpack: true },
+      });
+      const { ds: dsWithoutIncludeFrozen } = getTestContext({
+        jsonData: { esVersion: '5.6.0', includeFrozen: true, xpack: true },
+      });
+
+      expect(dsWithIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+      expect(dsWithoutIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+    });
   });
 });
 
@@ -917,27 +956,52 @@ describe('enhanceDataFrame', () => {
         url: 'someUrl',
       },
       {
+        field: 'urlField',
+        url: 'someOtherUrl',
+      },
+      {
         field: 'traceField',
         url: 'query',
-        datasourceUid: 'dsUid',
+        datasourceUid: 'ds1',
+      },
+      {
+        field: 'traceField',
+        url: 'otherQuery',
+        datasourceUid: 'ds2',
       },
     ]);
 
-    expect(df.fields[0].config.links!.length).toBe(1);
-    expect(df.fields[0].config.links![0]).toEqual({
+    expect(df.fields[0].config.links).toHaveLength(2);
+    expect(df.fields[0].config.links).toContainEqual({
       title: '',
       url: 'someUrl',
     });
-    expect(df.fields[1].config.links!.length).toBe(1);
-    expect(df.fields[1].config.links![0]).toEqual({
+    expect(df.fields[0].config.links).toContainEqual({
       title: '',
-      url: '',
-      internal: {
-        query: { query: 'query' },
-        datasourceName: 'elastic25',
-        datasourceUid: 'dsUid',
-      },
+      url: 'someOtherUrl',
     });
+
+    expect(df.fields[1].config.links).toHaveLength(2);
+    expect(df.fields[1].config.links).toContainEqual(
+      expect.objectContaining({
+        title: '',
+        url: '',
+        internal: expect.objectContaining({
+          query: { query: 'query' },
+          datasourceUid: 'ds1',
+        }),
+      })
+    );
+    expect(df.fields[1].config.links).toContainEqual(
+      expect.objectContaining({
+        title: '',
+        url: '',
+        internal: expect.objectContaining({
+          query: { query: 'otherQuery' },
+          datasourceUid: 'ds2',
+        }),
+      })
+    );
   });
 
   it('adds limit to dataframe', () => {

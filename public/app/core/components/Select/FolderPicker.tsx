@@ -2,13 +2,12 @@ import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
 import { AsyncSelect } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
 
 import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
-import { createFolder } from 'app/features/manage-dashboards/state/actions';
+import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
+import { AccessControlAction, PermissionLevelString } from '../../../types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -18,9 +17,18 @@ export interface Props {
   dashboardId?: any;
   initialTitle?: string;
   initialFolderId?: number;
-  permissionLevel?: 'View' | 'Edit';
+  permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
   allowEmpty?: boolean;
   showRoot?: boolean;
+  /**
+   * Skips loading all folders in order to find the folder matching
+   * the folder where the dashboard is stored.
+   * Instead initialFolderId and initialTitle will be used to display the correct folder.
+   * initialFolderId needs to have an value > -1 or an error will be thrown.
+   */
+  skipInitialLoad?: boolean;
+  /** The id of the search input. Use this to set a matching label with htmlFor */
+  inputId?: string;
 }
 
 interface State {
@@ -48,34 +56,47 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
-    permissionLevel: 'Edit',
+    permissionLevel: PermissionLevelString.Edit,
     allowEmpty: false,
     showRoot: true,
   };
 
   componentDidMount = async () => {
+    if (this.props.skipInitialLoad) {
+      const folder = await getInitialValues({
+        getFolder: getFolderById,
+        folderId: this.props.initialFolderId,
+        folderName: this.props.initialTitle,
+      });
+      this.setState({ folder });
+      return;
+    }
+
     await this.loadInitialValue();
   };
 
   getOptions = async (query: string) => {
-    const { rootName, enableReset, initialTitle, permissionLevel, showRoot } = this.props;
-    const params = {
-      query,
-      type: 'dash-folder',
-      permission: permissionLevel,
-    };
+    const { rootName, enableReset, initialTitle, permissionLevel, initialFolderId, showRoot } = this.props;
 
-    // TODO: move search to BackendSrv interface
-    // @ts-ignore
-    const searchHits = (await getBackendSrv().search(params)) as DashboardSearchHit[];
+    const searchHits = await searchFolders(query, permissionLevel);
 
     const options: Array<SelectableValue<number>> = searchHits.map((hit) => ({ label: hit.title, value: hit.id }));
-    if (contextSrv.isEditor && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
+
+    const hasAccess =
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+
+    if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
       options.unshift({ label: rootName, value: 0 });
     }
 
-    if (enableReset && query === '' && initialTitle !== '') {
-      options.unshift({ label: initialTitle, value: undefined });
+    if (
+      enableReset &&
+      query === '' &&
+      initialTitle !== '' &&
+      !options.find((option) => option.label === initialTitle)
+    ) {
+      options.unshift({ label: initialTitle, value: initialFolderId });
     }
 
     return options;
@@ -122,9 +143,8 @@ export class FolderPicker extends PureComponent<Props, State> {
       folder = options.find((option) => option.value === initialFolderId) || null;
     } else if (enableReset && initialTitle) {
       folder = resetFolder;
-    } else if (initialTitle && initialFolderId === -1) {
-      // @TODO temporary, we don't know the id for alerting rule folder in some cases
-      folder = options.find((option) => option.label === initialTitle) || null;
+    } else if (initialFolderId) {
+      folder = options.find((option) => option.id === initialFolderId) || null;
     }
 
     if (!folder && !this.props.allowEmpty) {
@@ -156,11 +176,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { enableCreateNew } = this.props;
+    const { enableCreateNew, inputId } = this.props;
 
     return (
-      <div aria-label={selectors.components.FolderPicker.container}>
+      <div data-testid={selectors.components.FolderPicker.containerV2}>
         <AsyncSelect
+          inputId={inputId}
+          aria-label={selectors.components.FolderPicker.input}
           loadingMessage="Loading folders..."
           defaultOptions
           defaultValue={folder}
@@ -169,8 +191,28 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
+          menuShouldPortal
         />
       </div>
     );
   }
+}
+
+interface Args {
+  getFolder: typeof getFolderById;
+  folderId?: number;
+  folderName?: string;
+}
+
+export async function getInitialValues({ folderName, folderId, getFolder }: Args): Promise<SelectableValue<number>> {
+  if (folderId === null || folderId === undefined || folderId < 0) {
+    throw new Error('folderId should to be greater or equal to zero.');
+  }
+
+  if (folderName) {
+    return { label: folderName, value: folderId };
+  }
+
+  const folderDto = await getFolder(folderId);
+  return { label: folderDto.title, value: folderId };
 }

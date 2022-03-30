@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import {
   dateMath,
   DateTime,
   dateTimeFormat,
   dateTimeParse,
+  GrafanaTheme2,
   isDateTime,
   rangeUtil,
   RawTimeRange,
@@ -11,16 +13,19 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Icon, Tooltip } from '../..';
+import { useStyles2 } from '../../..';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
-import { TimePickerCalendar } from './TimePickerCalendar';
+import TimePickerCalendar from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
   timeZone?: TimeZone;
+  fiscalYearStartMonth?: number;
   roundup?: boolean;
   isReversed?: boolean;
 }
@@ -28,21 +33,28 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
+  errorMessage: string;
 }
 
-const errorMessage = 'Please enter a past date or "now"';
+const ERROR_MESSAGES = {
+  default: 'Please enter a past date or "now"',
+  range: '"From" can\'t be after "To"',
+};
 
 export const TimeRangeForm: React.FC<Props> = (props) => {
-  const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed } = props;
+  const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed, fiscalYearStartMonth } = props;
+  const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
+  const style = useStyles2(getStyles);
 
-  const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
-  const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
+  const [from, setFrom] = useState<InputState>(fromValue);
+  const [to, setTo] = useState<InputState>(toValue);
   const [isOpen, setOpen] = useState(false);
 
   // Synchronize internal state with external value
   useEffect(() => {
-    setFrom(valueToState(value.raw.from, false, timeZone));
-    setTo(valueToState(value.raw.to, true, timeZone));
+    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
+    setFrom(fromValue);
+    setTo(toValue);
   }, [value.raw.from, value.raw.to, timeZone]);
 
   const onOpen = useCallback(
@@ -53,16 +65,6 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [setOpen]
   );
 
-  const onFocus = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      if (!isFullscreen) {
-        return;
-      }
-      onOpen(event);
-    },
-    [isFullscreen, onOpen]
-  );
-
   const onApply = useCallback(
     (e: FormEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -71,46 +73,70 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
       }
 
       const raw: RawTimeRange = { from: from.value, to: to.value };
-      const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
+      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth);
 
       onApplyFromProps(timeRange);
     },
-    [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value]
+    [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value, fiscalYearStartMonth]
   );
 
   const onChange = useCallback(
-    (from: DateTime, to: DateTime) => {
-      setFrom(valueToState(from, false, timeZone));
-      setTo(valueToState(to, true, timeZone));
+    (from: DateTime | string, to: DateTime | string) => {
+      const [fromValue, toValue] = valueToState(from, to, timeZone);
+      setFrom(fromValue);
+      setTo(toValue);
     },
     [timeZone]
   );
 
-  const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
+
+  const fyTooltip = (
+    <div className={style.tooltip}>
+      {rangeUtil.isFiscal(value) ? (
+        <Tooltip content={`Fiscal year: ${fiscalYear.from.format('MMM-DD')} - ${fiscalYear.to.format('MMM-DD')}`}>
+          <Icon name="info-circle" />
+        </Tooltip>
+      ) : null}
+    </div>
+  );
+
+  const icon = (
+    <Button
+      aria-label={selectors.components.TimePicker.calendar.openButton}
+      icon="calendar-alt"
+      variant="secondary"
+      onClick={onOpen}
+    />
+  );
 
   return (
-    <>
-      <Field label="From" invalid={from.invalid} error={errorMessage}>
-        <Input
-          onClick={(event) => event.stopPropagation()}
-          onFocus={onFocus}
-          onChange={(event) => setFrom(eventToState(event, false, timeZone))}
-          addonAfter={icon}
-          aria-label={selectors.components.TimePicker.fromField}
-          value={from.value}
-        />
-      </Field>
-      <Field label="To" invalid={to.invalid} error={errorMessage}>
-        <Input
-          onClick={(event) => event.stopPropagation()}
-          onFocus={onFocus}
-          onChange={(event) => setTo(eventToState(event, true, timeZone))}
-          addonAfter={icon}
-          aria-label={selectors.components.TimePicker.toField}
-          value={to.value}
-        />
-      </Field>
-      <Button aria-label={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
+    <div>
+      <div className={style.fieldContainer}>
+        <Field label="From" invalid={from.invalid} error={from.errorMessage}>
+          <Input
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onChange(event.currentTarget.value, to.value)}
+            addonAfter={icon}
+            aria-label={selectors.components.TimePicker.fromField}
+            value={from.value}
+          />
+        </Field>
+        {fyTooltip}
+      </div>
+      <div className={style.fieldContainer}>
+        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
+          <Input
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onChange(from.value, event.currentTarget.value)}
+            addonAfter={icon}
+            aria-label={selectors.components.TimePicker.toField}
+            value={to.value}
+          />
+        </Field>
+        {fyTooltip}
+      </div>
+      <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
 
@@ -125,18 +151,38 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
         timeZone={timeZone}
         isReversed={isReversed}
       />
-    </>
+    </div>
   );
 };
 
-function eventToState(event: FormEvent<HTMLInputElement>, roundup?: boolean, timeZone?: TimeZone): InputState {
-  return valueToState(event.currentTarget.value, roundup, timeZone);
+function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
+  const raw: RawTimeRange = { from, to };
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
+  const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
+
+  return !valid;
 }
 
-function valueToState(raw: DateTime | string, roundup?: boolean, timeZone?: TimeZone): InputState {
-  const value = valueAsString(raw, timeZone);
-  const invalid = !isValid(value, roundup, timeZone);
-  return { value, invalid };
+function valueToState(
+  rawFrom: DateTime | string,
+  rawTo: DateTime | string,
+  timeZone?: TimeZone
+): [InputState, InputState] {
+  const fromValue = valueAsString(rawFrom, timeZone);
+  const toValue = valueAsString(rawTo, timeZone);
+  const fromInvalid = !isValid(fromValue, false, timeZone);
+  const toInvalid = !isValid(toValue, true, timeZone);
+  // If "To" is invalid, we should not check the range anyways
+  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
+
+  return [
+    {
+      value: fromValue,
+      invalid: fromInvalid || rangeInvalid,
+      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range : ERROR_MESSAGES.default,
+    },
+    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default },
+  ];
 }
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
@@ -157,4 +203,16 @@ function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean
 
   const parsed = dateTimeParse(value, { roundUp, timeZone });
   return parsed.isValid();
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    fieldContainer: css`
+      display: flex;
+    `,
+    tooltip: css`
+      padding-left: ${theme.spacing(1)};
+      padding-top: ${theme.spacing(3)};
+    `,
+  };
 }

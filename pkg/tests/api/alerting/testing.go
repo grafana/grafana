@@ -56,10 +56,10 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 	buf := bytes.NewReader([]byte(body))
 	// nolint:gosec
 	resp, err := http.Post(url, "application/json", buf)
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, resp.Body.Close())
 	})
-	require.NoError(t, err)
 	if expStatusCode != resp.StatusCode {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)

@@ -17,18 +17,18 @@ type Message struct {
 	SingleEmail   bool
 	From          string
 	Subject       string
-	Body          string
+	Body          map[string]string
 	Info          string
 	ReplyTo       []string
 	EmbeddedFiles []string
 	AttachedFiles []*AttachedFile
 }
 
-func setDefaultTemplateData(data map[string]interface{}, u *models.User) {
+func setDefaultTemplateData(cfg *setting.Cfg, data map[string]interface{}, u *models.User) {
 	data["AppUrl"] = setting.AppUrl
 	data["BuildVersion"] = setting.BuildVersion
 	data["BuildStamp"] = setting.BuildStamp
-	data["EmailCodeValidHours"] = setting.EmailCodeValidMinutes / 60
+	data["EmailCodeValidHours"] = cfg.EmailCodeValidMinutes / 60
 	data["Subject"] = map[string]interface{}{}
 	if u != nil {
 		data["Name"] = u.NameOrFallback()

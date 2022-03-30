@@ -2,36 +2,40 @@ package cleanup
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
+	shortURLService shorturls.Service, store sqlstore.Store) *CleanUpService {
+	s := &CleanUpService{
+		Cfg:               cfg,
+		ServerLockService: serverLockService,
+		ShortURLService:   shortURLService,
+		store:             store,
+		log:               log.New("cleanup"),
+	}
+	return s
+}
+
 type CleanUpService struct {
 	log               log.Logger
-	Cfg               *setting.Cfg                  `inject:""`
-	ServerLockService *serverlock.ServerLockService `inject:""`
-	ShortURLService   shorturls.Service             `inject:""`
-}
-
-func init() {
-	registry.RegisterService(&CleanUpService{})
-}
-
-func (srv *CleanUpService) Init() error {
-	srv.log = log.New("cleanup")
-	return nil
+	store             sqlstore.Store
+	Cfg               *setting.Cfg
+	ServerLockService *serverlock.ServerLockService
+	ShortURLService   shorturls.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
@@ -45,14 +49,14 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			defer cancelFn()
 
 			srv.cleanUpTmpFiles()
-			srv.deleteExpiredSnapshots()
-			srv.deleteExpiredDashboardVersions()
+			srv.deleteExpiredSnapshots(ctx)
+			srv.deleteExpiredDashboardVersions(ctx)
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
-			srv.expireOldUserInvites()
-			srv.deleteStaleShortURLs()
+			srv.expireOldUserInvites(ctx)
+			srv.deleteStaleShortURLs(ctx)
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
-				time.Minute*10, func() {
-					srv.deleteOldLoginAttempts()
+				time.Minute*10, func(context.Context) {
+					srv.deleteOldLoginAttempts(ctx)
 				})
 			if err != nil {
 				srv.log.Error("failed to lock and execute cleanup of old login attempts", "error", err)
@@ -66,7 +70,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
 	cleaner := annotations.GetAnnotationCleaner()
 	affected, affectedTags, err := cleaner.CleanAnnotations(ctx, srv.Cfg)
-	if err != nil {
+	if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		srv.log.Error("failed to clean up old annotations", "error", err)
 	} else {
 		srv.log.Debug("Deleted excess annotations", "annotations affected", affected, "annotation tags affected", affectedTags)
@@ -123,25 +127,25 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 	return filemtime.Add(srv.Cfg.TempDataLifetime).Before(now)
 }
 
-func (srv *CleanUpService) deleteExpiredSnapshots() {
+func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	cmd := models.DeleteExpiredSnapshotsCommand{}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := srv.store.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
 	}
 }
 
-func (srv *CleanUpService) deleteExpiredDashboardVersions() {
+func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
 	cmd := models.DeleteExpiredVersionsCommand{}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := srv.store.DeleteExpiredVersions(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
 	}
 }
 
-func (srv *CleanUpService) deleteOldLoginAttempts() {
+func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context) {
 	if srv.Cfg.DisableBruteForceLoginProtection {
 		return
 	}
@@ -149,31 +153,31 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := srv.store.DeleteOldLoginAttempts(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
 	}
 }
 
-func (srv *CleanUpService) expireOldUserInvites() {
+func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	maxInviteLifetime := srv.Cfg.UserInviteMaxLifetime
 
 	cmd := models.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := srv.store.ExpireOldUserInvites(ctx, &cmd); err != nil {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)
 	}
 }
 
-func (srv *CleanUpService) deleteStaleShortURLs() {
+func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	cmd := models.DeleteShortUrlCommand{
 		OlderThan: time.Now().Add(-time.Hour * 24 * 7),
 	}
-	if err := srv.ShortURLService.DeleteStaleShortURLs(context.Background(), &cmd); err != nil {
+	if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting stale short urls", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)

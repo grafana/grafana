@@ -18,31 +18,45 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
 import { contextSrv } from 'app/core/services/context_srv';
-import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, PanelModel } from './PanelModel';
+import { TimeModel, TimePickerOptions } from './TimeModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
   AnnotationQuery,
   AppEvent,
   DashboardCursorSync,
+  dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
   EventBusExtended,
   EventBusSrv,
+  PanelModel as IPanelModel,
   TimeRange,
   TimeZone,
   UrlQueryValue,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
-import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
+import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
+import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+import { deleteScopeVars, isOnTheSameGridRow } from './utils';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { Subscription } from 'rxjs';
+import { appEvents } from '../../../core/core';
+import {
+  VariablesChanged,
+  VariablesChangedEvent,
+  VariablesChangedInUrl,
+  VariablesTimeRangeProcessDone,
+} from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -66,7 +80,7 @@ export interface DashboardLink {
   includeVars: boolean;
 }
 
-export class DashboardModel {
+export class DashboardModel implements TimeModel {
   id: any;
   uid: string;
   title: string;
@@ -75,11 +89,13 @@ export class DashboardModel {
   tags: any;
   style: any;
   timezone: any;
+  weekStart: any;
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
+  liveNow: boolean;
   private originalTime: any;
-  timepicker: any;
+  timepicker: TimePickerOptions;
   templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
@@ -93,7 +109,10 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
-  private hasChangesThatAffectsAllPanels: boolean;
+  fiscalYearStartMonth?: number;
+  private panelsAffectedByVariableChange: number[] | null;
+  private appEventsSubscription: Subscription;
+  private lastRefresh: number;
 
   // ------------------
   // not persisted
@@ -116,10 +135,12 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
-    hasChangesThatAffectsAllPanels: true,
+    appEventsSubscription: true,
+    panelsAffectedByVariableChange: true,
+    lastRefresh: true,
   };
 
-  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
+  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
     if (!data) {
       data = {};
     }
@@ -128,25 +149,28 @@ export class DashboardModel {
     this.id = data.id || null;
     this.uid = data.uid || null;
     this.revision = data.revision;
-    this.title = data.title || 'No Title';
+    this.title = data.title ?? 'No Title';
     this.autoUpdate = data.autoUpdate;
     this.description = data.description;
-    this.tags = data.tags || [];
-    this.style = data.style || 'dark';
-    this.timezone = data.timezone || '';
+    this.tags = data.tags ?? [];
+    this.style = data.style ?? 'dark';
+    this.timezone = data.timezone ?? '';
+    this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
-    this.time = data.time || { from: 'now-6h', to: 'now' };
-    this.timepicker = data.timepicker || {};
+    this.time = data.time ?? { from: 'now-6h', to: 'now' };
+    this.timepicker = data.timepicker ?? {};
+    this.liveNow = Boolean(data.liveNow);
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
-    this.schemaVersion = data.schemaVersion || 0;
-    this.version = data.version || 0;
-    this.links = data.links || [];
+    this.schemaVersion = data.schemaVersion ?? 0;
+    this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
+    this.version = data.version ?? 0;
+    this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
-    this.panels = map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -157,7 +181,16 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
-    this.hasChangesThatAffectsAllPanels = false;
+    this.panelsAffectedByVariableChange = null;
+    this.appEventsSubscription = new Subscription();
+    this.lastRefresh = Date.now();
+    this.appEventsSubscription.add(appEvents.subscribe(VariablesChanged, this.variablesChangedHandler.bind(this)));
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesTimeRangeProcessDone, this.variablesTimeRangeProcessDoneHandler.bind(this))
+    );
+    this.appEventsSubscription.add(
+      appEvents.subscribe(VariablesChangedInUrl, this.variablesChangedInUrlHandler.bind(this))
+    );
   }
 
   addBuiltInAnnotationQuery() {
@@ -174,7 +207,7 @@ export class DashboardModel {
     }
 
     this.annotations.list.unshift({
-      datasource: '-- Grafana --',
+      datasource: { uid: '-- Grafana --', type: 'grafana' },
       name: 'Annotations & Alerts',
       type: 'dashboard',
       iconColor: DEFAULT_ANNOTATION_COLOR,
@@ -191,7 +224,9 @@ export class DashboardModel {
     meta.canSave = meta.canSave !== false;
     meta.canStar = meta.canStar !== false;
     meta.canEdit = meta.canEdit !== false;
-    meta.showSettings = meta.canEdit;
+    meta.canDelete = meta.canDelete !== false;
+
+    meta.showSettings = meta.canSave;
     meta.canMakeEditable = meta.canSave && !this.editable;
     meta.hasUnsavedFolderChange = false;
 
@@ -231,7 +266,7 @@ export class DashboardModel {
     copy.panels = this.getPanelSaveModels();
 
     //  sort by keys
-    copy = sortByKeys(copy);
+    copy = sortedDeepCloneWithoutNulls(copy);
     copy.getVariables = () => {
       return copy.templating.list;
     };
@@ -239,9 +274,32 @@ export class DashboardModel {
     return copy;
   }
 
+  /**
+   * This will load a new dashboard, but keep existing panels unchanged
+   *
+   * This function can be used to implement:
+   * 1. potentially faster loading dashboard loading
+   * 2. dynamic dashboard behavior
+   * 3. "live" dashboard editing
+   *
+   * @internal and experimental
+   */
+  updatePanels(panels: IPanelModel[]): PanelMergeInfo {
+    const info = mergePanels(this.panels, panels ?? []);
+    if (info.changed) {
+      this.panels = info.panels ?? [];
+      this.sortPanelsByGridPos();
+      this.events.publish(new DashboardPanelsChangedEvent());
+    }
+    return info;
+  }
+
   private getPanelSaveModels() {
     return this.panels
       .filter((panel: PanelModel) => {
+        if (this.isSnapshotTruthy()) {
+          return true;
+        }
         if (panel.type === 'add-panel') {
           return false;
         }
@@ -258,16 +316,16 @@ export class DashboardModel {
       .map((panel: PanelModel) => {
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
-        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
-          const saveModel = this.panelInEdit.getSaveModel();
-          // while editing a panel we modify its id, need to restore it here
-          saveModel.id = this.panelInEdit.editSourceId;
-          return saveModel;
+        if (this.panelInEdit && this.panelInEdit.id === panel.id) {
+          return this.panelInEdit.getSaveModel();
         }
 
         return panel.getSaveModel();
       })
       .map((model: any) => {
+        if (this.isSnapshotTruthy()) {
+          return model;
+        }
         // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
         // panel models with preserved scopedVars, for example when going into edit mode.
         delete model.scopedVars;
@@ -291,7 +349,7 @@ export class DashboardModel {
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
     const originalVariables = this.originalTemplating;
-    const currentVariables = this.getVariablesFromState();
+    const currentVariables = this.getVariablesFromState(this.uid);
 
     copy.templating = {
       list: currentVariables.map((variable) =>
@@ -319,20 +377,25 @@ export class DashboardModel {
 
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
-    dispatch(onTimeRangeUpdated(timeRange));
+    dispatch(onTimeRangeUpdated(this.uid, timeRange));
   }
 
-  startRefresh() {
+  startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
     this.events.publish(new RefreshEvent());
+    this.lastRefresh = Date.now();
 
     if (this.panelInEdit) {
-      this.panelInEdit.refresh();
-      return;
+      if (event.refreshAll || event.panelIds.includes(this.panelInEdit.id)) {
+        this.panelInEdit.refresh();
+        return;
+      }
     }
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
-        panel.refresh();
+        if (event.refreshAll || event.panelIds.includes(panel.id)) {
+          panel.refresh();
+        }
       }
     }
   }
@@ -370,29 +433,23 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
-    this.refreshIfChangeAffectsAllPanels();
+    this.refreshIfPanelsAffectedByVariableChange();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
-    this.refreshIfChangeAffectsAllPanels();
     getTimeSrv().resumeAutoRefresh();
+    this.refreshIfPanelsAffectedByVariableChange();
   }
 
-  setChangeAffectsAllPanels() {
-    if (this.panelInEdit || this.panelInView) {
-      this.hasChangesThatAffectsAllPanels = true;
-    }
-  }
-
-  private refreshIfChangeAffectsAllPanels() {
-    if (!this.hasChangesThatAffectsAllPanels) {
+  private refreshIfPanelsAffectedByVariableChange() {
+    if (!this.panelsAffectedByVariableChange) {
       return;
     }
 
-    this.hasChangesThatAffectsAllPanels = false;
-    this.startRefresh();
+    this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false });
+    this.panelsAffectedByVariableChange = null;
   }
 
   private ensureListExist(data: any) {
@@ -446,7 +503,7 @@ export class DashboardModel {
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
-    return this.meta.canEdit && panel && !panel.repeatPanelId;
+    return Boolean(this.meta.canEdit && panel && !panel.repeatPanelId && panel.type !== 'row');
   }
 
   canEditPanelById(id: number): boolean | undefined | null {
@@ -473,6 +530,22 @@ export class DashboardModel {
     });
   }
 
+  clearUnsavedChanges() {
+    for (const panel of this.panels) {
+      panel.configRev = 0;
+    }
+  }
+
+  hasUnsavedChanges() {
+    for (const panel of this.panels) {
+      if (panel.hasChanged) {
+        console.log('Panel has changed', panel);
+        return true;
+      }
+    }
+    return false;
+  }
+
   cleanUpRepeats() {
     if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
@@ -482,9 +555,7 @@ export class DashboardModel {
     const panelsToRemove = [];
 
     // cleanup scopedVars
-    for (const panel of this.panels) {
-      delete panel.scopedVars;
-    }
+    deleteScopeVars(this.panels);
 
     for (let i = 0; i < this.panels.length; i++) {
       const panel = this.panels[i];
@@ -497,7 +568,6 @@ export class DashboardModel {
     pull(this.panels, ...panelsToRemove);
     panelsToRemove.map((p) => p.destroy());
     this.sortPanelsByGridPos();
-    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   processRepeats() {
@@ -560,9 +630,9 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    const clone = new PanelModel(sourcePanel.getSaveModel());
-
-    clone.id = this.getNextPanelId();
+    const m = sourcePanel.getSaveModel();
+    m.id = this.getNextPanelId();
+    const clone = new PanelModel(m);
 
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
@@ -661,6 +731,10 @@ export class DashboardModel {
     if (yOffset > 0) {
       const panelBelowIndex = panelIndex + selectedOptions.length;
       for (let i = panelBelowIndex; i < this.panels.length; i++) {
+        if (isOnTheSameGridRow(panel, this.panels[i])) {
+          continue;
+        }
+
         this.panels[i].gridPos.y += yOffset;
       }
     }
@@ -714,9 +788,11 @@ export class DashboardModel {
         panelBelowIndex = insertPos + rowPanels.length;
       }
 
-      // Update gridPos for panels below
-      for (let i = panelBelowIndex; i < this.panels.length; i++) {
-        this.panels[i].gridPos.y += yPos;
+      // Update gridPos for panels below if we inserted more than 1 repeated row panel
+      if (selectedOptions.length > 1) {
+        for (let i = panelBelowIndex; i < this.panels.length; i++) {
+          this.panels[i].gridPos.y += yPos;
+        }
       }
     }
   }
@@ -752,7 +828,7 @@ export class DashboardModel {
     const maxPos = maxBy(positions, (pos: GridPos) => {
       return pos.y + pos.h;
     });
-    return maxPos.y + maxPos.h - rowYPos;
+    return maxPos!.y + maxPos!.h - rowYPos;
   }
 
   removePanel(panel: PanelModel) {
@@ -860,6 +936,7 @@ export class DashboardModel {
   }
 
   destroy() {
+    this.appEventsSubscription.unsubscribe();
     this.events.removeAllListeners();
     for (const panel of this.panels) {
       panel.destroy();
@@ -875,8 +952,10 @@ export class DashboardModel {
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
-        const firstPanel = row.panels[0];
-        const yDiff = firstPanel.gridPos.y - (row.gridPos.y + row.gridPos.h);
+        // If the panel doesn't have gridPos.y, use the row gridPos.y instead.
+        // This can happen for some generated dashboards.
+        const firstPanelYPos = row.panels[0].gridPos.y ?? row.gridPos.y;
+        const yDiff = firstPanelYPos - (row.gridPos.y + row.gridPos.h);
 
         // start inserting after row
         let insertPos = rowIndex + 1;
@@ -885,8 +964,9 @@ export class DashboardModel {
         let yMax = row.gridPos.y;
 
         for (const panel of row.panels) {
+          // set the y gridPos if it wasn't already set
+          panel.gridPos.y ?? (panel.gridPos.y = row.gridPos.y); // (Safari 13.1 lacks ??= support)
           // make sure y is adjusted (in case row moved while collapsed)
-          // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
           // insert after row
           this.panels.splice(insertPos, 0, new PanelModel(panel));
@@ -998,7 +1078,16 @@ export class DashboardModel {
   }
 
   hasTimeChanged() {
-    return !isEqual(this.time, this.originalTime);
+    const { time, originalTime } = this;
+    if (isEqual(time, originalTime)) {
+      return false;
+    }
+
+    // Compare momemt values vs strings values
+    return !(
+      isEqual(dateTime(time?.from), dateTime(originalTime?.from)) &&
+      isEqual(dateTime(time?.to), dateTime(originalTime?.to))
+    );
   }
 
   resetOriginalVariables(initial = false) {
@@ -1007,11 +1096,11 @@ export class DashboardModel {
       return;
     }
 
-    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState());
+    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState(this.uid));
   }
 
   hasVariableValuesChanged() {
-    return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState());
+    return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState(this.uid));
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
@@ -1051,17 +1140,22 @@ export class DashboardModel {
     this.events.emit(CoreEvents.templateVariableValueUpdated);
   }
 
-  expandParentRowFor(panelId: number) {
+  getPanelByUrlId(panelUrlId: string) {
+    const panelId = parseInt(panelUrlId ?? '0', 10);
+
+    // First try to find it in a collapsed row and exand it
     for (const panel of this.panels) {
       if (panel.collapsed) {
         for (const rowPanel of panel.panels) {
           if (rowPanel.id === panelId) {
             this.toggleRow(panel);
-            return;
+            break;
           }
         }
       }
     }
+
+    return this.getPanelById(panelId);
   }
 
   toggleLegendsForAll() {
@@ -1081,7 +1175,7 @@ export class DashboardModel {
   }
 
   getVariables = () => {
-    return this.getVariablesFromState();
+    return this.getVariablesFromState(this.uid);
   };
 
   canAddAnnotations() {
@@ -1096,7 +1190,7 @@ export class DashboardModel {
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {
-    return this.getVariablesFromState().find((variable) => variable.name === panel.repeat);
+    return this.getVariablesFromState(this.uid).find((variable) => variable.name === panel.repeat);
   }
 
   private isSnapshotTruthy() {
@@ -1104,7 +1198,7 @@ export class DashboardModel {
   }
 
   private hasVariables() {
-    return this.getVariablesFromState().length > 0;
+    return this.getVariablesFromState(this.uid).length > 0;
   }
 
   private hasVariablesChanged(originalVariables: any[], currentVariables: any[]): boolean {
@@ -1133,5 +1227,34 @@ export class DashboardModel {
         filters: cloneDeep(variable.filters),
       };
     });
+  }
+
+  private variablesTimeRangeProcessDoneHandler(event: VariablesTimeRangeProcessDone) {
+    const processRepeats = event.payload.variableIds.length > 0;
+    this.variablesChangedHandler(new VariablesChanged({ panelIds: [], refreshAll: true }), processRepeats);
+  }
+
+  private variablesChangedHandler(event: VariablesChanged, processRepeats = true) {
+    if (processRepeats) {
+      this.processRepeats();
+    }
+
+    if (event.payload.refreshAll || getTimeSrv().isRefreshOutsideThreshold(this.lastRefresh)) {
+      this.startRefresh({ refreshAll: true, panelIds: [] });
+      return;
+    }
+
+    if (this.panelInEdit || this.panelInView) {
+      this.panelsAffectedByVariableChange = event.payload.panelIds.filter(
+        (id) => id !== (this.panelInEdit?.id ?? this.panelInView?.id)
+      );
+    }
+
+    this.startRefresh(event.payload);
+  }
+
+  private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
+    this.templateVariableValueUpdated();
+    this.startRefresh(event.payload);
   }
 }

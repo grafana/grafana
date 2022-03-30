@@ -13,6 +13,7 @@ import {
   LoadingState,
   TimeRange,
   ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -64,7 +65,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         case 'node_graph':
           streams.push(this.nodesQuery(target, options));
           break;
-
+        case 'raw_frame':
+          streams.push(this.rawFrameQuery(target, options));
+          break;
         // Unusable since 7, removed in 8
         case 'manual_entry': {
           let csvContent = 'Time,Value\n';
@@ -106,7 +109,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    const events = this.buildFakeAnnotationEvents(req.range, 10);
+    const events = this.buildFakeAnnotationEvents(req.range, 50);
     const dataFrame = new ArrayDataFrame(events);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
@@ -185,6 +188,19 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     }
 
     return of({ data: frames }).pipe(delay(100));
+  }
+
+  rawFrameQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    try {
+      const data = JSON.parse(target.rawFrameContent ?? '[]').map((v: any) => {
+        const f = toDataFrame(v);
+        f.refId = target.refId;
+        return f;
+      });
+      return of({ data, state: LoadingState.Done }).pipe(delay(100));
+    } catch (ex) {
+      return of({ data: [], error: ex }).pipe(delay(100));
+    }
   }
 }
 

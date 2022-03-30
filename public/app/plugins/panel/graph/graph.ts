@@ -9,13 +9,14 @@ import 'vendor/flot/jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';
-import { min as _min, max as _max, clone, find, isUndefined, map, toNumber, sortBy as _sortBy, flatten } from 'lodash';
+import { clone, find, flatten, isUndefined, map, max as _max, min as _min, sortBy as _sortBy, toNumber } from 'lodash';
 import { tickStep } from 'app/core/utils/ticks';
-import { coreModule, updateLegendValues } from 'app/core/core';
+import { updateLegendValues } from 'app/core/core';
+import { coreModule } from 'app/angular/core_module';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
-import { EventManager } from 'app/features/annotations/all';
+import { EventManager } from './event_manager';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
@@ -29,6 +30,9 @@ import { provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
   DataFrameView,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  DataHoverPayload,
   FieldDisplay,
   FieldType,
   formattedValueToString,
@@ -37,8 +41,10 @@ import {
   getTimeField,
   getValueFormat,
   hasLinks,
+  LegacyEventHandler,
   LegacyGraphHoverClearEvent,
   LegacyGraphHoverEvent,
+  LegacyGraphHoverEventPayload,
   LinkModelSupplier,
   PanelEvents,
   toUtc,
@@ -48,6 +54,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { DashboardModel } from '../../../features/dashboard/state';
+import { isLegacyGraphHoverEvent } from './utils';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -63,11 +70,17 @@ class GraphElement {
   data: any[] = [];
   panelWidth: number;
   eventManager: EventManager;
-  thresholdManager?: ThresholdManager;
+  thresholdManager: ThresholdManager;
   timeRegionManager: TimeRegionManager;
-  legendElem: HTMLElement;
+  declare legendElem: HTMLElement;
 
-  constructor(private scope: any, private elem: JQuery, private timeSrv: TimeSrv) {
+  constructor(
+    private scope: any,
+    private elem: JQuery & {
+      bind(eventType: string, handler: (eventObject: JQueryEventObject, ...args: any[]) => any): JQuery; // need to extend with Plot
+    },
+    private timeSrv: TimeSrv
+  ) {
     this.ctrl = scope.ctrl;
     this.contextMenu = scope.ctrl.contextMenuCtrl;
     this.dashboard = this.ctrl.dashboard;
@@ -76,10 +89,7 @@ class GraphElement {
 
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
-    // unified alerting does not support threshold for graphs, at least for now
-    if (!config.featureToggles.ngalert) {
-      this.thresholdManager = new ThresholdManager(this.ctrl);
-    }
+    this.thresholdManager = new ThresholdManager(this.ctrl);
     this.timeRegionManager = new TimeRegionManager(this.ctrl);
     // @ts-ignore
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
@@ -94,6 +104,9 @@ class GraphElement {
     // Using old way here to use the scope unsubscribe model as the new $on function does not take scope
     this.ctrl.dashboard.events.on(LegacyGraphHoverEvent.type, this.onGraphHover.bind(this), this.scope);
     this.ctrl.dashboard.events.on(LegacyGraphHoverClearEvent.type, this.onGraphHoverClear.bind(this), this.scope);
+
+    this.ctrl.dashboard.events.on(DataHoverEvent.type, this.onGraphHover.bind(this), this.scope);
+    this.ctrl.dashboard.events.on(DataHoverClearEvent.type, this.onGraphHoverClear.bind(this), this.scope);
 
     // plot events
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
@@ -143,18 +156,27 @@ class GraphElement {
     ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
-  onGraphHover(evt: any) {
+  onGraphHover(evt: LegacyGraphHoverEventPayload | DataHoverPayload) {
     // ignore other graph hover events if shared tooltip is disabled
     if (!this.dashboard.sharedTooltipModeEnabled()) {
       return;
     }
 
-    // ignore if we are the emitter
-    if (!this.plot || evt.panel.id === this.panel.id || this.ctrl.otherPanelInFullscreenMode()) {
+    if (isLegacyGraphHoverEvent(evt)) {
+      // ignore if we are the emitter
+      if (!this.plot || evt.panel?.id === this.panel.id || this.ctrl.otherPanelInFullscreenMode()) {
+        return;
+      }
+
+      this.tooltip.show(evt.pos);
+    }
+
+    // DataHoverEvent can come from multiple panels that doesn't include x position
+    if (!evt.point?.time) {
       return;
     }
 
-    this.tooltip.show(evt.pos);
+    this.tooltip.show({ x: evt.point.time, panelRelY: evt.point.panelRelY ?? 1 });
   }
 
   onPanelTeardown() {
@@ -170,7 +192,7 @@ class GraphElement {
     ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
-  onGraphHoverClear(event: any, info: any) {
+  onGraphHoverClear(handler: LegacyEventHandler<any>) {
     if (this.plot) {
       this.tooltip.clear(this.plot);
     }
@@ -382,9 +404,7 @@ class GraphElement {
       }
       msg.appendTo(this.elem);
     }
-    if (this.thresholdManager) {
-      this.thresholdManager.draw(plot);
-    }
+    this.thresholdManager.draw(plot);
     this.timeRegionManager.draw(plot);
   }
 
@@ -455,9 +475,7 @@ class GraphElement {
     }
 
     // give space to alert editing
-    if (this.thresholdManager) {
-      this.thresholdManager.prepare(this.elem, this.data);
-    }
+    this.thresholdManager.prepare(this.elem, this.data);
 
     // un-check dashes if lines are unchecked
     this.panel.dashes = this.panel.lines ? this.panel.dashes : false;
@@ -466,9 +484,7 @@ class GraphElement {
     const options: any = this.buildFlotOptions(this.panel);
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
-    if (this.thresholdManager) {
-      this.thresholdManager.addFlotOptions(options, this.panel);
-    }
+    this.thresholdManager.addFlotOptions(options, this.panel);
     this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
     this.sortedSeries = this.sortSeries(this.data, this.panel);

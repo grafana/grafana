@@ -13,7 +13,7 @@ Currently you can authenticate via an `API Token` or via a `Session cookie` (acq
 
 ## X-Grafana-Org-Id Header
 
-**X-Grafana-Org-Id**  is an optional property that specifies the organization to which the action is applied. If it is not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
+**X-Grafana-Org-Id** is an optional property that specifies the organization to which the action is applied. If it is not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
 
 **Example Request**:
 
@@ -31,13 +31,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-
 ## Basic Auth
 
 If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
 standard basic auth. Basic auth will also authenticate LDAP users.
 
 curl example:
+
 ```bash
 ?curl http://admin:admin@localhost:3000/api/org
 {"id":1,"name":"Main Org."}
@@ -64,6 +64,7 @@ The `Authorization` header value should be `Bearer <your api key>`.
 The API Token can also be passed as a Basic authorization password with the special username `api_key`:
 
 curl example:
+
 ```bash
 ?curl http://api_key:eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk@localhost:3000/api/org
 {"id":1,"name":"Main Org."}
@@ -160,6 +161,7 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
+
 **Example Response**:
 
 ```http

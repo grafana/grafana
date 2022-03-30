@@ -108,7 +108,10 @@ describe('LokiLabelBrowser', () => {
       theme: createTheme(),
       onChange: () => {},
       autoSelect: 0,
-      languageProvider: (mockLanguageProvider as unknown) as LokiLanguageProvider,
+      languageProvider: mockLanguageProvider as unknown as LokiLanguageProvider,
+      lastUsedLabels: [],
+      storeLastUsedLabels: () => {},
+      deleteLastUsedLabels: () => {},
     };
 
     return defaults;
@@ -246,8 +249,8 @@ describe('LokiLabelBrowser', () => {
     await screen.findByLabelText('Values for label2');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(4);
     // Typing '1' to filter for values
-    userEvent.type(screen.getByLabelText('Filter expression for values'), '1');
-    expect(screen.getByLabelText('Filter expression for values')).toHaveValue('1');
+    userEvent.type(screen.getByLabelText('Filter expression for values'), 'val1');
+    expect(screen.getByLabelText('Filter expression for values')).toHaveValue('val1');
     expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument();
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(3);
   });

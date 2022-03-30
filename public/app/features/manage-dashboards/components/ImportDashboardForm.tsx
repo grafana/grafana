@@ -1,19 +1,29 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
   Button,
+  Field,
   FormAPI,
+  FormFieldErrors,
   FormsOnSubmit,
   HorizontalGroup,
-  FormFieldErrors,
   Input,
-  Field,
   InputControl,
   Legend,
 } from '@grafana/ui';
 import { DataSourcePicker } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
+import {
+  DashboardInput,
+  DashboardInputs,
+  DataSourceInput,
+  ImportDashboardDTO,
+  LibraryPanelInputState,
+} from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
+import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanelsList';
 
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
@@ -40,6 +50,7 @@ export const ImportDashboardForm: FC<Props> = ({
 }) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
+  const watchFolder = watch('folder');
 
   /*
     This useEffect is needed for overwriting a dashboard. It
@@ -50,6 +61,8 @@ export const ImportDashboardForm: FC<Props> = ({
       onSubmit(getValues(), {} as any);
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
+  const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
+  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exits) ?? [];
 
   return (
     <>
@@ -61,6 +74,7 @@ export const ImportDashboardForm: FC<Props> = ({
             validate: async (v: string) => await validateTitle(v, getValues().folder.id),
           })}
           type="text"
+          data-testid={selectors.components.ImportDashboardForm.name}
         />
       </Field>
       <Field label="Folder">
@@ -94,6 +108,9 @@ export const ImportDashboardForm: FC<Props> = ({
       </Field>
       {inputs.dataSources &&
         inputs.dataSources.map((input: DataSourceInput, index: number) => {
+          if (input.pluginId === ExpressionDatasourceRef.type) {
+            return null;
+          }
           const dataSourceOption = `dataSources[${index}]`;
           const current = watchDataSources ?? [];
           return (
@@ -111,7 +128,7 @@ export const ImportDashboardForm: FC<Props> = ({
                     noDefault={true}
                     placeholder={input.info}
                     pluginId={input.pluginId}
-                    current={current[index]?.name}
+                    current={current[index]?.uid}
                   />
                 )}
                 control={control}
@@ -134,9 +151,22 @@ export const ImportDashboardForm: FC<Props> = ({
             </Field>
           );
         })}
+      <ImportDashboardLibraryPanelsList
+        inputs={newLibraryPanels}
+        label="New library panels"
+        description="List of new library panels that will get imported."
+        folderName={watchFolder.title}
+      />
+      <ImportDashboardLibraryPanelsList
+        inputs={existingLibraryPanels}
+        label="Existing library panels"
+        description="List of existing library panels. These panels are not affected by the import."
+        folderName={watchFolder.title}
+      />
       <HorizontalGroup>
         <Button
           type="submit"
+          data-testid={selectors.components.ImportDashboardForm.submit}
           variant={getButtonVariant(errors)}
           onClick={() => {
             setSubmitted(true);

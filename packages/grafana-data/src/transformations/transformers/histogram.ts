@@ -1,4 +1,4 @@
-import { DataTransformerInfo } from '../../types';
+import { SynchronousDataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
 import { DataTransformerID } from './ids';
@@ -73,7 +73,7 @@ export const histogramFieldInfo = {
 /**
  * @alpha
  */
-export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptions> = {
+export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTransformerOptions> = {
   id: DataTransformerID.histogram,
   name: 'Histogram',
   description: 'Calculate a histogram from input data',
@@ -81,23 +81,18 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
     fields: {},
   },
 
-  /**
-   * Return a modified copy of the series.  If the transform is not or should not
-   * be applied, just return the input series
-   */
-  operator: (options) => (source) =>
-    source.pipe(
-      map((data) => {
-        if (!Array.isArray(data) || data.length === 0) {
-          return data;
-        }
-        const hist = buildHistogram(data, options);
-        if (hist == null) {
-          return [];
-        }
-        return [histogramFieldsToFrame(hist)];
-      })
-    ),
+  operator: (options) => (source) => source.pipe(map((data) => histogramTransformer.transformer(options)(data))),
+
+  transformer: (options: HistogramTransformerOptions) => (data: DataFrame[]) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return data;
+    }
+    const hist = buildHistogram(data, options);
+    if (hist == null) {
+      return [];
+    }
+    return [histogramFieldsToFrame(hist)];
+  },
 };
 
 /**
@@ -157,7 +152,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   let bucketOffset = options?.bucketOffset ?? 0;
 
   // if bucket size is auto, try to calc from all numeric fields
-  if (!bucketSize) {
+  if (!bucketSize || bucketSize < 0) {
     let allValues: number[] = [];
 
     // TODO: include field configs!
@@ -290,15 +285,24 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   };
 }
 
-// function incrRound(num: number, incr: number) {
-//   return Math.round(num / incr) * incr;
-// }
+/**
+ * @internal
+ */
+export function incrRound(num: number, incr: number) {
+  return Math.round(num / incr) * incr;
+}
 
-// function incrRoundUp(num: number, incr: number) {
-//   return Math.ceil(num / incr) * incr;
-// }
+/**
+ * @internal
+ */
+export function incrRoundUp(num: number, incr: number) {
+  return Math.ceil(num / incr) * incr;
+}
 
-function incrRoundDn(num: number, incr: number) {
+/**
+ * @internal
+ */
+export function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
 }
 

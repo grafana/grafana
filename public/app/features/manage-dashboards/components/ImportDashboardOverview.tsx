@@ -1,29 +1,35 @@
 import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
-import { Legend, Form } from '@grafana/ui';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { Form, Legend } from '@grafana/ui';
+import { connect, ConnectedProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
-import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
+import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 
-interface OwnProps {}
+const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
-interface ConnectedProps {
-  dashboard: ImportDashboardDTO;
-  inputs: DashboardInputs;
-  source: DashboardSource;
-  meta?: any;
-  folder: { id: number; title?: string };
-}
+const mapStateToProps = (state: StoreState) => {
+  const searchObj = locationService.getSearchObject();
 
-interface DispatchProps {
-  clearLoadedDashboard: typeof clearLoadedDashboard;
-  importDashboard: typeof importDashboard;
-}
+  return {
+    dashboard: state.importDashboard.dashboard,
+    meta: state.importDashboard.meta,
+    source: state.importDashboard.source,
+    inputs: state.importDashboard.inputs,
+    folder: searchObj.folderId ? { id: Number(searchObj.folderId) } : { id: 0 },
+  };
+};
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+const mapDispatchToProps = {
+  clearLoadedDashboard,
+  importDashboard,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
 
 interface State {
   uidReset: boolean;
@@ -35,6 +41,8 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   onSubmit = (form: ImportDashboardDTO) => {
+    reportInteraction(IMPORT_FINISHED_EVENT_NAME);
+
     this.props.importDashboard(form);
   };
 
@@ -83,7 +91,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
         )}
         <Form
           onSubmit={this.onSubmit}
-          defaultValues={{ ...dashboard, constants: [], dataSources: [], folder: folder }}
+          defaultValues={{ ...dashboard, constants: [], dataSources: [], elements: [], folder: folder }}
           validateOnMount
           validateFieldsOnMount={['title', 'uid']}
           validateOn="onChange"
@@ -109,22 +117,5 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => {
-  const searchObj = locationService.getSearchObject();
-
-  return {
-    dashboard: state.importDashboard.dashboard,
-    meta: state.importDashboard.meta,
-    source: state.importDashboard.source,
-    inputs: state.importDashboard.inputs,
-    folder: searchObj.folderId ? { id: Number(searchObj.folderId) } : { id: 0 },
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  clearLoadedDashboard,
-  importDashboard,
-};
-
-export const ImportDashboardOverview = connect(mapStateToProps, mapDispatchToProps)(ImportDashboardOverviewUnConnected);
+export const ImportDashboardOverview = connector(ImportDashboardOverviewUnConnected);
 ImportDashboardOverview.displayName = 'ImportDashboardOverview';

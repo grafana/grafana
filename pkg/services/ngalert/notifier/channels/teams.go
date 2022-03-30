@@ -8,47 +8,67 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // TeamsNotifier is responsible for sending
 // alert notifications to Microsoft teams.
 type TeamsNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	URL     string
 	Message string
 	tmpl    *template.Template
 	log     log.Logger
+	ns      notifications.WebhookSender
+}
+
+type TeamsConfig struct {
+	*NotificationChannelConfig
+	URL     string
+	Message string
+}
+
+func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewTeamsConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewTeamsNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
+	URL := config.Settings.Get("url").MustString()
+	if URL == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
+	return &TeamsConfig{
+		NotificationChannelConfig: config,
+		URL:                       URL,
+		Message:                   config.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
+	}, nil
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*TeamsNotifier, error) {
-	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
-	}
-
-	u := model.Settings.Get("url").MustString()
-	if u == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
-	}
-
+func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, t *template.Template) *TeamsNotifier {
 	return &TeamsNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+		Base: NewBase(&models.AlertNotification{
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		URL:     u,
-		Message: model.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
+		URL:     config.URL,
+		Message: config.Message,
 		log:     log.New("alerting.notifier.teams"),
+		ns:      ns,
 		tmpl:    t,
-	}, nil
+	}
 }
 
 // Notify send an alert notification to Microsoft teams.
@@ -58,7 +78,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
-	title := tmpl(`{{ template "default.title" . }}`)
+	title := tmpl(DefaultMessageTitleEmbed)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -90,7 +110,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	u := tmpl(tn.URL)
 	if tmplErr != nil {
-		tn.log.Debug("failed to template Teams message", "err", tmplErr.Error())
+		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
 	}
 
 	b, err := json.Marshal(&body)
@@ -99,7 +119,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
 	}
 

@@ -1,17 +1,25 @@
-import React, { FC, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { ALIGNMENT_PERIODS } from '../constants';
-import { BaseQuery } from '../types';
+import React, { useMemo } from 'react';
 
-export interface Props {
-  onChange: (query: BaseQuery) => void;
-  query: BaseQuery;
+import { ALIGNMENT_PERIODS } from '../constants';
+import { MetricQuery, SLOQuery } from '../types';
+
+export interface Props<TQuery> {
+  inputId: string;
+  onChange(query: TQuery): void;
+  query: TQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
   selectWidth?: number;
 }
 
-export const AlignmentPeriod: FC<Props> = ({ templateVariableOptions, onChange, query, selectWidth }) => {
+export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
+  inputId,
+  templateVariableOptions,
+  onChange,
+  query,
+  selectWidth,
+}: Props<TQuery>) {
   const options = useMemo(
     () =>
       ALIGNMENT_PERIODS.map((ap) => ({
@@ -24,6 +32,7 @@ export const AlignmentPeriod: FC<Props> = ({ templateVariableOptions, onChange, 
 
   return (
     <Select
+      menuShouldPortal
       width={selectWidth}
       onChange={({ value }) => onChange({ ...query, alignmentPeriod: value! })}
       value={[...options, ...templateVariableOptions].find((s) => s.value === query.alignmentPeriod)}
@@ -39,6 +48,7 @@ export const AlignmentPeriod: FC<Props> = ({ templateVariableOptions, onChange, 
         },
       ]}
       placeholder="Select Alignment"
+      inputId={inputId}
     ></Select>
   );
-};
+}

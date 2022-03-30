@@ -33,9 +33,9 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
   );
 
   return (
-    <div {...divProps} className="panel-title-container" onClick={onMenuToggle} onMouseDown={onMouseDown}>
+    <header {...divProps} className="panel-title-container" onClick={onMenuToggle} onMouseDown={onMouseDown}>
       {children({ panelMenuOpen, closeMenu: () => setPanelMenuOpen(false) })}
-    </div>
+    </header>
   );
 };
 

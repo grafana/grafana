@@ -8,9 +8,9 @@ weight = 300
 
 # Getting started with Grafana and Prometheus
 
-Prometheus is an open source systems monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
+Prometheus is an open source monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
 
-You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself.
+> **Note:** You can configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. A [free forever plan](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) provides 10,000 active series for metrics.
 
 {{< docs/shared "getting-started/first-step.md" >}}
 
@@ -18,8 +18,8 @@ You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/
 
 Prometheus, like Grafana, can be installed on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/), which lists all stable versions of Prometheus components. Download the following components:
 
- - [Prometheus](https://prometheus.io/download/#prometheus)
- - [node_exporter](https://prometheus.io/download/#node_exporter)
+- [Prometheus](https://prometheus.io/download/#prometheus)
+- [node_exporter](https://prometheus.io/download/#node_exporter)
 
 ## Step 3. Install Prometheus node_exporter
 
@@ -62,3 +62,8 @@ Now that you have a curated list of queries, create [dashboards]({{< relref "../
 The following image shows a dashboard with three panels showing some system metrics.
 
 <img width="850px" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >
+
+To learn more:
+
+- Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus.md" >}})
+- Prometheus documentation: [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)

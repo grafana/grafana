@@ -1,23 +1,26 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
-	log log.Logger
+	log      log.Logger
+	orgStore utils.OrgStore
 }
 
-func (cr *configReader) readConfig(path string) ([]*configs, error) {
+func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs, error) {
 	var datasources []*configs
 
 	files, err := ioutil.ReadDir(path)
@@ -39,7 +42,7 @@ func (cr *configReader) readConfig(path string) ([]*configs, error) {
 		}
 	}
 
-	err = cr.validateDefaultUniqueness(datasources)
+	err = cr.validateDefaultUniqueness(ctx, datasources)
 	if err != nil {
 		return nil, err
 	}
@@ -88,19 +91,19 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*c
 	return v0.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
 }
 
-func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error {
+func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasources []*configs) error {
 	defaultCount := map[int64]int{}
 	for i := range datasources {
-		if datasources[i].Datasources == nil {
-			continue
-		}
-
 		for _, ds := range datasources[i].Datasources {
+			if ds == nil {
+				continue
+			}
+
 			if ds.OrgID == 0 {
 				ds.OrgID = 1
 			}
 
-			if err := cr.validateAccessAndOrgID(ds); err != nil {
+			if err := cr.validateAccessAndOrgID(ctx, ds); err != nil {
 				return fmt.Errorf("failed to provision %q data source: %w", ds.Name, err)
 			}
 
@@ -113,6 +116,10 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 		}
 
 		for _, ds := range datasources[i].DeleteDatasources {
+			if ds == nil {
+				continue
+			}
+
 			if ds.OrgID == 0 {
 				ds.OrgID = 1
 			}
@@ -122,8 +129,8 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 	return nil
 }
 
-func (cr *configReader) validateAccessAndOrgID(ds *upsertDataSourceFromConfig) error {
-	if err := utils.CheckOrgExists(ds.OrgID); err != nil {
+func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDataSourceFromConfig) error {
+	if err := utils.CheckOrgExists(ctx, cr.orgStore, ds.OrgID); err != nil {
 		return err
 	}
 

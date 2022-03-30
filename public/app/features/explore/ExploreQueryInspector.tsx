@@ -3,7 +3,6 @@ import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { TimeZone } from '@grafana/data';
 import { runQueries } from './state/query';
 import { StoreState, ExploreItemState, ExploreId } from 'app/types';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
@@ -15,13 +14,14 @@ import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 interface DispatchProps {
   width: number;
   exploreId: ExploreId;
+  timeZone: TimeZone;
   onClose: () => void;
 }
 
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { loading, width, onClose, queryResponse } = props;
+  const { loading, width, onClose, queryResponse, timeZone } = props;
   const dataFrames = queryResponse?.series || [];
   const error = queryResponse?.error;
 
@@ -48,6 +48,7 @@ export function ExploreQueryInspector(props: Props) {
         data={dataFrames}
         isLoading={loading}
         options={{ withTransforms: false, withFieldConfig: false }}
+        timeZone={timeZone}
       />
     ),
   };
@@ -93,4 +94,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default hot(module)(connector(ExploreQueryInspector));
+export default connector(ExploreQueryInspector);

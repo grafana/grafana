@@ -8,13 +8,14 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { TimeModel } from '../../dashboard/state/TimeModel';
 import { runQueries } from './query';
 import { syncTimesAction, stateSave } from './main';
 
@@ -47,12 +48,14 @@ export const updateTimeRange = (options: {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
       dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
-      dispatch(runQueries(ExploreId.left));
+      // When running query by updating time range, we want to preserve cache.
+      // Cached results are currently used in Logs pagination.
+      dispatch(runQueries(ExploreId.left, { preserveCache: true }));
       dispatch(updateTime({ ...options, exploreId: ExploreId.right }));
-      dispatch(runQueries(ExploreId.right));
+      dispatch(runQueries(ExploreId.right, { preserveCache: true }));
     } else {
       dispatch(updateTime({ ...options }));
-      dispatch(runQueries(options.exploreId));
+      dispatch(runQueries(options.exploreId, { preserveCache: true }));
     }
   };
 };
@@ -76,6 +79,7 @@ export const updateTime = (config: {
     const { exploreId, absoluteRange: absRange, rawRange: actionRange } = config;
     const itemState = getState().explore[exploreId]!;
     const timeZone = getTimeZone(getState().user);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
     const { range: rangeInState } = itemState;
     let rawRange: RawTimeRange = rangeInState.raw;
 
@@ -90,16 +94,23 @@ export const updateTime = (config: {
       rawRange = actionRange;
     }
 
-    const range = getTimeRange(timeZone, rawRange);
+    const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+    const timeModel: TimeModel = {
+      time: range.raw,
+      refresh: false,
+      timepicker: {},
+      getTimezone: () => timeZone,
+      timeRangeUpdated: (rawTimeRange: RawTimeRange) => {
+        dispatch(updateTimeRange({ exploreId: exploreId, rawRange: rawTimeRange }));
+      },
+    };
 
-    getTimeSrv().init(
-      new DashboardModel({
-        time: range.raw,
-        refresh: false,
-        timeZone,
-      })
-    );
+    // We need to re-initialize TimeSrv because it might have been triggered by the other Explore pane (when split)
+    getTimeSrv().init(timeModel);
+    // After re-initializing TimeSrv we need to update the time range in Template service for interpolation
+    // of __from and __to variables
+    getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
@@ -120,6 +131,29 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
     }
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
+    dispatch(stateSave());
+  };
+}
+
+/**
+ * Forces the timepicker's time into absolute time.
+ * The conversion is applied to all Explore panes.
+ * Useful to produce a bookmarkable URL that points to the same data.
+ */
+export function makeAbsoluteTime(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
+    const leftState = getState().explore.left;
+    const leftRange = getTimeRange(timeZone, leftState.range.raw, fiscalYearStartMonth);
+    const leftAbsoluteRange: AbsoluteTimeRange = { from: leftRange.from.valueOf(), to: leftRange.to.valueOf() };
+    dispatch(updateTime({ exploreId: ExploreId.left, absoluteRange: leftAbsoluteRange }));
+    const rightState = getState().explore.right!;
+    if (rightState) {
+      const rightRange = getTimeRange(timeZone, rightState.range.raw, fiscalYearStartMonth);
+      const rightAbsoluteRange: AbsoluteTimeRange = { from: rightRange.from.valueOf(), to: rightRange.to.valueOf() };
+      dispatch(updateTime({ exploreId: ExploreId.right, absoluteRange: rightAbsoluteRange }));
+    }
     dispatch(stateSave());
   };
 }

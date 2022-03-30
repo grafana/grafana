@@ -5,12 +5,24 @@ keywords = ["grafana", "http", "documentation", "api", "data source"]
 aliases = ["/docs/grafana/latest/http_api/datasource/"]
 +++
 
-
 # Data source API
+
+> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> Refer to specific resources to understand what permissions are required.
 
 ## Get all data sources
 
 `GET /api/datasources`
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action           | Scope          |
+| ---------------- | -------------- |
+| datasources:read | datasources:\* |
+
+### Examples
 
 **Example Request**:
 
@@ -58,6 +70,16 @@ Content-Type: application/json
 
 `GET /api/datasources/:datasourceId`
 
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action           | Scope                                                                        |
+| ---------------- | ---------------------------------------------------------------------------- |
+| datasources:read | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
+
 **Example Request**:
 
 ```http
@@ -103,6 +125,16 @@ Content-Type: application/json
 ## Get a single data source by UID
 
 `GET /api/datasources/uid/:uid`
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action           | Scope                                                                                  |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| datasources:read | datasources:\*<br>datasources:uid:\*<br>datasources:uid:kLtEtcRGk (single data source) |
+
+### Examples
 
 **Example request:**
 
@@ -150,6 +182,16 @@ Content-Type: application/json
 
 `GET /api/datasources/name/:name`
 
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action           | Scope                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| datasources:read | datasources:\*<br>datasources:name:\*<br>datasources:name:test_datasource (single data source) |
+
+### Examples
+
 **Example Request**:
 
 ```http
@@ -196,6 +238,16 @@ Content-Type: application/json
 
 `GET /api/datasources/id/:name`
 
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action              | Scope                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| datasources.id:read | datasources:\*<br>datasources:name:\*<br>datasources:name:test_datasource (single data source) |
+
+### Examples
+
 **Example Request**:
 
 ```http
@@ -219,6 +271,16 @@ Content-Type: application/json
 ## Create a data source
 
 `POST /api/datasources`
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action             | Scope |
+| ------------------ | ----- |
+| datasources:create | n/a   |
+
+### Examples
 
 **Example Graphite Request**:
 
@@ -293,6 +355,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   }
 }
 ```
+
 **Example Response with basic auth enabled**:
 
 ```http
@@ -356,6 +419,16 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ## Update an existing data source
 
 `PUT /api/datasources/:datasourceId`
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action            | Scope                                                                        |
+| ----------------- | ---------------------------------------------------------------------------- |
+| datasources:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
 
 **Example Request**:
 
@@ -427,6 +500,16 @@ Content-Type: application/json
 
 `DELETE /api/datasources/:datasourceId`
 
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action             | Scope                                                                        |
+| ------------------ | ---------------------------------------------------------------------------- |
+| datasources:delete | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
+
 **Example Request**:
 
 ```http
@@ -449,6 +532,16 @@ Content-Type: application/json
 
 `DELETE /api/datasources/uid/:uid`
 
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action             | Scope                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| datasources:delete | datasources:\*<br>datasources:uid:\*<br>datasources:uid:kLtEtcRGk (single data source) |
+
+### Examples
+
 **Example request:**
 
 ```http
@@ -464,12 +557,25 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Data source deleted"}
+{
+    "message": "Data source deleted",
+    "id": 1
+}
 ```
 
 ## Delete an existing data source by name
 
 `DELETE /api/datasources/name/:datasourceName`
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action             | Scope                                                                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| datasources:delete | datasources:\*<br>datasources:name:\*<br>datasources:name:test_datasource (single data source) |
+
+### Examples
 
 **Example Request**:
 
@@ -528,6 +634,7 @@ Content-Type: application/json
   ]
 }
 ```
+
 > **Note:** The `from`, `to`, and `queries` properties are required.
 
 JSON Body schema:
@@ -564,6 +671,7 @@ Content-Type: application/json
 ```
 
 **Example MySQL time series query response:**
+
 ```http
 HTTP/1.1 200
 Content-Type: application/json

@@ -1,0 +1,11 @@
+{{Subject .Subject "{{.InvitedBy}} has invited you to join Grafana"}}
+
+You're invited to join {{.OrgName}}
+
+You've been invited to join the {{.OrgName}} organization by {{.InvitedBy}}. To accept
+your invitation and join the team, copy and paste the link below into your browser
+directly:
+
+{{.LinkUrl}}
+
+Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs

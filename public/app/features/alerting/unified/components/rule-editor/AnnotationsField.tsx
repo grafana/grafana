@@ -37,11 +37,17 @@ const AnnotationsField: FC = () => {
                       className={styles.field}
                       invalid={!!errors.annotations?.[index]?.key?.message}
                       error={errors.annotations?.[index]?.key?.message}
+                      data-testid={`annotation-key-${index}`}
                     >
                       <InputControl
                         name={`annotations[${index}].key`}
                         render={({ field: { ref, ...field } }) => (
-                          <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={18} />
+                          <AnnotationKeyInput
+                            {...field}
+                            aria-label={`Annotation detail ${index + 1}`}
+                            existingKeys={existingKeys(index)}
+                            width={18}
+                          />
                         )}
                         control={control}
                         rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
@@ -53,6 +59,7 @@ const AnnotationsField: FC = () => {
                       error={errors.annotations?.[index]?.value?.message}
                     >
                       <ValueInputComponent
+                        data-testid={`annotation-value-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
                         {...register(`annotations[${index}].value`)}
                         placeholder={isUrl ? 'https://' : `Text`}

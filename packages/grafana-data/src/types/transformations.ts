@@ -2,27 +2,54 @@ import { MonoTypeOperatorFunction } from 'rxjs';
 
 import { DataFrame, Field } from './dataFrame';
 import { RegistryItemWithOptions } from '../utils/Registry';
+import { ScopedVars } from './ScopedVars';
 
 /**
  * Function that transform data frames (AKA transformer)
+ *
+ * @public
  */
 export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOptions {
   /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  operator: (options: TOptions) => MonoTypeOperatorFunction<DataFrame[]>;
+  operator: (
+    options: TOptions,
+    replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string
+  ) => MonoTypeOperatorFunction<DataFrame[]>;
 }
 
+/**
+ * Many transformations can be called with a simple synchronous function.
+ * When a transformer is defined, it should have identical behavior to using the operator
+ *
+ * @public
+ */
+export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTransformerInfo<TOptions> {
+  transformer: (options: TOptions) => (frames: DataFrame[]) => DataFrame[];
+}
+
+/**
+ * @public
+ */
 export interface DataTransformerConfig<TOptions = any> {
   /**
    * Unique identifier of transformer
    */
   id: string;
   /**
+   * Disabled transformations are skipped
+   */
+  disabled?: boolean;
+  /**
    * Options to be passed to the transformer
    */
   options: TOptions;
+  /**
+   * Function to apply template variable substitution to the DataTransformerConfig
+   */
+  replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 }
 
 export type FrameMatcher = (frame: DataFrame) => boolean;

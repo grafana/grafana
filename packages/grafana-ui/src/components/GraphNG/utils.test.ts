@@ -14,13 +14,13 @@ import {
 } from '@grafana/data';
 import {
   BarAlignment,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  PointVisibility,
+  VisibilityMode,
   StackingMode,
-} from '..';
+} from '@grafana/schema';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -36,7 +36,7 @@ function mockDataFrame() {
     displayName: 'Metric 1',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       gradientMode: GraphGradientMode.Opacity,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -48,7 +48,7 @@ function mockDataFrame() {
       spanNulls: false,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'A',
         mode: StackingMode.Normal,
@@ -60,7 +60,7 @@ function mockDataFrame() {
     displayName: 'Metric 2',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -72,7 +72,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'A',
         mode: StackingMode.Normal,
@@ -84,7 +84,7 @@ function mockDataFrame() {
     displayName: 'Metric 3',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       gradientMode: GraphGradientMode.Opacity,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -96,7 +96,7 @@ function mockDataFrame() {
       spanNulls: false,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.Normal,
@@ -107,7 +107,7 @@ function mockDataFrame() {
     displayName: 'Metric 4',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -119,7 +119,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.Normal,
@@ -130,7 +130,7 @@ function mockDataFrame() {
     displayName: 'Metric 4',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -142,7 +142,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.None,
@@ -197,7 +197,7 @@ describe('GraphNG utils', () => {
       timeZone: DefaultTimeZone,
       getTimeRange: getDefaultTimeRange,
       eventBus: new EventBusSrv(),
-      sync: DashboardCursorSync.Tooltip,
+      sync: () => DashboardCursorSync.Tooltip,
       allFrames: [frame!],
     }).getConfig();
     expect(result).toMatchSnapshot();

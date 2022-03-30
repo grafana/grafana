@@ -7,7 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/go-kit/log"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,13 +28,18 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func init() {
-	rc := &RemoteCache{}
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     rc,
-		InitPriority: registry.Medium,
-	})
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache, error) {
+	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	s := &RemoteCache{
+		SQLStore: sqlStore,
+		Cfg:      cfg,
+		log:      glog.New("cache.remote"),
+		client:   client,
+	}
+	return s, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -42,51 +48,43 @@ func init() {
 // ex `remotecache.Register(CacheableStruct{})``
 type CacheStorage interface {
 	// Get reads object from Cache
-	Get(key string) (interface{}, error)
+	Get(ctx context.Context, key string) (interface{}, error)
 
 	// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-	Set(key string, value interface{}, expire time.Duration) error
+	Set(ctx context.Context, key string, value interface{}, expire time.Duration) error
 
 	// Delete object from cache
-	Delete(key string) error
+	Delete(ctx context.Context, key string) error
 }
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
 	log      log.Logger
 	client   CacheStorage
-	SQLStore *sqlstore.SQLStore `inject:""`
-	Cfg      *setting.Cfg       `inject:""`
+	SQLStore *sqlstore.SQLStore
+	Cfg      *setting.Cfg
 }
 
 // Get reads object from Cache
-func (ds *RemoteCache) Get(key string) (interface{}, error) {
-	return ds.client.Get(key)
+func (ds *RemoteCache) Get(ctx context.Context, key string) (interface{}, error) {
+	return ds.client.Get(ctx, key)
 }
 
 // Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-func (ds *RemoteCache) Set(key string, value interface{}, expire time.Duration) error {
+func (ds *RemoteCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
 	if expire == 0 {
 		expire = defaultMaxCacheExpiration
 	}
 
-	return ds.client.Set(key, value, expire)
+	return ds.client.Set(ctx, key, value, expire)
 }
 
 // Delete object from cache
-func (ds *RemoteCache) Delete(key string) error {
-	return ds.client.Delete(key)
+func (ds *RemoteCache) Delete(ctx context.Context, key string) error {
+	return ds.client.Delete(ctx, key)
 }
 
-// Init initializes the service
-func (ds *RemoteCache) Init() error {
-	ds.log = log.New("cache.remote")
-	var err error
-	ds.client, err = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
-	return err
-}
-
-// Run start the backend processes for cache clients
+// Run starts the backend processes for cache clients.
 func (ds *RemoteCache) Run(ctx context.Context) error {
 	// create new interface if more clients need GC jobs
 	backgroundjob, ok := ds.client.(registry.BackgroundService)

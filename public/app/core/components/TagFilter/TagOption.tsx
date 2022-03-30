@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { useTheme, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-import { OptionProps } from 'react-select/src/components/Option';
+import { OptionProps } from 'react-select';
 import { TagBadge } from './TagBadge';
 
 // https://github.com/JedWatson/react-select/issues/3038
@@ -18,7 +18,7 @@ export const TagOption: FC<ExtendedOptionProps> = ({ data, className, label, isF
   return (
     <div className={cx(styles.option, isFocused && styles.optionFocused)} aria-label="Tag option" {...innerProps}>
       <div className={`tag-filter-option ${className || ''}`}>
-        <TagBadge label={label} removeIcon={false} count={data.count} />
+        <TagBadge label={label} removeIcon={false} count={data.count ?? 0} />
       </div>
     </div>
   );

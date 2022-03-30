@@ -1,34 +1,45 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { NavModel, renderMarkdown } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
+import { renderMarkdown } from '@grafana/data';
 import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
-import InviteesTable from './InviteesTable';
-import { Invitee, OrgUser, OrgRole } from 'app/types';
-import { loadInvitees, loadUsers, removeUser, updateUser } from './state/actions';
+import InviteesTable from '../invites/InviteesTable';
+import { OrgUser, OrgRole, StoreState } from 'app/types';
+import { loadUsers, removeUser, updateUser } from './state/actions';
+import { fetchInvitees } from '../invites/state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getInvitees, getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selectors';
+import { getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selectors';
 import { setUsersSearchQuery, setUsersSearchPage } from './state/reducers';
+import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
-export interface Props {
-  navModel: NavModel;
-  invitees: Invitee[];
-  users: OrgUser[];
-  searchQuery: string;
-  searchPage: number;
-  externalUserMngInfo: string;
-  hasFetched: boolean;
-  loadUsers: typeof loadUsers;
-  loadInvitees: typeof loadInvitees;
-  setUsersSearchQuery: typeof setUsersSearchQuery;
-  setUsersSearchPage: typeof setUsersSearchPage;
-  updateUser: typeof updateUser;
-  removeUser: typeof removeUser;
+function mapStateToProps(state: StoreState) {
+  const searchQuery = getUsersSearchQuery(state.users);
+  return {
+    navModel: getNavModel(state.navIndex, 'users'),
+    users: getUsers(state.users),
+    searchQuery: getUsersSearchQuery(state.users),
+    searchPage: getUsersSearchPage(state.users),
+    invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
+    externalUserMngInfo: state.users.externalUserMngInfo,
+    hasFetched: state.users.hasFetched,
+  };
 }
+
+const mapDispatchToProps = {
+  loadUsers,
+  fetchInvitees,
+  setUsersSearchQuery,
+  setUsersSearchPage,
+  updateUser,
+  removeUser,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = ConnectedProps<typeof connector>;
 
 export interface State {
   showInvites: boolean;
@@ -37,7 +48,7 @@ export interface State {
 const pageLimit = 30;
 
 export class UsersListPage extends PureComponent<Props, State> {
-  externalUserMngInfoHtml: string;
+  declare externalUserMngInfoHtml: string;
 
   constructor(props: Props) {
     super(props);
@@ -61,7 +72,7 @@ export class UsersListPage extends PureComponent<Props, State> {
   }
 
   async fetchInvitees() {
-    return await this.props.loadInvitees();
+    return await this.props.fetchInvitees();
   }
 
   onRoleChange = (role: OrgRole, user: OrgUser) => {
@@ -129,25 +140,4 @@ export class UsersListPage extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state: any) {
-  return {
-    navModel: getNavModel(state.navIndex, 'users'),
-    users: getUsers(state.users),
-    searchQuery: getUsersSearchQuery(state.users),
-    searchPage: getUsersSearchPage(state.users),
-    invitees: getInvitees(state.users),
-    externalUserMngInfo: state.users.externalUserMngInfo,
-    hasFetched: state.users.hasFetched,
-  };
-}
-
-const mapDispatchToProps = {
-  loadUsers,
-  loadInvitees,
-  setUsersSearchQuery,
-  setUsersSearchPage,
-  updateUser,
-  removeUser,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));
+export default connector(UsersListPage);

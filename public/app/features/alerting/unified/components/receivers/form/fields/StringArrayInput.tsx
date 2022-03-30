@@ -6,10 +6,11 @@ import { ActionIcon } from '../../../rules/ActionIcon';
 
 interface Props {
   value?: string[];
+  readOnly?: boolean;
   onChange: (value: string[]) => void;
 }
 
-export const StringArrayInput: FC<Props> = ({ value, onChange }) => {
+export const StringArrayInput: FC<Props> = ({ value, onChange, readOnly = false }) => {
   const styles = useStyles2(getStyles);
 
   const deleteItem = (index: number) => {
@@ -33,25 +34,29 @@ export const StringArrayInput: FC<Props> = ({ value, onChange }) => {
       {!!value?.length &&
         value.map((v, index) => (
           <div key={index} className={styles.row}>
-            <Input value={v} onChange={(e) => updateValue(e.currentTarget.value, index)} />
-            <ActionIcon
-              className={styles.deleteIcon}
-              icon="trash-alt"
-              tooltip="delete"
-              onClick={() => deleteItem(index)}
-            />
+            <Input readOnly={readOnly} value={v} onChange={(e) => updateValue(e.currentTarget.value, index)} />
+            {!readOnly && (
+              <ActionIcon
+                className={styles.deleteIcon}
+                icon="trash-alt"
+                tooltip="delete"
+                onClick={() => deleteItem(index)}
+              />
+            )}
           </div>
         ))}
-      <Button
-        className={styles.addButton}
-        type="button"
-        variant="secondary"
-        icon="plus"
-        size="sm"
-        onClick={() => onChange([...(value ?? []), ''])}
-      >
-        Add
-      </Button>
+      {!readOnly && (
+        <Button
+          className={styles.addButton}
+          type="button"
+          variant="secondary"
+          icon="plus"
+          size="sm"
+          onClick={() => onChange([...(value ?? []), ''])}
+        >
+          Add
+        </Button>
+      )}
     </div>
   );
 };

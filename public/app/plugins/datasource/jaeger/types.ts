@@ -63,4 +63,12 @@ export type JaegerQuery = {
   limit?: number;
 } & DataQuery;
 
-export type JaegerQueryType = 'search';
+export type JaegerQueryType = 'search' | 'upload';
+
+export type JaegerResponse = {
+  data: TraceResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+  errors?: string[] | null;
+};

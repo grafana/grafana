@@ -2,24 +2,13 @@ import { locationService } from '@grafana/runtime';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import createMockStore from 'redux-mock-store';
 import { PanelNotSupported, Props } from './PanelNotSupported';
 import { PanelEditorTabId } from './types';
 
 const setupTestContext = (options: Partial<Props>) => {
-  const defaults: Props = {
-    message: '',
-    dispatch: jest.fn(),
-  };
-  const store = createMockStore();
-
+  const defaults: Props = { message: '' };
   const props = { ...defaults, ...options };
-  render(
-    <Provider store={store()}>
-      <PanelNotSupported {...props} />
-    </Provider>
-  );
+  render(<PanelNotSupported {...props} />);
 
   return { props };
 };

@@ -45,19 +45,50 @@ describe('filterPanelDataToQuery', () => {
   });
 
   it('should include errors when missing data', () => {
-    const withError = ({
+    const withError = {
       series: [],
       error: {
         message: 'Error!!',
       },
-    } as unknown) as PanelData;
+    } as unknown as PanelData;
 
     const panelData = filterPanelDataToQuery(withError, 'B');
     expect(panelData).toBeDefined();
+    expect(panelData?.state).toBe(LoadingState.Error);
+    expect(panelData?.error).toBe(withError.error);
+  });
 
-    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
-    expect(panelData.state).toBe(LoadingState.Error);
-    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
-    expect(panelData.error).toBe(withError.error);
+  it('should set the state to done if the frame has no errors', () => {
+    const withError = {
+      ...data,
+    };
+    withError.state = LoadingState.Error;
+
+    const panelDataB = filterPanelDataToQuery(withError, 'B');
+    expect(panelDataB?.series.length).toBe(3);
+    expect(panelDataB?.series[0].refId).toBe('B');
+    expect(panelDataB?.state).toBe(LoadingState.Error);
+
+    const panelDataA = filterPanelDataToQuery(withError, 'A');
+    expect(panelDataA?.series.length).toBe(1);
+    expect(panelDataA?.series[0].refId).toBe('A');
+    expect(panelDataA?.state).toBe(LoadingState.Done);
+  });
+
+  it('should not set the state to done if the frame is loading and has no errors', () => {
+    const loadingData: PanelData = {
+      state: LoadingState.Loading,
+      series: [
+        toDataFrame({ refId: 'A', fields: [{ name: 'AAA' }], meta: {} }),
+        toDataFrame({ refId: 'B', fields: [{ name: 'B111' }], meta: {} }),
+      ],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    const panelDataB = filterPanelDataToQuery(loadingData, 'B');
+    expect(panelDataB?.state).toBe(LoadingState.Loading);
+
+    const panelDataA = filterPanelDataToQuery(loadingData, 'A');
+    expect(panelDataA?.state).toBe(LoadingState.Loading);
   });
 });

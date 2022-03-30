@@ -1,9 +1,9 @@
-import { chunk, flatten, initial, startCase, uniqBy } from 'lodash';
-import { ALIGNMENTS, AGGREGATIONS, SYSTEM_LABELS } from './constants';
-import { SelectableValue } from '@grafana/data';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { chunk, initial, startCase, uniqBy } from 'lodash';
+
+import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
-import { MetricDescriptor, ValueTypes, MetricKind, AlignmentTypes, PreprocessorType, Filter } from './types';
+import { AlignmentTypes, MetricDescriptor, MetricKind, PreprocessorType, ValueTypes } from './types';
 
 const templateSrv: TemplateSrv = getTemplateSrv();
 
@@ -105,11 +105,6 @@ export const labelsToGroupedOptions = (groupBys: string[]) => {
   return Object.entries(groups).map(([label, options]) => ({ label, options, expanded: true }), []);
 };
 
-export const filtersToStringArray = (filters: Filter[]) => {
-  const strArr = flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
-  return strArr.filter((_, i) => i !== strArr.length - 1);
-};
-
 export const stringArrayToFilters = (filterArray: string[]) =>
   chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
     key,
@@ -117,24 +112,3 @@ export const stringArrayToFilters = (filterArray: string[]) =>
     value,
     condition,
   }));
-
-export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);
-
-export const formatCloudMonitoringError = (error: any) => {
-  let message = error.statusText ?? '';
-  if (error.data && error.data.error) {
-    try {
-      const res = JSON.parse(error.data.error);
-      message += res.error.code + '. ' + res.error.message;
-    } catch (err) {
-      message += error.data.error;
-    }
-  } else if (error.data && error.data.message) {
-    try {
-      message = JSON.parse(error.data.message).error.message;
-    } catch (err) {
-      error.error = err;
-    }
-  }
-  return message;
-};

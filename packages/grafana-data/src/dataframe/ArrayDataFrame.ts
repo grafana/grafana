@@ -4,6 +4,7 @@ import { Vector, QueryResultMeta } from '../types';
 import { guessFieldTypeFromNameAndValue, toDataFrameDTO } from './processDataFrame';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
+/** @public */
 export type ValueConverter<T = any> = (val: any) => T;
 
 const NOOP: ValueConverter = (v) => v;

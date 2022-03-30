@@ -3,6 +3,7 @@ package telegraf
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -40,7 +41,7 @@ func checkTestData(tb testing.TB, file string) *backend.DataResponse {
 		dr.Frames = append(dr.Frames, w.Frame())
 	}
 
-	err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", file+".golden.txt"), dr, true)
+	err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", file+".golden.txt"), dr, *update)
 	require.NoError(tb, err)
 	return dr
 }
@@ -92,27 +93,41 @@ func TestConverter_Convert_LabelsColumn(t *testing.T) {
 		{Name: "same_metrics_same_labels_different_time", NumFields: 7, FieldLength: 3, NumFrames: 1},
 		{Name: "same_metrics_different_labels_different_time", NumFields: 7, FieldLength: 2, NumFrames: 1},
 		{Name: "same_metrics_different_labels_same_time", NumFields: 12, FieldLength: 13, NumFrames: 1},
+		{Name: "incomplete_fields", NumFields: 4, FieldLength: 4, NumFrames: 1},
+		{Name: "incomplete_fields_2", NumFields: 4, FieldLength: 5, NumFrames: 1},
+		{Name: "incomplete_fields_full", NumFrames: 5},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
 			testData := loadTestData(t, tt.Name)
+			if *pprint {
+				fmt.Println(string(testData))
+			}
 			converter := NewConverter(WithUseLabelsColumn(true))
 			frameWrappers, err := converter.Convert(testData)
 			require.NoError(t, err)
 			require.Len(t, frameWrappers, tt.NumFrames)
 			for _, fw := range frameWrappers {
 				frame := fw.Frame()
-				require.Len(t, frame.Fields, tt.NumFields)
-				require.Equal(t, tt.FieldLength, frame.Fields[0].Len())
+				if tt.NumFrames == 1 {
+					require.Len(t, frame.Fields, tt.NumFields)
+					require.Equal(t, tt.FieldLength, frame.Fields[0].Len())
+				}
 				_, err := data.FrameToJSON(frame, data.IncludeAll)
 				require.NoError(t, err)
+				if *pprint {
+					s, err := frame.StringTable(100, 100)
+					require.NoError(t, err)
+					fmt.Println(s)
+				}
 			}
 		})
 	}
 }
 
 var update = flag.Bool("update", false, "update golden files")
+var pprint = flag.Bool("pprint", false, "pretty print test case")
 
 func TestConverter_Convert_NumFrameFields(t *testing.T) {
 	testData := loadTestData(t, "same_metrics_different_labels_same_time")

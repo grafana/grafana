@@ -8,12 +8,13 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SelectWithAdd } from './SelectWIthAdd';
 import { Field, InputControl, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { checkForPathSeparator } from './util';
 
 interface Props {
-  dataSourceName: string;
+  rulesSourceName: string;
 }
 
-export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
+export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
   const {
     control,
     watch,
@@ -28,10 +29,10 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
   const rulerRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(fetchRulerRulesAction(dataSourceName));
-  }, [dataSourceName, dispatch]);
+    dispatch(fetchRulerRulesAction({ rulesSourceName }));
+  }, [rulesSourceName, dispatch]);
 
-  const rulesConfig = rulerRequests[dataSourceName]?.result;
+  const rulesConfig = rulerRequests[rulesSourceName]?.result;
 
   const namespace = watch('namespace');
 
@@ -49,7 +50,12 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
 
   return (
     <div className={style.flexRow}>
-      <Field label="Namespace" error={errors.namespace?.message} invalid={!!errors.namespace?.message}>
+      <Field
+        data-testid="namespace-picker"
+        label="Namespace"
+        error={errors.namespace?.message}
+        invalid={!!errors.namespace?.message}
+      >
         <InputControl
           render={({ field: { onChange, ref, ...field } }) => (
             <SelectWithAdd
@@ -70,10 +76,13 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
+            validate: {
+              pathSeparator: checkForPathSeparator,
+            },
           }}
         />
       </Field>
-      <Field label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
+      <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
           render={({ field: { ref, ...field } }) => (
             <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={style.input} />
@@ -82,6 +91,9 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
+            validate: {
+              pathSeparator: checkForPathSeparator,
+            },
           }}
         />
       </Field>

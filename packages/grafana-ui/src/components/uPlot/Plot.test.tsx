@@ -2,7 +2,7 @@ import React from 'react';
 import { UPlotChart } from './Plot';
 import { render } from '@testing-library/react';
 import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphFieldConfig, DrawStyle } from '../uPlot/config';
+import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
@@ -42,7 +42,7 @@ const mockData = () => {
     values: new ArrayVector([10, 20, 5]),
     config: {
       custom: {
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
       },
     } as FieldConfig<GraphFieldConfig>,
   });
@@ -55,7 +55,7 @@ const mockData = () => {
 
   const config = new UPlotConfigBuilder();
   config.addSeries({} as SeriesProps);
-  return { data, timeRange, config };
+  return { data: [data], timeRange, config };
 };
 
 describe('UPlotChart', () => {
@@ -104,7 +104,7 @@ describe('UPlotChart', () => {
 
       expect(uPlot).toBeCalledTimes(1);
 
-      data.fields[1].values.set(0, 1);
+      data[0].fields[1].values.set(0, 1);
 
       rerender(
         <UPlotChart

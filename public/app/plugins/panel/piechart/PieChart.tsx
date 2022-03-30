@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-
+import { VizTooltipOptions } from '@grafana/schema';
 import {
   FieldDisplay,
   FALLBACK_COLOR,
@@ -9,7 +9,6 @@ import {
   DataHoverEvent,
 } from '@grafana/data';
 import {
-  VizTooltipOptions,
   useTheme2,
   useStyles2,
   SeriesTableRowProps,
@@ -30,6 +29,7 @@ import { css } from '@emotion/css';
 import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { selectors } from '@grafana/e2e-selectors';
+import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
  * @beta
@@ -63,13 +63,7 @@ export const PieChart: FC<PieChartProps> = ({
     scroll: true,
   });
 
-  const filteredFieldDisplayValues = fieldDisplayValues.filter((dv) => {
-    return !dv.field.custom.hideFrom.viz;
-  });
-
-  if (filteredFieldDisplayValues.length < 0) {
-    return <div>No data</div>;
-  }
+  const filteredFieldDisplayValues = fieldDisplayValues.filter(filterDisplayItems);
 
   const getValue = (d: FieldDisplay) => d.display.numeric;
   const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
@@ -79,7 +73,7 @@ export const PieChart: FC<PieChartProps> = ({
 
   const showLabel = displayLabels.length > 0;
   const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
-  const total = filteredFieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
+  const total = filteredFieldDisplayValues.reduce(sumDisplayItemsReducer, 0);
   const layout = getPieLayout(width, height, pieType);
   const colors = [
     ...new Set(
@@ -305,7 +299,7 @@ function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color, 
         )}
         {displayLabels.includes(PieChartLabels.Percent) && (
           <tspan x={labelX} dy="1.2em">
-            {((arc.data.display.numeric / total) * 100).toFixed(0) + '%'}
+            {((arc.data.display.numeric / total) * 100).toFixed(arc.data.field.decimals ?? 0) + '%'}
           </tspan>
         )}
       </text>
@@ -346,14 +340,14 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
 function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
-    .spin(8)
+    .spin(4)
     .toRgbString();
 }
 
 function getGradientColorTo(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
-    .spin(-8)
+    .spin(-4)
     .toRgbString();
 }
 

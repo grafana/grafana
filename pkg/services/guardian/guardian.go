@@ -1,11 +1,12 @@
 package guardian
 
 import (
+	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,7 +21,8 @@ type DashboardGuardian interface {
 	CanEdit() (bool, error)
 	CanView() (bool, error)
 	CanAdmin() (bool, error)
-	HasPermission(permission models.PermissionType) (bool, error)
+	CanDelete() (bool, error)
+	CanCreate(folderID int64, isFolder bool) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
 
 	// GetAcl returns ACL.
@@ -40,15 +42,24 @@ type dashboardGuardianImpl struct {
 	acl    []*models.DashboardAclInfoDTO
 	teams  []*models.TeamDTO
 	log    log.Logger
+	ctx    context.Context
+	store  sqlstore.Store
 }
 
 // New factory for creating a new dashboard guardian instance
-var New = func(dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
+var New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+	panic("no guardian factory implementation provided")
+}
+
+func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser, store sqlstore.Store) *dashboardGuardianImpl {
 	return &dashboardGuardianImpl{
 		user:   user,
 		dashId: dashId,
 		orgId:  orgId,
 		log:    log.New("dashboard.permissions"),
+		ctx:    ctx,
+		store:  store,
 	}
 }
 
@@ -70,6 +81,16 @@ func (g *dashboardGuardianImpl) CanView() (bool, error) {
 
 func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
 	return g.HasPermission(models.PERMISSION_ADMIN)
+}
+
+func (g *dashboardGuardianImpl) CanDelete() (bool, error) {
+	// when using dashboard guardian without access control a user can delete a dashboard if they can save it
+	return g.CanSave()
+}
+
+func (g *dashboardGuardianImpl) CanCreate(_ int64, _ bool) (bool, error) {
+	// when using dashboard guardian without access control a user can create a dashboard if they can save it
+	return g.CanSave()
 }
 
 func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) (bool, error) {
@@ -201,10 +222,9 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	}
 
 	query := models.GetDashboardAclInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := g.store.GetDashboardAclInfoList(g.ctx, &query); err != nil {
 		return nil, err
 	}
-
 	g.acl = query.Result
 	return g.acl, nil
 }
@@ -251,7 +271,7 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	}
 
 	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
-	err := bus.Dispatch(&query)
+	err := g.store.GetTeamsByUser(g.ctx, &query)
 
 	g.teams = query.Result
 	return query.Result, err
@@ -321,6 +341,14 @@ func (g *FakeDashboardGuardian) CanAdmin() (bool, error) {
 	return g.CanAdminValue, nil
 }
 
+func (g *FakeDashboardGuardian) CanDelete() (bool, error) {
+	return g.CanSaveValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanCreate(_ int64, _ bool) (bool, error) {
+	return g.CanSaveValue, nil
+}
+
 func (g *FakeDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {
 	return g.HasPermissionValue, nil
 }
@@ -343,7 +371,7 @@ func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 // nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
-	New = func(dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+	New = func(_ context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 		mock.OrgId = orgId
 		mock.DashId = dashId
 		mock.User = user

@@ -5,18 +5,16 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		run(ctx context.Context, tsdbQuery plugins.DataQuery, e *Executor) (
-			plugins.DataQueryResult, cloudMonitoringResponse, string, error)
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		parseResponse(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, executedQueryString string) error
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		parseToAnnotations(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
+		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
+			*backend.DataResponse, cloudMonitoringResponse, string, error)
+		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
+		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text string) error
 		buildDeepLink() string
 		getRefID() string
 	}
@@ -41,7 +39,7 @@ type (
 		Query       string
 		IntervalMS  int64
 		AliasBy     string
-		timeRange   plugins.DataTimeRange
+		timeRange   backend.TimeRange
 	}
 
 	metricQuery struct {
@@ -118,7 +116,7 @@ type timeSeriesDescriptor struct {
 type timeSeriesData []struct {
 	LabelValues []struct {
 		BoolValue   bool   `json:"boolValue"`
-		Int64Value  int64  `json:"int64Value"`
+		Int64Value  string `json:"int64Value"`
 		StringValue string `json:"stringValue"`
 	} `json:"labelValues"`
 	PointData []struct {
@@ -191,4 +189,55 @@ type timeSeries struct {
 			} `json:"distributionValue"`
 		} `json:"value"`
 	} `json:"points"`
+}
+
+type metricDescriptorResponse struct {
+	Descriptors []metricDescriptor `json:"metricDescriptors"`
+	Token       string             `json:"nextPageToken"`
+}
+type metricDescriptor struct {
+	ValueType        string `json:"valueType"`
+	MetricKind       string `json:"metricKind"`
+	Type             string `json:"type"`
+	Unit             string `json:"unit"`
+	Service          string `json:"service"`
+	ServiceShortName string `json:"serviceShortName"`
+	DisplayName      string `json:"displayName"`
+	Description      string `json:"description"`
+}
+
+type projectResponse struct {
+	Projects []projectDescription `json:"projects"`
+	Token    string               `json:"nextPageToken"`
+}
+
+type projectDescription struct {
+	ProjectID string `json:"projectId"`
+	Name      string `json:"name"`
+}
+
+type serviceResponse struct {
+	Services []serviceDescription `json:"services"`
+	Token    string               `json:"nextPageToken"`
+}
+type serviceDescription struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+}
+
+type sloResponse struct {
+	SLOs  []sloDescription `json:"serviceLevelObjectives"`
+	Token string           `json:"nextPageToken"`
+}
+
+type sloDescription struct {
+	Name        string  `json:"name"`
+	DisplayName string  `json:"displayName"`
+	Goal        float64 `json:"goal"`
+}
+
+type selectableValue struct {
+	Value string  `json:"value"`
+	Label string  `json:"label"`
+	Goal  float64 `json:"goal,omitempty"`
 }

@@ -1,4 +1,4 @@
-import { ScopedVars, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { ScopedVars, DataSourceApi, DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 
 /**
  * This is the entry point for communicating with a datasource that is added as
@@ -10,10 +10,11 @@ import { ScopedVars, DataSourceApi, DataSourceInstanceSettings } from '@grafana/
  */
 export interface DataSourceSrv {
   /**
-   * @param name - name of the datasource plugin you want to use.
+   * Returns the requested dataSource. If it cannot be found it rejects the promise.
+   * @param ref - The datasource identifier, typically an object with UID and type,
    * @param scopedVars - variables used to interpolate a templated passed as name.
    */
-  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
+  get(ref?: DataSourceRef | string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
    * Get a list of data sources
@@ -23,12 +24,20 @@ export interface DataSourceSrv {
   /**
    * Get settings and plugin metadata by name or uid
    */
-  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined;
+  getInstanceSettings(
+    ref?: DataSourceRef | string | null,
+    scopedVars?: ScopedVars
+  ): DataSourceInstanceSettings | undefined;
+
+  /**
+   * Reloads the DataSourceSrv
+   */
+  reload(): void;
 }
 
 /** @public */
 export interface GetDataSourceListFilters {
-  /** Include mixed deta source by setting this to true */
+  /** Include mixed data source by setting this to true */
   mixed?: boolean;
 
   /** Only return data sources that support metrics response */

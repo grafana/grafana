@@ -5,13 +5,13 @@ import { RowOptionsModal } from './RowOptionsModal';
 import { OnRowOptionsUpdate } from './RowOptionsForm';
 
 export interface RowOptionsButtonProps {
-  title: string | null;
-  repeat: string | null | undefined;
+  title: string;
+  repeat?: string | null;
   onUpdate: OnRowOptionsUpdate;
 }
 
 export const RowOptionsButton: FC<RowOptionsButtonProps> = ({ repeat, title, onUpdate }) => {
-  const onUpdateChange = (hideModal: () => void) => (title: string | null, repeat: string | null) => {
+  const onUpdateChange = (hideModal: () => void) => (title: string, repeat?: string | null) => {
     onUpdate(title, repeat);
     hideModal();
   };

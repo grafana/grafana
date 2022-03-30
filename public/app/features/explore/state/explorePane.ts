@@ -9,7 +9,7 @@ import {
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
 import { queryReducer, runQueries, setQueriesAction } from './query';
 import { datasourceReducer } from './datasource';
 import { timeReducer, updateTime } from './time';
@@ -19,15 +19,26 @@ import {
   loadAndInitDatasource,
   createEmptyQueryResponse,
   getUrlStateFromPaneState,
+  storeGraphStyle,
 } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { EventBusExtended, DataQuery, ExploreUrlState, TimeRange, HistoryItem, DataSourceApi } from '@grafana/data';
+import {
+  EventBusExtended,
+  DataQuery,
+  ExploreUrlState,
+  TimeRange,
+  HistoryItem,
+  DataSourceApi,
+  ExplorePanelsState,
+  PreferredVisualisationType,
+} from '@grafana/data';
 // Types
 import { ThunkResult } from 'app/types';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getRichHistory } from '../../../core/utils/richHistory';
-import { richHistoryUpdatedAction } from './main';
+import { richHistoryUpdatedAction, stateSave } from './main';
+import { keybindingSrv } from 'app/core/services/keybindingSrv';
 
 //
 // Actions and Payloads
@@ -45,15 +56,36 @@ export interface ChangeSizePayload {
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
 /**
- * Highlight expressions in the log results
+ * Tracks the state of explore panels that gets synced with the url.
  */
-export interface HighlightLogsExpressionPayload {
+interface ChangePanelsState {
   exploreId: ExploreId;
-  expressions: string[];
+  panelsState: ExplorePanelsState;
 }
-export const highlightLogsExpressionAction = createAction<HighlightLogsExpressionPayload>(
-  'explore/highlightLogsExpression'
-);
+const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
+export function changePanelState(
+  exploreId: ExploreId,
+  panel: PreferredVisualisationType,
+  panelState: ExplorePanelsState[PreferredVisualisationType]
+): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const exploreItem = getState().explore[exploreId];
+    if (exploreItem === undefined) {
+      return;
+    }
+    const { panelsState } = exploreItem;
+    dispatch(
+      changePanelsStateAction({
+        exploreId,
+        panelsState: {
+          ...panelsState,
+          [panel]: panelState,
+        },
+      })
+    );
+    dispatch(stateSave());
+  };
+}
 
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -67,7 +99,6 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
-  originPanelId?: number | null;
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
@@ -87,6 +118,20 @@ export function changeSize(
   return changeSizeAction({ exploreId, height, width });
 }
 
+interface ChangeGraphStylePayload {
+  exploreId: ExploreId;
+  graphStyle: ExploreGraphStyle;
+}
+
+const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
+
+export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    storeGraphStyle(graphStyle);
+    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
+  };
+}
+
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -98,7 +143,7 @@ export function initializeExplore(
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
-  originPanelId?: number | null
+  panelsState?: ExplorePanelsState
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
@@ -119,12 +164,16 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
-        originPanelId,
         datasourceInstance: instance,
         history,
       })
     );
+    if (panelsState !== undefined) {
+      dispatch(changePanelsStateAction({ exploreId, panelsState }));
+    }
     dispatch(updateTime({ exploreId }));
+
+    keybindingSrv.setupTimeRangeBindings(false);
 
     if (instance) {
       // We do not want to add the url to browser history on init because when the pane is initialised it's because
@@ -133,7 +182,7 @@ export function initializeExplore(
       dispatch(runQueries(exploreId, { replaceUrl: true }));
     }
 
-    const richHistory = getRichHistory();
+    const richHistory = await getRichHistory();
     dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
@@ -155,7 +204,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
-    const { datasource, queries, range: urlRange, originPanelId } = newUrlState;
+    const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
     for (let index = 0; index < queries.length; index++) {
@@ -164,14 +213,15 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     }
 
     const timeZone = getTimeZone(getState().user);
-    const range = getTimeRangeFromUrl(urlRange, timeZone);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
+    const range = getTimeRangeFromUrl(urlRange, timeZone, fiscalYearStartMonth);
 
     // commit changes based on the diff of new url vs old url
 
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       await dispatch(
-        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, originPanelId)
+        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
       return;
     }
@@ -182,6 +232,10 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    if (update.panelsState && panelsState !== undefined) {
+      dispatch(changePanelsStateAction({ exploreId, panelsState }));
     }
 
     // always run queries when refresh is needed
@@ -210,19 +264,18 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, containerWidth };
   }
 
-  if (highlightLogsExpressionAction.match(action)) {
-    const { expressions: newExpressions } = action.payload;
-    const { logsHighlighterExpressions: currentExpressions } = state;
+  if (changeGraphStyleAction.match(action)) {
+    const { graphStyle } = action.payload;
+    return { ...state, graphStyle };
+  }
 
-    return {
-      ...state,
-      // Prevents re-renders. As logsHighlighterExpressions [] comes from datasource, we cannot control if it returns new array or not.
-      logsHighlighterExpressions: isEqual(newExpressions, currentExpressions) ? currentExpressions : newExpressions,
-    };
+  if (changePanelsStateAction.match(action)) {
+    const { panelsState } = action.payload;
+    return { ...state, panelsState };
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
+    const { containerWidth, eventBridge, queries, range, datasourceInstance, history } = action.payload;
 
     return {
       ...state,
@@ -232,12 +285,10 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries, datasourceInstance),
-      originPanelId,
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
-      logsHighlighterExpressions: undefined,
       cache: [],
     };
   }
@@ -256,14 +307,17 @@ export const urlDiff = (
   datasource: boolean;
   queries: boolean;
   range: boolean;
+  panelsState: boolean;
 } => {
   const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
   const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
   const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+  const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
 
   return {
     datasource,
     queries,
     range,
+    panelsState,
   };
 };

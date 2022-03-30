@@ -1,30 +1,40 @@
 package api
 
 import (
+	"context"
+	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/quota"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
+type Scheduler interface {
+	AlertmanagersFor(orgID int64) []*url.URL
+	DroppedAlertmanagersFor(orgID int64) []*url.URL
+}
+
 type Alertmanager interface {
 	// Configuration
-	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
+	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
@@ -36,54 +46,83 @@ type Alertmanager interface {
 	// Alerts
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+
+	// Testing
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
+}
+
+type AlertingStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
 // API handlers.
 type API struct {
-	Cfg             *setting.Cfg
-	DatasourceCache datasources.CacheService
-	RouteRegister   routing.RouteRegister
-	DataService     *tsdb.Service
-	QuotaService    *quota.QuotaService
-	Schedule        schedule.ScheduleService
-	RuleStore       store.RuleStore
-	InstanceStore   store.InstanceStore
-	AlertingStore   store.AlertingStore
-	DataProxy       *datasourceproxy.DatasourceProxyService
-	Alertmanager    Alertmanager
-	StateManager    *state.Manager
+	Cfg                  *setting.Cfg
+	DatasourceCache      datasources.CacheService
+	RouteRegister        routing.RouteRegister
+	ExpressionService    *expr.Service
+	QuotaService         *quota.QuotaService
+	Schedule             schedule.ScheduleService
+	TransactionManager   store.TransactionManager
+	RuleStore            store.RuleStore
+	InstanceStore        store.InstanceStore
+	AlertingStore        AlertingStore
+	AdminConfigStore     store.AdminConfigurationStore
+	DataProxy            *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	StateManager         *state.Manager
+	SecretsService       secrets.Service
+	AccessControl        accesscontrol.AccessControl
 }
 
 // RegisterAPIEndpoints registers API handlers
-func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
+func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	logger := log.New("ngalert.api")
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
 	}
 
-	// Register endpoints for proxing to Alertmanager-compatible backends.
+	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
+		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger},
 	), m)
-	// Register endpoints for proxing to Prometheus-compatible backends.
+	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
 	), m)
-	// Register endpoints for proxing to Cortex Ruler-compatible backends.
+	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, manager: api.StateManager, store: api.RuleStore, log: logger},
+		&RulerSrv{
+			DatasourceCache: api.DatasourceCache,
+			QuotaService:    api.QuotaService,
+			scheduleService: api.Schedule,
+			store:           api.RuleStore,
+			xactManager:     api.TransactionManager,
+			log:             logger,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			ac:              api.AccessControl,
+		},
 	), m)
-	api.RegisterTestingApiEndpoints(TestingApiSrv{
-		AlertingProxy:   proxy,
-		Cfg:             api.Cfg,
-		DataService:     api.DataService,
-		DatasourceCache: api.DatasourceCache,
-		log:             logger,
-	}, m)
+	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
+		&TestingApiSrv{
+			AlertingProxy:     proxy,
+			Cfg:               api.Cfg,
+			ExpressionService: api.ExpressionService,
+			DatasourceCache:   api.DatasourceCache,
+			secretsService:    api.SecretsService,
+			log:               logger,
+		}), m)
+	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
+		&AdminSrv{
+			store:     api.AdminConfigStore,
+			log:       logger,
+			scheduler: api.Schedule,
+		},
+	), m)
 }

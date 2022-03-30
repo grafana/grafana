@@ -1,28 +1,26 @@
 import { defaultBucketAgg } from '../../../../query_def';
 import { ElasticsearchQuery } from '../../../../types';
-import { ChangeMetricTypeAction, CHANGE_METRIC_TYPE } from '../../MetricAggregationsEditor/state/types';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
 import { BucketAggregation, Terms } from '../aggregations';
-import { INIT, InitAction } from '../../state';
-import {
-  ADD_BUCKET_AGG,
-  REMOVE_BUCKET_AGG,
-  CHANGE_BUCKET_AGG_TYPE,
-  CHANGE_BUCKET_AGG_FIELD,
-  CHANGE_BUCKET_AGG_SETTING,
-  BucketAggregationAction,
-} from './types';
+import { initQuery } from '../../state';
 import { bucketAggregationConfig } from '../utils';
 import { removeEmpty } from '../../../../utils';
+import { Action } from '@reduxjs/toolkit';
+import {
+  addBucketAggregation,
+  changeBucketAggregationField,
+  changeBucketAggregationSetting,
+  changeBucketAggregationType,
+  removeBucketAggregation,
+} from './actions';
+import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 
-export const createReducer = (defaultTimeField: string) => (
-  state: ElasticsearchQuery['bucketAggs'],
-  action: BucketAggregationAction | ChangeMetricTypeAction | InitAction
-): ElasticsearchQuery['bucketAggs'] => {
-  switch (action.type) {
-    case ADD_BUCKET_AGG:
+export const createReducer =
+  (defaultTimeField: string) =>
+  (state: ElasticsearchQuery['bucketAggs'], action: Action): ElasticsearchQuery['bucketAggs'] => {
+    if (addBucketAggregation.match(action)) {
       const newAgg: Terms = {
-        id: action.payload.id,
+        id: action.payload,
         type: 'terms',
         settings: bucketAggregationConfig['terms'].defaultSettings,
       };
@@ -34,30 +32,33 @@ export const createReducer = (defaultTimeField: string) => (
       }
 
       return [...state!, newAgg];
+    }
 
-    case REMOVE_BUCKET_AGG:
-      return state!.filter((bucketAgg) => bucketAgg.id !== action.payload.id);
+    if (removeBucketAggregation.match(action)) {
+      return state!.filter((bucketAgg) => bucketAgg.id !== action.payload);
+    }
 
-    case CHANGE_BUCKET_AGG_TYPE:
+    if (changeBucketAggregationType.match(action)) {
       return state!.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.id) {
           return bucketAgg;
         }
 
         /*
-          TODO: The previous version of the query editor was keeping some of the old bucket aggregation's configurations
-          in the new selected one (such as field or some settings).
-          It the future would be nice to have the same behavior but it's hard without a proper definition,
-          as Elasticsearch will error sometimes if some settings are not compatible.
-        */
+        TODO: The previous version of the query editor was keeping some of the old bucket aggregation's configurations
+        in the new selected one (such as field or some settings).
+        It the future would be nice to have the same behavior but it's hard without a proper definition,
+        as Elasticsearch will error sometimes if some settings are not compatible.
+      */
         return {
           id: bucketAgg.id,
           type: action.payload.newType,
           settings: bucketAggregationConfig[action.payload.newType].defaultSettings,
         } as BucketAggregation;
       });
+    }
 
-    case CHANGE_BUCKET_AGG_FIELD:
+    if (changeBucketAggregationField.match(action)) {
       return state!.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.id) {
           return bucketAgg;
@@ -68,8 +69,9 @@ export const createReducer = (defaultTimeField: string) => (
           field: action.payload.newField,
         };
       });
+    }
 
-    case CHANGE_METRIC_TYPE:
+    if (changeMetricType.match(action)) {
       // If we are switching to a metric which requires the absence of bucket aggregations
       // we remove all of them.
       if (metricAggregationConfig[action.payload.type].isSingleMetric) {
@@ -81,8 +83,9 @@ export const createReducer = (defaultTimeField: string) => (
         return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
       }
       return state;
+    }
 
-    case CHANGE_BUCKET_AGG_SETTING:
+    if (changeBucketAggregationSetting.match(action)) {
       return state!.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.bucketAgg.id) {
           return bucketAgg;
@@ -100,15 +103,15 @@ export const createReducer = (defaultTimeField: string) => (
           },
         };
       });
+    }
 
-    case INIT:
+    if (initQuery.match(action)) {
       if (state?.length || 0 > 0) {
         return state;
       }
 
       return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
+    }
 
-    default:
-      return state;
-  }
-};
+    return state;
+  };

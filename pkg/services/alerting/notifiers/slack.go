@@ -13,14 +13,13 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,7 +35,7 @@ func init() {
 				Label:        "Recipient",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
-				Description:  "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
+				Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
 				PropertyName: "recipient",
 			},
 			// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
@@ -63,14 +62,14 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
-				PropertyName: "iconEmoji",
+				PropertyName: "icon_emoji",
 			},
 			{
 				Label:        "Icon URL",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a URL to an image to use as the icon for the bot's message",
-				PropertyName: "iconUrl",
+				PropertyName: "icon_url",
 			},
 			{
 				Label:        "Mention Users",
@@ -119,13 +118,11 @@ func init() {
 	})
 }
 
-var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
-
 const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier.
-func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	urlStr := model.DecryptedValue("url", model.Settings.Get("url").MustString())
+func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+	urlStr := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
 	if urlStr == "" {
 		urlStr = slackAPIEndpoint
 	}
@@ -135,11 +132,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient != "" {
-		if !reRecipient.MatchString(recipient) {
-			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
-		}
-	} else if apiURL.String() == slackAPIEndpoint {
+	if recipient == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
@@ -150,7 +143,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString(), setting.SecretKey)
 	if token == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "token must be specified when using the Slack chat API",
@@ -181,7 +174,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 
 	return &SlackNotifier{
 		url:            apiURL,
-		NotifierBase:   NewNotifierBase(model),
+		NotifierBase:   NewNotifierBase(model, ns),
 		recipient:      recipient,
 		username:       username,
 		iconEmoji:      iconEmoji,
@@ -299,7 +292,6 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	body := map[string]interface{}{
 		"channel": sn.recipient,
-		"text":    evalContext.GetNotificationTitle(),
 		"attachments": []map[string]interface{}{
 			attachment,
 		},
@@ -383,16 +375,24 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	if resp.StatusCode/100 == 2 {
-		var rslt map[string]interface{}
-		// Slack responds to some requests with a JSON document, that might contain an error
-		if err := json.Unmarshal(body, &rslt); err == nil {
-			if !rslt["ok"].(bool) {
-				errMsg := rslt["error"].(string)
-				sn.log.Warn("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
-					"err", errMsg)
-				return fmt.Errorf("failed to make Slack API request: %s", errMsg)
-			}
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		// Slack responds to some requests with a JSON document, that might contain an error.
+		rslt := struct {
+			Ok  bool   `json:"ok"`
+			Err string `json:"error"`
+		}{}
+
+		// Marshaling can fail if Slack's response body is plain text (e.g. "ok").
+		if err := json.Unmarshal(body, &rslt); err != nil && json.Valid(body) {
+			sn.log.Error("Failed to unmarshal Slack API response", "url", sn.url.String(), "statusCode", resp.Status,
+				"err", err)
+			return fmt.Errorf("failed to unmarshal Slack API response with status code %d: %s", resp.StatusCode, err)
+		}
+
+		if !rslt.Ok && rslt.Err != "" {
+			sn.log.Error("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
+				"err", rslt.Err)
+			return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 		}
 
 		sn.log.Debug("Sending Slack API request succeeded", "url", sn.url.String(), "statusCode", resp.Status)
@@ -400,7 +400,7 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		return nil
 	}
 
-	sn.log.Warn("Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status, "body", string(body))
+	sn.log.Error("Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status, "body", string(body))
 	return fmt.Errorf("request to Slack API failed with status code %d", resp.StatusCode)
 }
 
@@ -418,7 +418,7 @@ func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log 
 	cmd := &models.SendWebhookSync{
 		Url: "https://slack.com/api/files.upload", Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
 	}
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := sn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
 		return err
 	}

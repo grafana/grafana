@@ -1,11 +1,4 @@
-import {
-  AnnotationQuery,
-  BusEventBase,
-  BusEventWithPayload,
-  eventFactory,
-  GrafanaTheme2,
-  TimeRange,
-} from '@grafana/data';
+import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 
 /**
@@ -92,7 +85,6 @@ export interface PanelChangeViewPayload {}
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
-export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
@@ -132,10 +124,6 @@ export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
 }
 
-export class RefreshEvent extends BusEventBase {
-  static type = 'refresh';
-}
-
 export class PanelDirectiveReadyEvent extends BusEventBase {
   static type = 'panel-directive-ready';
 }
@@ -144,20 +132,31 @@ export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
 
-export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme2> {
-  static type = 'theme-changed';
+interface ZoomOutEventPayload {
+  scale: number;
+  updateUrl?: boolean;
 }
 
-export class ZoomOutEvent extends BusEventWithPayload<number> {
+export class ZoomOutEvent extends BusEventWithPayload<ZoomOutEventPayload> {
   static type = 'zoom-out';
 }
 
-export enum ShiftTimeEventPayload {
+export enum ShiftTimeEventDirection {
   Left = -1,
   Right = 1,
 }
+
+interface ShiftTimeEventPayload {
+  direction: ShiftTimeEventDirection;
+  updateUrl?: boolean;
+}
+
 export class ShiftTimeEvent extends BusEventWithPayload<ShiftTimeEventPayload> {
   static type = 'shift-time';
+}
+
+export class AbsoluteTimeEvent extends BusEventBase {
+  static type = 'absolute-time';
 }
 
 export class RemovePanelEvent extends BusEventWithPayload<number> {
@@ -198,6 +197,10 @@ export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery
   static type = 'annotation-query-finished';
 }
 
-export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
-  static type = 'time-range-updated';
+export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
+  static type = 'panel-edit-started';
+}
+
+export class PanelEditExitedEvent extends BusEventWithPayload<number> {
+  static type = 'panel-edit-finished';
 }

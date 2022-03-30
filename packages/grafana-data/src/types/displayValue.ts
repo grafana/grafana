@@ -12,22 +12,20 @@ export interface DisplayValue extends FormattedValue {
    */
   percent?: number;
   /**
-   *  Color based on configs or Threshold
+   *  Color based on mappings or threshold
    */
   color?: string;
+  /**
+   *  Icon based on mappings or threshold
+   */
+  icon?: string;
   title?: string;
-}
 
-/**
- * Explicit control for text settings
- * @deprecated Use VizTextDisplayOptions from @grafana/ui instead
- */
-export type TextDisplayOptions = {
-  /* Explicit text size */
-  titleSize?: number;
-  /* Explicit text size */
-  valueSize?: number;
-};
+  /**
+   * Used in limited scenarios like legend reducer calculations
+   */
+  description?: string;
+}
 
 /**
  * These represents the display value with the longest title and text.

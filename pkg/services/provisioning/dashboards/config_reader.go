@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,8 +14,9 @@ import (
 )
 
 type configReader struct {
-	path string
-	log  log.Logger
+	path     string
+	log      log.Logger
+	orgStore utils.OrgStore
 }
 
 func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
@@ -62,7 +64,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 	return []*config{}, nil
 }
 
-func (cr *configReader) readConfig() ([]*config, error) {
+func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 	var dashboards []*config
 
 	files, err := ioutil.ReadDir(cr.path)
@@ -92,7 +94,7 @@ func (cr *configReader) readConfig() ([]*config, error) {
 			dashboard.OrgID = 1
 		}
 
-		if err := utils.CheckOrgExists(dashboard.OrgID); err != nil {
+		if err := utils.CheckOrgExists(ctx, cr.orgStore, dashboard.OrgID); err != nil {
 			return nil, fmt.Errorf("failed to provision dashboards with %q reader: %w", dashboard.Name, err)
 		}
 

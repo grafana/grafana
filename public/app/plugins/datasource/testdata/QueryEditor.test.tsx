@@ -37,7 +37,7 @@ describe('Test Datasource Query Editor', () => {
   it('should switch scenario and display its default values', async () => {
     const { rerender } = setup();
 
-    let select = (await screen.findByText('Scenario')).nextSibling!;
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     const scs = screen.getAllByLabelText('Select option');
 
@@ -81,5 +81,22 @@ describe('Test Datasource Query Editor', () => {
     expect(screen.getByLabelText('Speed (ms)')).toHaveValue(250);
     expect(screen.getByLabelText('Spread')).toHaveValue(3.5);
     expect(screen.getByLabelText('Bands')).toHaveValue(1);
+  });
+
+  it('persists the datasource from the query when switching scenario', async () => {
+    const mockDatasource = {
+      type: 'test',
+      uid: 'foo',
+    };
+    setup({
+      query: {
+        ...defaultQuery,
+        datasource: mockDatasource,
+      },
+    });
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
+    await fireEvent.keyDown(select, { keyCode: 40 });
+    await userEvent.click(screen.getByText('Grafana API'));
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ datasource: mockDatasource }));
   });
 });

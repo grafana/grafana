@@ -21,11 +21,17 @@ During an infrastructure monitoring and incident response, you can dig deeper in
 
 ### Logs visualization
 
-Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
+Results of log queries are shown as histograms in the graph and individual logs are explained in the following sections.
+
+If the data source supports a full range log volume histogram, the graph with log distribution for all entered log queries is shown automatically. This feature is currently supported by Elasticsearch and Loki data sources.
+
+If the data source does not support loading full range log volume histogram, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval, and the first log row's timestamp then anchors the start of the histogram from the result. The end of the time series is anchored to the time picker's **To** range.
 
 #### Log level
 
-For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level.
+For logs where a level label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with an unknown log level.
+
+> **Tip:** If you use Loki data source and the "level" is in your log-line, use parsers (JSON, logfmt, regex,..) to extract the level information into a level label that is used to determine log level. This will allow the histogram to show the various log levels in separate bars.
 
 **Supported log levels and mapping of log level abbreviation and expressions:**
 
@@ -70,6 +76,10 @@ Shows or hides the unique labels column that includes only non-common labels. Al
 #### Wrap lines
 
 Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
+
+#### Prettify JSON
+
+Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
 
 #### Deduping
 

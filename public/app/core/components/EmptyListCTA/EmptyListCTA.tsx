@@ -1,13 +1,14 @@
-import React, { MouseEvent } from 'react';
 import { css } from '@emotion/css';
-import { CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
+import React, { MouseEvent } from 'react';
 
 export interface Props {
   title: string;
   buttonIcon: IconName;
   buttonLink?: string;
   buttonTitle: string;
+  buttonDisabled?: boolean;
   onClick?: (event: MouseEvent) => void;
   proTip?: string;
   proTipLink?: string;
@@ -31,6 +32,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
   buttonIcon,
   buttonLink,
   buttonTitle,
+  buttonDisabled,
   onClick,
   proTip,
   proTipLink,
@@ -46,9 +48,11 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
           <span key="proTipFooter">
             <Icon name="rocket" />
             <> ProTip: {proTip} </>
-            <a href={proTipLink} target={proTipTarget} className="text-link">
-              {proTipLinkTitle}
-            </a>
+            {proTipLink && (
+              <a href={proTipLink} target={proTipTarget} className="text-link">
+                {proTipLinkTitle}
+              </a>
+            )}
           </span>
         ) : (
           ''
@@ -71,17 +75,19 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       `
     : '';
 
+  const ButtonEl = buttonLink ? LinkButton : Button;
   const ctaElement = (
-    <LinkButton
+    <ButtonEl
       size="lg"
       onClick={onClick}
       href={buttonLink}
       icon={buttonIcon}
       className={ctaElementClassName}
-      aria-label={selectors.components.CallToActionCard.button(buttonTitle)}
+      data-testid={selectors.components.CallToActionCard.buttonV2(buttonTitle)}
+      disabled={buttonDisabled}
     >
       {buttonTitle}
-    </LinkButton>
+    </ButtonEl>
   );
 
   return <CallToActionCard className={ctaStyle} message={title} footer={footer()} callToActionElement={ctaElement} />;

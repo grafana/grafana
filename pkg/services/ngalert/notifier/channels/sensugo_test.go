@@ -7,18 +7,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestSensuGoNotifier(t *testing.T) {
+	constNow := time.Now()
+	defer mockTimeNow(constNow)()
+
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -30,7 +32,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       map[string]interface{}
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -58,16 +60,15 @@ func TestSensuGoNotifier(t *testing.T) {
 							"ruleURL": "http://localhost/alerting/list",
 						},
 					},
-					"output":   "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-					"issued":   time.Now().Unix(),
+					"output":   "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+					"issued":   timeNow().Unix(),
 					"interval": 86400,
 					"status":   2,
 					"handlers": nil,
 				},
 				"ruleUrl": "http://localhost/alerting/list",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Custom config with multiple alerts",
 			settings: `{
@@ -107,27 +108,26 @@ func TestSensuGoNotifier(t *testing.T) {
 						},
 					},
 					"output":   "2 alerts are firing, 0 are resolved",
-					"issued":   time.Now().Unix(),
+					"issued":   timeNow().Unix(),
 					"interval": 86400,
 					"status":   2,
 					"handlers": []string{"myhandler"},
 				},
 				"ruleUrl": "http://localhost/alerting/list",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Error in initing: missing URL",
 			settings: `{
 				"apikey": "<apikey>"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find URL property in settings"},
+			expInitError: `could not find URL property in settings`,
 		}, {
 			name: "Error in initing: missing API key",
 			settings: `{
 				"url": "http://sensu-api.local:8080"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find the API key property in settings"},
+			expInitError: `could not find the API key property in settings`,
 		},
 	}
 
@@ -135,29 +135,29 @@ func TestSensuGoNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "Sensu Go",
-				Type:     "sensugo",
-				Settings: settingsJSON,
+				Name:           "Sensu Go",
+				Type:           "sensugo",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
-			sn, err := NewSensuGoNotifier(m, tmpl)
-			if c.expInitError != nil {
+			webhookSender := mockNotificationService()
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
+			cfg, err := NewSensuGoConfig(m, decryptFn)
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
 
-			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
-
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			sn := NewSensuGoNotifier(cfg, webhookSender, tmpl)
 			ok, err := sn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -171,7 +171,7 @@ func TestSensuGoNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

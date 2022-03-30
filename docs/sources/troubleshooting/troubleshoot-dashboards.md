@@ -32,6 +32,7 @@ Some applications publish data intermittently; for example, they only post a met
 default, Grafana graphs connect lines between the data points. This can be very deceiving.
 
 In the picture below we have enabled:
+
 - Points and 3-point radius to highlight where data points are actually present.
 - **Null value** is set to **connected**.
 

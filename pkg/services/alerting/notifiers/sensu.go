@@ -1,14 +1,16 @@
 package notifiers
 
 import (
+	"context"
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -59,18 +61,18 @@ func init() {
 }
 
 // NewSensuNotifier is the constructor for the Sensu Notifier.
-func NewSensuNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewSensuNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
 	return &SensuNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		URL:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Source:       model.Settings.Get("source").MustString(),
-		Password:     model.DecryptedValue("password", model.Settings.Get("password").MustString()),
+		Password:     fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey),
 		Handler:      model.Settings.Get("handler").MustString(),
 		log:          log.New("alerting.notifier.sensu"),
 	}, nil
@@ -144,7 +146,7 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 		HttpMethod: "POST",
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := sn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send sensu event", "error", err, "sensu", sn.Name)
 		return err
 	}

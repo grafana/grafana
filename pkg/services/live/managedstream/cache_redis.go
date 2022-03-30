@@ -1,6 +1,7 @@
 package managedstream
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"sync"
@@ -8,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"gopkg.in/redis.v5"
 )
 
 // RedisFrameCache ...
@@ -41,9 +42,9 @@ func (c *RedisFrameCache) GetActiveChannels(orgID int64) (map[string]json.RawMes
 	return info, nil
 }
 
-func (c *RedisFrameCache) GetFrame(orgID int64, channel string) (json.RawMessage, bool, error) {
+func (c *RedisFrameCache) GetFrame(ctx context.Context, orgID int64, channel string) (json.RawMessage, bool, error) {
 	key := getCacheKey(orgchannel.PrependOrgID(orgID, channel))
-	cmd := c.redisClient.HGetAll(key)
+	cmd := c.redisClient.HGetAll(ctx, key)
 	result, err := cmd.Result()
 	if err != nil {
 		return nil, false, err
@@ -58,7 +59,7 @@ const (
 	frameCacheTTL = 7 * 24 * time.Hour
 )
 
-func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
+func (c *RedisFrameCache) Update(ctx context.Context, orgID int64, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
 	c.mu.Lock()
 	if _, ok := c.frames[orgID]; !ok {
 		c.frames[orgID] = map[string]data.FrameJSONCache{}
@@ -73,14 +74,14 @@ func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.Fra
 	pipe := c.redisClient.TxPipeline()
 	defer func() { _ = pipe.Close() }()
 
-	pipe.HGetAll(key)
-	pipe.HMSet(key, map[string]string{
+	pipe.HGetAll(ctx, key)
+	pipe.HMSet(ctx, key, map[string]string{
 		"schema": stringSchema,
 		"frame":  string(jsonFrame.Bytes(data.IncludeAll)),
 	})
-	pipe.Expire(key, frameCacheTTL)
+	pipe.Expire(ctx, key, frameCacheTTL)
 
-	replies, err := pipe.Exec()
+	replies, err := pipe.Exec(ctx)
 	if err != nil {
 		return false, err
 	}

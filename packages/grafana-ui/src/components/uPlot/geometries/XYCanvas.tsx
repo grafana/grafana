@@ -1,31 +1,24 @@
-import { usePlotContext } from '../context';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 
-interface XYCanvasProps {}
+interface XYCanvasProps {
+  top: number; // css pxls
+  left: number; // css pxls
+}
 
 /**
  * Renders absolutely positioned element on top of the uPlot's plotting area (axes are not included!).
  * Useful when you want to render some overlay with canvas-independent elements on top of the plot.
  */
-export const XYCanvas: React.FC<XYCanvasProps> = ({ children }) => {
-  const plotCtx = usePlotContext();
-  const plotInstance = plotCtx.plot;
+export const XYCanvas: React.FC<XYCanvasProps> = ({ children, left, top }) => {
+  const className = useMemo(() => {
+    return css`
+      position: absolute;
+      overflow: visible;
+      left: ${left}px;
+      top: ${top}px;
+    `;
+  }, [left, top]);
 
-  if (!plotInstance) {
-    return null;
-  }
-
-  return (
-    <div
-      className={css`
-        position: absolute;
-        overflow: visible;
-        left: ${plotInstance.bbox.left / window.devicePixelRatio}px;
-        top: ${plotInstance.bbox.top / window.devicePixelRatio}px;
-      `}
-    >
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 };

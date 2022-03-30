@@ -1,11 +1,14 @@
 package notifiers
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"context"
+	"encoding/json"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -57,16 +60,16 @@ func init() {
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewWebHookNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	password := model.DecryptedValue("password", model.Settings.Get("password").MustString())
+	password := fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey)
 
 	return &WebhookNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		URL:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Password:     password,
@@ -86,20 +89,38 @@ type WebhookNotifier struct {
 	log        log.Logger
 }
 
+// WebhookNotifierBody is the body of webhook
+// notification channel
+type WebhookNotifierBody struct {
+	Title       string                `json:"title"`
+	RuleID      int64                 `json:"ruleId"`
+	RuleName    string                `json:"ruleName"`
+	State       models.AlertStateType `json:"state"`
+	EvalMatches []*alerting.EvalMatch `json:"evalMatches"`
+	OrgID       int64                 `json:"orgId"`
+	DashboardID int64                 `json:"dashboardId"`
+	PanelID     int64                 `json:"panelId"`
+	Tags        map[string]string     `json:"tags"`
+	RuleURL     string                `json:"ruleUrl,omitempty"`
+	ImageURL    string                `json:"imageUrl,omitempty"`
+	Message     string                `json:"message,omitempty"`
+}
+
 // Notify send alert notifications as
 // webhook as http requests.
 func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	wn.log.Info("Sending webhook")
 
-	bodyJSON := simplejson.New()
-	bodyJSON.Set("title", evalContext.GetNotificationTitle())
-	bodyJSON.Set("ruleId", evalContext.Rule.ID)
-	bodyJSON.Set("ruleName", evalContext.Rule.Name)
-	bodyJSON.Set("state", evalContext.Rule.State)
-	bodyJSON.Set("evalMatches", evalContext.EvalMatches)
-	bodyJSON.Set("orgId", evalContext.Rule.OrgID)
-	bodyJSON.Set("dashboardId", evalContext.Rule.DashboardID)
-	bodyJSON.Set("panelId", evalContext.Rule.PanelID)
+	body := WebhookNotifierBody{
+		Title:       evalContext.GetNotificationTitle(),
+		RuleID:      evalContext.Rule.ID,
+		RuleName:    evalContext.Rule.Name,
+		State:       evalContext.Rule.State,
+		EvalMatches: evalContext.EvalMatches,
+		OrgID:       evalContext.Rule.OrgID,
+		DashboardID: evalContext.Rule.DashboardID,
+		PanelID:     evalContext.Rule.PanelID,
+	}
 
 	tags := make(map[string]string)
 
@@ -107,32 +128,32 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		tags[tag.Key] = tag.Value
 	}
 
-	bodyJSON.Set("tags", tags)
+	body.Tags = tags
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
-		bodyJSON.Set("ruleUrl", ruleURL)
+		body.RuleURL = ruleURL
 	}
 
 	if wn.NeedsImage() && evalContext.ImagePublicURL != "" {
-		bodyJSON.Set("imageUrl", evalContext.ImagePublicURL)
+		body.ImageURL = evalContext.ImagePublicURL
 	}
 
 	if evalContext.Rule.Message != "" {
-		bodyJSON.Set("message", evalContext.Rule.Message)
+		body.Message = evalContext.Rule.Message
 	}
 
-	body, _ := bodyJSON.MarshalJSON()
+	bodyJSON, _ := json.Marshal(body)
 
 	cmd := &models.SendWebhookSync{
 		Url:        wn.URL,
 		User:       wn.User,
 		Password:   wn.Password,
-		Body:       string(body),
+		Body:       string(bodyJSON),
 		HttpMethod: wn.HTTPMethod,
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := wn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		wn.log.Error("Failed to send webhook", "error", err, "webhook", wn.Name)
 		return err
 	}

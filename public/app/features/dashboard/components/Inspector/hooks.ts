@@ -11,7 +11,7 @@ import { PanelInspectActionSupplier } from './PanelInspectActions';
  * Given PanelData return first data source supporting metadata inspector
  */
 export const useDatasourceMetadata = (data?: PanelData) => {
-  const state = useAsync<DataSourceApi | undefined>(async () => {
+  const state = useAsync(async () => {
     const targets = data?.request?.targets || [];
 
     if (data && data.series && targets.length) {

@@ -52,7 +52,7 @@ The Heatmap panel also works with Elasticsearch Histogram Aggregations for more 
 This release includes a [new core data source for MySQL](http://docs.grafana.org/features/datasources/mysql/). You can write any possible MySQL query and format it as either Time Series or Table Data allowing it be used with the Graph Panel, Table Panel and SingleStat Panel.
 
 We are still working on the MySQL data source. As it's missing some important features, like templating and macros and future changes could be breaking, we are
-labeling the state of the data source as Alpha. Instead of holding up the release of v4.3 we are including it in its current shape to get some early feedback.  So please try it out and let us know what you think on [twitter](https://twitter.com/intent/tweet?text=.%40grafana&source=4_3_beta_blog&related=blog) or on our [community forum](https://community.grafana.com/c/releases). Is this a feature that you would use? How can we make it better?
+labeling the state of the data source as Alpha. Instead of holding up the release of v4.3 we are including it in its current shape to get some early feedback. So please try it out and let us know what you think on [twitter](https://twitter.com/intent/tweet?text=.%40grafana&source=4_3_beta_blog&related=blog) or on our [community forum](https://community.grafana.com/c/releases). Is this a feature that you would use? How can we make it better?
 
 **The query editor can show the generated and interpolated SQL that is sent to the MySQL server.**
 

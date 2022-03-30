@@ -3,9 +3,10 @@ package tempo
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.opentelemetry.io/collector/translator/conventions"
 	tracetranslator "go.opentelemetry.io/collector/translator/trace"
 )
@@ -19,6 +20,12 @@ type TraceLog struct {
 	// Millisecond epoch time
 	Timestamp float64     `json:"timestamp"`
 	Fields    []*KeyValue `json:"fields"`
+}
+
+type TraceReference struct {
+	SpanID  string      `json:"spanID"`
+	TraceID string      `json:"traceID"`
+	Tags    []*KeyValue `json:"tags"`
 }
 
 func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
@@ -43,6 +50,7 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 			data.NewField("startTime", nil, []float64{}),
 			data.NewField("duration", nil, []float64{}),
 			data.NewField("logs", nil, []string{}),
+			data.NewField("references", nil, []string{}),
 			data.NewField("tags", nil, []string{}),
 		},
 		Meta: &data.FrameMeta{
@@ -101,18 +109,13 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 }
 
 func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, resource pdata.Resource) ([]interface{}, error) {
-	traceID, err := traceIDToString(span.TraceID())
-	if err != nil {
-		return nil, err
-	}
+	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
+	traceID := span.TraceID().HexString()
+	traceID = strings.TrimLeft(traceID, "0")
 
-	spanID, err := spanIDToString(span.SpanID())
-	if err != nil {
-		return nil, err
-	}
+	spanID := span.SpanID().HexString()
 
-	// Should get error only if empty in which case we are ok with empty string
-	parentSpanID, _ := spanIDToString(span.ParentSpanID())
+	parentSpanID := span.ParentSpanID().HexString()
 	startTime := float64(span.StartTimestamp()) / 1_000_000
 	serviceName, serviceTags := resourceToProcess(resource)
 
@@ -131,6 +134,13 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		return nil, fmt.Errorf("failed to marshal span logs: %w", err)
 	}
 
+	references, err := json.Marshal(spanLinksToReferences(span.Links()))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal span links: %w", err)
+	}
+
+	// Order matters (look at dataframe order)
 	return []interface{}{
 		traceID,
 		spanID,
@@ -141,6 +151,7 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		startTime,
 		float64(span.EndTimestamp()-span.StartTimestamp()) / 1_000_000,
 		toJSONString(logs),
+		toJSONString(references),
 		toJSONString(spanTags),
 	}, nil
 }
@@ -151,23 +162,6 @@ func toJSONString(json []byte) string {
 		return ""
 	}
 	return s
-}
-
-// TraceID can be the size of 2 uint64 in OT but we just need a string
-func traceIDToString(traceID pdata.TraceID) (string, error) {
-	traceIDHigh, traceIDLow := tracetranslator.TraceIDToUInt64Pair(traceID)
-	if traceIDLow == 0 && traceIDHigh == 0 {
-		return "", fmt.Errorf("OC span has an all zeros trace ID")
-	}
-	return fmt.Sprintf("%d%d", traceIDHigh, traceIDLow), nil
-}
-
-func spanIDToString(spanID pdata.SpanID) (string, error) {
-	uSpanID := tracetranslator.SpanIDToUInt64(spanID)
-	if uSpanID == 0 {
-		return "", fmt.Errorf("OC span has an all zeros span ID")
-	}
-	return fmt.Sprintf("%d", uSpanID), nil
 }
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
@@ -341,4 +335,34 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 	}
 
 	return logs
+}
+
+func spanLinksToReferences(links pdata.SpanLinkSlice) []*TraceReference {
+	if links.Len() == 0 {
+		return nil
+	}
+
+	references := make([]*TraceReference, 0, links.Len())
+	for i := 0; i < links.Len(); i++ {
+		link := links.At(i)
+
+		traceId := link.TraceID().HexString()
+		traceId = strings.TrimLeft(traceId, "0")
+
+		spanId := link.SpanID().HexString()
+
+		tags := make([]*KeyValue, 0, link.Attributes().Len())
+		link.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
+			tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
+			return true
+		})
+
+		references = append(references, &TraceReference{
+			TraceID: traceId,
+			SpanID:  spanId,
+			Tags:    tags,
+		})
+	}
+
+	return references
 }

@@ -92,17 +92,20 @@ export function localTimeFormat(
     return fallback ?? DEFAULT_SYSTEM_DATE_FORMAT;
   }
 
-  if (!locale) {
+  if (!locale && navigator) {
     locale = [...navigator.languages];
   }
 
   // https://momentjs.com/docs/#/displaying/format/
-  const parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
+  const dateTimeFormat = new Intl.DateTimeFormat(locale || undefined, options);
+  const parts = dateTimeFormat.formatToParts(new Date());
+  const hour12 = dateTimeFormat.resolvedOptions().hour12;
+
   const mapping: { [key: string]: string } = {
     year: 'YYYY',
     month: 'MM',
     day: 'DD',
-    hour: 'HH',
+    hour: hour12 ? 'hh' : 'HH',
     minute: 'mm',
     second: 'ss',
     weekday: 'ddd',

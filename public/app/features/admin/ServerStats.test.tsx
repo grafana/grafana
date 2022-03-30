@@ -1,27 +1,48 @@
 import React from 'react';
-// @ts-ignore
-import renderer from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import { ServerStats } from './ServerStats';
-import { createNavModel } from 'test/mocks/common';
 import { ServerStat } from './state/apis';
 
+const stats: ServerStat = {
+  activeAdmins: 1,
+  activeEditors: 0,
+  activeSessions: 1,
+  activeUsers: 1,
+  activeViewers: 0,
+  admins: 1,
+  alerts: 5,
+  dashboards: 1599,
+  datasources: 54,
+  editors: 2,
+  orgs: 1,
+  playlists: 1,
+  snapshots: 1,
+  stars: 3,
+  tags: 42,
+  users: 5,
+  viewers: 2,
+};
+
+jest.mock('./state/apis', () => ({
+  getServerStats: async () => stats,
+}));
+jest.mock('../../core/services/context_srv', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
+
 describe('ServerStats', () => {
-  it('Should render table with stats', (done) => {
-    const navModel = createNavModel('Admin', 'stats');
-    const stats: ServerStat[] = [
-      { name: 'Total dashboards', value: 10 },
-      { name: 'Total Users', value: 1 },
-    ];
-
-    const getServerStats = () => {
-      return Promise.resolve(stats);
-    };
-
-    const page = renderer.create(<ServerStats navModel={navModel} getServerStats={getServerStats} />);
-
-    setTimeout(() => {
-      expect(page.toJSON()).toBeDefined();
-      done();
-    });
+  it('Should render page with stats', async () => {
+    render(<ServerStats />);
+    expect(await screen.findByRole('heading', { name: /instance statistics/i })).toBeInTheDocument();
+    expect(screen.getByText('Dashboards (starred)')).toBeInTheDocument();
+    expect(screen.getByText('Tags')).toBeInTheDocument();
+    expect(screen.getByText('Playlists')).toBeInTheDocument();
+    expect(screen.getByText('Snapshots')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage dashboards' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage data sources' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage users' })).toBeInTheDocument();
   });
 });

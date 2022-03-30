@@ -4,6 +4,7 @@ module.exports = {
       //what are the files that we want to watch
       'assets/css/*.css',
       'templates/**/*.html',
+      'templates/**/*.txt',
       'grunt/*.js',
     ],
     tasks: ['default'],

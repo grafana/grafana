@@ -51,6 +51,7 @@ Do you want metrics about viewing metrics? Of course you do! In this release we 
 Switched logging framework to log15 to enable key value per logging and filtering based on different log levels. It's now possible to configure different log levels for different modules.
 
 ### Breaking changes
+
 - **Logging** format have been changed to improve log filtering.
 - **Graphite PNG** Graphite PNG support dropped from Graph panel (use Grafana native PNG instead).
 - **Migration** No longer possible to migrate dashboards from 1.x (Stored in ES or Influx 0.8).

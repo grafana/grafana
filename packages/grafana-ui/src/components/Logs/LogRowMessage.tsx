@@ -1,16 +1,15 @@
 import React, { PureComponent } from 'react';
-import { isEqual } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
+import memoizeOne from 'memoize-one';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
-import { Themeable } from '../../types/theme';
-import { withTheme } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { withTheme2 } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
 import { LogRowContext } from './LogRowContext';
@@ -18,22 +17,22 @@ import { LogMessageAnsi } from './LogMessageAnsi';
 
 export const MAX_CHARACTERS = 100000;
 
-interface Props extends Themeable {
+interface Props extends Themeable2 {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
   contextIsOpen: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  highlighterExpressions?: string[];
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
   updateLimit?: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const outlineColor = tinycolor(theme.colors.dashboardBg).setAlpha(0.7).toRgbString();
+const getStyles = (theme: GrafanaTheme2) => {
+  const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
   return {
     positionRelative: css`
@@ -47,9 +46,50 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     horizontalScroll: css`
       label: verticalScroll;
-      white-space: nowrap;
+      white-space: pre;
+    `,
+    contextNewline: css`
+      display: block;
+      margin-left: 0px;
     `,
   };
+};
+
+function renderLogMessage(
+  hasAnsi: boolean,
+  entry: string,
+  highlights: string[] | undefined,
+  highlightClassName: string
+) {
+  const needsHighlighter =
+    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
+  const searchWords = highlights ?? [];
+  if (hasAnsi) {
+    const highlight = needsHighlighter ? { searchWords, highlightClassName } : undefined;
+    return <LogMessageAnsi value={entry} highlight={highlight} />;
+  } else if (needsHighlighter) {
+    return (
+      <Highlighter
+        textToHighlight={entry}
+        searchWords={searchWords}
+        findChunks={findHighlightChunksInText}
+        highlightClassName={highlightClassName}
+      />
+    );
+  } else {
+    return entry;
+  }
+}
+
+const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): string => {
+  if (prettifyLogMessage) {
+    try {
+      return JSON.stringify(JSON.parse(line), undefined, 2);
+    } catch (error) {
+      return line;
+    }
+  }
+  return line;
 });
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
@@ -60,7 +100,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
   render() {
     const {
-      highlighterExpressions,
       row,
       theme,
       errors,
@@ -70,29 +109,28 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       contextIsOpen,
       showContextToggle,
       wrapLogMessage,
+      prettifyLogMessage,
       onToggleContext,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
-    const { entry, hasAnsi, raw } = row;
+    const { hasAnsi, raw } = row;
+    const restructuredEntry = restructureLog(raw, prettifyLogMessage);
 
-    const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
-    const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter =
-      highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
-    const highlightClassName = previewHighlights
-      ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
-      : cx([style.logsRowMatchHighLight]);
+    const highlightClassName = cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
 
     return (
       <td className={style.logsRowMessage}>
-        <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
+        <div
+          className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
+        >
           {contextIsOpen && context && (
             <LogRowContext
               row={row}
               context={context}
               errors={errors}
+              wrapLogMessage={wrapLogMessage}
               hasMoreContextRows={hasMoreContextRows}
               onOutsideClick={onToggleContext}
               onLoadMoreContext={() => {
@@ -103,21 +141,13 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {needsHighlighter ? (
-              <Highlighter
-                textToHighlight={entry}
-                searchWords={highlights ?? []}
-                findChunks={findHighlightChunksInText}
-                highlightClassName={highlightClassName}
-              />
-            ) : hasAnsi ? (
-              <LogMessageAnsi value={raw} />
-            ) : (
-              entry
-            )}
+            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, highlightClassName)}
           </span>
           {showContextToggle?.(row) && (
-            <span onClick={this.onContextToggle} className={cx('log-row-context', style.context)}>
+            <span
+              onClick={this.onContextToggle}
+              className={cx('log-row-context', style.context, { [styles.contextNewline]: !wrapLogMessage })}
+            >
               {contextIsOpen ? 'Hide' : 'Show'} context
             </span>
           )}
@@ -127,5 +157,5 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
   }
 }
 
-export const LogRowMessage = withTheme(UnThemedLogRowMessage);
+export const LogRowMessage = withTheme2(UnThemedLogRowMessage);
 LogRowMessage.displayName = 'LogRowMessage';

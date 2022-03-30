@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/hashicorp/go-plugin"
 )
@@ -72,6 +73,14 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
+	elevated, err := process.IsRunningWithElevatedPrivileges()
+	if err != nil {
+		p.logger.Debug("Error checking plugin process execution privilege", "err", err)
+	}
+	if elevated {
+		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
+	}
+
 	return nil
 }
 
@@ -122,12 +131,12 @@ func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	return pluginClient, true
 }
 
-func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	return pluginClient.CollectMetrics(ctx)
+	return pluginClient.CollectMetrics(ctx, req)
 }
 
 func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

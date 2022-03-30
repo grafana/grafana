@@ -1,4 +1,4 @@
-# Grafana PostgreSQL Data Source -  Native Plugin
+# Grafana PostgreSQL Data Source - Native Plugin
 
 Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
 

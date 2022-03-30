@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,7 +23,7 @@ type EvalContext struct {
 	StartTime      time.Time
 	EndTime        time.Time
 	Rule           *Rule
-	log            log.Logger
+	Log            log.Logger
 
 	dashboardRef *models.DashboardRef
 
@@ -36,19 +35,22 @@ type EvalContext struct {
 	RequestValidator models.PluginRequestValidator
 
 	Ctx context.Context
+
+	Store AlertStore
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
 	return &EvalContext{
 		Ctx:              alertCtx,
 		StartTime:        time.Now(),
 		Rule:             rule,
 		Logs:             make([]*ResultLogEntry, 0),
 		EvalMatches:      make([]*EvalMatch, 0),
-		log:              log.New("alerting.evalContext"),
+		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
+		Store:            sqlStore,
 	}
 }
 
@@ -108,7 +110,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	}
 
 	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := bus.Dispatch(uidQuery); err != nil {
+	if err := c.Store.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 
@@ -152,7 +154,7 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 
 func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	if c.Error != nil {
-		c.log.Error("Alert Rule Result Error",
+		c.Log.Error("Alert Rule Result Error",
 			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"error", c.Error,
@@ -169,7 +171,7 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	}
 
 	if c.NoDataFound {
-		c.log.Info("Alert Rule returned no data",
+		c.Log.Info("Alert Rule returned no data",
 			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"changing state to", c.Rule.NoDataState.ToAlertState())

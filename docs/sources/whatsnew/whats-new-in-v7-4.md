@@ -30,11 +30,11 @@ Apart from major performance improvements, the new Time series panel implements 
 
 The following documentation topics were added for this feature:
 
-- [Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}})
-- [Graph time series as lines]({{< relref "../panels/visualizations/time-series/graph-time-series-as-lines.md" >}})
-- [Graph time series as bars]({{< relref "../panels/visualizations/time-series/graph-time-series-as-bars.md" >}})
-- [Graph time series as points]({{< relref "../panels/visualizations/time-series/graph-time-series-as-points" >}})
-- [Change axis display]({{< relref "../panels/visualizations/time-series/change-axis-display.md" >}})
+- [Time series panel]({{< relref "../visualizations/time-series/_index.md" >}})
+- [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines.md" >}})
+- [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars.md" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points" >}})
+- [Change axis display]({{< relref "../visualizations/time-series/change-axis-display.md" >}})
 
 ### Node graph panel visualization (Beta)
 
@@ -44,7 +44,7 @@ All the information and stats shown in the Node graph beta are driven by the dat
 
 For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
-For more information, refer to [Node graph panel]({{< relref "../panels/visualizations/node-graph.md" >}}).
+For more information, refer to [Node graph panel]({{< relref "../visualizations/node-graph.md" >}}).
 
 ### New transformations
 
@@ -54,7 +54,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/transformations/types-options.md#sort-by" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/reference-transformation-functions.md#sort-by" >}}).
 
 #### Filter data by value transform
 
@@ -62,13 +62,13 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#filter-data-by-value" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/reference-transformation-functions.md#filter-data-by-value" >}}).
 
 ### New override option
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [Field overrides]({{< relref "../panels/field-overrides.md" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels/override-field-values/about-field-overrides.md" >}}).
 
 ### Exemplar support
 
@@ -99,7 +99,7 @@ The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-di
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
-For more information, refer to [Expressions]({{< relref "../panels/expressions.md" >}}). [Queries]({{< relref "../panels/queries.md" >}}) was also updated as a result of this feature.
+For more information, refer to [About expressions]({{< relref "../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions.md" >}}). [About queries]({{< relref "../panels/query-a-data-source/about-queries.md" >}}) was also updated as a result of this feature.
 
 ### Alert notification query label interpolation
 
@@ -142,7 +142,7 @@ For more information, refer to the [Elasticsearch docs]({{<relref "../datasource
 
 The Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs to match the service names in Azure and align the concepts with the rest of Grafana.
 
-[Azure Monitor]({{< relref "../datasources/azuremonitor.md" >}}) was updated to reflect this change.
+[Azure Monitor]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated to reflect this change.
 
 ### MQL support added for Google Cloud Monitoring
 
@@ -170,7 +170,7 @@ For more information, refer to the [Google Cloud Monitoring docs]({{< relref "..
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
 
-[Queries]({{< relref "../panels/queries.md" >}}) was updated as a result of this feature.
+[Queries]({{< relref "../panels/query-a-data-source/manage-queries.md" >}}) was updated as a result of this feature.
 
 For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help.md" >}}).
 
@@ -186,7 +186,7 @@ These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
-When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard and folder permissions]({{< relref "../permissions/dashboard-folder-permissions.md">}}).
+When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md#dashboard-permissions" >}}).
 
 After the number of Viewers or Editors has reached its license limit, only Admins will see a banner in Grafana indicating that the license limit has been reached. Previously, all users saw the banner.
 

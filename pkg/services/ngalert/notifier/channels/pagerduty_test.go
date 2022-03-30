@@ -7,15 +7,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -33,7 +32,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       *pagerDutyMessage
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -52,7 +51,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:1]  (val1)",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:1]  (val1)",
 					Source:    hostname,
 					Severity:  "critical",
@@ -60,7 +59,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Component: "Grafana",
 					Group:     "default",
 					CustomDetails: map[string]string{
-						"firing":       "\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						"firing":       "\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 						"num_firing":   "1",
 						"num_resolved": "0",
 						"resolved":     "",
@@ -70,8 +69,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				ClientURL: "http://localhost",
 				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Custom config with multiple alerts",
 			settings: `{
@@ -99,7 +97,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:2]  ",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:2]  ",
 					Source:    hostname,
 					Severity:  "warning",
@@ -107,7 +105,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Component: "My Grafana",
 					Group:     "my_group",
 					CustomDetails: map[string]string{
-						"firing":       "\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
+						"firing":       "\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 						"num_firing":   "2",
 						"num_resolved": "0",
 						"resolved":     "",
@@ -117,12 +115,11 @@ func TestPagerdutyNotifier(t *testing.T) {
 				ClientURL: "http://localhost",
 				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find integration key property in settings"},
+			expInitError: `could not find integration key property in settings`,
 		},
 	}
 
@@ -130,29 +127,29 @@ func TestPagerdutyNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "pageduty_testing",
-				Type:     "pagerduty",
-				Settings: settingsJSON,
+				Name:           "pageduty_testing",
+				Type:           "pagerduty",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
-			pn, err := NewPagerdutyNotifier(m, tmpl)
-			if c.expInitError != nil {
+			webhookSender := mockNotificationService()
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			decryptFn := secretsService.GetDecryptedValue
+			cfg, err := NewPagerdutyConfig(m, decryptFn)
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
 
-			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
-
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewPagerdutyNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -166,7 +163,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

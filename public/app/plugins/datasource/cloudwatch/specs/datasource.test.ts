@@ -1,24 +1,23 @@
-import { interval, of, throwError } from 'rxjs';
+import { interval, lastValueFrom, of, throwError } from 'rxjs';
 import {
   DataFrame,
   DataQueryErrorType,
-  DataQueryRequest,
-  DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
   getFrameDisplayName,
 } from '@grafana/data';
 
 import * as redux from 'app/store/store';
-import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
+import { CloudWatchDatasource } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
-  CloudWatchQuery,
   LogAction,
+  MetricEditorMode,
+  MetricQueryType,
 } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -29,14 +28,8 @@ import { CustomVariableModel, initialVariableModelState, VariableHide } from '..
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-jest.mock('rxjs/operators', () => {
-  const operators = jest.requireActual('rxjs/operators');
-  operators.delay = jest.fn(() => (s: any) => s);
-  return operators;
-});
-
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -173,7 +166,7 @@ describe('CloudWatchDatasource', () => {
         'container-insights-prometheus-demo',
       ];
 
-      const logGroups = await ds.describeLogGroups({});
+      const logGroups = await ds.describeLogGroups({ region: 'default' });
 
       expect(logGroups).toEqual(expectedLogGroups);
     });
@@ -184,59 +177,7 @@ describe('CloudWatchDatasource', () => {
       jest.spyOn(rxjsUtils, 'increasingInterval').mockImplementation(() => interval(100));
     });
 
-    it('should add data links to response', () => {
-      const { ds } = getTestContext();
-      const mockResponse: DataQueryResponse = {
-        data: [
-          {
-            fields: [
-              {
-                config: {
-                  links: [],
-                },
-              },
-            ],
-            refId: 'A',
-          },
-        ],
-      };
-
-      const mockOptions: any = {
-        targets: [
-          {
-            refId: 'A',
-            expression: 'stats count(@message) by bin(1h)',
-            logGroupNames: ['fake-log-group-one', 'fake-log-group-two'],
-            region: 'default',
-          },
-        ],
-      };
-
-      const saturatedResponse = ds['addDataLinksToLogsResponse'](mockResponse, mockOptions);
-      expect(saturatedResponse).toMatchObject({
-        data: [
-          {
-            fields: [
-              {
-                config: {
-                  links: [
-                    {
-                      url:
-                        "https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'stats*20count*28*40message*29*20by*20bin*281h*29~isLiveTail~false~source~(~'fake-log-group-one~'fake-log-group-two))",
-                      title: 'View in CloudWatch console',
-                      targetBlank: true,
-                    },
-                  ],
-                },
-              },
-            ],
-            refId: 'A',
-          },
-        ],
-      });
-    });
-
-    it('should stop querying when no more data received a number of times in a row', async () => {
+    it('should stop querying when timed out', async () => {
       const { ds } = getTestContext();
       const fakeFrames = genMockFrames(20);
       const initialRecordsMatched = fakeFrames[0].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
@@ -272,7 +213,14 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const iterations = 15;
+      // Times out after 15 passes for consistent testing
+      const timeoutFunc = () => {
+        return i >= iterations;
+      };
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
+      );
 
       const expectedData = [
         {
@@ -292,10 +240,10 @@ describe('CloudWatchDatasource', () => {
         state: 'Done',
         error: {
           type: DataQueryErrorType.Timeout,
-          message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
+          message: `error: query timed out after 5 attempts`,
         },
       });
-      expect(i).toBe(15);
+      expect(i).toBe(iterations);
     });
 
     it('should continue querying as long as new data is being received', async () => {
@@ -313,7 +261,13 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const startTime = new Date();
+      const timeoutFunc = () => {
+        return Date.now() >= startTime.valueOf() + 6000;
+      };
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
+      );
       expect(myResponse).toEqual({
         data: [fakeFrames[fakeFrames.length - 1]],
         key: 'test-key',
@@ -336,7 +290,13 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const startTime = new Date();
+      const timeoutFunc = () => {
+        return Date.now() >= startTime.valueOf() + 6000;
+      };
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
+      );
 
       expect(myResponse).toEqual({
         data: [fakeFrames[2]],
@@ -344,22 +304,6 @@ describe('CloudWatchDatasource', () => {
         state: 'Done',
       });
       expect(i).toBe(3);
-    });
-
-    it('should call the replace method on provided log groups', () => {
-      const { ds } = getTestContext();
-      const replaceSpy = jest.spyOn(ds, 'replace').mockImplementation((target?: string) => target ?? '');
-      ds.makeLogActionRequest('StartQuery', [
-        {
-          queryString: 'test query string',
-          region: 'default',
-          logGroupNames: ['log-group', '${my_var}Variable', 'Cool${other_var}'],
-        },
-      ]);
-
-      expect(replaceSpy).toBeCalledWith('log-group', undefined, true, 'log groups');
-      expect(replaceSpy).toBeCalledWith('${my_var}Variable', undefined, true, 'log groups');
-      expect(replaceSpy).toBeCalledWith('Cool${other_var}', undefined, true, 'log groups');
     });
   });
 
@@ -369,6 +313,8 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Builder,
           type: 'Metrics',
           expression: '',
           refId: 'A',
@@ -378,7 +324,7 @@ describe('CloudWatchDatasource', () => {
           dimensions: {
             InstanceId: 'i-12345678',
           },
-          statistics: ['Average'],
+          statistic: 'Average',
           period: '300',
         },
       ],
@@ -419,7 +365,7 @@ describe('CloudWatchDatasource', () => {
               namespace: query.targets[0].namespace,
               metricName: query.targets[0].metricName,
               dimensions: { InstanceId: ['i-12345678'] },
-              statistics: query.targets[0].statistics,
+              statistic: query.targets[0].statistic,
               period: query.targets[0].period,
             }),
           ])
@@ -449,6 +395,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -457,7 +405,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               InstanceId: 'i-12345678',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '[[period]]',
           },
         ],
@@ -468,30 +416,6 @@ describe('CloudWatchDatasource', () => {
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(fetchMock.mock.calls[0][0].data.queries[0].period).toEqual('600');
       });
-    });
-
-    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', (stat) => {
-      const { ds } = getTestContext({ response });
-      const query: DataQueryRequest<CloudWatchQuery> = ({
-        range: defaultTimeRange,
-        rangeRaw: { from: 1483228800, to: 1483232400 },
-        targets: [
-          {
-            type: 'Metrics',
-            refId: 'A',
-            region: 'us-east-1',
-            namespace: 'AWS/EC2',
-            metricName: 'CPUUtilization',
-            dimensions: {
-              InstanceId: 'i-12345678',
-            },
-            statistics: [stat],
-            period: '60s',
-          },
-        ],
-      } as unknown) as DataQueryRequest<CloudWatchQuery>;
-
-      expect(ds.query.bind(ds, query)).toThrow(/Invalid extended statistics/);
     });
 
     it('should return series list', async () => {
@@ -506,13 +430,15 @@ describe('CloudWatchDatasource', () => {
 
     describe('and throttling exception is thrown', () => {
       const partialQuery = {
+        metricQueryType: MetricQueryType.Search,
+        metricEditorMode: MetricEditorMode.Builder,
         type: 'Metrics',
         namespace: 'AWS/EC2',
         metricName: 'CPUUtilization',
         dimensions: {
           InstanceId: 'i-12345678',
         },
-        statistics: ['Average'],
+        statistic: 'Average',
         period: '300',
         expression: '',
       };
@@ -580,16 +506,15 @@ describe('CloudWatchDatasource', () => {
         });
       });
     });
-
     describe('when regions query is used', () => {
       describe('and region param is left out', () => {
         it('should use the default region', async () => {
           const { ds, instanceSettings } = getTestContext();
-          ds.doMetricQueryRequest = jest.fn().mockResolvedValue([]);
+          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
 
           await ds.metricFindQuery('metrics(testNamespace)');
 
-          expect(ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
             namespace: 'testNamespace',
             region: instanceSettings.jsonData.defaultRegion,
           });
@@ -599,11 +524,11 @@ describe('CloudWatchDatasource', () => {
       describe('and region param is defined by user', () => {
         it('should use the user defined region', async () => {
           const { ds } = getTestContext();
-          ds.doMetricQueryRequest = jest.fn().mockResolvedValue([]);
+          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
 
           await ds.metricFindQuery('metrics(testNamespace2, custom-region)');
 
-          expect(ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
             namespace: 'testNamespace2',
             region: 'custom-region',
           });
@@ -637,6 +562,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'default',
@@ -645,7 +572,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               InstanceId: 'i-12345678',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -661,14 +588,14 @@ describe('CloudWatchDatasource', () => {
 
   describe('When interpolating variables', () => {
     it('should return an empty array if no queries are provided', () => {
-      const templateSrv: any = { replace: jest.fn() };
+      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
       const { ds } = getTestContext({ templateSrv });
 
       expect(ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
     });
 
     it('should replace correct variables in CloudWatchLogsQuery', () => {
-      const templateSrv: any = { replace: jest.fn() };
+      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
       const { ds } = getTestContext({ templateSrv });
       const variableName = 'someVar';
       const logQuery: CloudWatchLogsQuery = {
@@ -687,7 +614,7 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
-      const templateSrv: any = { replace: jest.fn() };
+      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
       const { ds } = getTestContext({ templateSrv });
       const variableName = 'someVar';
       const logQuery: CloudWatchMetricsQuery = {
@@ -704,23 +631,26 @@ describe('CloudWatchDatasource', () => {
           [`$${variableName}`]: `$${variableName}`,
         },
         matchExact: false,
-        statistics: [],
+        statistic: '',
+        sqlExpression: `$${variableName}`,
       };
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
       // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
       expect(templateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(8);
+      expect(templateSrv.replace).toHaveBeenCalledTimes(9);
     });
   });
 
-  describe('When performing CloudWatch query for extended statistics', () => {
+  describe('When performing CloudWatch query for extended statistic', () => {
     const query: any = {
       range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Builder,
           type: 'Metrics',
           refId: 'A',
           region: 'us-east-1',
@@ -730,7 +660,7 @@ describe('CloudWatchDatasource', () => {
             LoadBalancer: 'lb',
             TargetGroup: 'tg',
           },
-          statistics: ['p90.00'],
+          statistic: 'p90.00',
           period: '300s',
         },
       ],
@@ -775,9 +705,11 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let templateSrv: TemplateSrv;
     beforeEach(() => {
+      const key = 'key';
       const var1: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var1',
+        rootStateKey: key,
         name: 'var1',
         index: 0,
         current: { value: 'var1-foo', text: 'var1-foo', selected: true },
@@ -791,6 +723,7 @@ describe('CloudWatchDatasource', () => {
       const var2: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var2',
+        rootStateKey: key,
         name: 'var2',
         index: 1,
         current: { value: 'var2-foo', text: 'var2-foo', selected: true },
@@ -804,6 +737,7 @@ describe('CloudWatchDatasource', () => {
       const var3: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var3',
+        rootStateKey: key,
         name: 'var3',
         index: 2,
         current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
@@ -821,6 +755,7 @@ describe('CloudWatchDatasource', () => {
       const var4: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var4',
+        rootStateKey: key,
         name: 'var4',
         index: 3,
         options: [
@@ -836,7 +771,7 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
       };
       const variables = [var1, var2, var3, var4];
-      const state = convertToStoreState(variables);
+      const state = convertToStoreState(key, variables);
       templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
       templateSrv.init(variables);
     });
@@ -848,6 +783,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -856,7 +793,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               dim2: '[[var2]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -874,6 +811,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -884,7 +823,7 @@ describe('CloudWatchDatasource', () => {
               dim2: '[[var2]]',
               dim3: '[[var3]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -908,6 +847,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -918,7 +859,7 @@ describe('CloudWatchDatasource', () => {
               dim3: '[[var3]]',
               dim4: '[[var4]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -938,6 +879,8 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
             type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
@@ -948,7 +891,7 @@ describe('CloudWatchDatasource', () => {
               dim2: '[[var2]]',
               dim3: '[[var3]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300',
           },
         ],
@@ -964,161 +907,6 @@ describe('CloudWatchDatasource', () => {
       });
     });
   });
-
-  function describeMetricFindQuery(query: any, func: any) {
-    describe('metricFindQuery ' + query, () => {
-      const scenario: any = {};
-      scenario.setup = async (setupCallback: any) => {
-        beforeEach(async () => {
-          await setupCallback();
-          const { ds } = getTestContext({ response: scenario.requestResponse });
-          ds.metricFindQuery(query).then((args: any) => {
-            scenario.result = args;
-          });
-        });
-      };
-
-      func(scenario);
-    });
-  }
-
-  describeMetricFindQuery('regions()', async (scenario: any) => {
-    await scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [{ rows: [['us-east-1', 'us-east-1']] }],
-          },
-        },
-      };
-    });
-
-    it('should call __GetRegions and return result', () => {
-      expect(scenario.result[0].text).toContain('us-east-1');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('regions');
-    });
-  });
-
-  describeMetricFindQuery('namespaces()', async (scenario: any) => {
-    await scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [{ rows: [['AWS/EC2', 'AWS/EC2']] }],
-          },
-        },
-      };
-    });
-
-    it('should call __GetNamespaces and return result', () => {
-      expect(scenario.result[0].text).toContain('AWS/EC2');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('namespaces');
-    });
-  });
-
-  describeMetricFindQuery('metrics(AWS/EC2, us-east-2)', async (scenario: any) => {
-    await scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [{ rows: [['CPUUtilization', 'CPUUtilization']] }],
-          },
-        },
-      };
-    });
-
-    it('should call __GetMetrics and return result', () => {
-      expect(scenario.result[0].text).toBe('CPUUtilization');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('metrics');
-    });
-  });
-
-  describeMetricFindQuery('dimension_keys(AWS/EC2)', async (scenario: any) => {
-    await scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [{ rows: [['InstanceId', 'InstanceId']] }],
-          },
-        },
-      };
-    });
-
-    it('should call __GetDimensions and return result', () => {
-      expect(scenario.result[0].text).toBe('InstanceId');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('dimension_keys');
-    });
-  });
-
-  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
-    await scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [{ rows: [['i-12345678', 'i-12345678']] }],
-          },
-        },
-      };
-    });
-
-    it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).toContain('i-12345678');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('dimension_values');
-    });
-  });
-
-  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
-    await scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [{ rows: [['i-12345678', 'i-12345678']] }],
-          },
-        },
-      };
-    });
-
-    it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).toContain('i-12345678');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('dimension_values');
-    });
-  });
-
-  describeMetricFindQuery(
-    'resource_arns(default,ec2:instance,{"environment":["production"]})',
-    async (scenario: any) => {
-      await scenario.setup(() => {
-        scenario.requestResponse = {
-          results: {
-            metricFindQuery: {
-              tables: [
-                {
-                  rows: [
-                    [
-                      'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
-                      'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
-                    ],
-                  ],
-                },
-              ],
-            },
-          },
-        };
-      });
-
-      it('should call __ListMetrics and return result', () => {
-        expect(scenario.result[0].text).toContain('arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567');
-        expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-        expect(scenario.request.queries[0].subtype).toBe('resource_arns');
-      });
-    }
-  );
 });
 
 function genMockFrames(numResponses: number): DataFrame[] {

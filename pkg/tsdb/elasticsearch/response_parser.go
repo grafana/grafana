@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -42,13 +42,12 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 	}
 }
 
-// nolint:staticcheck // plugins.DataResponse deprecated
-func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult),
+func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
+	result := backend.QueryDataResponse{
+		Responses: backend.Responses{},
 	}
 	if rp.Responses == nil {
-		return result, nil
+		return &result, nil
 	}
 
 	for i, res := range rp.Responses {
@@ -60,31 +59,41 @@ func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 		}
 
 		if res.Error != nil {
-			errRslt := getErrorFromElasticResponse(res)
-			errRslt.Meta = debugInfo
-			result.Results[target.RefID] = errRslt
+			errResult := getErrorFromElasticResponse(res)
+			result.Responses[target.RefID] = backend.DataResponse{
+				Error: errors.New(errResult),
+				Frames: data.Frames{
+					&data.Frame{
+						Meta: &data.FrameMeta{
+							Custom: debugInfo,
+						},
+					},
+				}}
 			continue
 		}
 
-		queryRes := plugins.DataQueryResult{
-			Meta: debugInfo,
-		}
+		queryRes := backend.DataResponse{}
+
 		props := make(map[string]string)
 		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
 		if err != nil {
-			return plugins.DataResponse{}, err
+			return &backend.QueryDataResponse{}, err
 		}
 		rp.nameFields(queryRes, target)
 		rp.trimDatapoints(queryRes, target)
 
-		result.Results[target.RefID] = queryRes
+		for _, frame := range queryRes.Frames {
+			frame.Meta = &data.FrameMeta{
+				Custom: debugInfo,
+			}
+		}
+		result.Responses[target.RefID] = queryRes
 	}
-	return result, nil
+	return &result, nil
 }
 
-// nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query,
-	queryResult *plugins.DataQueryResult, props map[string]string, depth int) error {
+	queryResult *backend.DataResponse, props map[string]string, depth int) error {
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 
@@ -161,8 +170,8 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 	return nil
 }
 
-// nolint:staticcheck,gocyclo // plugins.* deprecated
-func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, query *plugins.DataQueryResult,
+// nolint:gocyclo
+func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
 	props map[string]string) error {
 	frames := data.Frames{}
 	esAggBuckets := esAgg.Get("buckets").MustArray()
@@ -190,9 +199,9 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				tags[k] = v
 			}
 			tags["metric"] = countType
-			frames = append(frames, data.NewFrame(metric.Field,
+			frames = append(frames, data.NewFrame("",
 				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+				data.NewField("value", tags, values)))
 		case percentilesType:
 			buckets := esAggBuckets
 			if len(buckets) == 0 {
@@ -224,9 +233,9 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 					values = append(values, value)
 				}
-				frames = append(frames, data.NewFrame(metric.Field,
+				frames = append(frames, data.NewFrame("",
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+					data.NewField("value", tags, values)))
 			}
 		case topMetricsType:
 			buckets := esAggBuckets
@@ -266,9 +275,9 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					}
 				}
 
-				frames = append(frames, data.NewFrame(metricField.(string),
+				frames = append(frames, data.NewFrame("",
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metricField.(string)}),
+					data.NewField("value", tags, values),
 				))
 			}
 
@@ -313,9 +322,9 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					values = append(values, value)
 				}
 				labels := tags
-				frames = append(frames, data.NewFrame(metric.Field,
+				frames = append(frames, data.NewFrame("",
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", labels, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+					data.NewField("value", labels, values)))
 			}
 		default:
 			for k, v := range props {
@@ -341,25 +350,21 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 				values = append(values, value)
 			}
-			frames = append(frames, data.NewFrame(metric.Field,
+			frames = append(frames, data.NewFrame("",
 				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+				data.NewField("value", tags, values)))
 		}
 	}
-	if query.Dataframes != nil {
-		oldFrames, err := query.Dataframes.Decoded()
-		if err != nil {
-			return err
-		}
+	if query.Frames != nil {
+		oldFrames := query.Frames
 		frames = append(oldFrames, frames...)
 	}
-	query.Dataframes = plugins.NewDecodedDataFrames(frames)
+	query.Frames = frames
 	return nil
 }
 
-// nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
-	queryResult *plugins.DataQueryResult, props map[string]string) error {
+	queryResult *backend.DataResponse, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
 		propKeys = append(propKeys, k)
@@ -368,7 +373,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 	frames := data.Frames{}
 	var fields []*data.Field
 
-	if queryResult.Dataframes == nil {
+	if queryResult.Frames == nil {
 		for _, propKey := range propKeys {
 			fields = append(fields, data.NewField(propKey, nil, []*string{}))
 		}
@@ -494,7 +499,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 				Fields: dataFields,
 			}}
 	}
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryResult.Frames = frames
 	return nil
 }
 
@@ -509,9 +514,7 @@ func extractDataField(name string, v interface{}) *data.Field {
 	}
 }
 
-// TODO remove deprecations
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func (rp *responseParser) trimDatapoints(queryResult plugins.DataQueryResult, target *Query) {
+func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, target *Query) {
 	var histogram *BucketAgg
 	for _, bucketAgg := range target.BucketAggs {
 		if bucketAgg.Type == dateHistType {
@@ -529,10 +532,7 @@ func (rp *responseParser) trimDatapoints(queryResult plugins.DataQueryResult, ta
 		return
 	}
 
-	frames, err := queryResult.Dataframes.Decoded()
-	if err != nil {
-		return
-	}
+	frames := queryResult.Frames
 
 	for _, frame := range frames {
 		for _, field := range frame.Fields {
@@ -547,13 +547,9 @@ func (rp *responseParser) trimDatapoints(queryResult plugins.DataQueryResult, ta
 	}
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func (rp *responseParser) nameFields(queryResult plugins.DataQueryResult, target *Query) {
+func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
-	frames, err := queryResult.Dataframes.Decoded()
-	if err != nil {
-		return
-	}
+	frames := queryResult.Frames
 	for _, v := range frames {
 		for _, vv := range v.Fields {
 			if metricType, exists := vv.Labels["metric"]; exists {
@@ -565,13 +561,15 @@ func (rp *responseParser) nameFields(queryResult plugins.DataQueryResult, target
 	}
 	metricTypeCount := len(set)
 	for i := range frames {
-		frames[i].Name = rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
+		fieldName := rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
+		for _, field := range frames[i].Fields {
+			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
+		}
 	}
 }
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-// nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
 	metricType := dataField.Labels["metric"]
 	metricName := rp.getMetricName(metricType)
@@ -704,21 +702,20 @@ func findAgg(target *Query, aggID string) (*BucketAgg, error) {
 	return nil, errors.New("can't found aggDef, aggID:" + aggID)
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryResult {
-	var result plugins.DataQueryResult
+func getErrorFromElasticResponse(response *es.SearchResponse) string {
+	var errorString string
 	json := simplejson.NewFromAny(response.Error)
 	reason := json.Get("reason").MustString()
 	rootCauseReason := json.Get("root_cause").GetIndex(0).Get("reason").MustString()
 
 	switch {
 	case rootCauseReason != "":
-		result.ErrorString = rootCauseReason
+		errorString = rootCauseReason
 	case reason != "":
-		result.ErrorString = reason
+		errorString = reason
 	default:
-		result.ErrorString = "Unknown elasticsearch error response"
+		errorString = "Unknown elasticsearch error response"
 	}
 
-	return result
+	return errorString
 }

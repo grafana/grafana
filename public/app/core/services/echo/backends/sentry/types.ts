@@ -11,4 +11,5 @@ export type SentryEchoEvent = EchoEvent<EchoEventType.Sentry, SentryEvent>;
 export interface User {
   email: string;
   id: number;
+  orgId: number;
 }

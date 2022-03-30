@@ -1,3 +1,4 @@
+import { Location } from 'history';
 import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
 import { UrlQueryMap, urlUtil } from './url';
 import { textUtil } from '../text';
@@ -17,14 +18,8 @@ const stripBaseFromUrl = (url: string): string => {
   const isAbsoluteUrl = url.startsWith('http');
   let segmentToStrip = appSubUrl;
 
-  if (!url.startsWith('/')) {
+  if (!url.startsWith('/') || isAbsoluteUrl) {
     segmentToStrip = `${window.location.origin}${appSubUrl}`;
-  }
-
-  if (isAbsoluteUrl) {
-    segmentToStrip = url.startsWith(`${window.location.origin}${appSubUrl}`)
-      ? `${window.location.origin}${appSubUrl}`
-      : `${window.location.origin}`;
   }
 
   return url.length > 0 && url.indexOf(segmentToStrip) === 0 ? url.slice(segmentToStrip.length - stripExtraChars) : url;
@@ -42,12 +37,47 @@ const assureBaseUrl = (url: string): string => {
   return url;
 };
 
-const updateSearchParams = (href: string, searchParams: string) => {
-  const curURL = new URL(href);
-  const urlSearchParams = new URLSearchParams(searchParams);
-  urlSearchParams.forEach((val, key) => curURL.searchParams.set(key, val));
+/**
+ *
+ * @param location
+ * @param searchParamsToUpdate
+ * @returns
+ */
+const getUrlForPartial = (location: Location<any>, searchParamsToUpdate: Record<string, any>) => {
+  const searchParams = urlUtil.parseKeyValue(
+    location.search.startsWith('?') ? location.search.substring(1) : location.search
+  );
+  for (const key of Object.keys(searchParamsToUpdate)) {
+    // removing params with null | undefined
+    if (searchParamsToUpdate[key] === null || searchParamsToUpdate[key] === undefined) {
+      delete searchParams[key];
+    } else {
+      searchParams[key] = searchParamsToUpdate[key];
+    }
+  }
+  return urlUtil.renderUrl(location.pathname, searchParams);
+};
 
-  return curURL.href;
+/**
+ * @deprecated use `getUrlForPartial` instead
+ * Update URL or search param string `init` with new params `partial`.
+ */
+const updateSearchParams = (init: string, partial: string) => {
+  const urlSearchParams = new URLSearchParams(partial);
+
+  // Check if full URL
+  try {
+    const curURL = new URL(init);
+    urlSearchParams.forEach((val, key) => curURL.searchParams.set(key, val));
+    return curURL.href;
+  } catch {
+    // assume search params
+    const newSearchParams = new URLSearchParams(init);
+    urlSearchParams.forEach((v, k) => {
+      newSearchParams.set(k, v);
+    });
+    return '?' + newSearchParams.toString();
+  }
 };
 
 interface LocationUtilDependencies {
@@ -85,6 +115,7 @@ export const locationUtil = {
     const params = getVariablesUrlParams(scopedVars);
     return urlUtil.toUrlParams(params);
   },
+  getUrlForPartial,
   processUrl: (url: string) => {
     return grafanaConfig.disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   },

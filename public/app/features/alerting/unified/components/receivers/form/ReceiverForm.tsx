@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, AppEvents } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -12,13 +12,15 @@ import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
-import { appEvents } from 'app/core/core';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
   notifiers: NotifierDTO[];
   defaultItem: R;
   alertManagerSourceName: string;
+  onTestChannel?: (channel: R) => void;
   onSubmit: (values: ReceiverFormValues<R>) => void;
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
@@ -32,11 +34,13 @@ export function ReceiverForm<R extends ChannelValues>({
   notifiers,
   alertManagerSourceName,
   onSubmit,
+  onTestChannel,
   takenReceiverNames,
   commonSettingsComponent,
 }: Props<R>): JSX.Element {
+  const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
-
+  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
   const defaultValues = initialValues || {
     name: '',
     items: [
@@ -81,7 +85,7 @@ export function ReceiverForm<R extends ChannelValues>({
   };
 
   const onInvalid = () => {
-    appEvents.emit(AppEvents.alertError, ['There are errors in the form. Please correct them and try again!']);
+    notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
   return (
@@ -92,15 +96,19 @@ export function ReceiverForm<R extends ChannelValues>({
         </Alert>
       )}
       <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
-        <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
-        <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
+        <h4 className={styles.heading}>
+          {readOnly ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
+        </h4>
+        <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
+            readOnly={readOnly}
             id="name"
             {...register('name', {
               required: 'Name is required',
               validate: { nameIsAvailable: validateNameIsAvailable },
             })}
             width={39}
+            placeholder="Name"
           />
         </Field>
         {fields.map((field, index) => {
@@ -117,39 +125,57 @@ export function ReceiverForm<R extends ChannelValues>({
                 const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
+              onTest={
+                onTestChannel
+                  ? () => {
+                      const currentValues: R = getValues().items[index];
+                      onTestChannel(currentValues);
+                    }
+                  : undefined
+              }
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
               secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
+              readOnly={readOnly}
             />
           );
         })}
-        <Button
-          type="button"
-          icon="plus"
-          variant="secondary"
-          onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
-        >
-          New contact point type
-        </Button>
-        <div className={styles.buttons}>
-          {loading && (
-            <Button disabled={true} icon="fa fa-spinner" variant="primary">
-              Saving...
+        <>
+          {!readOnly && (
+            <Button
+              type="button"
+              icon="plus"
+              variant="secondary"
+              onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
+            >
+              New contact point type
             </Button>
           )}
-          {!loading && <Button type="submit">Save contact point</Button>}
-          <LinkButton
-            disabled={loading}
-            fill="outline"
-            variant="secondary"
-            href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-          >
-            Cancel
-          </LinkButton>
-        </div>
+          <div className={styles.buttons}>
+            {!readOnly && (
+              <>
+                {loading && (
+                  <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                    Saving...
+                  </Button>
+                )}
+                {!loading && <Button type="submit">Save contact point</Button>}
+              </>
+            )}
+            <LinkButton
+              disabled={loading}
+              fill="outline"
+              variant="secondary"
+              data-testid="cancel-button"
+              href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+            >
+              Cancel
+            </LinkButton>
+          </div>
+        </>
       </form>
     </FormProvider>
   );

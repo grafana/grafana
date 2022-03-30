@@ -2,10 +2,17 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { DataQuery, DataSourceInstanceSettings, PanelData } from '@grafana/data';
+import {
+  CoreApp,
+  DataQuery,
+  DataSourceInstanceSettings,
+  EventBusExtended,
+  HistoryItem,
+  PanelData,
+} from '@grafana/data';
 import { QueryEditorRow } from './QueryEditorRow';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
 interface Props {
   // The query configuration
@@ -19,6 +26,11 @@ interface Props {
 
   // Query Response Data
   data: PanelData;
+
+  // Misc
+  app?: CoreApp;
+  history?: Array<HistoryItem<DataQuery>>;
+  eventBus?: EventBusExtended;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -55,7 +67,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           if (previous?.type === dataSource.type) {
             return {
               ...item,
-              datasource: dataSource.name,
+              datasource: { uid: dataSource.uid },
             };
           }
         }
@@ -63,14 +75,24 @@ export class QueryEditorRows extends PureComponent<Props> {
         return {
           refId: item.refId,
           hide: item.hide,
-          datasource: dataSource.name,
+          datasource: { uid: dataSource.uid },
         };
       })
     );
   }
 
+  onDragStart = (result: DragStart) => {
+    const { queries, dsSettings } = this.props;
+
+    reportInteraction('query_row_reorder_started', {
+      startIndex: result.source.index,
+      numberOfQueries: queries.length,
+      datasourceType: dsSettings.type,
+    });
+  };
+
   onDragEnd = (result: DropResult) => {
-    const { queries, onQueriesChange } = this.props;
+    const { queries, onQueriesChange, dsSettings } = this.props;
 
     if (!result || !result.destination) {
       return;
@@ -79,6 +101,12 @@ export class QueryEditorRows extends PureComponent<Props> {
     const startIndex = result.source.index;
     const endIndex = result.destination.index;
     if (startIndex === endIndex) {
+      reportInteraction('query_row_reorder_canceled', {
+        startIndex,
+        endIndex,
+        numberOfQueries: queries.length,
+        datasourceType: dsSettings.type,
+      });
       return;
     }
 
@@ -86,13 +114,20 @@ export class QueryEditorRows extends PureComponent<Props> {
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
+
+    reportInteraction('query_row_reorder_ended', {
+      startIndex,
+      endIndex,
+      numberOfQueries: queries.length,
+      datasourceType: dsSettings.type,
+    });
   };
 
   render() {
-    const { dsSettings, data, queries } = this.props;
+    const { dsSettings, data, queries, app, history, eventBus } = this.props;
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
+      <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
@@ -117,6 +152,9 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onAddQuery={this.props.onAddQuery}
                       onRunQuery={this.props.onRunQueries}
                       queries={queries}
+                      app={app}
+                      history={history}
+                      eventBus={eventBus}
                     />
                   );
                 })}

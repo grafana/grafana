@@ -5,9 +5,10 @@ import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import appEvents from 'app/core/app_events';
 import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
-import { getTemplateSrv } from '@grafana/runtime';
-import { RefreshEvent, ShowConfirmModalEvent } from '../../../../types/events';
+import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { ShowConfirmModalEvent } from '../../../../types/events';
 import { Unsubscribable } from 'rxjs';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -46,9 +47,9 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   };
 
-  onUpdate = (title: string, repeat: string | undefined) => {
+  onUpdate = (title: string, repeat?: string | null) => {
     this.props.panel['title'] = title;
-    this.props.panel['repeat'] = repeat;
+    this.props.panel['repeat'] = repeat ?? undefined;
     this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
@@ -84,7 +85,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
     return (
       <div className={classes}>
-        <a className="dashboard-row__title pointer" onClick={this.onToggle}>
+        <a
+          className="dashboard-row__title pointer"
+          data-testid={selectors.components.DashboardRow.title(title)}
+          onClick={this.onToggle}
+        >
           <Icon name={this.state.collapsed ? 'angle-right' : 'angle-down'} />
           {title}
           <span className="dashboard-row__panel_count">

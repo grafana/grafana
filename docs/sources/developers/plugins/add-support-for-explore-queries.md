@@ -21,17 +21,15 @@ The query editor for Explore is similar to the query editor for the data source 
    ```ts
    import React from 'react';
 
-   import { ExploreQueryFieldProps } from '@grafana/data';
+   import { QueryEditorProps } from '@grafana/data';
    import { QueryField } from '@grafana/ui';
    import { DataSource } from './DataSource';
    import { MyQuery, MyDataSourceOptions } from './types';
 
-   export type Props = ExploreQueryFieldProps<DataSource, MyQuery, MyDataSourceOptions>;
+   export type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
    export default (props: Props) => {
-     return (
-       <h2>My query editor</h2>
-     );
+     return <h2>My query editor</h2>;
    };
    ```
 
@@ -48,7 +46,7 @@ The query editor for Explore is similar to the query editor for the data source 
      .setExploreQueryField(ExploreQueryEditor);
    ```
 
-1. Add a [QueryField]({{< relref "../../packages_api/ui/queryfield.md" >}}) to `ExploreQueryEditor`.
+1. Add a `QueryField` to `ExploreQueryEditor`.
 
    ```ts
    import { QueryField } from '@grafana/ui';
@@ -92,6 +90,7 @@ Explore should by default select a reasonable visualization for your data so use
 If this does not work for you or you want to show some data in a specific visualization, add a hint to your returned data frame using the `preferredVisualisationType` meta attribute.
 
 You can construct a data frame with specific metadata:
+
 ```
 const firstResult = new MutableDataFrame({
     fields: [...],

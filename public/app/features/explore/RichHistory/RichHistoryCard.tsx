@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { connect, ConnectedProps } from 'react-redux';
 import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaTheme, DataSourceApi } from '@grafana/data';
+import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -15,21 +14,37 @@ import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
 
-import { updateRichHistory } from '../state/history';
+import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from '../state/history';
 import { changeDatasource } from '../state/datasource';
 import { setQueries } from '../state/query';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface Props {
-  query: RichHistoryQuery;
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+  const explore = state.explore;
+  const { datasourceInstance } = explore[exploreId]!;
+  return {
+    exploreId,
+    datasourceInstance,
+  };
+}
+
+const mapDispatchToProps = {
+  changeDatasource,
+  deleteHistoryItem,
+  commentHistoryItem,
+  starHistoryItem,
+  setQueries,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps<T extends DataQuery = DataQuery> {
+  query: RichHistoryQuery<T>;
   dsImg: string;
   isRemoved: boolean;
-  changeDatasource: typeof changeDatasource;
-  updateRichHistory: typeof updateRichHistory;
-  setQueries: typeof setQueries;
-  exploreId: ExploreId;
-  datasourceInstance: DataSourceApi;
 }
+
+export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
@@ -134,7 +149,9 @@ export function RichHistoryCard(props: Props) {
     query,
     dsImg,
     isRemoved,
-    updateRichHistory,
+    commentHistoryItem,
+    starHistoryItem,
+    deleteHistoryItem,
     changeDatasource,
     exploreId,
     datasourceInstance,
@@ -187,25 +204,25 @@ export function RichHistoryCard(props: Props) {
           yesText: 'Delete',
           icon: 'trash-alt',
           onConfirm: () => {
-            updateRichHistory(query.ts, 'delete');
+            deleteHistoryItem(query.id);
             dispatch(notifyApp(createSuccessNotification('Query deleted')));
           },
         })
       );
     } else {
-      updateRichHistory(query.ts, 'delete');
+      deleteHistoryItem(query.id);
       dispatch(notifyApp(createSuccessNotification('Query deleted')));
     }
   };
 
   const onStarrQuery = () => {
-    updateRichHistory(query.ts, 'starred');
+    starHistoryItem(query.id, !query.starred);
   };
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
 
   const onUpdateComment = () => {
-    updateRichHistory(query.ts, 'comment', comment);
+    commentHistoryItem(query.id, comment);
     setActiveUpdateComment(false);
   };
 
@@ -304,19 +321,4 @@ export function RichHistoryCard(props: Props) {
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
-  const explore = state.explore;
-  const { datasourceInstance } = explore[exploreId]!;
-  return {
-    exploreId,
-    datasourceInstance,
-  };
-}
-
-const mapDispatchToProps = {
-  changeDatasource,
-  updateRichHistory,
-  setQueries,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryCard));
+export default connector(RichHistoryCard);

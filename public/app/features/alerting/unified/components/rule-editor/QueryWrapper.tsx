@@ -2,18 +2,22 @@ import React, { FC, ReactNode, useState } from 'react';
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import {
+  CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
+  getDefaultRelativeTimeRange,
   GrafanaTheme2,
+  LoadingState,
   PanelData,
   RelativeTimeRange,
-  getDefaultRelativeTimeRange,
+  ThresholdsConfig,
 } from '@grafana/data';
-import { useStyles2, RelativeTimeRangePicker } from '@grafana/ui';
+import { RelativeTimeRangePicker, useStyles2 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { VizWrapper } from './VizWrapper';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { TABLE, TIMESERIES } from '../../utils/constants';
+import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
@@ -28,9 +32,9 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   onRunQueries: () => void;
   index: number;
+  thresholds: ThresholdsConfig;
+  onChangeThreshold: (thresholds: ThresholdsConfig, index: number) => void;
 }
-
-export type SupportedPanelPlugins = 'timeseries' | 'table' | 'stat';
 
 export const QueryWrapper: FC<Props> = ({
   data,
@@ -44,6 +48,8 @@ export const QueryWrapper: FC<Props> = ({
   onDuplicateQuery,
   query,
   queries,
+  thresholds,
+  onChangeThreshold,
 }) => {
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
@@ -64,7 +70,8 @@ export const QueryWrapper: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      <QueryEditorRow
+      <QueryEditorRow<DataQuery>
+        alerting
         dataSource={dsSettings}
         onChangeDataSource={!isExpression ? (settings) => onChangeDataSource(settings, index) : undefined}
         id={query.refId}
@@ -74,15 +81,31 @@ export const QueryWrapper: FC<Props> = ({
         query={cloneDeep(query.model)}
         onChange={(query) => onChangeQuery(query, index)}
         onRemoveQuery={onRemoveQuery}
-        onAddQuery={onDuplicateQuery}
+        onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
         onRunQuery={onRunQueries}
         queries={queries}
         renderHeaderExtras={() => renderTimePicker(query, index)}
-        visualization={data ? <VizWrapper data={data} changePanel={changePluginId} currentPanel={pluginId} /> : null}
+        app={CoreApp.UnifiedAlerting}
+        visualization={
+          data.state !== LoadingState.NotStarted ? (
+            <VizWrapper
+              data={data}
+              changePanel={changePluginId}
+              currentPanel={pluginId}
+              thresholds={thresholds}
+              onThresholdsChange={(thresholds) => onChangeThreshold(thresholds, index)}
+            />
+          ) : null
+        }
         hideDisableQuery={true}
       />
     </div>
   );
+};
+
+export const EmptyQueryWrapper: FC<{}> = ({ children }) => {
+  const styles = useStyles2(getStyles);
+  return <div className={styles.wrapper}>{children}</div>;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -91,6 +114,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: ${theme.shape.borderRadius(1)};
-    padding-bottom: ${theme.spacing(1)};
   `,
 });

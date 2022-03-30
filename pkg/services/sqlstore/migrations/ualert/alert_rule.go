@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
+	legacymodels "github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type alertRule struct {
-	OrgId           int64
+	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
 	Data            []alertQuery
 	IntervalSeconds int64
 	Version         int64
-	Uid             string
-	NamespaceUid    string
+	UID             string `xorm:"uid"`
+	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
 	NoDataState     string
 	ExecErrState    string
@@ -51,9 +55,9 @@ type alertRuleVersion struct {
 
 func (a *alertRule) makeVersion() *alertRuleVersion {
 	return &alertRuleVersion{
-		RuleOrgID:        a.OrgId,
-		RuleUID:          a.Uid,
-		RuleNamespaceUID: a.NamespaceUid,
+		RuleOrgID:        a.OrgID,
+		RuleUID:          a.UID,
+		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
 		ParentVersion:    0,
 		RestoredFrom:     0,
@@ -79,31 +83,33 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	}
 
 	annotations := make(map[string]string, 3)
-	annotations["__dashboardUid__"] = da.DashboardUID
-	annotations["__panelId__"] = fmt.Sprintf("%v", da.PanelId)
+	annotations[ngmodels.DashboardUIDAnnotation] = da.DashboardUID
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelId)
 	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
 	return lbls, annotations
-}
-
-func getMigrationString(da dashAlert) string {
-	return fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
 }
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
 	lbls["alertname"] = da.Name
 	annotations["message"] = da.Message
+	var err error
+
+	data, err := migrateAlertRuleQueries(cond.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
+	}
 
 	ar := &alertRule{
-		OrgId:           da.OrgId,
+		OrgID:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
-		Uid:             util.GenerateShortUID(),
+		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
-		Data:            cond.Data,
+		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
-		NamespaceUid:    folderUID, // Folder already created, comes from env var.
+		NamespaceUID:    folderUID, // Folder already created, comes from env var.
 		RuleGroup:       da.Name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
@@ -111,7 +117,6 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Labels:          lbls,
 	}
 
-	var err error
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
 	if err != nil {
 		return nil, err
@@ -123,14 +128,59 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	}
 
 	// Label for routing and silences.
-	n, v := getLabelForRouteMatching(ar.Uid)
+	n, v := getLabelForRouteMatching(ar.UID)
 	ar.Labels[n] = v
 
 	if err := m.addSilence(da, ar); err != nil {
 		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
 	}
 
+	if err := m.addErrorSilence(da, ar); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
+	}
+
+	if err := m.addNoDataSilence(da, ar); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
+	}
+
 	return ar, nil
+}
+
+// migrateAlertRuleQueries attempts to fix alert rule queries so they can work in unified alerting. Queries of some data sources are not compatible with unified alerting.
+func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
+	result := make([]alertQuery, 0, len(data))
+	for _, d := range data {
+		// queries that are expression are not relevant, skip them.
+		if d.DatasourceUID == expr.OldDatasourceUID {
+			result = append(result, d)
+			continue
+		}
+		var fixedData map[string]json.RawMessage
+		err := json.Unmarshal(d.Model, &fixedData)
+		if err != nil {
+			return nil, err
+		}
+		fixedData = fixGraphiteReferencedSubQueries(fixedData)
+		updatedModel, err := json.Marshal(fixedData)
+		if err != nil {
+			return nil, err
+		}
+		d.Model = updatedModel
+		result = append(result, d)
+	}
+	return result, nil
+}
+
+// fixGraphiteReferencedSubQueries attempts to fix graphite referenced sub queries, given unified alerting does not support this.
+// targetFull of Graphite data source contains the expanded version of field 'target', so let's copy that.
+func fixGraphiteReferencedSubQueries(queryData map[string]json.RawMessage) map[string]json.RawMessage {
+	fullQuery, ok := queryData[graphite.TargetFullModelField]
+	if ok {
+		delete(queryData, graphite.TargetFullModelField)
+		queryData[graphite.TargetModelField] = fullQuery
+	}
+
+	return queryData
 }
 
 type alertQuery struct {
@@ -192,25 +242,29 @@ func ruleAdjustInterval(freq int64) int64 {
 }
 
 func transNoData(s string) (string, error) {
-	switch s {
-	case "ok":
-		return "OK", nil // values from ngalert/models/rule
-	case "", "no_data":
-		return "NoData", nil
-	case "alerting":
-		return "Alerting", nil
-	case "keep_state":
-		return "Alerting", nil
+	switch legacymodels.NoDataOption(s) {
+	case legacymodels.NoDataSetOK:
+		return string(ngmodels.OK), nil // values from ngalert/models/rule
+	case "", legacymodels.NoDataSetNoData:
+		return string(ngmodels.NoData), nil
+	case legacymodels.NoDataSetAlerting:
+		return string(ngmodels.Alerting), nil
+	case legacymodels.NoDataKeepState:
+		return string(ngmodels.NoData), nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
 
 func transExecErr(s string) (string, error) {
-	switch s {
-	case "", "alerting":
-		return "Alerting", nil
-	case "keep_state":
-		return "Alerting", nil
+	switch legacymodels.ExecutionErrorOption(s) {
+	case "", legacymodels.ExecutionErrorSetAlerting:
+		return string(ngmodels.AlertingErrState), nil
+	case legacymodels.ExecutionErrorKeepState:
+		// Keep last state is translated to error as we now emit a
+		// DatasourceError alert when the state is error
+		return string(ngmodels.ErrorErrState), nil
+	case legacymodels.ExecutionErrorSetOk:
+		return string(ngmodels.OkErrState), nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }

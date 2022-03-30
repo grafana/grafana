@@ -3,7 +3,6 @@ import { useAsync } from 'react-use';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme, PanelProps, PluginMeta, PluginType } from '@grafana/data';
 import { CustomScrollbar, ModalsController, stylesFactory, Tooltip, useStyles } from '@grafana/ui';
-import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { UpdatePluginModal } from './components/UpdatePluginModal';
@@ -49,16 +48,13 @@ export function PluginList(props: PanelProps) {
                             className={cx(styles.message, styles.messageUpdate)}
                             onClick={(e) => {
                               e.preventDefault();
-                              if (config.pluginAdminEnabled) {
-                                locationService.push(`/a/grafana-plugin-admin-app/plugin/${plugin.id}`);
-                              } else {
-                                showModal(UpdatePluginModal, {
-                                  pluginID: plugin.id,
-                                  pluginName: plugin.name,
-                                  onDismiss: hideModal,
-                                  isOpen: true,
-                                });
-                              }
+
+                              showModal(UpdatePluginModal, {
+                                pluginID: plugin.id,
+                                pluginName: plugin.name,
+                                onDismiss: hideModal,
+                                isOpen: true,
+                              });
                             }}
                           >
                             Update available!

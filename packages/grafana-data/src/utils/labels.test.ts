@@ -73,6 +73,6 @@ describe('matchAllLabels()', () => {
   });
 
   it('be graceful with null values (match)', () => {
-    expect(matchAllLabels((undefined as unknown) as Labels, { foo: 'bar' })).toBeTruthy();
+    expect(matchAllLabels(undefined as unknown as Labels, { foo: 'bar' })).toBeTruthy();
   });
 });

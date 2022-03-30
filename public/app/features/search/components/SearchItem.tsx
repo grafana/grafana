@@ -1,7 +1,7 @@
 import React, { FC, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { TagList, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -14,7 +14,7 @@ export interface Props {
   onToggleChecked?: OnToggleChecked;
 }
 
-const selectors = e2eSelectors.pages.Dashboards;
+const selectors = e2eSelectors.components.Search;
 
 const getIconFromMeta = (meta = ''): IconName => {
   const metaIconMap = new Map<string, IconName>([
@@ -29,14 +29,18 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+      event.preventDefault();
       onTagSelected(tag);
     },
     [onTagSelected]
   );
 
-  const toggleItem = useCallback(
-    (event: React.MouseEvent) => {
-      event.preventDefault();
+  const handleCheckboxClick = useCallback(
+    (ev: React.MouseEvent) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+
       if (onToggleChecked) {
         onToggleChecked(item);
       }
@@ -47,18 +51,23 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   const folderTitle = item.folderTitle || 'General';
   return (
     <Card
-      aria-label={selectors.dashboards(item.title)}
-      heading={item.title}
+      data-testid={selectors.dashboardItem(item.title)}
       href={item.url}
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}
       className={styles.container}
     >
+      <Card.Heading>{item.title}</Card.Heading>
       <Card.Figure align={'center'} className={styles.checkbox}>
-        <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
+        <SearchCheckbox
+          aria-label="Select dashboard"
+          editable={editable}
+          checked={item.checked}
+          onClick={handleCheckboxClick}
+        />
       </Card.Figure>
       <Card.Meta separator={''}>
         <span className={styles.metaContainer}>
-          <Icon name={'folder'} />
+          <Icon name={'folder'} aria-hidden />
           {folderTitle}
         </span>
         {item.sortMetaName && (
@@ -69,7 +78,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         )}
       </Card.Meta>
       <Card.Tags>
-        <TagList tags={item.tags} onClick={tagSelected} />
+        <TagList tags={item.tags} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
       </Card.Tags>
     </Card>
   );
@@ -79,10 +88,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       margin-bottom: ${theme.spacing(0.75)};
-
-      a {
-        padding: ${theme.spacing(1)} ${theme.spacing(2)};
-      }
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
     `,
     metaContainer: css`
       display: flex;

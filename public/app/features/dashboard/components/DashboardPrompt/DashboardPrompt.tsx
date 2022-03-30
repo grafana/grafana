@@ -1,17 +1,17 @@
 import { locationService } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
 import { contextSrv } from 'app/core/services/context_srv';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 import { DashboardModel } from '../../state/DashboardModel';
 import { each, filter, find } from 'lodash';
-import angular from 'angular';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 import * as H from 'history';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { useDispatch } from 'react-redux';
-import { discardPanelChanges } from '../PanelEditor/state/actions';
+import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
+import { ModalsContext } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { DashboardSavedEvent } from 'app/types/events';
 
 export interface Props {
@@ -21,19 +21,13 @@ export interface Props {
 interface State {
   original: object | null;
   originalPath?: string;
-  modal: PromptModal | null;
-  blockedLocation?: H.Location | null;
-}
-
-enum PromptModal {
-  UnsavedChangesModal,
-  SaveLibraryPanelModal,
 }
 
 export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
-  const [state, setState] = useState<State>({ original: null, modal: null });
+  const [state, setState] = useState<State>({ original: null });
   const dispatch = useDispatch();
-  const { original, originalPath, blockedLocation, modal } = state;
+  const { original, originalPath } = state;
+  const { showModal, hideModal } = useContext(ModalsContext);
 
   useEffect(() => {
     // This timeout delay is to wait for panels to load and migrate scheme before capturing the original state
@@ -41,29 +35,35 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
     const timeoutId = setTimeout(() => {
       const originalPath = locationService.getLocation().pathname;
       const original = dashboard.getSaveModelClone();
-
-      setState({ originalPath, original, modal: null });
+      setState({ originalPath, original });
     }, 1000);
+
+    const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
+      const original = dashboard.getSaveModelClone();
+      setState({ originalPath, original });
+    });
 
     return () => {
       clearTimeout(timeoutId);
+      savedEventUnsub.unsubscribe();
     };
-  }, [dashboard]);
+  }, [dashboard, originalPath]);
 
-  // Handle saved events
   useEffect(() => {
-    const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
-      const original = dashboard.getSaveModelClone();
-      const originalPath = locationService.getLocation().pathname;
-      setState({ originalPath, original, modal: null });
-
-      if (blockedLocation) {
-        moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
+    const handleUnload = (event: BeforeUnloadEvent) => {
+      if (ignoreChanges(dashboard, original)) {
+        return;
       }
-    });
-
-    return () => savedEventUnsub.unsubscribe();
-  }, [dashboard, blockedLocation]);
+      if (hasChanges(dashboard, original)) {
+        event.preventDefault();
+        // No browser actually displays this message anymore.
+        // But Chrome requires it to be defined else the popup won't show.
+        event.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [dashboard, original]);
 
   const onHistoryBlock = (location: H.Location) => {
     const panelInEdit = dashboard.panelInEdit;
@@ -71,12 +71,31 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
 
     // Are we leaving panel edit & library panel?
     if (panelInEdit && panelInEdit.libraryPanel && panelInEdit.hasChanged && !search.has('editPanel')) {
-      setState({ ...state, modal: PromptModal.SaveLibraryPanelModal, blockedLocation: location });
+      showModal(SaveLibraryPanelModal, {
+        isUnsavedPrompt: true,
+        panel: dashboard.panelInEdit as PanelModelWithLibraryPanel,
+        folderId: dashboard.meta.folderId as number,
+        onConfirm: () => {
+          hideModal();
+          moveToBlockedLocationAfterReactStateUpdate(location);
+        },
+        onDiscard: () => {
+          dispatch(discardPanelChanges());
+          moveToBlockedLocationAfterReactStateUpdate(location);
+          hideModal();
+        },
+        onDismiss: hideModal,
+      });
       return false;
     }
 
     // Are we still on the same dashboard?
     if (originalPath === location.pathname || !original) {
+      // This is here due to timing reasons we want the exit panel editor state changes to happen before router update
+      if (panelInEdit && !search.has('editPanel')) {
+        dispatch(exitPanelEditor());
+      }
+
       return true;
     }
 
@@ -88,55 +107,31 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       return true;
     }
 
-    setState({ ...state, modal: PromptModal.UnsavedChangesModal, blockedLocation: location });
+    showModal(UnsavedChangesModal, {
+      dashboard: dashboard,
+      onSaveSuccess: () => {
+        hideModal();
+        moveToBlockedLocationAfterReactStateUpdate(location);
+      },
+      onDiscard: () => {
+        setState({ ...state, original: null });
+        hideModal();
+        moveToBlockedLocationAfterReactStateUpdate(location);
+      },
+      onDismiss: hideModal,
+    });
+
     return false;
   };
 
-  const onHideModalAndMoveToBlockedLocation = () => {
-    setState({ ...state, modal: null });
-    moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
-  };
-
-  return (
-    <>
-      <Prompt when={true} message={onHistoryBlock} />
-      {modal === PromptModal.UnsavedChangesModal && (
-        <UnsavedChangesModal
-          dashboard={dashboard}
-          onSaveSuccess={() => {}} // Handled by DashboardSavedEvent above
-          onDiscard={() => {
-            // Clear original will allow us to leave without unsaved changes prompt
-            setState({ ...state, original: null, modal: null });
-            moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
-          }}
-          onDismiss={() => {
-            setState({ ...state, modal: null, blockedLocation: null });
-          }}
-        />
-      )}
-      {modal === PromptModal.SaveLibraryPanelModal && (
-        <SaveLibraryPanelModal
-          isUnsavedPrompt
-          panel={dashboard.panelInEdit as PanelModelWithLibraryPanel}
-          folderId={dashboard.meta.folderId as number}
-          onConfirm={onHideModalAndMoveToBlockedLocation}
-          onDiscard={() => {
-            dispatch(discardPanelChanges());
-            setState({ ...state, modal: null });
-            moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
-          }}
-          onDismiss={() => {
-            setState({ ...state, modal: null, blockedLocation: null });
-          }}
-        />
-      )}
-    </>
-  );
+  return <Prompt when={true} message={onHistoryBlock} />;
 });
+
+DashboardPrompt.displayName = 'DashboardPrompt';
 
 function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null) {
   if (location) {
-    setTimeout(() => locationService.push(location!), 10);
+    setTimeout(() => locationService.push(location), 10);
   }
 }
 
@@ -225,8 +220,8 @@ export function hasChanges(current: DashboardModel, original: any) {
     currentTimepicker.now = originalTimepicker.now;
   }
 
-  const currentJson = angular.toJson(currentClean);
-  const originalJson = angular.toJson(originalClean);
+  const currentJson = JSON.stringify(currentClean, null);
+  const originalJson = JSON.stringify(originalClean, null);
 
   return currentJson !== originalJson;
 }

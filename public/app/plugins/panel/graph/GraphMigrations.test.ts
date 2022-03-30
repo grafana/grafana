@@ -1,4 +1,4 @@
-import { PanelModel, FieldConfigSource } from '@grafana/data';
+import { PanelModel, FieldConfigSource, DataQuery } from '@grafana/data';
 import { graphPanelMigrationHandler } from './GraphMigrations';
 
 describe('Graph Panel Migrations', () => {
@@ -71,7 +71,7 @@ describe('Graph Panel Migrations', () => {
           refId: 'C',
           scenarioId: 'random_walk',
         },
-      ],
+      ] as unknown as DataQuery[],
       thresholds: [],
       timeFrom: null,
       timeRegions: [],
@@ -128,7 +128,7 @@ describe('Graph Panel Migrations', () => {
   });
 
   it('from 7.1 it should preserve existing fieldConfig', () => {
-    const panel = ({
+    const panel = {
       id: 1,
       fieldConfig: {
         defaults: {
@@ -141,7 +141,7 @@ describe('Graph Panel Migrations', () => {
         },
         overrides: [],
       },
-    } as unknown) as PanelModel;
+    } as unknown as PanelModel;
 
     graphPanelMigrationHandler(panel as PanelModel);
     const fieldConfig = (panel as any).fieldConfig as FieldConfigSource;

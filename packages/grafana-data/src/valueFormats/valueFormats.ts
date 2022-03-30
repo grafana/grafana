@@ -18,7 +18,8 @@ export type ValueFormatter = (
   value: number,
   decimals?: DecimalCount,
   scaledDecimals?: DecimalCount,
-  timeZone?: TimeZone
+  timeZone?: TimeZone,
+  showMs?: boolean
 ) => FormattedValue;
 
 export interface ValueFormat {

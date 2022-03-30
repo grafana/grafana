@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
-import { Select } from '../Forms/Legacy/Select/Select';
+import { Select } from '../Select/Select';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
@@ -56,7 +57,15 @@ const HttpAccessHelp = () => (
 );
 
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
-  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled } = props;
+  const {
+    defaultUrl,
+    dataSourceConfig,
+    onChange,
+    showAccessOptions,
+    sigV4AuthToggleEnabled,
+    showForwardOAuthIdentityOption,
+    azureAuthSettings,
+  } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
@@ -93,7 +102,9 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
 
   const accessSelect = (
     <Select
-      width={20}
+      aria-label="Access"
+      menuShouldPortal
+      className="width-20 gf-form-input"
       options={ACCESS_OPTIONS}
       value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
       onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
@@ -115,9 +126,13 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
       className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
+      aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
       onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
     />
   );
+
+  const azureAuthEnabled: boolean =
+    (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
 
   return (
     <div className="gf-form-group">
@@ -154,7 +169,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   width={13}
                   tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
                 >
-                  Whitelisted Cookies
+                  Allowed cookies
                 </InlineFormLabel>
                 <TagsInput
                   tags={dataSourceConfig.jsonData.keepCookies}
@@ -171,6 +186,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   labelWidth={13}
                   inputWidth={20}
                   tooltip="HTTP request timeout in seconds"
+                  placeholder="Timeout in seconds"
+                  aria-label="Timeout in seconds"
                   value={dataSourceConfig.jsonData.timeout}
                   onChange={(event) => {
                     onSettingsChange({
@@ -207,6 +224,22 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             />
           </div>
 
+          {azureAuthSettings?.azureAuthSupported && (
+            <div className="gf-form-inline">
+              <Switch
+                label="Azure Authentication"
+                labelClass="width-13"
+                checked={azureAuthEnabled}
+                onChange={(event) => {
+                  onSettingsChange(
+                    azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
+                  );
+                }}
+                tooltip="Use Azure authentication for Azure endpoint."
+              />
+            </div>
+          )}
+
           {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
               <Switch
@@ -226,6 +259,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
               onChange={(jsonData) => onSettingsChange({ jsonData })}
+              showForwardOAuthIdentityOption={showForwardOAuthIdentityOption}
             />
           )}
         </div>
@@ -238,7 +272,11 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           </>
         )}
 
-        {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}
+        {azureAuthSettings?.azureAuthSupported && azureAuthEnabled && azureAuthSettings.azureSettingsUI && (
+          <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
+        )}
+
+        {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && <SigV4AuthSettings {...props} />}
 
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />

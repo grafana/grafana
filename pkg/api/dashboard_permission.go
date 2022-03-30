@@ -1,24 +1,33 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
-	dashID := c.ParamsInt64(":dashboardId")
+	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
 
-	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	_, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}
 
-	g := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
@@ -50,19 +59,26 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 	return response.JSON(200, filteredAcls)
 }
 
-func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) response.Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
+	apiCmd := dtos.UpdateDashboardAclCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
 		return response.Error(400, err.Error(), err)
 	}
 
-	dashID := c.ParamsInt64(":dashboardId")
+	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
 
-	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}
 
-	g := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
@@ -99,7 +115,18 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := updateDashboardACL(hs, dashID, items); err != nil {
+	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		old, err := g.GetAcl()
+		if err != nil {
+			return response.Error(500, "Error while checking dashboard permissions", err)
+		}
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Id, false, items, old); err != nil {
+			return response.Error(500, "Failed to update permissions", err)
+		}
+		return response.Success("Dashboard permissions updated")
+	}
+
+	if err := hs.dashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
@@ -110,8 +137,70 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 	return response.Success("Dashboard permissions updated")
 }
 
+// updateDashboardAccessControl is used for api backward compatibility
+func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, dashID int64, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
+	commands := []accesscontrol.SetResourcePermissionCommand{}
+	for _, item := range items {
+		permissions := item.Permission.String()
+		role := ""
+		if item.Role != nil {
+			role = string(*item.Role)
+		}
+
+		commands = append(commands, accesscontrol.SetResourcePermissionCommand{
+			UserID:      item.UserID,
+			TeamID:      item.TeamID,
+			BuiltinRole: role,
+			Permission:  permissions,
+		})
+	}
+
+	for _, o := range old {
+		shouldRemove := true
+		for _, item := range items {
+			if item.UserID != 0 && item.UserID == o.UserId {
+				shouldRemove = false
+				break
+			}
+			if item.TeamID != 0 && item.TeamID == o.TeamId {
+				shouldRemove = false
+				break
+			}
+			if item.Role != nil && o.Role != nil && *item.Role == *o.Role {
+				shouldRemove = false
+				break
+			}
+		}
+		if shouldRemove {
+			role := ""
+			if o.Role != nil {
+				role = string(*o.Role)
+			}
+
+			commands = append(commands, accesscontrol.SetResourcePermissionCommand{
+				UserID:      o.UserId,
+				TeamID:      o.TeamId,
+				BuiltinRole: role,
+				Permission:  "",
+			})
+		}
+	}
+
+	svc := hs.permissionServices.GetDashboardService()
+	if isFolder {
+		svc = hs.permissionServices.GetFolderService()
+	}
+
+	_, err := svc.SetPermissions(ctx, orgID, strconv.FormatInt(dashID, 10), commands...)
+	return err
+}
+
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
 	for _, item := range apiCmd.Items {
+		if item.UserID > 0 && item.TeamID > 0 {
+			return models.ErrPermissionsWithUserAndTeamNotAllowed
+		}
+
 		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
 			return models.ErrPermissionsWithRoleNotAllowed
 		}

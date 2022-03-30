@@ -32,7 +32,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export function FolderLibraryPanelsPage({ navModel, getFolderByUid, folderUid, folder }: Props): JSX.Element {
-  const { loading } = useAsync<void>(async () => await getFolderByUid(folderUid), [getFolderByUid, folderUid]);
+  const { loading } = useAsync(async () => await getFolderByUid(folderUid), [getFolderByUid, folderUid]);
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
 
   return (

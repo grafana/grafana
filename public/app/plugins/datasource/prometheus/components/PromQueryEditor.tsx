@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { CoreApp, SelectableValue } from '@grafana/data';
 import { PromQuery } from '../types';
 
 import PromQueryField from './PromQueryField';
@@ -13,13 +13,13 @@ import { PromQueryEditorProps } from './types';
 
 const { Switch } = LegacyForms;
 
-const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
+export const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
   { label: 'Heatmap', value: 'heatmap' },
 ];
 
-const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
+export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
   value,
   label: '1/' + value,
 }));
@@ -40,7 +40,13 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
   constructor(props: PromQueryEditorProps) {
     super(props);
     // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
+    const defaultQuery: Partial<PromQuery> = {
+      expr: '',
+      legendFormat: '',
+      interval: '',
+      // Set exemplar to false for alerting queries
+      exemplar: props.app === CoreApp.UnifiedAlerting ? false : true,
+    };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
@@ -105,7 +111,9 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
   render() {
     const { datasource, query, range, data } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
+    const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
+    //We want to hide exemplar field for unified alerting as exemplars in alerting don't make sense and are source of confusion
+    const showExemplarField = this.props.app !== CoreApp.UnifiedAlerting;
 
     return (
       <PromQueryField
@@ -153,6 +161,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               <input
                 type="text"
                 className="gf-form-input width-8"
+                aria-label="Set lower limit for the step parameter"
                 placeholder={interval}
                 onChange={this.onIntervalChange}
                 onBlur={this.onRunQuery}
@@ -163,6 +172,8 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label">Resolution</div>
               <Select
+                aria-label="Select resolution"
+                menuShouldPortal
                 isSearchable={false}
                 options={INTERVAL_FACTOR_OPTIONS}
                 onChange={this.onIntervalFactorChange}
@@ -173,11 +184,14 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
+                menuShouldPortal
+                className="select-container"
                 width={16}
                 isSearchable={false}
                 options={FORMAT_OPTIONS}
                 onChange={this.onFormatChange}
                 value={formatOption}
+                aria-label="Select format"
               />
               <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
 
@@ -189,8 +203,14 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 />
               </InlineFormLabel>
             </div>
-
-            <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
+            {showExemplarField && (
+              <PromExemplarField
+                onChange={this.onExemplarChange}
+                datasource={datasource}
+                query={this.query}
+                data-testid={testIds.exemplar}
+              />
+            )}
           </div>
         }
       />
@@ -200,4 +220,5 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
 export const testIds = {
   editor: 'prom-editor',
+  exemplar: 'exemplar-editor',
 };

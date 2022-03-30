@@ -1,4 +1,4 @@
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
 import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {
@@ -12,7 +12,7 @@ export class ThresholdFormCtrl {
   $onInit() {
     this.panel = this.panelCtrl.panel;
 
-    if (this.panel.alert) {
+    if (this.panel.alert && !config.unifiedAlertingEnabled) {
       this.disabled = true;
     }
 

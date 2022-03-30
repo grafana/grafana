@@ -52,6 +52,7 @@ export function getDefaultOptions(): DashboardQueryRunnerOptions {
       subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
       publish: jest.fn(),
     },
+    panels: [{ alert: {} } as any],
   };
   const range = getDefaultTimeRange();
 

@@ -5,7 +5,7 @@ import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Team, User } from 'app/types';
+import { OrgUser, Team } from 'app/types';
 import {
   dashboardPermissionLevels,
   dashboardAclTargets,
@@ -41,8 +41,8 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     };
   }
 
-  onTypeChanged = (item: any) => {
-    const type = item.value as AclTarget;
+  onTypeChanged = (item: SelectableValue<AclTarget>) => {
+    const type = item.value;
 
     switch (type) {
       case AclTarget.User:
@@ -58,7 +58,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     }
   };
 
-  onUserSelected = (user: User) => {
+  onUserSelected = (user: SelectableValue<OrgUser['userId']>) => {
     this.setState({ userId: user && !Array.isArray(user) ? user.id : 0 });
   };
 
@@ -100,10 +100,12 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
           {() => (
             <HorizontalGroup>
               <Select
+                aria-label="Role to add new permission to"
                 isSearchable={false}
                 value={this.state.type}
                 options={dashboardAclTargets}
                 onChange={this.onTypeChanged}
+                menuShouldPortal
               />
 
               {newItem.type === AclTarget.User ? (
@@ -117,11 +119,13 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
               <span className={styles.label}>Can</span>
 
               <Select
+                aria-label="Permission level"
                 isSearchable={false}
                 value={this.state.permission}
                 options={dashboardPermissionLevels}
                 onChange={this.onPermissionChanged}
                 width={25}
+                menuShouldPortal
               />
               <Button data-save-permission type="submit" disabled={!isValid}>
                 Save

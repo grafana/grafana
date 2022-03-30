@@ -5,283 +5,292 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndexPattern(t *testing.T) {
-	Convey("Static index patterns", t, func() {
-		indexPatternScenario(noInterval, "data-*", plugins.DataTimeRange{}, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-*")
+	t.Run("Static index patterns", func(t *testing.T) {
+		indexPatternScenario(t, noInterval, "data-*", backend.TimeRange{}, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "data-*")
 		})
 
-		indexPatternScenario(noInterval, "es-index-name", plugins.DataTimeRange{}, func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "es-index-name")
+		indexPatternScenario(t, noInterval, "es-index-name", backend.TimeRange{}, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "es-index-name")
 		})
 	})
 
-	Convey("Dynamic index patterns", t, func() {
-		from := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
-		to := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
+	t.Run("Dynamic index patterns", func(t *testing.T) {
+		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
 
-		indexPatternScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.05.15.17")
+		indexPatternScenario(t, intervalHourly, "[data-]YYYY.MM.DD.HH", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "data-2018.05.15.17")
 		})
 
-		indexPatternScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.05.15.17-data")
+		indexPatternScenario(t, intervalHourly, "YYYY.MM.DD.HH[-data]", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "2018.05.15.17-data")
 		})
 
-		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.05.15")
+		indexPatternScenario(t, intervalDaily, "[data-]YYYY.MM.DD", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "data-2018.05.15")
 		})
 
-		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.05.15-data")
+		indexPatternScenario(t, intervalDaily, "YYYY.MM.DD[-data]", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "2018.05.15-data")
 		})
 
-		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.20")
+		indexPatternScenario(t, intervalWeekly, "[data-]GGGG.WW", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "data-2018.20")
 		})
 
-		indexPatternScenario(intervalWeekly, "GGGG.WW[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.20-data")
+		indexPatternScenario(t, intervalWeekly, "GGGG.WW[-data]", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "2018.20-data")
 		})
 
-		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018.05")
+		indexPatternScenario(t, intervalMonthly, "[data-]YYYY.MM", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "data-2018.05")
 		})
 
-		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018.05-data")
+		indexPatternScenario(t, intervalMonthly, "YYYY.MM[-data]", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "2018.05-data")
 		})
 
-		indexPatternScenario(intervalYearly, "[data-]YYYY", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018")
+		indexPatternScenario(t, intervalYearly, "[data-]YYYY", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "data-2018")
 		})
 
-		indexPatternScenario(intervalYearly, "YYYY[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018-data")
+		indexPatternScenario(t, intervalYearly, "YYYY[-data]", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "2018-data")
 		})
 
-		indexPatternScenario(intervalDaily, "YYYY[-data-]MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "2018-data-05.15")
+		indexPatternScenario(t, intervalDaily, "YYYY[-data-]MM.DD", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "2018-data-05.15")
 		})
 
-		indexPatternScenario(intervalDaily, "[data-]YYYY[-moredata-]MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
-			So(indices, ShouldHaveLength, 1)
-			So(indices[0], ShouldEqual, "data-2018-moredata-05.15")
+		indexPatternScenario(t, intervalDaily, "[data-]YYYY[-moredata-]MM.DD", timeRange, func(indices []string) {
+			require.Len(t, indices, 1)
+			require.Equal(t, indices[0], "data-2018-moredata-05.15")
 		})
 
-		Convey("Should return 01 week", func() {
-			from = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
-			to = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
-			indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), func(indices []string) {
-				So(indices, ShouldHaveLength, 1)
-				So(indices[0], ShouldEqual, "data-2018.03")
+		t.Run("Should return 01 week", func(t *testing.T) {
+			from = time.Date(2018, 1, 15, 17, 50, 0, 0, time.UTC)
+			to = time.Date(2018, 1, 15, 17, 55, 0, 0, time.UTC)
+			timeRange := backend.TimeRange{
+				From: from,
+				To:   to,
+			}
+			indexPatternScenario(t, intervalWeekly, "[data-]GGGG.WW", timeRange, func(indices []string) {
+				require.Len(t, indices, 1)
+				require.Equal(t, indices[0], "data-2018.03")
 			})
 		})
 	})
 
-	Convey("Hourly interval", t, func() {
-		Convey("Should return 1 interval", func() {
+	t.Run("Hourly interval", func(t *testing.T) {
+		t.Run("Should return 1 interval", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&hourlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 1)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 2 intervals", func() {
+		t.Run("Should return 2 intervals", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 2, 0, 6, 0, 0, time.UTC)
 			intervals := (&hourlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 2)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 10 intervals", func() {
+		t.Run("Should return 10 intervals", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 2, 8, 6, 0, 0, time.UTC)
 			intervals := (&hourlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 10)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
-			So(intervals[4], ShouldEqual, time.Date(2018, 1, 2, 3, 0, 0, 0, time.UTC))
-			So(intervals[9], ShouldEqual, time.Date(2018, 1, 2, 8, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 10)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 23, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[4], time.Date(2018, 1, 2, 3, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[9], time.Date(2018, 1, 2, 8, 0, 0, 0, time.UTC))
 		})
 	})
 
-	Convey("Daily interval", t, func() {
-		Convey("Should return 1 day", func() {
+	t.Run("Daily interval", func(t *testing.T) {
+		t.Run("Should return 1 day", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&dailyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 1)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 2 days", func() {
+		t.Run("Should return 2 days", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 2, 0, 6, 0, 0, time.UTC)
 			intervals := (&dailyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 2)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 32 days", func() {
+		t.Run("Should return 32 days", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 1, 8, 6, 0, 0, time.UTC)
 			intervals := (&dailyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 32)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[30], ShouldEqual, time.Date(2018, 1, 31, 0, 0, 0, 0, time.UTC))
-			So(intervals[31], ShouldEqual, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 32)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[30], time.Date(2018, 1, 31, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[31], time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
 		})
 	})
 
-	Convey("Weekly interval", t, func() {
-		Convey("Should return 1 week (1)", func() {
+	t.Run("Weekly interval", func(t *testing.T) {
+		t.Run("Should return 1 week (1)", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 1)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 1 week (2)", func() {
+		t.Run("Should return 1 week (2)", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2017, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 1)
+			require.Equal(t, intervals[0], time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 2 weeks (1)", func() {
+		t.Run("Should return 2 weeks (1)", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 10, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 2)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 2 weeks (2)", func() {
+		t.Run("Should return 2 weeks (2)", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2017, 1, 8, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 2)
+			require.Equal(t, intervals[0], time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 3 weeks (1)", func() {
+		t.Run("Should return 3 weeks (1)", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 21, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 3)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC))
-			So(intervals[2], ShouldEqual, time.Date(2018, 1, 15, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 3)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2018, 1, 8, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[2], time.Date(2018, 1, 15, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 3 weeks (2)", func() {
+		t.Run("Should return 3 weeks (2)", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2017, 1, 9, 23, 6, 0, 0, time.UTC)
 			intervals := (&weeklyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 3)
-			So(intervals[0], ShouldEqual, time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC))
-			So(intervals[2], ShouldEqual, time.Date(2017, 1, 9, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 3)
+			require.Equal(t, intervals[0], time.Date(2016, 12, 26, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[2], time.Date(2017, 1, 9, 0, 0, 0, 0, time.UTC))
 		})
 	})
 
-	Convey("Monthly interval", t, func() {
-		Convey("Should return 1 month", func() {
+	t.Run("Monthly interval", func(t *testing.T) {
+		t.Run("Should return 1 month", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 1, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&monthlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 1)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 2 months", func() {
+		t.Run("Should return 2 months", func(t *testing.T) {
 			from := time.Date(2018, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 2, 0, 6, 0, 0, time.UTC)
 			intervals := (&monthlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 2)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 14 months", func() {
+		t.Run("Should return 14 months", func(t *testing.T) {
 			from := time.Date(2017, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 1, 8, 6, 0, 0, time.UTC)
 			intervals := (&monthlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 14)
-			So(intervals[0], ShouldEqual, time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[13], ShouldEqual, time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 14)
+			require.Equal(t, intervals[0], time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[13], time.Date(2018, 2, 1, 0, 0, 0, 0, time.UTC))
 		})
 	})
 
-	Convey("Yearly interval", t, func() {
-		Convey("Should return 1 year (hour diff)", func() {
+	t.Run("Yearly interval", func(t *testing.T) {
+		t.Run("Should return 1 year (hour diff)", func(t *testing.T) {
 			from := time.Date(2018, 2, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 2, 1, 23, 6, 0, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 1)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 1 year (month diff)", func() {
+		t.Run("Should return 1 year (month diff)", func(t *testing.T) {
 			from := time.Date(2018, 2, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 12, 31, 23, 59, 59, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 1)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 1)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 2 years", func() {
+		t.Run("Should return 2 years", func(t *testing.T) {
 			from := time.Date(2018, 2, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2019, 1, 1, 23, 59, 59, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 2)
-			So(intervals[0], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[1], ShouldEqual, time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 2)
+			require.Equal(t, intervals[0], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[1], time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 
-		Convey("Should return 5 years", func() {
+		t.Run("Should return 5 years", func(t *testing.T) {
 			from := time.Date(2014, 1, 1, 23, 1, 1, 0, time.UTC)
 			to := time.Date(2018, 11, 1, 23, 59, 59, 0, time.UTC)
 			intervals := (&yearlyInterval{}).Generate(from, to)
-			So(intervals, ShouldHaveLength, 5)
-			So(intervals[0], ShouldEqual, time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC))
-			So(intervals[4], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Len(t, intervals, 5)
+			require.Equal(t, intervals[0], time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC))
+			require.Equal(t, intervals[4], time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 	})
 }
 
-func indexPatternScenario(interval string, pattern string, timeRange plugins.DataTimeRange, fn func(indices []string)) {
-	Convey(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func() {
+func indexPatternScenario(t *testing.T, interval string, pattern string, timeRange backend.TimeRange, fn func(indices []string)) {
+	testName := fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern)
+	t.Run(testName, func(t *testing.T) {
 		ip, err := newIndexPattern(interval, pattern)
-		So(err, ShouldBeNil)
-		So(ip, ShouldNotBeNil)
+		require.NoError(t, err)
+		require.NotNil(t, ip)
 		indices, err := ip.GetIndices(timeRange)
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		fn(indices)
 	})
 }

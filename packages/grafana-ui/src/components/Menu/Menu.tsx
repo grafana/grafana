@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useImperativeHandle, useRef } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
+import { useMenuFocus } from './hooks';
 
 /** @internal */
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -9,15 +10,31 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   header?: React.ReactNode;
   children: React.ReactNode;
   ariaLabel?: string;
+  onOpen?: (focusOnItem: (itemId: number) => void) => void;
+  onClose?: () => void;
+  onKeyDown?: React.KeyboardEventHandler;
 }
 
 /** @internal */
 export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
-  ({ header, children, ariaLabel, ...otherProps }, ref) => {
+  ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
 
+    const localRef = useRef<HTMLDivElement>(null);
+    useImperativeHandle(forwardedRef, () => localRef.current!);
+
+    const [handleKeys, handleFocus] = useMenuFocus({ localRef, onOpen, onClose, onKeyDown });
+
     return (
-      <div {...otherProps} ref={ref} className={styles.wrapper} aria-label={ariaLabel}>
+      <div
+        {...otherProps}
+        ref={localRef}
+        className={styles.wrapper}
+        role="menu"
+        aria-label={ariaLabel}
+        onKeyDown={handleKeys}
+        onFocus={handleFocus}
+      >
         {header && <div className={styles.header}>{header}</div>}
         {children}
       </div>

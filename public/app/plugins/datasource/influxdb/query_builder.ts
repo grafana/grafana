@@ -2,6 +2,7 @@ import { reduce } from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
 function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {
+  // FIXME: merge this function with influx_query_model/renderTagCondition
   let str = '';
   let operator = tag.operator;
   let value = tag.value;
@@ -19,7 +20,7 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
 
   // quote value unless regex or number, or if empty-string
   if (value === '' || (operator !== '=~' && operator !== '!~' && isNaN(+value))) {
-    value = "'" + value + "'";
+    value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 
   return str + '"' + tag.key + '" ' + operator + ' ' + value;

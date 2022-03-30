@@ -2,8 +2,6 @@ import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
-
-// @ts-ignore
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs-extra';

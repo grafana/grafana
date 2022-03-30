@@ -51,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   nestedEntry: css({
     display: 'flex',
+    alignItems: 'center',
   }),
 
   entryContentItem: css({
@@ -62,6 +63,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+  }),
+
+  nestedRowCheckbox: css({
+    zIndex: 0,
   }),
 });
 

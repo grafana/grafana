@@ -12,9 +12,10 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+	"gopkg.in/ldap.v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"gopkg.in/ldap.v3"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -252,16 +253,11 @@ func (server *Server) Users(logins []string) (
 	[]*models.ExternalUserInfo,
 	error,
 ) {
-	var users []*ldap.Entry
+	var users [][]*ldap.Entry
 	err := getUsersIteration(logins, func(previous, current int) error {
-		entries, err := server.users(logins[previous:current])
-		if err != nil {
-			return err
-		}
-
-		users = append(users, entries...)
-
-		return nil
+		var err error
+		users, err = server.users(logins[previous:current])
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -308,12 +304,14 @@ func getUsersIteration(logins []string, fn func(int, int) error) error {
 
 // users is helper method for the Users()
 func (server *Server) users(logins []string) (
-	[]*ldap.Entry,
+	[][]*ldap.Entry,
 	error,
 ) {
 	var result *ldap.SearchResult
 	var Config = server.Config
 	var err error
+
+	var entries = make([][]*ldap.Entry, 0, len(Config.SearchBaseDNs))
 
 	for _, base := range Config.SearchBaseDNs {
 		result, err = server.Connection.Search(
@@ -324,11 +322,11 @@ func (server *Server) users(logins []string) (
 		}
 
 		if len(result.Entries) > 0 {
-			break
+			entries = append(entries, result.Entries)
 		}
 	}
 
-	return result.Entries, nil
+	return entries, nil
 }
 
 // validateGrafanaUser validates user access.
@@ -557,17 +555,26 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 // serializeUsers serializes the users
 // from LDAP result to ExternalInfo struct
 func (server *Server) serializeUsers(
-	entries []*ldap.Entry,
+	entries [][]*ldap.Entry,
 ) ([]*models.ExternalUserInfo, error) {
 	var serialized []*models.ExternalUserInfo
+	var users = map[string]struct{}{}
 
-	for _, user := range entries {
-		extUser, err := server.buildGrafanaUser(user)
-		if err != nil {
-			return nil, err
+	for _, dn := range entries {
+		for _, user := range dn {
+			extUser, err := server.buildGrafanaUser(user)
+			if err != nil {
+				return nil, err
+			}
+
+			if _, exists := users[extUser.Login]; exists {
+				// ignore duplicates
+				continue
+			}
+			users[extUser.Login] = struct{}{}
+
+			serialized = append(serialized, extUser)
 		}
-
-		serialized = append(serialized, extUser)
 	}
 
 	return serialized, nil

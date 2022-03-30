@@ -90,7 +90,10 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 	lastSeenRowIdx := -1
 	timeField := f.Fields[tsSchema.TimeIndex]
 
-	for currentTime := qm.TimeRange.From; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
+	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+	startTime := time.Unix(startUnixTime, 0)
+
+	for currentTime := startTime; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
 		initialRowIdx := 0
 		if lastSeenRowIdx > 0 {
 			initialRowIdx = lastSeenRowIdx + 1
@@ -110,17 +113,16 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 				return f, fmt.Errorf("time point is nil")
 			}
 
-			if t.(time.Time).After(currentTime) {
-				nextTime := currentTime.Add(qm.Interval)
-				if t.(time.Time).Before(nextTime) {
+			// take the last element of the period current - interval <-> current, use it as value for current data point value
+			previousTime := currentTime.Add(-qm.Interval)
+			if t.(time.Time).After(previousTime) {
+				if !t.(time.Time).After(currentTime) {
 					intermediateRows = append(intermediateRows, initialRowIdx)
-					lastSeenRowIdx = initialRowIdx
-					initialRowIdx++
+				} else {
+					break
 				}
-				break
 			}
 
-			intermediateRows = append(intermediateRows, initialRowIdx)
 			lastSeenRowIdx = initialRowIdx
 			initialRowIdx++
 		}

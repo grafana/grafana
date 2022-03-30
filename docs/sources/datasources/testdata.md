@@ -36,6 +36,7 @@ Once you provided the numbers, `TestData DB` distributes them evenly based on th
 ## Dashboards
 
 `TestData DB` also contains some dashboards with examples.
+
 1. Click **Configuration** > **Data Sources** > **TestData DB** > **Dashboards**.
 1. **Import** the **Simple Streaming Example** dashboard.
 

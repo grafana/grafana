@@ -13,12 +13,14 @@ import { GrafanaEdition } from '@grafana/data/src/types/config';
 jest.mock('@sentry/browser');
 
 describe('SentryEchoBackend', () => {
-  beforeEach(() => jest.resetAllMocks());
+  beforeEach(() => {
+    jest.resetAllMocks();
+    window.fetch = jest.fn();
+  });
 
   const buildInfo: BuildInfo = {
     version: '1.0',
     commit: 'abcd123',
-    isEnterprise: false,
     env: 'production',
     edition: GrafanaEdition.OpenSource,
     latestVersion: 'ba',
@@ -35,6 +37,7 @@ describe('SentryEchoBackend', () => {
     user: {
       email: 'darth.vader@sith.glx',
       id: 504,
+      orgId: 1,
     },
   };
 
@@ -65,6 +68,11 @@ describe('SentryEchoBackend', () => {
       dsn: options.dsn,
       sampleRate: options.sampleRate,
       transport: EchoSrvTransport,
+      ignoreErrors: [
+        'ResizeObserver loop limit exceeded',
+        'ResizeObserver loop completed',
+        'Non-Error exception captured with keys',
+      ],
     });
     expect(sentrySetUser).toHaveBeenCalledWith({
       email: options.user?.email,
@@ -77,8 +85,8 @@ describe('SentryEchoBackend', () => {
     backend.transports = [{ sendEvent: jest.fn() }, { sendEvent: jest.fn() }];
     const event: SentryEchoEvent = {
       type: EchoEventType.Sentry,
-      payload: ({ foo: 'bar' } as unknown) as SentryEvent,
-      meta: ({} as unknown) as EchoMeta,
+      payload: { foo: 'bar' } as unknown as SentryEvent,
+      meta: {} as unknown as EchoMeta,
     };
     backend.addEvent(event);
     backend.transports.forEach((transport) => {

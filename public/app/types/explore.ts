@@ -1,4 +1,4 @@
-import { Unsubscribable } from 'rxjs';
+import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -12,6 +12,8 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
+  DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -44,7 +46,21 @@ export interface ExploreState {
    * History of all queries
    */
   richHistory: RichHistoryQuery[];
+
+  /**
+   * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
+   * multiple errors when local storage is full.
+   */
+  richHistoryStorageFull: boolean;
+
+  /**
+   * True if a warning message of hitting the exceeded number of items has been shown already.
+   */
+  richHistoryLimitExceededWarningShown: boolean;
 }
+
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -82,11 +98,6 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
-   * Log line substrings to be highlighted as you type in a query field.
-   * Currently supports only the first query row.
-   */
-  logsHighlighterExpressions?: string[];
-  /**
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult: LogsModel | null;
@@ -122,8 +133,6 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
-  latency: number;
-
   /**
    * If true, the view is in live tailing mode.
    */
@@ -136,13 +145,7 @@ export interface ExploreItemState {
 
   querySubscription?: Unsubscribable;
 
-  queryResponse: PanelData;
-
-  /**
-   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
-   * query of that panel.
-   */
-  originPanelId?: number | null;
+  queryResponse: ExplorePanelData;
 
   showLogs?: boolean;
   showMetrics?: boolean;
@@ -155,7 +158,17 @@ export interface ExploreItemState {
    * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
    * We are currently caching last 5 query responses.
    */
-  cache: Array<{ key: string; value: PanelData }>;
+  cache: Array<{ key: string; value: ExplorePanelData }>;
+
+  // properties below should be more generic if we add more providers
+  // see also: DataSourceWithLogsVolumeSupport
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
+  logsVolumeDataSubscription?: SubscriptionLike;
+  logsVolumeData?: DataQueryResponse;
+
+  /* explore graph style */
+  graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {
@@ -176,22 +189,20 @@ export interface QueryTransaction {
   done: boolean;
   error?: string | JSX.Element;
   hints?: QueryHint[];
-  latency: number;
   request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
-export type RichHistoryQuery = {
-  ts: number;
+export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
-  datasourceId: string;
   starred: boolean;
   comment: string;
-  queries: DataQuery[];
-  sessionName: string;
-  timeRange?: string;
+  queries: T[];
 };
 
 export interface ExplorePanelData extends PanelData {
@@ -204,7 +215,3 @@ export interface ExplorePanelData extends PanelData {
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
 }
-
-export type SplitOpen = <T extends DataQuery = any>(
-  options?: { datasourceUid: string; query: T; range?: TimeRange } | undefined
-) => void;

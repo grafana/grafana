@@ -21,7 +21,7 @@ For more information, refer to [Enable debug logging in Grafana CLI]({{< relref 
 
 Order of transformations matters. If the final data output from multiple transformations looks wrong, try changing the transformation order. Each transformation transforms data returned by the previous transformation, not the original raw data.
 
-For more information, refer to [Debug transformations]({{< relref "../panels/transformations/apply-transformations.md" >}}).
+For more information, refer to [Debug a transformation]({{< relref "../panels/transform-data/debug-transformation.md" >}}).
 
 ## Text missing with server-side image rendering (RPM-based Linux)
 
@@ -39,5 +39,3 @@ sudo yum install urw-fonts
 
 Check out the [FAQ section](https://community.grafana.com/c/howto/faq) on the Grafana Community page for answers to frequently
 asked questions.
-
-

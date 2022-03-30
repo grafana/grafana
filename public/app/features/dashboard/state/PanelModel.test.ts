@@ -55,7 +55,7 @@ describe('PanelModel', () => {
       {
         id: 'table',
       },
-      (null as unknown) as ComponentClass<PanelProps>, // react
+      null as unknown as ComponentClass<PanelProps>, // react
       {} // angular
     );
 
@@ -196,11 +196,6 @@ describe('PanelModel', () => {
       expect(saveModel.gridPos).toBe(undefined);
     });
 
-    it('getSaveModel should not remove datasource default', () => {
-      const saveModel = model.getSaveModel();
-      expect(saveModel.datasource).toBe(null);
-    });
-
     it('getSaveModel should remove nonPersistedProperties', () => {
       const saveModel = model.getSaveModel();
       expect(saveModel.events).toBe(undefined);
@@ -232,6 +227,18 @@ describe('PanelModel', () => {
         const extra = { aaa: { text: '???', value: 'XXX' } };
         const out = model.replaceVariables('hello $aaa and $bbb', extra);
         expect(out).toBe('hello XXX and BBB');
+      });
+
+      it('Can use request scoped vars', () => {
+        model.getQueryRunner().getLastRequest = () => {
+          return {
+            scopedVars: {
+              __interval: { text: '10m', value: '10m' },
+            },
+          };
+        };
+        const out = model.replaceVariables('hello $__interval');
+        expect(out).toBe('hello 10m');
       });
     });
 
@@ -265,7 +272,6 @@ describe('PanelModel', () => {
           });
         });
 
-        model.editSourceId = 1001;
         model.fieldConfig.defaults.decimals = 3;
         model.fieldConfig.defaults.custom = {
           customProp: true,
@@ -287,10 +293,6 @@ describe('PanelModel', () => {
         ];
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
-      });
-
-      it('should keep editSourceId', () => {
-        expect(model.editSourceId).toBe(1001);
       });
 
       it('should keep maxDataPoints', () => {

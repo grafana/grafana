@@ -4,7 +4,7 @@ The main goal of issue triage is to categorize all incoming Grafana issues and m
 
 > **Note:** This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you will not be able to perform most of the tasks in this topic.
 
-The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project. 
+The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project.
 
 Triage helps ensure issues resolve quickly by:
 
@@ -18,6 +18,7 @@ If you don't have the knowledge or time to code, consider helping with triage. T
 ## Simplified flowchart diagram of the issue triage process
 
 <!-- https://textik.com/#610afa78553def29 -->
+
 ```
                         +--------------------------+
        +----------------+  New issue opened/       |
@@ -76,15 +77,16 @@ Instructions for setting up filters in Gmail can be found [here](#setting-up-gma
 
 ## 2. Ensure the issue contains basic information
 
-Before triaging an issue very far, make sure that the issue's author provided the standard issue information. This will help you make an educated recommendation on how to categorize the issue. The Grafana project utilizes [GitHub issue templates](https://help.github.com/en/articles/creating-issue-templates-for-your-repository) to guide  contributors to provide standard information that must be included for each type of template or type of issue.
+Before triaging an issue very far, make sure that the issue's author provided the standard issue information. This will help you make an educated recommendation on how to categorize the issue. The Grafana project utilizes [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
 
 ### Standard issue information that must be included
 
-Given a certain [issue template]([template](https://github.com/grafana/grafana/issues/new/choose)) have been used by the issue author or depending how the issue is perceived by the issue triage responsible, the following should help you understand what standard issue information that must be included.
+Given a certain [issue template](https://github.com/grafana/grafana/issues/new/choose) have been used by the issue author or depending how the issue is perceived by the issue triage responsible, the following should help you understand what standard issue information that must be included.
 
 #### Bug reports
 
 Should explain what happened, what was expected and how to reproduce it together with any additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output and any environment related information that's applicable and/or maybe related to the reported problem:
+
 - Grafana version
 - Data source type & version
 - Platform & OS Grafana is installed on
@@ -170,10 +172,12 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 4. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
 **It can't be reproduced:**
+
 1. Either [ask for more information](#2-ensure-the-issue-contains-basic-information) needed to investigate it more thoroughly.
 2. Either [delegate further investigations](#investigation-of-issues) to someone else.
 
 **It works as intended/by design:**
+
 1. Kindly and politely add a comment explaining briefly why we think it works as intended and close the issue.
 2. Label the issue `type/works-as-intended`.
 
@@ -188,13 +192,14 @@ First, evaluate if the documentation makes sense to be included in the Grafana p
 
 - Is this something we want/can maintain as a project?
 - Is this referring to usage of some specific integration/tool and in that case is that a popular use case in combination with Grafana?
-- If unsure, kindly and politely add a comment explaining that we would need [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) to identify that lots of other users want/need this.
+- If unsure, kindly and politely add a comment explaining that we would need [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments) to identify that lots of other users want/need this.
 
 Second, label the issue `type/docs` and at least one `area/*` or `datasource/*` label.
 
 **Minor typo/error/lack of information:**
 
 There's a minor typo/error/lack of information that adds a lot of confusion for users and given the amount of work is a big win to make sure fixing it:
+
 1. Either update the documentation yourself and open a pull request.
 2. Either delegate the work to someone else by assigning that person to the issue and add the issue to next major/minor milestone.
 
@@ -291,20 +296,20 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 ## Investigation of issues
 
-When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending on the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
+When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending on the perceived severity and/or number of [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
 
 Investigating issues can be a very time consuming task, especially for the maintainers, given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services, etc that are being used with Grafana. There is a certain number of combinations that are more common than others, and these are in general easier for maintainers to investigate.
 
 For some other combinations it may not be possible at all for a maintainer to setup a proper test environment to investigate the issue. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
-Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
+Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
 
-## Automation 
+## Automation
 
 We have some automation that triggers on comments or labels being added to issues. Many of these automated behaviors are defined in [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json). Or in other [GitHub Actions](https://github.com/grafana/grafana/tree/main/.github/workflows)
 
-* Add /duplicate `#<issue number>`  to have Grafana label & close issue with an appropriate message. 
-* Add `bot/question` and the bot will close it with an appropriate message. 
+- Add /duplicate `#<issue number>` to have Grafana label & close issue with an appropriate message.
+- Add `bot/question` and the bot will close it with an appropriate message.
 
 [Read more on bot actions](https://github.com/grafana/grafana/blob/main/.github/bot.md)
 
@@ -324,6 +329,7 @@ Part of issue triage should also be triaging of external PRs. Main goal should b
 If you're using Gmail it's highly recommended that you setup filters to automatically remove email from the inbox and label them accordingly to make it easy for you to understand when you need to act upon a notification or process all incoming issues that haven't been triaged.
 
 This may be setup by personal preference, but here's a working configuration for reference.
+
 1. Follow instructions in [gist](https://gist.github.com/marefr/9167c2e31466f6316c1cba118874e74f)
 2. In Gmail, go to Settings -> Filters and Blocked Addresses
 3. Import filters -> select xml file -> Open file
@@ -332,6 +338,7 @@ This may be setup by personal preference, but here's a working configuration for
 6. Create filters
 
 This will give you a structure of labels in the sidebar similar to the following:
+
 ```
  - Inbox
  ...

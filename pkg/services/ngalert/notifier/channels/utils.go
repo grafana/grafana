@@ -12,11 +12,12 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -26,6 +27,33 @@ const (
 	ColorAlertResolved = "#36a64f"
 )
 
+var (
+	// Provides current time. Can be overwritten in tests.
+	timeNow = time.Now
+)
+
+type receiverInitError struct {
+	Reason string
+	Err    error
+	Cfg    NotificationChannelConfig
+}
+
+func (e receiverInitError) Error() string {
+	name := ""
+	if e.Cfg.Name != "" {
+		name = fmt.Sprintf("%q ", e.Cfg.Name)
+	}
+
+	s := fmt.Sprintf("failed to validate receiver %sof type %q: %s", name, e.Cfg.Type, e.Reason)
+	if e.Err != nil {
+		return fmt.Sprintf("%s: %s", s, e.Err.Error())
+	}
+
+	return s
+}
+
+func (e receiverInitError) Unwrap() error { return e.Err }
+
 func getAlertStatusColor(status model.AlertStatus) string {
 	if status == model.AlertFiring {
 		return ColorAlertFiring
@@ -33,21 +61,18 @@ func getAlertStatusColor(status model.AlertStatus) string {
 	return ColorAlertResolved
 }
 
-type NotificationChannelConfig struct {
-	UID                   string                        `json:"uid"`
-	Name                  string                        `json:"name"`
-	Type                  string                        `json:"type"`
-	DisableResolveMessage bool                          `json:"disableResolveMessage"`
-	Settings              *simplejson.Json              `json:"settings"`
-	SecureSettings        securejsondata.SecureJsonData `json:"secureSettings"`
+type NotificationChannel interface {
+	notify.Notifier
+	notify.ResolvedSender
 }
-
-// DecryptedValue returns decrypted value from secureSettings
-func (an *NotificationChannelConfig) DecryptedValue(field string, fallback string) string {
-	if value, ok := an.SecureSettings.DecryptedValue(field); ok {
-		return value
-	}
-	return fallback
+type NotificationChannelConfig struct {
+	OrgID                 int64             // only used internally
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string][]byte `json:"secureSettings"`
 }
 
 type httpCfg struct {

@@ -3,6 +3,7 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import { uniqBy } from 'lodash';
 // Types
+import { TooltipDisplayMode } from '@grafana/schema';
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
 import { FlotPosition, FlotItem } from './types';
 import { VizTooltipProps, VizTooltipContentProps, ActiveDimensions, VizTooltip } from '../VizTooltip';
@@ -10,7 +11,6 @@ import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
 import { graphTimeFormat, graphTickFormatter } from './utils';
-import { TooltipDisplayMode } from '../VizTooltip/models.gen';
 
 export interface GraphProps {
   ariaLabel?: string;
@@ -37,6 +37,13 @@ interface GraphState {
   contextItem?: FlotItem<GraphSeriesXY>;
 }
 
+/**
+ * This is a react wrapper for the angular, flot based graph visualization.
+ * Rather than using this component, you should use the `<PanelRender .../> with
+ * timeseries panel configs.
+ *
+ * @deprecated
+ */
 export class Graph extends PureComponent<GraphProps, GraphState> {
   static defaultProps = {
     showLines: true,

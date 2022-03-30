@@ -7,7 +7,7 @@ import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
 import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
-import { otherOptions, quickOptions } from './rangeOptions';
+import { quickOptions } from './options';
 import { selectors } from '@grafana/e2e-selectors';
 import { stylesFactory } from '../../themes';
 
@@ -100,7 +100,6 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
             timeZone={timeZone}
             value={isValidTimeRange(value) ? (value as TimeRange) : getDefaultTimeRange()}
             onChange={onRangeChange}
-            otherOptions={otherOptions}
             quickOptions={quickOptions}
             onChangeTimeZone={onChangeTimeZone}
             className={styles.content}
@@ -141,6 +140,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
       inputStyles.suffix,
       css`
         position: relative;
+        top: -1px;
         margin-left: ${theme.v1.spacing.xs};
       `
     ),

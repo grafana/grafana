@@ -33,19 +33,16 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = fa
     ];
   }, []);
 
-  // no need to show the picker if there's only one option
-  if (options.length === 1) {
-    return null;
-  }
-
   return (
     <Field
       className={styles.field}
-      label={disabled ? 'Alert manager' : 'Choose alert manager'}
-      disabled={disabled}
+      label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
+      disabled={disabled || options.length === 1}
       data-testid="alertmanager-picker"
     >
       <Select
+        aria-label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
+        menuShouldPortal
         width={29}
         className="ds-picker select-container"
         backspaceRemovesValue={false}

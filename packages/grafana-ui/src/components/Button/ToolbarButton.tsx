@@ -17,6 +17,8 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
   /** For image icons */
   imgSrc?: string;
+  /** Alt text for imgSrc */
+  imgAlt?: string;
   /** if true or false will show angle-down/up */
   isOpen?: boolean;
   /** Controls flex-grow: 1 */
@@ -27,6 +29,8 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ToolbarButtonVariant;
   /** Hide any children and only show icon */
   iconOnly?: boolean;
+  /** Show highlight dot */
+  isHighlighted?: boolean;
 }
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
@@ -39,12 +43,14 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
       className,
       children,
       imgSrc,
+      imgAlt,
       fullWidth,
       isOpen,
       narrow,
       variant = 'default',
       iconOnly,
       'aria-label': ariaLabel,
+      isHighlighted,
       ...rest
     },
     ref
@@ -69,12 +75,19 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
     });
 
     const body = (
-      <button ref={ref} className={buttonStyles} aria-label={getButttonAriaLabel(ariaLabel, tooltip)} {...rest}>
+      <button
+        ref={ref}
+        className={buttonStyles}
+        aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
+        aria-expanded={isOpen}
+        {...rest}
+      >
         {renderIcon(icon)}
-        {imgSrc && <img className={styles.img} src={imgSrc} />}
+        {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
         {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
+        {isHighlighted && <div className={styles.highlight} />}
       </button>
     );
 
@@ -88,7 +101,9 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   }
 );
 
-function getButttonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
+ToolbarButton.displayName = 'ToolbarButton';
+
+function getButtonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
   return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
 }
 
@@ -111,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css`
       label: toolbar-button;
+      position: relative;
       display: flex;
       align-items: center;
       height: ${theme.spacing(theme.components.height.md)};
@@ -197,6 +213,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     contentWithRightIcon: css`
       padding-right: ${theme.spacing(0.5)};
+    `,
+    highlight: css`
+      background-color: ${theme.colors.success.main};
+      border-radius: 50%;
+      width: 6px;
+      height: 6px;
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      z-index: 1;
     `,
   };
 };

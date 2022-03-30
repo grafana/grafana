@@ -18,27 +18,29 @@ WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<p
 
 If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin.md" >}}).
 
-| Signature status | Description |
-| ---------------- | ----------- |
-| Core | Core plugin built into Grafana. |
-| Invalid signature | The plugin has a invalid signature. |
+| Signature status   | Description                                                                     |
+| ------------------ | ------------------------------------------------------------------------------- |
+| Core               | Core plugin built into Grafana.                                                 |
+| Invalid signature  | The plugin has a invalid signature.                                             |
 | Modified signature | The plugin has changed since it was signed. This may indicate malicious intent. |
-| Unsigned | The plugin is not signed. |
-| Signed | The plugin signature was successfully verified. |
+| Unsigned           | The plugin is not signed.                                                       |
+| Signed             | The plugin signature was successfully verified.                                 |
 
 ## Plugin signature levels
 
 All plugins is signed under a _signature level_. The signature level determines how the plugin can be distributed.
 
-|**Plugin Level**|**Description**|
-|---|---|
-|Private|<p>Private plugins are for use on your own Grafana. They may not be distributed to the Grafana community, and are not published in the Grafana catalog.</p>|
-|Community|<p>Community plugins have dependent technologies that are open source and not for profit.</p><p>Community plugins are published in the official Grafana catalog, and are available to the Grafana community.</p>|
-|Commercial|<p>Commercial plugins have dependent technologies that are closed source or commercially backed.</p><p>Commercial Plugins are published on the official Grafana catalog, and are available to the Grafana community.</p>|
+| **Plugin Level** | **Description**                                                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Private          | <p>Private plugins are for use on your own Grafana. They may not be distributed to the Grafana community, and are not published in the Grafana catalog.</p>                                                              |
+| Community        | <p>Community plugins have dependent technologies that are open source and not for profit.</p><p>Community plugins are published in the official Grafana catalog, and are available to the Grafana community.</p>         |
+| Commercial       | <p>Commercial plugins have dependent technologies that are closed source or commercially backed.</p><p>Commercial Plugins are published on the official Grafana catalog, and are available to the Grafana community.</p> |
 
 ## Allow unsigned plugins
 
-We strongly recommend that you don't run unsigned plugins in your Grafana installation. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../administration/configuration.md#allow_loading_unsigned_plugins" >}}).
+> **Note:** Unsigned plugins are not supported in Grafana Cloud.
+
+We strongly recommend that you don't run unsigned plugins in your Grafana instance. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../administration/configuration.md#allow_loading_unsigned_plugins" >}}).
 
 If you've allowed loading of an unsigned plugin, then Grafana writes a warning message to the server log:
 

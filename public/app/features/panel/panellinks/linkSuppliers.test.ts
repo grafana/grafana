@@ -2,21 +2,23 @@ import { getFieldLinksSupplier } from './linkSuppliers';
 import { applyFieldOverrides, createTheme, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
-import { TimeSrv } from '../../dashboard/services/TimeSrv';
+
+// We do not need more here and TimeSrv is hard to setup fully.
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  getTimeSrv: () => ({
+    timeRangeForUrl() {
+      const from = dateTime().subtract(1, 'h');
+      const to = dateTime();
+      return { from, to, raw: { from, to } };
+    },
+  }),
+}));
 
 describe('getFieldLinksSupplier', () => {
   let originalLinkSrv: LinkService;
   let templateSrv = new TemplateSrv();
   beforeAll(() => {
-    // We do not need more here and TimeSrv is hard to setup fully.
-    const timeSrvMock: TimeSrv = {
-      timeRangeForUrl() {
-        const from = dateTime().subtract(1, 'h');
-        const to = dateTime();
-        return { from, to, raw: { from, to } };
-      },
-    } as any;
-    const linkService = new LinkSrv(new TemplateSrv(), timeSrvMock);
+    const linkService = new LinkSrv();
     originalLinkSrv = getLinkSrv();
 
     setLinkSrv(linkService);

@@ -1,4 +1,3 @@
-import './query_parameter_ctrl';
 import { DataSourcePlugin } from '@grafana/data';
 import { ConfigEditor } from './components/ConfigEditor';
 import { CloudWatchDatasource } from './datasource';
@@ -6,8 +5,8 @@ import { CloudWatchAnnotationsQueryCtrl } from './annotations_query_ctrl';
 import { CloudWatchJsonData, CloudWatchQuery } from './types';
 import { CloudWatchLogsQueryEditor } from './components/LogsQueryEditor';
 import { PanelQueryEditor } from './components/PanelQueryEditor';
+import { MetaInspector } from './components/MetaInspector';
 import LogsCheatSheet from './components/LogsCheatSheet';
-import { LiveMeasurementsSupport } from 'app/features/live/measurements/measurementsSupport';
 
 export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>(
   CloudWatchDatasource
@@ -15,7 +14,7 @@ export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery
   .setQueryEditorHelp(LogsCheatSheet)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(PanelQueryEditor)
+  .setMetadataInspector(MetaInspector)
   .setExploreMetricsQueryField(PanelQueryEditor)
   .setExploreLogsQueryField(CloudWatchLogsQueryEditor)
-  .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl)
-  .setChannelSupport(new LiveMeasurementsSupport());
+  .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl);

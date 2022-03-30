@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 
 const defaultMaxDataPoints float64 = 43200 // 12 hours at 1sec interval
 const defaultIntervalMS float64 = 1000
+
+var ErrNoQuery = errors.New("no `expr` property in the query model")
 
 // Duration is a type used for marshalling durations.
 type Duration time.Duration
@@ -89,7 +92,7 @@ func (aq *AlertQuery) setModelProps() error {
 
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
-	return aq.DatasourceUID == expr.DatasourceUID, nil
+	return expr.IsDataSource(aq.DatasourceUID), nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid
@@ -172,6 +175,28 @@ func (aq *AlertQuery) GetIntervalDuration() (time.Duration, error) {
 // GetDatasource returns the query datasource identifier.
 func (aq *AlertQuery) GetDatasource() (string, error) {
 	return aq.DatasourceUID, nil
+}
+
+// GetQuery returns the query defined by `expr` within the model.
+// Returns an ErrNoQuery if it is unable to find the query.
+// Returns an error if it is not able to cast the query to a string.
+func (aq *AlertQuery) GetQuery() (string, error) {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return "", err
+		}
+	}
+	query, ok := aq.modelProps["expr"]
+	if !ok {
+		return "", ErrNoQuery
+	}
+
+	q, ok := query.(string)
+	if !ok {
+		return "", fmt.Errorf("failed to cast query to string: %v", aq.modelProps["expr"])
+	}
+	return q, nil
 }
 
 func (aq *AlertQuery) GetModel() ([]byte, error) {

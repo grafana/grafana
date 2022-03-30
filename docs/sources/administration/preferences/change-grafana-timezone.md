@@ -30,9 +30,10 @@ Organization administrators and team administrators can choose a default timezon
 
 {{< docs/list >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}
+
 1. Click on the team you that you want to change the timezone for and then navigate to the **Settings** tab.
-{{< docs/shared "preferences/select-timezone-list.md" >}}
-{{< /docs/list >}}
+   {{< docs/shared "preferences/select-timezone-list.md" >}}
+   {{< /docs/list >}}
 
 ## Set your personal timezone
 

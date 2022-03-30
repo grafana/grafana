@@ -33,7 +33,7 @@ export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor
   );
 };
 
-const useOptions = (metricDescriptor?: MetricDescriptor): Array<SelectableValue<string>> => {
+const useOptions = (metricDescriptor?: MetricDescriptor): Array<SelectableValue<PreprocessorType>> => {
   const metricKind = metricDescriptor?.metricKind;
   const valueType = metricDescriptor?.valueType;
 

@@ -16,7 +16,7 @@ export function extractNotifierTypeCounts(receiver: Receiver, grafanaNotifiers: 
 
 function getCortexAlertManagerNotifierTypeCounts(receiver: Receiver): NotifierTypeCounts {
   return Object.entries(receiver)
-    .filter(([key]) => key !== 'grafana_managed_receiver_configs' && key.endsWith('_configs')) // filter out only properties that are alert manager notifier
+    .filter(([key]) => key !== 'grafana_managed_receiver_configs' && key.endsWith('_configs')) // filter out only properties that are alertmanager notifier
     .filter(([_, value]) => Array.isArray(value) && !!value.length) // check that there are actually notifiers of this type configured
     .reduce<NotifierTypeCounts>((acc, [key, value]) => {
       const type = key.replace('_configs', ''); // remove the `_config` part from the key, making it intto a notifier name

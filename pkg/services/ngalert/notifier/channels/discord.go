@@ -3,66 +3,92 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 	"strings"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
-	old_notifiers.NotifierBase
-	log        log.Logger
-	tmpl       *template.Template
-	Content    string
-	AvatarURL  string
-	WebhookURL string
+	*Base
+	log                log.Logger
+	ns                 notifications.WebhookSender
+	tmpl               *template.Template
+	Content            string
+	AvatarURL          string
+	WebhookURL         string
+	UseDiscordUsername bool
 }
 
-func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
-	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
-	}
+type DiscordConfig struct {
+	*NotificationChannelConfig
+	Content            string
+	AvatarURL          string
+	WebhookURL         string
+	UseDiscordUsername bool
+}
 
-	avatarURL := model.Settings.Get("avatar_url").MustString()
-
-	discordURL := model.Settings.Get("url").MustString()
+func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error) {
+	discordURL := config.Settings.Get("url").MustString()
 	if discordURL == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
+		return nil, errors.New("could not find webhook url property in settings")
 	}
-
-	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
-
-	return &DiscordNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
-			SecureSettings:        model.SecureSettings,
-		}),
-		Content:    content,
-		AvatarURL:  avatarURL,
-		WebhookURL: discordURL,
-		log:        log.New("alerting.notifier.discord"),
-		tmpl:       t,
+	return &DiscordConfig{
+		NotificationChannelConfig: config,
+		Content:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		AvatarURL:                 config.Settings.Get("avatar_url").MustString(),
+		WebhookURL:                discordURL,
+		UseDiscordUsername:        config.Settings.Get("use_discord_username").MustBool(false),
 	}, nil
+}
+
+func DiscrodFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewDiscordConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewDiscordNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewDiscordNotifier(config *DiscordConfig, ns notifications.WebhookSender, t *template.Template) *DiscordNotifier {
+	return &DiscordNotifier{
+		Base: NewBase(&models.AlertNotification{
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
+			SecureSettings:        config.SecureSettings,
+		}),
+		Content:            config.Content,
+		AvatarURL:          config.AvatarURL,
+		WebhookURL:         config.WebhookURL,
+		log:                log.New("alerting.notifier.discord"),
+		ns:                 ns,
+		tmpl:               t,
+		UseDiscordUsername: config.UseDiscordUsername,
+	}
 }
 
 func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("username", "Grafana")
+
+	if !d.UseDiscordUsername {
+		bodyJSON.Set("username", "Grafana")
+	}
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
@@ -81,7 +107,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	embed := simplejson.New()
-	embed.Set("title", tmpl(`{{ template "default.title" . }}`))
+	embed.Set("title", tmpl(DefaultMessageTitleEmbed))
 	embed.Set("footer", footer)
 	embed.Set("type", "rich")
 
@@ -95,7 +121,8 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	u := tmpl(d.WebhookURL)
 	if tmplErr != nil {
-		d.log.Debug("failed to template Discord message", "err", tmplErr.Error())
+		d.log.Warn("failed to template Discord message", "err", tmplErr.Error())
+		return false, tmplErr
 	}
 
 	body, err := json.Marshal(bodyJSON)
@@ -109,7 +136,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		Body:        string(body),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
 		d.log.Error("Failed to send notification to Discord", "error", err)
 		return false, err
 	}

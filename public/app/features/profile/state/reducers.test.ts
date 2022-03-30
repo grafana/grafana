@@ -7,6 +7,7 @@ import {
   setUpdating,
   teamsLoaded,
   updateTimeZone,
+  updateWeekStart,
   userLoaded,
   userReducer,
   userSessionRevoked,
@@ -14,12 +15,31 @@ import {
 } from './reducers';
 
 describe('userReducer', () => {
+  let dateNow: any;
+
+  beforeAll(() => {
+    dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
+  });
+
+  afterAll(() => {
+    dateNow.mockRestore();
+  });
+
   describe('when updateTimeZone is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
         .givenReducer(userReducer, { ...initialUserState })
         .whenActionIsDispatched(updateTimeZone({ timeZone: 'xyz' }))
         .thenStateShouldEqual({ ...initialUserState, timeZone: 'xyz' });
+    });
+  });
+
+  describe('when updateWeekStart is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<UserState>()
+        .givenReducer(userReducer, { ...initialUserState })
+        .whenActionIsDispatched(updateWeekStart({ weekStart: 'xyz' }))
+        .thenStateShouldEqual({ ...initialUserState, weekStart: 'xyz' });
     });
   });
 
@@ -146,7 +166,7 @@ describe('userReducer', () => {
               browserVersion: '90',
               osVersion: '95',
               clientIp: '192.168.1.1',
-              createdAt: 'December 31, 2020',
+              createdAt: '2021-01-01 04:00:00',
               device: 'Computer',
               os: 'Windows',
               isActive: false,

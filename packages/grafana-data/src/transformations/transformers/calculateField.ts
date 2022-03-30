@@ -71,9 +71,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: (options) => (outerSource) => {
+  operator: (options, replace) => (outerSource) => {
     const operator =
       options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
+
+    options.alias = replace ? replace(options.alias) : options.alias;
 
     return outerSource.pipe(
       operator,
@@ -84,7 +86,14 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
         if (mode === CalculateFieldMode.ReduceRow) {
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
-          creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
+          const binaryOptions = replace
+            ? {
+                ...options.binary,
+                left: replace ? replace(options.binary?.left) : options.binary?.left,
+                right: replace ? replace(options.binary?.right) : options.binary?.right,
+              }
+            : options.binary;
+          creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         }
 
         // Nothing configured
@@ -210,7 +219,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return (undefined as unknown) as Vector;
+      return undefined as unknown as Vector;
     }
 
     return new BinaryOperationVector(left, right, operator.operation);

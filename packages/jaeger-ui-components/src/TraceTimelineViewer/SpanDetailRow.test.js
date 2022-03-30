@@ -14,8 +14,9 @@
 
 import React from 'react';
 import { shallow } from 'enzyme';
+import { createTheme } from '@grafana/data';
 
-import SpanDetailRow from './SpanDetailRow';
+import { UnthemedSpanDetailRow } from './SpanDetailRow';
 import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
@@ -37,6 +38,7 @@ describe('<SpanDetailRow>', () => {
     span: { spanID, depth: 3 },
     tagsToggle: jest.fn(),
     traceStartTime: 1000,
+    theme: createTheme(),
   };
 
   let wrapper;
@@ -48,10 +50,7 @@ describe('<SpanDetailRow>', () => {
     props.logsToggle.mockReset();
     props.processToggle.mockReset();
     props.tagsToggle.mockReset();
-    wrapper = shallow(<SpanDetailRow {...props} />)
-      .dive()
-      .dive()
-      .dive();
+    wrapper = shallow(<UnthemedSpanDetailRow {...props} />);
   });
 
   it('renders without exploding', () => {

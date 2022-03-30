@@ -7,9 +7,10 @@ weight = 105
 
 # Roles
 
-A role represents set of permissions that allow you to perform specific actions on Grafana resources. Refer to [Permissions]({{< relref "./permissions.md" >}}) to understand how permissions work.
+A role represents set of permissions that allow you to perform specific actions on Grafana resources. Refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}) to understand how permissions work.
 
 There are two types of roles:
+
 - [Fixed roles]({{< relref "./roles.md#fixed-roles" >}}), which provide granular access for specific resources within Grafana and are managed by the Grafana itself.
 - [Custom roles]({{< relref "./roles.md#custom-roles.md" >}}), which provide granular access based on the user specified set of permissions.
 
@@ -25,7 +26,7 @@ Fixed roles provide convenience and guarantee of consistent behaviour by combini
 There are few basic rules for fixed roles:
 
 - All fixed roles are _global_.
-- All fixed roles have a `fixed:` prefix. 
+- All fixed roles have a `fixed:` prefix.
 - You can’t change or delete a fixed role.
 
 For more information, refer to [Fine-grained access control references]({{< relref "./fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}).
@@ -42,6 +43,18 @@ A role's name is intended as a human friendly identifier for the role, helping a
 Role names must be unique within an organization.
 
 Roles with names prefixed by `fixed:` are fixed roles created by Grafana and cannot be created or modified by users.
+
+### Role display name
+
+A role’s display name is human friendly text that is displayed in the UI. When you create a display name for a role, use up to 190 ASCII-based characters. For fixed roles, the display name is shown as specified. If the display name has not been set the display name replace any `:` (a colon) with ` ` (a space).
+
+### Display name
+
+A role’s display name is a human-friendly identifier for the role, so that users more easily understand the purpose of a role. You can see the display name in the role picker in the UI.
+
+### Group
+
+A role’s group organizes roles in the role picker in the UI.
 
 ### Role version
 
@@ -66,20 +79,13 @@ If a Grafana Server Admin wants to delegate that privilege to other users, they 
 
 Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
 
-## Built-in role assignments
+## Assign roles
 
-To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role. 
-These assignments are called built-in role assignments.
+[Custom roles]({{< ref "#custom-roles" >}}) and [Fixed roles]({{< ref "#fixed-roles" >}}) can be assigned to users, the existing [Organization roles]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#organization-users-and-permissions" >}}) and to the [Grafana Server Admin]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#grafana-server-administrators" >}}) role.
 
-During startup, Grafana will create default assignments for you. When you make any changes to the built-on role assignments, Grafana will take them into account and won’t overwrite during next start.
-
-For more information, refer to [Fine-grained access control references]({{< relref "./fine-grained-access-control-references.md#default-built-in-role-assignments" >}}).
-
-## Create and remove built-in role assignments
-
-You can create or remove built-in role assignments using [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) or using [Grafana Provisioning]({{< relref "./provisioning" >}}).
+Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for more details.
 
 ### Scope of assignments
 
-A built-in role assignment can be either _global_ or _organization local_. _Global_ assignments are not mapped to any specific organization and will be applied to all organizations, whereas _organization local_ assignments are only applied for that specific organization.
+A role assignment can be either _global_ or _organization local_. _Global_ assignments are not mapped to any specific organization and will be applied to all organizations, whereas _organization local_ assignments are only applied for that specific organization.
 You can only create _organization local_ assignments for _organization local_ roles.

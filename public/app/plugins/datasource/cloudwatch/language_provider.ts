@@ -1,7 +1,9 @@
-// Libraries
 import { sortedUniq } from 'lodash';
+import { lastValueFrom } from 'rxjs';
+import Prism, { Grammar } from 'prismjs';
+import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
+import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-// Services & Utils
 import syntax, {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -12,14 +14,8 @@ import syntax, {
   QUERY_COMMANDS,
   STRING_FUNCTIONS,
 } from './syntax';
-
-// Types
 import { CloudWatchQuery, TSDBResponse } from './types';
-import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
-
 import { CloudWatchDatasource } from './datasource';
-import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
-import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -27,11 +23,12 @@ type TypeaheadContext = {
   history?: CloudWatchHistoryItem[];
   absoluteRange?: AbsoluteTimeRange;
   logGroupNames?: string[];
+  region: string;
 };
 
 export class CloudWatchLanguageProvider extends LanguageProvider {
-  started: boolean;
-  initialRange: AbsoluteTimeRange;
+  started = false;
+  declare initialRange: AbsoluteTimeRange;
   datasource: CloudWatchDatasource;
 
   constructor(datasource: CloudWatchDatasource, initialValues?: any) {
@@ -50,7 +47,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   }
 
   request = (url: string, params?: any): Promise<TSDBResponse> => {
-    return this.datasource.awsRequest(url, params).toPromise();
+    return lastValueFrom(this.datasource.awsRequest(url, params));
   };
 
   start = () => {
@@ -108,7 +105,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     if (isInsideFunctionParenthesis(curToken)) {
-      return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+      return await this.getFieldCompletionItems(context?.logGroupNames ?? [], context?.region || 'default');
     }
 
     if (isAfterKeyword('by', curToken)) {
@@ -137,7 +134,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       }
     | undefined;
 
-  private fetchFields = async (logGroups: string[]): Promise<string[]> => {
+  private fetchFields = async (logGroups: string[], region: string): Promise<string[]> => {
     if (
       this.fetchedFieldsCache &&
       Date.now() - this.fetchedFieldsCache.time < 30 * 1000 &&
@@ -147,7 +144,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     const results = await Promise.all(
-      logGroups.map((logGroup) => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
+      logGroups.map((logGroup) => this.datasource.getLogGroupFields({ logGroupName: logGroup, region }))
     );
 
     const fields = [
@@ -166,7 +163,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   };
 
   private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput> => {
-    const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+    const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? [], context?.region || 'default');
     const functionSuggestions: CompletionItemGroup[] = [
       {
         searchFunctionType: SearchFunctionType.Prefix,
@@ -194,7 +191,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     if (queryCommand === 'parse') {
       if (currentTokenIsFirstArg) {
-        return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+        return await this.getFieldCompletionItems(context?.logGroupNames ?? [], context?.region || 'default');
       }
     }
 
@@ -211,7 +208,10 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     if (['display', 'fields'].includes(queryCommand)) {
-      const typeaheadOutput = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+      const typeaheadOutput = await this.getFieldCompletionItems(
+        context?.logGroupNames ?? [],
+        context?.region || 'default'
+      );
       typeaheadOutput.suggestions.push(...this.getFieldAndFilterFunctionCompletionItems().suggestions);
 
       return typeaheadOutput;
@@ -228,7 +228,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     if (queryCommand === 'filter' && currentTokenIsFirstArg) {
-      const sugg = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+      const sugg = await this.getFieldCompletionItems(context?.logGroupNames ?? [], context?.region || 'default');
       const boolFuncs = this.getBoolFuncCompletionItems();
       sugg.suggestions.push(...boolFuncs.suggestions);
       return sugg;
@@ -242,7 +242,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     context?: TypeaheadContext
   ): Promise<TypeaheadOutput> {
     if (isFirstArgument) {
-      return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+      return await this.getFieldCompletionItems(context?.logGroupNames ?? [], context?.region || 'default');
     } else if (isTokenType(prevNonWhitespaceToken(curToken), 'field-name')) {
       // suggest sort options
       return {
@@ -265,7 +265,10 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   }
 
   private handleComparison = async (context?: TypeaheadContext) => {
-    const fieldsSuggestions = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
+    const fieldsSuggestions = await this.getFieldCompletionItems(
+      context?.logGroupNames ?? [],
+      context?.region || 'default'
+    );
     const comparisonSuggestions = this.getComparisonCompletionItems();
     fieldsSuggestions.suggestions.push(...comparisonSuggestions.suggestions);
     return fieldsSuggestions;
@@ -317,8 +320,8 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     };
   };
 
-  private getFieldCompletionItems = async (logGroups: string[]): Promise<TypeaheadOutput> => {
-    const fields = await this.fetchFields(logGroups);
+  private getFieldCompletionItems = async (logGroups: string[], region: string): Promise<TypeaheadOutput> => {
+    const fields = await this.fetchFields(logGroups, region);
 
     return {
       suggestions: [

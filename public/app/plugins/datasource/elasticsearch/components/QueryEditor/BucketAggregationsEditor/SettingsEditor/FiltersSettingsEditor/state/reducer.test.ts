@@ -46,7 +46,7 @@ describe('Filters Bucket Aggregation Settings Reducer', () => {
 
     reducerTester<Filter[]>()
       .givenReducer(reducer, [firstFilter, secondFilter])
-      .whenActionIsDispatched(changeFilter(1, expectedSecondFilter))
+      .whenActionIsDispatched(changeFilter({ index: 1, filter: expectedSecondFilter }))
       .thenStateShouldEqual([firstFilter, expectedSecondFilter]);
   });
 });

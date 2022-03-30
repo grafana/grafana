@@ -9,7 +9,7 @@ import DashboardTable from './DashboardsTable';
 // Actions & Selectors
 import { getNavModel } from 'app/core/selectors/navModel';
 import { loadDataSource } from './state/actions';
-import { loadPluginDashboards } from '../plugins/state/actions';
+import { loadPluginDashboards } from '../plugins/admin/state/actions';
 import { importDashboard, removeDashboard } from '../dashboard/state/actions';
 import { getDataSource } from './state/selectors';
 
@@ -71,7 +71,7 @@ export class DataSourceDashboards extends PureComponent<Props> {
   };
 
   onRemove = (dashboard: PluginDashboard) => {
-    this.props.removeDashboard(dashboard.importedUri);
+    this.props.removeDashboard(dashboard.uid);
   };
 
   render() {

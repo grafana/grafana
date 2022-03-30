@@ -6,7 +6,7 @@ import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 
 import config from 'app/core/config';
 import { feedToDataFrame } from './utils';
-import { loadRSSFeed } from './rss';
+import { loadFeed } from './feed';
 
 // Types
 import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
@@ -14,6 +14,8 @@ import { NewsItem } from './types';
 import { PanelOptions } from './models.gen';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
 import { css, cx } from '@emotion/css';
+import { RefreshEvent } from '@grafana/runtime';
+import { Unsubscribable } from 'rxjs';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -23,14 +25,20 @@ interface State {
 }
 
 export class NewsPanel extends PureComponent<Props, State> {
+  private refreshSubscription: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
-
+    this.refreshSubscription = this.props.eventBus.subscribe(RefreshEvent, this.loadChannel.bind(this));
     this.state = {};
   }
 
   componentDidMount(): void {
     this.loadChannel();
+  }
+
+  componentWillUnmount(): void {
+    this.refreshSubscription.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props): void {
@@ -47,8 +55,9 @@ export class NewsPanel extends PureComponent<Props, State> {
           ? `${PROXY_PREFIX}${options.feedUrl}`
           : options.feedUrl
         : DEFAULT_FEED_URL;
-      const res = await loadRSSFeed(url);
-      const frame = feedToDataFrame(res);
+
+      const feed = await loadFeed(url);
+      const frame = feedToDataFrame(feed);
       this.setState({
         news: new DataFrameView<NewsItem>(frame),
         isError: false,
@@ -80,30 +89,34 @@ export class NewsPanel extends PureComponent<Props, State> {
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         {news.map((item, index) => {
           return (
-            <div key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
+            <article key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
               {showImage && item.ogImage && (
                 <a
+                  tabIndex={-1}
                   href={textUtil.sanitizeUrl(item.link)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
+                  aria-hidden
                 >
-                  <img src={item.ogImage} />
+                  <img src={item.ogImage} alt={item.title} />
                 </a>
               )}
               <div className={styles.body}>
-                <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
+                <time className={styles.date} dateTime={dateTimeFormat(item.date, { format: 'MMM DD' })}>
+                  {dateTimeFormat(item.date, { format: 'MMM DD' })}{' '}
+                </time>
                 <a
                   className={styles.link}
                   href={textUtil.sanitizeUrl(item.link)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <div className={styles.title}>{item.title}</div>
+                  <h3 className={styles.title}>{item.title}</h3>
                 </a>
                 <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
               </div>
-            </div>
+            </article>
           );
         })}
       </CustomScrollbar>
@@ -129,7 +142,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   itemWide: css`
     flex-direction: row;
   `,
-  body: css``,
+  body: css`
+    display: flex;
+    flex-direction: column;
+  `,
   socialImage: css`
     display: flex;
     align-items: center;
@@ -149,6 +165,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   link: css`
     color: ${theme.colors.text.link};
+    display: inline-block;
 
     &:hover {
       color: ${theme.colors.text.link};
@@ -156,7 +173,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     }
   `,
   title: css`
-    max-width: calc(100% - 70px);
     font-size: 16px;
     margin-bottom: ${theme.spacing(0.5)};
   `,

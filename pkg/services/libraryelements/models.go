@@ -136,9 +136,9 @@ type LibraryElementConnectionDTO struct {
 
 var (
 	// errLibraryElementAlreadyExists is an error for when the user tries to add a library element that already exists.
-	errLibraryElementAlreadyExists = errors.New("library element with that name already exists")
-	// errLibraryElementNotFound is an error for when a library element can't be found.
-	errLibraryElementNotFound = errors.New("library element could not be found")
+	errLibraryElementAlreadyExists = errors.New("library element with that name or UID already exists")
+	// ErrLibraryElementNotFound is an error for when a library element can't be found.
+	ErrLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
 	errLibraryElementDashboardNotFound = errors.New("library element connection could not be found")
 	// errLibraryElementHasConnections is an error for when an user deletes a library element that is connected.
@@ -147,27 +147,54 @@ var (
 	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
 	// errLibraryElementUnSupportedElementKind is an error for when the kind is unsupported.
 	errLibraryElementUnSupportedElementKind = errors.New("the element kind is not supported")
-	// ErrFolderHasConnectedLibraryElements is an error for when an user deletes a folder that contains connected library elements.
+	// ErrFolderHasConnectedLibraryElements is an error for when a user deletes a folder that contains connected library elements.
 	ErrFolderHasConnectedLibraryElements = errors.New("folder contains library elements that are linked in use")
+	// errLibraryElementInvalidUID is an error for when the uid of a library element is invalid
+	errLibraryElementInvalidUID = errors.New("uid contains illegal characters")
+	// errLibraryElementUIDTooLong is an error for when the uid of a library element is invalid
+	errLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
 )
 
 // Commands
 
 // CreateLibraryElementCommand is the command for adding a LibraryElement
+// swagger:model
 type CreateLibraryElementCommand struct {
-	FolderID int64           `json:"folderId"`
-	Name     string          `json:"name"`
-	Model    json.RawMessage `json:"model"`
-	Kind     int64           `json:"kind" binding:"Required"`
+	// ID of the folder where the library element is stored.
+	FolderID int64 `json:"folderId"`
+	// Name of the library element.
+	Name string `json:"name"`
+	// The JSON model for the library element.
+	// swagger:type object
+	Model json.RawMessage `json:"model"`
+	// Kind of element to create, Use 1 for library panels or 2 for c.
+	// Description:
+	// * 1 - library panels
+	// * 2 - library variables
+	// Enum: 1,2
+	Kind int64 `json:"kind" binding:"Required"`
+	// required: false
+	UID string `json:"uid"`
 }
 
-// patchLibraryElementCommand is the command for patching a LibraryElement
-type patchLibraryElementCommand struct {
-	FolderID int64           `json:"folderId" binding:"Default(-1)"`
-	Name     string          `json:"name"`
-	Model    json.RawMessage `json:"model"`
-	Kind     int64           `json:"kind" binding:"Required"`
-	Version  int64           `json:"version" binding:"Required"`
+// PatchLibraryElementCommand is the command for patching a LibraryElement
+type PatchLibraryElementCommand struct {
+	// ID of the folder where the library element is stored.
+	FolderID int64 `json:"folderId" binding:"Default(-1)"`
+	// Name of the library element.
+	Name string `json:"name"`
+	// The JSON model for the library element.
+	Model json.RawMessage `json:"model,omitempty"`
+	// Kind of element to create, Use 1 for library panels or 2 for c.
+	// Description:
+	// * 1 - library panels
+	// * 2 - library variables
+	// Enum: 1,2
+	Kind int64 `json:"kind" binding:"Required"`
+	// Version of the library element you are updating.
+	Version int64 `json:"version" binding:"Required"`
+	// required: false
+	UID string `json:"uid"`
 }
 
 // searchLibraryElementsQuery is the query used for searching for Elements
@@ -180,4 +207,30 @@ type searchLibraryElementsQuery struct {
 	typeFilter    string
 	excludeUID    string
 	folderFilter  string
+}
+
+// LibraryElementResponse is a response struct for LibraryElementDTO.
+type LibraryElementResponse struct {
+	Result LibraryElementDTO `json:"result"`
+}
+
+// LibraryElementSearchResponse is a response struct for LibraryElementSearchResult.
+type LibraryElementSearchResponse struct {
+	Result LibraryElementSearchResult `json:"result"`
+}
+
+// LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.
+type LibraryElementArrayResponse struct {
+	Result []LibraryElementDTO `json:"result"`
+}
+
+// LibraryElementConnectionsResponse is a response struct for an array of LibraryElementConnectionDTO.
+type LibraryElementConnectionsResponse struct {
+	Result []LibraryElementConnectionDTO `json:"result"`
+}
+
+// DeleteLibraryElementResponse is the response struct for deleting a library element.
+type DeleteLibraryElementResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
 }

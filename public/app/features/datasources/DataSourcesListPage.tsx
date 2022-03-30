@@ -1,16 +1,16 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { connect, ConnectedProps } from 'react-redux';
+// Services & Utils
+import { contextSrv } from 'app/core/core';
 // Components
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 // Types
-import { DataSourceSettings, NavModel, LayoutMode } from '@grafana/data';
 import { IconName } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { StoreState, AccessControlAction } from 'app/types';
 // Actions
 import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -22,72 +22,6 @@ import {
   getDataSourcesSearchQuery,
 } from './state/selectors';
 import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
-
-export interface Props {
-  navModel: NavModel;
-  dataSources: DataSourceSettings[];
-  dataSourcesCount: number;
-  layoutMode: LayoutMode;
-  searchQuery: string;
-  hasFetched: boolean;
-  loadDataSources: typeof loadDataSources;
-  setDataSourcesLayoutMode: typeof setDataSourcesLayoutMode;
-  setDataSourcesSearchQuery: typeof setDataSourcesSearchQuery;
-}
-
-const emptyListModel = {
-  title: 'No data sources defined',
-  buttonIcon: 'database' as IconName,
-  buttonLink: 'datasources/new',
-  buttonTitle: 'Add data source',
-  proTip: 'You can also define data sources through configuration files.',
-  proTipLink: 'http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list',
-  proTipLinkTitle: 'Learn more',
-  proTipTarget: '_blank',
-};
-
-export class DataSourcesListPage extends PureComponent<Props> {
-  componentDidMount() {
-    this.props.loadDataSources();
-  }
-
-  render() {
-    const {
-      dataSources,
-      dataSourcesCount,
-      navModel,
-      layoutMode,
-      searchQuery,
-      setDataSourcesSearchQuery,
-      hasFetched,
-    } = this.props;
-
-    const linkButton = {
-      href: 'datasources/new',
-      title: 'Add data source',
-    };
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>
-          <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
-            {hasFetched &&
-              dataSourcesCount > 0 && [
-                <PageActionBar
-                  searchQuery={searchQuery}
-                  setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
-                  linkButton={linkButton}
-                  key="action-bar"
-                />,
-                <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
-              ]}
-          </>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -106,4 +40,65 @@ const mapDispatchToProps = {
   setDataSourcesLayoutMode,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = ConnectedProps<typeof connector>;
+
+const emptyListModel = {
+  title: 'No data sources defined',
+  buttonIcon: 'database' as IconName,
+  buttonLink: 'datasources/new',
+  buttonTitle: 'Add data source',
+  proTip: 'You can also define data sources through configuration files.',
+  proTipLink: 'http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list',
+  proTipLinkTitle: 'Learn more',
+  proTipTarget: '_blank',
+};
+
+export class DataSourcesListPage extends PureComponent<Props> {
+  componentDidMount() {
+    this.props.loadDataSources();
+  }
+
+  render() {
+    const { dataSources, dataSourcesCount, navModel, layoutMode, searchQuery, setDataSourcesSearchQuery, hasFetched } =
+      this.props;
+
+    const canCreateDataSource =
+      contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
+      contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+
+    const linkButton = {
+      href: 'datasources/new',
+      title: 'Add data source',
+      disabled: !canCreateDataSource,
+    };
+
+    const emptyList = {
+      ...emptyListModel,
+      buttonDisabled: !canCreateDataSource,
+    };
+
+    return (
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!hasFetched}>
+          <>
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyList} />}
+            {hasFetched &&
+              dataSourcesCount > 0 && [
+                <PageActionBar
+                  searchQuery={searchQuery}
+                  setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
+                  linkButton={linkButton}
+                  key="action-bar"
+                />,
+                <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
+              ]}
+          </>
+        </Page.Contents>
+      </Page>
+    );
+  }
+}
+
+export default connector(DataSourcesListPage);

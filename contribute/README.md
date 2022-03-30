@@ -3,9 +3,10 @@
 This directory contains guides for contributors to the Grafana project.
 
 - [Create a pull request](create-pull-request.md)
-- [Contributing documentation](documentation.md)
+- [Contribute documentation](../contribute/documentation/README.md)
 - [Developer guide](developer-guide.md)
 - [Triage issues](triage-issues.md)
+- [Merge a pull request](merge-pull-request.md)
 
 The `style-guides` directory contains style guides for the Grafana software project and documentation.
 

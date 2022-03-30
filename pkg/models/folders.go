@@ -15,6 +15,7 @@ var (
 	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
 	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
 	ErrFolderAccessDenied            = errors.New("access denied to folder")
+	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
 )
 
 type Folder struct {
@@ -30,6 +31,31 @@ type Folder struct {
 	UpdatedBy int64
 	CreatedBy int64
 	HasAcl    bool
+}
+
+// NewFolder creates a new Folder
+func NewFolder(title string) *Folder {
+	folder := &Folder{}
+	folder.Title = title
+	folder.Created = time.Now()
+	folder.Updated = time.Now()
+	return folder
+}
+
+// DashboardToFolder converts Dashboard to Folder
+func DashboardToFolder(dash *Dashboard) *Folder {
+	return &Folder{
+		Id:        dash.Id,
+		Uid:       dash.Uid,
+		Title:     dash.Title,
+		HasAcl:    dash.HasAcl,
+		Url:       dash.GetUrl(),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
+	}
 }
 
 // UpdateDashboardModel updates an existing model from command into model for update
@@ -61,7 +87,7 @@ type CreateFolderCommand struct {
 	Uid   string `json:"uid"`
 	Title string `json:"title"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 type UpdateFolderCommand struct {
@@ -70,7 +96,7 @@ type UpdateFolderCommand struct {
 	Version   int    `json:"version"`
 	Overwrite bool   `json:"overwrite"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 //

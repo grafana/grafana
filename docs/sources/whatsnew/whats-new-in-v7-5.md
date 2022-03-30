@@ -22,7 +22,7 @@ Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
 ![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
-For more information, refer to [Pie chart panel]({{< relref "../panels/visualizations/pie-chart-panel.md" >}}).
+For more information, refer to [Pie chart panel]({{< relref "../visualizations/pie-chart-panel.md" >}}).
 
 ### Alerting for Loki
 
@@ -64,7 +64,7 @@ Previously, when users wanted to configure the Postgres data source to connect w
 
 Instead of the file path, users can now paste the SSL certification content in the UI. This allows them to configure the certification even when they do not have access to the server.
 
-> **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
+> **Note:** It remains as limitation for the Grafana Cloud, as users may not have access to the server configuration.
 
 [Postgres data source]({{< relref "../datasources/postgres.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of this change.
 
@@ -74,16 +74,16 @@ In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
-For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
+For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor/_index.md#deprecating-application-insights-and-insights-analytics" >}}).
 
 ### Cloudwatch data source enhancements
 
 - Support for region eu-south-1 has been added to the CloudWatch data source. New metrics have also been added to the namespaces AWS/Timestream, AWS/RDS (RDS Proxy metrics), AWS/NetworkFirewall, AWS/GroundStation, and AWS/DDoSProtection. Many thanks to [relvira](https://github.com/relvira), [ilyastoli](https://github.com/ilyastoli), and [rubycut](https://github.com/rubycut) for contributing!
 - Added a page limit to the List Metrics API call to improve speed and reduce memory consumption. You can change this limit by entering a higher value in [list_metrics_page_limit]({{< relref "../administration/configuration.md#list-metrics-page-limit" >}}) in the Grafana configuration file.
-- You can now enable or disable authentication providers and assume a role other than default by changing the [allowed_auth_providers]({{< relref "../administration/configuration.md#allowed-auth-providers" >}}) and [assume_role_enabled]({{< relref "../administration/configuration.md#assume-role-enabled" >}}) options in the Grafana configuration file. By default, the allowed authentication providers are _AWS SDK Default_, _Access && secret key_, and _Credentials File_, and role is _Assume role (ARN)_.
+- You can now enable or disable authentication providers and assume a role other than default by changing the [allowed_auth_providers]({{< relref "../administration/configuration.md#allowed-auth-providers" >}}) and [assume_role_enabled]({{< relref "../administration/configuration.md#assume-role-enabled" >}}) options in the Grafana configuration file. By default, the allowed authentication providers are _AWS SDK Default_, _Access and secret key_, and _Credentials File_, and role is _Assume role (ARN)_.
 - You can now specify a custom endpoint in the CloudWatch data source configuration page. This field is optional, and if it is left empty, then the default endpoint for CloudWatch is used. By specifying a regional endpoint, you can reduce request latency.
 
-  [AWS Cloudwatch data source]({{< relref "../datasources/cloudwatch.md#endpoint" >}}) was updated as a result of this change.
+  [AWS Cloudwatch data source]({{< relref "../datasources/aws-cloudwatch/_index.md" >}}) was updated as a result of this change.
 
 ### Increased API limit for CloudMonitoring Services
 
@@ -98,7 +98,7 @@ server:
   http_listen_port: 3101
 ```
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
@@ -109,6 +109,7 @@ These features are included in the Grafana Enterprise edition.
 When caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the same query again, the results return from the cache instead of from the data source (such as Splunk or ServiceNow).
 
 Query caching advantages:
+
 - Faster dashboard load times, especially for popular dashboards.
 - Reduced API costs.
 - Reduced likelihood that APIs will rate-limit or throttle requests.

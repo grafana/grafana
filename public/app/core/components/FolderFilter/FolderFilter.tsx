@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import { AsyncMultiSelect, Icon, resetSelectStyles, useStyles2 } from '@grafana/ui';
+import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { FolderInfo } from 'app/types';
+import { FolderInfo, PermissionLevelString } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export interface FolderFilterProps {
@@ -36,7 +36,6 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
     isMulti: true,
     noOptionsMessage: 'No folders found',
     placeholder: 'Filter by folder',
-    styles: resetSelectStyles(),
     maxMenuHeight,
     value,
     onChange,
@@ -45,11 +44,19 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
   return (
     <div className={styles.container}>
       {value.length > 0 && (
-        <span className={styles.clear} onClick={() => onChange([])}>
+        <Button
+          size="xs"
+          icon="trash-alt"
+          variant="link"
+          className={styles.clear}
+          onClick={() => onChange([])}
+          aria-label="Clear folders"
+        >
           Clear folders
-        </span>
+        </Button>
       )}
       <AsyncMultiSelect
+        menuShouldPortal
         {...selectOptions}
         isLoading={loading}
         loadOptions={debouncedLoadOptions}
@@ -66,7 +73,7 @@ async function getFoldersAsOptions(searchString: string, setLoading: (loading: b
   const params = {
     query: searchString,
     type: 'dash-folder',
-    permission: 'View',
+    permission: PermissionLevelString.View,
   };
 
   const searchHits = await getBackendSrv().search(params);
@@ -90,17 +97,10 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     clear: css`
       label: clear;
-      text-decoration: underline;
       font-size: ${theme.spacing(1.5)};
       position: absolute;
-      top: -${theme.spacing(2.75)};
+      top: -${theme.spacing(4.5)};
       right: 0;
-      cursor: pointer;
-      color: ${theme.colors.text.link};
-
-      &:hover {
-        color: ${theme.colors.text.maxContrast};
-      }
     `,
   };
 }

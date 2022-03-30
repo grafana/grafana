@@ -1,6 +1,6 @@
 /* Prometheus internal models */
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 import {
   PromAlertingRuleState,
   PromRuleType,
@@ -28,7 +28,7 @@ interface RuleBase {
 }
 
 export interface AlertingRule extends RuleBase {
-  alerts: Alert[];
+  alerts?: Alert[];
   labels: {
     [key: string]: string;
   };
@@ -85,6 +85,8 @@ export interface CombinedRule {
 
 export interface CombinedRuleGroup {
   name: string;
+  interval?: string;
+  source_tenants?: string[];
   rules: CombinedRule[];
 }
 
@@ -112,16 +114,62 @@ export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
-  ruleHash: number;
-}
-
-export interface RuleFilterState {
-  queryString?: string;
-  dataSource?: string;
-  alertState?: string;
+  rulerRuleHash: number;
 }
 export interface GrafanaRuleIdentifier {
   uid: string;
 }
 
-export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier;
+// Rule read directly from Prometheus without existing in the ruler API
+export interface PrometheusRuleIdentifier {
+  ruleSourceName: string;
+  namespace: string;
+  groupName: string;
+  ruleHash: number;
+}
+
+export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
+export interface FilterState {
+  queryString?: string;
+  dataSource?: string;
+  alertState?: string;
+  groupBy?: string[];
+  ruleType?: string;
+}
+
+export interface SilenceFilterState {
+  queryString?: string;
+  silenceState?: string;
+}
+
+interface EvalMatch {
+  metric: string;
+  tags?: any;
+  value: number;
+}
+
+export interface StateHistoryItemData {
+  noData: boolean;
+  evalMatches?: EvalMatch[];
+}
+
+export interface StateHistoryItem {
+  id: number;
+  alertId: number;
+  alertName: string;
+  dashboardId: number;
+  panelId: number;
+  userId: number;
+  newState: AlertState;
+  prevState: AlertState;
+  created: number;
+  updated: number;
+  time: number;
+  timeEnd: number;
+  text: string;
+  tags: any[];
+  login: string;
+  email: string;
+  avatarUrl: string;
+  data: StateHistoryItemData;
+}

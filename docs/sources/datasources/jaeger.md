@@ -32,8 +32,19 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+- **Map tag names -** When enabled, allows configuring how Jaeger tag names map to Loki label names. For example, map `service.name` to `service`.
+- **Span start time shift -** Shift in the start time for the Loki query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
+- **Span end time shift -** Shift in the end time for the Loki query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
+- **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
+- **Filter by Span ID -** Toggle to append the span ID to the Loki query.
 
-![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
+
+### Node Graph
+
+This is a configuration for the beta Node Graph visualization. The Node Graph is shown after the trace view is loaded and is disabled by default.
+
+-- **Enable Node Graph -** Enables the Node Graph visualization.
 
 ## Query traces
 
@@ -53,6 +64,62 @@ To perform a search, set the query type selector to Search, then use the followi
 - Min Duration - Filter all traces with a duration higher than the set value. Possible values are `1.2s, 100ms, 500us`.
 - Max Duration - Filter all traces with a duration lower than the set value. Possible values are `1.2s, 100ms, 500us`.
 - Limit - Limits the number of traces returned.
+
+## Upload JSON trace file
+
+You can upload a JSON file that contains a single trace to visualize it. If the file has multiple traces then the first trace is used for visualization.
+
+{{< figure src="/static/img/docs/explore/jaeger-upload-json.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger data source in explore with upload selected" >}}
+
+Here is an example JSON:
+
+```json
+{
+  "data": [
+    {
+      "traceID": "2ee9739529395e31",
+      "spans": [
+        {
+          "traceID": "2ee9739529395e31",
+          "spanID": "2ee9739529395e31",
+          "flags": 1,
+          "operationName": "CAS",
+          "references": [],
+          "startTime": 1616095319593196,
+          "duration": 1004,
+          "tags": [
+            {
+              "key": "sampler.type",
+              "type": "string",
+              "value": "const"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        }
+      ],
+      "processes": {
+        "p1": {
+          "serviceName": "loki-all",
+          "tags": [
+            {
+              "key": "jaeger.version",
+              "type": "string",
+              "value": "Go-2.25.0"
+            }
+          ]
+        }
+      },
+      "warnings": null
+    }
+  ],
+  "total": 0,
+  "limit": 0,
+  "offset": 0,
+  "errors": null
+}
+```
 
 ## Linking Trace ID from logs
 
@@ -81,12 +148,14 @@ datasources:
       tracesToLogs:
         # Field with internal link pointing to a Loki data source in Grafana.
         # datasourceUid value must match the `datasourceUid` value of the Loki data source.
-        datasourceUid: loki
-        tags:
-          - cluster
-          - hostname
-          - namespace
-          - pod
+        datasourceUid: 'loki'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        mappedTags: [{ key: 'service.name', value: 'service' }]
+        mapTagNamesEnabled: false
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: false
+        filterBySpanID: false
     secureJsonData:
       basicAuthPassword: my_password
 ```

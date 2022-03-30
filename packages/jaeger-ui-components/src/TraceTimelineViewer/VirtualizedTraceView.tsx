@@ -15,6 +15,11 @@
 import * as React from 'react';
 import { css } from '@emotion/css';
 
+import { isEqual } from 'lodash';
+import memoizeOne from 'memoize-one';
+import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
@@ -23,29 +28,41 @@ import {
   createViewedBoundsFunc,
   findServerChildSpan,
   isErrorSpan,
+  isKindClient,
   spanContainsErredSpan,
   ViewedBoundsFunctionType,
 } from './utils';
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
-import { TNil } from '../types';
-import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../types/trace';
+import { SpanLinkFunc, TNil } from '../types';
+import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
-
-import { createStyle, Theme, withTheme } from '../Theme';
-import { CreateSpanLink } from './types';
+import { PEER_SERVICE } from '../constants/tag-keys';
+import { createRef, RefObject } from 'react';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = createStyle(() => {
+const getStyles = stylesFactory(() => {
   return {
     rowsWrapper: css`
       width: 100%;
     `,
     row: css`
       width: 100%;
+    `,
+    scrollToTopButton: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1;
     `,
   };
 });
@@ -71,6 +88,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailWarningsToggle: (spanID: string) => void;
   detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
+  detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
@@ -79,9 +97,12 @@ type TVirtualizedTraceViewOwnProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
-  createSpanLink?: CreateSpanLink;
+  theme: GrafanaTheme2;
+  createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
+  focusedSpanId?: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -146,29 +167,31 @@ function getClipping(currentViewRange: [number, number]) {
   };
 }
 
+function generateRowStatesFromTrace(
+  trace: Trace | TNil,
+  childrenHiddenIDs: Set<string>,
+  detailStates: Map<string, DetailState | TNil>
+): RowState[] {
+  return trace ? generateRowStates(trace.spans, childrenHiddenIDs, detailStates) : [];
+}
+
+const memoizedGenerateRowStates = memoizeOne(generateRowStatesFromTrace);
+const memoizedViewBoundsFunc = memoizeOne(createViewedBoundsFunc, isEqual);
+const memoizedGetClipping = memoizeOne(getClipping, isEqual);
+
 // export from tests
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
-  clipping: { left: boolean; right: boolean };
   listView: ListView | TNil;
-  rowStates: RowState[];
-  getViewedBounds: ViewedBoundsFunctionType;
+  topTraceViewRef = createRef<HTMLDivElement>();
 
   constructor(props: VirtualizedTraceViewProps) {
     super(props);
-    // keep "prop derivations" on the instance instead of calculating in
-    // `.render()` to avoid recalculating in every invocation of `.renderRow()`
-    const { currentViewRangeTime, childrenHiddenIDs, detailStates, setTrace, trace, uiFind } = props;
-    this.clipping = getClipping(currentViewRangeTime);
-    const [zoomStart, zoomEnd] = currentViewRangeTime;
-    this.getViewedBounds = createViewedBoundsFunc({
-      min: trace.startTime,
-      max: trace.endTime,
-      viewStart: zoomStart,
-      viewEnd: zoomEnd,
-    });
-    this.rowStates = generateRowStates(trace.spans, childrenHiddenIDs, detailStates);
-
+    const { setTrace, trace, uiFind } = props;
     setTrace(trace, uiFind);
+  }
+
+  componentDidMount() {
+    this.scrollToSpan(this.props.focusedSpanId);
   }
 
   shouldComponentUpdate(nextProps: VirtualizedTraceViewProps) {
@@ -189,48 +212,57 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     return false;
   }
 
-  UNSAFE_componentWillUpdate(nextProps: VirtualizedTraceViewProps) {
-    const { childrenHiddenIDs, detailStates, registerAccessors, trace, currentViewRangeTime } = this.props;
-    const {
-      currentViewRangeTime: nextViewRangeTime,
-      childrenHiddenIDs: nextHiddenIDs,
-      detailStates: nextDetailStates,
-      registerAccessors: nextRegisterAccessors,
-      setTrace,
-      trace: nextTrace,
-      uiFind,
-    } = nextProps;
-    if (trace !== nextTrace) {
-      setTrace(nextTrace, uiFind);
-    }
-    if (trace !== nextTrace || childrenHiddenIDs !== nextHiddenIDs || detailStates !== nextDetailStates) {
-      this.rowStates = nextTrace ? generateRowStates(nextTrace.spans, nextHiddenIDs, nextDetailStates) : [];
-    }
-    if (currentViewRangeTime !== nextViewRangeTime || (trace !== nextTrace && nextTrace)) {
-      this.clipping = getClipping(nextViewRangeTime);
-      const [zoomStart, zoomEnd] = nextViewRangeTime;
-      this.getViewedBounds = createViewedBoundsFunc({
-        min: nextTrace.startTime,
-        max: nextTrace.endTime,
-        viewStart: zoomStart,
-        viewEnd: zoomEnd,
-      });
-    }
-    if (this.listView && registerAccessors !== nextRegisterAccessors) {
-      nextRegisterAccessors(this.getAccessors());
-    }
-  }
-
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
+    const { registerAccessors, trace } = prevProps;
     const {
       shouldScrollToFirstUiFindMatch,
       clearShouldScrollToFirstUiFindMatch,
       scrollToFirstVisibleSpan,
+      registerAccessors: nextRegisterAccessors,
+      setTrace,
+      trace: nextTrace,
+      uiFind,
+      focusedSpanId,
     } = this.props;
+
+    if (trace !== nextTrace) {
+      setTrace(nextTrace, uiFind);
+    }
+
+    if (this.listView && registerAccessors !== nextRegisterAccessors) {
+      nextRegisterAccessors(this.getAccessors());
+    }
+
     if (shouldScrollToFirstUiFindMatch) {
       scrollToFirstVisibleSpan();
       clearShouldScrollToFirstUiFindMatch();
     }
+
+    if (focusedSpanId !== prevProps.focusedSpanId) {
+      this.scrollToSpan(focusedSpanId);
+    }
+  }
+
+  getRowStates(): RowState[] {
+    const { childrenHiddenIDs, detailStates, trace } = this.props;
+    return memoizedGenerateRowStates(trace, childrenHiddenIDs, detailStates);
+  }
+
+  getClipping(): { left: boolean; right: boolean } {
+    const { currentViewRangeTime } = this.props;
+    return memoizedGetClipping(currentViewRangeTime);
+  }
+
+  getViewedBounds(): ViewedBoundsFunctionType {
+    const { currentViewRangeTime, trace } = this.props;
+    const [zoomStart, zoomEnd] = currentViewRangeTime;
+
+    return memoizedViewBoundsFunc({
+      min: trace.startTime,
+      max: trace.endTime,
+      viewStart: zoomStart,
+      viewEnd: zoomEnd,
+    });
   }
 
   getAccessors() {
@@ -257,12 +289,12 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   getCollapsedChildren = () => this.props.childrenHiddenIDs;
 
-  mapRowIndexToSpanIndex = (index: number) => this.rowStates[index].spanIndex;
+  mapRowIndexToSpanIndex = (index: number) => this.getRowStates()[index].spanIndex;
 
   mapSpanIndexToRowIndex = (index: number) => {
-    const max = this.rowStates.length;
+    const max = this.getRowStates().length;
     for (let i = 0; i < max; i++) {
-      const { spanIndex } = this.rowStates[i];
+      const { spanIndex } = this.getRowStates()[i];
       if (spanIndex === index) {
         return i;
       }
@@ -281,18 +313,19 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   // use long form syntax to avert flow error
   // https://github.com/facebook/flow/issues/3076#issuecomment-290944051
   getKeyFromIndex = (index: number) => {
-    const { isDetail, span } = this.rowStates[index];
-    return `${span.spanID}--${isDetail ? 'detail' : 'bar'}`;
+    const { isDetail, span } = this.getRowStates()[index];
+    return `${span.traceID}--${span.spanID}--${isDetail ? 'detail' : 'bar'}`;
   };
 
   getIndexFromKey = (key: string) => {
     const parts = key.split('--');
-    const _spanID = parts[0];
-    const _isDetail = parts[1] === 'detail';
-    const max = this.rowStates.length;
+    const _traceID = parts[0];
+    const _spanID = parts[1];
+    const _isDetail = parts[2] === 'detail';
+    const max = this.getRowStates().length;
     for (let i = 0; i < max; i++) {
-      const { span, isDetail } = this.rowStates[i];
-      if (span.spanID === _spanID && isDetail === _isDetail) {
+      const { span, isDetail } = this.getRowStates()[i];
+      if (span.spanID === _spanID && span.traceID === _traceID && isDetail === _isDetail) {
         return i;
       }
     }
@@ -300,7 +333,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   };
 
   getRowHeight = (index: number) => {
-    const { span, isDetail } = this.rowStates[index];
+    const { span, isDetail } = this.getRowStates()[index];
     if (!isDetail) {
       return DEFAULT_HEIGHTS.bar;
     }
@@ -311,10 +344,20 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   };
 
   renderRow = (key: string, style: React.CSSProperties, index: number, attrs: {}) => {
-    const { isDetail, span, spanIndex } = this.rowStates[index];
+    const { isDetail, span, spanIndex } = this.getRowStates()[index];
     return isDetail
       ? this.renderSpanDetailRow(span, key, style, attrs)
       : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
+  };
+
+  scrollToSpan = (spanID?: string) => {
+    if (spanID == null) {
+      return;
+    }
+    const i = this.getRowStates().findIndex((row) => row.span.spanID === spanID);
+    if (i >= 0) {
+      this.listView?.scrollToIndex(i);
+    }
   };
 
   renderSpanBarRow(span: TraceSpan, spanIndex: number, key: string, style: React.CSSProperties, attrs: {}) {
@@ -334,6 +377,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       removeHoverIndentGuideId,
       theme,
       createSpanLink,
+      focusedSpanId,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -343,6 +387,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
+    const isFocused = spanID === focusedSpanId;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 
     // Check for direct child "server" span if the span is a "client" span.
@@ -350,7 +395,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (isCollapsed) {
       const rpcSpan = findServerChildSpan(trace.spans.slice(spanIndex));
       if (rpcSpan) {
-        const rpcViewBounds = this.getViewedBounds(rpcSpan.startTime, rpcSpan.startTime + rpcSpan.duration);
+        const rpcViewBounds = this.getViewedBounds()(rpcSpan.startTime, rpcSpan.startTime + rpcSpan.duration);
         rpc = {
           color: getColorByKey(rpcSpan.process.serviceName, theme),
           operationName: rpcSpan.operationName,
@@ -360,23 +405,37 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
         };
       }
     }
+
+    const peerServiceKV = span.tags.find((kv) => kv.key === PEER_SERVICE);
+    // Leaf, kind == client and has peer.service.tag, is likely a client span that does a request
+    // to an uninstrumented/external service
+    let noInstrumentedServer = null;
+    if (!span.hasChildren && peerServiceKV && isKindClient(span)) {
+      noInstrumentedServer = {
+        serviceName: peerServiceKV.value,
+        color: getColorByKey(peerServiceKV.value, theme),
+      };
+    }
+
     const styles = getStyles();
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
         <SpanBarRow
-          clippingLeft={this.clipping.left}
-          clippingRight={this.clipping.right}
+          clippingLeft={this.getClipping().left}
+          clippingRight={this.getClipping().right}
           color={color}
           columnDivision={spanNameColumnWidth}
           isChildrenExpanded={!isCollapsed}
           isDetailExpanded={isDetailExpanded}
           isMatchingFilter={isMatchingFilter}
+          isFocused={isFocused}
           numTicks={NUM_TICKS}
           onDetailToggled={detailToggle}
           onChildrenToggled={childrenToggle}
           rpc={rpc}
+          noInstrumentedServer={noInstrumentedServer}
           showErrorIcon={showErrorIcon}
-          getViewedBounds={this.getViewedBounds}
+          getViewedBounds={this.getViewedBounds()}
           traceStartTime={trace.startTime}
           span={span}
           focusSpan={focusSpan}
@@ -397,6 +456,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailLogsToggle,
       detailProcessToggle,
       detailReferencesToggle,
+      detailReferenceItemToggle,
       detailWarningsToggle,
       detailStackTracesToggle,
       detailStates,
@@ -411,6 +471,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       linksGetter,
       theme,
       createSpanLink,
+      focusedSpanId,
+      createFocusSpanLink,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -429,6 +491,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           logItemToggle={detailLogItemToggle}
           logsToggle={detailLogsToggle}
           processToggle={detailProcessToggle}
+          referenceItemToggle={detailReferenceItemToggle}
           referencesToggle={detailReferencesToggle}
           warningsToggle={detailWarningsToggle}
           stackTracesToggle={detailStackTracesToggle}
@@ -440,19 +503,26 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}
           createSpanLink={createSpanLink}
+          focusedSpanId={focusedSpanId}
+          createFocusSpanLink={createFocusSpanLink}
         />
       </div>
     );
   }
 
+  scrollToTop = () => {
+    const { topOfExploreViewRef } = this.props;
+    topOfExploreViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   render() {
     const styles = getStyles();
     const { scrollElement } = this.props;
     return (
-      <div>
+      <>
         <ListView
           ref={this.setListView}
-          dataLength={this.rowStates.length}
+          dataLength={this.getRowStates().length}
           itemHeightGetter={this.getRowHeight}
           itemRenderer={this.renderRow}
           viewBuffer={50}
@@ -463,9 +533,16 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           windowScroller={false}
           scrollElement={scrollElement}
         />
-      </div>
+
+        <ToolbarButton
+          className={styles.scrollToTopButton}
+          onClick={this.scrollToTop}
+          title="Scroll to top"
+          icon="arrow-up"
+        ></ToolbarButton>
+      </>
     );
   }
 }
 
-export default withTheme(UnthemedVirtualizedTraceView);
+export default withTheme2(UnthemedVirtualizedTraceView);

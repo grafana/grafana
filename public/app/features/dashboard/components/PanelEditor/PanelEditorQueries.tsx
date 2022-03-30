@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { PanelModel } from '../../state';
-import { getLocationSrv } from '@grafana/runtime';
-import { QueryGroupOptions } from 'app/types';
-import { DataQuery } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
+import { DataQuery, getDataSourceRef } from '@grafana/data';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   /** Current panel */
@@ -18,9 +19,17 @@ export class PanelEditorQueries extends PureComponent<Props> {
   }
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
+    const dataSource: QueryGroupDataSource = panel.datasource ?? {
+      default: true,
+    };
+    const datasourceSettings = getDatasourceSrv().getInstanceSettings(dataSource);
+
     return {
+      cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
       dataSource: {
-        name: panel.datasource,
+        default: datasourceSettings?.isDefault,
+        type: datasourceSettings?.type,
+        uid: datasourceSettings?.uid,
       },
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
@@ -33,25 +42,35 @@ export class PanelEditorQueries extends PureComponent<Props> {
     };
   }
 
+  async componentDidMount() {
+    const { panel } = this.props;
+
+    // If the panel model has no datasource property load the default data source property and update the persisted model
+    // Because this part of the panel model is not in redux yet we do a forceUpdate.
+    if (!panel.datasource) {
+      const ds = getDatasourceSrv().getInstanceSettings(null);
+      panel.datasource = getDataSourceRef(ds!);
+      this.forceUpdate();
+    }
+  }
+
   onRunQueries = () => {
     this.props.panel.refresh();
   };
 
   onOpenQueryInspector = () => {
-    getLocationSrv().update({
-      query: { inspect: this.props.panel.id, inspectTab: 'query' },
-      partial: true,
+    locationService.partial({
+      inspect: this.props.panel.id,
+      inspectTab: 'query',
     });
   };
 
   onOptionsChange = (options: QueryGroupOptions) => {
     const { panel } = this.props;
 
-    const newDataSourceName = options.dataSource.default ? null : options.dataSource.name!;
-    const dataSourceChanged = newDataSourceName !== panel.datasource;
     panel.updateQueries(options);
 
-    if (dataSourceChanged) {
+    if (options.dataSource.uid !== panel.datasource?.uid) {
       // trigger queries when changing data source
       setTimeout(this.onRunQueries, 10);
     }
@@ -61,6 +80,12 @@ export class PanelEditorQueries extends PureComponent<Props> {
 
   render() {
     const { panel } = this.props;
+
+    // If no panel data soruce set, wait with render. Will be set to default in componentDidMount
+    if (!panel.datasource) {
+      return null;
+    }
+
     const options = this.buildQueryOptions(panel);
 
     return (

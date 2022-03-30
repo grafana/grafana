@@ -5,27 +5,14 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionPaneRenderProps } from './types';
-import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
-import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
-  const { panel, onPanelConfigChange, dashboard } = props;
+  const { panel, onPanelConfigChange } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
     isOpenDefault: true,
   });
-
-  if (isPanelModelLibraryPanel(panel)) {
-    descriptor.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Library panel information',
-        render: function renderLibraryPanelInformation() {
-          return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
-        },
-      })
-    );
-  }
 
   return descriptor
     .addItem(
@@ -52,6 +39,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderDescription() {
           return (
             <TextArea
+              id="description-text-area"
               defaultValue={panel.description}
               onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
             />
@@ -109,8 +97,9 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             render: function renderRepeatOptions() {
               return (
                 <RepeatRowSelect
+                  id="repeat-by-variable-select"
                   repeat={panel.repeat}
-                  onChange={(value: string | null) => {
+                  onChange={(value?: string | null) => {
                     onPanelConfigChange('repeat', value);
                   }}
                 />
@@ -146,6 +135,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
               const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
               return (
                 <Select
+                  menuShouldPortal
                   options={maxPerRowOptions}
                   value={panel.maxPerRow}
                   onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}

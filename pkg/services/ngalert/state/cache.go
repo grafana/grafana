@@ -1,11 +1,11 @@
 package state
 
 import (
-	"bytes"
+	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
-	text_template "text/template"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -17,30 +17,30 @@ import (
 )
 
 type cache struct {
-	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
-	mtxStates sync.RWMutex
-	log       log.Logger
-	metrics   *metrics.Metrics
+	states      map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
+	mtxStates   sync.RWMutex
+	log         log.Logger
+	metrics     *metrics.State
+	externalURL *url.URL
 }
 
-func newCache(logger log.Logger, metrics *metrics.Metrics) *cache {
+func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *cache {
 	return &cache{
-		states:  make(map[int64]map[string]map[string]*State),
-		log:     logger,
-		metrics: metrics,
+		states:      make(map[int64]map[string]map[string]*State),
+		log:         logger,
+		metrics:     metrics,
+		externalURL: externalURL,
 	}
 }
 
-func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	templateData := make(map[string]string, len(result.Instance)+3)
-	for k, v := range result.Instance {
-		templateData[k] = v
-	}
-	attachRuleLabels(templateData, alertRule)
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, templateData)
+	// clone the labels so we don't change eval.Result
+	labels := result.Instance.Copy()
+	attachRuleLabels(labels, alertRule)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, labels, result)
 
 	// if duplicate labels exist, alertRule label will take precedence
 	lbs := mergeLabels(ruleLabels, result.Instance)
@@ -89,11 +89,11 @@ func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
 	m[prometheusModel.AlertNameLabel] = alertRule.Title
 }
 
-func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, data map[string]string) (map[string]string, map[string]string) {
+func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, labels map[string]string, alertInstance eval.Result) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(alertRule.Title, v, data)
+			ev, err := expandTemplate(ctx, alertRule.Title, v, labels, alertInstance, c.externalURL)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
@@ -104,39 +104,7 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, da
 
 		return expanded
 	}
-
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
-}
-
-func expandTemplate(name, text string, data map[string]string) (result string, resultErr error) {
-	name = "__alert_" + name
-	text = "{{- $labels := .Labels -}}" + text
-	// It'd better to have no alert description than to kill the whole process
-	// if there's a bug in the template.
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			resultErr, ok = r.(error)
-			if !ok {
-				resultErr = fmt.Errorf("panic expanding template %v: %v", name, r)
-			}
-		}
-	}()
-
-	tmpl, err := text_template.New(name).Option("missingkey=zero").Parse(text)
-	if err != nil {
-		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
-	}
-	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, struct {
-		Labels map[string]string
-	}{
-		Labels: data,
-	})
-	if err != nil {
-		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
-	}
-	return buffer.String(), nil
 }
 
 func (c *cache) set(entry *State) {
@@ -236,4 +204,10 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		}
 	}
 	return newLbs
+}
+
+func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	delete(c.states[orgID][alertRuleUID], cacheID)
 }

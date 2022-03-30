@@ -6,26 +6,28 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExecutor_createRequest(t *testing.T) {
-	datasource := &models.DataSource{
-		Url:      "http://awesome-influxdb:1337",
+	datasource := &models.DatasourceInfo{
+		URL:      "http://awesome-influxdb:1337",
 		Database: "awesome-db",
-		JsonData: simplejson.New(),
+		HTTPMode: "GET",
 	}
 	query := "SELECT awesomeness FROM somewhere"
-	e := &Executor{
-		QueryParser:    &InfluxdbQueryParser{},
-		ResponseParser: &ResponseParser{},
+	s := &Service{
+		queryParser:    &InfluxdbQueryParser{},
+		responseParser: &ResponseParser{},
+		glog:           log.New("test"),
 	}
 
 	t.Run("createRequest with GET httpMode", func(t *testing.T) {
-		req, err := e.createRequest(context.Background(), datasource, query)
+		req, err := s.createRequest(context.Background(), datasource, query)
+
 		require.NoError(t, err)
 
 		assert.Equal(t, "GET", req.Method)
@@ -37,8 +39,8 @@ func TestExecutor_createRequest(t *testing.T) {
 	})
 
 	t.Run("createRequest with POST httpMode", func(t *testing.T) {
-		datasource.JsonData.Set("httpMode", "POST")
-		req, err := e.createRequest(context.Background(), datasource, query)
+		datasource.HTTPMode = "POST"
+		req, err := s.createRequest(context.Background(), datasource, query)
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -56,8 +58,8 @@ func TestExecutor_createRequest(t *testing.T) {
 	})
 
 	t.Run("createRequest with PUT httpMode", func(t *testing.T) {
-		datasource.JsonData.Set("httpMode", "PUT")
-		_, err := e.createRequest(context.Background(), datasource, query)
+		datasource.HTTPMode = "PUT"
+		_, err := s.createRequest(context.Background(), datasource, query)
 		require.EqualError(t, err, ErrInvalidHttpMode.Error())
 	})
 }

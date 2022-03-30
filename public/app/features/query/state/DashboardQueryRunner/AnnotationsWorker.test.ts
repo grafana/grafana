@@ -2,7 +2,7 @@ import { Subject, throwError } from 'rxjs';
 import { setDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
-import * as annotationsSrv from '../../../annotations/annotations_srv';
+import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import { createDashboardQueryRunner, setDashboardQueryRunnerFactory } from './DashboardQueryRunner';
@@ -11,7 +11,7 @@ import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorkerResult } from '.
 import { AnnotationQuery } from '@grafana/data';
 import { delay } from 'rxjs/operators';
 
-function getTestContext() {
+function getTestContext(dataSourceSrvRejects = false) {
   jest.clearAllMocks();
   const cancellations = new Subject<AnnotationQuery>();
   setDashboardQueryRunnerFactory(() => ({
@@ -28,6 +28,9 @@ function getTestContext() {
   const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 'Legacy' }]);
   const dataSourceSrvMock: any = {
     get: async (name: string) => {
+      if (dataSourceSrvRejects) {
+        return Promise.reject(`Could not find datasource with name: ${name}`);
+      }
       if (name === LEGACY_DS_NAME) {
         return {
           annotationQuery: annotationQueryMock,
@@ -64,7 +67,7 @@ function expectOnResults(args: {
         done();
       } catch (err) {
         subscription.unsubscribe();
-        done.fail(err);
+        done(err);
       }
     },
   });
@@ -269,6 +272,21 @@ describe('AnnotationsWorker', () => {
         expect(result).toEqual({ alertStates: [], annotations: [] });
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('when run is called with correct props and call to datasourceSrv fails', () => {
+    silenceConsoleOutput();
+    it('then it should return the correct results', async () => {
+      const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext(true);
+
+      await expect(worker.work(options)).toEmitValuesWith((received) => {
+        expect(received).toHaveLength(1);
+        const result = received[0];
+        expect(result).toEqual({ alertStates: [], annotations: [] });
+        expect(executeAnnotationQueryMock).not.toHaveBeenCalled();
+        expect(annotationQueryMock).not.toHaveBeenCalled();
       });
     });
   });

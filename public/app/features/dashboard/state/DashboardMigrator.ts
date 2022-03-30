@@ -7,18 +7,27 @@ import kbn from 'app/core/utils/kbn';
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
 import {
+  AnnotationQuery,
   DataLink,
   DataLinkBuiltInVars,
+  DataQuery,
+  DataSourceRef,
+  DataTransformerConfig,
+  FieldConfigSource,
+  FieldMatcherID,
+  FieldType,
+  getActiveThreshold,
+  getDataSourceRef,
+  isDataSourceRef,
   MappingType,
-  SpecialValueMatch,
   PanelPlugin,
+  SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   ThresholdsConfig,
   urlUtil,
   ValueMap,
   ValueMapping,
-  getActiveThreshold,
 } from '@grafana/data';
 // Constants
 import {
@@ -35,10 +44,21 @@ import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
+import {
+  migrateCloudWatchQuery,
+  migrateMultipleStatsAnnotationQuery,
+  migrateMultipleStatsMetricsQuery,
+} from 'app/plugins/datasource/cloudwatch/migrations';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-standardEditorsRegistry.setInit(getStandardOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
 export class DashboardMigrator {
@@ -46,13 +66,18 @@ export class DashboardMigrator {
 
   constructor(dashboardModel: DashboardModel) {
     this.dashboard = dashboardModel;
+
+    // for tests to pass
+    if (!getDataSourceSrv()) {
+      setDataSourceSrv(new DatasourceSrv());
+    }
   }
 
   updateSchema(old: any) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 30;
+    this.dashboard.schemaVersion = 36;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -660,6 +685,99 @@ export class DashboardMigrator {
       panelUpgrades.push(migrateTooltipOptions);
     }
 
+    if (oldVersion < 31) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.transformations) {
+          for (const t of panel.transformations) {
+            if (t.id === labelsToFieldsTransformer.id) {
+              return appendTransformerAfter(panel, labelsToFieldsTransformer.id, {
+                id: mergeTransformer.id,
+                options: {},
+              });
+            }
+          }
+        }
+        return panel;
+      });
+    }
+
+    if (oldVersion < 32) {
+      // CloudWatch migrations have been moved to version 34
+    }
+
+    // Replace datasource name with reference, uid and type
+    if (oldVersion < 33) {
+      panelUpgrades.push((panel) => {
+        panel.datasource = migrateDatasourceNameToRef(panel.datasource, { returnDefaultAsNull: true });
+
+        if (!panel.targets) {
+          return panel;
+        }
+
+        for (const target of panel.targets) {
+          const targetRef = migrateDatasourceNameToRef(target.datasource, { returnDefaultAsNull: true });
+          if (targetRef != null) {
+            target.datasource = targetRef;
+          }
+        }
+
+        return panel;
+      });
+    }
+
+    if (oldVersion < 34) {
+      panelUpgrades.push((panel: PanelModel) => {
+        this.migrateCloudWatchQueries(panel);
+        return panel;
+      });
+
+      this.migrateCloudWatchAnnotationQuery();
+    }
+
+    if (oldVersion < 35) {
+      panelUpgrades.push(ensureXAxisVisibility);
+    }
+
+    if (oldVersion < 36) {
+      // Migrate datasource to refs in annotations
+      for (const query of this.dashboard.annotations.list) {
+        query.datasource = migrateDatasourceNameToRef(query.datasource, { returnDefaultAsNull: false });
+      }
+
+      // Migrate datasource: null to current default
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      if (defaultDs) {
+        for (const variable of this.dashboard.templating.list) {
+          if (variable.type === 'query' && variable.datasource === null) {
+            variable.datasource = getDataSourceRef(defaultDs);
+          }
+        }
+
+        panelUpgrades.push((panel: PanelModel) => {
+          if (panel.targets) {
+            let panelDataSourceWasDefault = false;
+            if (panel.datasource == null && panel.targets.length > 0) {
+              panel.datasource = getDataSourceRef(defaultDs);
+              panelDataSourceWasDefault = true;
+            }
+
+            for (const target of panel.targets) {
+              if (target.datasource && panelDataSourceWasDefault) {
+                // We can have situations when default ds changed and the panel level data source is different from the queries
+                // In this case we use the query level data source as source for truth
+                panel.datasource = target.datasource as DataSourceRef;
+              }
+
+              if (target.datasource === null) {
+                target.datasource = getDataSourceRef(defaultDs);
+              }
+            }
+          }
+          return panel;
+        });
+      }
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -671,6 +789,35 @@ export class DashboardMigrator {
           for (n = 0; n < this.dashboard.panels[j].panels.length; n++) {
             this.dashboard.panels[j].panels[n] = panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
           }
+        }
+      }
+    }
+  }
+
+  // Migrates metric queries and/or annotation queries that use more than one statistic.
+  // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
+  // New queries, that were created during migration, are put at the end of the array.
+  migrateCloudWatchQueries(panel: PanelModel) {
+    for (const target of panel.targets || []) {
+      if (isCloudWatchQuery(target)) {
+        migrateCloudWatchQuery(target);
+        if (target.hasOwnProperty('statistics')) {
+          // New queries, that were created during migration, are put at the end of the array.
+          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
+          for (const newQuery of newQueries) {
+            panel.targets.push(newQuery);
+          }
+        }
+      }
+    }
+  }
+
+  migrateCloudWatchAnnotationQuery() {
+    for (const annotation of this.dashboard.annotations.list) {
+      if (isLegacyCloudWatchAnnotationQuery(annotation)) {
+        const newAnnotationQueries = migrateMultipleStatsAnnotationQuery(annotation);
+        for (const newAnnotationQuery of newAnnotationQueries) {
+          this.dashboard.annotations.list.push(newAnnotationQuery);
         }
       }
     }
@@ -949,13 +1096,57 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
+interface MigrateDatasourceNameOptions {
+  returnDefaultAsNull: boolean;
+}
+
+export function migrateDatasourceNameToRef(
+  nameOrRef: string | DataSourceRef | null | undefined,
+  options: MigrateDatasourceNameOptions
+): DataSourceRef | null {
+  if (options.returnDefaultAsNull && (nameOrRef == null || nameOrRef === 'default')) {
+    return null;
+  }
+
+  if (isDataSourceRef(nameOrRef)) {
+    return nameOrRef;
+  }
+
+  const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
+  if (!ds) {
+    return { uid: nameOrRef as string }; // not found
+  }
+
+  return getDataSourceRef(ds);
+}
+
+// mutates transformations appending a new transformer after the existing one
+function appendTransformerAfter(panel: PanelModel, id: string, cfg: DataTransformerConfig) {
+  if (panel.transformations) {
+    const transformations: DataTransformerConfig[] = [];
+    for (const t of panel.transformations) {
+      transformations.push(t);
+      if (t.id === id) {
+        transformations.push({ ...cfg });
+      }
+    }
+    panel.transformations = transformations;
+  }
+  return panel;
+}
+
 function upgradeValueMappingsForPanel(panel: PanelModel) {
   const fieldConfig = panel.fieldConfig;
   if (!fieldConfig) {
     return panel;
   }
 
-  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings, fieldConfig.defaults.thresholds);
+  if (fieldConfig.defaults && fieldConfig.defaults.mappings) {
+    fieldConfig.defaults.mappings = upgradeValueMappings(
+      fieldConfig.defaults.mappings,
+      fieldConfig.defaults.thresholds
+    );
+  }
 
   // Protect against no overrides
   if (Array.isArray(fieldConfig.overrides)) {
@@ -969,6 +1160,25 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
   }
 
   return panel;
+}
+
+function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
+  return (
+    target.hasOwnProperty('dimensions') &&
+    target.hasOwnProperty('namespace') &&
+    target.hasOwnProperty('region') &&
+    target.hasOwnProperty('metricName')
+  );
+}
+
+function isLegacyCloudWatchAnnotationQuery(target: AnnotationQuery<DataQuery>): target is CloudWatchAnnotationQuery {
+  return (
+    target.hasOwnProperty('dimensions') &&
+    target.hasOwnProperty('namespace') &&
+    target.hasOwnProperty('region') &&
+    target.hasOwnProperty('prefixMatching') &&
+    target.hasOwnProperty('statistics')
+  );
 }
 
 function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {
@@ -1051,6 +1261,38 @@ function migrateTooltipOptions(panel: PanelModel) {
         tooltip: panel.options.tooltipOptions,
       };
       delete panel.options.tooltipOptions;
+    }
+  }
+
+  return panel;
+}
+
+// This migration is performed when there is a time series panel with all axes configured to be hidden
+// To avoid breaking dashboards we add override that persists x-axis visibility
+function ensureXAxisVisibility(panel: PanelModel) {
+  if (panel.type === 'timeseries') {
+    if (
+      (panel.fieldConfig as FieldConfigSource<GraphFieldConfig>)?.defaults.custom?.axisPlacement ===
+      AxisPlacement.Hidden
+    ) {
+      panel.fieldConfig = {
+        ...panel.fieldConfig,
+        overrides: [
+          ...panel.fieldConfig.overrides,
+          {
+            matcher: {
+              id: FieldMatcherID.byType,
+              options: FieldType.time,
+            },
+            properties: [
+              {
+                id: 'custom.axisPlacement',
+                value: AxisPlacement.Auto,
+              },
+            ],
+          },
+        ],
+      };
     }
   }
 

@@ -44,6 +44,7 @@ export type TraceSpanReference = {
   span?: TraceSpan | null | undefined;
   spanID: string;
   traceID: string;
+  tags?: TraceKeyValuePair[];
 };
 
 export type TraceSpanData = {
@@ -61,11 +62,13 @@ export type TraceSpanData = {
   stackTraces?: string[];
   flags: number;
   errorIconColor?: string;
+  dataFrameRowIndex?: number;
 };
 
 export type TraceSpan = TraceSpanData & {
   depth: number;
   hasChildren: boolean;
+  childSpanCount: number;
   process: TraceProcess;
   relativeStartTime: number;
   tags: NonNullable<TraceSpanData['tags']>;

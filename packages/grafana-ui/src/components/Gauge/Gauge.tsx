@@ -5,6 +5,8 @@ import {
   formattedValueToString,
   FieldConfig,
   ThresholdsMode,
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
   getActiveThreshold,
   Threshold,
   getColorForTheme,
@@ -58,15 +60,15 @@ export class Gauge extends PureComponent<Props> {
     const { field, theme, value } = this.props;
 
     if (field.color?.mode !== FieldColorModeId.Thresholds) {
-      return [{ value: field.min ?? 0, color: value.color ?? FALLBACK_COLOR }];
+      return [{ value: field.min ?? GAUGE_DEFAULT_MINIMUM, color: value.color ?? FALLBACK_COLOR }];
     }
 
     const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
     const steps = thresholds.steps;
 
-    let min = field.min ?? 0;
-    let max = field.max ?? 100;
+    let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
+    let max = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
     if (isPercent) {
       min = 0;
@@ -110,12 +112,14 @@ export class Gauge extends PureComponent<Props> {
     const valueWidthBase = Math.min(width, dimension * 1.3) * 0.9;
     // remove gauge & marker width (on left and right side)
     // and 10px is some padding that flot adds to the outer canvas
-    const valueWidth = valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10);
+    const valueWidth =
+      valueWidthBase -
+      ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0) + (showThresholdLabels ? 10 : 0)) * 2 + 10);
     const fontSize = this.props.text?.valueSize ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
-    const thresholdLabelFontSize = fontSize / 2.5;
+    const thresholdLabelFontSize = Math.max(fontSize / 2.5, 12);
 
-    let min = field.min ?? 0;
-    let max = field.max ?? 100;
+    let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
+    let max = field.max ?? GAUGE_DEFAULT_MAXIMUM;
     let numeric = value.numeric;
 
     if (field.thresholds?.mode === ThresholdsMode.Percentage) {

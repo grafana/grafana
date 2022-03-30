@@ -28,7 +28,7 @@ describe('Field', () => {
   it('renders with the inputId of its children', () => {
     render(
       <Field label="My other label">
-        <Select inputId="my-select-input" onChange={() => {}} />
+        <Select menuShouldPortal inputId="my-select-input" onChange={() => {}} />
       </Field>
     );
 

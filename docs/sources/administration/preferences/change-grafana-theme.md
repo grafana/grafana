@@ -52,9 +52,10 @@ Organization and team administrators can change the UI theme for all users in a 
 
 {{< docs/list >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}
+
 1. Click on the team that you want to change the UI theme for and then navigate to the **Settings** tab.
-{{< docs/shared "preferences/select-ui-theme-list.md" >}}
-{{< /docs/list >}}
+   {{< docs/shared "preferences/select-ui-theme-list.md" >}}
+   {{< /docs/list >}}
 
 ## Change your personal UI theme
 

@@ -6,8 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,22 +46,21 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
-			require.NoError(t, err)
+			dataframes := queryRes.Frames
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Count")
 			require.Len(t, frame.Fields, 2)
 
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 		})
 
 		t.Run("Simple query count & avg aggregation", func(t *testing.T) {
@@ -99,31 +97,31 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Count")
 			require.Len(t, frame.Fields, 2)
 
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "Average value")
 			require.Len(t, frame.Fields, 2)
 
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average value")
 		})
 
 		t.Run("Single group by query one metric", func(t *testing.T) {
@@ -168,27 +166,27 @@ func TestResponseParser(t *testing.T) {
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server2")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2")
 		})
 
 		t.Run("Single group by query two metrics", func(t *testing.T) {
@@ -238,45 +236,45 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 4)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1 Count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Count")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server1 Average @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Average @value")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "server2 Count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Count")
 
 			frame = dataframes[3]
-			require.Equal(t, frame.Name, "server2 Average @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Average @value")
 		})
 
 		t.Run("With percentiles", func(t *testing.T) {
@@ -313,29 +311,29 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "p75")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "p75")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "p90")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "p90")
 		})
 
 		t.Run("With extended stats", func(t *testing.T) {
@@ -397,61 +395,61 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 6)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1 Max")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Max")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server1 Std Dev Lower")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Std Dev Lower")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "server1 Std Dev Upper")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Std Dev Upper")
 
 			frame = dataframes[3]
-			require.Equal(t, frame.Name, "server2 Max")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Max")
 
 			frame = dataframes[4]
-			require.Equal(t, frame.Name, "server2 Std Dev Lower")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Std Dev Lower")
 
 			frame = dataframes[5]
-			require.Equal(t, frame.Name, "server2 Std Dev Upper")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Std Dev Upper")
 		})
 
 		t.Run("Single group by with alias pattern", func(t *testing.T) {
@@ -503,37 +501,37 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 3)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "server1 Count and {{not_exist}} server1")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server1 Count and {{not_exist}} server1")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "server2 Count and {{not_exist}} server2")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "server2 Count and {{not_exist}} server2")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "0 Count and {{not_exist}} 0")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "0 Count and {{not_exist}} 0")
 		})
 
 		t.Run("Histogram response", func(t *testing.T) {
@@ -559,11 +557,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 		})
@@ -611,29 +609,29 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "@metric:cpu")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "@metric:cpu")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "@metric:logins.count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "@metric:logins.count")
 		})
 
 		t.Run("With dropfirst and last aggregation", func(t *testing.T) {
@@ -682,29 +680,29 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Average")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "Count")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 		})
 
 		t.Run("No group by time", func(t *testing.T) {
@@ -741,16 +739,15 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "")
 			require.Len(t, frame.Fields, 3)
 			require.Equal(t, frame.Fields[0].Name, "host")
 			require.Equal(t, frame.Fields[0].Len(), 2)
@@ -758,6 +755,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			require.Equal(t, frame.Fields[2].Name, "Count")
 			require.Equal(t, frame.Fields[2].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
 		})
 
 		t.Run("Multiple metrics of same type", func(t *testing.T) {
@@ -790,16 +788,15 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "")
 			require.Len(t, frame.Fields, 3)
 			require.Equal(t, frame.Fields[0].Name, "host")
 			require.Equal(t, frame.Fields[0].Len(), 1)
@@ -807,6 +804,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			require.Equal(t, frame.Fields[2].Name, "Average test2")
 			require.Equal(t, frame.Fields[2].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
 		})
 
 		t.Run("With bucket_script", func(t *testing.T) {
@@ -857,37 +855,37 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 3)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "Sum @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Sum @value")
 
 			frame = dataframes[1]
-			require.Equal(t, frame.Name, "Max @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Max @value")
 
 			frame = dataframes[2]
-			require.Equal(t, frame.Name, "Sum @value * Max @value")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Sum @value * Max @value")
 		})
 
 		t.Run("Terms with two bucket_script", func(t *testing.T) {
@@ -947,16 +945,15 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
-			require.Equal(t, frame.Name, "")
 			require.Len(t, frame.Fields, 5)
 			require.Equal(t, frame.Fields[0].Name, "@timestamp")
 			require.Equal(t, frame.Fields[0].Len(), 2)
@@ -968,6 +965,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[3].Len(), 2)
 			require.Equal(t, frame.Fields[4].Name, "params.var1 * params.var2 * 2")
 			require.Equal(t, frame.Fields[4].Len(), 2)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
 		})
 	})
 
@@ -1021,19 +1019,19 @@ func TestResponseParser(t *testing.T) {
 		assert.Nil(t, err)
 		result, err := rp.getTimeSeries()
 		assert.Nil(t, err)
-		assert.Len(t, result.Results, 1)
+		assert.Len(t, result.Responses, 1)
 
-		queryRes := result.Results["A"]
+		queryRes := result.Responses["A"]
 		assert.NotNil(t, queryRes)
-		dataframes, err := queryRes.Dataframes.Decoded()
+		dataframes := queryRes.Frames
 		assert.NoError(t, err)
 		assert.Len(t, dataframes, 2)
 
 		frame := dataframes[0]
-		assert.Equal(t, frame.Name, "Top Metrics @value")
 		assert.Len(t, frame.Fields, 2)
 		require.Equal(t, frame.Fields[0].Len(), 2)
 		require.Equal(t, frame.Fields[1].Len(), 2)
+		assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Top Metrics @value")
 		v, _ := frame.FloatAt(0, 0)
 		assert.Equal(t, 1609459200000., v)
 		v, _ = frame.FloatAt(1, 0)
@@ -1045,12 +1043,12 @@ func TestResponseParser(t *testing.T) {
 		assert.Equal(t, 1., v)
 
 		frame = dataframes[1]
-		assert.Equal(t, frame.Name, "Top Metrics @anotherValue")
 		l, _ := frame.MarshalJSON()
 		fmt.Println(string(l))
 		assert.Len(t, frame.Fields, 2)
 		require.Equal(t, frame.Fields[0].Len(), 2)
 		require.Equal(t, frame.Fields[1].Len(), 2)
+		assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Top Metrics @anotherValue")
 		v, _ = frame.FloatAt(0, 0)
 		assert.Equal(t, 1609459200000., v)
 		v, _ = frame.FloatAt(1, 0)
@@ -1066,23 +1064,19 @@ func TestResponseParser(t *testing.T) {
 func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-	timeRange := plugins.NewDataTimeRange(fromStr, toStr)
-	tsdbQuery := plugins.DataQuery{
-		Queries:   []plugins.DataSubQuery{},
-		TimeRange: &timeRange,
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
+	}
+	tsdbQuery := backend.QueryDataRequest{
+		Queries: []backend.DataQuery{},
 	}
 
 	for refID, tsdbQueryBody := range tsdbQueries {
-		tsdbQueryJSON, err := simplejson.NewJson([]byte(tsdbQueryBody))
-		if err != nil {
-			return nil, err
-		}
-
-		tsdbQuery.Queries = append(tsdbQuery.Queries, plugins.DataSubQuery{
-			Model: tsdbQueryJSON,
-			RefID: refID,
+		tsdbQuery.Queries = append(tsdbQuery.Queries, backend.DataQuery{
+			TimeRange: timeRange,
+			RefID:     refID,
+			JSON:      json.RawMessage(tsdbQueryBody),
 		})
 	}
 
@@ -1093,7 +1087,7 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 	}
 
 	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(tsdbQuery)
+	queries, err := tsQueryParser.parse(tsdbQuery.Queries)
 	if err != nil {
 		return nil, err
 	}

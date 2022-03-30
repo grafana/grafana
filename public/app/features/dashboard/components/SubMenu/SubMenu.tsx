@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
-import { getSubMenuVariables } from '../../../variables/state/selectors';
+import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
 import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
@@ -9,6 +9,7 @@ import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
 import { AnnotationQuery } from '@grafana/data';
+import { css } from '@emotion/css';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -47,7 +48,9 @@ class SubMenuUnConnected extends PureComponent<Props> {
 
     return (
       <div className="submenu-controls">
-        <SubMenuItems variables={variables} />
+        <form aria-label="Template variables" className={styles}>
+          <SubMenuItems variables={variables} />
+        </form>
         <Annotations
           annotations={annotations}
           onAnnotationChanged={this.onAnnotationStateChanged}
@@ -61,11 +64,19 @@ class SubMenuUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
+  const { uid } = ownProps.dashboard;
+  const templatingState = getVariablesState(uid, state);
   return {
-    variables: getSubMenuVariables(state.templating.variables),
+    variables: getSubMenuVariables(uid, templatingState.variables),
   };
 };
+
+const styles = css`
+  display: flex;
+  flex-wrap: wrap;
+  display: contents;
+`;
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
 

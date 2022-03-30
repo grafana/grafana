@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { AlignedData } from 'uplot';
+import { AlignedData, Range } from 'uplot';
 import {
   compareDataFrameStructures,
   DataFrame,
+  Field,
   FieldConfig,
   FieldSparkline,
   FieldType,
@@ -10,17 +11,18 @@ import {
 } from '@grafana/data';
 import {
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
-  PointVisibility,
+  VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
-} from '../uPlot/config';
+} from '@grafana/schema';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable2 } from '../../types';
 import { preparePlotData } from '../uPlot/utils';
 import { preparePlotFrame } from './utils';
+import { isEqual } from 'lodash';
 
 export interface SparklineProps extends Themeable2 {
   width: number;
@@ -36,8 +38,8 @@ interface State {
 }
 
 const defaultConfig: GraphFieldConfig = {
-  drawStyle: DrawStyle.Line,
-  showPoints: PointVisibility.Auto,
+  drawStyle: GraphDrawStyle.Line,
+  showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
 };
 
@@ -46,10 +48,9 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     super(props);
 
     const alignedDataFrame = preparePlotFrame(props.sparkline, props.config);
-    const data = preparePlotData(alignedDataFrame);
 
     this.state = {
-      data,
+      data: preparePlotData([alignedDataFrame]),
       alignedDataFrame,
       configBuilder: this.prepareConfig(alignedDataFrame),
     };
@@ -63,7 +64,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     return {
       ...state,
-      data: preparePlotData(frame),
+      data: preparePlotData([frame]),
       alignedDataFrame: frame,
     };
   }
@@ -79,8 +80,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     if (prevProps.sparkline !== this.props.sparkline) {
       rebuildConfig = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
-    } else if (prevProps.config !== this.props.config) {
-      rebuildConfig = true;
+    } else {
+      rebuildConfig = !isEqual(prevProps.config, this.props.config);
     }
 
     if (rebuildConfig) {
@@ -88,12 +89,30 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     }
   }
 
+  getYRange(field: Field) {
+    let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
+
+    if (min === max) {
+      if (min === 0) {
+        max = 100;
+      } else {
+        min = 0;
+        max! *= 2;
+      }
+    }
+
+    return [
+      Math.max(min!, field.config.min ?? -Infinity),
+      Math.min(max!, field.config.max ?? Infinity),
+    ] as Range.MinMax;
+  }
+
   prepareConfig(data: DataFrame) {
     const { theme } = this.props;
     const builder = new UPlotConfigBuilder();
 
     builder.setCursor({
-      show: true,
+      show: false,
       x: false, // no crosshairs
       y: false,
     });
@@ -141,8 +160,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         scaleKey,
         orientation: ScaleOrientation.Vertical,
         direction: ScaleDirection.Up,
-        min: field.config.min,
-        max: field.config.max,
+        range: () => this.getYRange(field),
       });
 
       builder.addAxis({
@@ -153,9 +171,11 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+      const pointsMode =
+        customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
 
       builder.addSeries({
+        pxAlign: false,
         scaleKey,
         theme,
         drawStyle: customConfig.drawStyle!,
@@ -164,7 +184,6 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         lineInterpolation: customConfig.lineInterpolation,
         showPoints: pointsMode,
         pointSize: customConfig.pointSize,
-        pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
         fillColor: customConfig.fillColor ?? seriesColor,
       });

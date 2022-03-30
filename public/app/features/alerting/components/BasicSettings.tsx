@@ -30,7 +30,7 @@ export const BasicSettings: FC<Props> = ({
       <Field label="Type">
         <InputControl
           name="type"
-          render={({ field: { ref, ...field } }) => <Select {...field} options={channels} />}
+          render={({ field: { ref, ...field } }) => <Select menuShouldPortal {...field} options={channels} />}
           control={control}
           rules={{ required: true }}
         />

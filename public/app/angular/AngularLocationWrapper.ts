@@ -18,10 +18,14 @@ export class AngularLocationWrapper {
     this.url = this.wrapInDeprecationWarning(this.url);
   }
 
-  wrapInDeprecationWarning = (fn: Function, replacement?: string) => {
-    deprecationWarning('$location', fn.name, replacement || 'locationService');
-    return fn.bind(this);
-  };
+  wrapInDeprecationWarning(fn: Function, replacement?: string) {
+    let self = this;
+
+    return function wrapper() {
+      deprecationWarning('$location', fn.name, replacement || 'locationService');
+      return fn.apply(self, arguments);
+    };
+  }
 
   absUrl(): string {
     return `${window.location.origin}${this.url()}`;
@@ -131,7 +135,6 @@ export class AngularLocationWrapper {
       } else if (newUrl.startsWith('?')) {
         locationService.push({ ...locationService.getLocation(), search: newUrl });
       } else if (newUrl.trim().length === 0) {
-        console.log('pushing emptu');
         locationService.push('/');
       } else {
         locationService.push(newUrl);

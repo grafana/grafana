@@ -23,4 +23,13 @@ export enum DataTransformerID {
   groupBy = 'groupBy',
   sortBy = 'sortBy',
   histogram = 'histogram',
+  configFromData = 'configFromData',
+  rowsToFields = 'rowsToFields',
+  prepareTimeSeries = 'prepareTimeSeries',
+  convertFieldType = 'convertFieldType',
+  fieldLookup = 'fieldLookup',
+  heatmap = 'heatmap',
+  spatial = 'spatial',
+  extractFields = 'extractFields',
+  groupingToMatrix = 'groupingToMatrix',
 }

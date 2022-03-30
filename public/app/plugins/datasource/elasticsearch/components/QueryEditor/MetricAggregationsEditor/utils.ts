@@ -112,7 +112,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     label: 'Moving Average',
     requiresField: true,
     isPipelineAgg: true,
-    versionRange: '>=2.0.0',
+    versionRange: '>=2.0.0 <8.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,

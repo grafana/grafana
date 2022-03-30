@@ -1,10 +1,36 @@
-import { DataFrame, dataFrameToJSON, DataSourceInstanceSettings, MutableDataFrame, PluginType } from '@grafana/data';
-import { Observable, of } from 'rxjs';
+import { lastValueFrom, Observable, of } from 'rxjs';
+import {
+  DataFrame,
+  dataFrameToJSON,
+  DataSourceInstanceSettings,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  MutableDataFrame,
+  PluginType,
+} from '@grafana/data';
+
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { TempoDatasource } from './datasource';
-import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
+import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
+import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
+  // Mock the console error so that running the test suite doesnt throw the error
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
+  it('returns empty response when traceId is empty', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceId', query: '' } as Partial<TempoQuery>] } as any),
+      { defaultValue: 'empty' }
+    );
+    expect(response).toBe('empty');
+  });
+
   it('parses json fields from backend', async () => {
     setupBackendSrv(
       new MutableDataFrame({
@@ -23,7 +49,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    const response = await ds.query({ targets: [{ refId: 'refid1' }] } as any).toPromise();
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
@@ -68,7 +94,198 @@ describe('Tempo data source', () => {
       { name: 'source', values: [] },
     ]);
   });
+
+  it('runs service graph queries', async () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        serviceMap: {
+          datasourceUid: 'prom',
+        },
+      },
+    });
+    setDataSourceSrv(backendSrvWithPrometheus as any);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+    );
+
+    expect(response.data).toHaveLength(2);
+    expect(response.data[0].name).toBe('Nodes');
+    expect(response.data[0].fields[0].values.length).toBe(3);
+
+    // Test Links
+    expect(response.data[0].fields[0].config.links.length).toBeGreaterThan(0);
+    expect(response.data[0].fields[0].config.links).toEqual(serviceGraphLinks);
+
+    expect(response.data[1].name).toBe('Edges');
+    expect(response.data[1].fields[0].values.length).toBe(2);
+
+    expect(response.state).toBe(LoadingState.Done);
+  });
+
+  it('should handle json file upload', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify(mockJson);
+    const response = await lastValueFrom(
+      ds.query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+    );
+    const field = response.data[0].fields[0];
+    expect(field.name).toBe('traceID');
+    expect(field.type).toBe(FieldType.string);
+    expect(field.values.get(0)).toBe('60ba2abb44f13eae');
+    expect(field.values.length).toBe(6);
+  });
+
+  it('should fail on invalid json file upload', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify(mockInvalidJson);
+    const response = await lastValueFrom(
+      ds.query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+    );
+    expect(response.error?.message).toBeDefined();
+    expect(response.data.length).toBe(0);
+  });
+
+  it('should build search query correctly', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      serviceName: 'frontend',
+      spanName: '/config',
+      search: 'root.http.status_code=500',
+      minDuration: '1ms',
+      maxDuration: '100s',
+      limit: 10,
+    };
+    const builtQuery = ds.buildSearchQuery(tempoQuery);
+    expect(builtQuery).toStrictEqual({
+      tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
+      minDuration: '1ms',
+      maxDuration: '100s',
+      limit: 10,
+    });
+  });
+
+  it('should include a default limit', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      search: '',
+    };
+    const builtQuery = ds.buildSearchQuery(tempoQuery);
+    expect(builtQuery).toStrictEqual({
+      tags: '',
+      limit: DEFAULT_LIMIT,
+    });
+  });
+
+  it('should include time range if provided', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      search: '',
+    };
+    const timeRange = { startTime: 0, endTime: 1000 };
+    const builtQuery = ds.buildSearchQuery(tempoQuery, timeRange);
+    expect(builtQuery).toStrictEqual({
+      tags: '',
+      limit: DEFAULT_LIMIT,
+      start: timeRange.startTime,
+      end: timeRange.endTime,
+    });
+  });
+
+  it('formats native search query history correctly', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'nativeSearch',
+      refId: 'A',
+      query: '',
+      serviceName: 'frontend',
+      spanName: '/config',
+      search: 'root.http.status_code=500',
+      minDuration: '1ms',
+      maxDuration: '100s',
+      limit: 10,
+    };
+    const result = ds.getQueryDisplayText(tempoQuery);
+    expect(result).toBe(
+      'Service Name: frontend, Span Name: /config, Search: root.http.status_code=500, Min Duration: 1ms, Max Duration: 100s, Limit: 10'
+    );
+  });
+
+  it('should get loki search datasource', () => {
+    // 1. Get lokiSearch.datasource if present
+    const ds1 = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        lokiSearch: {
+          datasourceUid: 'loki-1',
+        },
+      },
+    });
+    const lokiDS1 = ds1.getLokiSearchDS();
+    expect(lokiDS1).toBe('loki-1');
+
+    // 2. Get traceToLogs.datasource
+    const ds2 = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        tracesToLogs: {
+          lokiSearch: true,
+          datasourceUid: 'loki-2',
+        },
+      },
+    });
+    const lokiDS2 = ds2.getLokiSearchDS();
+    expect(lokiDS2).toBe('loki-2');
+
+    // 3. Return undefined if neither is available
+    const ds3 = new TempoDatasource(defaultSettings);
+    const lokiDS3 = ds3.getLokiSearchDS();
+    expect(lokiDS3).toBe(undefined);
+
+    // 4. Return undefined if lokiSearch is undefined, even if traceToLogs is present
+    // since this indicates the user cleared the fallback setting
+    const ds4 = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        tracesToLogs: {
+          lokiSearch: true,
+          datasourceUid: 'loki-2',
+        },
+        lokiSearch: {
+          datasourceUid: undefined,
+        },
+      },
+    });
+    const lokiDS4 = ds4.getLokiSearchDS();
+    expect(lokiDS4).toBe(undefined);
+  });
 });
+
+const backendSrvWithPrometheus = {
+  async get(uid: string) {
+    if (uid === 'prom') {
+      return {
+        query() {
+          return of({ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] });
+        },
+      };
+    }
+    throw new Error('unexpected uid');
+  },
+};
 
 function setupBackendSrv(frame: DataFrame) {
   setBackendSrv({
@@ -86,18 +303,131 @@ function setupBackendSrv(frame: DataFrame) {
   } as any);
 }
 
-const defaultSettings: DataSourceInstanceSettings = {
+const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
   uid: '0',
   type: 'tracing',
-  name: 'jaeger',
+  name: 'tempo',
+  access: 'proxy',
   meta: {
-    id: 'jaeger',
-    name: 'jaeger',
+    id: 'tempo',
+    name: 'tempo',
     type: PluginType.datasource,
     info: {} as any,
     module: '',
     baseUrl: '',
   },
-  jsonData: {},
+  jsonData: {
+    nodeGraph: {
+      enabled: true,
+    },
+  },
 };
+
+const totalsPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
+  ],
+});
+
+const secondsPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_server_seconds_sum',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
+  ],
+});
+
+const failedPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_failed_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
+  ],
+});
+
+const mockInvalidJson = {
+  batches: [
+    {
+      resource: {
+        attributes: [],
+      },
+      instrumentation_library_spans: [
+        {
+          instrumentation_library: {},
+          spans: [
+            {
+              trace_id: 'AAAAAAAAAABguiq7RPE+rg==',
+              span_id: 'cmteMBAvwNA=',
+              parentSpanId: 'OY8PIaPbma4=',
+              name: 'HTTP GET - root',
+              kind: 'SPAN_KIND_SERVER',
+              startTimeUnixNano: '1627471657255809000',
+              endTimeUnixNano: '1627471657256268000',
+              attributes: [
+                { key: 'http.status_code', value: { intValue: '200' } },
+                { key: 'http.method', value: { stringValue: 'GET' } },
+                { key: 'http.url', value: { stringValue: '/' } },
+                { key: 'component', value: { stringValue: 'net/http' } },
+              ],
+              status: {},
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+const serviceGraphLinks = [
+  {
+    url: '',
+    title: 'Request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Request histogram',
+    internal: {
+      query: {
+        expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Failed request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+];

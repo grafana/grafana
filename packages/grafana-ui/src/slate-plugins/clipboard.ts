@@ -10,6 +10,11 @@ const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: num
   return textBlocks.join('\n').slice(startOffset, excludingLastLineLength + endOffset);
 };
 
+// Remove unicode special symbol - byte order mark (BOM), U+FEFF.
+const removeBom = (str: string | undefined): string | undefined => {
+  return str?.replace(/[\uFEFF]/g, '');
+};
+
 export function ClipboardPlugin(): Plugin {
   const clipboardPlugin: Plugin = {
     onCopy(event: Event, editor: CoreEditor, next: () => any) {
@@ -26,7 +31,7 @@ export function ClipboardPlugin(): Plugin {
         .toArray()
         .map((block) => block.text);
 
-      const copiedText = getCopiedText(selectedBlocks, startOffset, endOffset);
+      const copiedText = removeBom(getCopiedText(selectedBlocks, startOffset, endOffset));
       if (copiedText && clipEvent.clipboardData) {
         clipEvent.clipboardData.setData('Text', copiedText);
       }
@@ -38,10 +43,10 @@ export function ClipboardPlugin(): Plugin {
       const clipEvent = event as ClipboardEvent;
       clipEvent.preventDefault();
       if (clipEvent.clipboardData) {
-        const pastedValue = clipEvent.clipboardData.getData('Text');
-        const lines = pastedValue.split('\n');
+        const pastedValue = removeBom(clipEvent.clipboardData.getData('Text'));
+        const lines = pastedValue?.split('\n');
 
-        if (lines.length) {
+        if (lines && lines.length) {
           editor.insertText(lines[0]);
           for (const line of lines.slice(1)) {
             editor.splitBlock().insertText(line);

@@ -10,19 +10,13 @@ import {
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
   stringOverrideProcessor,
-  ThresholdsConfig,
-  ThresholdsFieldConfigSettings,
-  thresholdsOverrideProcessor,
-  ValueMapping,
-  ValueMappingFieldConfigSettings,
-  valueMappingsOverrideProcessor,
-  ThresholdsMode,
   identityOverrideProcessor,
   TimeZone,
   FieldColor,
   FieldColorConfigSettings,
   StatsPickerConfigSettings,
   displayNameOverrideProcessor,
+  FieldNamePickerConfigSettings,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -36,13 +30,12 @@ import {
   MultiSelectValueEditor,
   TimeZonePicker,
 } from '../components';
-import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
-import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { ColorValueEditor } from '../components/OptionsUI/color';
 import { FieldColorEditor } from '../components/OptionsUI/fieldColor';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
+import { FieldNamePicker } from '../components/MatchersUI/FieldNamePicker';
 
 /**
  * Returns collection of common field config properties definitions
@@ -138,42 +131,6 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
-    id: 'thresholds',
-    path: 'thresholds',
-    name: 'Thresholds',
-    editor: standardEditorsRegistry.get('thresholds').editor as any,
-    override: standardEditorsRegistry.get('thresholds').editor as any,
-    process: thresholdsOverrideProcessor,
-    settings: {},
-    defaultValue: {
-      mode: ThresholdsMode.Absolute,
-      steps: [
-        { value: -Infinity, color: 'green' },
-        { value: 80, color: 'red' },
-      ],
-    },
-    shouldApply: () => true,
-    category: ['Thresholds'],
-    getItemsCount: (value) => (value ? value.steps.length : 0),
-  };
-
-  const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
-    id: 'mappings',
-    path: 'mappings',
-    name: 'Value mappings',
-    description: 'Modify the display text based on input value',
-
-    editor: standardEditorsRegistry.get('mappings').editor as any,
-    override: standardEditorsRegistry.get('mappings').editor as any,
-    process: valueMappingsOverrideProcessor,
-    settings: {},
-    defaultValue: [],
-    shouldApply: () => true,
-    category: ['Value mappings'],
-    getItemsCount: (value?) => (value ? value.length : 0),
-  };
-
   const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'noValue',
     path: 'noValue',
@@ -222,11 +179,13 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, decimals, displayName, color, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, color, noValue, links];
 };
 
 /**
  * Returns collection of standard option editors definitions
+ *
+ * @internal
  */
 export const getStandardOptionEditors = () => {
   const number: StandardEditorsRegistryItem<number> = {
@@ -296,20 +255,6 @@ export const getStandardOptionEditors = () => {
     editor: UnitValueEditor as any,
   };
 
-  const thresholds: StandardEditorsRegistryItem<ThresholdsConfig> = {
-    id: 'thresholds',
-    name: 'Thresholds',
-    description: 'Allows defining thresholds',
-    editor: ThresholdsValueEditor as any,
-  };
-
-  const mappings: StandardEditorsRegistryItem<ValueMapping[]> = {
-    id: 'mappings',
-    name: 'Mappings',
-    description: 'Allows defining value mappings',
-    editor: ValueMappingsValueEditor as any,
-  };
-
   const color: StandardEditorsRegistryItem<string> = {
     id: 'color',
     name: 'Color',
@@ -347,6 +292,13 @@ export const getStandardOptionEditors = () => {
     editor: TimeZonePicker as any,
   };
 
+  const fieldName: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    id: 'field-name',
+    name: 'Field name',
+    description: 'Time zone selection',
+    editor: FieldNamePicker as any,
+  };
+
   return [
     text,
     number,
@@ -355,8 +307,6 @@ export const getStandardOptionEditors = () => {
     radio,
     select,
     unit,
-    mappings,
-    thresholds,
     links,
     statsPicker,
     strings,
@@ -364,5 +314,6 @@ export const getStandardOptionEditors = () => {
     fieldColor,
     color,
     multiSelect,
+    fieldName,
   ];
 };

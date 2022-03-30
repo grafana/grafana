@@ -3,8 +3,6 @@ import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getCiFolder } from '../../plugins/env';
 import path = require('path');
 import fs = require('fs');
-// @ts-ignore
-// import execa = require('execa');
 import GithubClient from './githubClient';
 import { AxiosResponse } from 'axios';
 
@@ -79,7 +77,7 @@ class GitHubRelease {
       if (latestRelease.data.tag_name === `v${pluginInfo.version}`) {
         await this.git.client.delete(`releases/${latestRelease.data.id}`);
       }
-    } catch (reason) {
+    } catch (reason: any) {
       if (reason.response.status !== 404) {
         // 404 just means no release found. Not an error. Anything else though, re throw the error
         throw reason;
@@ -102,7 +100,7 @@ class GitHubRelease {
         `https://uploads.github.com/repos/${this.username}/${this.repository}/releases/${newReleaseResponse.data.id}/assets`
       );
       await Promise.all(publishPromises);
-    } catch (reason) {
+    } catch (reason: any) {
       console.error(reason.data?.message ?? reason.response.data ?? reason);
       // Rethrow the error so that we can trigger a non-zero exit code to circle-ci
       throw reason;

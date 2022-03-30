@@ -3,38 +3,43 @@ package imguploader
 import (
 	"context"
 	"net/url"
+	"strings"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUploadToWebdav(t *testing.T) {
 	// Can be tested with this docker container: https://hub.docker.com/r/morrisjobke/webdav/
-	SkipConvey("[Integration test] for external_image_store.webdav", t, func() {
+	t.Run("[Integration test] for external_image_store.webdav", func(t *testing.T) {
+		t.Skip("Skip test [Integration test] for external_image_store.webdav")
 		webdavUploader, _ := NewWebdavImageUploader("http://localhost:8888/webdav/", "test", "test", "")
 		path, err := webdavUploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
 
-		So(err, ShouldBeNil)
-		So(path, ShouldStartWith, "http://localhost:8888/webdav/")
+		require.NoError(t, err)
+		require.True(t, strings.HasPrefix(path, "http://localhost:8888/webdav/"))
 	})
 
-	SkipConvey("[Integration test] for external_image_store.webdav with public url", t, func() {
+	t.Run("[Integration test] for external_image_store.webdav with public url", func(t *testing.T) {
+		t.Skip("Skip test [Integration test] for external_image_store.webdav with public url")
 		webdavUploader, _ := NewWebdavImageUploader("http://localhost:8888/webdav/", "test", "test", "http://publicurl:8888/webdav")
 		path, err := webdavUploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
 
-		So(err, ShouldBeNil)
-		So(path, ShouldStartWith, "http://publicurl:8888/webdav/")
+		require.NoError(t, err)
+		require.True(t, strings.HasPrefix(path, "http://publicurl:8888/webdav/"))
+
+		require.True(t, strings.HasPrefix(path, "http://publicurl:8888/webdav/"))
 	})
 }
 
 func TestPublicURL(t *testing.T) {
-	Convey("Given a public URL with parameters, and no template", t, func() {
+	t.Run("Given a public URL with parameters, and no template", func(t *testing.T) {
 		webdavUploader, _ := NewWebdavImageUploader("http://localhost:8888/webdav/", "test", "test", "http://cloudycloud.me/s/DOIFDOMV/download?files=")
 		parsed, _ := url.Parse(webdavUploader.PublicURL("fileyfile.png"))
-		So(parsed.Path, ShouldEndWith, "fileyfile.png")
+		require.True(t, strings.HasSuffix(parsed.Path, "fileyfile.png"))
 	})
-	Convey("Given a public URL with parameters, and a template", t, func() {
+	t.Run("Given a public URL with parameters, and a template", func(t *testing.T) {
 		webdavUploader, _ := NewWebdavImageUploader("http://localhost:8888/webdav/", "test", "test", "http://cloudycloud.me/s/DOIFDOMV/download?files=${file}")
-		So(webdavUploader.PublicURL("fileyfile.png"), ShouldEndWith, "fileyfile.png")
+		require.True(t, strings.HasSuffix(webdavUploader.PublicURL("fileyfile.png"), "fileyfile.png"))
 	})
 }

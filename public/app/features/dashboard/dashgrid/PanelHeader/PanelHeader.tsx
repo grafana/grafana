@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import { cx } from '@emotion/css';
-import { DataLink, PanelData } from '@grafana/data';
-import { Icon } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
+import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
@@ -30,25 +30,25 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
+  const styles = useStyles2(panelStyles);
 
   return (
     <>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
+      <PanelHeaderCorner
+        panel={panel}
+        title={panel.title}
+        description={panel.description}
+        scopedVars={panel.scopedVars}
+        links={getPanelLinksSupplier(panel)}
+        error={error}
+      />
       <div className={className}>
-        <PanelHeaderCorner
-          panel={panel}
-          title={panel.title}
-          description={panel.description}
-          scopedVars={panel.scopedVars}
-          links={getPanelLinksSupplier(panel)}
-          error={error}
-        />
-        <PanelHeaderMenuTrigger aria-label={selectors.components.Panels.Panel.title(title)}>
+        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
               <div className="panel-title">
                 <PanelHeaderNotices frames={data.series} panelId={panel.id} />
-                {panel.libraryPanel && <Icon name="library-panel" style={{ marginRight: '4px' }} />}
                 {alertState ? (
                   <Icon
                     name={alertState === 'alerting' ? 'heart-break' : 'heart'}
@@ -57,7 +57,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                     size="sm"
                   />
                 ) : null}
-                <span className="panel-title-text">{title}</span>
+                <h2 className={styles.titleText}>{title}</h2>
                 <Icon name="angle-down" className="panel-menu-toggle" />
                 <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
                 {data.request && data.request.timeInfo && (
@@ -72,4 +72,26 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
       </div>
     </>
   );
+};
+
+const panelStyles = (theme: GrafanaTheme2) => {
+  return {
+    titleText: css`
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: calc(100% - 38px);
+      cursor: pointer;
+      font-weight: ${theme.typography.fontWeightMedium};
+      font-size: ${theme.typography.body.fontSize};
+      margin: 0;
+
+      &:hover {
+        color: ${theme.colors.text.primary};
+      }
+      .panel-has-alert & {
+        max-width: calc(100% - 54px);
+      }
+    `,
+  };
 };

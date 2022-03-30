@@ -21,7 +21,7 @@ interface DashboardListPageConnectedProps {
 interface Props extends GrafanaRouteComponentProps<DashboardListPageRouteParams>, DashboardListPageConnectedProps {}
 
 export const DashboardListPage: FC<Props> = memo(({ navModel, match, location }) => {
-  const { loading, value } = useAsync<{ folder?: FolderDTO; pageNavModel: NavModel }>(() => {
+  const { loading, value } = useAsync<() => Promise<{ folder?: FolderDTO; pageNavModel: NavModel }>>(() => {
     const uid = match.params.uid;
     const url = location.pathname;
     if (!uid || !url.startsWith('/dashboards')) {

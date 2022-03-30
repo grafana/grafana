@@ -1,8 +1,12 @@
 import React, { ComponentProps } from 'react';
-import { FieldType, DataFrame } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InspectDataTab } from './InspectDataTab';
+
+// the mock below gets rid of this warning from recompose:
+// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
+jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
   const defaultProps = {
@@ -57,12 +61,12 @@ describe('InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
       userEvent.click(dataOptions);
-      const dataFrameInput = screen.getByRole('textbox', { name: /Select dataframe/i });
+      const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
       userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
     it('should show download logs button if logs data', () => {
-      const dataWithLogs = ([
+      const dataWithLogs = [
         {
           name: 'Data frame with logs',
           fields: [
@@ -75,13 +79,71 @@ describe('InspectDataTab', () => {
             preferredVisualisationType: 'logs',
           },
         },
-      ] as unknown) as DataFrame[];
+      ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
     });
     it('should not show download logs button if no logs data', () => {
       render(<InspectDataTab {...createProps()} />);
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
+    });
+    it('should show download traces button if traces data', () => {
+      const dataWithtraces = [
+        {
+          name: 'Data frame with traces',
+          fields: [
+            { name: 'traceID', values: ['3fa414edcef6ad90', '3fa414edcef6ad90'] },
+            { name: 'spanID', values: ['3fa414edcef6ad90', '0f5c1808567e4403'] },
+            { name: 'parentSpanID', values: [undefined, '3fa414edcef6ad90'] },
+            { name: 'operationName', values: ['HTTP GET - api_traces_traceid', '/tempopb.Querier/FindTraceByID'] },
+            { name: 'serviceName', values: ['tempo-querier', 'tempo-querier'] },
+            {
+              name: 'serviceTags',
+              values: [
+                [
+                  { key: 'cluster', type: 'string', value: 'ops-tools1' },
+                  { key: 'container', type: 'string', value: 'tempo-query' },
+                ],
+                [
+                  { key: 'cluster', type: 'string', value: 'ops-tools1' },
+                  { key: 'container', type: 'string', value: 'tempo-query' },
+                ],
+              ],
+            },
+            { name: 'startTime', values: [1605873894680.409, 1605873894680.587] },
+            { name: 'duration', values: [1049.141, 1.847] },
+            { name: 'logs', values: [[], []] },
+            {
+              name: 'tags',
+              values: [
+                [
+                  { key: 'sampler.type', type: 'string', value: 'probabilistic' },
+                  { key: 'sampler.param', type: 'float64', value: 1 },
+                ],
+                [
+                  { key: 'component', type: 'string', value: 'gRPC' },
+                  { key: 'span.kind', type: 'string', value: 'client' },
+                ],
+              ],
+            },
+            { name: 'warnings', values: [undefined, undefined] },
+            { name: 'stackTraces', values: [undefined, undefined] },
+          ],
+          length: 2,
+          meta: {
+            preferredVisualisationType: 'trace',
+            custom: {
+              traceFormat: 'jaeger',
+            },
+          },
+        },
+      ] as unknown as DataFrame[];
+      render(<InspectDataTab {...createProps({ data: dataWithtraces })} />);
+      expect(screen.getByText(/Download traces/i)).toBeInTheDocument();
+    });
+    it('should not show download traces button if no traces data', () => {
+      render(<InspectDataTab {...createProps()} />);
+      expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
     });
   });
 });

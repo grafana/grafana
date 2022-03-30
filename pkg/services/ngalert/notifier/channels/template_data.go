@@ -8,14 +8,13 @@ import (
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type ExtendedAlert struct {
@@ -77,11 +76,11 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 		return extended
 	}
 	externalPath := u.Path
-	dashboardUid := alert.Annotations["__dashboardUid__"]
+	dashboardUid := alert.Annotations[ngmodels.DashboardUIDAnnotation]
 	if len(dashboardUid) > 0 {
 		u.Path = path.Join(externalPath, "/d/", dashboardUid)
 		extended.DashboardURL = u.String()
-		panelId := alert.Annotations["__panelId__"]
+		panelId := alert.Annotations[ngmodels.PanelIDAnnotation]
 		if len(panelId) > 0 {
 			u.RawQuery = "viewPanel=" + panelId
 			extended.PanelURL = u.String()
@@ -100,7 +99,15 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 	sort.Strings(matchers)
 	u.Path = path.Join(externalPath, "/alerting/silence/new")
-	u.RawQuery = "alertmanager=grafana&matchers=" + url.QueryEscape(strings.Join(matchers, ","))
+
+	query := make(url.Values)
+	query.Add("alertmanager", "grafana")
+	for _, matcher := range matchers {
+		query.Add("matcher", matcher)
+	}
+
+	u.RawQuery = query.Encode()
+
 	extended.SilenceURL = u.String()
 
 	return extended
@@ -128,7 +135,7 @@ func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
 }
 
 func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger, tmplErr *error) (func(string) string, *ExtendedData) {
-	promTmplData := notify.GetTemplateData(ctx, tmpl, alerts, gokit_log.NewLogfmtLogger(logging.NewWrapper(l)))
+	promTmplData := notify.GetTemplateData(ctx, tmpl, alerts, l)
 	data := ExtendData(promTmplData, l)
 
 	return func(name string) (s string) {

@@ -12,8 +12,12 @@ import {
   DataQuery,
   DataFrameJSON,
   dataFrameFromJSON,
+  QueryResultMetaNotice,
 } from '@grafana/data';
-import { FetchResponse } from '../services';
+import { FetchError, FetchResponse } from '../services';
+import { toDataQueryError } from './toDataQueryError';
+
+export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
 
 /**
  * Single response object from a backend data source. Properties are optional but response should contain at least
@@ -61,6 +65,7 @@ export function toDataQueryResponse(
   if ((res as FetchResponse).data?.results) {
     const results = (res as FetchResponse).data.results;
     const refIDs = queries?.length ? queries.map((q) => q.refId) : Object.keys(results);
+    const cachedResponse = isCachedResponse(res as FetchResponse);
     const data: DataResponse[] = [];
 
     for (const refId of refIDs) {
@@ -84,7 +89,10 @@ export function toDataQueryResponse(
       }
 
       if (dr.frames?.length) {
-        for (const js of dr.frames) {
+        for (let js of dr.frames) {
+          if (cachedResponse) {
+            js = addCacheNotice(js);
+          }
           const df = dataFrameFromJSON(js);
           if (!df.refId) {
             df.refId = dr.refId;
@@ -127,34 +135,58 @@ export function toDataQueryResponse(
   return rsp;
 }
 
+function isCachedResponse(res: FetchResponse<BackendDataSourceResponse | undefined>): boolean {
+  const headers = res?.headers;
+  if (!headers || !headers.get) {
+    return false;
+  }
+  return headers.get('X-Cache') === 'HIT';
+}
+
+function addCacheNotice(frame: DataFrameJSON): DataFrameJSON {
+  return {
+    ...frame,
+    schema: {
+      ...frame.schema,
+      fields: [...(frame.schema?.fields ?? [])],
+      meta: {
+        ...frame.schema?.meta,
+        notices: [...(frame.schema?.meta?.notices ?? []), cachedResponseNotice],
+      },
+    },
+  };
+}
+
 /**
- * Convert an object into a DataQueryError -- if this is an HTTP response,
- * it will put the correct values in the error field
+ * Data sources using api/ds/query to test data sources can use this function to
+ * handle errors and convert them to TestingStatus object.
  *
- * @public
+ * If possible, this should be avoided in favor of implementing /health endpoint
+ * and testing data source with DataSourceWithBackend.testDataSource()
+ *
+ * Re-thrown errors are handled by testDataSource() in public/app/features/datasources/state/actions.ts
+ *
+ * @returns {TestingStatus}
  */
-export function toDataQueryError(err: DataQueryError | string | Object): DataQueryError {
-  const error = (err || {}) as DataQueryError;
-
-  if (!error.message) {
-    if (typeof err === 'string' || err instanceof String) {
-      return { message: err } as DataQueryError;
-    }
-
-    let message = 'Query error';
-    if (error.message) {
-      message = error.message;
-    } else if (error.data && error.data.message) {
-      message = error.data.message;
-    } else if (error.data && error.data.error) {
-      message = error.data.error;
-    } else if (error.status) {
-      message = `Query error: ${error.status} ${error.statusText}`;
-    }
-    error.message = message;
+export function toTestingStatus(err: FetchError): any {
+  const queryResponse = toDataQueryResponse(err);
+  // POST api/ds/query errors returned as { message: string, error: string } objects
+  if (queryResponse.error?.data?.message) {
+    return {
+      status: 'error',
+      message: queryResponse.error.data.message,
+      details: queryResponse.error?.data?.error ? { message: queryResponse.error.data.error } : undefined,
+    };
+  }
+  // POST api/ds/query errors returned in results object
+  else if (queryResponse.error?.refId && queryResponse.error?.message) {
+    return {
+      status: 'error',
+      message: queryResponse.error.message,
+    };
   }
 
-  return error;
+  throw err;
 }
 
 /**

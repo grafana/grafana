@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
@@ -61,6 +61,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     return (
       <>
+        {options.access === 'direct' && (
+          <Alert title="Deprecation Notice" severity="warning">
+            This data source uses browser access mode. This mode is deprecated and will be removed in the future. Please
+            use server access mode instead.
+          </Alert>
+        )}
         <DataSourceHttpSettings
           defaultUrl="http://localhost:8080"
           dataSourceConfig={options}
@@ -74,6 +80,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 Version
               </InlineFormLabel>
               <Select
+                aria-label="Graphite version"
+                menuShouldPortal
                 value={currentVersion}
                 options={graphiteVersions}
                 width={8}
@@ -85,6 +93,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
               <Select
+                aria-label="Graphite backend type"
+                menuShouldPortal
                 options={graphiteTypes}
                 value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
                 width={8}

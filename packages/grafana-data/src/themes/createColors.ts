@@ -96,7 +96,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   text = {
     primary: `rgb(${this.whiteBase})`,
     secondary: `rgba(${this.whiteBase}, 0.65)`,
-    disabled: `rgba(${this.whiteBase}, 0.40)`,
+    disabled: `rgba(${this.whiteBase}, 0.6)`,
     link: palette.blueDarkText,
     maxContrast: palette.white,
   };
@@ -108,8 +108,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.whiteBase}, 0.1)`,
-    shade: `rgba(${this.whiteBase}, 0.15)`,
+    main: `rgba(${this.whiteBase}, 0.16)`,
+    shade: `rgba(${this.whiteBase}, 0.20)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
     border: this.border.strong,
@@ -139,12 +139,12 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   action = {
-    hover: `rgba(${this.whiteBase}, 0.08)`,
+    hover: `rgba(${this.whiteBase}, 0.16)`,
     selected: `rgba(${this.whiteBase}, 0.12)`,
     focus: `rgba(${this.whiteBase}, 0.16)`,
     hoverOpacity: 0.08,
     disabledText: this.text.disabled,
-    disabledBackground: `rgba(${this.whiteBase}, 0.07)`,
+    disabledBackground: `rgba(${this.whiteBase}, 0.04)`,
     disabledOpacity: 0.38,
   };
 
@@ -184,8 +184,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.blackBase}, 0.11)`,
-    shade: `rgba(${this.blackBase}, 0.16)`,
+    main: `rgba(${this.blackBase}, 0.16)`,
+    shade: `rgba(${this.blackBase}, 0.20)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
     border: this.border.strong,
@@ -219,11 +219,11 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   action = {
-    hover: `rgba(${this.blackBase}, 0.04)`,
+    hover: `rgba(${this.blackBase}, 0.12)`,
     selected: `rgba(${this.blackBase}, 0.08)`,
     hoverOpacity: 0.08,
     focus: `rgba(${this.blackBase}, 0.12)`,
-    disabledBackground: `rgba(${this.blackBase}, 0.07)`,
+    disabledBackground: `rgba(${this.blackBase}, 0.04)`,
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
   };

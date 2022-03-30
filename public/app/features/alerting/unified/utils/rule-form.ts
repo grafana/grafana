@@ -1,11 +1,19 @@
-import { DataQuery, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  rangeUtil,
+  RelativeTimeRange,
+  ScopedVars,
+  getDefaultRelativeTimeRange,
+  TimeRange,
+  IntervalValues,
+  DataSourceRef,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
@@ -13,16 +21,16 @@ import {
   AlertQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
-  RulerAlertingRuleDTO,
+  RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { Annotation } from './constants';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
+import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
-import { getDefaultRelativeTimeRange } from '../../../../../../packages/grafana-data';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export const getDefaultFormValues = (): RuleFormValues =>
   Object.freeze({
@@ -53,15 +61,24 @@ export const getDefaultFormValues = (): RuleFormValues =>
     forTimeUnit: 'm',
   });
 
-export function formValuesToRulerAlertingRuleDTO(values: RuleFormValues): RulerAlertingRuleDTO {
-  const { name, expression, forTime, forTimeUnit } = values;
-  return {
-    alert: name,
-    for: `${forTime}${forTimeUnit}`,
-    annotations: arrayToRecord(values.annotations || []),
-    labels: arrayToRecord(values.labels || []),
-    expr: expression,
-  };
+export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
+  const { name, expression, forTime, forTimeUnit, type } = values;
+  if (type === RuleFormType.cloudAlerting) {
+    return {
+      alert: name,
+      for: `${forTime}${forTimeUnit}`,
+      annotations: arrayToRecord(values.annotations || []),
+      labels: arrayToRecord(values.labels || []),
+      expr: expression,
+    };
+  } else if (type === RuleFormType.cloudRecording) {
+    return {
+      record: name,
+      labels: arrayToRecord(values.labels || []),
+      expr: expression,
+    };
+  }
+  throw new Error(`unexpected rule type: ${type}`);
 }
 
 function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Array<{ key: string; value: string }> {
@@ -106,7 +123,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
-        folder: { title: namespace, id: -1 },
+        folder: { title: namespace, id: ga.namespace_id },
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
@@ -119,7 +136,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: rule.alert,
-        type: RuleFormType.cloud,
+        type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
@@ -129,8 +146,19 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
       };
+    } else if (isRecordingRulerRule(rule)) {
+      return {
+        ...defaultFormValues,
+        name: rule.record,
+        type: RuleFormType.cloudRecording,
+        dataSourceName: ruleSourceName,
+        namespace,
+        group: group.name,
+        expression: rule.expr,
+        labels: listifyLabelsOrAnnotations(rule.labels),
+      };
     } else {
-      throw new Error('Editing recording rules not supported (yet)');
+      throw new Error('Unexpected type of rule for cloud rules source');
     }
   }
 }
@@ -163,7 +191,10 @@ const getDefaultExpression = (refId: string): AlertQuery => {
     refId,
     hide: false,
     type: ExpressionQueryType.classic,
-    datasource: ExpressionDatasourceID,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
     conditions: [
       {
         type: 'query',
@@ -193,60 +224,82 @@ const getDefaultExpression = (refId: string): AlertQuery => {
   };
 };
 
-const dataQueriesToGrafanaQueries = (
+const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
-  datasourceName?: string
-): AlertQuery[] => {
-  return queries.reduce<AlertQuery[]>((queries, target) => {
-    const dsName = target.datasource || datasourceName;
-    if (dsName) {
-      // expressions
-      if (dsName === ExpressionDatasourceID) {
+  scopedVars: ScopedVars | {},
+  panelDataSourceRef?: DataSourceRef,
+  maxDataPoints?: number,
+  minInterval?: string
+): Promise<AlertQuery[]> => {
+  const result: AlertQuery[] = [];
+
+  for (const target of queries) {
+    const datasource = await getDataSourceSrv().get(target.datasource?.uid ? target.datasource : panelDataSourceRef);
+    const dsRef = { uid: datasource.uid, type: datasource.type };
+
+    const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
+    const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
+    const queryVariables = {
+      __interval: { text: interval, value: interval },
+      __interval_ms: { text: intervalMs, value: intervalMs },
+      ...scopedVars,
+    };
+
+    const interpolatedTarget = datasource.interpolateVariablesInQueries
+      ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
+      : target;
+
+    // expressions
+    if (dsRef.uid === ExpressionDatasourceUID) {
+      const newQuery: AlertQuery = {
+        refId: interpolatedTarget.refId,
+        queryType: '',
+        relativeTimeRange,
+        datasourceUid: ExpressionDatasourceUID,
+        model: interpolatedTarget,
+      };
+      result.push(newQuery);
+      // queries
+    } else {
+      const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsRef);
+      if (datasourceSettings && datasourceSettings.meta.alerting) {
         const newQuery: AlertQuery = {
-          refId: target.refId,
-          queryType: '',
+          refId: interpolatedTarget.refId,
+          queryType: interpolatedTarget.queryType ?? '',
           relativeTimeRange,
-          datasourceUid: ExpressionDatasourceUID,
-          model: target,
+          datasourceUid: datasourceSettings.uid,
+          model: {
+            ...interpolatedTarget,
+            maxDataPoints,
+            intervalMs,
+          },
         };
-        return [...queries, newQuery];
-        // queries
-      } else {
-        const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
-        if (datasource && datasource.meta.alerting) {
-          const newQuery: AlertQuery = {
-            refId: target.refId,
-            queryType: target.queryType ?? '',
-            relativeTimeRange,
-            datasourceUid: datasource.uid,
-            model: target,
-          };
-          return [...queries, newQuery];
-        }
+        result.push(newQuery);
       }
     }
-    return queries;
-  }, []);
+  }
+  return result;
 };
 
-export const panelToRuleFormValues = (
+export const panelToRuleFormValues = async (
   panel: PanelModel,
   dashboard: DashboardModel
-): Partial<RuleFormValues> | undefined => {
+): Promise<Partial<RuleFormValues> | undefined> => {
   const { targets } = panel;
-
-  // it seems if default datasource is selected, datasource=null, hah
-  const datasourceName =
-    panel.datasource === null ? getDatasourceSrv().getInstanceSettings('default')?.name : panel.datasource;
-
-  if (!panel.editSourceId || !dashboard.uid) {
+  if (!panel.id || !dashboard.uid) {
     return undefined;
   }
 
   const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
-  const queries = dataQueriesToGrafanaQueries(targets, relativeTimeRange, datasourceName);
-
+  const queries = await dataQueriesToGrafanaQueries(
+    targets,
+    relativeTimeRange,
+    panel.scopedVars || {},
+    panel.datasource ?? undefined,
+    panel.maxDataPoints ?? undefined,
+    panel.interval ?? undefined
+  );
   // if no alerting capable queries are found, can't create a rule
   if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
     return undefined;
@@ -269,6 +322,7 @@ export const panelToRuleFormValues = (
         : undefined,
     queries,
     name: panel.title,
+    condition: queries[queries.length - 1].refId,
     annotations: [
       {
         key: Annotation.dashboardUID,
@@ -276,9 +330,23 @@ export const panelToRuleFormValues = (
       },
       {
         key: Annotation.panelID,
-        value: String(panel.editSourceId),
+        value: String(panel.id),
       },
     ],
   };
   return formValues;
 };
+
+export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+  if (!resolution) {
+    if (lowLimit && rangeUtil.intervalToMs(lowLimit) > 1000) {
+      return {
+        interval: lowLimit,
+        intervalMs: rangeUtil.intervalToMs(lowLimit),
+      };
+    }
+    return { interval: '1s', intervalMs: 1000 };
+  }
+
+  return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}

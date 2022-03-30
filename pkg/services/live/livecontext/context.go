@@ -2,7 +2,6 @@ package livecontext
 
 import (
 	"context"
-	"net/url"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -24,21 +23,6 @@ func GetContextSignedUser(ctx context.Context) (*models.SignedInUser, bool) {
 	return nil, false
 }
 
-type valuesContextKey struct{}
-
-func SetContextValues(ctx context.Context, values url.Values) context.Context {
-	ctx = context.WithValue(ctx, valuesContextKey{}, values)
-	return ctx
-}
-
-func GetContextValues(ctx context.Context) (url.Values, bool) {
-	if val := ctx.Value(valuesContextKey{}); val != nil {
-		values, ok := val.(url.Values)
-		return values, ok
-	}
-	return nil, false
-}
-
 type streamIDContextKey struct{}
 
 func SetContextStreamID(ctx context.Context, streamID string) context.Context {
@@ -48,6 +32,21 @@ func SetContextStreamID(ctx context.Context, streamID string) context.Context {
 
 func GetContextStreamID(ctx context.Context) (string, bool) {
 	if val := ctx.Value(streamIDContextKey{}); val != nil {
+		values, ok := val.(string)
+		return values, ok
+	}
+	return "", false
+}
+
+type channelIDContextKey struct{}
+
+func SetContextChannelID(ctx context.Context, channelID string) context.Context {
+	ctx = context.WithValue(ctx, channelIDContextKey{}, channelID)
+	return ctx
+}
+
+func GetContextChannelID(ctx context.Context) (string, bool) {
+	if val := ctx.Value(channelIDContextKey{}); val != nil {
 		values, ok := val.(string)
 		return values, ok
 	}

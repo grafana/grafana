@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declarationDir": "dist",
+    "outDir": "compiled",
+    "rootDirs": ["."],
+    "incremental": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
+  },
+  "exclude": ["dist", "node_modules"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts*"]
+}

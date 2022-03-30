@@ -1,10 +1,9 @@
 import React, { FC, memo, useState } from 'react';
 import { css } from '@emotion/css';
-import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { FilterInput, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { FolderDTO } from 'app/types';
 import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchLayout } from '../types';
@@ -62,6 +61,8 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     onDeleteItems,
     onMoveItems,
     noFolders,
+    showPreviews,
+    setShowPreviews,
   } = useManageDashboards(query, {}, folder);
 
   const onMoveTo = () => {
@@ -107,11 +108,13 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           canMove={hasEditPermissionInFolders && canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
+          setShowPreviews={setShowPreviews}
           onToggleAllChecked={onToggleAllChecked}
           onStarredFilterChange={onStarredFilterChange}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           query={query}
+          showPreviews={showPreviews}
           hideLayout={!!folderUid}
           onLayoutChange={onLayoutChange}
           editable={hasEditPermissionInFolders}
@@ -124,6 +127,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           onToggleSection={onToggleSection}
           onToggleChecked={onToggleChecked}
           layout={query.layout}
+          showPreviews={showPreviews}
         />
       </div>
       <ConfirmDeleteModal
@@ -141,6 +145,8 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     </div>
   );
 });
+
+ManageDashboards.displayName = 'ManageDashboards';
 
 export default ManageDashboards;
 

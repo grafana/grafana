@@ -19,11 +19,13 @@ export interface Props {
   hideText?: boolean;
   range: TimeRange;
   timeZone: TimeZone;
+  fiscalYearStartMonth: number;
   splitted: boolean;
   syncedTimes: boolean;
   onChangeTimeSync: () => void;
   onChangeTime: (range: RawTimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
+  onChangeFiscalYearStartMonth: (fiscalYearStartMonth: number) => void;
 }
 
 export class ExploreTimeControls extends Component<Props> {
@@ -63,11 +65,22 @@ export class ExploreTimeControls extends Component<Props> {
   };
 
   render() {
-    const { range, timeZone, splitted, syncedTimes, onChangeTimeSync, hideText, onChangeTimeZone } = this.props;
+    const {
+      range,
+      timeZone,
+      fiscalYearStartMonth,
+      splitted,
+      syncedTimes,
+      onChangeTimeSync,
+      hideText,
+      onChangeTimeZone,
+      onChangeFiscalYearStartMonth,
+    } = this.props;
     const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : undefined;
     const timePickerCommonProps = {
       value: range,
       timeZone,
+      fiscalYearStartMonth,
       onMoveBackward: this.onMoveBack,
       onMoveForward: this.onMoveForward,
       onZoom: this.onZoom,
@@ -81,6 +94,7 @@ export class ExploreTimeControls extends Component<Props> {
         isSynced={syncedTimes}
         onChange={this.onChangeTimePicker}
         onChangeTimeZone={onChangeTimeZone}
+        onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
       />
     );
   }

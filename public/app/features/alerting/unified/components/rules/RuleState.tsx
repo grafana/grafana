@@ -80,5 +80,6 @@ const getStyle = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.bodySmall.fontSize};
     color: ${theme.colors.text.secondary};
     white-space: nowrap;
+    padding-top: 2px;
   `,
 });

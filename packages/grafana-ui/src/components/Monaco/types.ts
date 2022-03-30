@@ -1,12 +1,22 @@
-// We use `import type` to guarentee it'll be erased from the JS and it doesnt accidently bundle monaco
+// We use `import type` to guarantee it'll be erased from the JS and it doesnt accidently bundle monaco
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type { EditorProps } from '@monaco-editor/react';
+
+// we do not allow customizing the theme.
+// (theme is complicated in Monaco, right now there is
+// a limitation where all monaco editors must have
+// the same theme, see
+// https://github.com/microsoft/monaco-editor/issues/338#issuecomment-274837186
+// )
+export type ReactMonacoEditorProps = Omit<EditorProps, 'theme'>;
 
 export type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
 
+export type { monacoType as monacoTypes };
 export type Monaco = typeof monacoType;
 export type MonacoEditor = monacoType.editor.IStandaloneCodeEditor;
-export type MonacoOptions = monacoType.editor.IStandaloneEditorConstructionOptions;
+export type MonacoOptions = MonacoOptionsWithGrafanaDefaults;
 
 export interface CodeEditorProps {
   value: string;
@@ -18,6 +28,11 @@ export interface CodeEditorProps {
   showMiniMap?: boolean;
   showLineNumbers?: boolean;
   monacoOptions?: MonacoOptions;
+
+  /**
+   * Callback before the editor has mounted that gives you raw access to monaco
+   */
+  onBeforeEditorMount?: (monaco: Monaco) => void;
 
   /**
    * Callback after the editor has mounted that gives you raw access to monaco
@@ -80,4 +95,51 @@ export interface CodeEditorSuggestionItem {
    * this completion. When `falsy` the `label` is used.
    */
   insertText?: string;
+}
+
+/**
+ * This interface will extend the original Monaco editor options interface
+ * but changing the code comments to contain the proper default values to
+ * prevent the consumer of the CodeEditor to get incorrect documentation in editor.
+ */
+export interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.IStandaloneEditorConstructionOptions {
+  /**
+   * Enable custom contextmenu.
+   * Defaults to false.
+   */
+  contextmenu?: boolean;
+  /**
+   * The number of spaces a tab is equal to.
+   * This setting is overridden based on the file contents when `detectIndentation` is on.
+   * Defaults to 4.
+   */
+  tabSize?: number;
+  /**
+   * Show code lens
+   * Defaults to false.
+   */
+  codeLens?: boolean;
+  /**
+   * Control the width of line numbers, by reserving horizontal space for rendering at least an amount of digits.
+   * Defaults to 4.
+   */
+  lineNumbersMinChars?: number;
+  /**
+   * The width reserved for line decorations (in px).
+   * Line decorations are placed between line numbers and the editor content.
+   * You can pass in a string in the format floating point followed by "ch". e.g. 1.3ch.
+   * Defaults to 1 * theme.spacing.gridSize.
+   */
+  lineDecorationsWidth?: number | string;
+  /**
+   * Controls if a border should be drawn around the overview ruler.
+   * Defaults to `false`.
+   */
+  overviewRulerBorder?: boolean;
+  /**
+   * Enable that the editor will install an interval to check if its container dom node size has changed.
+   * Enabling this might have a severe performance impact.
+   * Defaults to true.
+   */
+  automaticLayout?: boolean;
 }

@@ -7,24 +7,28 @@ import {
   FieldConfigSource,
   FieldMatcherID,
   fieldReducers,
+  FieldType,
   NullValueMode,
   PanelTypeChangedHandler,
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
 import {
+  LegendDisplayMode,
+  TooltipDisplayMode,
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   GraphTresholdsStyleMode,
-  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
-  PointVisibility,
+  VisibilityMode,
+  ScaleDistribution,
   StackingMode,
-  TooltipDisplayMode,
-} from '@grafana/ui';
+  SortOrder,
+  GraphTransform,
+} from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';
@@ -45,6 +49,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
       fieldConfig: prevFieldConfig,
     });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
+    panel.alert = prevOptions.angular.alert;
     return options;
   }
 
@@ -164,14 +169,14 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           case 'points':
             rule.properties.push({
               id: 'custom.showPoints',
-              value: v ? PointVisibility.Always : PointVisibility.Never,
+              value: v ? VisibilityMode.Always : VisibilityMode.Never,
             });
             break;
           case 'bars':
             if (v) {
               rule.properties.push({
                 id: 'custom.drawStyle',
-                value: DrawStyle.Bars,
+                value: GraphDrawStyle.Bars,
               });
               rule.properties.push({
                 id: 'custom.fillOpacity',
@@ -180,7 +185,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             } else {
               rule.properties.push({
                 id: 'custom.drawStyle',
-                value: DrawStyle.Line, // Change from bars
+                value: GraphDrawStyle.Line, // Change from bars
               });
             }
             break;
@@ -238,6 +243,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               },
             });
             break;
+          case 'transform':
+            rule.properties.push({
+              id: 'custom.transform',
+              value: v === 'negative-Y' ? GraphTransform.NegativeY : GraphTransform.Constant,
+            });
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }
@@ -255,16 +266,16 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   const graph = y1.custom ?? ({} as GraphFieldConfig);
-  graph.drawStyle = angular.bars ? DrawStyle.Bars : angular.lines ? DrawStyle.Line : DrawStyle.Points;
+  graph.drawStyle = angular.bars ? GraphDrawStyle.Bars : angular.lines ? GraphDrawStyle.Line : GraphDrawStyle.Points;
 
   if (angular.points) {
-    graph.showPoints = PointVisibility.Always;
+    graph.showPoints = VisibilityMode.Always;
 
     if (isNumber(angular.pointradius)) {
       graph.pointSize = 2 + angular.pointradius * 2;
     }
-  } else if (graph.drawStyle !== DrawStyle.Points) {
-    graph.showPoints = PointVisibility.Never;
+  } else if (graph.drawStyle !== GraphDrawStyle.Points) {
+    graph.showPoints = VisibilityMode.Never;
   }
 
   graph.lineWidth = angular.linewidth;
@@ -289,7 +300,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.lineInterpolation = LineInterpolation.StepAfter;
   }
 
-  if (graph.drawStyle === DrawStyle.Bars) {
+  if (graph.drawStyle === GraphDrawStyle.Bars) {
     graph.fillOpacity = 100; // bars were always
   }
 
@@ -311,6 +322,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     },
     tooltip: {
       mode: TooltipDisplayMode.Single,
+      sort: SortOrder.None,
     },
   };
 
@@ -330,6 +342,26 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (angular.legend.values) {
       const enabledLegendValues = pickBy(angular.legend);
       options.legend.calcs = getReducersFromLegend(enabledLegendValues);
+    }
+  }
+
+  const tooltipConfig = angular.tooltip;
+  if (tooltipConfig) {
+    if (tooltipConfig.shared !== undefined) {
+      options.tooltip.mode = tooltipConfig.shared ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single;
+    }
+
+    if (tooltipConfig.sort !== undefined && tooltipConfig.shared) {
+      switch (tooltipConfig.sort) {
+        case 1:
+          options.tooltip.sort = SortOrder.Ascending;
+          break;
+        case 2:
+          options.tooltip.sort = SortOrder.Descending;
+          break;
+        default:
+          options.tooltip.sort = SortOrder.None;
+      }
     }
   }
 
@@ -410,6 +442,20 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     };
   }
 
+  if (angular.xaxis && angular.xaxis.show === false && angular.xaxis.mode === 'time') {
+    overrides.push({
+      matcher: {
+        id: FieldMatcherID.byType,
+        options: FieldType.time,
+      },
+      properties: [
+        {
+          id: 'custom.axisPlacement',
+          value: AxisPlacement.Hidden,
+        },
+      ],
+    });
+  }
   return {
     fieldConfig: {
       defaults: omitBy(y1, isNil),
@@ -465,6 +511,15 @@ function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
   };
   if (obj.label) {
     graph.axisLabel = obj.label;
+  }
+  if (obj.logBase) {
+    const log = obj.logBase as number;
+    if (log === 2 || log === 10) {
+      graph.scaleDistribution = {
+        type: ScaleDistribution.Log,
+        log,
+      };
+    }
   }
   return omitBy(
     {

@@ -3,15 +3,12 @@ package notifier
 import (
 	"context"
 	"errors"
-	"io/ioutil"
-	"os"
 	"sort"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/provider/mem"
@@ -20,42 +17,36 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func setupAMTest(t *testing.T) *Alertmanager {
-	dir, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll(dir))
-	})
+	dir := t.TempDir()
 	cfg := &setting.Cfg{
 		DataPath: dir,
 	}
 
-	m := metrics.NewMetrics(prometheus.NewRegistry())
+	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
-	store := &store.DBstore{
-		BaseInterval:           10 * time.Second,
-		DefaultIntervalSeconds: 60,
-		SQLStore:               sqlStore,
-		Logger:                 log.New("alertmanager-test"),
+	s := &store.DBstore{
+		BaseInterval:    10 * time.Second,
+		DefaultInterval: 60 * time.Second,
+		SQLStore:        sqlStore,
+		Logger:          log.New("alertmanager-test"),
 	}
 
-	am, err := New(cfg, store, m)
+	kvStore := NewFakeKVStore(t)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	decryptFn := secretsService.GetDecryptedValue
+	am, err := newAlertmanager(context.Background(), 1, cfg, s, kvStore, &NilPeer{}, decryptFn, nil, m)
 	require.NoError(t, err)
 	return am
-}
-
-func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := setupAMTest(t)
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
-	require.NotNil(t, am.config)
 }
 
 func TestPutAlert(t *testing.T) {
@@ -183,48 +174,87 @@ func TestPutAlert(t *testing.T) {
 				}
 			},
 		}, {
-			title: "Invalid labels",
+			title: "Allow spaces in label and annotation name",
 			postableAlerts: apimodels.PostableAlerts{
 				PostableAlerts: []models.PostableAlert{
 					{
+						Annotations: models.LabelSet{"Dashboard URL": "http://localhost:3000"},
 						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname$": "Alert1"},
+							Labels:       models.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
+							GeneratorURL: "http://localhost/url1",
 						},
+						StartsAt: strfmt.DateTime{},
+						EndsAt:   strfmt.DateTime{},
 					},
 				},
 			},
-			expError: &AlertValidationError{
-				Alerts: []models.PostableAlert{
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
 					{
-						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname$": "Alert1"},
+						Alert: model.Alert{
+							Annotations:  model.LabelSet{"Dashboard URL": "http://localhost:3000"},
+							Labels:       model.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "http://localhost/url1",
 						},
+						UpdatedAt: now,
+						Timeout:   true,
 					},
-				},
-				Errors: []error{errors.New("invalid label set: invalid name \"alertname$\"")},
+				}
 			},
 		}, {
-			title: "Invalid annotation",
+			title: "Special characters in labels",
 			postableAlerts: apimodels.PostableAlerts{
 				PostableAlerts: []models.PostableAlert{
 					{
-						Annotations: models.LabelSet{"msg$": "Alert4 annotation"},
 						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname": "Alert1"},
+							Labels: models.LabelSet{"alertname$": "Alert1", "az3-- __...++!!!£@@312312": "1"},
 						},
 					},
 				},
 			},
-			expError: &AlertValidationError{
-				Alerts: []models.PostableAlert{
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
 					{
-						Annotations: models.LabelSet{"msg$": "Alert4 annotation"},
+						Alert: model.Alert{
+							Labels:       model.LabelSet{"alertname$": "Alert1", "az3-- __...++!!!£@@312312": "1"},
+							Annotations:  model.LabelSet{},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "",
+						},
+						UpdatedAt: now,
+						Timeout:   true,
+					},
+				}
+			},
+		}, {
+			title: "Special characters in annotations",
+			postableAlerts: apimodels.PostableAlerts{
+				PostableAlerts: []models.PostableAlert{
+					{
+						Annotations: models.LabelSet{"az3-- __...++!!!£@@312312": "Alert4 annotation"},
 						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname": "Alert1"},
+							Labels: models.LabelSet{"alertname": "Alert4"},
 						},
 					},
 				},
-				Errors: []error{errors.New("invalid annotations: invalid name \"msg$\"")},
+			},
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
+					{
+						Alert: model.Alert{
+							Labels:       model.LabelSet{"alertname": "Alert4"},
+							Annotations:  model.LabelSet{"az3-- __...++!!!£@@312312": "Alert4 annotation"},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "",
+						},
+						UpdatedAt: now,
+						Timeout:   true,
+					},
+				}
 			},
 		}, {
 			title: "No labels after removing empty",
@@ -280,7 +310,7 @@ func TestPutAlert(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, am.logger)
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}
@@ -309,4 +339,76 @@ func TestPutAlert(t *testing.T) {
 			require.Equal(t, expAlerts, alerts)
 		})
 	}
+}
+
+// Tests cleanup of expired Silences. We rely on prometheus/alertmanager for
+// our alert silencing functionality, so we rely on its tests. However, we
+// implement a custom maintenance function for silences, because we snapshot
+// our data differently, so we test that functionality.
+func TestSilenceCleanup(t *testing.T) {
+	require := require.New(t)
+
+	oldRetention := retentionNotificationsAndSilences
+	retentionNotificationsAndSilences = 30 * time.Millisecond
+	oldMaintenance := silenceMaintenanceInterval
+	silenceMaintenanceInterval = 15 * time.Millisecond
+	t.Cleanup(
+		func() {
+			retentionNotificationsAndSilences = oldRetention
+			silenceMaintenanceInterval = oldMaintenance
+		})
+
+	am := setupAMTest(t)
+	now := time.Now()
+	dt := func(t time.Time) strfmt.DateTime { return strfmt.DateTime(t) }
+
+	makeSilence := func(comment string, createdBy string,
+		startsAt, endsAt strfmt.DateTime, matchers models.Matchers) *apimodels.PostableSilence {
+		return &apimodels.PostableSilence{
+			ID: "",
+			Silence: models.Silence{
+				Comment:   &comment,
+				CreatedBy: &createdBy,
+				StartsAt:  &startsAt,
+				EndsAt:    &endsAt,
+				Matchers:  matchers,
+			},
+		}
+	}
+
+	tru := true
+	testString := "testName"
+	matchers := models.Matchers{&models.Matcher{Name: &testString, IsEqual: &tru, IsRegex: &tru, Value: &testString}}
+	// Create silences - one in the future, one currently active, one expired but
+	// retained, one expired and not retained.
+	silences := []*apimodels.PostableSilence{
+		// Active in future
+		makeSilence("", "tests", dt(now.Add(5*time.Hour)), dt(now.Add(6*time.Hour)), matchers),
+		// Active now
+		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(6*time.Hour)), matchers),
+		// Expiring soon
+		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(2*time.Second)), matchers),
+		// Expiring *very* soon
+		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(20*time.Millisecond)), matchers),
+	}
+
+	for _, s := range silences {
+		_, err := am.CreateSilence(s)
+		require.NoError(err)
+	}
+
+	// Let enough time pass for the maintenance window to run.
+	require.Eventually(func() bool {
+		// So, what silences do we have now?
+		found, err := am.ListSilences(nil)
+		require.NoError(err)
+		return len(found) == 3
+	}, 1500*time.Millisecond, 150*time.Millisecond)
+
+	// Wait again for another silence to expire.
+	require.Eventually(func() bool {
+		found, err := am.ListSilences(nil)
+		require.NoError(err)
+		return len(found) == 2
+	}, 2*time.Second, 150*time.Millisecond)
 }

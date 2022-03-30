@@ -1,8 +1,17 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  PanelPlugin,
+} from '@grafana/data';
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
-import { BarValueVisibility, commonOptionsBuilder } from '@grafana/ui';
+import { VisibilityMode } from '@grafana/schema';
+import { commonOptionsBuilder } from '@grafana/ui';
 import { timelinePanelChangedHandler } from './migrations';
+import { StatTimelineSuggestionsSupplier } from './suggestions';
+import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -38,6 +47,16 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
             max: 100,
             step: 1,
           },
+        })
+        .addCustomEditor<void, boolean>({
+          id: 'spanNulls',
+          path: 'spanNulls',
+          name: 'Connect null values',
+          defaultValue: false,
+          editor: SpanNullsEditor,
+          override: SpanNullsEditor,
+          shouldApply: (f) => f.type !== FieldType.time,
+          process: identityOverrideProcessor,
         });
     },
   })
@@ -53,9 +72,9 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         name: 'Show values',
         settings: {
           options: [
-            { value: BarValueVisibility.Auto, label: 'Auto' },
-            { value: BarValueVisibility.Always, label: 'Always' },
-            { value: BarValueVisibility.Never, label: 'Never' },
+            { value: VisibilityMode.Auto, label: 'Auto' },
+            { value: VisibilityMode.Always, label: 'Always' },
+            { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
         defaultValue: defaultPanelOptions.showValue,
@@ -85,4 +104,5 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
 
     commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder, true);
-  });
+  })
+  .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier());

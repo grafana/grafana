@@ -9,14 +9,14 @@ import {
   CSVReader,
   Field,
   LoadingState,
-  StreamingDataFrame,
   DataFrameSchema,
   DataFrameData,
 } from '@grafana/data';
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
-import { perf } from 'app/features/live/perf';
+import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
+import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -51,10 +51,9 @@ export function runSignalStream(
 
     const schema: DataFrameSchema = {
       refId: target.refId,
-      name: target.alias || 'Signal ' + target.refId,
       fields: [
         { name: 'time', type: FieldType.time },
-        { name: 'value', type: FieldType.number },
+        { name: target.alias ?? 'value', type: FieldType.number },
       ],
     };
 
@@ -65,7 +64,7 @@ export function runSignalStream(
       schema.fields.push({ name: 'Max' + suffix, type: FieldType.number });
     }
 
-    const frame = new StreamingDataFrame({ schema }, { maxLength: maxDataPoints });
+    const frame = StreamingDataFrame.fromDataFrameJSON({ schema }, { maxLength: maxDataPoints });
 
     let value = Math.random() * 100;
     let timeoutId: any = null;
@@ -105,14 +104,14 @@ export function runSignalStream(
     const pushNextEvent = () => {
       addNextRow(Date.now());
 
-      const elapsed = perf.last - lastSent;
-      if (elapsed > 1000 || perf.ok) {
+      const elapsed = liveTimer.lastUpdate - lastSent;
+      if (elapsed > 1000 || liveTimer.ok) {
         subscriber.next({
           data: [frame],
           key: streamId,
           state: LoadingState.Streaming,
         });
-        lastSent = perf.last;
+        lastSent = liveTimer.lastUpdate;
       }
 
       timeoutId = setTimeout(pushNextEvent, speed);

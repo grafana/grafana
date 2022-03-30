@@ -13,13 +13,11 @@
       ]
     },
     "editable": true,
-    "gnetId": null,
     "graphTooltip": 0,
     "id": 632,
     "links": [],
     "panels": [
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -29,7 +27,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -40,8 +38,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -79,7 +76,10 @@
         "type": "histogram"
       },
       {
-        "datasource": "-- Dashboard --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "-- Dashboard --"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -89,7 +89,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -100,8 +100,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -139,7 +138,6 @@
         "type": "histogram"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -149,7 +147,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -160,8 +158,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -212,7 +209,6 @@
         "type": "histogram"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -222,7 +218,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -233,8 +229,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -285,7 +280,6 @@
         "type": "histogram"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -300,8 +294,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -353,7 +346,6 @@
         "type": "table"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -368,8 +360,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -421,11 +412,12 @@
         "type": "table"
       }
     ],
-    "schemaVersion": 30,
+    "schemaVersion": 33,
     "style": "dark",
     "tags": [
       "gdev",
-      "panel-tests"
+      "panel-tests",
+      "graph-ng"
     ],
     "templating": {
       "list": []

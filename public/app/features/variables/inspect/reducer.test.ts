@@ -10,19 +10,13 @@ describe('variableInspectReducer', () => {
         .givenReducer(variableInspectReducer, { ...initialVariableInspectState })
         .whenActionIsDispatched(
           initInspect({
-            unknownExits: true,
-            unknownsNetwork: [{ edges: [], nodes: [], showGraph: true, variable }],
             usagesNetwork: [{ edges: [], nodes: [], showGraph: true, variable }],
             usages: [{ variable, tree: {} }],
-            unknown: [{ variable, tree: {} }],
           })
         )
         .thenStateShouldEqual({
-          unknownExits: true,
-          unknownsNetwork: [{ edges: [], nodes: [], showGraph: true, variable }],
           usagesNetwork: [{ edges: [], nodes: [], showGraph: true, variable }],
           usages: [{ variable, tree: {} }],
-          unknown: [{ variable, tree: {} }],
         });
     });
   });

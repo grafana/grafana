@@ -1,4 +1,6 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, TimeRange } from '@grafana/data';
+import { GraphiteDatasource } from './datasource';
+import { TemplateSrv } from '../../../features/templating/template_srv';
 
 export interface GraphiteQuery extends DataQuery {
   target?: string;
@@ -52,4 +54,29 @@ export type GraphiteLokiMapping = {
 export type GraphiteMetricLokiMatcher = {
   value: string;
   labelName?: string;
+};
+
+export type GraphiteSegment = {
+  value: string;
+  type?: 'tag' | 'metric' | 'series-ref' | 'template';
+  expandable?: boolean;
+  fake?: boolean;
+};
+
+export type GraphiteTagOperator = '=' | '!=' | '=~' | '!=~';
+
+export type GraphiteTag = {
+  key: string;
+  operator: GraphiteTagOperator;
+  value: string;
+};
+
+export type GraphiteQueryEditorDependencies = {
+  target: any;
+  datasource: GraphiteDatasource;
+  range?: TimeRange;
+  templateSrv: TemplateSrv;
+  queries: DataQuery[];
+  // schedule onChange/onRunQuery after the reducer actions finishes
+  refresh: () => void;
 };

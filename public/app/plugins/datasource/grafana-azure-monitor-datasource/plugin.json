@@ -8,7 +8,24 @@
     { "type": "dashboard", "name": "Azure Monitor CosmosDB Insights", "path": "dashboards/cosmosdb.json" },
     { "type": "dashboard", "name": "Azure Monitor Key Vault Insights", "path": "dashboards/keyvault.json" },
     { "type": "dashboard", "name": "Azure SQL Database Insights", "path": "dashboards/sqldb.json" },
-    { "type": "dashboard", "name": "Azure Data Explorer Insights", "path": "dashboards/adx.json" }
+    { "type": "dashboard", "name": "Azure Data Explorer Insights", "path": "dashboards/adx.json" },
+    { "type": "dashboard", "name": "Azure Resource Overview", "path": "dashboards/arg.json" },
+    { "type": "dashboard", "name": "Azure Alert Consumption", "path": "dashboards/v1Alerts.json" },
+    {
+      "type": "dashboard",
+      "name": "Azure App Monitoring - Application Insights",
+      "path": "dashboards/appInsights.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure VM Monitoring - VM Insights by Workspace",
+      "path": "dashboards/vMInsightsWorkspace.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure VM Monitoring - VM Insights by Resource Group",
+      "path": "dashboards/vMInsightsRG.json"
+    }
   ],
 
   "info": {
@@ -23,7 +40,7 @@
       "large": "img/logo.jpg"
     },
     "links": [
-      { "name": "Learn more", "url": "https://github.com/grafana/azure-monitor-datasource" },
+      { "name": "Learn more", "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/" },
       { "name": "Apache License", "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE" }
     ],
     "screenshots": [
@@ -31,158 +48,8 @@
       { "name": "Azure Monitor Network", "path": "img/azure_monitor_network.png" },
       { "name": "Azure Monitor CPU", "path": "img/azure_monitor_cpu.png" }
     ],
-    "version": "0.3.0",
-    "updated": "2018-12-06"
+    "version": "1.0.0"
   },
-
-  "routes": [
-    {
-      "path": "azuremonitor",
-      "method": "*",
-      "url": "https://management.azure.com",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.azure.com/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "govazuremonitor",
-      "method": "*",
-      "url": "https://management.usgovcloudapi.net",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.usgovcloudapi.net/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureUSGovernment",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "germanyazuremonitor",
-      "method": "*",
-      "url": "https://management.microsoftazure.de",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.microsoftazure.de/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureGermanCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "chinaazuremonitor",
-      "method": "*",
-      "url": "https://management.chinacloudapi.cn",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.chinacloudapi.cn/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureChinaCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "appinsights",
-      "method": "GET",
-      "url": "https://api.applicationinsights.io",
-      "headers": [
-        { "name": "X-API-Key", "content": "{{.SecureJsonData.appInsightsApiKey}}" },
-        { "name": "x-ms-app", "content": "Grafana" }
-      ]
-    },
-    {
-      "path": "chinaappinsights",
-      "method": "GET",
-      "url": "https://api.applicationinsights.azure.cn",
-      "headers": [
-        { "name": "X-API-Key", "content": "{{.SecureJsonData.appInsightsApiKey}}" },
-        { "name": "x-ms-app", "content": "Grafana" }
-      ]
-    },
-    {
-      "path": "loganalyticsazure",
-      "method": "GET",
-      "url": "https://api.loganalytics.io/",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://api.loganalytics.io/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [
-        { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" }
-      ]
-    },
-    {
-      "path": "chinaloganalyticsazure",
-      "method": "GET",
-      "url": "https://api.loganalytics.azure.cn/",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://api.loganalytics.azure.cn/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureChinaCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [
-        { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" }
-      ]
-    },
-    {
-      "path": "govloganalyticsazure",
-      "method": "GET",
-      "url": "https://api.loganalytics.us/",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://api.loganalytics.us/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureUSGovernment",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [
-        { "name": "x-ms-app", "content": "Grafana" },
-        { "name": "Cache-Control", "content": "public, max-age=60" }
-      ]
-    }
-  ],
 
   "dependencies": {
     "grafanaVersion": "5.2.x",
@@ -191,5 +58,6 @@
 
   "metrics": true,
   "annotations": true,
-  "alerting": true
+  "alerting": true,
+  "backend": true
 }

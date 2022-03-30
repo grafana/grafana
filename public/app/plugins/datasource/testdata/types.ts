@@ -20,6 +20,8 @@ export interface TestDataQuery extends DataQuery {
   nodes?: NodesQuery;
   csvFileName?: string;
   csvContent?: string;
+  rawFrameContent?: string;
+  usa?: USAQuery;
 }
 
 export interface NodesQuery {
@@ -48,4 +50,11 @@ export interface CSVWave {
   name?: string;
   valuesCSV?: string;
   labels?: string;
+}
+
+export interface USAQuery {
+  mode?: string;
+  period?: string;
+  fields?: string[]; // foo, bar, baz
+  states?: string[];
 }

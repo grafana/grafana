@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
-	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 )
@@ -127,41 +126,42 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for _, query := range req.Queries {
+		if query.DataSource == nil || query.DataSource.Uid == "" {
+			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
+		}
+
 		rawQueryProp := make(map[string]interface{})
 		queryBytes, err := query.JSON.MarshalJSON()
+
 		if err != nil {
 			return nil, err
 		}
+
 		err = json.Unmarshal(queryBytes, &rawQueryProp)
 		if err != nil {
 			return nil, err
 		}
 
 		rn := &rawNode{
-			Query:         rawQueryProp,
-			RefID:         query.RefID,
-			TimeRange:     query.TimeRange,
-			QueryType:     query.QueryType,
-			DatasourceUID: query.DatasourceUID,
+			Query:      rawQueryProp,
+			RefID:      query.RefID,
+			TimeRange:  query.TimeRange,
+			QueryType:  query.QueryType,
+			DataSource: query.DataSource,
 		}
 
-		dsName, err := rn.GetDatasourceName()
-		if err != nil {
-			return nil, err
-		}
+		var node Node
 
-		dsUID := rn.DatasourceUID
-
-		var node graph.Node
-		switch {
-		case dsName == DatasourceName || dsUID == DatasourceUID:
+		if IsDataSource(rn.DataSource.Uid) {
 			node, err = buildCMDNode(dp, rn)
-		default: // If it's not an expression query, it's a data source query.
-			node, err = s.buildDSNode(dp, rn, req.OrgId)
+		} else {
+			node, err = s.buildDSNode(dp, rn, req)
 		}
+
 		if err != nil {
 			return nil, err
 		}
+
 		dp.AddNode(node)
 	}
 	return dp, nil

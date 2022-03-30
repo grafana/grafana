@@ -16,10 +16,10 @@
      "x-go-name": "ActiveAt"
     },
     "annotations": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "labels": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "state": {
      "type": "string",
@@ -57,10 +57,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "AlertGroup": {},
-  "AlertGroups": {
-   "$ref": "#/definitions/alertGroups"
-  },
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -78,6 +74,46 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertManager": {
+   "properties": {
+    "url": {
+     "type": "string",
+     "x-go-name": "URL"
+    }
+   },
+   "title": "AlertManager models a configured Alert Manager.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+  },
+  "AlertManagerNotFound": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertManagerNotReady": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertManagersResult": {
+   "properties": {
+    "activeAlertManagers": {
+     "items": {
+      "$ref": "#/definitions/AlertManager"
+     },
+     "type": "array",
+     "x-go-name": "Active"
+    },
+    "droppedAlertManagers": {
+     "items": {
+      "$ref": "#/definitions/AlertManager"
+     },
+     "type": "array",
+     "x-go-name": "Dropped"
+    }
+   },
+   "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
   },
   "AlertQuery": {
    "properties": {
@@ -143,7 +179,7 @@
      "x-go-name": "Alerts"
     },
     "annotations": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "duration": {
      "format": "double",
@@ -160,7 +196,7 @@
      "x-go-name": "Health"
     },
     "labels": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "lastError": {
      "type": "string",
@@ -283,6 +319,13 @@
      "type": "array",
      "x-go-name": "InhibitRules"
     },
+    "mute_time_intervals": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
+    },
     "route": {
      "$ref": "#/definitions/Route"
     },
@@ -298,11 +341,128 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "CreateDashboardSnapshotCommand": {
+   "properties": {
+    "Result": {
+     "$ref": "#/definitions/DashboardSnapshot"
+    },
+    "dashboard": {
+     "$ref": "#/definitions/Json"
+    },
+    "deleteKey": {
+     "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
+     "type": "string",
+     "x-go-name": "DeleteKey"
+    },
+    "expires": {
+     "default": 0,
+     "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "Expires"
+    },
+    "external": {
+     "default": false,
+     "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
+     "type": "boolean",
+     "x-go-name": "External"
+    },
+    "key": {
+     "description": "Define the unique key. Required if `external` is `true`.",
+     "type": "string",
+     "x-go-name": "Key"
+    },
+    "name": {
+     "description": "Snapshot name",
+     "type": "string",
+     "x-go-name": "Name"
+    }
+   },
+   "required": [
+    "dashboard"
+   ],
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
+  },
+  "DashboardSnapshot": {
+   "description": "DashboardSnapshot model",
+   "properties": {
+    "Created": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "Dashboard": {
+     "$ref": "#/definitions/Json"
+    },
+    "DashboardEncrypted": {
+     "items": {
+      "format": "uint8",
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "DeleteKey": {
+     "type": "string"
+    },
+    "Expires": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "External": {
+     "type": "boolean"
+    },
+    "ExternalDeleteUrl": {
+     "type": "string"
+    },
+    "ExternalUrl": {
+     "type": "string"
+    },
+    "Id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Key": {
+     "type": "string"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "OrgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Updated": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "UserId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
+  },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
    "format": "date-time",
    "type": "string",
    "x-go-package": "github.com/go-openapi/strfmt"
+  },
+  "DayOfMonthRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "DiscoveryBase": {
    "properties": {
@@ -323,6 +483,12 @@
    ],
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "DsPermissionType": {
+   "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+   "format": "int64",
+   "type": "integer",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
   },
   "Duration": {
    "format": "int64",
@@ -475,11 +641,18 @@
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
-  "GettableAlert": {
-   "$ref": "#/definitions/gettableAlert"
-  },
-  "GettableAlerts": {
-   "$ref": "#/definitions/gettableAlerts"
+  "GettableAlertmanagers": {
+   "properties": {
+    "data": {
+     "$ref": "#/definitions/AlertManagersResult"
+    },
+    "status": {
+     "type": "string",
+     "x-go-name": "Status"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableApiAlertingConfig": {
    "properties": {
@@ -492,6 +665,13 @@
      },
      "type": "array",
      "x-go-name": "InhibitRules"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
     },
     "receivers": {
      "description": "Override with our superset receiver type",
@@ -563,6 +743,13 @@
      },
      "type": "array",
      "x-go-name": "SlackConfigs"
+    },
+    "sns_configs": {
+     "items": {
+      "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array",
+     "x-go-name": "SNSConfigs"
     },
     "victorops_configs": {
      "items": {
@@ -687,9 +874,12 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "OK",
+      "Alerting",
+      "Error"
      ],
      "type": "string",
+     "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
      "x-go-name": "ExecErrState"
     },
     "id": {
@@ -718,6 +908,7 @@
       "OK"
      ],
      "type": "string",
+     "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
      "x-go-name": "NoDataState"
     },
     "orgId": {
@@ -751,6 +942,29 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "GettableNGalertConfig": {
+   "properties": {
+    "alertmanagers": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "Alertmanagers"
+    },
+    "alertmanagersChoice": {
+     "enum": [
+      "all",
+      "internal",
+      "external"
+     ],
+     "type": "string",
+     "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+     "x-go-name": "AlertmanagersChoice"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "GettableRuleGroupConfig": {
    "properties": {
     "interval": {
@@ -766,16 +980,17 @@
      },
      "type": "array",
      "x-go-name": "Rules"
+    },
+    "source_tenants": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "SourceTenants"
     }
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-  },
-  "GettableSilence": {
-   "$ref": "#/definitions/gettableSilence"
-  },
-  "GettableSilences": {
-   "$ref": "#/definitions/gettableSilences"
   },
   "GettableStatus": {
    "properties": {
@@ -828,6 +1043,10 @@
     },
     "opsgenie_api_key": {
      "$ref": "#/definitions/Secret"
+    },
+    "opsgenie_api_key_file": {
+     "type": "string",
+     "x-go-name": "OpsGenieAPIKeyFile"
     },
     "opsgenie_api_url": {
      "$ref": "#/definitions/URL"
@@ -942,6 +1161,21 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
+  "InclusiveRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
   "InhibitRule": {
    "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
    "properties": {
@@ -1008,6 +1242,19 @@
    "type": "array",
    "x-go-package": "github.com/prometheus/common/model"
   },
+  "LabelSet": {
+   "additionalProperties": {
+    "$ref": "#/definitions/LabelValue"
+   },
+   "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/common/model"
+  },
+  "LabelValue": {
+   "title": "A LabelValue is an associated value for a LabelName.",
+   "type": "string",
+   "x-go-package": "github.com/prometheus/common/model"
+  },
   "Labels": {
    "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
    "items": {
@@ -1053,6 +1300,43 @@
    },
    "type": "array"
   },
+  "MonthRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
+  "MultiStatus": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "MuteTimeInterval": {
+   "properties": {
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "TimeIntervals"
+    }
+   },
+   "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
   "NamespaceConfigResponse": {
    "additionalProperties": {
     "items": {
@@ -1076,6 +1360,9 @@
   },
   "OAuth2": {
    "properties": {
+    "TLSConfig": {
+     "$ref": "#/definitions/TLSConfig"
+    },
     "client_id": {
      "type": "string",
      "x-go-name": "ClientID"
@@ -1110,10 +1397,22 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/common/config"
   },
+  "ObjectMatchers": {
+   "$ref": "#/definitions/Matchers",
+   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+  },
   "OpsGenieConfig": {
    "properties": {
+    "actions": {
+     "type": "string",
+     "x-go-name": "Actions"
+    },
     "api_key": {
      "$ref": "#/definitions/Secret"
+    },
+    "api_key_file": {
+     "type": "string",
+     "x-go-name": "APIKeyFile"
     },
     "api_url": {
      "$ref": "#/definitions/URL"
@@ -1128,6 +1427,10 @@
      },
      "type": "object",
      "x-go-name": "Details"
+    },
+    "entity": {
+     "type": "string",
+     "x-go-name": "Entity"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
@@ -1162,6 +1465,10 @@
     "tags": {
      "type": "string",
      "x-go-name": "Tags"
+    },
+    "update_alerts": {
+     "type": "boolean",
+     "x-go-name": "UpdateAlerts"
     }
    },
    "title": "OpsGenieConfig configures notifications via OpsGenie.",
@@ -1298,6 +1605,10 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
+  "PermissionDenied": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "Point": {
    "properties": {
     "T": {
@@ -1324,6 +1635,13 @@
      },
      "type": "array",
      "x-go-name": "InhibitRules"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
     },
     "receivers": {
      "description": "Override with our superset receiver type",
@@ -1395,6 +1713,13 @@
      },
      "type": "array",
      "x-go-name": "SlackConfigs"
+    },
+    "sns_configs": {
+     "items": {
+      "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array",
+     "x-go-name": "SNSConfigs"
     },
     "victorops_configs": {
      "items": {
@@ -1519,9 +1844,12 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "OK",
+      "Alerting",
+      "Error"
      ],
      "type": "string",
+     "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
      "x-go-name": "ExecErrState"
     },
     "no_data_state": {
@@ -1531,6 +1859,7 @@
       "OK"
      ],
      "type": "string",
+     "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
      "x-go-name": "NoDataState"
     },
     "title": {
@@ -1540,6 +1869,29 @@
     "uid": {
      "type": "string",
      "x-go-name": "UID"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "PostableNGalertConfig": {
+   "properties": {
+    "alertmanagers": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "Alertmanagers"
+    },
+    "alertmanagersChoice": {
+     "enum": [
+      "all",
+      "internal",
+      "external"
+     ],
+     "type": "string",
+     "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+     "x-go-name": "AlertmanagersChoice"
     }
    },
    "type": "object",
@@ -1565,7 +1917,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "PostableSilence": {},
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1677,6 +2028,13 @@
      "type": "array",
      "x-go-name": "SlackConfigs"
     },
+    "sns_configs": {
+     "items": {
+      "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array",
+     "x-go-name": "SNSConfigs"
+    },
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
@@ -1700,7 +2058,8 @@
     }
    },
    "title": "Receiver configuration provides configuration on how to contact a receiver.",
-   "type": "object"
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/config"
   },
   "Regexp": {
    "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -1732,6 +2091,7 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Route": {
+   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "continue": {
      "type": "boolean",
@@ -1771,6 +2131,9 @@
      "type": "array",
      "x-go-name": "MuteTimeIntervals"
     },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
     "receiver": {
      "type": "string",
      "x-go-name": "Receiver"
@@ -1786,9 +2149,8 @@
      "x-go-name": "Routes"
     }
    },
-   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Rule": {
    "description": "adapted from cortex",
@@ -1803,7 +2165,7 @@
      "x-go-name": "Health"
     },
     "labels": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "lastError": {
      "type": "string",
@@ -1909,6 +2271,13 @@
      },
      "type": "array",
      "x-go-name": "Rules"
+    },
+    "source_tenants": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "SourceTenants"
     }
    },
    "type": "object",
@@ -1942,6 +2311,53 @@
    "type": "string",
    "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
   },
+  "SNSConfig": {
+   "properties": {
+    "api_url": {
+     "type": "string",
+     "x-go-name": "APIUrl"
+    },
+    "attributes": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Attributes"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "message": {
+     "type": "string",
+     "x-go-name": "Message"
+    },
+    "phone_number": {
+     "type": "string",
+     "x-go-name": "PhoneNumber"
+    },
+    "send_resolved": {
+     "type": "boolean",
+     "x-go-name": "VSendResolved"
+    },
+    "sigv4": {
+     "$ref": "#/definitions/SigV4Config"
+    },
+    "subject": {
+     "type": "string",
+     "x-go-name": "Subject"
+    },
+    "target_arn": {
+     "type": "string",
+     "x-go-name": "TargetARN"
+    },
+    "topic_arn": {
+     "type": "string",
+     "x-go-name": "TopicARN"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
   "Sample": {
    "properties": {
     "Metric": {
@@ -1968,6 +2384,28 @@
   "SecretURL": {
    "$ref": "#/definitions/URL",
    "title": "SecretURL is a URL that must not be revealed on marshaling."
+  },
+  "SigV4Config": {
+   "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
+   "properties": {
+    "AccessKey": {
+     "type": "string"
+    },
+    "Profile": {
+     "type": "string"
+    },
+    "Region": {
+     "type": "string"
+    },
+    "RoleARN": {
+     "type": "string"
+    },
+    "SecretKey": {
+     "$ref": "#/definitions/Secret"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/prometheus/common/sigv4"
   },
   "SlackAction": {
    "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -2192,6 +2630,94 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/common/config"
   },
+  "TestReceiverConfigResult": {
+   "properties": {
+    "error": {
+     "type": "string",
+     "x-go-name": "Error"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "status": {
+     "type": "string",
+     "x-go-name": "Status"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "TestReceiverResult": {
+   "properties": {
+    "grafana_managed_receiver_configs": {
+     "items": {
+      "$ref": "#/definitions/TestReceiverConfigResult"
+     },
+     "type": "array",
+     "x-go-name": "Configs"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "TestReceiversConfigAlertParams": {
+   "properties": {
+    "annotations": {
+     "$ref": "#/definitions/LabelSet"
+    },
+    "labels": {
+     "$ref": "#/definitions/LabelSet"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "TestReceiversConfigBodyParams": {
+   "properties": {
+    "alert": {
+     "$ref": "#/definitions/TestReceiversConfigAlertParams"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/PostableApiReceiver"
+     },
+     "type": "array",
+     "x-go-name": "Receivers"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "TestReceiversResult": {
+   "properties": {
+    "alert": {
+     "$ref": "#/definitions/TestReceiversConfigAlertParams"
+    },
+    "notified_at": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "NotifiedAt"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/TestReceiverResult"
+     },
+     "type": "array",
+     "x-go-name": "Receivers"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "TestRulePayload": {
    "properties": {
     "expr": {
@@ -2218,7 +2744,66 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "TimeInterval": {
+   "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
+   "properties": {
+    "days_of_month": {
+     "items": {
+      "$ref": "#/definitions/DayOfMonthRange"
+     },
+     "type": "array",
+     "x-go-name": "DaysOfMonth"
+    },
+    "months": {
+     "items": {
+      "$ref": "#/definitions/MonthRange"
+     },
+     "type": "array",
+     "x-go-name": "Months"
+    },
+    "times": {
+     "items": {
+      "$ref": "#/definitions/TimeRange"
+     },
+     "type": "array",
+     "x-go-name": "Times"
+    },
+    "weekdays": {
+     "items": {
+      "$ref": "#/definitions/WeekdayRange"
+     },
+     "type": "array",
+     "x-go-name": "Weekdays"
+    },
+    "years": {
+     "items": {
+      "$ref": "#/definitions/YearRange"
+     },
+     "type": "array",
+     "x-go-name": "Years"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
+  "TimeRange": {
+   "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+   "properties": {
+    "EndMinute": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "StartMinute": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2251,9 +2836,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "x-go-package": "net/url"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -2399,6 +2984,36 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
+  "WeekdayRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
+  "YearRange": {
+   "properties": {
+    "Begin": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "End": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "A YearRange is a positive inclusive range.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+  },
   "alert": {
    "description": "Alert alert",
    "properties": {
@@ -2425,7 +3040,7 @@
     "alerts": {
      "description": "alerts",
      "items": {
-      "$ref": "#/definitions/GettableAlert"
+      "$ref": "#/definitions/gettableAlert"
      },
      "type": "array",
      "x-go-name": "Alerts"
@@ -2442,12 +3057,9 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -2632,18 +3244,14 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/GettableAlert"
+    "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
@@ -2698,12 +3306,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -2719,15 +3324,6 @@
    "type": "object",
    "x-go-name": "LabelSet",
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
-  },
-  "labels": {
-   "additionalProperties": {
-    "type": "string"
-   },
-   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-   "title": "override the labels type with a map for generation.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "matcher": {
    "description": "Matcher matcher",
@@ -2770,6 +3366,15 @@
    "type": "array",
    "x-go-name": "Matchers",
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+  },
+  "overrideLabels": {
+   "additionalProperties": {
+    "type": "string"
+   },
+   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
+   "title": "override the labels type with a map for generation.",
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "peerStatus": {
    "description": "PeerStatus peer status",
@@ -2838,7 +3443,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2883,7 +3487,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3005,11 +3608,459 @@
   }
  },
  "info": {
-  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Unified Alerting API.\nDocumentation of the API.",
-  "title": "Unified Alerting API",
+  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana Alerting API.",
+  "title": "Grafana Alerting API.",
   "version": "1.1.0"
  },
  "paths": {
+  "/api/alertmanager/grafana/api/v2/alerts": {
+   "get": {
+    "description": "get alertmanager alerts",
+    "operationId": "RouteGetGrafanaAMAlerts",
+    "parameters": [
+     {
+      "default": true,
+      "description": "Show active alerts",
+      "in": "query",
+      "name": "active",
+      "type": "boolean",
+      "x-go-name": "Active"
+     },
+     {
+      "default": true,
+      "description": "Show silenced alerts",
+      "in": "query",
+      "name": "silenced",
+      "type": "boolean",
+      "x-go-name": "Silenced"
+     },
+     {
+      "default": true,
+      "description": "Show inhibited alerts",
+      "in": "query",
+      "name": "inhibited",
+      "type": "boolean",
+      "x-go-name": "Inhibited"
+     },
+     {
+      "description": "A list of matchers to filter alerts by",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "filter",
+      "type": "array",
+      "x-go-name": "Matchers"
+     },
+     {
+      "description": "A regex matching receivers to filter alerts by",
+      "in": "query",
+      "name": "receiver",
+      "type": "string",
+      "x-go-name": "Receivers"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "gettableAlerts",
+      "schema": {
+       "$ref": "#/definitions/gettableAlerts"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "post": {
+    "description": "create alertmanager alerts",
+    "operationId": "RoutePostGrafanaAMAlerts",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "PostableAlerts",
+      "schema": {
+       "items": {
+        "$ref": "#/definitions/postableAlert"
+       },
+       "type": "array"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/alerts/groups": {
+   "get": {
+    "description": "get alertmanager alerts",
+    "operationId": "RouteGetGrafanaAMAlertGroups",
+    "parameters": [
+     {
+      "default": true,
+      "description": "Show active alerts",
+      "in": "query",
+      "name": "active",
+      "type": "boolean",
+      "x-go-name": "Active"
+     },
+     {
+      "default": true,
+      "description": "Show silenced alerts",
+      "in": "query",
+      "name": "silenced",
+      "type": "boolean",
+      "x-go-name": "Silenced"
+     },
+     {
+      "default": true,
+      "description": "Show inhibited alerts",
+      "in": "query",
+      "name": "inhibited",
+      "type": "boolean",
+      "x-go-name": "Inhibited"
+     },
+     {
+      "description": "A list of matchers to filter alerts by",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "filter",
+      "type": "array",
+      "x-go-name": "Matchers"
+     },
+     {
+      "description": "A regex matching receivers to filter alerts by",
+      "in": "query",
+      "name": "receiver",
+      "type": "string",
+      "x-go-name": "Receivers"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "alertGroups",
+      "schema": {
+       "$ref": "#/definitions/alertGroups"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/silence/{SilenceId}": {
+   "delete": {
+    "description": "delete silence",
+    "operationId": "RouteDeleteGrafanaSilence",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "SilenceId",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "get": {
+    "description": "get silence",
+    "operationId": "RouteGetGrafanaSilence",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "SilenceId",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "gettableSilence",
+      "schema": {
+       "$ref": "#/definitions/gettableSilence"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/silences": {
+   "get": {
+    "description": "get silences",
+    "operationId": "RouteGetGrafanaSilences",
+    "parameters": [
+     {
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "filter",
+      "type": "array",
+      "x-go-name": "Filter"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "gettableSilences",
+      "schema": {
+       "$ref": "#/definitions/gettableSilences"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "post": {
+    "description": "create silence",
+    "operationId": "RouteCreateGrafanaSilence",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Silence",
+      "schema": {
+       "$ref": "#/definitions/postableSilence"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "gettableSilence",
+      "schema": {
+       "$ref": "#/definitions/gettableSilence"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/status": {
+   "get": {
+    "description": "get alertmanager status and configuration",
+    "operationId": "RouteGetGrafanaAMStatus",
+    "responses": {
+     "200": {
+      "description": "GettableStatus",
+      "schema": {
+       "$ref": "#/definitions/GettableStatus"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/config/api/v1/alerts": {
+   "delete": {
+    "description": "deletes the Alerting config for a tenant",
+    "operationId": "RouteDeleteGrafanaAlertingConfig",
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "get": {
+    "description": "gets an Alerting config",
+    "operationId": "RouteGetGrafanaAlertingConfig",
+    "responses": {
+     "200": {
+      "description": "GettableUserConfig",
+      "schema": {
+       "$ref": "#/definitions/GettableUserConfig"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "post": {
+    "description": "sets an Alerting config",
+    "operationId": "RoutePostGrafanaAlertingConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableUserConfig"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/config/api/v1/receivers/test": {
+   "post": {
+    "operationId": "RoutePostTestGrafanaReceivers",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestReceiversConfigBodyParams"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "207": {
+      "description": "MultiStatus",
+      "schema": {
+       "$ref": "#/definitions/MultiStatus"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     },
+     "404": {
+      "description": "AlertManagerNotFound",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotFound"
+      }
+     },
+     "408": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     },
+     "409": {
+      "description": "AlertManagerNotReady",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotReady"
+      }
+     }
+    },
+    "summary": "Test Grafana managed receivers without saving them.",
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
   "/api/alertmanager/{Recipient}/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
@@ -3057,18 +4108,19 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
      "200": {
-      "description": "GettableAlerts",
+      "description": "gettableAlerts",
       "schema": {
-       "$ref": "#/definitions/GettableAlerts"
+       "$ref": "#/definitions/gettableAlerts"
       }
      },
      "400": {
@@ -3097,11 +4149,12 @@
       }
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3170,18 +4223,19 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertGroups",
+      "description": "alertGroups",
       "schema": {
-       "$ref": "#/definitions/AlertGroups"
+       "$ref": "#/definitions/alertGroups"
       }
      },
      "400": {
@@ -3208,11 +4262,12 @@
       "type": "string"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3244,18 +4299,19 @@
       "type": "string"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
      "200": {
-      "description": "GettableSilence",
+      "description": "gettableSilence",
       "schema": {
-       "$ref": "#/definitions/GettableSilence"
+       "$ref": "#/definitions/gettableSilence"
       }
      },
      "400": {
@@ -3285,18 +4341,19 @@
       "x-go-name": "Filter"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
      "200": {
-      "description": "GettableSilences",
+      "description": "gettableSilences",
       "schema": {
-       "$ref": "#/definitions/GettableSilences"
+       "$ref": "#/definitions/gettableSilences"
       }
      },
      "400": {
@@ -3322,18 +4379,19 @@
       }
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
      "201": {
-      "description": "GettableSilence",
+      "description": "gettableSilence",
       "schema": {
-       "$ref": "#/definitions/GettableSilence"
+       "$ref": "#/definitions/gettableSilence"
       }
      },
      "400": {
@@ -3354,11 +4412,12 @@
     "operationId": "RouteGetAMStatus",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3386,11 +4445,12 @@
     "operationId": "RouteDeleteAlertingConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3416,11 +4476,12 @@
     "operationId": "RouteGetAlertingConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3453,11 +4514,12 @@
       }
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3479,17 +4541,155 @@
     ]
    }
   },
+  "/api/alertmanager/{Recipient}/config/api/v1/receivers/test": {
+   "post": {
+    "operationId": "RoutePostTestReceivers",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestReceiversConfigBodyParams"
+      }
+     },
+     {
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
+      "in": "path",
+      "name": "Recipient",
+      "required": true,
+      "type": "integer"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "207": {
+      "description": "MultiStatus",
+      "schema": {
+       "$ref": "#/definitions/MultiStatus"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     },
+     "404": {
+      "description": "AlertManagerNotFound",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotFound"
+      }
+     },
+     "408": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     },
+     "409": {
+      "description": "AlertManagerNotReady",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotReady"
+      }
+     }
+    },
+    "summary": "Test Grafana managed receivers without saving them.",
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/prometheus/grafana/api/v1/alerts": {
+   "get": {
+    "description": "gets the current alerts",
+    "operationId": "RouteGetGrafanaAlertStatuses",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Include Grafana specific labels as part of the response.",
+      "in": "query",
+      "name": "includeInternalLabels",
+      "type": "boolean",
+      "x-go-name": "IncludeInternalLabels"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertResponse",
+      "schema": {
+       "$ref": "#/definitions/AlertResponse"
+      }
+     }
+    },
+    "tags": [
+     "prometheus"
+    ]
+   }
+  },
+  "/api/prometheus/grafana/api/v1/rules": {
+   "get": {
+    "description": "gets the evaluation statuses of all rules",
+    "operationId": "RouteGetGrafanaRuleStatuses",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Include Grafana specific labels as part of the response.",
+      "in": "query",
+      "name": "includeInternalLabels",
+      "type": "boolean",
+      "x-go-name": "IncludeInternalLabels"
+     },
+     {
+      "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
+      "in": "query",
+      "name": "DashboardUID",
+      "type": "string"
+     },
+     {
+      "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "RuleResponse",
+      "schema": {
+       "$ref": "#/definitions/RuleResponse"
+      }
+     }
+    },
+    "tags": [
+     "prometheus"
+    ]
+   }
+  },
   "/api/prometheus/{Recipient}/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetAlertStatuses",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3511,11 +4711,12 @@
     "operationId": "RouteGetRuleStatuses",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3531,17 +4732,210 @@
     ]
    }
   },
+  "/api/ruler/grafana/api/v1/rules": {
+   "get": {
+    "description": "List rule groups",
+    "operationId": "RouteGetGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "DashboardUID",
+      "type": "string"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "NamespaceConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/NamespaceConfigResponse"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/api/ruler/grafana/api/v1/rules/{Namespace}": {
+   "delete": {
+    "description": "Delete namespace",
+    "operationId": "RouteDeleteNamespaceGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   },
+   "get": {
+    "description": "Get rule groups by namespace",
+    "operationId": "RouteGetNamespaceGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "NamespaceConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/NamespaceConfigResponse"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "description": "Creates or updates a rule group",
+    "operationId": "RoutePostNameGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableRuleGroupConfig"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
+   "delete": {
+    "description": "Delete rule group",
+    "operationId": "RouteDeleteGrafanaRuleGroupConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Groupname",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   },
+   "get": {
+    "description": "Get rule group",
+    "operationId": "RouteGetGrafanaRuleGroupConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Groupname",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "RuleGroupConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/RuleGroupConfigResponse"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
   "/api/ruler/{Recipient}/api/v1/rules": {
    "get": {
     "description": "List rule groups",
     "operationId": "RouteGetRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
+      "type": "integer"
+     },
+     {
+      "in": "query",
+      "name": "DashboardUID",
       "type": "string"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
      }
     ],
     "produces": [
@@ -3566,11 +4960,12 @@
     "operationId": "RouteDeleteNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -3596,11 +4991,12 @@
     "operationId": "RouteGetNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -3633,11 +5029,12 @@
     "operationId": "RoutePostNameRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -3672,11 +5069,12 @@
     "operationId": "RouteDeleteRuleGroupConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -3708,11 +5106,12 @@
     "operationId": "RouteGetRulegGroupConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -3775,26 +5174,128 @@
     ]
    }
   },
-  "/api/v1/receiver/test/{Recipient}": {
+  "/api/v1/ngalert/admin_config": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteDeleteNGalertConfig",
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "500": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     }
+    },
+    "summary": "Deletes the NGalert configuration of the user's organization.",
+    "tags": [
+     "configuration"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetNGalertConfig",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "GettableNGalertConfig",
+      "schema": {
+       "$ref": "#/definitions/GettableNGalertConfig"
+      }
+     },
+     "404": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     },
+     "500": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     }
+    },
+    "summary": "Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.",
+    "tags": [
+     "configuration"
+    ]
+   },
    "post": {
     "consumes": [
      "application/json"
     ],
-    "description": "Test receiver",
-    "operationId": "RouteTestReceiverConfig",
+    "operationId": "RoutePostNGalertConfig",
     "parameters": [
-     {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
-      "in": "path",
-      "name": "Recipient",
-      "required": true,
-      "type": "string"
-     },
      {
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/ExtendedReceiver"
+       "$ref": "#/definitions/PostableNGalertConfig"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to \"all\".",
+    "tags": [
+     "configuration"
+    ]
+   }
+  },
+  "/api/v1/ngalert/alertmanagers": {
+   "get": {
+    "operationId": "RouteGetAlertmanagers",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "GettableAlertmanagers",
+      "schema": {
+       "$ref": "#/definitions/GettableAlertmanagers"
+      }
+     }
+    },
+    "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
+    "tags": [
+     "configuration"
+    ]
+   }
+  },
+  "/api/v1/rule/test/grafana": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test a rule against Grafana ruler",
+    "operationId": "RouteTestRuleGrafanaConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestRulePayload"
       }
      }
     ],
@@ -3803,21 +5304,9 @@
     ],
     "responses": {
      "200": {
-      "description": "Success",
+      "description": "TestRuleResponse",
       "schema": {
-       "$ref": "#/definitions/Success"
-      }
-     },
-     "412": {
-      "description": "SmtpNotEnabled",
-      "schema": {
-       "$ref": "#/definitions/SmtpNotEnabled"
-      }
-     },
-     "500": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
+       "$ref": "#/definitions/TestRuleResponse"
       }
      }
     },
@@ -3831,15 +5320,16 @@
     "consumes": [
      "application/json"
     ],
-    "description": "Test rule",
+    "description": "Test a rule against external data source ruler",
     "operationId": "RouteTestRuleConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "body",

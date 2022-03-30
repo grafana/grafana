@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { LegacyForms, DeleteButton } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { SelectableValue } from '@grafana/data';
@@ -9,14 +9,20 @@ import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { updateTeamMember, removeTeamMember } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
-export interface Props {
+const mapDispatchToProps = {
+  removeTeamMember,
+  updateTeamMember,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
   member: TeamMember;
   syncEnabled: boolean;
   editorsCanAdmin: boolean;
   signedInUserIsTeamAdmin: boolean;
-  removeTeamMember: typeof removeTeamMember;
-  updateTeamMember: typeof updateTeamMember;
 }
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export class TeamMemberRow extends PureComponent<Props> {
   constructor(props: Props) {
@@ -49,6 +55,7 @@ export class TeamMemberRow extends PureComponent<Props> {
           <div className="gf-form">
             {signedInUserIsTeamAdmin && (
               <Select
+                menuShouldPortal
                 isSearchable={false}
                 options={teamsPermissionLevels}
                 onChange={(item) => this.onPermissionChange(item, member)}
@@ -82,7 +89,11 @@ export class TeamMemberRow extends PureComponent<Props> {
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
-          <img className="filter-table__avatar" src={member.avatarUrl} />
+          <img
+            aria-label={`Avatar for team member "${member.name}"`}
+            className="filter-table__avatar"
+            src={member.avatarUrl}
+          />
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
@@ -90,20 +101,16 @@ export class TeamMemberRow extends PureComponent<Props> {
         {this.renderPermissions(member)}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
-          <DeleteButton size="sm" disabled={!signedInUserIsTeamAdmin} onConfirm={() => this.onRemoveMember(member)} />
+          <DeleteButton
+            aria-label="Remove team member"
+            size="sm"
+            disabled={!signedInUserIsTeamAdmin}
+            onConfirm={() => this.onRemoveMember(member)}
+          />
         </td>
       </tr>
     );
   }
 }
 
-function mapStateToProps(state: any) {
-  return {};
-}
-
-const mapDispatchToProps = {
-  removeTeamMember,
-  updateTeamMember,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMemberRow);
+export default connector(TeamMemberRow);

@@ -2,21 +2,25 @@ import React, { FC, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { useLocalStorage } from 'react-use';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
+
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { getSectionIcon, getSectionStorageKey } from '../utils';
+import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 interface SectionHeaderProps {
   editable?: boolean;
   onSectionClick: (section: DashboardSection) => void;
   onToggleChecked?: OnToggleChecked;
   section: DashboardSection;
+  children: React.ReactNode;
 }
 
 export const SectionHeader: FC<SectionHeaderProps> = ({
   section,
   onSectionClick,
+  children,
   onToggleChecked,
   editable = false,
 }) => {
@@ -29,39 +33,54 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     onSectionClick(section);
   };
 
-  const onSectionChecked = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (onToggleChecked) {
-        onToggleChecked(section);
-      }
+  const handleCheckboxClick = useCallback(
+    (ev: React.MouseEvent) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+
+      onToggleChecked?.(section);
     },
     [onToggleChecked, section]
   );
 
+  const id = useUniqueId();
+  const labelId = `section-header-label-${id}`;
+
   return (
-    <div
+    <CollapsableSection
+      isOpen={section.expanded ?? false}
+      onToggle={onSectionExpand}
       className={styles.wrapper}
-      onClick={onSectionExpand}
-      aria-label={section.expanded ? `Collapse folder ${section.id}` : `Expand folder ${section.id}`}
+      contentClassName={styles.content}
+      loading={section.itemsFetching}
+      labelId={labelId}
+      label={
+        <>
+          <SearchCheckbox
+            className={styles.checkbox}
+            editable={editable}
+            checked={section.checked}
+            onClick={handleCheckboxClick}
+            aria-label="Select folder"
+          />
+
+          <div className={styles.icon}>
+            <Icon name={getSectionIcon(section)} />
+          </div>
+
+          <div className={styles.text}>
+            <span id={labelId}>{section.title}</span>
+            {section.url && (
+              <a href={section.url} className={styles.link}>
+                <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
+              </a>
+            )}
+          </div>
+        </>
+      }
     >
-      <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
-
-      <div className={styles.icon}>
-        <Icon name={getSectionIcon(section)} />
-      </div>
-
-      <div className={styles.text}>
-        {section.title}
-        {section.url && (
-          <a href={section.url} className={styles.link}>
-            <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
-          </a>
-        )}
-      </div>
-      {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
-    </div>
+      {children}
+    </CollapsableSection>
   );
 };
 
@@ -70,18 +89,21 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
   return {
     wrapper: cx(
       css`
-        display: flex;
         align-items: center;
         font-size: ${theme.typography.size.base};
         padding: 12px;
+        border-bottom: none;
         color: ${theme.colors.textWeak};
+        z-index: 1;
 
         &:hover,
         &.selected {
           color: ${theme.colors.text};
         }
 
-        &:hover {
+        &:hover,
+        &:focus-visible,
+        &:focus-within {
           a {
             opacity: 1;
           }
@@ -90,6 +112,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       'pointer',
       { selected }
     ),
+    checkbox: css`
+      padding: 0 ${sm} 0 0;
+    `,
     icon: css`
       padding: 0 ${sm} 0 ${editable ? 0 : sm};
     `,
@@ -105,6 +130,10 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     `,
     separator: css`
       margin-right: 6px;
+    `,
+    content: css`
+      padding-top: 0px;
+      padding-bottom: 0px;
     `,
   };
 });

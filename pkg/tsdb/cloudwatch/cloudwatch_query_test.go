@@ -2,17 +2,42 @@ package cloudwatch
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCloudWatchQuery(t *testing.T) {
+	t.Run("Deeplink is not generated for MetricQueryTypeQuery", func(t *testing.T) {
+		startTime := time.Now()
+		endTime := startTime.Add(2 * time.Hour)
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Statistic:  "Average",
+			Period:     300,
+			Id:         "id1",
+			MatchExact: true,
+			Dimensions: map[string][]string{
+				"InstanceId": {"i-12345678"},
+			},
+			MetricQueryType:  MetricQueryTypeQuery,
+			MetricEditorMode: MetricEditorModeBuilder,
+		}
+
+		deepLink, err := query.buildDeepLink(startTime, endTime)
+		require.NoError(t, err)
+		assert.Empty(t, deepLink)
+	})
+
 	t.Run("SEARCH(someexpression) was specified in the query editor", func(t *testing.T) {
 		query := &cloudWatchQuery{
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "SEARCH(someexpression)",
-			Stats:      "Average",
+			Statistic:  "Average",
 			Period:     300,
 			Id:         "id1",
 		}
@@ -26,7 +51,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
-			Stats:      "Average",
+			Statistic:  "Average",
 			Period:     300,
 			Id:         "id1",
 			MatchExact: true,
@@ -44,7 +69,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
-			Stats:      "Average",
+			Statistic:  "Average",
 			Period:     300,
 			Id:         "id1",
 			Dimensions: map[string][]string{
@@ -61,7 +86,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
-			Stats:      "Average",
+			Statistic:  "Average",
 			Period:     300,
 			Id:         "id1",
 			Dimensions: map[string][]string{
@@ -79,7 +104,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
-			Stats:      "Average",
+			Statistic:  "Average",
 			Period:     300,
 			Id:         "id1",
 			Dimensions: map[string][]string{
@@ -97,7 +122,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
-			Stats:      "Average",
+			Statistic:  "Average",
 			Period:     300,
 			Id:         "id1",
 			MatchExact: false,
@@ -107,14 +132,12 @@ func TestCloudWatchQuery(t *testing.T) {
 			query.MatchExact = false
 			assert.True(t, query.isSearchExpression(), "Expected a search expression")
 			assert.False(t, query.isMathExpression(), "Expected not math expression")
-			assert.False(t, query.isMetricStat(), "Expected not metric stat")
 		})
 
 		t.Run("Match exact is true", func(t *testing.T) {
 			query.MatchExact = true
 			assert.False(t, query.isSearchExpression(), "Exxpected not search expression")
 			assert.False(t, query.isMathExpression(), "Expected not math expression")
-			assert.True(t, query.isMetricStat(), "Expected a metric stat")
 		})
 	})
 
@@ -123,7 +146,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			RefId:      "A",
 			Region:     "us-east-1",
 			Expression: "",
-			Stats:      "Average",
+			Statistic:  "Average",
 			Period:     300,
 			Id:         "id1",
 			MatchExact: false,
@@ -134,10 +157,5 @@ func TestCloudWatchQuery(t *testing.T) {
 
 		assert.True(t, query.isSearchExpression(), "Expected search expression")
 		assert.False(t, query.isMathExpression(), "Expected not math expression")
-		assert.False(t, query.isMetricStat(), "Expected not metric stat")
 	})
-}
-
-func (q *cloudWatchQuery) isMetricStat() bool {
-	return !q.isSearchExpression() && !q.isMathExpression()
 }

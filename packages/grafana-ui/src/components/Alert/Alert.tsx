@@ -19,6 +19,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
+  topSpacing?: number;
 }
 
 function getIconFromSeverity(severity: AlertVariant): string {
@@ -37,35 +38,46 @@ function getIconFromSeverity(severity: AlertVariant): string {
 
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
-    { title, onRemove, children, buttonContent, elevated, bottomSpacing, className, severity = 'error', ...restProps },
+    {
+      title,
+      onRemove,
+      children,
+      buttonContent,
+      elevated,
+      bottomSpacing,
+      topSpacing,
+      className,
+      severity = 'error',
+      ...restProps
+    },
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, severity, elevated, bottomSpacing);
+    const styles = getStyles(theme, severity, elevated, bottomSpacing, topSpacing);
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
-        aria-label={selectors.components.Alert.alert(severity)}
+        data-testid={selectors.components.Alert.alertV2(severity)}
         {...restProps}
       >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
-        <div className={styles.body}>
+        <div className={styles.body} role="alert">
           <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
-            <IconButton name="times" onClick={onRemove} size="lg" type="button" />
+            <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
           </div>
         )}
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
-            <Button variant="secondary" onClick={onRemove} type="button">
+            <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
               {buttonContent}
             </Button>
           </div>
@@ -77,7 +89,13 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  severity: AlertVariant,
+  elevated?: boolean,
+  bottomSpacing?: number,
+  topSpacing?: number
+) => {
   const color = theme.colors[severity];
   const borderRadius = theme.shape.borderRadius();
 
@@ -92,6 +110,7 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
       background: ${theme.colors.background.secondary};
       box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
       margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
+      margin-top: ${theme.spacing(topSpacing ?? 0)};
 
       &:before {
         content: '';
@@ -130,6 +149,8 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
     content: css`
       color: ${theme.colors.text.secondary};
       padding-top: ${theme.spacing(1)};
+      max-height: 50vh;
+      overflow-y: scroll;
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};

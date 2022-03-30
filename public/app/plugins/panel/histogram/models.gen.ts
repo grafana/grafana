@@ -4,13 +4,14 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import {
-  GraphGradientMode,
-  HideableFieldConfig,
   LegendDisplayMode,
   OptionsWithLegend,
   OptionsWithTooltip,
   TooltipDisplayMode,
-} from '@grafana/ui';
+  GraphGradientMode,
+  HideableFieldConfig,
+  SortOrder,
+} from '@grafana/schema';
 
 export const modelVersion = Object.freeze([1, 0]);
 
@@ -29,6 +30,7 @@ export const defaultPanelOptions: PanelOptions = {
   },
   tooltip: {
     mode: TooltipDisplayMode.Multi,
+    sort: SortOrder.None,
   },
 };
 

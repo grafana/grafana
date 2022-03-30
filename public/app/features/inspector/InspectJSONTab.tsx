@@ -129,10 +129,16 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     const styles = getPanelInspectorStyles();
 
     return (
-      <>
+      <div className={styles.wrap}>
         <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
           <Field label="Select source" className="flex-grow-1">
-            <Select options={jsonOptions} value={selected} onChange={this.onSelectChanged} />
+            <Select
+              inputId="select-source-dropdown"
+              options={jsonOptions}
+              value={selected}
+              onChange={this.onSelectChanged}
+              menuShouldPortal
+            />
           </Field>
           {this.hasPanelJSON && isPanelJSON && canEdit && (
             <Button className={styles.toolbarItem} onClick={this.onApplyPanelModel}>
@@ -156,7 +162,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
             )}
           </AutoSizer>
         </div>
-      </>
+      </div>
     );
   }
 }

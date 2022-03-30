@@ -8,11 +8,13 @@ import {
   DataTransformerID,
   dateTimeFormat,
   dateTimeFormatISO,
+  MutableDataFrame,
   SelectableValue,
   toCSV,
   transformDataFrame,
+  TimeZone,
 } from '@grafana/data';
-import { Button, Container, Spinner, Table } from '@grafana/ui';
+import { Button, Spinner, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
@@ -22,10 +24,14 @@ import { css } from '@emotion/css';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
+import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
+import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
+import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
 
 interface Props {
   isLoading: boolean;
   options: GetDataOptions;
+  timeZone: TimeZone;
   data?: DataFrame[];
   panel?: PanelModel;
   onOptionsChange?: (options: GetDataOptions) => void;
@@ -122,6 +128,48 @@ export class InspectDataTab extends PureComponent<Props, State> {
     saveAs(blob, fileName);
   };
 
+  exportTracesAsJson = () => {
+    const { data, panel } = this.props;
+    if (!data) {
+      return;
+    }
+
+    for (const df of data) {
+      // Only export traces
+      if (df.meta?.preferredVisualisationType !== 'trace') {
+        continue;
+      }
+
+      switch (df.meta?.custom?.traceFormat) {
+        case 'jaeger': {
+          let res = transformToJaeger(new MutableDataFrame(df));
+          this.saveTraceJson(res, panel);
+          break;
+        }
+        case 'zipkin': {
+          let res = transformToZipkin(new MutableDataFrame(df));
+          this.saveTraceJson(res, panel);
+          break;
+        }
+        case 'otlp':
+        default: {
+          let res = transformToOTLP(new MutableDataFrame(df));
+          this.saveTraceJson(res, panel);
+          break;
+        }
+      }
+    }
+  };
+
+  saveTraceJson = (json: any, panel?: PanelModel) => {
+    const blob = new Blob([JSON.stringify(json)], {
+      type: 'application/json',
+    });
+    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
+    const fileName = `${displayTitle}-traces-${dateTimeFormat(new Date())}.json`;
+    saveAs(blob, fileName);
+  };
+
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
       transformId:
@@ -138,7 +186,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   getProcessedData(): DataFrame[] {
-    const { options, panel } = this.props;
+    const { options, panel, timeZone } = this.props;
     const data = this.state.transformedData;
 
     if (!options.withFieldConfig || !panel) {
@@ -151,6 +199,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       data,
       theme: config.theme2,
       fieldConfig: panel.fieldConfig,
+      timeZone,
       replaceVariables: (value: string) => {
         return value;
       },
@@ -180,10 +229,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const index = !dataFrames[dataFrameIndex] ? 0 : dataFrameIndex;
     const dataFrame = dataFrames[index];
     const hasLogs = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'logs');
+    const hasTraces = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'trace');
 
     return (
-      <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <div className={styles.actionsWrapper}>
+      <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
+        <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
             panel={panel}
@@ -218,8 +268,20 @@ export class InspectDataTab extends PureComponent<Props, State> {
               Download logs
             </Button>
           )}
+          {hasTraces && (
+            <Button
+              variant="primary"
+              onClick={this.exportTracesAsJson}
+              className={css`
+                margin-bottom: 10px;
+                margin-left: 10px;
+              `}
+            >
+              Download traces
+            </Button>
+          )}
         </div>
-        <Container grow={1}>
+        <div className={styles.content}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -228,12 +290,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={dataFrame} />
+                  <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />
                 </div>
               );
             }}
           </AutoSizer>
-        </Container>
+        </div>
       </div>
     );
   }

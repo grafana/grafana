@@ -37,7 +37,7 @@ const columnsMap = {
   min: 'min',
   max: 'max',
   total: 'sum',
-  current: 'last',
+  current: 'lastNotNull',
   count: 'count',
 };
 

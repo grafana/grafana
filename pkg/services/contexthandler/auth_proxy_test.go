@@ -9,16 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
-	macaron "gopkg.in/macaron.v1"
 )
 
 // Test initContextWithAuthProxy with a cached user ID that is no longer valid.
@@ -30,7 +29,11 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	const userID = int64(1)
 	const orgID = int64(4)
 
-	upsertHandler := func(cmd *models.UpsertUserCommand) error {
+	svc := getContextHandler(t)
+
+	// XXX: These handlers have to be injected AFTER calling getContextHandler, since the latter
+	// creates a SQLStore which installs its own handlers.
+	upsertHandler := func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 		require.Equal(t, name, cmd.ExternalUser.Login)
 		cmd.Result = &models.User{Id: userID}
 		return nil
@@ -48,23 +51,16 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		return nil
 	}
 	bus.AddHandler("", upsertHandler)
-	bus.AddHandlerCtx("", getUserHandler)
+	bus.AddHandler("", getUserHandler)
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
 	})
 
-	svc := getContextHandler(t)
-
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
 	ctx := &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: req,
-			},
-			Data: map[string]interface{}{},
-		},
-		Logger: log.New("Test"),
+		Context: &web.Context{Req: req},
+		Logger:  log.New("Test"),
 	}
 	req.Header.Set(svc.Cfg.AuthProxyHeaderName, name)
 	h, err := authproxy.HashCacheKey(name)
@@ -72,7 +68,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	key := fmt.Sprintf(authproxy.CachePrefix, h)
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
-	err = svc.RemoteCache.Set(key, int64(33), 0)
+	err = svc.RemoteCache.Set(context.Background(), key, int64(33), 0)
 	require.NoError(t, err)
 
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
@@ -81,7 +77,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	require.Equal(t, userID, ctx.SignedInUser.UserId)
 	require.True(t, ctx.IsSignedIn)
 
-	i, err := svc.RemoteCache.Get(key)
+	i, err := svc.RemoteCache.Get(context.Background(), key)
 	require.NoError(t, err)
 	require.Equal(t, userID, i.(int64))
 }
@@ -90,15 +86,10 @@ type fakeRenderService struct {
 	rendering.Service
 }
 
-func (s *fakeRenderService) Init() error {
-	return nil
-}
-
 func getContextHandler(t *testing.T) *ContextHandler {
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
 
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
@@ -107,38 +98,13 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	cfg.AuthProxyHeaderName = "X-Killa"
 	cfg.AuthProxyEnabled = true
 	cfg.AuthProxyHeaderProperty = "username"
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
+	require.NoError(t, err)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	svc := &ContextHandler{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     auth.ServiceName,
-			Instance: userAuthTokenSvc,
-		},
-		{
-			Name:     rendering.ServiceName,
-			Instance: renderSvc,
-		},
-		{
-			Name:     jwt.ServiceName,
-			Instance: authJWTSvc,
-		},
-		{
-			Name:     ServiceName,
-			Instance: svc,
-		},
-	})
+	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
-	return svc
+	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
 }

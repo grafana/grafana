@@ -7,7 +7,6 @@
 
   fake-graphite11-data:
     image: grafana/fake-data-gen
-    network_mode: bridge
     environment:
       FD_DATASOURCE: graphite
       FD_PORT: 2103

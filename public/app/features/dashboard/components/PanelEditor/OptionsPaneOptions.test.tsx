@@ -2,10 +2,12 @@ import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import {
   FieldConfigSource,
+  FieldType,
   LoadingState,
   PanelData,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  toDataFrame,
 } from '@grafana/data';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,13 +16,20 @@ import { DashboardModel, PanelModel } from '../../state';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
 
-standardEditorsRegistry.setInit(getStandardOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const mockStore = configureMockStore<any, any>();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
+jest.mock('react-router-dom', () => ({
+  ...(jest.requireActual('react-router-dom') as any),
+  useLocation: () => ({
+    pathname: 'localhost:3000/example/path',
+  }),
+}));
 
 class OptionsPaneOptionsTestScenario {
   onFieldConfigsChange = jest.fn();
@@ -96,6 +105,7 @@ class OptionsPaneOptionsTestScenario {
           onFieldConfigsChange={this.onFieldConfigsChange}
           onPanelConfigChange={this.onPanelConfigChange}
           onPanelOptionsChanged={this.onPanelOptionsChanged}
+          instanceState={undefined}
         />
       </Provider>
     );
@@ -116,6 +126,7 @@ describe('OptionsPaneOptions', () => {
 
     expect(screen.getByRole('heading', { name: /Panel options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Value mappings/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Thresholds/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /TestPanel/ })).toBeInTheDocument();
   });
@@ -233,5 +244,47 @@ describe('OptionsPaneOptions', () => {
     expect(
       within(thresholdsSection).getByLabelText(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
     ).toBeInTheDocument();
+  });
+
+  it('should show data override info dot', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.panelData.series = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [10, 200],
+            config: {
+              min: 100,
+            },
+          },
+        ],
+        refId: 'A',
+      }),
+    ];
+
+    scenario.render();
+
+    expect(screen.getByLabelText(dataOverrideTooltipDescription)).toBeInTheDocument();
+    expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+  });
+
+  it('should show override rule info dot', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.panel.fieldConfig.overrides = [
+      {
+        matcher: { id: 'byName', options: 'SeriesA' },
+        properties: [
+          {
+            id: 'decimals',
+            value: 2,
+          },
+        ],
+      },
+    ];
+
+    scenario.render();
+    expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
 });

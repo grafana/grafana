@@ -1,6 +1,7 @@
 +++
 title = "Data source permissions"
-description = "Grafana Datasource Permissions Guide "
+description = "Grafana Datasource Permissions Guide"
+aliases = ["docs/sources/permissions/datasource_permissions.md"]
 keywords = ["grafana", "configuration", "documentation", "datasource", "permissions", "users", "teams", "enterprise"]
 weight = 500
 +++
@@ -18,7 +19,7 @@ Data source permissions allow you to restrict access for users to query a data s
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
 queries that exist on dashboards they have access to.
 
-When permissions are enabled for a data source in an organization, you restrict admin and query access for that data source to [admin users]({{< relref "../permissions/organization_roles/#admin-role" >}}) in that organization.
+When permissions are enabled for a data source in an organization, you restrict admin and query access for that data source to admin users in that organization.
 
 **Enable permissions for a data source:**
 
@@ -52,7 +53,7 @@ After you have enabled permissions for a data source you can assign query permis
 
 If you have enabled permissions for a data source and want to return data source permissions to the default, then you can disable permissions with a click of a button.
 
-Note that *all* existing permissions created for the data source will be deleted.
+Note that _all_ existing permissions created for the data source will be deleted.
 
 **Disable permissions for a data source:**
 

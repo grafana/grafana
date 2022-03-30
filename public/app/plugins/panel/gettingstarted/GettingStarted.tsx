@@ -99,7 +99,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
             </div>
             {currentStep === steps.length - 1 && (
               <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
-                <Button icon="angle-left" variant="secondary" />
+                <Button aria-label="To advanced tutorials" icon="angle-left" variant="secondary" />
               </div>
             )}
             <div className={styles.content}>
@@ -107,7 +107,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
             </div>
             {currentStep < steps.length - 1 && (
               <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
-                <Button icon="angle-right" variant="secondary" />
+                <Button aria-label="To basic tutorials" icon="angle-right" variant="secondary" />
               </div>
             )}
           </>

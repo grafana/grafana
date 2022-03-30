@@ -90,7 +90,7 @@ dt {
   font-weight: $font-weight-semi-bold;
 }
 dd {
-  margin-left: $line-height-base / 2;
+  margin-left: calc($line-height-base / 2);
 }
 // Horizontal layout (like forms)
 .dl-horizontal {
@@ -214,9 +214,13 @@ a.external-link {
   }
 
   table {
+    margin-bottom: $spacer;
+  }
+
+  table {
     td,
     th {
-      padding: $spacer * 0.5 $spacer;
+      padding: $space-xs $space-sm;
     }
     th {
       font-weight: $font-weight-semi-bold;
@@ -245,6 +249,7 @@ a.external-link {
     margin-bottom: 0;
   }
 
+  table:last-child,
   ul:last-child,
   ol:last-child {
     margin-bottom: 0;

@@ -2,15 +2,22 @@
 package adapters
 
 import (
+	"encoding/json"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 // ModelToInstanceSettings converts a models.DataSource to a backend.DataSourceInstanceSettings.
-func ModelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
-	jsonDataBytes, err := ds.JsonData.MarshalJSON()
-	if err != nil {
-		return nil, err
+func ModelToInstanceSettings(ds *models.DataSource, decryptFn func(map[string][]byte) map[string]string,
+) (*backend.DataSourceInstanceSettings, error) {
+	var jsonDataBytes json.RawMessage
+	if ds.JsonData != nil {
+		var err error
+		jsonDataBytes, err = ds.JsonData.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &backend.DataSourceInstanceSettings{
@@ -23,7 +30,7 @@ func ModelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstance
 		BasicAuthEnabled:        ds.BasicAuth,
 		BasicAuthUser:           ds.BasicAuthUser,
 		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: ds.DecryptedValues(),
+		DecryptedSecureJSONData: decryptFn(ds.SecureJsonData),
 		Updated:                 ds.Updated,
 	}, nil
 }

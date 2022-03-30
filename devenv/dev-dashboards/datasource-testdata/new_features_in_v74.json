@@ -511,7 +511,6 @@
       },
       "id": 41,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -613,7 +612,6 @@
       },
       "id": 42,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -716,7 +714,6 @@
       },
       "id": 32,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -819,7 +816,6 @@
       },
       "id": 44,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -1995,7 +1991,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillOpacity": 29,
+            "fillOpacity": 0,
             "gradientMode": {
               "label": "None",
               "value": "none"
@@ -2058,6 +2054,18 @@
                 "value": 0
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
           }
         ]
       },
@@ -2070,7 +2078,6 @@
       "id": 29,
       "maxDataPoints": 500,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [
             "last"
@@ -2161,6 +2168,7 @@
   "style": "dark",
   "tags": [
     "gdev",
+    "graph-ng",
     "demo"
   ],
   "templating": {

@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
-import { ValueLinkConfig } from '@grafana/data';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -16,6 +15,7 @@ interface TableContainerProps {
   ariaLabel?: string;
   exploreId: ExploreId;
   width: number;
+  timeZone: TimeZone;
   onCellFilterAdded?: (filter: FilterItem) => void;
 }
 
@@ -49,29 +49,45 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpen, range, ariaLabel } = this.props;
-
+    const { loading, onCellFilterAdded, tableResult, width, splitOpen, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
-    const hasTableResult = tableResult?.length;
 
-    if (tableResult && tableResult.length) {
+    let dataFrame = tableResult;
+
+    if (dataFrame?.length) {
+      dataFrame = applyFieldOverrides({
+        data: [dataFrame],
+        timeZone,
+        theme: config.theme2,
+        replaceVariables: (v: string) => v,
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      })[0];
       // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
       // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
       // differently and sidestep this getLinks API on a dataframe
-      for (const field of tableResult.fields) {
+      for (const field of dataFrame.fields) {
         field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore({ field, rowIndex: config.valueRowIndex!, splitOpenFn: splitOpen, range });
+          return getFieldLinksForExplore({
+            field,
+            rowIndex: config.valueRowIndex!,
+            splitOpenFn: splitOpen,
+            range,
+            dataFrame: dataFrame!,
+          });
         };
       }
     }
 
     return (
       <Collapse label="Table" loading={loading} isOpen>
-        {hasTableResult ? (
+        {dataFrame?.length ? (
           <Table
             ariaLabel={ariaLabel}
-            data={tableResult!}
+            data={dataFrame}
             width={tableWidth}
             height={height}
             onCellFilterAdded={onCellFilterAdded}
@@ -84,4 +100,4 @@ export class TableContainer extends PureComponent<Props> {
   }
 }
 
-export default hot(module)(connector(TableContainer));
+export default connector(TableContainer);

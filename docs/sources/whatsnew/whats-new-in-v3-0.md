@@ -36,8 +36,8 @@ two new plugin types:
 
 - **Panel** plugins let you add new panel types for your Dashboards.
 - **App** plugins bundle **Panels** plugins, **Data Sources** plugins,
-Dashboards, and Grafana **Pages**. Apps are a great way to provide an
-entire experience right within Grafana.
+  Dashboards, and Grafana **Pages**. Apps are a great way to provide an
+  entire experience right within Grafana.
 
 ## Grafana.com
 
@@ -183,13 +183,13 @@ now stored without any formatting (glob/regex/etc), this is done on the fly when
 variable is interpolated.
 
 - Plugin API: The plugin API has changed so if you are using a custom
-data source (or panel) they need to be updated as well.
+  data source (or panel) they need to be updated as well.
 
 - InfluxDB 0.8: This data source is no longer included in releases,
-you can still install manually from [Grafana.com](https://grafana.com)
+  you can still install manually from [Grafana.com](https://grafana.com)
 
 - KairosDB: This data source has also no longer shipped with Grafana,
-you can install it manually from [Grafana.com](https://grafana.com)
+  you can install it manually from [Grafana.com](https://grafana.com)
 
 ## Plugin showcase
 
@@ -197,20 +197,24 @@ Discovering and installing plugins is very quick and easy with Grafana 3.0 and [
 are a couple that I encourage you try!
 
 #### [Clock Panel](https://grafana.com/plugins/grafana-clock-panel)
+
 Support's both current time and count down mode.
 <img src="/static/img/docs/v3/clock_panel.png">
 
 #### [Pie Chart Panel](https://grafana.com/plugins/grafana-piechart-panel)
+
 A simple pie chart panel is now available as an external plugin.
 <img src="/static/img/docs/v3/pie_chart_panel.png">
 
 #### [WorldPing App](https://grafana.com/plugins/raintank-worldping-app)
+
 This is full blown Grafana App that adds new panels, data sources and pages to give
 feature rich global performance monitoring directly from your on-prem Grafana.
 
 <img src="/static/img/docs/v3/wP-Screenshot-dash-web.png">
 
 #### [Zabbix App](https://grafana.com/plugins/alexanderzobnin-zabbix-app)
+
 This app contains the already very pouplar Zabbix data source plugin, 2 dashboards and a triggers panel. It is
 created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/grafana-zabbix).
 

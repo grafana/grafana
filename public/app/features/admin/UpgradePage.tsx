@@ -1,22 +1,23 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { NavModel } from '@grafana/data';
-import Page from '../../core/components/Page/Page';
-import { LicenseChrome } from './LicenseChrome';
-import { LinkButton } from '@grafana/ui';
-import { hot } from 'react-hot-loader';
-import { StoreState } from '../../types';
-import { getNavModel } from '../../core/selectors/navModel';
 import { connect } from 'react-redux';
+import { css } from '@emotion/css';
+import { LinkButton, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, NavModel } from '@grafana/data';
+import Page from '../../core/components/Page/Page';
+import { getNavModel } from '../../core/selectors/navModel';
+import { LicenseChrome } from './LicenseChrome';
+import { StoreState } from '../../types';
+import { ServerStats } from './ServerStats';
 
 interface Props {
   navModel: NavModel;
 }
 
-export const UpgradePage: React.FC<Props> = ({ navModel }) => {
+export function UpgradePage({ navModel }: Props) {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        <ServerStats />
         <UpgradeInfo
           editionNotice="You are running the open-source version of Grafana.
         You have to install the Enterprise edition in order enable Enterprise features."
@@ -24,7 +25,7 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
       </Page.Contents>
     </Page>
   );
-};
+}
 
 const titleStyles = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
@@ -33,25 +34,37 @@ interface UpgradeInfoProps {
 }
 
 export const UpgradeInfo: React.FC<UpgradeInfoProps> = ({ editionNotice }) => {
-  const columnStyles = css`
-    display: grid;
-    grid-template-columns: 100%;
-    column-gap: 20px;
-    row-gap: 40px;
-
-    @media (min-width: 1050px) {
-      grid-template-columns: 50% 50%;
-    }
-  `;
+  const styles = useStyles2(getStyles);
 
   return (
-    <LicenseChrome header="Grafana Enterprise" subheader="Get your free trial" editionNotice={editionNotice}>
-      <div className={columnStyles}>
-        <FeatureInfo />
-        <ServiceInfo />
-      </div>
-    </LicenseChrome>
+    <>
+      <h2 className={styles.title}>Enterprise license</h2>
+      <LicenseChrome header="Grafana Enterprise" subheader="Get your free trial" editionNotice={editionNotice}>
+        <div className={styles.column}>
+          <FeatureInfo />
+          <ServiceInfo />
+        </div>
+      </LicenseChrome>
+    </>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    column: css`
+      display: grid;
+      grid-template-columns: 100%;
+      column-gap: 20px;
+      row-gap: 40px;
+
+      @media (min-width: 1050px) {
+        grid-template-columns: 50% 50%;
+      }
+    `,
+    title: css`
+      margin: ${theme.spacing(4)} 0;
+    `,
+  };
 };
 
 const GetEnterprise: React.FC = () => {
@@ -148,8 +161,14 @@ const FeatureListing: React.FC = () => {
           <Item title="New Relic" />
           <Item title="DataDog" />
           <Item title="AppDynamics" />
-          <Item title="Amazon Timestream" />
           <Item title="SAP HANA®" />
+          <Item title="Gitlab" />
+          <Item title="Honeycomb" />
+          <Item title="Jira" />
+          <Item title="MongoDB" />
+          <Item title="Salesforce" />
+          <Item title="Snowflake" />
+          <Item title="Wavefront" />
         </List>
       </Item>
     </List>
@@ -198,7 +217,7 @@ const Item: React.FC<ItemProps> = ({ children, title, image }) => {
 
   return (
     <div className={itemStyle}>
-      <img src={imageUrl} />
+      <img src={imageUrl} alt="" />
       <div>
         <div className={titleStyle}>{title}</div>
         {children}
@@ -211,4 +230,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'upgrading'),
 });
 
-export default hot(module)(connect(mapStateToProps)(UpgradePage));
+export default connect(mapStateToProps)(UpgradePage);

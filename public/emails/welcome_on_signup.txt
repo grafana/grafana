@@ -1,0 +1,14 @@
+{{Subject .Subject "Welcome to Grafana"}}
+
+Hi {{.Name}},
+
+Welcome! Ready to start building some beautiful metric and analytic dashboards?
+
+If you are new to Grafana, refer to the Getting started with Grafana guide on
+https://grafana.com/docs/grafana/latest/getting-started/getting-started/.
+
+Thank you for joining our community.
+
+The Grafana team
+
+Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs

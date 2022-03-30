@@ -1,28 +1,19 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securedata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func init() {
-	bus.AddHandler("sql", CreateDashboardSnapshot)
-	bus.AddHandler("sql", GetDashboardSnapshot)
-	bus.AddHandler("sql", DeleteDashboardSnapshot)
-	bus.AddHandler("sql", SearchDashboardSnapshots)
-	bus.AddHandler("sql", DeleteExpiredSnapshots)
-}
-
 // DeleteExpiredSnapshots removes snapshots with old expiry dates.
 // SnapShotRemoveExpired is deprecated and should be removed in the future.
 // Snapshot expiry is decided by the user when they share the snapshot.
-func DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if !setting.SnapShotRemoveExpired {
 			sqlog.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
 			return nil
@@ -39,22 +30,12 @@ func DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCommand) error {
 	})
 }
 
-func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// never
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
-		}
-
-		marshalledData, err := cmd.Dashboard.Encode()
-		if err != nil {
-			return err
-		}
-
-		encryptedDashboard, err := securedata.Encrypt(marshalledData)
-		if err != nil {
-			return err
 		}
 
 		snapshot := &models.DashboardSnapshot{
@@ -67,27 +48,27 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			ExternalUrl:        cmd.ExternalUrl,
 			ExternalDeleteUrl:  cmd.ExternalDeleteUrl,
 			Dashboard:          simplejson.New(),
-			DashboardEncrypted: encryptedDashboard,
+			DashboardEncrypted: cmd.DashboardEncrypted,
 			Expires:            expires,
 			Created:            time.Now(),
 			Updated:            time.Now(),
 		}
-		_, err = sess.Insert(snapshot)
+		_, err := sess.Insert(snapshot)
 		cmd.Result = snapshot
 
 		return err
 	})
 }
 
-func DeleteDashboardSnapshot(cmd *models.DeleteDashboardSnapshotCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
 		_, err := sess.Exec(rawSQL, cmd.DeleteKey)
 		return err
 	})
 }
 
-func GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
+func (ss *SQLStore) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
 	snapshot := models.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
 	has, err := x.Get(&snapshot)
 
@@ -103,7 +84,7 @@ func GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
 
 // SearchDashboardSnapshots returns a list of all snapshots for admins
 // for other roles, it returns snapshots created by the user
-func SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
+func (ss *SQLStore) SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
 	var snapshots = make(models.DashboardSnapshotsList, 0)
 
 	sess := x.NewSession()
