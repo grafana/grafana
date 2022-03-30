@@ -97,7 +97,7 @@ describe('ApiKeysPage', () => {
       const apiKeys = getMultipleMockKeys(3);
       const { toggleIncludeExpiredMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
-      toggleShowExpired();
+      await toggleShowExpired();
       expect(toggleIncludeExpiredMock).toHaveBeenCalledTimes(1);
     });
   });
@@ -134,7 +134,7 @@ describe('ApiKeysPage', () => {
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(1);
 
-      toggleShowExpired();
+      await toggleShowExpired();
 
       deleteApiKeyMock.mockClear();
       expect(within(secondRow).getByLabelText('Delete API key')).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe('ApiKeysPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /add api key/i }));
       await addAndVerifyApiKey(addApiKeyMock);
 
-      toggleShowExpired();
+      await toggleShowExpired();
 
       addApiKeyMock.mockClear();
       await userEvent.click(screen.getByRole('button', { name: /add api key/i }));

@@ -70,7 +70,7 @@ describe('PromQueryBuilder', () => {
 
   it('tries to load metrics without labels', async () => {
     const { languageProvider, container } = setup();
-    openMetricSelect(container);
+    await openMetricSelect(container);
     await waitFor(() => expect(languageProvider.getLabelValues).toBeCalledWith('__name__'));
   });
 
@@ -79,27 +79,27 @@ describe('PromQueryBuilder', () => {
       ...defaultQuery,
       labels: [{ label: 'label_name', op: '=', value: 'label_value' }],
     });
-    openMetricSelect(container);
+    await openMetricSelect(container);
     await waitFor(() => expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true));
   });
 
   it('tries to load variables in metric field', async () => {
     const { datasource, container } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
-    openMetricSelect(container);
+    await openMetricSelect(container);
     await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
-    openLabelNameSelect();
+    await openLabelNameSelect();
     await waitFor(() => expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}'));
   });
 
   it('tries to load variables in label field', async () => {
     const { datasource } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
-    openLabelNameSelect();
+    await openLabelNameSelect();
     await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
@@ -111,7 +111,7 @@ describe('PromQueryBuilder', () => {
         { label: 'foo', op: '=', value: 'bar' },
       ],
     });
-    openLabelNameSelect(1);
+    await openLabelNameSelect(1);
     await waitFor(() =>
       expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
     );
@@ -122,7 +122,7 @@ describe('PromQueryBuilder', () => {
       ...defaultQuery,
       metric: '',
     });
-    openLabelNameSelect();
+    await openLabelNameSelect();
     await waitFor(() => expect(languageProvider.fetchLabels).toBeCalled());
   });
 
@@ -132,7 +132,7 @@ describe('PromQueryBuilder', () => {
       labels: [],
       operations: [],
     });
-    openMetricSelect(container);
+    await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_bucket'));
     await waitFor(() => expect(screen.getByText('hint: add histogram_quantile()')).toBeInTheDocument());
   });
@@ -143,7 +143,7 @@ describe('PromQueryBuilder', () => {
       labels: [],
       operations: [],
     });
-    openMetricSelect(container);
+    await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
   });
@@ -154,7 +154,7 @@ describe('PromQueryBuilder', () => {
       labels: [],
       operations: [],
     });
-    openMetricSelect(container);
+    await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
   });
@@ -176,7 +176,7 @@ describe('PromQueryBuilder', () => {
       },
       data
     );
-    openMetricSelect(container);
+    await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getAllByText(/hint:/g)).toHaveLength(2));
   });

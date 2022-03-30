@@ -73,7 +73,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Builder);
+    await switchToMode(QueryEditorMode.Builder);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -107,7 +107,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    switchToMode(QueryEditorMode.Code);
+    await switchToMode(QueryEditorMode.Code);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -117,7 +117,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('changes to explain mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Explain);
+    await switchToMode(QueryEditorMode.Explain);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -131,7 +131,7 @@ describe('LokiQueryEditorSelector', () => {
   //     expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
   //     editorMode: QueryEditorMode.Code,
   //   });
-  //   switchToMode(QueryEditorMode.Builder);
+  //   await switchToMode(QueryEditorMode.Builder);
   //   rerender(
   //     <PromQueryEditorSelector
   //       {...defaultProps}
