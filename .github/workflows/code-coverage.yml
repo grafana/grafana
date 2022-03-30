@@ -17,5 +17,4 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '1.17.8'
-      - run: go mod download
       - run: go test ./...
