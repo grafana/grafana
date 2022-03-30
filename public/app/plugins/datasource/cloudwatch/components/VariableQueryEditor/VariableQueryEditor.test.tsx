@@ -112,9 +112,6 @@ describe('VariableEditor', () => {
         metricName: 'i3',
         dimensionKey: 's4',
       };
-      props.onChange = jest.fn((query) => {
-        props.query = query;
-      });
       render(<VariableQueryEditor {...props} />);
 
       const querySelect = screen.queryByLabelText('Query Type');
