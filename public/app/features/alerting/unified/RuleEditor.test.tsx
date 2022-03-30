@@ -526,12 +526,11 @@ describe('RuleEditor', () => {
     // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    // wait for ui theck each datasource if it supports rule editing
+    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalledTimes(4));
 
     await ui.inputs.name.find();
     userEvent.click(await ui.buttons.lotexAlert.get());
-
-    // wait for ui theck each datasource if it supports rule editing
-    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalledTimes(4));
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
