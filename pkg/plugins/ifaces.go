@@ -17,14 +17,14 @@ type Store interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type ExtRegistry interface {
+type PublicRegistry interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 }
 
-type IntRegistry interface {
+type PrivateRegistry interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, id string) (*Plugin, bool)
 	// Plugins returns all plugins.

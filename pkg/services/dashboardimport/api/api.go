@@ -20,12 +20,12 @@ type ImportDashboardAPI struct {
 	dashboardImportService dashboardimport.Service
 	quotaService           QuotaService
 	schemaLoaderService    SchemaLoaderService
-	pluginRegistry         plugins.ExtRegistry
+	pluginRegistry         plugins.PublicRegistry
 	ac                     accesscontrol.AccessControl
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	schemaLoaderService SchemaLoaderService, pluginRegistry plugins.ExtRegistry, ac accesscontrol.AccessControl) *ImportDashboardAPI {
+	schemaLoaderService SchemaLoaderService, pluginRegistry plugins.PublicRegistry, ac accesscontrol.AccessControl) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,

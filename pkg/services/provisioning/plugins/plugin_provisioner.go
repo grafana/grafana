@@ -16,7 +16,7 @@ type Store interface {
 
 // Provision scans a directory for provisioning config files
 // and provisions the app in those files.
-func Provision(ctx context.Context, configDirectory string, store Store, pluginRegistry plugins.ExtRegistry, pluginSettings pluginsettings.Service) error {
+func Provision(ctx context.Context, configDirectory string, store Store, pluginRegistry plugins.PublicRegistry, pluginSettings pluginsettings.Service) error {
 	logger := log.New("provisioning.plugins")
 	ap := PluginProvisioner{
 		log:            logger,

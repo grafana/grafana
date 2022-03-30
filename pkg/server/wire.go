@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -126,12 +127,12 @@ var wireBasicSet = wire.NewSet(
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
-	manager.ProvidePluginRegistry,
-	wire.Bind(new(plugins.IntRegistry), new(*manager.PluginRegistry)),
+	registry.ProvidePluginRegistry,
+	wire.Bind(new(plugins.PrivateRegistry), new(*registry.PluginRegistry)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.ExtRegistry), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.PublicRegistry), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),

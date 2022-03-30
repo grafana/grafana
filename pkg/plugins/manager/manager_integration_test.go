@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -92,7 +93,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, NewPluginRegistry(pmCfg), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	pm, err := ProvideService(cfg, registry.NewPluginRegistry(pmCfg), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
 		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
 

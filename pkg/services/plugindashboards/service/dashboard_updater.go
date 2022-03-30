@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-func ProvideDashboardUpdater(bus bus.Bus, pluginRegistry plugins.ExtRegistry, pluginDashboardService plugindashboards.Service,
+func ProvideDashboardUpdater(bus bus.Bus, pluginRegistry plugins.PublicRegistry, pluginDashboardService plugindashboards.Service,
 	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service,
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
 	du := newDashboardUpdater(bus, pluginRegistry, pluginDashboardService, dashboardImportService,
@@ -23,7 +23,7 @@ func ProvideDashboardUpdater(bus bus.Bus, pluginRegistry plugins.ExtRegistry, pl
 	return du
 }
 
-func newDashboardUpdater(bus bus.Bus, pluginRegistry plugins.ExtRegistry,
+func newDashboardUpdater(bus bus.Bus, pluginRegistry plugins.PublicRegistry,
 	pluginDashboardService plugindashboards.Service, dashboardImportService dashboardimport.Service,
 	pluginSettingsService pluginsettings.Service, dashboardPluginService dashboards.PluginService,
 	dashboardService dashboards.DashboardService) *DashboardUpdater {
@@ -42,7 +42,7 @@ func newDashboardUpdater(bus bus.Bus, pluginRegistry plugins.ExtRegistry,
 }
 
 type DashboardUpdater struct {
-	pluginRegistry         plugins.ExtRegistry
+	pluginRegistry         plugins.PublicRegistry
 	pluginDashboardService plugindashboards.Service
 	dashboardImportService dashboardimport.Service
 	pluginSettingsService  pluginsettings.Service

@@ -18,7 +18,7 @@ import (
 type UsageStats struct {
 	Cfg            *setting.Cfg
 	SQLStore       sqlstore.Store
-	pluginRegistry plugins.ExtRegistry
+	pluginRegistry plugins.PublicRegistry
 	SocialService  social.Service
 	kvStore        *kvstore.NamespacedKVStore
 	RouteRegister  routing.RouteRegister
@@ -32,7 +32,7 @@ type UsageStats struct {
 	sendReportCallbacks      []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginRegistry plugins.ExtRegistry,
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginRegistry plugins.PublicRegistry,
 	socialService social.Service, kvStore kvstore.KVStore, routeRegister routing.RouteRegister,
 ) *UsageStats {
 	s := &UsageStats{

@@ -89,7 +89,7 @@ func TestConfigReader(t *testing.T) {
 }
 
 type fakePluginRegistry struct {
-	plugins.ExtRegistry
+	plugins.PublicRegistry
 
 	apps map[string]plugins.PluginDTO
 }

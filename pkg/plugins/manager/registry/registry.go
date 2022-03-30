@@ -1,4 +1,4 @@
-package manager
+package registry
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ plugins.IntRegistry = (*PluginRegistry)(nil)
+var _ plugins.PrivateRegistry = (*PluginRegistry)(nil)
 
 type PluginRegistry struct {
 	cfg   *plugins.Cfg
