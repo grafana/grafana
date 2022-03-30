@@ -83,8 +83,8 @@ const ui = {
     addLabel: byRole('button', { name: /Add label/ }),
     // alert type buttons
     grafanaManagedAlert: byRole('button', { name: /Grafana managed/ }),
-    lotexAlert: byRole('button', { name: /Cortex or Loki alert/ }),
-    lotexRecordingRule: byRole('button', { name: /Cortex or Loki recording rule/ }),
+    lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
+    lotexRecordingRule: byRole('button', { name: /Mimir or Loki recording rule/ }),
   },
 };
 
@@ -523,7 +523,7 @@ describe('RuleEditor', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
 
-    // render rule editor, select cortex/loki managed alerts
+    // render rule editor, select Mimir/loki managed alerts
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
