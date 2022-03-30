@@ -242,7 +242,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		err := pm.loadPlugins(context.Background(), plugins.Core, "test/path")
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, pc.startCount)
+		assert.Equal(t, 0, pc.startCount)
 		assert.Equal(t, 0, pc.stopCount)
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
@@ -433,6 +433,20 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 			})
 		})
 	})
+
+	newScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
+		t.Run("Backend core plugin is registered but not started", func(t *testing.T) {
+			ctx.plugin.Class = plugins.Core
+			err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
+			require.NoError(t, err)
+			require.NotNil(t, ctx.plugin)
+			require.Equal(t, testPluginID, ctx.plugin.ID)
+			require.Equal(t, 0, ctx.pluginClient.startCount)
+			testPlugin, exists := ctx.manager.Plugin(context.Background(), testPluginID)
+			assert.True(t, exists)
+			require.NotNil(t, testPlugin)
+		})
+	})
 }
 
 func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
@@ -541,7 +555,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		manager: manager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createPlugin(testPluginID, "", plugins.Core, managed, true)
+	ctx.plugin, ctx.pluginClient = createPlugin(testPluginID, "", plugins.External, managed, true)
 
 	fn(t, ctx)
 }
