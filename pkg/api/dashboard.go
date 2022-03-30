@@ -200,17 +200,19 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, actions *dtos.AnnotationActions, scope string) {
-	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsRead, scope)
-	actions.CanRead, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	var err error
 
-	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
-	actions.CanDelete, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
-
-	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
-	actions.CanCreate, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
+	actions.CanDelete, err = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	if err != nil {
+		hs.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsDelete, "scope", scope)
+	}
 
 	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, scope)
-	actions.CanEdit, _ = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	actions.CanEdit, err = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	if err != nil {
+		hs.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsWrite, "scope", scope)
+	}
 }
 
 func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {

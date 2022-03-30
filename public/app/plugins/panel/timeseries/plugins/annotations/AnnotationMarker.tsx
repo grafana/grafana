@@ -7,6 +7,7 @@ import { getCommonAnnotationStyles } from '../styles';
 import { usePopper } from 'react-popper';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { AnnotationTooltip } from './AnnotationTooltip';
+import { contextSrv } from '../../../../../core/services/context_srv';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   timeZone: TimeZone;
@@ -82,6 +83,26 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
     [timeZone]
   );
 
+  const canDelete = useCallback(() => {
+    if (contextSrv.accessControlEnabled()) {
+      if (annotation.dashboardId !== 0) {
+        return panelCtx.annotationPermissions?.dashboard.canDelete;
+      }
+      return panelCtx.annotationPermissions?.organization.canDelete;
+    }
+    return canAddAnnotations && canAddAnnotations();
+  }, [canAddAnnotations, annotation, panelCtx]);
+
+  const canEdit = useCallback(() => {
+    if (contextSrv.accessControlEnabled()) {
+      if (annotation.dashboardId !== 0) {
+        return panelCtx.annotationPermissions?.dashboard.canEdit;
+      }
+      return panelCtx.annotationPermissions?.organization.canEdit;
+    }
+    return canAddAnnotations && canAddAnnotations();
+  }, [canAddAnnotations, annotation, panelCtx]);
+
   const renderTooltip = useCallback(() => {
     return (
       <AnnotationTooltip
@@ -89,10 +110,11 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
         timeFormatter={timeFormatter}
         onEdit={onAnnotationEdit}
         onDelete={onAnnotationDelete}
-        editable={Boolean(canAddAnnotations && canAddAnnotations())}
+        canEdit={Boolean(canEdit())}
+        canDelete={Boolean(canDelete())}
       />
     );
-  }, [canAddAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
+  }, [canDelete, canEdit, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
 
   const isRegionAnnotation = Boolean(annotation.isRegion);
 

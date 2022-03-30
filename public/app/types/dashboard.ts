@@ -38,16 +38,14 @@ export interface DashboardMeta {
   annotationsPermissions?: AnnotationsPermissions;
 }
 
-export interface AnnotationsActions {
-  canRead: boolean;
-  canCreate: boolean;
+export interface AnnotationActions {
   canEdit: boolean;
   canDelete: boolean;
 }
 
 export interface AnnotationsPermissions {
-  dashboard: AnnotationsActions;
-  organization: AnnotationsActions;
+  dashboard: AnnotationActions;
+  organization: AnnotationActions;
 }
 
 export interface DashboardDataDTO {

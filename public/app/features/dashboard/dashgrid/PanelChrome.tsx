@@ -90,6 +90,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
         onToggleLegendSort: this.onToggleLegendSort,
+        annotationPermissions: props.dashboard.meta.annotationsPermissions,
       },
       data: this.getInitialPanelDataState(),
     };
