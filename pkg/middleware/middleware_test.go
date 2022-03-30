@@ -204,17 +204,17 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+			query.Result = &models.SignedInUser{OrgId: 1, UserId: userID}
+			return nil
+		})
+
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
 		}
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: userID}
-			return nil
-		})
 
 		sc.fakeReq("GET", "/").exec()
 
