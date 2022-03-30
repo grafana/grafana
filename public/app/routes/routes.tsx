@@ -1,4 +1,5 @@
 import React from 'react';
+import { UrlQueryMap } from '@grafana/data';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
@@ -15,6 +16,10 @@ import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 
+function hideNavBarOnDashboard(queryParams: UrlQueryMap) {
+  return 'editview' in queryParams || 'editPanel' in queryParams;
+}
+
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -26,6 +31,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
+      hideNavBar: hideNavBarOnDashboard,
     },
     {
       path: '/d/:uid/:slug?',
@@ -34,6 +40,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
+      hideNavBar: hideNavBarOnDashboard,
     },
     {
       path: '/dashboard/:type/:slug',
@@ -42,6 +49,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
+      hideNavBar: hideNavBarOnDashboard,
     },
     {
       path: '/dashboard/new',
@@ -52,6 +60,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
+      hideNavBar: hideNavBarOnDashboard,
     },
     {
       path: '/d-solo/:uid/:slug',
@@ -60,6 +69,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),
+      hideNavBar: hideNavBarOnDashboard,
     },
     // This route handles embedding of snapshot/scripted dashboard panels
     {
@@ -69,6 +79,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),
+      hideNavBar: hideNavBarOnDashboard,
     },
     {
       path: '/d-solo/:uid',
@@ -77,6 +88,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),
+      hideNavBar: hideNavBarOnDashboard,
     },
     {
       path: '/dashboard/import',

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { matchPath, useLocation, useRouteMatch } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { getAppRoutes } from 'app/routes/routes';
 import { KioskMode, StoreState } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
 import { OrgSwitcher } from '../../OrgSwitcher';
@@ -55,8 +57,16 @@ export const NavBarNext = React.memo(() => {
   );
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [queryParams] = useQueryParams();
+  const { path } = useRouteMatch();
+  const hideNavBar = getAppRoutes().some(
+    (r) =>
+      matchPath(path, { path: r.path, exact: r.exact }) &&
+      ((typeof r.hideNavBar === 'boolean' && r.hideNavBar) ||
+        (typeof r.hideNavBar === 'function' && r.hideNavBar(queryParams)))
+  );
 
-  if (kiosk !== KioskMode.Off) {
+  if (kiosk !== KioskMode.Off || hideNavBar) {
     return null;
   }
 
