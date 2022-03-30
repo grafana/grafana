@@ -219,8 +219,8 @@ func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2
 		return namespacesMap, nil
 	}
 
-	for _, rule := range f.Rules[orgID] {
-		namespacesMap[rule.NamespaceUID] = &models2.Folder{}
+	for _, folder := range f.Folders[orgID] {
+		namespacesMap[folder.Uid] = folder
 	}
 	return namespacesMap, nil
 }
