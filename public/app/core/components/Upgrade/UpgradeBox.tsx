@@ -186,7 +186,7 @@ export const UpgradeContentVertical = ({
 }: Omit<UpgradeContentProps, 'listItems' | 'caption'>) => {
   const styles = useStyles2(getContentVerticalStyles);
   return (
-    <div>
+    <div className={styles.container}>
       <h3 className={styles.title}>Get started with {featureName}</h3>
       {description && <h6 className={styles.description}>{description}</h6>}
       <LinkButton fill={'text'} href={featureUrl}>
@@ -201,6 +201,10 @@ export const UpgradeContentVertical = ({
 
 const getContentVerticalStyles = (theme: GrafanaTheme2) => {
   return {
+    container: css`
+      overflow: auto;
+      height: 100%;
+    `,
     title: css`
       color: ${theme.colors.text.maxContrast};
     `,
