@@ -18,7 +18,6 @@ import { PromQuery } from '../../types';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;
-  const styles = useStyles2(getStyles);
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
