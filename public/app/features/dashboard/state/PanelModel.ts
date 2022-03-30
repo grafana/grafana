@@ -587,8 +587,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * This is the title used when displaying the title in the UI so it will include any interpolated variables.
    * If you need the raw title without interpolation use title property instead.
    * */
-  getDisplayTitle(): string {
-    return this.replaceVariables(this.title, undefined, 'text');
+  getDisplayTitle(extraVars: ScopedVars | undefined = undefined): string {
+    return this.replaceVariables(this.title, extraVars, 'text');
   }
 }
 

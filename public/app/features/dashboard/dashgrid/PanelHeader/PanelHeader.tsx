@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
+import { DataLink, GrafanaTheme2, PanelData, DataFrame } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -28,7 +28,18 @@ export interface Props {
 
 export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, data, alertState, dashboard }) => {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
-  const title = panel.getDisplayTitle();
+  const statsExtendVar = {
+    queries_number: data.series.length,
+    rows_number: data.series.reduce((count: number, val: DataFrame) => count + val.length, 0),
+    processing_time: data.timings?.dataProcessingTime?.toPrecision(4) || 0,
+    request_time: data.request && data.request.endTime ? (data.request.endTime - data.request.startTime) / 1000 : 0,
+  };
+  const title = panel.getDisplayTitle({
+    __stats: {
+      text: statsExtendVar,
+      value: statsExtendVar,
+    },
+  });
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
   const styles = useStyles2(panelStyles);
 
