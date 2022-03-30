@@ -1,12 +1,17 @@
 import { camelCase } from 'lodash';
 const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
+const specialMatcher = '([\\' + specialChars.join('\\') + '])';
 
+const specialCharEscape = new RegExp(specialMatcher, 'g');
+const specialCharUnescape = new RegExp('(\\\\)' + specialMatcher, 'g');
 export const escapeStringForRegex = (value: string) => {
   if (!value) {
     return value;
   }
 
-  return specialChars.reduce((escaped, currentChar) => escaped.replace(currentChar, '\\' + currentChar), value);
+  // For reviewers: this could simply be replaceAll if we're willing to
+  // increase the yarn compile target to es2021. What's the policy on that?
+  return value.replace(specialCharEscape, '\\$1');
 };
 
 export const unEscapeStringFromRegex = (value: string) => {
@@ -14,7 +19,9 @@ export const unEscapeStringFromRegex = (value: string) => {
     return value;
   }
 
-  return specialChars.reduce((escaped, currentChar) => escaped.replace('\\' + currentChar, currentChar), value);
+  // For reviewers: this could simply be replaceAll if we're willing to
+  // increase the yarn compile target to es2021. What's the policy on that?
+  return value.replace(specialCharUnescape, '$2');
 };
 
 export function stringStartsAsRegEx(str: string): boolean {
