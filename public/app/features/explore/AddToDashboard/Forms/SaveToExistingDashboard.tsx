@@ -5,7 +5,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { SaveToExistingDashboardDTO } from '../types';
 
 const ERRORS = {
-  INVALID_DASHBOARD: 'Select a valid dashboard to save your panel in.',
+  REQUIRED: 'Dashboard is required.',
 };
 
 export const SaveToExistingDashboard = () => {
@@ -41,7 +41,7 @@ export const SaveToExistingDashboard = () => {
         control={control}
         name="dashboard"
         shouldUnregister
-        rules={{ required: { value: true, message: ERRORS.INVALID_DASHBOARD } }}
+        rules={{ required: { value: true, message: ERRORS.REQUIRED } }}
       />
     </>
   );
