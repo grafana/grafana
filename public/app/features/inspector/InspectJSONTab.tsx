@@ -26,7 +26,7 @@ const options: Array<SelectableValue<ShowContent>> = [
   },
   {
     label: 'DataFrame JSON',
-    description: 'JSON formatted schema and data',
+    description: 'JSON formatted DataFrames',
     value: ShowContent.DataFrames,
   },
 ];
