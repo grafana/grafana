@@ -80,6 +80,10 @@ func (a *Avatar) Update() (err error) {
 	return err
 }
 
+func (a *Avatar) GetIsCustom() bool {
+	return a.isCustom
+}
+
 // Quick error handler to avoid multiple copy pastes
 func (a *Avatar) HandleErrorResponse() {
 	a.notFound = true
