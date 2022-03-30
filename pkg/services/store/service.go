@@ -3,10 +3,11 @@ package store
 import (
 	"context"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -117,40 +118,35 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	}
 
 	files := form.File["file"]
-	contents := []byte{}
 	for _, fileHeader := range files {
 		// Restrict the size of each uploaded file to 1MB.
 		// TODO: To prevent the aggregate size from exceeding
 		// a specified value, use the http.MaxBytesReader() method
 		// before calling ParseMultipartForm()
 		if fileHeader.Size > MAX_UPLOAD_SIZE {
-			return &response, fmt.Errorf("The uploaded image is too big: %s. Please use an image less than 1MB in size", fileHeader.Size)
+			return &response, fmt.Errorf("The uploaded image is too big: %s. Please use an image less than 1MB in size", strconv.FormatInt(fileHeader.Size, 10))
 		}
-		// Open the file
+		// open each file to copy contents
 		file, err := fileHeader.Open()
 		if err != nil {
+			response.statusCode = 500
+			response.message = "error in opening file to read"
 			return &response, err
 		}
-
-		// read file in chunks
-		buff := make([]byte, 512)
-		for {
-			_, err := file.Read(buff)
-			if err != nil {
-				if err != io.EOF {
-					grafanaStorageLogger.Error("error in reading file in chunks")
-				}
-				break
-			}
-			// create contents to send to upsert
-			contents = append(contents, buff...)
+		defer file.Close()
+		data, err := ioutil.ReadAll(file)
+		if err != nil {
+			response.statusCode = 500
+			response.message = "error in reading file"
+			return &response, err
 		}
-
 		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
 			Path:     "/" + fileHeader.Filename,
-			Contents: &contents,
+			Contents: &data,
 		})
 		if err != nil {
+			response.statusCode = 500
+			response.message = "error in uploading file"
 			return &response, err
 		}
 		response.fileName = fileHeader.Filename
