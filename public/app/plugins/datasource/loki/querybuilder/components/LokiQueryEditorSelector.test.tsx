@@ -136,8 +136,6 @@ describe('LokiQueryEditorSelector', () => {
   });
 
   it('parses query when changing to builder mode', async () => {
-    jest.spyOn(console, 'error').mockImplementation();
-
     const { rerender } = renderWithProps({
       refId: 'A',
       expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
