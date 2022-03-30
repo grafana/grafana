@@ -3364,13 +3364,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@braintree/sanitize-url@npm:*":
-  version: 5.0.2
-  resolution: "@braintree/sanitize-url@npm:5.0.2"
-  checksum: c033f9a0e6dd6fbd4022df2d3916a278510f759971b1e8ab278b3ce1123a3816d5fdd9d84c5c9fbcd6c94c05f8421c4c669f110c8db67eaf58f3018825af514e
-  languageName: node
-  linkType: hard
-
 "@braintree/sanitize-url@npm:6.0.0":
   version: 6.0.0
   resolution: "@braintree/sanitize-url@npm:6.0.0"
@@ -4000,12 +3993,11 @@ __metadata:
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.1.3
     "@swc/helpers": 0.3.8
-    "@testing-library/dom": 8.11.3
+    "@testing-library/dom": 8.12.0
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.5.0
-    "@types/braintree__sanitize-url": 4.1.0
     "@types/d3-interpolate": ^1.4.0
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
@@ -4028,7 +4020,7 @@ __metadata:
     marked: 4.0.12
     moment: 2.29.1
     moment-timezone: 0.5.34
-    ol: 6.13.0
+    ol: 6.14.1
     papaparse: 5.3.2
     react: 17.0.2
     react-dom: 17.0.2
@@ -4175,7 +4167,7 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.2
     "@rollup/plugin-node-resolve": 13.1.3
     "@sentry/browser": 6.19.1
-    "@testing-library/dom": 8.11.3
+    "@testing-library/dom": 8.12.0
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": ^13.5.0
     "@types/angular": 1.8.4
@@ -4381,7 +4373,7 @@ __metadata:
     "@storybook/react": 6.4.15
     "@storybook/theming": 6.4.15
     "@swc/helpers": 0.3.8
-    "@testing-library/dom": 8.11.3
+    "@testing-library/dom": 8.12.0
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 7.0.2
@@ -4439,7 +4431,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: ^0.31.1
-    ol: 6.13.0
+    ol: 6.14.1
     postcss: 8.4.12
     postcss-loader: 6.2.1
     prismjs: 1.27.0
@@ -9039,9 +9031,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:8.11.3":
-  version: 8.11.3
-  resolution: "@testing-library/dom@npm:8.11.3"
+"@testing-library/dom@npm:8.12.0":
+  version: 8.12.0
+  resolution: "@testing-library/dom@npm:8.12.0"
   dependencies:
     "@babel/code-frame": ^7.10.4
     "@babel/runtime": ^7.12.5
@@ -9051,7 +9043,7 @@ __metadata:
     dom-accessibility-api: ^0.5.9
     lz-string: ^1.4.4
     pretty-format: ^27.0.2
-  checksum: 2245d254b6058590e25de86fb7b3c75e4a31096901a191f80d3efb9fa7e1e273043416f370c8770feb9f3ccc73a1550a877a3b003b593f1728ae828fcb52cd62
+  checksum: 2bbf5fa5c1e883571c440ccee76c0568fa5153b43c097456dd7146797256687352bfca9db574e0e78a022ce14722a6acaaba5f680ee16b95e12405501713d34d
   languageName: node
   linkType: hard
 
@@ -9278,15 +9270,6 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: bfcadb042a41b124c4e3de4925e3be6d35b78f93f27c4535d5ff86980dc0f8bc407ed99b9b54528952dc62834d5a779392f7a12c2947dd19330eb05a6bcae15a
-  languageName: node
-  linkType: hard
-
-"@types/braintree__sanitize-url@npm:4.1.0":
-  version: 4.1.0
-  resolution: "@types/braintree__sanitize-url@npm:4.1.0"
-  dependencies:
-    "@braintree/sanitize-url": "*"
-  checksum: 29b91a4c6923d5e52cabd263abff9eecd24c2cdc7a1f16d945a26fa599e370d490bf1a4c7080157836850736c962712d26fe83cae94d5a67a0a968d2ef14950f
   languageName: node
   linkType: hard
 
@@ -10231,10 +10214,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.3":
-  version: 1.6.3
-  resolution: "@types/mousetrap@npm:1.6.3"
-  checksum: ac2fc9d55ecee6aae6724d76750dfff14f7145fcc1823db9f4644d321c443081e01b66f14f75b52b4611d40c0d581889b52ef1ffaab80df4ea11a43cbbb5fd74
+"@types/mousetrap@npm:1.6.9":
+  version: 1.6.9
+  resolution: "@types/mousetrap@npm:1.6.9"
+  checksum: 9362f0aadf4b66deb39e506159248592ec422583fe8c1b3e6e98a6ba193828b4221b50b832829333089e577729d967423165c692a995b1deafa85934b2b63125
   languageName: node
   linkType: hard
 
@@ -20478,7 +20461,7 @@ __metadata:
     "@sentry/utils": 6.19.1
     "@swc/core": 1.2.160
     "@swc/helpers": 0.3.8
-    "@testing-library/dom": 8.11.3
+    "@testing-library/dom": 8.12.0
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 7.0.2
@@ -20505,7 +20488,7 @@ __metadata:
     "@types/lingui__macro": ^3
     "@types/lodash": 4.14.149
     "@types/logfmt": ^1.2.1
-    "@types/mousetrap": 1.6.3
+    "@types/mousetrap": 1.6.9
     "@types/node": 16.11.26
     "@types/papaparse": 5.3.2
     "@types/pluralize": ^0.0.29
@@ -20630,7 +20613,7 @@ __metadata:
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
     nodemon: 2.0.15
-    ol: 6.13.0
+    ol: 6.14.1
     papaparse: 5.3.2
     pluralize: ^8.0.0
     postcss: 8.4.12
@@ -27236,26 +27219,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "ol-mapbox-style@npm:7.0.0"
+"ol-mapbox-style@npm:^7.1.1":
+  version: 7.1.1
+  resolution: "ol-mapbox-style@npm:7.1.1"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.20.1
     mapbox-to-css-font: ^2.4.1
     webfont-matcher: ^1.1.0
-  checksum: a18b0049850845fb35b69fee6ec95c45c7d7b78a212174f819a88aacf2012666f33d98fd9cb1a21e41eb085309b2b94fa8801bd99ed56e52d2d53dc2dfa59009
+  checksum: 3f5f9c528163a0f74a582c0cbec58b833cc76b212d334a497a085e0b562164a05054ab2a5a78cde92e9ea560433bbae9511344e894d5440700515af07365426c
   languageName: node
   linkType: hard
 
-"ol@npm:6.13.0":
-  version: 6.13.0
-  resolution: "ol@npm:6.13.0"
+"ol@npm:6.14.1":
+  version: 6.14.1
+  resolution: "ol@npm:6.14.1"
   dependencies:
     geotiff: ^2.0.2
-    ol-mapbox-style: ^7.0.0
+    ol-mapbox-style: ^7.1.1
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 1655d87a47338bcc42ff011b516804759d9c8be0c1bc0d732092792bf53c64f8f5f2998004016771f085b44fef238f3508e95364b7a3ef3ba8d8cae8b6207953
+  checksum: 118ae5b40fb3f98efb7c2cbf230edc3788567fac872f80e09b9dbcc3845c0179de95c2ef771be2307e6f8b4162e9dbc68818757c874d7d4fdd855e56dd43ea12
   languageName: node
   linkType: hard
 
