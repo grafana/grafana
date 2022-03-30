@@ -73,7 +73,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 	cfg := &setting.Cfg{}
 	provider := &fakeHttpClientProvider{}
 
-	t.Run("should have Azure credentials when scopes provided", func(t *testing.T) {
+	t.Run("should have Azure middleware when scopes provided", func(t *testing.T) {
 		route := types.AzRoute{
 			URL:    deprecated.AzAppInsights.URL,
 			Scopes: []string{"https://management.azure.com/.default"},
@@ -82,17 +82,12 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 		_, err := newHTTPClient(route, model, cfg, provider)
 		require.NoError(t, err)
 
-		assert.NotNil(t, provider.opts)
-		assert.NotNil(t, provider.opts.CustomOptions)
-
-		assert.Contains(t, provider.opts.CustomOptions, "_azureCredentials")
-		assert.Contains(t, provider.opts.CustomOptions, "_azureScopes")
-
-		assert.Equal(t, model.Credentials, provider.opts.CustomOptions["_azureCredentials"])
-		assert.Equal(t, route.Scopes, provider.opts.CustomOptions["_azureScopes"])
+		require.NotNil(t, provider.opts)
+		require.NotNil(t, provider.opts.Middlewares)
+		assert.Len(t, provider.opts.Middlewares, 1)
 	})
 
-	t.Run("should not have Azure credentials when scopes are not provided", func(t *testing.T) {
+	t.Run("should not have Azure middleware when scopes are not provided", func(t *testing.T) {
 		route := types.AzRoute{
 			URL:    deprecated.AzAppInsights.URL,
 			Scopes: []string{},
@@ -103,9 +98,8 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 
 		assert.NotNil(t, provider.opts)
 
-		if provider.opts.CustomOptions != nil {
-			assert.NotContains(t, provider.opts.CustomOptions, "_azureCredentials")
-			assert.NotContains(t, provider.opts.CustomOptions, "_azureScopes")
+		if provider.opts.Middlewares != nil {
+			assert.Len(t, provider.opts.Middlewares, 0)
 		}
 	})
 }

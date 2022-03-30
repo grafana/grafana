@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
@@ -61,10 +62,10 @@ func TestNewInstanceSettings(t *testing.T) {
 				ID:                      40,
 			},
 			expectedModel: types.DatasourceInfo{
-				Cloud:                   setting.AzurePublic,
+				Cloud:                   azsettings.AzurePublic,
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
 				Settings:                types.AzureMonitorSettings{},
-				Routes:                  routes[setting.AzurePublic],
+				Routes:                  routes[azsettings.AzurePublic],
 				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
@@ -75,8 +76,8 @@ func TestNewInstanceSettings(t *testing.T) {
 	}
 
 	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{
-			Cloud: setting.AzurePublic,
+		Azure: &azsettings.AzureSettings{
+			Cloud: azsettings.AzurePublic,
 		},
 	}
 

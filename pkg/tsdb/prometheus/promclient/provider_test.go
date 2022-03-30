@@ -139,10 +139,11 @@ func setup(jsonData ...string) *testContext {
 	var jd map[string]interface{}
 	_ = json.Unmarshal(rawData, &jd)
 
+	cfg := &setting.Cfg{}
 	settings := backend.DataSourceInstanceSettings{URL: "test-url", JSONData: rawData}
 	features := featuremgmt.WithFeatures()
 	hp := &fakeHttpClientProvider{}
-	p := promclient.NewProvider(settings, jd, hp, features, nil)
+	p := promclient.NewProvider(settings, jd, hp, cfg, features, nil)
 
 	return &testContext{
 		httpProvider:       hp,

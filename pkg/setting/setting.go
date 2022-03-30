@@ -818,6 +818,7 @@ func NewCfg() *Cfg {
 	return &Cfg{
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
+		Azure:  &azsettings.AzureSettings{},
 	}
 }
 

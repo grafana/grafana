@@ -6,18 +6,19 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConfigureAzureAuthentication(t *testing.T) {
+	cfg := &setting.Cfg{}
 	settings := backend.DataSourceInstanceSettings{}
 
 	t.Run("given feature flag enabled", func(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagPrometheusAzureAuth)
 
-		t.Run("should set Azure Credentials when JsonData contains valid credentials", func(t *testing.T) {
+		t.Run("should set Azure middleware when JsonData contains valid credentials", func(t *testing.T) {
 			jsonData := map[string]interface{}{
 				"httpMethod": "POST",
 				"azureCredentials": map[string]interface{}{
@@ -26,25 +27,23 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			}
 
-			var p = NewProvider(settings, jsonData, nil, features, nil)
+			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)
 
 			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
 
-			assert.Contains(t, opts.CustomOptions, "_azureCredentials")
-			credentials := opts.CustomOptions["_azureCredentials"]
-
-			assert.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
+			require.NotNil(t, opts.Middlewares)
+			assert.Len(t, opts.Middlewares, 1)
 		})
 
-		t.Run("should not set Azure Credentials when JsonData doesn't contain valid credentials", func(t *testing.T) {
+		t.Run("should not set Azure middleware when JsonData doesn't contain valid credentials", func(t *testing.T) {
 			jsonData := map[string]interface{}{
 				"httpMethod": "POST",
 			}
 
-			var p = NewProvider(settings, jsonData, nil, features, nil)
+			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)
 
 			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
@@ -60,7 +59,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				"azureCredentials": "invalid",
 			}
 
-			var p = NewProvider(settings, jsonData, nil, features, nil)
+			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)
 
 			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
@@ -68,7 +67,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("should set Azure Scopes when JsonData contains credentials and valid audience", func(t *testing.T) {
+		t.Run("should set Azure middleware when JsonData contains credentials and valid audience", func(t *testing.T) {
 			jsonData := map[string]interface{}{
 				"httpMethod": "POST",
 				"azureCredentials": map[string]interface{}{
@@ -77,36 +76,33 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			}
 
-			var p = NewProvider(settings, jsonData, nil, features, nil)
+			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)
 
 			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
 
-			assert.Contains(t, opts.CustomOptions, "_azureScopes")
-
-			require.IsType(t, []string{}, opts.CustomOptions["_azureScopes"])
-			scopes := opts.CustomOptions["_azureScopes"].([]string)
-
-			assert.Len(t, scopes, 1)
-			assert.Equal(t, "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5/.default", scopes[0])
+			require.NotNil(t, opts.Middlewares)
+			assert.Len(t, opts.Middlewares, 1)
 		})
 
-		t.Run("should not set Azure Scopes when JsonData doesn't contain credentials", func(t *testing.T) {
+		t.Run("should not set Azure middleware when JsonData doesn't contain credentials", func(t *testing.T) {
 			jsonData := map[string]interface{}{
 				"httpMethod":              "POST",
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			}
 
-			var p = NewProvider(settings, jsonData, nil, features, nil)
+			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)
 
 			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
 
-			assert.NotContains(t, opts.CustomOptions, "_azureScopes")
+			if opts.Middlewares != nil {
+				assert.Len(t, opts.Middlewares, 0)
+			}
 		})
 
 		t.Run("should return error when JsonData contains invalid audience", func(t *testing.T) {
@@ -118,7 +114,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				"azureEndpointResourceId": "invalid",
 			}
 
-			var p = NewProvider(settings, jsonData, nil, features, nil)
+			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)
 
 			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
@@ -139,15 +135,16 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			}
 
-			var p = NewProvider(settings, jsonData, nil, features, nil)
+			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)
 
 			var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
 
 			err := p.configureAzureAuthentication(opts)
 			require.NoError(t, err)
 
-			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
-			assert.NotContains(t, opts.CustomOptions, "_azureScopes")
+			if opts.Middlewares != nil {
+				assert.Len(t, opts.Middlewares, 0)
+			}
 		})
 	})
 }
