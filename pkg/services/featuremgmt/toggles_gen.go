@@ -76,8 +76,8 @@ const (
 	FlagAccesscontrol = "accesscontrol"
 
 	// FlagAccesscontrolBuiltins
-	// Simplify fine grained access-control builtin roles
-	FlagAccesscontrolBuiltins = FlagAccesscontrol + "-builtins"
+	// Simplify access control builtin roles
+	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
 
 	// FlagPrometheusAzureAuth
 	// Use azure authentication for prometheus datasource
