@@ -2,17 +2,23 @@
 title = "Playlist"
 keywords = ["grafana", "dashboard", "documentation", "playlist"]
 aliases = ["/docs/grafana/latest/reference/playlist/"]
-weight = 4
+weight = 9
 +++
 
 # Playlist
 
 A playlist displays a list of dashboards that are in a sequence. Use a playlist to build situational awareness or to present your metrics to your team or visitors. Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens. This topic has the following sections:
 
-- [Access, share, and control a playlist](#access-share-and-control-a-playlist)
-- [Create a playlist](#create-a-playlist)
-- [Edit or delete a playlist](#edit-or-delete-a-playlist)
-- [Share a playlist](#share-a-playlist-in-a-view-mode)
+- [Playlist](#playlist)
+  - [Access, share, and control a playlist](#access-share-and-control-a-playlist)
+    - [Access playlist](#access-playlist)
+    - [Start a playlist](#start-a-playlist)
+    - [Control a playlist](#control-a-playlist)
+  - [Create a playlist](#create-a-playlist)
+  - [Edit or delete a playlist](#edit-or-delete-a-playlist)
+    - [Edit a playlist](#edit-a-playlist)
+    - [Delete a playlist](#delete-a-playlist)
+  - [Share a playlist in a view mode](#share-a-playlist-in-a-view-mode)
 
 ## Access, share, and control a playlist
 

@@ -57,7 +57,7 @@ const (
 
 type NavLink struct {
 	Id            string     `json:"id,omitempty"`
-	Text          string     `json:"text,omitempty"`
+	Text          string     `json:"text"`
 	Description   string     `json:"description,omitempty"`
 	Section       string     `json:"section,omitempty"`
 	SubTitle      string     `json:"subTitle,omitempty"`

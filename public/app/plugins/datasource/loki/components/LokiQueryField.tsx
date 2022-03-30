@@ -16,7 +16,7 @@ import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import LokiLanguageProvider from '../language_provider';
 import { shouldRefreshLabels } from '../language_utils';
-import LokiDatasource from '../datasource';
+import { LokiDatasource } from '../datasource';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';

@@ -127,7 +127,9 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 
 		if dimSB.String() != "" {
 			params.Add("$filter", dimSB.String())
-			params.Add("top", azJSONModel.Top)
+			if azJSONModel.Top != "" {
+				params.Add("top", azJSONModel.Top)
+			}
 		}
 
 		target = params.Encode()
