@@ -333,13 +333,13 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 				require.Equal(t, testPluginID, ctx.plugin.ID)
 				require.Equal(t, 1, ctx.pluginClient.startCount)
 				testPlugin, exists := ctx.manager.Plugin(context.Background(), testPluginID)
-				assert.True(t, exists)
+				require.True(t, exists)
 				require.NotNil(t, testPlugin)
 
 				t.Run("Should not be able to register an already registered plugin", func(t *testing.T) {
 					err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
-					require.Equal(t, 1, ctx.pluginClient.startCount)
 					require.Error(t, err)
+					require.Equal(t, 1, ctx.pluginClient.startCount)
 				})
 
 				t.Run("When manager runs should start and stop plugin", func(t *testing.T) {
@@ -580,7 +580,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
 	loader := &fakeLoader{}
-	manager := New(cfg, newRegistry(), nil, loader)
+	manager := New(cfg, NewPluginRegistry(cfg), nil, loader)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,

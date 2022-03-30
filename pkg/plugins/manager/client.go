@@ -12,13 +12,13 @@ import (
 )
 
 func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plugin, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.QueryDataResponse
-	err = instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
+	err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
 		resp, innerErr = plugin.QueryData(ctx, req)
 		return
 	})
@@ -48,11 +48,11 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return err
+	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return backendplugin.ErrPluginNotRegistered
 	}
-	err = instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
+	err := instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
 		if err := p.CallResource(ctx, req, sender); err != nil {
 			return err
 		}
@@ -67,13 +67,13 @@ func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResou
 }
 
 func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CollectMetricsResult
-	err = instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
+	err := instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx, req)
 		return
 	})
@@ -85,13 +85,13 @@ func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.Collect
 }
 
 func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CheckHealthResult
-	err = instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err := instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, req)
 		return
 	})
@@ -112,27 +112,27 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 }
 
 func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	plugin, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	return plugin.SubscribeStream(ctx, req)
 }
 
 func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	plugin, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	return plugin.PublishStream(ctx, req)
 }
 
 func (m *PluginManager) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	plugin, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return err
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return backendplugin.ErrPluginNotRegistered
 	}
 
 	return plugin.RunStream(ctx, req, sender)

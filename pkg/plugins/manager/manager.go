@@ -117,8 +117,8 @@ func (m *PluginManager) Renderer() *plugins.Plugin {
 }
 
 func (m *PluginManager) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, err := m.plugin(ctx, pluginID)
-	if err != nil {
+	p, exists := m.plugin(ctx, pluginID)
+	if !exists {
 		return plugins.PluginDTO{}, false
 	}
 
@@ -270,17 +270,17 @@ func (m *PluginManager) shutdown(ctx context.Context) {
 }
 
 // availablePlugins returns all non-decommissioned plugins from the registry
-func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, error) {
+func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
 	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
 	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+		return nil, false
 	}
 
 	if p.IsDecommissioned() {
-		return nil, backendplugin.ErrPluginDecommissioned
+		return nil, false
 	}
 
-	return p, nil
+	return p, true
 }
 
 // availablePlugins returns all non-decommissioned plugins from the registry

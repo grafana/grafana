@@ -20,12 +20,12 @@ type PluginRegistry struct {
 }
 
 func ProvidePluginRegistry(grafanaCfg *setting.Cfg) *PluginRegistry {
-	return NewPluginRegistry(grafanaCfg)
+	return NewPluginRegistry(plugins.FromGrafanaCfg(grafanaCfg))
 }
 
-func NewPluginRegistry(grafanaCfg *setting.Cfg) *PluginRegistry {
+func NewPluginRegistry(cfg *plugins.Cfg) *PluginRegistry {
 	return &PluginRegistry{
-		cfg:   plugins.FromGrafanaCfg(grafanaCfg),
+		cfg:   cfg,
 		store: make(map[string]*plugins.Plugin),
 		log:   log.New("int.plugin.registry"),
 	}
