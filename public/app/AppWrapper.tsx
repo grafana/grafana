@@ -15,7 +15,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import { CommandPaletteContainer } from './features/commandPalette/CommandPaletteContainer';
+import { CommandPaletteContainer } from './features/commandPalette/CommandPalette';
 import { I18nProvider } from './core/localisation';
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
