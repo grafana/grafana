@@ -47,7 +47,7 @@ export const ResourcePickerPopover = (props: Props) => {
   );
 
   const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
-  const renderUploader = () => <FileUploader newValue={newValue} setNewValue={setNewValue} />;
+  const renderUploader = () => <FileUploader setNewValue={setNewValue} />;
   const renderPicker = () => {
     switch (activePicker) {
       case PickerTabType.Folder:
