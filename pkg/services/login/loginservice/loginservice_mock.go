@@ -16,6 +16,8 @@ type LoginServiceMock struct {
 	AlreadyExitingLogin string
 	GeneratedUserId     int64
 	ExpectedUser        *models.User
+	ExpectedUserFunc    func(cmd *models.UpsertUserCommand) *models.User
+	ExpectedError       error
 }
 
 func (s LoginServiceMock) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
@@ -36,6 +38,10 @@ func (s LoginServiceMock) CreateUser(cmd models.CreateUserCommand) (*models.User
 }
 
 func (s LoginServiceMock) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
+	if s.ExpectedUserFunc != nil {
+		cmd.Result = s.ExpectedUserFunc(cmd)
+		return s.ExpectedError
+	}
 	cmd.Result = s.ExpectedUser
-	return nil
+	return s.ExpectedError
 }

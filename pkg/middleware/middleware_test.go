@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -25,8 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -203,17 +204,17 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
-			return nil
-		})
-
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
 		}
+
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+			query.Result = &models.SignedInUser{OrgId: 1, UserId: userID}
+			return nil
+		})
 
 		sc.fakeReq("GET", "/").exec()
 
@@ -364,10 +365,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const group = "grafana-core-team"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: orgID, UserId: query.UserId}
-				return nil
-			})
+			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
 
 			h, err := authproxy.HashCacheKey(hdrName + "-" + group)
 			require.NoError(t, err)
@@ -387,11 +385,11 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
 			var actualAuthProxyAutoSignUp *bool = nil
-
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
+			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *models.User {
 				actualAuthProxyAutoSignUp = &cmd.SignupAllowed
-				return login.ErrInvalidCredentials
-			})
+				return nil
+			}
+			sc.loginService.ExpectedError = login.ErrInvalidCredentials
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -407,18 +405,8 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
-					return nil
-				}
-				return models.ErrUserNotFound
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
-				return nil
-			})
+			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.loginService.ExpectedUser = &models.User{Id: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -435,19 +423,11 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should assign role from header to default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]models.RoleType = nil
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &models.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
-					return nil
-				}
-				return models.ErrUserNotFound
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
+			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *models.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				return nil
-			})
+				sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
+				return &models.User{Id: userID}
+			}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -466,19 +446,11 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]models.RoleType = nil
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
-					return nil
-				}
-				return models.ErrUserNotFound
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
+			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *models.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				return nil
-			})
+				sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
+				return &models.User{Id: userID}
+			}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -499,27 +471,17 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID}
-					return nil
-				}
-				return models.ErrUserNotFound
-			})
+			var targetOrgID int64 = 123
+			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: targetOrgID, UserId: userID}
+			sc.loginService.ExpectedUser = &models.User{Id: userID}
 
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
-				return nil
-			})
-
-			targetOrgID := 123
 			sc.fakeReq("GET", fmt.Sprintf("/?targetOrgId=%d", targetOrgID))
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, int64(targetOrgID), sc.context.OrgId)
+			assert.Equal(t, targetOrgID, sc.context.OrgId)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
@@ -554,15 +516,8 @@ func TestMiddlewareContext(t *testing.T) {
 			const userID int64 = 12
 			const orgID int64 = 2
 
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
-				return nil
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
-				return nil
-			})
+			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.loginService.ExpectedUser = &models.User{Id: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -577,15 +532,8 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
-				return nil
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
-				return nil
-			})
+			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.loginService.ExpectedUser = &models.User{Id: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -602,15 +550,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should not allow the request from whitelisted IP", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
-				return nil
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: userID}
-				return nil
-			})
+			sc.loginService.ExpectedUser = &models.User{Id: userID}
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
@@ -626,10 +566,6 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should return 407 status code if LDAP says no", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("LDAP", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				return errors.New("Do not add user")
-			})
-
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
 			sc.exec()
@@ -639,10 +575,6 @@ func TestMiddlewareContext(t *testing.T) {
 		}, configure)
 
 		middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("Do not have the user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				return errors.New("Do not add user")
-			})
-
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
 			sc.exec()
@@ -684,7 +616,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
-		ctxHdlr := getContextHandler(t, cfg)
+		sc.mockSQLStore = mockstore.NewSQLStoreMock()
+		sc.loginService = &loginservice.LoginServiceMock{}
+		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
@@ -714,7 +648,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	})
 }
 
-func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
+func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock, loginService *loginservice.LoginServiceMock) *contexthandler.ContextHandler {
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
@@ -730,8 +664,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
 	tracer, err := tracing.InitializeTracerForTest()
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, mockSQLStore)
 	require.NoError(t, err)
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy)
 }
 
 type fakeRenderService struct {
