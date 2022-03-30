@@ -108,6 +108,12 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	}
 
+	u := tmpl(tn.URL)
+	if u == "" {
+		tn.log.Info("failed to template Teams URL", "fallback", tn.URL)
+		u = tn.URL
+	}
+
 	if tmplErr != nil {
 		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
 	}
@@ -116,7 +122,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	if err != nil {
 		return false, errors.Wrap(err, "marshal json")
 	}
-	cmd := &models.SendWebhookSync{Url: tn.URL, Body: string(b)}
+	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
 
 	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
