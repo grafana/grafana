@@ -19,7 +19,7 @@ import (
 
 func ProvideService(routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
-	pluginDashboardService plugindashboards.Service, pluginRegistry plugins.PublicRegistry,
+	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
 	ac accesscontrol.AccessControl,
 ) *ImportDashboardService {
@@ -29,7 +29,7 @@ func ProvideService(routeRegister routing.RouteRegister,
 		libraryPanelService:    libraryPanelService,
 	}
 
-	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginRegistry, ac)
+	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginStore, ac)
 	dashboardImportAPI.RegisterAPIEndpoints(routeRegister)
 
 	return s

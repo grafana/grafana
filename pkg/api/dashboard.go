@@ -355,7 +355,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	if err != nil {
-		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginRegistry, err)
+		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID

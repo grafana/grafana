@@ -338,12 +338,12 @@ func TestDashboardUpdater(t *testing.T) {
 		})
 }
 
-type pluginRegistryMock struct {
-	plugins.PublicRegistry
+type pluginStoreMock struct {
+	plugins.Store
 	pluginFunc func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool)
 }
 
-func (m *pluginRegistryMock) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+func (m *pluginStoreMock) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
 	if m.pluginFunc != nil {
 		return m.pluginFunc(ctx, pluginID)
 	}
@@ -454,7 +454,7 @@ type scenarioContext struct {
 	t                              *testing.T
 	bus                            bus.Bus
 	pluginSettingsService          *pluginsSettingsServiceMock
-	pluginRegistry                 plugins.PublicRegistry
+	pluginStore                    plugins.Store
 	pluginDashboardService         plugindashboards.Service
 	importDashboardService         dashboardimport.Service
 	dashboardPluginService         *dashboardPluginServiceMock
@@ -490,7 +490,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		storedPluginSettings: input.storedPluginSettings,
 	}
 
-	sCtx.pluginRegistry = &pluginRegistryMock{
+	sCtx.pluginStore = &pluginStoreMock{
 		pluginFunc: getPlugin,
 	}
 
@@ -561,7 +561,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 
 	sCtx.dashboardUpdater = newDashboardUpdater(
 		sCtx.bus,
-		sCtx.pluginRegistry,
+		sCtx.pluginStore,
 		sCtx.pluginDashboardService,
 		sCtx.importDashboardService,
 		sCtx.pluginSettingsService,

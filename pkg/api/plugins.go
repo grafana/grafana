@@ -48,7 +48,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	}
 
 	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range hs.pluginRegistry.Plugins(c.Req.Context()) {
+	for _, pluginDef := range hs.pluginStore.Plugins(c.Req.Context()) {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
 			continue
@@ -117,7 +117,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	plugin, exists := hs.pluginRegistry.Plugin(c.Req.Context(), pluginID)
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
 	}
@@ -173,7 +173,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if _, exists := hs.pluginRegistry.Plugin(c.Req.Context(), pluginID); !exists {
+	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
@@ -243,7 +243,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	plugin, exists := hs.pluginRegistry.Plugin(c.Req.Context(), pluginID)
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
@@ -364,7 +364,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version)
+	err := hs.pluginStoreWriter.Add(c.Req.Context(), pluginID, dto.Version)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
@@ -395,7 +395,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Remove(c.Req.Context(), pluginID)
+	err := hs.pluginStoreWriter.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)
@@ -433,7 +433,7 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 }
 
 func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name string) ([]byte, error) {
-	plugin, exists := hs.pluginRegistry.Plugin(ctx, pluginId)
+	plugin, exists := hs.pluginStore.Plugin(ctx, pluginId)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}

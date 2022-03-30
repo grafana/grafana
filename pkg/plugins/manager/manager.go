@@ -19,14 +19,14 @@ const (
 )
 
 var _ plugins.Client = (*PluginManager)(nil)
+var _ plugins.StoreWriter = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
-var _ plugins.PublicRegistry = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg             *plugins.Cfg
-	pluginRegistry  PluginRegistry
+	pluginStore     PluginRegistry
 	pluginInstaller pluginInstaller
 	pluginLoader    PluginLoader
 	pluginsMu       sync.RWMutex
@@ -39,8 +39,8 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry PluginRegistry, pluginLoader PluginLoader) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
+func ProvideService(grafanaCfg *setting.Cfg, pluginStore PluginRegistry, pluginLoader PluginLoader) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginStore, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
@@ -51,12 +51,12 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry PluginRegistry, plug
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []PluginSource, pluginLoader PluginLoader) *PluginManager {
+func New(cfg *plugins.Cfg, pluginStore PluginRegistry, pluginSources []PluginSource, pluginLoader PluginLoader) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
-		pluginRegistry:  pluginRegistry,
+		pluginStore:     pluginStore,
 		log:             log.New("plugin.manager"),
 		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.pluginInstaller", true)),
 	}
@@ -157,7 +157,7 @@ func (m *PluginManager) Routes() []*plugins.StaticRoute {
 }
 
 func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Plugin) error {
-	if err := m.pluginRegistry.Add(ctx, plugin); err != nil {
+	if err := m.pluginStore.Add(ctx, plugin); err != nil {
 		return err
 	}
 
@@ -177,7 +177,7 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 		return err
 	}
 
-	if err := m.pluginRegistry.Remove(ctx, p.ID); err != nil {
+	if err := m.pluginStore.Remove(ctx, p.ID); err != nil {
 		return err
 	}
 
@@ -191,7 +191,7 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 		return nil
 	}
 
-	if _, exists := m.pluginRegistry.Plugin(ctx, p.ID); !exists {
+	if _, exists := m.pluginStore.Plugin(ctx, p.ID); !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
@@ -255,7 +255,7 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 // shutdown stops all backend plugin processes
 func (m *PluginManager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
+	for _, p := range m.pluginStore.Plugins(ctx) {
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()
@@ -271,7 +271,7 @@ func (m *PluginManager) shutdown(ctx context.Context) {
 
 // availablePlugins returns all non-decommissioned plugins from the registry
 func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	p, exists := m.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, false
 	}
@@ -286,7 +286,7 @@ func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.P
 // availablePlugins returns all non-decommissioned plugins from the registry
 func (m *PluginManager) availablePlugins(ctx context.Context) []*plugins.Plugin {
 	var res []*plugins.Plugin
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
+	for _, p := range m.pluginStore.Plugins(ctx) {
 		if !p.IsDecommissioned() {
 			res = append(res, p)
 		}
@@ -297,7 +297,7 @@ func (m *PluginManager) availablePlugins(ctx context.Context) []*plugins.Plugin 
 // registeredPlugins returns all registered plugins from the registry
 func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct{} {
 	pluginsByID := make(map[string]struct{})
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
+	for _, p := range m.pluginStore.Plugins(ctx) {
 		pluginsByID[p.ID] = struct{}{}
 	}
 

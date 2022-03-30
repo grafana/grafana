@@ -21,19 +21,19 @@ type PluginsService struct {
 
 	enabled        bool
 	grafanaVersion string
-	pluginRegistry plugins.PublicRegistry
+	pluginStore    plugins.Store
 	httpClient     httpClient
 	mutex          sync.RWMutex
 	log            log.Logger
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginRegistry plugins.PublicRegistry) *PluginsService {
+func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store) *PluginsService {
 	return &PluginsService{
 		enabled:          cfg.CheckForUpdates,
 		grafanaVersion:   cfg.BuildVersion,
 		httpClient:       &http.Client{Timeout: 10 * time.Second},
 		log:              log.New("plugins.update.checker"),
-		pluginRegistry:   pluginRegistry,
+		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]string),
 	}
 }
@@ -70,7 +70,7 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 	s.mutex.RUnlock()
 	if updateAvailable {
 		// check if plugin has already been updated since the last invocation of `checkForUpdates`
-		plugin, exists := s.pluginRegistry.Plugin(ctx, pluginID)
+		plugin, exists := s.pluginStore.Plugin(ctx, pluginID)
 		if !exists {
 			return "", false
 		}
@@ -156,7 +156,7 @@ func (s *PluginsService) pluginIDsCSV(m map[string]plugins.PluginDTO) string {
 
 func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map[string]plugins.PluginDTO {
 	result := make(map[string]plugins.PluginDTO)
-	for _, p := range s.pluginRegistry.Plugins(ctx) {
+	for _, p := range s.pluginStore.Plugins(ctx) {
 		if p.IsCorePlugin() {
 			continue
 		}

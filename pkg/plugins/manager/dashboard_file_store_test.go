@@ -190,7 +190,7 @@ func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
 	t.Helper()
 
 	return &PluginManager{
-		pluginRegistry: &fakeInternalRegistry{
+		pluginStore: &fakeInternalRegistry{
 			store: map[string]*plugins.Plugin{
 				"pluginWithoutDashboards": {
 					JSONData: plugins.JSONData{

@@ -9,15 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store is the storage for plugins.
-type Store interface {
+// StoreWriter is the storage for plugins.
+type StoreWriter interface {
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type PublicRegistry interface {
+type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
