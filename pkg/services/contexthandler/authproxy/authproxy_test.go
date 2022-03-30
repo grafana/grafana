@@ -101,7 +101,6 @@ func TestMiddlewareContext(t *testing.T) {
 
 func TestMiddlewareContext_ldap(t *testing.T) {
 	t.Run("Logs in via LDAP", func(t *testing.T) {
-
 		origIsLDAPEnabled := isLDAPEnabled
 		origGetLDAPConfig := getLDAPConfig
 		origNewLDAP := newLDAP

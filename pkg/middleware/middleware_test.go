@@ -205,7 +205,7 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.withTokenSessionCookie("token")
 
 		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: userID}
+			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
 			return nil
 		})
 
