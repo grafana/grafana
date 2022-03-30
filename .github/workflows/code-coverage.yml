@@ -1,0 +1,21 @@
+# Reports Go and TypeScript test code coverage for cloud data sources
+name: Code Coverage
+on:
+  pull_request:
+    paths:
+      - 'pkg/tsdb/azuremonitor/**'
+      - 'pkg/tsdb/cloudwatch/**'
+      - 'pkg/tsdb/cloudmonitoring/**'
+      - 'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
+      - 'public/app/plugins/datasource/cloudwatch/**'
+      - 'public/app/plugins/datasource/cloud-monitoring/**'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.17.8'
+      - run: go mod download
+      - run: go test ./...
