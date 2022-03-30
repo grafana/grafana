@@ -1,0 +1,18 @@
+name: PR Labeler
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+    - name: label PR
+      uses: actions/labeler@v4
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
