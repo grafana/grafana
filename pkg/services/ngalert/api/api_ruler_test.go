@@ -264,19 +264,6 @@ func TestCalculateChanges(t *testing.T) {
 }
 
 func TestRouteDeleteAlertRules(t *testing.T) {
-	createService := func(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
-		return &RulerSrv{
-			xactManager:     store,
-			store:           store,
-			DatasourceCache: nil,
-			QuotaService:    nil,
-			scheduleService: scheduler,
-			log:             log.New("test"),
-			cfg:             nil,
-			ac:              ac,
-		}
-	}
-
 	getRecordedCommand := func(ruleStore *store.FakeRuleStore) []store.GenericRecordedQuery {
 		results := ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
 			c, ok := cmd.(store.GenericRecordedQuery)
@@ -484,6 +471,20 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 		})
 	})
+}
+
+
+func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
+	return &RulerSrv{
+		xactManager:     store,
+		store:           store,
+		DatasourceCache: nil,
+		QuotaService:    nil,
+		scheduleService: scheduler,
+		log:             log.New("test"),
+		cfg:             nil,
+		ac:              ac,
+	}
 }
 
 func createRequestContext(orgID int64, role models2.RoleType, params map[string]string) *models2.ReqContext {
