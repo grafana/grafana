@@ -77,13 +77,19 @@ describe('Add to Dashboard Modal', () => {
     // from an a11y perspective, making it impossible to search for those elements with canonical methods
     // such as *byRole queries or even *byLabelText.
 
+    const assertFormIsSaveToNewDashboard = () => {
+      expect(newDashboardRadio).toBeChecked();
+      expect(existingDashboardRadio).not.toBeChecked();
+      expect(
+        screen.getByText(/create a new dashboard and add a panel with the explored queries./i)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/add a panel with the explored queries to an existing dashboard./i)
+      ).not.toBeInTheDocument();
+    };
+
     // Save to new dashboard should be the default form
-    expect(newDashboardRadio).toBeChecked();
-    expect(existingDashboardRadio).not.toBeChecked();
-    expect(screen.getByText(/create a new dashboard and add a panel with the explored queries./i)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/add a panel with the explored queries to an existing dashboard./i)
-    ).not.toBeInTheDocument();
+    assertFormIsSaveToNewDashboard();
 
     // Clicking on "Existing dashboard" radio should switch form
     userEvent.click(existingDashboardRadio);
@@ -98,12 +104,7 @@ describe('Add to Dashboard Modal', () => {
     // Clicking on "New Dashboard" radio should switch back
     userEvent.click(newDashboardRadio);
     await waitForSearchFolderResponse();
-    expect(newDashboardRadio).toBeChecked();
-    expect(existingDashboardRadio).not.toBeChecked();
-    expect(screen.getByText(/create a new dashboard and add a panel with the explored queries./i)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/add a panel with the explored queries to an existing dashboard./i)
-    ).not.toBeInTheDocument();
+    assertFormIsSaveToNewDashboard();
   });
 
   describe('Save to new dashboard', () => {
