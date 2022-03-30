@@ -29,11 +29,13 @@ export const SaveDashboardProxy: React.FC<SaveDashboardModalProps> = ({
     isCopy,
   };
 
+  if (isNew || isCopy) {
+    return <SaveDashboardAsModal {...modalProps} isNew />;
+  }
   return (
     <>
       {isChanged && !isProvisioned && <SaveDashboardModal {...modalProps} />}
       {isProvisioned && <SaveProvisionedDashboard {...modalProps} />}
-      {isNew && <SaveDashboardAsModal {...modalProps} isNew />}
     </>
   );
 };
