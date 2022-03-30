@@ -74,8 +74,15 @@ func (r *NormalResponse) ErrMessage() string {
 
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
-		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(),
-			"traceID", tracing.TraceIDFromContext(ctx.Req.Context(), false))
+		v := map[string]interface{}{}
+		traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
+		if err := json.Unmarshal(r.body.Bytes(), &v); err == nil {
+			v["traceID"] = traceID
+			if b, err := json.Marshal(v); err == nil {
+				r.body = bytes.NewBuffer(b)
+			}
+		}
+		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
 
 	header := ctx.Resp.Header()
