@@ -7,14 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -148,134 +145,6 @@ func (m *PluginManager) Plugins(ctx context.Context, pluginTypes ...plugins.Type
 	return pluginsList
 }
 
-func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, backendplugin.ErrPluginNotRegistered
-	}
-
-	var resp *backend.QueryDataResponse
-	err = instrumentation.InstrumentQueryDataRequest(p.ID, func() (innerErr error) {
-		resp, innerErr = p.QueryData(ctx, req)
-		return
-	})
-
-	if err != nil {
-		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-			return nil, err
-		}
-
-		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-			return nil, err
-		}
-
-		return nil, errutil.Wrap("failed to query data", err)
-	}
-
-	for refID, res := range resp.Responses {
-		// set frame ref ID based on response ref ID
-		for _, f := range res.Frames {
-			if f.RefID == "" {
-				f.RefID = refID
-			}
-		}
-	}
-
-	return resp, err
-}
-
-func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return err
-	}
-
-	err = instrumentation.InstrumentCallResourceRequest(p.ID, func() error {
-		if err := p.CallResource(ctx, req, sender); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp *backend.CollectMetricsResult
-	err = instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
-		resp, innerErr = p.CollectMetrics(ctx, req)
-		return
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp *backend.CheckHealthResult
-	err = instrumentation.InstrumentCheckHealthRequest(p.ID, func() (innerErr error) {
-		resp, innerErr = p.CheckHealth(ctx, req)
-		return
-	})
-
-	if err != nil {
-		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-			return nil, err
-		}
-
-		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-			return nil, err
-		}
-
-		return nil, errutil.Wrap("failed to check plugin health", backendplugin.ErrHealthCheckFailed)
-	}
-
-	return resp, nil
-}
-
-func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
-	}
-
-	return p.SubscribeStream(ctx, req)
-}
-
-func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	p, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
-	}
-
-	return p.PublishStream(ctx, req)
-}
-
-func (m *PluginManager) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	plugin, err := m.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return err
-	}
-
-	return plugin.RunStream(ctx, req, sender)
-}
-
 func (m *PluginManager) Routes() []*plugins.StaticRoute {
 	staticRoutes := make([]*plugins.StaticRoute, 0)
 
@@ -326,13 +195,15 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
+	if p.IsCorePlugin() {
+		return nil
+	}
+
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
 	}
 
-	if !p.IsCorePlugin() {
-		p.Logger().Debug("Successfully started backend plugin process")
-	}
+	p.Logger().Debug("Successfully started backend plugin process")
 
 	return nil
 }

@@ -308,14 +308,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	dashboardsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
+			Version:     2,
 			Name:        "fixed:dashboards:creator",
 			DisplayName: "Dashboard creator",
 			Description: "Create dashboard in general folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
-				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},

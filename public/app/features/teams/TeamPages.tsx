@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { includes } from 'lodash';
+import { Themeable2, withTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
 import TeamMembers from './TeamMembers';
@@ -16,14 +17,14 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
 import { featureEnabled, reportExperimentView } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
+import { UpgradeBox, UpgradeContent } from 'app/core/components/Upgrade/UpgradeBox';
 
 interface TeamPageRouteParams {
   id: string;
   page: string | null;
 }
 
-export interface OwnProps extends GrafanaRouteComponentProps<TeamPageRouteParams> {}
+export interface OwnProps extends GrafanaRouteComponentProps<TeamPageRouteParams>, Themeable2 {}
 
 interface State {
   isSyncEnabled: boolean;
@@ -140,7 +141,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
   renderPage(isSignedInUserTeamAdmin: boolean): React.ReactNode {
     const { isSyncEnabled } = this.state;
-    const { members, team } = this.props;
+    const { members, team, theme } = this.props;
     const currentPage = this.getCurrentPage();
 
     const canReadTeam = contextSrv.hasAccessInMetadata(
@@ -175,11 +176,21 @@ export class TeamPages extends PureComponent<Props, State> {
           }
         } else if (config.featureToggles.featureHighlights) {
           return (
-            <UpgradeBox
-              text={
-                "Team Sync immediately updates each user's Grafana teams and permissions based on their LDAP or Oauth group membership, instead of updating when users sign in."
-              }
-            />
+            <>
+              <UpgradeBox featureName={'team sync'} />
+              <UpgradeContent
+                listItems={[
+                  'Stop managing user access in two places - assign users to groups in SAML, LDAP or Oauth, and manage access at a Team level in Grafana',
+                  'Update users’ permissions immediately when you add or remove them from an LDAP group, with no need for them to sign out and back in',
+                ]}
+                image={`team-sync-${theme.isLight ? 'light' : 'dark'}.png`}
+                featureName={'team sync'}
+                featureUrl={'https://grafana.com/docs/grafana/latest/enterprise/team-sync'}
+                description={
+                  'Team Sync makes it easier for you to manage users’ access in Grafana, by immediately updating each user’s Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in.'
+                }
+              />
+            </>
           );
         }
     }
@@ -201,4 +212,4 @@ export class TeamPages extends PureComponent<Props, State> {
   }
 }
 
-export default connector(TeamPages);
+export default connector(withTheme2(TeamPages));

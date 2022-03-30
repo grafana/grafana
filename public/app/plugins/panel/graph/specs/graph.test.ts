@@ -44,7 +44,7 @@ describe('grafanaGraph', () => {
       user: {
         lightTheme: false,
       },
-    };
+    } as any;
     Object.assign(GraphCtrl.prototype, {
       ...MetricsPanelCtrl.prototype,
       ...PanelCtrl.prototype,
