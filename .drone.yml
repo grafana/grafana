@@ -565,6 +565,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -666,6 +668,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1044,6 +1048,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1126,6 +1132,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1189,6 +1197,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1273,6 +1283,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1305,6 +1317,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
   status:
   - failure
 type: docker
@@ -3321,6 +3335,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3421,6 +3437,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3506,6 +3524,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3562,6 +3582,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3891,6 +3913,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4034,6 +4058,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4166,6 +4192,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4246,6 +4274,8 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:

@@ -200,7 +200,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.test.tsx:1262111696": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1044891955": [
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:809006195": [
       [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:1798654441": [
@@ -284,7 +284,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/teams/TeamMembers.test.tsx:3993436101": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/teams/TeamPages.test.tsx:2493626076": [
+    "public/app/features/teams/TeamPages.test.tsx:1265047708": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/teams/TeamSettings.test.tsx:2628968507": [
@@ -329,7 +329,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:1661240493": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:3844880066": [
+    "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:2909181412": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:1527527456": [
