@@ -71,6 +71,15 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
+	}
+	if dashboardUID == "" && panelID != 0 {
+		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -100,14 +109,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
 
-	dashboardUID := c.Query("dashboard_uid")
-	panelID, err := getPanelIDFromRequest(c.Req)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
-	}
-	if dashboardUID == "" && panelID != 0 {
-		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
-	}
 
 	ruleGroupQuery := ngmodels.ListOrgRuleGroupsQuery{
 		OrgID:         c.SignedInUser.OrgId,
