@@ -770,7 +770,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	var routes []*plugins.Route
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
-	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
+	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.Error(t, err)
 	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
 }
@@ -791,7 +791,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	var routes []*plugins.Route
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
-	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
+	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 
 	require.NoError(t, err)
 }
@@ -834,7 +834,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 			var routes []*plugins.Route
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
-			p, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", &cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
+			p, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 			if tc.err == nil {
 				require.NoError(t, err)
 				assert.Equal(t, &url.URL{
