@@ -4,16 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -414,6 +419,53 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	}
 }
 `, folder.Title), string(r.Body()))
+	})
+
+	t.Run("when fine-grained access is enabled", func(t *testing.T) {
+		t.Run("should return only rules the user can query all data sources", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			fakeAIM := NewFakeAlertInstanceManager(t)
+
+			rules := ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))
+			ruleStore.PutRule(context.Background(), rules...)
+			ruleStore.PutRule(context.Background(), ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))...)
+
+			var permissions []*accesscontrol.Permission
+			for _, rule := range rules {
+				for _, query := range rule.Data {
+					permissions = append(permissions, &accesscontrol.Permission{
+						Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
+					})
+				}
+			}
+
+			acMock := acmock.New().WithPermissions(permissions)
+
+			api := PrometheusSrv{
+				log:     log.NewNopLogger(),
+				manager: fakeAIM,
+				store:   ruleStore,
+				ac:      acMock,
+			}
+
+			response := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, response.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+			for _, group := range result.Data.RuleGroups {
+			grouploop:
+				for _, rule := range group.Rules {
+					for i, expected := range rules {
+						if rule.Name == expected.Title && group.Name == expected.RuleGroup {
+							rules = append(rules[:i], rules[i+1:]...)
+							continue grouploop
+						}
+					}
+					assert.Failf(t, "rule %s in a group %s was not found in expected", rule.Name, group.Name)
+				}
+			}
+			assert.Emptyf(t, rules, "not all expected rules were returned")
+		})
 	})
 }
 
