@@ -1,6 +1,0 @@
-# This file links paths to GitHub labels to apply on pull requests.
-area/alerting:
-- /pkg/services/ngalert/**/*
-- /pkg/services/sqlstore/migrations/ualert/**/*
-- /pkg/services/alerting/**/*
-- /public/app/features/alerting/**/*
