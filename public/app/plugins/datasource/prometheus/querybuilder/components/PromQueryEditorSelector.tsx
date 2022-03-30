@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useCallback, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
@@ -14,11 +14,14 @@ import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
+import { PromQuery } from '../../types';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
   const [parseModalOpen, setParseModalOpen] = useState(false);
+  const [dataIsStale, setDataIsStale] = useState(false);
+
   const query = getQueryWithDefaults(props.query, props.app);
   const editorMode = query.editorMode!;
 
@@ -37,10 +40,19 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     [onChange, query]
   );
 
+  useEffect(() => {
+    setDataIsStale(false);
+  }, [data]);
+
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
     onChange({ ...query, editorPreview: isEnabled });
     onRunQuery();
+  };
+
+  const onChangeInternal = (query: PromQuery) => {
+    setDataIsStale(true);
+    onChange(query);
   };
 
   return (
@@ -59,10 +71,8 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       <EditorHeader>
         <FlexItem grow={1} />
         <Button
-          className={styles.runQuery}
-          variant="secondary"
+          variant={dataIsStale ? 'primary' : 'secondary'}
           size="sm"
-          fill="outline"
           onClick={onRunQuery}
           icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
           disabled={data?.state === LoadingState.Loading}
@@ -104,7 +114,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           <PromQueryBuilderContainer
             query={query}
             datasource={props.datasource}
-            onChange={onChange}
+            onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             data={data}
           />
@@ -122,9 +132,6 @@ PromQueryEditorSelector.displayName = 'PromQueryEditorSelector';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    runQuery: css({
-      color: theme.colors.text.secondary,
-    }),
     switchLabel: css({
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
