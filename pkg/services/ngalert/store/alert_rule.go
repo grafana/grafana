@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -270,23 +271,44 @@ func (st DBstore) GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRul
 	})
 }
 
-// GetNamespaces returns the folders that are visible to the user
+// GetNamespaces returns the folders that are visible to the user and have at least one alert in it
 func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
 	namespaceMap := make(map[string]*models.Folder)
+
+	searchQuery := models.FindPersistedDashboardsQuery{
+		OrgId:        orgID,
+		SignedInUser: user,
+		Type:         searchstore.TypeAlertFolder,
+		Limit:        -1,
+		Permission:   models.PERMISSION_VIEW,
+		Sort:         models.SortOption{},
+		Filters: []interface{}{
+			searchstore.FolderThatHaveAlertsFilter{},
+		},
+	}
+
 	var page int64 = 1
 	for {
-		// if limit is negative; it fetches at most 1000
-		folders, err := st.FolderService.GetFolders(ctx, user, orgID, -1, page)
+		query := searchQuery
+		query.Page = page
+		proj, err := st.SQLStore.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(folders) == 0 {
+		if len(proj) == 0 {
 			break
 		}
 
-		for _, f := range folders {
-			namespaceMap[f.Uid] = f
+		for _, hit := range proj {
+			if !hit.IsFolder {
+				continue
+			}
+			namespaceMap[hit.UID] = &models.Folder{
+				Id:    hit.ID,
+				Uid:   hit.UID,
+				Title: hit.Title,
+			}
 		}
 		page += 1
 	}
