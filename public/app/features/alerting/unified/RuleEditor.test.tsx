@@ -523,7 +523,7 @@ describe('RuleEditor', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
 
-    // render rule editor, select Mimir/loki managed alerts
+    // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
