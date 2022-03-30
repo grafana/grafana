@@ -32,7 +32,7 @@ export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
   kioskMode: KioskMode;
-  hideTimePicker: boolean;
+  hideTimePicker?: boolean;
   folderTitle?: string;
   title: string;
   onAddPanel: () => void;

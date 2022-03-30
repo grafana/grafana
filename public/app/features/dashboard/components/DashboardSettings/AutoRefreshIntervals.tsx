@@ -4,7 +4,7 @@ import { Input, defaultIntervals, Field } from '@grafana/ui';
 import { getTimeSrv } from '../../services/TimeSrv';
 
 export interface Props {
-  refreshIntervals: string[];
+  refreshIntervals?: string[];
   onRefreshIntervalChange: (interval: string[]) => void;
   getIntervalsFunc?: typeof getValidIntervals;
   validateIntervalsFunc?: typeof validateIntervals;

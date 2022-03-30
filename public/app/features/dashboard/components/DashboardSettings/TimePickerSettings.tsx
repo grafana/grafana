@@ -13,10 +13,10 @@ interface Props {
   onMaxTimeRangeChange: (maxTimeRange: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
   onLiveNowChange: (liveNow: boolean) => void;
-  refreshIntervals: string[];
-  timePickerHidden: boolean;
-  nowDelay: string;
-  maxTimeRange: string;
+  refreshIntervals?: string[];
+  timePickerHidden?: boolean;
+  nowDelay?: string;
+  maxTimeRange?: string;
   timezone: TimeZone;
   weekStart: string;
   liveNow: boolean;
@@ -114,10 +114,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             defaultValue={this.props.nowDelay}
           />
         </Field>
-        <Field
-           label="Max time range"
-           description="Limits users to the specified time interval."
-        >
+        <Field label="Max time range" description="Limits users to the specified time interval.">
           <Input
             invalid={!this.state.isMaxTimeRangeValid}
             onChange={this.onMaxTimeRangeChange}
