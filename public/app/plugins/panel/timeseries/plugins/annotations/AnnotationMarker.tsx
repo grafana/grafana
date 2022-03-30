@@ -84,23 +84,31 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
   );
 
   const canDelete = useCallback(() => {
+    let canDelete = true;
+
     if (contextSrv.accessControlEnabled()) {
       if (annotation.dashboardId !== 0) {
-        return panelCtx.annotationPermissions?.dashboard.canDelete;
+        canDelete = !!panelCtx.annotationPermissions?.dashboard.canDelete;
+      } else {
+        canDelete = !!panelCtx.annotationPermissions?.organization.canDelete;
       }
-      return panelCtx.annotationPermissions?.organization.canDelete;
     }
-    return canAddAnnotations && canAddAnnotations();
+
+    return canDelete && !!canAddAnnotations && canAddAnnotations();
   }, [canAddAnnotations, annotation, panelCtx]);
 
   const canEdit = useCallback(() => {
+    let canEdit = true;
+
     if (contextSrv.accessControlEnabled()) {
       if (annotation.dashboardId !== 0) {
-        return panelCtx.annotationPermissions?.dashboard.canEdit;
+        canEdit = !!panelCtx.annotationPermissions?.dashboard.canEdit;
+      } else {
+        canEdit = !!panelCtx.annotationPermissions?.organization.canEdit;
       }
-      return panelCtx.annotationPermissions?.organization.canEdit;
     }
-    return canAddAnnotations && canAddAnnotations();
+
+    return canEdit && !!canAddAnnotations && canAddAnnotations();
   }, [canAddAnnotations, annotation, panelCtx]);
 
   const renderTooltip = useCallback(() => {
@@ -110,8 +118,8 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
         timeFormatter={timeFormatter}
         onEdit={onAnnotationEdit}
         onDelete={onAnnotationDelete}
-        canEdit={Boolean(canEdit())}
-        canDelete={Boolean(canDelete())}
+        canEdit={canEdit()}
+        canDelete={canDelete()}
       />
     );
   }, [canDelete, canEdit, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);

@@ -32,12 +32,12 @@ export class EventEditorCtrl {
     this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time!);
   }
 
-  canDelete() {
+  canDelete(): boolean {
     if (contextSrv.accessControlEnabled()) {
       if (this.event.source.type === 'dashboard') {
-        return this.panelCtrl.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
+        return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
       }
-      return this.panelCtrl.dashboard.meta.annotationsPermissions?.organization.canDelete;
+      return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.organization.canDelete;
     }
     return true;
   }
