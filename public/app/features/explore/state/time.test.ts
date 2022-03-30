@@ -3,9 +3,44 @@ import { dateTime, LoadingState } from '@grafana/data';
 import { makeExplorePaneState } from './utils';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { changeRangeAction, changeRefreshIntervalAction, timeReducer } from './time';
+import { changeRangeAction, changeRefreshIntervalAction, timeReducer, updateTime } from './time';
+import { createDefaultInitialState } from './helpers';
+import { configureStore } from 'app/store/configureStore';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+
+const MOCK_TIME_RANGE = {};
+
+const mockTimeSrv = {
+  init: jest.fn(),
+  timeRange: jest.fn().mockReturnValue(MOCK_TIME_RANGE),
+};
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
+  getTimeSrv: () => mockTimeSrv,
+}));
+
+const mockTemplateSrv = {
+  updateTimeRange: jest.fn(),
+};
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => mockTemplateSrv,
+}));
 
 describe('Explore item reducer', () => {
+  silenceConsoleOutput();
+
+  describe('When time is updated', () => {
+    it('Time service is re-initialized and template service is updated with the new time range', async () => {
+      const { dispatch } = configureStore({
+        ...(createDefaultInitialState() as any),
+      });
+      await dispatch(updateTime({ exploreId: ExploreId.left }));
+      expect(mockTimeSrv.init).toBeCalled();
+      expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
+    });
+  });
+
   describe('changing refresh intervals', () => {
     it("should result in 'streaming' state, when live-tailing is active", () => {
       const initialState = makeExplorePaneState();

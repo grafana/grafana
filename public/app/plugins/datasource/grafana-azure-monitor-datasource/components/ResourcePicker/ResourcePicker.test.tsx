@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import ResourcePicker from '.';
@@ -8,6 +9,7 @@ import {
   createMockSubscriptions,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+import { ResourceRowType } from './types';
 
 const noResourceURI = '';
 const singleSubscriptionSelectionURI = '/subscriptions/def-456';
@@ -15,28 +17,31 @@ const singleResourceGroupSelectionURI = '/subscriptions/def-456/resourceGroups/d
 const singleResourceSelectionURI =
   '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
-const createResourcePickerDataMock = () => {
-  return createMockResourcePickerData({
+const noop: any = () => {};
+const defaultProps = {
+  templateVariables: [],
+  resourceURI: noResourceURI,
+  resourcePickerData: createMockResourcePickerData({
     getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
     getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
     getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
-  });
+  }),
+  onCancel: noop,
+  onApply: noop,
+  selectableEntryTypes: [
+    ResourceRowType.Subscription,
+    ResourceRowType.ResourceGroup,
+    ResourceRowType.Resource,
+    ResourceRowType.Variable,
+  ],
 };
+
 describe('AzureMonitor ResourcePicker', () => {
-  const noop: any = () => {};
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
-    render(
-      <ResourcePicker
-        templateVariables={[]}
-        resourcePickerData={createResourcePickerDataMock()}
-        resourceURI={noResourceURI}
-        onCancel={noop}
-        onApply={noop}
-      />
-    );
+    render(<ResourcePicker {...defaultProps} resourceURI={noResourceURI} />);
     const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
     expect(subscriptionCheckbox).toBeInTheDocument();
     expect(subscriptionCheckbox).not.toBeChecked();
@@ -45,58 +50,25 @@ describe('AzureMonitor ResourcePicker', () => {
   });
 
   it('should show a subscription as selected if there is one saved', async () => {
-    render(
-      <ResourcePicker
-        templateVariables={[]}
-        resourcePickerData={createResourcePickerDataMock()}
-        resourceURI={singleSubscriptionSelectionURI}
-        onCancel={noop}
-        onApply={noop}
-      />
-    );
+    render(<ResourcePicker {...defaultProps} resourceURI={singleSubscriptionSelectionURI} />);
     const subscriptionCheckbox = await screen.findByLabelText('Dev Subscription');
     expect(subscriptionCheckbox).toBeChecked();
   });
 
-  it('should show a resource group as selected if there is one saved', async () => {
-    render(
-      <ResourcePicker
-        templateVariables={[]}
-        resourcePickerData={createResourcePickerDataMock()}
-        resourceURI={singleResourceGroupSelectionURI}
-        onCancel={noop}
-        onApply={noop}
-      />
-    );
+  it('should show a resourceGroup as selected if there is one saved', async () => {
+    render(<ResourcePicker {...defaultProps} resourceURI={singleResourceGroupSelectionURI} />);
     const resourceGroupCheckbox = await screen.findByLabelText('A Great Resource Group');
     expect(resourceGroupCheckbox).toBeChecked();
   });
 
   it('should show a resource as selected if there is one saved', async () => {
-    render(
-      <ResourcePicker
-        templateVariables={[]}
-        resourcePickerData={createResourcePickerDataMock()}
-        resourceURI={singleResourceSelectionURI}
-        onCancel={noop}
-        onApply={noop}
-      />
-    );
-
+    render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
     const resourceCheckbox = await screen.findByLabelText('db-server');
     expect(resourceCheckbox).toBeChecked();
   });
 
   it('should be able to expand a subscription when clicked and reveal resource groups', async () => {
-    render(
-      <ResourcePicker
-        templateVariables={[]}
-        resourcePickerData={createResourcePickerDataMock()}
-        resourceURI={noResourceURI}
-        onCancel={noop}
-        onApply={noop}
-      />
-    );
+    render(<ResourcePicker {...defaultProps} />);
     const expandSubscriptionButton = await screen.findByLabelText('Expand Primary Subscription');
     expect(expandSubscriptionButton).toBeInTheDocument();
     expect(screen.queryByLabelText('A Great Resource Group')).not.toBeInTheDocument();
@@ -106,15 +78,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should call onApply with a new subscription uri when a user selects it', async () => {
     const onApply = jest.fn();
-    render(
-      <ResourcePicker
-        templateVariables={[]}
-        resourcePickerData={createResourcePickerDataMock()}
-        resourceURI={noResourceURI}
-        onCancel={noop}
-        onApply={onApply}
-      />
-    );
+    render(<ResourcePicker {...defaultProps} onApply={onApply} />);
     const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
     expect(subscriptionCheckbox).toBeInTheDocument();
     expect(subscriptionCheckbox).not.toBeChecked();
@@ -125,28 +89,33 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(onApply).toBeCalledWith('/subscriptions/def-123');
   });
 
-  it('should call onApply with a template variable when a user selects it', async () => {
+  it('should call onApply with a new subscription uri when a user types it', async () => {
     const onApply = jest.fn();
-    render(
-      <ResourcePicker
-        templateVariables={['$workspace']}
-        resourcePickerData={createResourcePickerDataMock()}
-        resourceURI={noResourceURI}
-        onCancel={noop}
-        onApply={onApply}
-      />
-    );
+    render(<ResourcePicker {...defaultProps} onApply={onApply} />);
+    const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
+    expect(subscriptionCheckbox).toBeInTheDocument();
+    expect(subscriptionCheckbox).not.toBeChecked();
 
-    const expandButton = await screen.findByLabelText('Expand Template variables');
-    expandButton.click();
+    const advancedSection = screen.getByText('Advanced');
+    advancedSection.click();
 
-    const workSpaceCheckbox = await screen.findByLabelText('$workspace');
-    workSpaceCheckbox.click();
+    const advancedInput = await screen.findByLabelText('Resource URI');
+    userEvent.type(advancedInput, '/subscriptions/def-123');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     applyButton.click();
 
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith('$workspace');
+    expect(onApply).toBeCalledWith('/subscriptions/def-123');
+  });
+
+  describe('when rendering resource picker without any selectable entry types', () => {
+    it('renders no checkboxes', async () => {
+      await act(async () => {
+        render(<ResourcePicker {...defaultProps} selectableEntryTypes={[]} />);
+      });
+      const checkboxes = screen.queryAllByRole('checkbox');
+      expect(checkboxes.length).toBe(0);
+    });
   });
 });

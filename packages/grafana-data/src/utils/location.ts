@@ -1,3 +1,4 @@
+import { Location } from 'history';
 import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
 import { UrlQueryMap, urlUtil } from './url';
 import { textUtil } from '../text';
@@ -37,6 +38,28 @@ const assureBaseUrl = (url: string): string => {
 };
 
 /**
+ *
+ * @param location
+ * @param searchParamsToUpdate
+ * @returns
+ */
+const getUrlForPartial = (location: Location<any>, searchParamsToUpdate: Record<string, any>) => {
+  const searchParams = urlUtil.parseKeyValue(
+    location.search.startsWith('?') ? location.search.substring(1) : location.search
+  );
+  for (const key of Object.keys(searchParamsToUpdate)) {
+    // removing params with null | undefined
+    if (searchParamsToUpdate[key] === null || searchParamsToUpdate[key] === undefined) {
+      delete searchParams[key];
+    } else {
+      searchParams[key] = searchParamsToUpdate[key];
+    }
+  }
+  return urlUtil.renderUrl(location.pathname, searchParams);
+};
+
+/**
+ * @deprecated use `getUrlForPartial` instead
  * Update URL or search param string `init` with new params `partial`.
  */
 const updateSearchParams = (init: string, partial: string) => {
@@ -92,6 +115,7 @@ export const locationUtil = {
     const params = getVariablesUrlParams(scopedVars);
     return urlUtil.toUrlParams(params);
   },
+  getUrlForPartial,
   processUrl: (url: string) => {
     return grafanaConfig.disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   },
