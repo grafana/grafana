@@ -86,7 +86,6 @@ export function TextBoxVariableEditor({
         onBlur={onEmptyBlur}
         labelWidth={20}
         grow
-        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
       />
       <VariableTextField
         value={placeholder ?? ''}
@@ -96,7 +95,6 @@ export function TextBoxVariableEditor({
         onBlur={onPlaceholderBlur}
         labelWidth={20}
         grow
-        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
       />
     </VerticalGroup>
   );

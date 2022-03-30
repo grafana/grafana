@@ -8,7 +8,8 @@ import { VariableAdapter } from '../adapters';
 import { DateTimeVariableEditor } from './DateTimeVariableEditor';
 import { DateTimeVariablePicker } from './DateTimeVariablePicker';
 import { updateDateTimeVariableOptions, setDateTimeVariableOptionsFromUrl } from './actions';
-import { ALL_VARIABLE_VALUE, toVariableIdentifier } from '../state/types';
+import { toKeyedVariableIdentifier } from '../utils';
+import { ALL_VARIABLE_VALUE } from '../constants';
 
 export const createDateTimeVariableAdapter = (): VariableAdapter<DateTimeVariableModel> => {
   return {
@@ -23,7 +24,7 @@ export const createDateTimeVariableAdapter = (): VariableAdapter<DateTimeVariabl
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
       if (urlValue) {
@@ -32,10 +33,10 @@ export const createDateTimeVariableAdapter = (): VariableAdapter<DateTimeVariabl
         }
       }
 
-      await dispatch(setDateTimeVariableOptionsFromUrl(toVariableIdentifier(variable), urlValue));
+      await dispatch(setDateTimeVariableOptionsFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
-      await dispatch(updateDateTimeVariableOptions(toVariableIdentifier(variable)));
+      await dispatch(updateDateTimeVariableOptions(toKeyedVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
       const { index, id, state, global, ...rest } = cloneDeep(variable);

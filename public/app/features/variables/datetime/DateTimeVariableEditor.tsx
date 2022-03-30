@@ -33,9 +33,10 @@ export const DateTimeVariableEditor = ({ onPropChange, variable: { allValue, ret
   const onAllChange = useCallback((e: FormEvent<HTMLInputElement>) => updateAllVariable(e, true), [updateAllVariable]);
   const onAllBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateAllVariable(e, false), [updateAllVariable]);
 
-  const onReturnValueChanged = useCallback((e: ChangeEvent<HTMLInputElement>) => updateReturnValueVariable(e), [
-    updateReturnValueVariable,
-  ]);
+  const onReturnValueChanged = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => updateReturnValueVariable(e),
+    [updateReturnValueVariable]
+  );
 
   return (
     <VerticalGroup spacing="none">
@@ -49,7 +50,6 @@ export const DateTimeVariableEditor = ({ onPropChange, variable: { allValue, ret
         onBlur={onAllBlur}
         labelWidth={20}
         grow
-        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
       />
 
       <InlineFieldRow>

@@ -1,10 +1,11 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload, VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { createDateTimeOptions, dateTimeVariableReducer } from './reducer';
 import { DateTimeVariableModel } from '../types';
 import { createDateTimeVariableAdapter } from './adapter';
+import { toVariablePayload } from '../utils';
 
 describe('dateTimeVariableReducer', () => {
   const adapter = createDateTimeVariableAdapter();

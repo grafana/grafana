@@ -8,6 +8,7 @@ import { DatePickerWithEmptyWithInput } from '@grafana/ui';
 import { variableAdapters } from '../adapters';
 import { useDispatch } from 'react-redux';
 import { ALL_VARIABLE_VALUE } from '../constants';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 
 export interface Props extends VariablePickerProps<DateTimeVariableModel> {}
 
@@ -15,9 +16,11 @@ export function DateTimeVariablePicker({ variable, onVariableChange }: Props): R
   const dispatch = useDispatch();
   const [date, setDate] = useState<Date | string>(() => {
     const currentValue = variable.current.value;
+
     if (currentValue === ALL_VARIABLE_VALUE) {
       return ALL_VARIABLE_VALUE;
     }
+
     return new Date(+currentValue);
   });
   const [isDateInput, setIsDateInput] = useState(true);
@@ -34,11 +37,23 @@ export function DateTimeVariablePicker({ variable, onVariableChange }: Props): R
 
   const updateVariable = useCallback(
     (value: Date | string, isDateInput: boolean) => {
+      if (!variable.rootStateKey) {
+        console.error('Cannot update variable without rootStateKey');
+        return;
+      }
+
+      if (variable.current.value === date) {
+        return;
+      }
+
       dispatch(
-        changeVariableProp(
-          toVariablePayload(
-            { id: variable.id, type: variable.type },
-            { propName: 'query', propValue: isDateInput ? value.valueOf().toString() : ALL_VARIABLE_VALUE }
+        toKeyedAction(
+          variable.rootStateKey,
+          changeVariableProp(
+            toVariablePayload(
+              { id: variable.id, type: variable.type },
+              { propName: 'query', propValue: isDateInput ? value.valueOf().toString() : ALL_VARIABLE_VALUE }
+            )
           )
         )
       );
@@ -53,11 +68,12 @@ export function DateTimeVariablePicker({ variable, onVariableChange }: Props): R
 
       variableAdapters.get(variable.type).updateOptions(variable);
     },
-    [dispatch, variable, onVariableChange]
+    [dispatch, variable, onVariableChange, date]
   );
 
   const onChange = (value: Date | string, isDateInput: boolean) => {
     setDate(value);
+
     setIsDateInput(isDateInput);
     updateVariable(value, isDateInput);
   };

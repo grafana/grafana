@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { initialVariableModelState, DateTimeVariableModel, VariableOption } from '../types';
-import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
+import { VariablePayload, initialVariablesState, VariablesState } from '../state/types';
+import { getInstanceState } from '../state/selectors';
 
 export const initialDateTimeVariableModelState: DateTimeVariableModel = {
   ...initialVariableModelState,
@@ -18,8 +19,8 @@ export const dateTimeVariableSlice = createSlice({
     createDateTimeOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState<DateTimeVariableModel>(state, action.payload.id);
       const option = { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false };
-      instanceState.current = option;
       instanceState.options = [option];
+      instanceState.current = option;
     },
   },
 });

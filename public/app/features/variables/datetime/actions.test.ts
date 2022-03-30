@@ -4,9 +4,9 @@ import { createDateTimeVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer, RootReducerType } from '../state/helpers';
 import { DateTimeVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { createDateTimeOptions } from './reducer';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('datetime  actions', () => {
   variableAdapters.setInit(() => [createDateTimeVariableAdapter()]);
@@ -46,7 +46,7 @@ describe('datetime  actions', () => {
         .whenActionIsDispatched(
           addVariable(toVariablePayload(variable, { global: false, index: variable.index, model: variable }))
         )
-        .whenAsyncActionIsDispatched(updateDateTimeVariableOptions(toVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateDateTimeVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         createDateTimeOptions(toVariablePayload(variable)),
@@ -86,7 +86,7 @@ describe('datetime  actions', () => {
         .whenActionIsDispatched(
           addVariable(toVariablePayload(variable, { global: false, index: variable.index, model: variable }))
         )
-        .whenAsyncActionIsDispatched(updateDateTimeVariableOptions(toVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateDateTimeVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         createDateTimeOptions(toVariablePayload(variable)),
@@ -118,7 +118,10 @@ describe('datetime  actions', () => {
         .whenActionIsDispatched(
           addVariable(toVariablePayload(variable, { global: false, index: variable.index, model: variable }))
         )
-        .whenAsyncActionIsDispatched(setDateTimeVariableOptionsFromUrl(toVariableIdentifier(variable), urlValue), true);
+        .whenAsyncActionIsDispatched(
+          setDateTimeVariableOptionsFromUrl(toKeyedVariableIdentifier(variable), urlValue),
+          true
+        );
 
       tester.thenDispatchedActionsShouldEqual(
         changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: urlValue })),
@@ -150,7 +153,10 @@ describe('datetime  actions', () => {
         .whenActionIsDispatched(
           addVariable(toVariablePayload(variable, { global: false, index: variable.index, model: variable }))
         )
-        .whenAsyncActionIsDispatched(setDateTimeVariableOptionsFromUrl(toVariableIdentifier(variable), urlValue), true);
+        .whenAsyncActionIsDispatched(
+          setDateTimeVariableOptionsFromUrl(toKeyedVariableIdentifier(variable), urlValue),
+          true
+        );
 
       tester.thenDispatchedActionsShouldEqual(
         changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: urlValue })),
