@@ -26,6 +26,7 @@ import {
   AnnotationQuery,
   AppEvent,
   DashboardCursorSync,
+  dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
@@ -206,7 +207,7 @@ export class DashboardModel implements TimeModel {
     }
 
     this.annotations.list.unshift({
-      datasource: '-- Grafana --',
+      datasource: { uid: '-- Grafana --', type: 'grafana' },
       name: 'Annotations & Alerts',
       type: 'dashboard',
       iconColor: DEFAULT_ANNOTATION_COLOR,
@@ -799,7 +800,6 @@ export class DashboardModel implements TimeModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
-    panel.key = `${panel.id}`;
     panel.repeatIteration = this.iteration;
     if (repeatedByRow) {
       panel.repeatedByRow = true;
@@ -965,7 +965,7 @@ export class DashboardModel implements TimeModel {
 
         for (const panel of row.panels) {
           // set the y gridPos if it wasn't already set
-          panel.gridPos.y ??= row.gridPos.y;
+          panel.gridPos.y ?? (panel.gridPos.y = row.gridPos.y); // (Safari 13.1 lacks ??= support)
           // make sure y is adjusted (in case row moved while collapsed)
           panel.gridPos.y -= yDiff;
           // insert after row
@@ -1078,7 +1078,16 @@ export class DashboardModel implements TimeModel {
   }
 
   hasTimeChanged() {
-    return !isEqual(this.time, this.originalTime);
+    const { time, originalTime } = this;
+    if (isEqual(time, originalTime)) {
+      return false;
+    }
+
+    // Compare momemt values vs strings values
+    return !(
+      isEqual(dateTime(time?.from), dateTime(originalTime?.from)) &&
+      isEqual(dateTime(time?.to), dateTime(originalTime?.to))
+    );
   }
 
   resetOriginalVariables(initial = false) {

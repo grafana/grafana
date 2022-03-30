@@ -33,7 +33,7 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -67,7 +67,7 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},

@@ -33,8 +33,8 @@ type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
 	// Values contains the RefID and value of reduce and math expressions.
-	// It does not contain values for classic conditions as the values
-	// in classic conditions do not have a RefID.
+	// Classic conditions can have different values for the same RefID as they can include multiple conditions.
+	// For these, we use the index of the condition in addition RefID as the key e.g. "A0, A1, A2, etc.".
 	Values map[string]*float64
 }
 
@@ -47,7 +47,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func (a *State) resultNormal(alertRule *ngModels.AlertRule, result eval.Result) {
+func (a *State) resultNormal(_ *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error // should be nil since state is not error
 
 	if a.State != eval.Normal {
@@ -176,4 +176,14 @@ func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
 	}
 
 	a.EndsAt = result.EvaluatedAt.Add(ends * 3)
+}
+
+func (a *State) GetLabels(opts ...ngModels.LabelOption) map[string]string {
+	labels := a.Labels.Copy()
+
+	for _, opt := range opts {
+		opt(labels)
+	}
+
+	return labels
 }

@@ -163,10 +163,22 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "fileStoreApi",
-			Description:     "Simple API for managing files",
+			Name:        "storage",
+			Description: "Configurable storage for dashboards, datasources, and resources",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "storageLocalUpload",
+			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:            "azureMonitorResourcePickerForMetrics",
+			Description:     "New UI for Azure Monitor Metrics Query",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
 		},
 	}
 )

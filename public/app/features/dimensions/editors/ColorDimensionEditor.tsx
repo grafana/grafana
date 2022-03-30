@@ -33,7 +33,7 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
           field,
         });
       } else {
-        const fixed = value.fixed ?? defaultColor;
+        const fixed = value?.fixed ?? defaultColor;
         onChange({
           ...value,
           field: undefined,

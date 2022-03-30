@@ -34,13 +34,22 @@ type CreateQueryInQueryHistoryCommand struct {
 	Queries       *simplejson.Json `json:"queries"`
 }
 
+type SearchInQueryHistoryQuery struct {
+	DatasourceUIDs []string `json:"datasourceUids"`
+	SearchString   string   `json:"searchString"`
+	OnlyStarred    bool     `json:"onlyStarred"`
+	Sort           string   `json:"sort"`
+	Page           int      `json:"page"`
+	Limit          int      `json:"limit"`
+}
+
 type PatchQueryCommentInQueryHistoryCommand struct {
 	Comment string `json:"comment"`
 }
 
 type QueryHistoryDTO struct {
-	UID           string           `json:"uid"`
-	DatasourceUID string           `json:"datasourceUid"`
+	UID           string           `json:"uid" xorm:"uid"`
+	DatasourceUID string           `json:"datasourceUid" xorm:"datasource_uid"`
 	CreatedBy     int64            `json:"createdBy"`
 	CreatedAt     int64            `json:"createdAt"`
 	Comment       string           `json:"comment"`
@@ -51,6 +60,17 @@ type QueryHistoryDTO struct {
 // QueryHistoryResponse is a response struct for QueryHistoryDTO
 type QueryHistoryResponse struct {
 	Result QueryHistoryDTO `json:"result"`
+}
+
+type QueryHistorySearchResult struct {
+	TotalCount   int               `json:"totalCount"`
+	QueryHistory []QueryHistoryDTO `json:"queryHistory"`
+	Page         int               `json:"page"`
+	PerPage      int               `json:"perPage"`
+}
+
+type QueryHistorySearchResponse struct {
+	Result QueryHistorySearchResult `json:"result"`
 }
 
 // DeleteQueryFromQueryHistoryResponse is the response struct for deleting a query from query history

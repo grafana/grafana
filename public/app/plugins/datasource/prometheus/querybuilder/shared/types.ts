@@ -27,10 +27,12 @@ export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   category: string;
   hideFromList?: boolean;
   alternativesKey?: string;
+  /** Can be used to control operation placement when adding a new operations, lower are placed first */
+  orderRank?: number;
   renderer: QueryBuilderOperationRenderer;
   addOperationHandler: QueryBuilderAddOperationHandler<T>;
   paramChangedHandler?: QueryBuilderOnParamChangedHandler;
-  explainHandler?: (op: QueryBuilderOperation, def: QueryBuilderOperationDef<T>) => string;
+  explainHandler?: QueryBuilderExplainOperationHandler;
   changeTypeHandler?: (op: QueryBuilderOperation, newDef: QueryBuilderOperationDef<T>) => QueryBuilderOperation;
 }
 
@@ -39,6 +41,8 @@ export type QueryBuilderAddOperationHandler<T> = (
   query: T,
   modeller: VisualQueryModeller
 ) => T;
+
+export type QueryBuilderExplainOperationHandler = (op: QueryBuilderOperation, def: QueryBuilderOperationDef) => string;
 
 export type QueryBuilderOnParamChangedHandler = (
   index: number,
@@ -52,14 +56,18 @@ export type QueryBuilderOperationRenderer = (
   innerExpr: string
 ) => string;
 
-export type QueryBuilderOperationParamValue = string | number;
+export type QueryBuilderOperationParamValue = string | number | boolean;
 
 export interface QueryBuilderOperationParamDef {
   name: string;
-  type: string;
+  type: 'string' | 'number' | 'boolean';
   options?: string[] | number[] | Array<SelectableValue<string>>;
+  hideName?: boolean;
   restParam?: boolean;
   optional?: boolean;
+  placeholder?: string;
+  description?: string;
+  minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
 }
 

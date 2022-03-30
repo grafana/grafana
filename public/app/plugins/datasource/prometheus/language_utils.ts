@@ -152,7 +152,7 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
     return '';
   });
 
-  // Loop trough all of the label objects and add them to query.
+  // Loop through all label objects and add them to query.
   // As a starting point we have valid query without the labels.
   let result = exprBeforeRegexMatch;
   arrayOfLabelObjects.filter(Boolean).forEach((obj) => {

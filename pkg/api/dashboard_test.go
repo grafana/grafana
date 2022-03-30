@@ -9,6 +9,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -16,11 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -29,9 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
@@ -82,14 +85,14 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 }
 
-func newTestLive(t *testing.T) *live.GrafanaLive {
+func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil,
-		sqlstore.InitTestDB(t),
+		store,
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
@@ -130,11 +133,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 			}
-
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = aclMockResp
-				return nil
-			})
+			mockSQLStore.ExpectedDashboardAclInfoList = aclMockResp
+			guardian.InitLegacyGuardian(mockSQLStore)
 		}
 
 		// This tests two scenarios:
@@ -214,14 +214,19 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		mockSQLStore.ExpectedDashboard = fakeDash
 
-		dashboardStore := database.ProvideDashboardStore(sqlstore.InitTestDB(t))
+		cfg := setting.NewCfg()
+		features := featuremgmt.WithFeatures()
+		sql := sqlstore.InitTestDB(t)
+		dashboardStore := database.ProvideDashboardStore(sql)
 		hs := &HTTPServer{
-			Cfg:                   setting.NewCfg(),
-			Live:                  newTestLive(t),
+			Cfg:                   cfg,
+			Live:                  newTestLive(t, sql),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
-			dashboardService:      service.ProvideDashboardService(dashboardStore, nil),
 			SQLStore:              mockSQLStore,
+			dashboardService: service.ProvideDashboardService(
+				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -240,10 +245,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				},
 			}
 
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = aclMockResp
-				return nil
-			})
+			mockSQLStore.ExpectedDashboardAclInfoList = aclMockResp
+			guardian.InitLegacyGuardian(mockSQLStore)
 		}
 
 		// This tests six scenarios:
@@ -339,10 +342,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			setUpInner := func() {
 				setUp()
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
@@ -398,11 +398,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
-
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 
 				origCanEdit := setting.ViewersCanEdit
 				t.Cleanup(func() {
@@ -440,10 +436,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_ADMIN},
 				}
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -488,10 +481,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -539,7 +529,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Post dashboard response tests", func(t *testing.T) {
-		dashboardStore := &database.FakeDashboardStore{}
+		dashboardStore := &dashboards.FakeDashboardStore{}
 		defer dashboardStore.AssertExpectations(t)
 		// This tests that a valid request returns correct response
 		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
@@ -738,10 +728,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		sqlmock := mockstore.SQLStoreMock{ExpectedDashboardVersions: dashboardvs}
 		setUp := func() {
 			mockResult := []*models.DashboardAclInfoDTO{}
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = mockResult
-				return nil
-			})
+			sqlmock.ExpectedDashboardAclInfoList = mockResult
 		}
 
 		cmd := dtos.CalculateDiffOptions{
@@ -857,16 +844,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
+		mockSQLStore := mockstore.NewSQLStoreMock()
 		setUp := func() {
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = []*models.DashboardAclInfoDTO{
-					{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT},
-				}
-				return nil
-			})
+			mockSQLStore.ExpectedDashboardAclInfoList = []*models.DashboardAclInfoDTO{
+				{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT},
+			}
 		}
 
-		mockSQLStore := mockstore.NewSQLStoreMock()
 		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
 		require.NoError(t, err)
 		mockSQLStore.ExpectedDashboard = &models.Dashboard{Id: 1, Data: dataValue}
@@ -878,7 +862,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return "/tmp/grafana/dashboards"
 			}
 
-			dashboardStore := &database.FakeDashboardStore{}
+			dashboardStore := &dashboards.FakeDashboardStore{}
 			defer dashboardStore.AssertExpectations(t)
 
 			dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
@@ -934,14 +918,18 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := mockLibraryElementService{}
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
 
 	hs := &HTTPServer{
-		Cfg:                          setting.NewCfg(),
-		LibraryPanelService:          &libraryPanelsService,
-		LibraryElementService:        &libraryElementsService,
-		ProvisioningService:          provisioningService,
-		dashboardProvisioningService: service.ProvideDashboardService(dashboardStore, nil),
-		SQLStore:                     sc.sqlStore,
+		Cfg:                   cfg,
+		LibraryPanelService:   &libraryPanelsService,
+		LibraryElementService: &libraryElementsService,
+		SQLStore:              sc.sqlStore,
+		ProvisioningService:   provisioningService,
+		dashboardProvisioningService: service.ProvideDashboardService(
+			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+		),
 	}
 
 	hs.callGetDashboard(sc)
@@ -1018,7 +1006,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                newTestLive(t),
+			Live:                newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
@@ -1055,7 +1043,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Cfg:                   cfg,
 			Bus:                   bus.GetBus(),
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t),
+			Live:                  newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
@@ -1092,7 +1080,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                   cfg,
 			Bus:                   bus.GetBus(),
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t),
+			Live:                  newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},

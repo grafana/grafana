@@ -172,6 +172,12 @@ var (
 	// Explore UI
 	ExploreEnabled bool
 
+	// Help UI
+	HelpEnabled bool
+
+	// Profile UI
+	ProfileEnabled bool
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -307,6 +313,7 @@ type Cfg struct {
 	AuthProxyEnableLoginToken bool
 	AuthProxyWhitelist        string
 	AuthProxyHeaders          map[string]string
+	AuthProxyHeadersEncoded   bool
 	AuthProxySyncTTL          int
 
 	// OAuth
@@ -944,6 +951,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
+	help := iniFile.Section("help")
+	HelpEnabled = help.Key("enabled").MustBool(true)
+
+	profile := iniFile.Section("profile")
+	ProfileEnabled = profile.Key("enabled").MustBool(true)
+
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
 
@@ -1318,6 +1331,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 			cfg.AuthProxyHeaders[split[0]] = split[1]
 		}
 	}
+
+	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
 	return nil
 }
