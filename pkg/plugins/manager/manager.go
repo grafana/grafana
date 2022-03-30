@@ -185,13 +185,15 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
+	if p.IsCorePlugin() {
+		return nil
+	}
+
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
 	}
 
-	if !p.IsCorePlugin() {
-		p.Logger().Debug("Successfully started backend plugin process")
-	}
+	p.Logger().Debug("Successfully started backend plugin process")
 
 	return nil
 }
