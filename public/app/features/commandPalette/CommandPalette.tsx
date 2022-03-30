@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  KBarProvider,
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
@@ -12,6 +13,7 @@ import {
 } from 'kbar';
 import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
+import { ResultItem } from './ResultItem';
 import getGlobalActions from './actions/global.static.actions';
 import getDashboardNavActions from './actions/dashboard.nav.actions';
 import { css } from '@emotion/css';
@@ -23,8 +25,6 @@ import { css } from '@emotion/css';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
-
-  //const [actions, setActions] = useState<Action[]>(getGlobalActions());
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
 
@@ -32,10 +32,7 @@ export const CommandPalette = () => {
     const addDashboardActions = async () => {
       const staticActions = getGlobalActions();
       const dashAct = await getDashboardNavActions();
-      console.log('add dashboard actions', query);
       setActions([...staticActions, ...dashAct]);
-      //setActions([...actions, ...dashAct]);
-      //return dashAct;
     };
     addDashboardActions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,28 +55,25 @@ export const CommandPalette = () => {
   );
 };
 
-function RenderResults() {
-  const { results } = useMatches();
+const RenderResults = () => {
+  const { results, rootActionId } = useMatches();
+  const styles = useStyles2(getSearchStyles);
 
   return (
-    <KBarResults
-      items={results}
-      onRender={({ item, active }) =>
-        typeof item === 'string' ? (
-          <div>{item}</div>
-        ) : (
-          <div
-            style={{
-              background: active ? '#eee' : 'transparent',
-            }}
-          >
-            {item.name}
-          </div>
-        )
-      }
-    />
+    <div style={{ padding: `8px 0` }}>
+      <KBarResults
+        items={results}
+        onRender={({ item, active }) =>
+          typeof item === 'string' ? (
+            <div className={styles.sectionHeader}>{item}</div>
+          ) : (
+            <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
+          )
+        }
+      />
+    </div>
   );
-}
+};
 
 const getSearchStyles = (theme: GrafanaTheme2) => ({
   positioner: css({
@@ -122,3 +116,11 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
 });
+
+export const CommandPaletteContainer = () => {
+  return (
+    <KBarProvider actions={[]} options={{ enableHistory: true }}>
+      <CommandPalette />
+    </KBarProvider>
+  );
+};
