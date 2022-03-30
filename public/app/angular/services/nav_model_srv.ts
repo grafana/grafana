@@ -1,46 +1,49 @@
 import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
-import { find, isNumber } from 'lodash';
-import { NavModel } from '@grafana/data';
+import { NavModel, NavModelItem } from '@grafana/data';
+
+interface Nav {
+  breadcrumbs: NavModelItem[];
+  node?: NavModelItem;
+  main?: NavModelItem;
+}
 
 export class NavModelSrv {
-  navItems: any;
+  navItems: NavModelItem[];
 
   constructor() {
     this.navItems = config.bootData.navTree;
   }
 
   getCfgNode() {
-    return find(this.navItems, { id: 'cfg' });
+    return this.navItems.find((navItem) => navItem.id === 'cfg');
   }
 
   getNav(...args: Array<string | number>) {
     let children = this.navItems;
-    const nav = {
+    const nav: Nav = {
       breadcrumbs: [],
-    } as any;
+    };
 
     for (const id of args) {
       // if its a number then it's the index to use for main
-      if (isNumber(id)) {
+      if (typeof id === 'number') {
         nav.main = nav.breadcrumbs[id];
         break;
       }
 
-      const node: any = find(children, { id: id });
-      nav.breadcrumbs.push(node);
-      nav.node = node;
-      nav.main = node;
-      children = node.children;
+      const node = children.find((child) => child.id === id);
+      if (node) {
+        nav.breadcrumbs.push(node);
+        nav.node = node;
+        nav.main = node;
+        children = node.children ?? [];
+      }
     }
 
-    if (nav.main.children) {
+    if (nav.main?.children) {
       for (const item of nav.main.children) {
-        item.active = false;
-
-        if (item.url === nav.node.url) {
-          item.active = true;
-        }
+        item.active = item.url === nav.node?.url;
       }
     }
 

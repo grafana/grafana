@@ -239,8 +239,8 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func (r *SQLAnnotationRepo) Delete(params *annotations.DeleteParams) error {
-	return inTransaction(func(sess *DBSession) error {
+func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.DeleteParams) error {
+	return r.sql.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var (
 			sql        string
 			annoTagSQL string
@@ -275,17 +275,19 @@ func (r *SQLAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 	})
 }
 
-func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	if query.Limit == 0 {
-		query.Limit = 100
-	}
+func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	var items []*annotations.Tag
+	err := r.sql.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if query.Limit == 0 {
+			query.Limit = 100
+		}
 
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
-	tagKey := `tag.` + dialect.Quote("key")
-	tagValue := `tag.` + dialect.Quote("value")
+		var sql bytes.Buffer
+		params := make([]interface{}, 0)
+		tagKey := `tag.` + dialect.Quote("key")
+		tagValue := `tag.` + dialect.Quote("value")
 
-	sql.WriteString(`
+		sql.WriteString(`
 		SELECT
 			` + tagKey + `,
 			` + tagValue + `,
@@ -294,21 +296,22 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) (annotations.
 		INNER JOIN annotation_tag ON tag.id = annotation_tag.tag_id
 `)
 
-	sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
-	params = append(params, query.OrgID)
+		sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
+		params = append(params, query.OrgID)
 
-	sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
-	params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
+		sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
+		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
 
-	sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
-	sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
-	sql.WriteString(` ` + dialect.Limit(query.Limit))
+		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
+		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
+		sql.WriteString(` ` + dialect.Limit(query.Limit))
 
-	var items []*annotations.Tag
-	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
+		err := dbSession.SQL(sql.String(), params...).Find(&items)
+		return err
+	})
+	if err != nil {
 		return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, err
 	}
-
 	tags := make([]*annotations.TagsDTO, 0)
 	for _, item := range items {
 		tag := item.Key
