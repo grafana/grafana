@@ -35,6 +35,13 @@ async function fetchDashboard(
   dispatch: ThunkDispatch,
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
+  // When creating new or adding panels to a dashboard from explore we load it from local storage
+  const model = store.getObject<DashboardDTO | null>(DASHBOARD_FROM_LS_KEY, null);
+  if (model) {
+    store.delete(DASHBOARD_FROM_LS_KEY);
+    return model;
+  }
+
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
@@ -74,13 +81,6 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
-        // When creating new dashboard with panel from explore
-        const model = store.getObject<DashboardDTO | null>(NEW_DASHBOARD_MODEL_LS_KEY, null);
-        if (model) {
-          store.delete(NEW_DASHBOARD_MODEL_LS_KEY);
-          return model;
-        }
-
         return getNewDashboardModelData(args.urlFolderId);
       }
       default:
@@ -235,8 +235,8 @@ export function getNewDashboardModelData(urlFolderId?: string | null): any {
   return data;
 }
 
-const NEW_DASHBOARD_MODEL_LS_KEY = 'TEMP_NEW_DASHBOARD_MODEL';
+const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
 
-export function setNewDashboardModel(model: DashboardDTO) {
-  store.setObject(NEW_DASHBOARD_MODEL_LS_KEY, model);
+export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
+  store.setObject(DASHBOARD_FROM_LS_KEY, model);
 }

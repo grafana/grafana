@@ -1,8 +1,11 @@
 import { DataFrame, DataQuery } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { getNewDashboardModelData, setNewDashboardModel } from 'app/features/dashboard/state/initDashboard';
-import { ExploreItemState, ExplorePanelData } from 'app/types';
+import {
+  getNewDashboardModelData,
+  setDashboardToFetchFromLocalStorage,
+} from 'app/features/dashboard/state/initDashboard';
+import { DashboardDTO, ExploreItemState, ExplorePanelData } from 'app/types';
 
 export enum SaveTarget {
   NewDashboard,
@@ -38,22 +41,23 @@ export function addPanelToDashboard(options: AddPanelToDashboardOptions) {
 function addToNewDashboard(panel: any, openInNewTab?: boolean) {
   const dto = getNewDashboardModelData();
   dto.dashboard.panels = [panel];
-
-  setNewDashboardModel(dto);
-
-  if (!openInNewTab) {
-    locationService.push('/dashboard/new');
-  } else {
-    window.open(config.appUrl + 'dashboard/new', '_blank');
-  }
+  openDashboard('dashboard/new', dto, openInNewTab);
 }
 
 async function addToExisting(panel: any, uid: string, openInNewTab?: boolean) {
-  const dashboardData = await backendSrv.getDashboardByUid(uid);
-  dashboardData.dashboard.panels = [panel, ...(dashboardData.dashboard.panels ?? [])];
+  const dto = await backendSrv.getDashboardByUid(uid);
+  dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
+  openDashboard(`d/${uid}`, dto, openInNewTab);
+}
 
-  // Save to local storage
-  // open
+function openDashboard(url: string, dto: DashboardDTO, openInNewTab?: boolean) {
+  setDashboardToFetchFromLocalStorage(dto);
+
+  if (!openInNewTab) {
+    locationService.push('dashboard/new');
+  } else {
+    window.open(config.appUrl + url, '_blank');
+  }
 }
 
 const isVisible = (query: DataQuery) => !query.hide;
