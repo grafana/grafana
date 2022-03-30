@@ -76,6 +76,17 @@ func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
 
 		case "stats":
 			v := iter.Read()
+			if len(rsp.Frames) > 0 {
+				meta := rsp.Frames[0].Meta
+				if meta == nil {
+					meta = &data.FrameMeta{}
+					rsp.Frames[0].Meta = meta
+				}
+				meta.Custom = map[string]interface{}{
+					"stats": v,
+				}
+			}
+
 			fmt.Printf("[data] TODO, support stats: %v\n", v)
 
 		default:
@@ -289,6 +300,59 @@ func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
 func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
+	labelsField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	labelsField.Name = "__labels" // avoid automatically spreading this by labels
+
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	timeField.Name = "Time"
+
+	lineField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	lineField.Name = "Line"
+
+	// Nanoseconds time field
+	tsField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	tsField.Name = "TS"
+
+	labels := data.Labels{}
+	labelString := labels.String()
+
+	for iter.ReadArray() {
+
+		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+			switch l1Field {
+			case "stream":
+				iter.ReadVal(&labels)
+				labelString = labels.String()
+
+			case "values":
+				for iter.ReadArray() {
+					iter.ReadArray()
+					ts := iter.ReadString()
+					iter.ReadArray()
+					line := iter.ReadString()
+					iter.ReadArray()
+
+					t := timeFromLokiString(ts)
+
+					labelsField.Append(labelString)
+					timeField.Append(t)
+					lineField.Append(line)
+					tsField.Append(ts)
+				}
+			}
+		}
+	}
+
+	frame := data.NewFrame("", labelsField, timeField, lineField, tsField)
+	frame.Meta = &data.FrameMeta{}
+	rsp.Frames = append(rsp.Frames, frame)
+
+	return rsp
+}
+
+func readStreamFrames(iter *jsoniter.Iterator) *backend.DataResponse {
+	rsp := &backend.DataResponse{}
+
 	for iter.ReadArray() {
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0) // for now!
 		timeField.Name = "Time"
@@ -321,10 +385,6 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 				}
 			}
 		}
-
-		frame := data.NewFrame("", timeField, lineField, tsField)
-		frame.Meta = &data.FrameMeta{}
-		rsp.Frames = append(rsp.Frames, frame)
 	}
 
 	return rsp
