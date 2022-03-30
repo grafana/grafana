@@ -1,7 +1,8 @@
 import { parser } from '@grafana/lezer-logql';
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
-import { LokiVisualQuery } from './types';
+import { binaryScalarDefs } from './binaryScalarOperations';
+import { LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 // This is used for error type
 const ErrorName = '⚠';
@@ -84,6 +85,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 
     case 'VectorAggregationExpr': {
       visQuery.operations.push(handleVectorAggregation(expr, node, context));
+      break;
+    }
+
+    case 'BinOpExpr': {
+      handleBinary(expr, node, context);
       break;
     }
 
@@ -269,7 +275,136 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   return op;
 }
 
-function getString(expr: string, node: SyntaxNode | TreeCursor | null) {
+const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
+  acc[def.sign] = {
+    id: def.id,
+    comparison: def.comparison,
+  };
+  return acc;
+}, {} as Record<string, { id: string; comparison?: boolean }>);
+
+/**
+ * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
+ * just operation with scalar or it creates a binaryQuery when it's 2 queries.
+ * @param expr
+ * @param node
+ * @param context
+ */
+function handleBinary(expr: string, node: SyntaxNode, context: Context) {
+  const visQuery = context.query;
+  const left = node.firstChild!;
+  const op = getString(expr, left.nextSibling);
+  const binModifier = getBinaryModifier(expr, node.getChild('BinModifiers'));
+
+  const right = node.lastChild!;
+
+  const opDef = operatorToOpName[op];
+
+  const leftNumber = left.getChild('NumberLiteral');
+  const rightNumber = right.getChild('NumberLiteral');
+
+  const rightBinary = right.getChild('BinOpExpr');
+
+  if (leftNumber) {
+    // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+    //  if query starts with a number that isn't handled now.
+  } else {
+    // If this is binary we don't really know if there is a query or just chained scalars. So
+    // we have to traverse a bit deeper to know
+    handleExpression(expr, left, context);
+  }
+
+  if (rightNumber) {
+    visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+  } else if (rightBinary) {
+    // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
+    // is a factor for a current binary operation. So we have to add it as an operation now.
+    const leftMostChild = getLeftMostChild(right);
+    if (leftMostChild?.name === 'NumberLiteral') {
+      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
+    }
+
+    // If we added the first number literal as operation here we still can continue and handle the rest as the first
+    // number will be just skipped.
+    handleExpression(expr, right, context);
+  } else {
+    visQuery.binaryQueries = visQuery.binaryQueries || [];
+    const binQuery: LokiVisualQueryBinary = {
+      operator: op,
+      query: {
+        labels: [],
+        operations: [],
+      },
+    };
+    if (binModifier?.isMatcher) {
+      binQuery.vectorMatchesType = binModifier.matchType;
+      binQuery.vectorMatches = binModifier.matches;
+    }
+    visQuery.binaryQueries.push(binQuery);
+    handleExpression(expr, right, {
+      query: binQuery.query,
+      errors: context.errors,
+    });
+  }
+}
+
+function getBinaryModifier(
+  expr: string,
+  node: SyntaxNode | null
+):
+  | { isBool: true; isMatcher: false }
+  | { isBool: false; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
+  | undefined {
+  if (!node) {
+    return undefined;
+  }
+  if (node.getChild('Bool')) {
+    return { isBool: true, isMatcher: false };
+  } else {
+    const matcher = node.getChild('OnOrIgnoring');
+    if (!matcher) {
+      // Not sure what this could be, maybe should be an error.
+      return undefined;
+    }
+    const labels = getString(expr, matcher.getChild('GroupingLabels')?.getChild('GroupingLabelList'));
+    return {
+      isMatcher: true,
+      isBool: false,
+      matches: labels,
+      matchType: matcher.getChild('On') ? 'on' : 'ignoring',
+    };
+  }
+}
+
+function makeBinOp(
+  opDef: { id: string; comparison?: boolean },
+  expr: string,
+  numberNode: SyntaxNode,
+  hasBool: boolean
+) {
+  const params: any[] = [parseFloat(getString(expr, numberNode))];
+  if (opDef.comparison) {
+    params.unshift(hasBool);
+  }
+  return {
+    id: opDef.id,
+    params,
+  };
+}
+
+function getLeftMostChild(cur: SyntaxNode): SyntaxNode | null {
+  let child = cur;
+  while (true) {
+    if (child.firstChild) {
+      child = child.firstChild;
+    } else {
+      break;
+    }
+  }
+  return child;
+}
+
+function getString(expr: string, node: SyntaxNode | TreeCursor | null | undefined) {
   if (!node) {
     return '';
   }

@@ -286,6 +286,36 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses binary query', () => {
+    expect(buildVisualQueryFromString('rate({project="bar"}[5m]) / rate({project="foo"}[5m])')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'bar',
+            label: 'project',
+          },
+        ],
+        operations: [{ id: 'rate', params: ['5m'] }],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              labels: [
+                {
+                  op: '=',
+                  value: 'foo',
+                  label: 'project',
+                },
+              ],
+              operations: [{ id: 'rate', params: ['5m'] }],
+            },
+          },
+        ],
+      })
+    );
+  });
 });
 
 function noErrors(query: LokiVisualQuery) {
