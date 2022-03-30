@@ -56,7 +56,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
   /**
    * Function that configures transformation and returns a transformer
+   * @param map
    * @param options
+   * @param theme
    */
   create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
     // Assert default values
@@ -137,8 +139,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           // Post updates to the legend component
           if (legend) {
             legendProps.next({
-              color: style.dims?.color,
+              styleConfig: style,
               size: style.dims?.size,
+              layerName: options.name,
             });
           }
 
