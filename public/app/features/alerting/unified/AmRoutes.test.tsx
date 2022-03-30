@@ -266,24 +266,24 @@ describe('AmRoutes', () => {
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
-    userEvent.click(byText('Timing options').get(rootRouteContainer));
+    await userEvent.click(byText('Timing options').get(rootRouteContainer));
 
     await updateTiming(ui.groupWaitContainer.get(), '1', 'Minutes');
     await updateTiming(ui.groupIntervalContainer.get(), '4', 'Minutes');
     await updateTiming(ui.groupRepeatContainer.get(), '5', 'Hours');
 
     //save
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -326,17 +326,17 @@ describe('AmRoutes', () => {
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
-    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
     //save
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -407,8 +407,8 @@ describe('AmRoutes', () => {
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -478,8 +478,8 @@ describe('AmRoutes', () => {
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -580,7 +580,7 @@ describe('AmRoutes', () => {
     await renderAmRoutes(dataSources.am.name);
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(1);
-    userEvent.click(ui.editRouteButton.get(rows[0]));
+    await userEvent.click(ui.editRouteButton.get(rows[0]));
 
     const muteTimingSelect = ui.muteTimingSelect.get();
     await clickSelectOption(muteTimingSelect, 'default-mute');
@@ -589,7 +589,7 @@ describe('AmRoutes', () => {
     const savePolicyButton = ui.savePolicyButton.get();
     expect(savePolicyButton).toBeInTheDocument();
 
-    userEvent.click(savePolicyButton);
+    await userEvent.click(savePolicyButton);
 
     await waitFor(() => expect(savePolicyButton).not.toBeInTheDocument());
 
@@ -618,14 +618,14 @@ describe('AmRoutes', () => {
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('combobox').get(selectElement));
+  await userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
   const input = byRole('textbox').get(selectElement);
   const select = byRole('combobox').get(selectElement);
-  userEvent.type(input, value);
-  userEvent.click(select);
+  await userEvent.type(input, value);
+  await userEvent.click(select);
   await selectOptionInTest(selectElement, timeUnit);
 };

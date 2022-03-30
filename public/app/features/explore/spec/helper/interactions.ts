@@ -9,19 +9,19 @@ export const changeDatasource = async (name: string) => {
   fireEvent.click(option);
 };
 
-export const inputQuery = (query: string) => {
+export const inputQuery = async (query: string) => {
   const input = screen.getByRole('textbox', { name: 'query' });
-  userEvent.type(input, query);
+  await userEvent.type(input, query);
 };
 
-export const runQuery = () => {
+export const runQuery = async () => {
   const button = screen.getByRole('button', { name: /run query/i });
-  userEvent.click(button);
+  await userEvent.click(button);
 };
 
 export const openQueryHistory = async () => {
   const button = screen.getByRole('button', { name: 'Rich history button' });
-  userEvent.click(button);
+  await userEvent.click(button);
   expect(
     await screen.findByText('The history is local to your browser and is not shared with others.')
   ).toBeInTheDocument();

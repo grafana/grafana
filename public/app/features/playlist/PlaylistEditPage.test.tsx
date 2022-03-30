@@ -63,10 +63,10 @@ describe('PlaylistEditPage', () => {
       const { putMock } = await getTestContext();
 
       expect(locationService.getLocation().pathname).toEqual('/');
-      userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
-      userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
-      userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
-      userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
+      await userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
+      await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(putMock).toHaveBeenCalledTimes(1));
       expect(putMock).toHaveBeenCalledWith('/api/playlists/1', {

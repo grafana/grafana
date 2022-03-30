@@ -7,7 +7,7 @@ import { setSearchQuery } from './state/reducers';
 import { mockToolkitActionCreator } from '../../../test/core/redux/mocks';
 import { getMultipleMockKeys } from './__mocks__/apiKeysMock';
 import { selectors } from '@grafana/e2e-selectors';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 
 const setup = (propOverrides: Partial<Props>) => {
@@ -109,7 +109,7 @@ describe('ApiKeysPage', () => {
 
       setSearchQueryMock.mockClear();
       expect(screen.getByPlaceholderText(/search keys/i)).toBeInTheDocument();
-      userEvent.type(screen.getByPlaceholderText(/search keys/i), 'First');
+      await userEvent.type(screen.getByPlaceholderText(/search keys/i), 'First');
       expect(setSearchQueryMock).toHaveBeenCalledTimes(5);
     });
   });
@@ -127,10 +127,10 @@ describe('ApiKeysPage', () => {
 
       deleteApiKeyMock.mockClear();
       expect(within(firstRow).getByLabelText('Delete API key')).toBeInTheDocument();
-      userEvent.click(within(firstRow).getByLabelText('Delete API key'));
+      await userEvent.click(within(firstRow).getByLabelText('Delete API key'));
 
       expect(within(firstRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
-      userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }));
+      await userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }));
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(1);
 
@@ -138,10 +138,10 @@ describe('ApiKeysPage', () => {
 
       deleteApiKeyMock.mockClear();
       expect(within(secondRow).getByLabelText('Delete API key')).toBeInTheDocument();
-      userEvent.click(within(secondRow).getByLabelText('Delete API key'));
+      await userEvent.click(within(secondRow).getByLabelText('Delete API key'));
       expect(within(secondRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
-      userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }), undefined, {
-        skipPointerEventsCheck: true,
+      await userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }), {
+        pointerEventsCheck: PointerEventsCheckLevel.Never,
       });
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(2);
@@ -154,7 +154,7 @@ describe('ApiKeysPage', () => {
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();
-      userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('New API key')));
+      await userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('New API key')));
       await addAndVerifyApiKey(addApiKeyMock);
     });
   });
@@ -165,13 +165,13 @@ describe('ApiKeysPage', () => {
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();
-      userEvent.click(screen.getByRole('button', { name: /add api key/i }));
+      await userEvent.click(screen.getByRole('button', { name: /add api key/i }));
       await addAndVerifyApiKey(addApiKeyMock);
 
       toggleShowExpired();
 
       addApiKeyMock.mockClear();
-      userEvent.click(screen.getByRole('button', { name: /add api key/i }));
+      await userEvent.click(screen.getByRole('button', { name: /add api key/i }));
       await addAndVerifyApiKey(addApiKeyMock);
     });
   });
@@ -182,20 +182,20 @@ describe('ApiKeysPage', () => {
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();
-      userEvent.click(screen.getByRole('button', { name: /add api key/i }));
-      userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
-      userEvent.type(screen.getByPlaceholderText(/1d/i), '60x');
+      await userEvent.click(screen.getByRole('button', { name: /add api key/i }));
+      await userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
+      await userEvent.type(screen.getByPlaceholderText(/1d/i), '60x');
       expect(screen.queryByText(/not a valid duration/i)).not.toBeInTheDocument();
-      userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+      await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
       expect(screen.getByText(/not a valid duration/i)).toBeInTheDocument();
       expect(addApiKeyMock).toHaveBeenCalledTimes(0);
     });
   });
 });
 
-function toggleShowExpired() {
+async function toggleShowExpired() {
   expect(screen.queryByLabelText(/include expired keys/i)).toBeInTheDocument();
-  userEvent.click(screen.getByLabelText(/include expired keys/i));
+  await userEvent.click(screen.getByLabelText(/include expired keys/i));
 }
 
 async function addAndVerifyApiKey(addApiKeyMock: jest.Mock) {
@@ -204,9 +204,9 @@ async function addAndVerifyApiKey(addApiKeyMock: jest.Mock) {
   expect(screen.getByPlaceholderText(/1d/i)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /^add$/i })).toBeInTheDocument();
 
-  userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
-  userEvent.type(screen.getByPlaceholderText(/1d/i), '60s');
-  userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+  await userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
+  await userEvent.type(screen.getByPlaceholderText(/1d/i), '60s');
+  await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
   expect(addApiKeyMock).toHaveBeenCalledTimes(1);
   expect(addApiKeyMock).toHaveBeenCalledWith({ name: 'Test', role: 'Viewer', secondsToLive: 60 }, expect.anything());
 }

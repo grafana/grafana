@@ -447,14 +447,14 @@ describe('Plugin details page', () => {
       await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       // Open the confirmation modal
-      userEvent.click(getByRole('button', { name: /uninstall/i }));
+      await userEvent.click(getByRole('button', { name: /uninstall/i }));
 
       expect(queryByText('Uninstall Akumuli')).toBeInTheDocument();
       expect(queryByText('Are you sure you want to uninstall this plugin?')).toBeInTheDocument();
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(0);
 
       // Confirm the uninstall
-      userEvent.click(getByRole('button', { name: /confirm/i }));
+      await userEvent.click(getByRole('button', { name: /confirm/i }));
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(1);
       expect(api.uninstallPlugin).toHaveBeenCalledWith(id);
 
@@ -635,7 +635,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Enable"
-      userEvent.click(getByRole('button', { name: /enable/i }));
+      await userEvent.click(getByRole('button', { name: /enable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
@@ -675,7 +675,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Disable"
-      userEvent.click(getByRole('button', { name: /disable/i }));
+      await userEvent.click(getByRole('button', { name: /disable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);

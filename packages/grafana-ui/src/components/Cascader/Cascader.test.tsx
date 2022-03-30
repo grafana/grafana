@@ -1,7 +1,7 @@
 import React from 'react';
 import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
 const options = [
   {
@@ -52,71 +52,71 @@ describe('Cascader', () => {
     it('displays updated options', () => {
       render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
 
-      act(() => {
-        userEvent.click(screen.getByPlaceholderText(placeholder));
+      act(async () => {
+        await userEvent.click(screen.getByPlaceholderText(placeholder));
       });
 
       expect(screen.getByText('Initial state option')).toBeInTheDocument();
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
-      act(() => {
+      act(async () => {
         jest.runAllTimers();
-        userEvent.click(screen.getByPlaceholderText(placeholder));
+        await userEvent.click(screen.getByPlaceholderText(placeholder));
       });
 
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
       expect(screen.getByText('First')).toBeInTheDocument();
     });
 
-    it('filters updated results when searching', () => {
+    it('filters updated results when searching', async () => {
       render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
 
       act(() => {
         jest.runAllTimers();
       });
 
-      userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
+      await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
       expect(screen.queryByText('Second')).not.toBeInTheDocument();
       expect(screen.getByText('First / Third')).toBeInTheDocument();
     });
   });
 
-  it('filters results when searching', () => {
+  it('filters results when searching', async () => {
     render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
 
-    userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
+    await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
 
     expect(screen.queryByText('Second')).not.toBeInTheDocument();
     expect(screen.getByText('First / Third')).toBeInTheDocument();
   });
 
-  it('displays selected value with all levels when displayAllSelectedLevels is true and selecting a value from the search', () => {
+  it('displays selected value with all levels when displayAllSelectedLevels is true and selecting a value from the search', async () => {
     render(
       <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={jest.fn()} />
     );
 
-    userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
-    userEvent.click(screen.getByText('First / Third'));
+    await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
+    await userEvent.click(screen.getByText('First / Third'));
 
     expect(screen.getByDisplayValue('First / Third')).toBeInTheDocument();
   });
 
-  it('displays all levels selected with default separator when displayAllSelectedLevels is true', () => {
+  it('displays all levels selected with default separator when displayAllSelectedLevels is true', async () => {
     render(
       <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={() => {}} />
     );
 
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
-    userEvent.click(screen.getByPlaceholderText(placeholder));
+    await userEvent.click(screen.getByPlaceholderText(placeholder));
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
-    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
+    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
     expect(screen.getByDisplayValue('First/Second')).toBeInTheDocument();
   });
 
-  it('displays all levels selected with separator passed in when displayAllSelectedLevels is true', () => {
+  it('displays all levels selected with separator passed in when displayAllSelectedLevels is true', async () => {
     const separator = ',';
 
     render(
@@ -131,34 +131,34 @@ describe('Cascader', () => {
 
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
-    userEvent.click(screen.getByPlaceholderText(placeholder));
+    await userEvent.click(screen.getByPlaceholderText(placeholder));
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
-    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
+    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
     expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
   });
 
-  it('displays last level selected when displayAllSelectedLevels is false', () => {
+  it('displays last level selected when displayAllSelectedLevels is false', async () => {
     render(
       <Cascader displayAllSelectedLevels={false} placeholder={placeholder} options={options} onSelect={jest.fn()} />
     );
 
-    userEvent.click(screen.getByPlaceholderText(placeholder));
+    await userEvent.click(screen.getByPlaceholderText(placeholder));
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
-    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
+    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
 
-  it('displays last level selected when displayAllSelectedLevels is not passed in', () => {
+  it('displays last level selected when displayAllSelectedLevels is not passed in', async () => {
     render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
 
-    userEvent.click(screen.getByPlaceholderText(placeholder));
+    await userEvent.click(screen.getByPlaceholderText(placeholder));
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
-    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
+    await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });

@@ -56,7 +56,7 @@ describe('Login Page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Login button' }));
     expect(await screen.findByText('Email or username is required')).toBeInTheDocument();
 
-    userEvent.type(screen.getByRole('textbox', { name: 'Username input field' }), 'admin');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Username input field' }), 'admin');
     await waitFor(() => expect(screen.queryByText('Email or username is required')).not.toBeInTheDocument());
   });
   it('should pass validation checks for password field', async () => {
@@ -65,7 +65,7 @@ describe('Login Page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Login button' }));
     expect(await screen.findByText('Password is required')).toBeInTheDocument();
 
-    userEvent.type(screen.getByLabelText('Password input field'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password input field'), 'admin');
     await waitFor(() => expect(screen.queryByText('Password is required')).not.toBeInTheDocument());
   });
   it('should navigate to default url if credentials is valid', async () => {
@@ -77,8 +77,8 @@ describe('Login Page', () => {
     postMock.mockResolvedValueOnce({ message: 'Logged in' });
     render(<LoginPage />);
 
-    userEvent.type(screen.getByLabelText('Username input field'), 'admin');
-    userEvent.type(screen.getByLabelText('Password input field'), 'test');
+    await userEvent.type(screen.getByLabelText('Username input field'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password input field'), 'test');
     fireEvent.click(screen.getByLabelText('Login button'));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' }));

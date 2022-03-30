@@ -53,18 +53,18 @@ describe('NavBarItem', () => {
       it('then the onClick handler should be called', () => {
         getTestContext();
 
-        act(() => {
-          userEvent.click(screen.getByRole('button'));
+        act(async () => {
+          await userEvent.click(screen.getByRole('button'));
         });
         expect(onClickMock).toHaveBeenCalledTimes(1);
       });
     });
 
     describe('and hovering over the menu trigger button', () => {
-      it('then the menu items should be visible', () => {
+      it('then the menu items should be visible', async () => {
         getTestContext();
 
-        userEvent.hover(screen.getByRole('button'));
+        await userEvent.hover(screen.getByRole('button'));
 
         expect(screen.getByRole('menuitem', { name: 'Parent Node' })).toBeInTheDocument();
         expect(screen.getByText('Child Node 1')).toBeInTheDocument();
@@ -73,10 +73,10 @@ describe('NavBarItem', () => {
     });
 
     describe('and tabbing to the menu trigger button', () => {
-      it('then the menu items should be visible', () => {
+      it('then the menu items should be visible', async () => {
         getTestContext();
 
-        userEvent.tab();
+        await userEvent.tab();
 
         expect(screen.getByText('Parent Node')).toBeInTheDocument();
         expect(screen.getByText('Child Node 1')).toBeInTheDocument();
@@ -85,16 +85,16 @@ describe('NavBarItem', () => {
     });
 
     describe('and pressing arrow right on the menu trigger button', () => {
-      it('then the correct menu item should receive focus', () => {
+      it('then the correct menu item should receive focus', async () => {
         getTestContext();
 
-        userEvent.tab();
+        await userEvent.tab();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getByRole('menuitem', { name: 'Parent Node' })).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
 
-        userEvent.keyboard('{arrowright}');
+        await userEvent.keyboard('{arrowright}');
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '0');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
@@ -112,10 +112,10 @@ describe('NavBarItem', () => {
     });
 
     describe('and hovering over the menu trigger link', () => {
-      it('then the menu items should be visible', () => {
+      it('then the menu items should be visible', async () => {
         getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
 
-        userEvent.hover(screen.getByRole('link'));
+        await userEvent.hover(screen.getByRole('link'));
 
         expect(screen.getByText('Parent Node')).toBeInTheDocument();
         expect(screen.getByText('Child Node 1')).toBeInTheDocument();
@@ -124,10 +124,10 @@ describe('NavBarItem', () => {
     });
 
     describe('and tabbing to the menu trigger link', () => {
-      it('then the menu items should be visible', () => {
+      it('then the menu items should be visible', async () => {
         getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
 
-        userEvent.tab();
+        await userEvent.tab();
 
         expect(screen.getByText('Parent Node')).toBeInTheDocument();
         expect(screen.getByText('Child Node 1')).toBeInTheDocument();
@@ -136,17 +136,17 @@ describe('NavBarItem', () => {
     });
 
     describe('and pressing arrow right on the menu trigger link', () => {
-      it('then the correct menu item should receive focus', () => {
+      it('then the correct menu item should receive focus', async () => {
         getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
 
-        userEvent.tab();
+        await userEvent.tab();
         expect(screen.getAllByRole('link')[0]).toHaveFocus();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
 
-        userEvent.keyboard('{arrowright}');
+        await userEvent.keyboard('{arrowright}');
         expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '0');
@@ -156,18 +156,18 @@ describe('NavBarItem', () => {
     });
 
     describe('and pressing arrow left on a menu item', () => {
-      it('then the nav bar item should receive focus', () => {
+      it('then the nav bar item should receive focus', async () => {
         getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
 
-        userEvent.tab();
-        userEvent.keyboard('{arrowright}');
+        await userEvent.tab();
+        await userEvent.keyboard('{arrowright}');
         expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '0');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
 
-        userEvent.keyboard('{arrowleft}');
+        await userEvent.keyboard('{arrowleft}');
         expect(screen.getAllByRole('link')[0]).toHaveFocus();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
         expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '-1');
@@ -189,14 +189,14 @@ describe('NavBarItem', () => {
           '/grafana'
         );
 
-        userEvent.hover(screen.getByRole('link'));
+        await userEvent.hover(screen.getByRole('link'));
         await waitFor(() => {
           expect(screen.getByText('Parent Node')).toBeInTheDocument();
           expect(screen.getByText('New')).toBeInTheDocument();
         });
 
-        act(() => {
-          userEvent.click(screen.getByText('New'));
+        act(async () => {
+          await userEvent.click(screen.getByText('New'));
         });
         await waitFor(() => {
           expect(pushMock).toHaveBeenCalledTimes(1);
@@ -215,14 +215,14 @@ describe('NavBarItem', () => {
           },
         });
 
-        userEvent.hover(screen.getByRole('link'));
+        await userEvent.hover(screen.getByRole('link'));
         await waitFor(() => {
           expect(screen.getByText('Parent Node')).toBeInTheDocument();
           expect(screen.getByText('New')).toBeInTheDocument();
         });
 
-        act(() => {
-          userEvent.click(screen.getByText('New'));
+        act(async () => {
+          await userEvent.click(screen.getByText('New'));
         });
         await waitFor(() => {
           expect(pushMock).toHaveBeenCalledTimes(1);

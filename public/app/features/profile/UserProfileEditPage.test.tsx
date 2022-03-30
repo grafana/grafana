@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { within } from '@testing-library/dom';
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -239,10 +239,10 @@ describe('UserProfileEditPage', () => {
         const { props } = await getTestContext();
 
         const { email, saveProfile } = getSelectors();
-        userEvent.clear(email());
-        userEvent.type(email(), 'test@test.se');
+        await userEvent.clear(email());
+        await userEvent.type(email(), 'test@test.se');
         // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-        userEvent.click(saveProfile(), undefined, { skipPointerEventsCheck: true });
+        await userEvent.click(saveProfile(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
         await waitFor(() => expect(props.updateUserProfile).toHaveBeenCalledTimes(1));
         expect(props.updateUserProfile).toHaveBeenCalledWith({
@@ -261,7 +261,7 @@ describe('UserProfileEditPage', () => {
             name: /select organisation/i,
           });
 
-        userEvent.click(orgsAdminSelectButton());
+        await userEvent.click(orgsAdminSelectButton());
 
         await waitFor(() => expect(props.changeUserOrg).toHaveBeenCalledTimes(1));
         expect(props.changeUserOrg).toHaveBeenCalledWith({
@@ -280,7 +280,7 @@ describe('UserProfileEditPage', () => {
             name: /revoke user session/i,
           });
 
-        userEvent.click(sessionsRevokeButton());
+        await userEvent.click(sessionsRevokeButton());
 
         await waitFor(() => expect(props.revokeUserSession).toHaveBeenCalledTimes(1));
         expect(props.revokeUserSession).toHaveBeenCalledWith(0);

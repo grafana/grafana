@@ -222,7 +222,7 @@ describe('Wrapper', () => {
     };
     setupExplore({ urlParams });
     const closeButtons = await screen.findAllByTitle(/Close split pane/i);
-    userEvent.click(closeButtons[1]);
+    await userEvent.click(closeButtons[1]);
 
     await waitFor(() => {
       const logsPanels = screen.queryAllByTitle(/Close split pane/i);

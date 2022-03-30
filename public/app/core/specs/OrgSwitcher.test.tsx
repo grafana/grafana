@@ -53,7 +53,7 @@ describe('OrgSwitcher', () => {
     it('should switch orgId in call to backend', async () => {
       const row = screen.getByRole('row', { name: /org 2 admin switch to/i });
       const switchToButton = within(row).getByText(/switch to/i);
-      userEvent.click(switchToButton);
+      await userEvent.click(switchToButton);
 
       await waitFor(() => expect(setUserOrgSpy).toBeCalledWith({ orgId: 2, name: 'Org 2', role: 'Admin' }));
     });
@@ -63,7 +63,7 @@ describe('OrgSwitcher', () => {
 
       const row = screen.getByRole('row', { name: /org 2 admin switch to/i });
       const switchToButton = within(row).getByText(/switch to/i);
-      userEvent.click(switchToButton);
+      await userEvent.click(switchToButton);
 
       await waitFor(() => expect(window.location.href).toEqual('/subUrl/?orgId=2'));
     });

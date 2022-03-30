@@ -200,7 +200,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        userEvent.click(screen.getByText(/result text/i));
+        await userEvent.click(screen.getByText(/result text/i));
         await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
         expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardIds: 14 });
@@ -215,7 +215,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByText('Result tag B')).toBeInTheDocument();
-        userEvent.click(screen.getByText('Result tag B'));
+        await userEvent.click(screen.getByText('Result tag B'));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(
@@ -239,7 +239,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByRole('img')).toBeInTheDocument();
-        userEvent.click(screen.getByRole('img'));
+        await userEvent.click(screen.getByRole('img'));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(

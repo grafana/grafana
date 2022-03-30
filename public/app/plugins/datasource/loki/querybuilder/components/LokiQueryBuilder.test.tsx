@@ -15,10 +15,10 @@ describe('LokiQueryBuilder', () => {
   it('tries to load labels when no labels are selected', async () => {
     const { datasource } = setup();
     datasource.languageProvider.fetchSeriesLabels = jest.fn().mockReturnValue({ job: ['a'], instance: ['b'] });
-    userEvent.click(screen.getByLabelText('Add'));
+    await userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Labels/);
     const selects = getAllByRole(labels.parentElement!, 'combobox');
-    userEvent.click(selects[3]);
+    await userEvent.click(selects[3]);
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
 });

@@ -71,11 +71,11 @@ describe('OptionPicker', () => {
       expect(getSubMenu('A + C')).toBeInTheDocument();
     });
 
-    it('link text should be clickable', () => {
+    it('link text should be clickable', async () => {
       const { dispatch } = setupTestContext();
 
       dispatch.mockClear();
-      userEvent.click(getSubMenu('A + C'));
+      await userEvent.click(getSubMenu('A + C'));
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
   });
@@ -89,14 +89,14 @@ describe('OptionPicker', () => {
       expect(getSubMenu('A + C')).toBeInTheDocument();
     });
 
-    it('link text should be clickable', () => {
+    it('link text should be clickable', async () => {
       const { dispatch } = setupTestContext({
         variable: defaultVariable,
         pickerState: { id: 'Other' },
       });
 
       dispatch.mockClear();
-      userEvent.click(getSubMenu('A + C'));
+      await userEvent.click(getSubMenu('A + C'));
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
   });
@@ -110,13 +110,13 @@ describe('OptionPicker', () => {
       expect(screen.getByLabelText(selectors.components.LoadingIndicator.icon)).toBeInTheDocument();
     });
 
-    it('link text should not be clickable', () => {
+    it('link text should not be clickable', async () => {
       const { dispatch } = setupTestContext({
         variable: { ...defaultVariable, state: LoadingState.Loading },
       });
 
       dispatch.mockClear();
-      userEvent.click(getSubMenu('A + C'));
+      await userEvent.click(getSubMenu('A + C'));
       expect(dispatch).toHaveBeenCalledTimes(0);
     });
   });

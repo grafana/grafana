@@ -32,9 +32,9 @@ describe('NodeGraph', () => {
     const zoomOut = await screen.findByTitle(/Zoom out/);
 
     expect(getScale()).toBe(1);
-    userEvent.click(zoomIn);
+    await userEvent.click(zoomIn);
     expect(getScale()).toBe(1.5);
-    userEvent.click(zoomOut);
+    await userEvent.click(zoomOut);
     expect(getScale()).toBe(1);
   });
 
@@ -86,14 +86,14 @@ describe('NodeGraph', () => {
     const node = await screen.findByLabelText(/Node: service:0/);
     // This shows warning because there is no position for the click. We cannot add any because we use pageX/Y in the
     // context menu which is experimental (but supported) property and userEvents does not seem to support that
-    act(() => {
-      userEvent.click(node);
+    act(async () => {
+      await userEvent.click(node);
     });
     await screen.findByText(/Node traces/);
 
     const edge = await screen.findByLabelText(/Edge from/);
-    act(() => {
-      userEvent.click(edge);
+    act(async () => {
+      await userEvent.click(edge);
     });
     await screen.findByText(/Edge traces/);
   });
@@ -183,8 +183,8 @@ describe('NodeGraph', () => {
     expect(node).toBeInTheDocument();
 
     const marker = await screen.findByLabelText(/Hidden nodes marker: 3/);
-    act(() => {
-      userEvent.click(marker);
+    act(async () => {
+      await userEvent.click(marker);
     });
 
     expect(screen.queryByLabelText(/Node: service:0/)).not.toBeInTheDocument();
@@ -210,7 +210,7 @@ describe('NodeGraph', () => {
     );
 
     const button = await screen.findByTitle(/Grid layout/);
-    userEvent.click(button);
+    await userEvent.click(button);
 
     await expectNodePositionCloseTo('service:0', { x: -60, y: -60 });
     await expectNodePositionCloseTo('service:1', { x: 60, y: -60 });

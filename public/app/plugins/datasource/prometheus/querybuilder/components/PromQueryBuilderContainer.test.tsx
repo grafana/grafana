@@ -23,7 +23,7 @@ describe('PromQueryBuilderContainer', () => {
 
   it('Can add rest param', async () => {
     const { container } = setup({ expr: 'sum(ALERTS)' });
-    userEvent.click(screen.getByTestId('operations.0.add-rest-param'));
+    await userEvent.click(screen.getByTestId('operations.0.add-rest-param'));
 
     waitFor(() => {
       expect(container.querySelector(`${getOperationParamId(0, 0)}`)).toBeInTheDocument();

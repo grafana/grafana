@@ -96,7 +96,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // we click the WHERE/cpu button
     await act(async () => {
-      userEvent.click(screen.getByRole('button', { name: 'cpu' }));
+      await userEvent.click(screen.getByRole('button', { name: 'cpu' }));
     });
 
     // and verify getTagKeysForMeasurementAndTags was called again,
@@ -106,7 +106,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // now we click on the WHERE/host2 button
     await act(async () => {
-      userEvent.click(screen.getByRole('button', { name: 'host2' }));
+      await userEvent.click(screen.getByRole('button', { name: 'host2' }));
     });
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
@@ -115,7 +115,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // now we click on the FROM/cpudata button
     await act(async () => {
-      userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
+      await userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
     });
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`

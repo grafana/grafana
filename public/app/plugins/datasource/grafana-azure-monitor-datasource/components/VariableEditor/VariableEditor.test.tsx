@@ -137,7 +137,7 @@ describe('VariableEditor:', () => {
       };
       render(<VariableEditor {...props} />);
       await waitFor(() => screen.queryByText('Grafana template variable function'));
-      userEvent.type(screen.getByDisplayValue('Su'), 'bscriptions()');
+      await userEvent.type(screen.getByDisplayValue('Su'), 'bscriptions()');
       expect(screen.getByDisplayValue('Subscriptions()')).toBeInTheDocument();
       screen.getByDisplayValue('Subscriptions()').blur();
       await waitFor(() => screen.queryByText('None'));

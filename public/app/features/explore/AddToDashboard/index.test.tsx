@@ -45,7 +45,7 @@ const createFolder = (title: string, id: number): DashboardSearchHit => ({
 });
 
 const openModal = async () => {
-  userEvent.click(screen.getByRole('button', { name: /add to dashboard/i }));
+  await userEvent.click(screen.getByRole('button', { name: /add to dashboard/i }));
 
   expect(await screen.findByRole('dialog', { name: 'Add panel to dashboard' })).toBeInTheDocument();
 };
@@ -78,7 +78,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -91,7 +91,7 @@ describe('Add to Dashboard Button', () => {
 
       await openModal();
 
-      userEvent.click(screen.getByRole('button', { name: /save and go to dashboard/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and go to dashboard/i }));
 
       await waitForSearchFolderResponse();
 
@@ -105,7 +105,7 @@ describe('Add to Dashboard Button', () => {
 
       await openModal();
 
-      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       await waitForSearchFolderResponse();
 
@@ -120,7 +120,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -141,7 +141,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -159,7 +159,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -177,7 +177,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -199,7 +199,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -222,7 +222,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -244,7 +244,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -265,7 +265,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 
@@ -287,7 +287,7 @@ describe('Add to Dashboard Button', () => {
 
     await openModal();
 
-    userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+    await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog', { name: 'Add panel to dashboard' }));
 

@@ -74,7 +74,7 @@ describe('RawInfluxQLEditor', () => {
     // value before
     expect(queryTextarea).toHaveValue('test query 1');
 
-    userEvent.type(queryTextarea, 'new changes');
+    await userEvent.type(queryTextarea, 'new changes');
 
     // the field should have a new value, but no onChange yet.
     expect(queryTextarea).toHaveValue('test query 1new changes');
@@ -97,7 +97,7 @@ describe('RawInfluxQLEditor', () => {
     // value before
     expect(aliasInput).toHaveValue('alias42');
 
-    userEvent.type(aliasInput, 'new changes');
+    await userEvent.type(aliasInput, 'new changes');
 
     // the field should have a new value, but no onChange yet.
     expect(aliasInput).toHaveValue('alias42new changes');

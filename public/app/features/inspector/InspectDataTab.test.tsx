@@ -50,19 +50,19 @@ describe('InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
       expect(screen.getByText(/Data options/i)).toBeInTheDocument();
     });
-    it('should show available options', () => {
+    it('should show available options', async () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
-      userEvent.click(dataOptions);
+      await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
       expect(screen.getByText(/Download for Excel/i)).toBeInTheDocument();
     });
-    it('should show available dataFrame options', () => {
+    it('should show available dataFrame options', async () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
-      userEvent.click(dataOptions);
+      await userEvent.click(dataOptions);
       const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
-      userEvent.click(dataFrameInput);
+      await userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
     it('should show download logs button if logs data', () => {

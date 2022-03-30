@@ -71,45 +71,45 @@ describe('TraceView', () => {
     renderTraceViewNew();
     expect(screen.queryByText(/Tags/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[0];
-    userEvent.click(spanView);
+    await userEvent.click(spanView);
     expect(screen.queryByText(/Tags/)).toBeTruthy();
 
-    userEvent.click(spanView);
+    await userEvent.click(spanView);
     screen.debug(screen.queryAllByText(/Tags/));
     expect(screen.queryByText(/Tags/)).toBeFalsy();
   });
 
-  it('toggles children visibility', () => {
+  it('toggles children visibility', async () => {
     renderTraceViewNew();
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
+    await userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(1);
 
-    userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
+    await userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
   });
 
-  it('toggles collapses and expands one level of spans', () => {
+  it('toggles collapses and expands one level of spans', async () => {
     renderTraceViewNew();
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getByLabelText('Collapse +1'));
+    await userEvent.click(screen.getByLabelText('Collapse +1'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(2);
-    userEvent.click(screen.getByLabelText('Expand +1'));
+    await userEvent.click(screen.getByLabelText('Expand +1'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
   });
 
-  it('toggles collapses and expands all levels', () => {
+  it('toggles collapses and expands all levels', async () => {
     renderTraceViewNew();
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getByLabelText('Collapse All'));
+    await userEvent.click(screen.getByLabelText('Collapse All'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(1);
-    userEvent.click(screen.getByLabelText('Expand All'));
+    await userEvent.click(screen.getByLabelText('Expand All'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
   });
 
-  it('searches for spans', () => {
+  it('searches for spans', async () => {
     renderTraceViewNew();
-    userEvent.type(screen.getByPlaceholderText('Find...'), '1ed38015486087ca');
+    await userEvent.type(screen.getByPlaceholderText('Find...'), '1ed38015486087ca');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[0].parentNode! as HTMLElement).className
     ).toContain('rowMatchingFilter');
@@ -124,33 +124,33 @@ describe('TraceView', () => {
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
   });
 
-  it('correctly shows processes for each span', () => {
+  it('correctly shows processes for each span', async () => {
     renderTraceView();
     let table: HTMLElement;
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
 
     const firstSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[0];
-    userEvent.click(firstSpan);
-    userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(firstSpan);
+    await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-1');
-    userEvent.click(firstSpan);
+    await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[1];
-    userEvent.click(secondSpan);
-    userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(secondSpan);
+    await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-2');
-    userEvent.click(secondSpan);
+    await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
-    userEvent.click(thirdSpan);
-    userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(thirdSpan);
+    await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-3');
   });
 
-  it('resets detail view for new trace with the identical spanID', () => {
+  it('resets detail view for new trace with the identical spanID', async () => {
     const store = configureStore();
     const mockPanelData = {
       state: LoadingState.Done,
@@ -169,7 +169,7 @@ describe('TraceView', () => {
       </Provider>
     );
     const span = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
-    userEvent.click(span);
+    await userEvent.click(span);
     //Process is in detail view
     expect(screen.getByText(/Process/)).toBeInTheDocument();
 

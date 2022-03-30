@@ -49,9 +49,9 @@ describe('Add to Dashboard Modal', () => {
       const dashboardNameInput = screen.getByRole<HTMLInputElement>('textbox', { name: /dashboard name/i });
 
       // dashboard name is required
-      userEvent.clear(dashboardNameInput);
+      await userEvent.clear(dashboardNameInput);
 
-      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       // The error message should appear
       await screen.findByRole('alert');
@@ -68,7 +68,7 @@ describe('Add to Dashboard Modal', () => {
 
       const dashboardNameInput = screen.getByRole<HTMLInputElement>('textbox', { name: /dashboard name/i });
 
-      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /save and keep exploring/i })).toBeEnabled();
@@ -91,7 +91,7 @@ describe('Add to Dashboard Modal', () => {
 
       render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
-      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       expect(await screen.findByRole('alert')).toHaveTextContent(
         'A dashboard with the same name already exists in this folder.'
@@ -106,7 +106,7 @@ describe('Add to Dashboard Modal', () => {
 
       render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
-      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('Dashboard name is required.');
     });
@@ -119,7 +119,7 @@ describe('Add to Dashboard Modal', () => {
 
       render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
-      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('name match');
     });
@@ -129,7 +129,7 @@ describe('Add to Dashboard Modal', () => {
 
       render(<AddToDashboardModal onSave={saveMock} onClose={() => {}} />);
 
-      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('unknown error');
     });

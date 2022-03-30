@@ -54,10 +54,10 @@ describe('NativeSearch', () => {
     const asyncServiceSelect = await screen.findByRole('combobox', { name: 'select-span-name' });
 
     expect(asyncServiceSelect).toBeInTheDocument();
-    userEvent.click(asyncServiceSelect);
+    await userEvent.click(asyncServiceSelect);
 
     const driverOption = await screen.findByText('driver');
-    userEvent.click(driverOption);
+    await userEvent.click(driverOption);
 
     expect(handleOnChange).toHaveBeenCalledWith(fakeOptionChoice);
   });
@@ -100,7 +100,7 @@ describe('TempoLanguageProvider with delay', () => {
 
     const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-span-name' });
 
-    userEvent.click(asyncServiceSelect);
+    await userEvent.click(asyncServiceSelect);
     const loader = screen.getByText('Loading options...');
 
     expect(loader).toBeInTheDocument();

@@ -38,7 +38,7 @@ describe('SearchForm', () => {
     const asyncServiceSelect = await waitFor(() => screen.getByRole('combobox', { name: 'select-service-name' }));
     expect(asyncServiceSelect).toBeInTheDocument();
 
-    userEvent.click(asyncServiceSelect);
+    await userEvent.click(asyncServiceSelect);
 
     const jaegerService = await screen.findByText('jaeger-query');
     expect(jaegerService).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('SearchForm', () => {
     render(<SearchForm datasource={ds} query={query} onChange={handleOnChange} />);
 
     const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
-    userEvent.click(asyncServiceSelect);
+    await userEvent.click(asyncServiceSelect);
     const loader = screen.getByText('Loading options...');
 
     expect(loader).toBeInTheDocument();

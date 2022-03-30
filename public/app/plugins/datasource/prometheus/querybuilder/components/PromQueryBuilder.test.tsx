@@ -133,7 +133,7 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     openMetricSelect(container);
-    userEvent.click(screen.getByText('histogram_metric_bucket'));
+    await userEvent.click(screen.getByText('histogram_metric_bucket'));
     await waitFor(() => expect(screen.getByText('hint: add histogram_quantile()')).toBeInTheDocument());
   });
 
@@ -144,7 +144,7 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     openMetricSelect(container);
-    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
   });
 
@@ -155,7 +155,7 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     openMetricSelect(container);
-    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
   });
 
@@ -177,7 +177,7 @@ describe('PromQueryBuilder', () => {
       data
     );
     openMetricSelect(container);
-    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getAllByText(/hint:/g)).toHaveLength(2));
   });
 });
@@ -205,14 +205,14 @@ function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
   return { languageProvider, datasource, container };
 }
 
-function openMetricSelect(container: HTMLElement) {
+async function openMetricSelect(container: HTMLElement) {
   const select = container.querySelector('#prometheus-metric-select');
   if (select) {
-    userEvent.click(select);
+    await userEvent.click(select);
   }
 }
 
-function openLabelNameSelect(index = 0) {
+async function openLabelNameSelect(index = 0) {
   const { name } = getLabelSelects(index);
-  userEvent.click(name);
+  await userEvent.click(name);
 }

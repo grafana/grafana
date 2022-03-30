@@ -113,7 +113,7 @@ describe('VersionSettings', () => {
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(VERSIONS_FETCH_LIMIT);
 
     const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
-    userEvent.click(showMoreButton);
+    await userEvent.click(showMoreButton);
 
     expect(historySrv.getHistoryList).toBeCalledTimes(2);
     expect(screen.queryByText(/Fetching more entries/i)).toBeInTheDocument();
@@ -139,17 +139,17 @@ describe('VersionSettings', () => {
 
     const compareButton = screen.getByRole('button', { name: /compare versions/i });
     const tableBody = screen.getAllByRole('rowgroup')[1];
-    userEvent.click(within(tableBody).getAllByRole('checkbox')[0]);
-    userEvent.click(within(tableBody).getAllByRole('checkbox')[VERSIONS_FETCH_LIMIT - 1]);
+    await userEvent.click(within(tableBody).getAllByRole('checkbox')[0]);
+    await userEvent.click(within(tableBody).getAllByRole('checkbox')[VERSIONS_FETCH_LIMIT - 1]);
 
     expect(compareButton).toBeEnabled();
 
-    userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
+    await userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
 
     expect(compareButton).toBeDisabled();
 
-    userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
-    userEvent.click(compareButton);
+    await userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
+    await userEvent.click(compareButton);
 
     await waitFor(() => expect(screen.getByRole('heading', { name: /versions comparing 2 11/i })).toBeInTheDocument());
 
@@ -170,7 +170,7 @@ describe('VersionSettings', () => {
     expect(queryByFullText('version changed')).toBeInTheDocument();
     expect(screen.queryByText(/view json diff/i)).toBeInTheDocument();
 
-    userEvent.click(screen.getByText(/view json diff/i));
+    await userEvent.click(screen.getByText(/view json diff/i));
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
   });

@@ -113,7 +113,7 @@ const ui = {
 };
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('combobox').get(selectElement));
+  await userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
@@ -177,7 +177,7 @@ describe('Receivers', () => {
 
     // go to new contact point page
     await act(async () => {
-      userEvent.click(await ui.newContactPointButton.find());
+      await userEvent.click(await ui.newContactPointButton.find());
     });
 
     await byRole('heading', { name: /create contact point/i }).find();
@@ -186,19 +186,19 @@ describe('Receivers', () => {
 
     await act(async () => {
       // type in a name for the new receiver
-      userEvent.type(ui.inputs.name.get(), 'my new receiver');
+      await userEvent.type(ui.inputs.name.get(), 'my new receiver');
 
       // enter some email
       const email = ui.inputs.email.addresses.get();
-      userEvent.clear(email);
-      userEvent.type(email, 'tester@grafana.com');
+      await userEvent.clear(email);
+      await userEvent.type(email, 'tester@grafana.com');
 
       // try to test the contact point
-      userEvent.click(await ui.testContactPointButton.find());
+      await userEvent.click(await ui.testContactPointButton.find());
     });
 
     await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument(), { timeout: 1000 });
-    userEvent.click(ui.customContactPointOption.get());
+    await userEvent.click(ui.customContactPointOption.get());
     await waitFor(() => expect(ui.contactPointAnnotationSelect(0).get()).toBeInTheDocument());
 
     // enter custom annotations and labels
@@ -206,7 +206,7 @@ describe('Receivers', () => {
     await userEvent.type(ui.contactPointAnnotationValue(0).get(), 'Test contact point');
     await userEvent.type(ui.contactPointLabelKey(0).get(), 'foo');
     await userEvent.type(ui.contactPointLabelValue(0).get(), 'bar');
-    userEvent.click(ui.testContactPoint.get());
+    await userEvent.click(ui.testContactPoint.get());
 
     await waitFor(() => expect(mocks.api.testReceivers).toHaveBeenCalled());
 
@@ -242,7 +242,7 @@ describe('Receivers', () => {
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
     // type in a name for the new receiver
-    userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
+    await userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
     await ui.inputs.email.addresses.find();
@@ -256,12 +256,12 @@ describe('Receivers', () => {
     const urlInput = ui.inputs.hipchat.url.get();
     const apiKeyInput = ui.inputs.hipchat.apiKey.get();
 
-    userEvent.type(urlInput, 'http://hipchat');
-    userEvent.type(apiKeyInput, 'foobarbaz');
+    await userEvent.type(urlInput, 'http://hipchat');
+    await userEvent.type(apiKeyInput, 'foobarbaz');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
-      userEvent.click(await ui.saveContactButton.find());
+      await userEvent.click(await ui.saveContactButton.find());
     });
 
     // see that we're back to main page and proper api calls have been made
@@ -319,13 +319,13 @@ describe('Receivers', () => {
     // modify webhook url
     const slackContainer = ui.channelFormContainer.get();
     await userEvent.click(byText('Optional Slack settings').get(slackContainer));
-    userEvent.type(ui.inputs.slack.webhookURL.get(slackContainer), 'http://newgreaturl');
+    await userEvent.type(ui.inputs.slack.webhookURL.get(slackContainer), 'http://newgreaturl');
 
     // add confirm button to action
     await userEvent.click(byText(/Actions \(1\)/i).get(slackContainer));
     await userEvent.click(await byTestId('items.1.settings.actions.0.confirm.add-button').find());
     const confirmSubform = byTestId('items.1.settings.actions.0.confirm.container').get();
-    userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
+    await userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
 
     // delete a field
     await userEvent.click(byText(/Fields \(2\)/i).get(slackContainer));
@@ -335,7 +335,7 @@ describe('Receivers', () => {
     // add another channel
     await userEvent.click(ui.newContactPointTypeButton.get());
     await clickSelectOption(await byTestId('items.2.type').find(), 'Webhook');
-    userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
+    await userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
@@ -407,7 +407,7 @@ describe('Receivers', () => {
     const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     expect(byTestId('edit').query(receiverRows[0])).not.toBeInTheDocument();
-    userEvent.click(byTestId('view').get(receiverRows[0]));
+    await userEvent.click(byTestId('view').get(receiverRows[0]));
 
     // check that form is open
     await byRole('heading', { name: /contact point/i }).find();

@@ -69,13 +69,13 @@ describe('QueryVariableEditor', () => {
       ${'regex'} | ${'onPropChange'}             | ${[{ propName: 'regex', propValue: 't', updateOptions: true }]}
     `(
       '$fieldName field and tabs away then $propName should be called with correct args',
-      ({ fieldName, propName, expectedArgs }) => {
+      async ({ fieldName, propName, expectedArgs }) => {
         const { props } = setupTestContext({});
         const propUnderTest = props[propName];
         const fieldAccessor = fieldAccessors[fieldName];
 
-        userEvent.type(fieldAccessor(), 't');
-        userEvent.tab();
+        await userEvent.type(fieldAccessor(), 't');
+        await userEvent.tab();
 
         expect(propUnderTest).toHaveBeenCalledTimes(1);
         expect(propUnderTest).toHaveBeenCalledWith(...expectedArgs);
@@ -90,14 +90,14 @@ describe('QueryVariableEditor', () => {
       ${'regex'} | ${'onPropChange'}
     `(
       '$fieldName field but reverts the change and tabs away then $propName should not be called',
-      ({ fieldName, propName }) => {
+      async ({ fieldName, propName }) => {
         const { props } = setupTestContext({});
         const propUnderTest = props[propName];
         const fieldAccessor = fieldAccessors[fieldName];
 
-        userEvent.type(fieldAccessor(), 't');
-        userEvent.type(fieldAccessor(), '{backspace}');
-        userEvent.tab();
+        await userEvent.type(fieldAccessor(), 't');
+        await userEvent.type(fieldAccessor(), '{backspace}');
+        await userEvent.tab();
 
         expect(propUnderTest).not.toHaveBeenCalled();
       }

@@ -39,21 +39,21 @@ describe('VariablesUnknownTable', () => {
     it('then it should show loading spinner', async () => {
       await getTestContext();
 
-      userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+      await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
       await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
     });
 
     it('then it should call getUnknownsNetwork', async () => {
       const { getUnknownsNetworkSpy } = await getTestContext();
 
-      userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+      await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
       await waitFor(() => expect(getUnknownsNetworkSpy).toHaveBeenCalledTimes(1));
     });
 
     it('then it should report the interaction', async () => {
       const { reportInteractionSpy } = await getTestContext();
 
-      userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+      await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
       await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
 
       expect(reportInteractionSpy).toHaveBeenCalledTimes(1);
@@ -64,14 +64,14 @@ describe('VariablesUnknownTable', () => {
       it('then it should not call getUnknownsNetwork', async () => {
         const { getUnknownsNetworkSpy } = await getTestContext();
 
-        userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+        await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
         await waitFor(() => expect(screen.getByTitle('Click to collapse')).toBeInTheDocument());
         expect(getUnknownsNetworkSpy).toHaveBeenCalledTimes(1);
 
-        userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+        await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
         await waitFor(() => expect(screen.getByTitle('Click to expand')).toBeInTheDocument());
 
-        userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+        await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
         await waitFor(() => expect(screen.getByTitle('Click to collapse')).toBeInTheDocument());
 
         expect(getUnknownsNetworkSpy).toHaveBeenCalledTimes(1);
@@ -82,7 +82,7 @@ describe('VariablesUnknownTable', () => {
       it('then it should render the correct message', async () => {
         await getTestContext();
 
-        userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+        await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
         await waitForElementToBeRemoved(() => screen.getByText('Loading...'));
 
         expect(screen.getByText('No renamed or missing variables found.')).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('VariablesUnknownTable', () => {
         const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
         const { reportInteractionSpy } = await getTestContext({}, usages);
 
-        userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+        await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
         await waitForElementToBeRemoved(() => screen.getByText('Loading...'));
 
         expect(screen.queryByText('No renamed or missing variables found.')).not.toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('VariablesUnknownTable', () => {
           const dateNowStop = 2000;
           Date.now = jest.fn().mockReturnValueOnce(dateNowStart).mockReturnValue(dateNowStop);
 
-          userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+          await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
           await waitForElementToBeRemoved(() => screen.getByText('Loading...'));
 
           // make sure we report the interaction for slow expansion

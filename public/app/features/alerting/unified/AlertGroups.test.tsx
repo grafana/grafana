@@ -82,10 +82,10 @@ describe('AlertGroups', () => {
     expect(groups[0]).toHaveTextContent('No grouping');
     expect(groups[1]).toHaveTextContent('severity=warningregion=US-Central');
 
-    userEvent.click(ui.groupCollapseToggle.get(groups[0]));
+    await userEvent.click(ui.groupCollapseToggle.get(groups[0]));
     expect(ui.groupTable.get()).toBeDefined();
 
-    userEvent.click(ui.collapseToggle.get(ui.groupTable.get()));
+    await userEvent.click(ui.collapseToggle.get(ui.groupTable.get()));
     expect(ui.silenceButton.get(ui.groupTable.get())).toBeDefined();
     expect(ui.sourceButton.get(ui.groupTable.get())).toBeDefined();
   });
@@ -117,7 +117,7 @@ describe('AlertGroups', () => {
     expect(groups[1]).toHaveTextContent('region=EMEA');
     expect(groups[2]).toHaveTextContent('region=APAC');
 
-    userEvent.type(groupByInput, 'appName{enter}');
+    await userEvent.type(groupByInput, 'appName{enter}');
 
     await waitFor(() => expect(groupByWrapper).toHaveTextContent('appName'));
 
@@ -129,10 +129,10 @@ describe('AlertGroups', () => {
     expect(groups[1]).toHaveTextContent('appName=auth');
     expect(groups[2]).toHaveTextContent('appName=frontend');
 
-    userEvent.click(ui.clearButton.get());
+    await userEvent.click(ui.clearButton.get());
     await waitFor(() => expect(groupByWrapper).not.toHaveTextContent('appName'));
 
-    userEvent.type(groupByInput, 'env{enter}');
+    await userEvent.type(groupByInput, 'env{enter}');
     await waitFor(() => expect(groupByWrapper).toHaveTextContent('env'));
 
     groups = ui.group.getAll();
@@ -141,10 +141,10 @@ describe('AlertGroups', () => {
     expect(groups[0]).toHaveTextContent('env=production');
     expect(groups[1]).toHaveTextContent('env=staging');
 
-    userEvent.click(ui.clearButton.get());
+    await userEvent.click(ui.clearButton.get());
     await waitFor(() => expect(groupByWrapper).not.toHaveTextContent('env'));
 
-    userEvent.type(groupByInput, 'uniqueLabel{enter}');
+    await userEvent.type(groupByInput, 'uniqueLabel{enter}');
     await waitFor(() => expect(groupByWrapper).toHaveTextContent('uniqueLabel'));
 
     groups = ui.group.getAll();

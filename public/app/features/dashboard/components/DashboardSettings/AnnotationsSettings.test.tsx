@@ -76,7 +76,7 @@ describe('AnnotationsSettings', () => {
     };
   });
 
-  test('it renders a header and cta if no annotations or only builtIn annotation', () => {
+  test('it renders a header and cta if no annotations or only builtIn annotation', async () => {
     render(<AnnotationsSettings dashboard={dashboard} />);
 
     expect(screen.getByRole('heading', { name: /annotations/i })).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /annotations documentation/i })).toBeInTheDocument();
 
-    userEvent.click(screen.getByRole('cell', { name: /annotations & alerts \(built\-in\)/i }));
+    await userEvent.click(screen.getByRole('cell', { name: /annotations & alerts \(built\-in\)/i }));
 
     const heading = screen.getByRole('heading', {
       name: /annotations edit/i,
@@ -96,13 +96,13 @@ describe('AnnotationsSettings', () => {
 
     expect(heading).toBeInTheDocument();
 
-    userEvent.clear(nameInput);
-    userEvent.type(nameInput, 'My Annotation');
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, 'My Annotation');
 
     expect(screen.queryByText(/grafana/i)).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /hidden/i })).toBeChecked();
 
-    userEvent.click(within(heading).getByText(/annotations/i));
+    await userEvent.click(within(heading).getByText(/annotations/i));
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /my annotation \(built\-in\) grafana/i })).toBeInTheDocument();
@@ -111,8 +111,8 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new query/i })).not.toBeInTheDocument();
 
-    userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
-    userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(screen.queryAllByRole('row').length).toBe(0);
     expect(
@@ -120,7 +120,7 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
   });
 
-  test('it renders a sortable table of annotations', () => {
+  test('it renders a sortable table of annotations', async () => {
     const annotationsList = [
       ...dashboard.annotations.list,
       {
@@ -164,9 +164,9 @@ describe('AnnotationsSettings', () => {
     expect(within(getTableBodyRows()[1]).queryByText(/annotation 2/i)).toBeInTheDocument();
     expect(within(getTableBodyRows()[2]).queryByText(/annotation 3/i)).toBeInTheDocument();
 
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
 
     // Checking if it has changed the sorting accordingly
     expect(within(getTableBodyRows()[0]).queryByText(/annotation 3/i)).toBeInTheDocument();
@@ -177,7 +177,7 @@ describe('AnnotationsSettings', () => {
   test('it renders a form for adding/editing annotations', async () => {
     render(<AnnotationsSettings dashboard={dashboard} />);
 
-    userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
+    await userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
 
     const heading = screen.getByRole('heading', {
       name: /annotations edit/i,
@@ -186,19 +186,19 @@ describe('AnnotationsSettings', () => {
 
     expect(heading).toBeInTheDocument();
 
-    userEvent.clear(nameInput);
-    userEvent.type(nameInput, 'My Prometheus Annotation');
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, 'My Prometheus Annotation');
 
-    userEvent.click(screen.getByText(/testdata/i));
+    await userEvent.click(screen.getByText(/testdata/i));
 
     expect(await screen.findByText(/Prometheus/i)).toBeVisible();
     expect(screen.queryAllByText(/testdata/i)).toHaveLength(2);
 
-    userEvent.click(screen.getByText(/prometheus/i));
+    await userEvent.click(screen.getByText(/prometheus/i));
 
     expect(screen.getByRole('checkbox', { name: /hidden/i })).not.toBeChecked();
 
-    userEvent.click(within(heading).getByText(/annotations/i));
+    await userEvent.click(within(heading).getByText(/annotations/i));
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(2);
     expect(screen.queryByRole('row', { name: /my prometheus annotation prometheus/i })).toBeInTheDocument();
@@ -207,14 +207,14 @@ describe('AnnotationsSettings', () => {
       screen.queryByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).not.toBeInTheDocument();
 
-    userEvent.click(screen.getByRole('button', { name: /new query/i }));
+    await userEvent.click(screen.getByRole('button', { name: /new query/i }));
 
-    userEvent.click(within(screen.getByRole('heading', { name: /annotations edit/i })).getByText(/annotations/i));
+    await userEvent.click(within(screen.getByRole('heading', { name: /annotations edit/i })).getByText(/annotations/i));
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(3);
 
-    userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
-    userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(2);
   });

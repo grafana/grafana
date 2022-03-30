@@ -100,7 +100,7 @@ describe('AzureMonitor ResourcePicker', () => {
     advancedSection.click();
 
     const advancedInput = await screen.findByLabelText('Resource URI');
-    userEvent.type(advancedInput, '/subscriptions/def-123');
+    await userEvent.type(advancedInput, '/subscriptions/def-123');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     applyButton.click();

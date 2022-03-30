@@ -176,7 +176,7 @@ function expectExplain() {
   expect(screen.getByText(/Fetch all log/)).toBeInTheDocument();
 }
 
-function switchToMode(mode: QueryEditorMode) {
+async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: 'Code',
     [QueryEditorMode.Explain]: 'Explain',
@@ -184,5 +184,5 @@ function switchToMode(mode: QueryEditorMode) {
   }[mode];
 
   const switchEl = screen.getByLabelText(label);
-  userEvent.click(switchEl);
+  await userEvent.click(switchEl);
 }

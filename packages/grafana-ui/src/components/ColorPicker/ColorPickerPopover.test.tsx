@@ -12,13 +12,13 @@ describe('ColorPickerPopover', () => {
     const color = screen.getByRole('button', { name: 'dark-red color' });
     const customTab = screen.getByRole('button', { name: 'Custom' });
 
-    act(() => {
-      userEvent.tab();
+    act(async () => {
+      await userEvent.tab();
     });
     expect(customTab).toHaveFocus();
 
-    act(() => {
-      userEvent.tab();
+    act(async () => {
+      await userEvent.tab();
     });
     expect(color).toHaveFocus();
   });
@@ -32,8 +32,8 @@ describe('ColorPickerPopover', () => {
       expect(color).toBeInTheDocument();
       expect(colorSwatchWrapper[0]).toBeInTheDocument();
 
-      act(() => {
-        userEvent.click(colorSwatchWrapper[0]);
+      act(async () => {
+        await userEvent.click(colorSwatchWrapper[0]);
       });
       expect(color).toHaveStyle('box-shadow: inset 0 0 0 2px #73BF69,inset 0 0 0 4px #000000');
     });
@@ -45,8 +45,8 @@ describe('ColorPickerPopover', () => {
     it('should pass hex color value to onChange prop by default', () => {
       render(<ColorPickerPopover color={'red'} onChange={onChangeSpy} />);
       const color = screen.getByRole('button', { name: 'red color' });
-      act(() => {
-        userEvent.click(color);
+      act(async () => {
+        await userEvent.click(color);
       });
 
       expect(onChangeSpy).toBeCalledTimes(1);
@@ -56,8 +56,8 @@ describe('ColorPickerPopover', () => {
     it('should pass color name to onChange prop when named colors enabled', () => {
       render(<ColorPickerPopover color={'red'} enableNamedColors onChange={onChangeSpy} />);
       const color = screen.getByRole('button', { name: 'red color' });
-      act(() => {
-        userEvent.click(color);
+      act(async () => {
+        await userEvent.click(color);
       });
 
       expect(onChangeSpy).toBeCalledTimes(2);
