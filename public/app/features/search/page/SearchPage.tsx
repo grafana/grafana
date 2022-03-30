@@ -6,9 +6,11 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
-import { SearchPageDashboards } from './SearchPageDashboards';
 import { useAsync } from 'react-use';
-import { getGrafanaSearcher } from '../service';
+import { getGrafanaSearcher, QueryFilters } from '../service';
+import { Table } from './table/Table';
+import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { getTermCounts } from '../service/backend';
 
 const node: NavModelItem = {
   id: 'search',
@@ -20,29 +22,43 @@ const node: NavModelItem = {
 export default function SearchPage() {
   const styles = useStyles2(getStyles);
   const [query, setQuery] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
 
   const results = useAsync(() => {
-    return getGrafanaSearcher().search(query);
-  }, [query]);
+    const filters: QueryFilters = {
+      tags,
+    };
+    return getGrafanaSearcher().search(query, tags.length ? filters : undefined);
+  }, [query, tags]);
 
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
   }
 
+  const getTagOptions = (): Promise<TermCount[]> => {
+    const tags = results.value?.body.fields.find((f) => f.name === 'tags');
+
+    if (tags) {
+      return Promise.resolve(getTermCounts(tags));
+    }
+    return Promise.resolve([]);
+  };
+
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
         <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} autoFocus spellCheck={false} />
-        <br /> <br />
+        <br />
         {results.loading && <Spinner />}
         {results.value?.body && (
           <div>
-            <AutoSizer style={{ width: '100%', height: '1000px' }}>
+            <TagFilter isClearable tags={tags} tagOptions={getTagOptions} onChange={setTags} /> <br />
+            <AutoSizer style={{ width: '100%', height: '2000px' }}>
               {({ width }) => {
                 return (
-                  <div>
-                    <SearchPageDashboards dashboards={results.value!.body} width={width} />
-                  </div>
+                  <>
+                    <Table data={results.value!.body} width={width} />
+                  </>
                 );
               }}
             </AutoSizer>

@@ -7,6 +7,7 @@ import {
   VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
 import { FUNCTIONS } from '../syntax';
+import { binaryScalarOperations } from './binaryScalarOperations';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
@@ -56,6 +57,34 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       explainHandler: () =>
         `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expressions and used as values for a range aggregation via the unwrap operation. `,
     },
+    {
+      id: LokiOperationId.LineFormat,
+      name: 'Line format',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: '{{.status_code}}',
+          description: 'A line template that can refer to stream labels and extracted labels.',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | line_format "${model.params[0]}"`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
+
+        Example: \`{{.status_code}} - {{.message}}\`
+
+        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
+        `,
+    },
+
     {
       id: LokiOperationId.LineContains,
       name: 'Line contains',
@@ -179,6 +208,16 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
         let label = String(op.params[0]).length > 0 ? op.params[0] : '<label>';
         return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.`;
       },
+    },
+    ...binaryScalarOperations,
+    {
+      id: LokiOperationId.NestedQuery,
+      name: 'Binary operation with query',
+      params: [],
+      defaultParams: [],
+      category: LokiVisualQueryOperationCategory.BinaryOps,
+      renderer: (model, def, innerExpr) => innerExpr,
+      addOperationHandler: addNestedQueryHandler,
     },
   ];
 
@@ -326,5 +365,18 @@ export function addLokiOperation(
   return {
     ...query,
     operations,
+  };
+}
+
+function addNestedQueryHandler(def: QueryBuilderOperationDef, query: LokiVisualQuery): LokiVisualQuery {
+  return {
+    ...query,
+    binaryQueries: [
+      ...(query.binaryQueries ?? []),
+      {
+        operator: '/',
+        query,
+      },
+    ],
   };
 }

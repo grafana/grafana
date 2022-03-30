@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius(5)};
       background-color: ${theme.colors.success.main};
       padding: ${theme.spacing(0.25, 0.75)};
-      color: ${theme.colors.text.maxContrast};
+      color: white; // use the same color for both themes
       font-weight: ${theme.typography.fontWeightMedium};
       font-size: ${theme.typography.pxToRem(10)};
     `,

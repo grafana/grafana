@@ -1,5 +1,5 @@
 +++
-title = " Configure high availability"
+title = " High availability"
 description = "High Availability"
 keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
 weight = 450
@@ -11,25 +11,7 @@ The Grafana alerting system has two main components: a `Scheduler` and an intern
 
 When it comes to running Grafana alerting in high availability the operational mode of the scheduler is unaffected such that all alerts continue be evaluated in each Grafana instance. Rather the operational change happens in the Alertmanager which **deduplicates** alert notifications across Grafana instances.
 
-```
-  .─────.
- ╱       ╲                                                                      ┌────────────────┐
-(  User   )──────┐                        ┌──────────────────────────────────┐  │                │
- `.     ,'       │                        │┌─────────┐      ┌──────────────┐ │  │                ▼
-   `───'         │                        ││Scheduler│──────▶Alertmananager│─┼──┘    ┌──────────────────────┐
-                 │      ┌───────────┐  ┌─▶│└─────────┘      ▲──────────────┤ │       │                      │
-  .─────.        │      │   Load    │  │  │Grafana          │              │ │       │                      │
- ╱       ╲       │      │ Balancing │  │  └─────────────────┼──────────────┼─┘       │     Integrations     │
-(  User   )──────┼─────▶│  Reverse  │──┤  ┌─────────────────┼──────────────┼─┐       │                      │
- `.     ,'       │      │   Proxy   │  │  │┌─────────┐      ├──────────────▼ │       │                      │
-   `───'         │      └───────────┘  │  ││Scheduler│──────▶Alertmananager│─┼──┐    └──────────────────────┘
-                 │                     └─▶│└─────────┘      └──────────────┘ │  │                ▲
-  .─────.        │                        │Grafana                           │  │                │
- ╱       ╲       │                        └──────────────────────────────────┘  └────────────────┘
-(  User   )──────┘
- `.     ,'
-   `───'
-```
+{{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 
 The coordination between Grafana instances happens via [a Gossip protocol](https://en.wikipedia.org/wiki/Gossip_protocol). Alerts are not gossiped between instances. It is expected that each scheduler delivers the same alerts to each Alertmanager.
 

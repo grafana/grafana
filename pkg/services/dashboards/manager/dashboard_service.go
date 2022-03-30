@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -449,7 +448,6 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *m.SaveDashboardDTO, dash *models.Dashboard, provisioned bool) error {
 	inFolder := dash.FolderId > 0
 	if dr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		resourceID := strconv.FormatInt(dash.Id, 10)
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if !provisioned {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
@@ -469,7 +467,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 			svc = dr.folderPermissions
 		}
 
-		_, err := svc.SetPermissions(ctx, dto.OrgId, resourceID, permissions...)
+		_, err := svc.SetPermissions(ctx, dto.OrgId, dash.Uid, permissions...)
 		if err != nil {
 			return err
 		}
