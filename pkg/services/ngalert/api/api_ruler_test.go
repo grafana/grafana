@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"math/rand"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -473,6 +476,81 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 	})
 }
 
+func TestRouteGetNamespaceRulesConfig(t *testing.T) {
+	t.Run("fine-grained access is enabled", func(t *testing.T) {
+		t.Run("should return rules user has access to data source", func(t *testing.T) {
+			orgID := rand.Int63()
+			folder := randFolder()
+			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+			ruleStore.PutRule(context.Background(), expectedRules...)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
+			ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
+
+			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, "", map[string]string{
+				":Namespace": folder.Title,
+			}))
+
+			require.Equal(t, http.StatusAccepted, response.Status())
+			result := &apimodels.NamespaceConfigResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+			require.NotNil(t, result)
+			for namespace, groups := range *result {
+				require.Equal(t, folder.Title, namespace)
+				for _, group := range groups {
+				grouploop:
+					for _, actualRule := range group.Rules {
+						for i, expected := range expectedRules {
+							if actualRule.GrafanaManagedAlert.UID == expected.UID {
+								expectedRules = append(expectedRules[:i], expectedRules[i+1:]...)
+								continue grouploop
+							}
+						}
+						assert.Failf(t, "rule in a group was not found in expected", "rule %s group %s", actualRule.GrafanaManagedAlert.Title, group.Name)
+					}
+				}
+			}
+			assert.Emptyf(t, expectedRules, "not all expected rules were returned")
+		})
+	})
+	t.Run("fine-grained access is disabled", func(t *testing.T) {
+		t.Run("should return all rules from folder", func(t *testing.T) {
+			orgID := rand.Int63()
+			folder := randFolder()
+			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+			ruleStore.PutRule(context.Background(), expectedRules...)
+			ac := acMock.New().WithDisabled()
+
+			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, "", map[string]string{
+				":Namespace": folder.Title,
+			}))
+
+			require.Equal(t, http.StatusAccepted, response.Status())
+			result := &apimodels.NamespaceConfigResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+			require.NotNil(t, result)
+			for namespace, groups := range *result {
+				require.Equal(t, folder.Title, namespace)
+				for _, group := range groups {
+				grouploop:
+					for _, actualRule := range group.Rules {
+						for i, expected := range expectedRules {
+							if actualRule.GrafanaManagedAlert.UID == expected.UID {
+								expectedRules = append(expectedRules[:i], expectedRules[i+1:]...)
+								continue grouploop
+							}
+						}
+						assert.Failf(t, "rule in a group was not found in expected", "rule %s group %s", actualRule.GrafanaManagedAlert.Title, group.Name)
+					}
+				}
+			}
+			assert.Emptyf(t, expectedRules, "not all expected rules were returned")
+		})
+	})
+}
 
 func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
 	return &RulerSrv{
