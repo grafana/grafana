@@ -194,7 +194,7 @@ func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(e
 		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.OldDatasourceUID {
 			continue
 		}
-		if !evaluator(ac.EvalPermission(datasources.ActionQuery, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))) {
+		if !evaluator(ac.EvalPermission(datasources.ActionQuery, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))) {
 			return false
 		}
 	}

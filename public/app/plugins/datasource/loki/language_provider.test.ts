@@ -4,7 +4,7 @@ import LanguageProvider, { LokiHistoryItem } from './language_provider';
 import { TypeaheadInput } from '@grafana/ui';
 
 import { makeMockLokiDatasource } from './mocks';
-import LokiDatasource from './datasource';
+import { LokiDatasource } from './datasource';
 import { AbstractLabelOperator } from '@grafana/data';
 import { LokiQueryType } from './types';
 
