@@ -1,8 +1,7 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
-import { css } from '@emotion/css';
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
@@ -128,12 +127,3 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 });
 
 PromQueryEditorSelector.displayName = 'PromQueryEditorSelector';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    switchLabel: css({
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-  };
-};
