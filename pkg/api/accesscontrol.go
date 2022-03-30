@@ -265,10 +265,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Annotation reader",
 			Description: "Read annotations and tags",
 			Group:       "Annotations",
-			Version:     1,
+			Version:     2,
 			Permissions: []ac.Permission{
 				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
-				{Action: ac.ActionAnnotationsTagsRead, Scope: ac.ScopeAnnotationsTagsAll},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},

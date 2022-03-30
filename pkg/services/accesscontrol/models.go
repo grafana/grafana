@@ -319,11 +319,10 @@ const (
 	ScopeTeamsAll = "teams:*"
 
 	// Annotations related actions
-	ActionAnnotationsCreate   = "annotations:create"
-	ActionAnnotationsDelete   = "annotations:delete"
-	ActionAnnotationsRead     = "annotations:read"
-	ActionAnnotationsWrite    = "annotations:write"
-	ActionAnnotationsTagsRead = "annotations.tags:read"
+	ActionAnnotationsCreate = "annotations:create"
+	ActionAnnotationsDelete = "annotations:delete"
+	ActionAnnotationsRead   = "annotations:read"
+	ActionAnnotationsWrite  = "annotations:write"
 
 	// Dashboard actions
 	ActionDashboardsCreate           = "dashboards:create"
@@ -381,9 +380,6 @@ var (
 	ScopeAnnotationsID               = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
 	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
 	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType("organization")
-
-	// Annotation tag scopes
-	ScopeAnnotationsTagsAll = "annotations:tags:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
