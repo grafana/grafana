@@ -293,7 +293,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}],
 			"interval": 60,
 			"lastEvaluation": "2022-03-10T14:01:00Z",
-			"evaluationTime": 0
+			"evaluationTime": 60
 		}]
 	}
 }
