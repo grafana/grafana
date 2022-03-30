@@ -75,7 +75,7 @@ func (m *PluginManager) isRegistered(pluginID string) bool {
 
 func (m *PluginManager) registeredPlugins() map[string]struct{} {
 	pluginsByID := make(map[string]struct{})
-	for _, p := range m.plugins() {
+	for _, p := range m.store {
 		pluginsByID[p.ID] = struct{}{}
 	}
 
