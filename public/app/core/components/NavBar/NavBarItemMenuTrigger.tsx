@@ -47,6 +47,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     onHoverChange: (isHovering) => {
       if (isHovering) {
         state.open();
+        setMenuIdOpen(ref.current?.id || null);
       } else {
         state.close();
       }
@@ -59,7 +60,6 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       setMenuHasFocus(false);
     } else {
       state.open();
-      ref.current?.focus();
     }
   }, [menuIdOpen]);
 
@@ -158,6 +158,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       if (e.target.id === ref.current?.id) {
         // If focussing on the trigger itself, set the menu id that is open
         setMenuIdOpen(ref.current?.id);
+        state.open();
       }
     },
     onBlurWithin: (e) => {
@@ -186,7 +187,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
             }}
           >
             <FocusScope restoreFocus>
-              <div {...overlayProps} {...overlayPositionProps} {...dialogProps} ref={overlayRef}>
+              <div {...overlayProps} {...overlayPositionProps} {...dialogProps} {...hoverProps} ref={overlayRef}>
                 <DismissButton onDismiss={() => state.close()} />
                 {menu}
                 <DismissButton onDismiss={() => state.close()} />
