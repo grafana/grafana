@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -45,7 +44,6 @@ type DataSourceProxy struct {
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService datasources.DataSourceService
 	tracer             tracing.Tracer
-	secretsService     secrets.Service
 }
 
 type handleResponseTransport struct {
@@ -81,7 +79,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, secretsService secrets.Service) (*DataSourceProxy, error) {
+	tracer tracing.Tracer) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
@@ -98,7 +96,6 @@ func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ct
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
 		tracer:             tracer,
-		secretsService:     secretsService,
 	}, nil
 }
 
@@ -118,7 +115,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
 
-	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ds, proxy.clientProvider)
+	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
@@ -190,17 +187,28 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	switch proxy.ds.Type {
 	case models.DS_INFLUXDB_08:
+		password, err := proxy.dataSourcesService.DecryptedPassword(proxy.ctx.Req.Context(), proxy.ds)
+		if err != nil {
+			logger.Error("Error interpolating proxy url", "error", err)
+			return
+		}
+
 		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 		reqQueryVals.Add("u", proxy.ds.User)
-		reqQueryVals.Add("p", proxy.dataSourcesService.DecryptedPassword(proxy.ds))
+		reqQueryVals.Add("p", password)
 		req.URL.RawQuery = reqQueryVals.Encode()
 	case models.DS_INFLUXDB:
+		password, err := proxy.dataSourcesService.DecryptedPassword(proxy.ctx.Req.Context(), proxy.ds)
+		if err != nil {
+			logger.Error("Error interpolating proxy url", "error", err)
+			return
+		}
 		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		req.URL.RawQuery = reqQueryVals.Encode()
 		if !proxy.ds.BasicAuth {
 			req.Header.Set(
 				"Authorization",
-				util.GetBasicAuthHeader(proxy.ds.User, proxy.dataSourcesService.DecryptedPassword(proxy.ds)),
+				util.GetBasicAuthHeader(proxy.ds.User, password),
 			)
 		}
 	default:
@@ -216,8 +224,13 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.URL.Path = unescapedPath
 
 	if proxy.ds.BasicAuth {
+		password, err := proxy.dataSourcesService.DecryptedBasicAuthPassword(proxy.ctx.Req.Context(), proxy.ds)
+		if err != nil {
+			logger.Error("Error interpolating proxy url", "error", err)
+			return
+		}
 		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
-			proxy.dataSourcesService.DecryptedBasicAuthPassword(proxy.ds)))
+			password))
 	}
 
 	dsAuth := req.Header.Get("X-DS-Authorization")
@@ -253,7 +266,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	secureJsonData, err := proxy.secretsService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData)
+	decryptedValues, err := proxy.dataSourcesService.DecryptedValues(proxy.ctx.Req.Context(), proxy.ds)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return
@@ -264,7 +277,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			ID:                      proxy.ds.Id,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
-			DecryptedSecureJSONData: secureJsonData,
+			DecryptedSecureJSONData: decryptedValues,
 		}, proxy.cfg)
 	}
 
