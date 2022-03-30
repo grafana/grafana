@@ -33,7 +33,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       position: sticky;
       top: 8px;
       right: 0;
-      z-index: 5;
+      z-index: ${theme.zIndex.navbarFixed};
       background: ${theme.colors.background.primary};
       margin-top: 8px;
       margin-bottom: -48px;
@@ -94,7 +94,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     'data-test': markers.IN_TRACE_SEARCH,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
-    suffix: suffix,
+    suffix,
   };
 
   return (
