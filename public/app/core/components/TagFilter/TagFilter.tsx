@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { components } from 'react-select';
 import debounce from 'debounce-promise';
@@ -19,6 +19,7 @@ export interface Props {
   formatCreateLabel?: (input: string) => string;
   /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
   hideValues?: boolean;
+  updateOptionsDynamically?: boolean;
   inputId?: string;
   isClearable?: boolean;
   onChange: (tags: string[]) => void;
@@ -37,6 +38,7 @@ export const TagFilter: FC<Props> = ({
   allowCustomValue = false,
   formatCreateLabel,
   hideValues,
+  updateOptionsDynamically,
   inputId,
   isClearable,
   onChange,
@@ -47,6 +49,17 @@ export const TagFilter: FC<Props> = ({
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+
+  const [selectKey, setSelectKey] = useState<string>(JSON.stringify(tags));
+  const [previousTags, setPreviousTags] = useState(tags);
+
+  useEffect(() => {
+    if (updateOptionsDynamically && previousTags !== tags) {
+      setPreviousTags(tags);
+      // Slight delay necessary to ensure query results are most up to date
+      setTimeout(() => setSelectKey(JSON.stringify(tags)), 100);
+    }
+  }, [previousTags, tags, updateOptionsDynamically]);
 
   const onLoadOptions = async (query: string) => {
     const options = await tagOptions();
@@ -68,6 +81,7 @@ export const TagFilter: FC<Props> = ({
   const value = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
 
   const selectOptions = {
+    ...(updateOptionsDynamically && { key: selectKey }),
     allowCreateWhileLoading: true,
     allowCustomValue,
     formatCreateLabel,
