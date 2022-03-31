@@ -100,6 +100,12 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:            "accesscontrol-builtins",
+			Description:     "Simplify access control builtin roles",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "prometheus_azure_auth",
 			Description: "Use azure authentication for prometheus datasource",
 			State:       FeatureStateBeta,
