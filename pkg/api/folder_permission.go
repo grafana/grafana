@@ -120,7 +120,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgId, folder.Id, true, items, old); err != nil {
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgId, folder.Uid, true, items, old); err != nil {
 			return response.Error(500, "Failed to create permission", err)
 		}
 		return response.Success("Dashboard permissions updated")
