@@ -16,7 +16,7 @@ package definitions
 //     - application/json
 //
 //     Responses:
-//       201: Ack
+//       202: Accepted
 //       400: ValidationError
 
 // swagger:parameters RoutePostPolicyTree
