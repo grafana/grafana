@@ -1,6 +1,6 @@
 +++
 title = "Keyboard shortcuts"
-weight = 7
+weight = 10
 +++
 
 # Keyboard shortcuts

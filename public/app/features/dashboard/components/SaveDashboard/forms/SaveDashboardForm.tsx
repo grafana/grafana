@@ -42,6 +42,7 @@ export const SaveDashboardForm = ({
           return;
         }
         setSaving(true);
+        options = { ...options, message: data.message };
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
           if (options.saveVariables) {
@@ -51,8 +52,9 @@ export const SaveDashboardForm = ({
             dashboard.resetOriginalTime();
           }
           onSuccess();
+        } else {
+          setSaving(false);
         }
-        setSaving(false);
       }}
     >
       {({ register, errors }) => (
@@ -96,7 +98,7 @@ export const SaveDashboardForm = ({
               icon={saving ? 'fa fa-spinner' : undefined}
               aria-label={selectors.pages.SaveDashboardModal.save}
             >
-              {saving ? '' : 'Save'}
+              Save
             </Button>
             {!saveModel.hasChanges && <div>No changes to save</div>}
           </Stack>

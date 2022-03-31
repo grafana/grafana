@@ -100,6 +100,12 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:            "accesscontrol-builtins",
+			Description:     "Simplify access control builtin roles",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "prometheus_azure_auth",
 			Description: "Use azure authentication for prometheus datasource",
 			State:       FeatureStateBeta,
@@ -160,6 +166,11 @@ var (
 		{
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "saveDashboardDrawer",
+			Description: "Use a drawer to show save dashboard dialog",
 			State:       FeatureStateBeta,
 		},
 		{

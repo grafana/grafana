@@ -13,6 +13,8 @@ import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 import SilencesEditor from './components/silences/SilencesEditor';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
+import { Authorize } from './components/Authorize';
 
 const Silences: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
@@ -51,7 +53,9 @@ const Silences: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="silences">
-      <AlertManagerPicker disabled={!isRoot} current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <Authorize actions={[AccessControlAction.AlertingInstancesExternalRead]}>
+        <AlertManagerPicker disabled={!isRoot} current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      </Authorize>
       {error && !loading && (
         <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}

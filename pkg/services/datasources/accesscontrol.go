@@ -3,7 +3,8 @@ package datasources
 import "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 const (
-	ScopeRoot = "datasources"
+	ScopeRoot   = "datasources"
+	ScopePrefix = ScopeRoot + ":uid:"
 
 	ActionRead             = "datasources:read"
 	ActionQuery            = "datasources:query"

@@ -144,7 +144,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
 }
 
 export const waitForExplore = async () => {
-  await screen.findByText(/Editor/i);
+  await screen.findAllByText(/Editor/i);
 };
 
 export const tearDown = () => {

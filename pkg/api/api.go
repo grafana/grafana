@@ -174,7 +174,7 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqSignedInNoAnonymous)
 
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
-			userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
+			userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
 			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
@@ -329,18 +329,20 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
+			idScope := dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id"))
+			uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 			folderRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
-			folderRoute.Get("/id/:id", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.GetFolderByID))
+			folderRoute.Get("/id/:id", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 			folderRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolderByUID))
-				folderUidRoute.Put("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersWrite)), routing.Wrap(hs.UpdateFolder))
-				folderUidRoute.Delete("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersDelete)), routing.Wrap(hs.DeleteFolder))
+				folderUidRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
+				folderUidRoute.Put("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
+				folderUidRoute.Delete("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersPermissionsRead)), routing.Wrap(hs.GetFolderPermissionList))
-					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite)), routing.Wrap(hs.UpdateFolderPermissions))
+					folderPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
+					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
 				})
 			})
 		})
@@ -399,6 +401,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/search/", routing.Wrap(hs.Search))
 
 		// metrics
+		// Deprecated: use /ds/query API instead.
 		apiRoute.Post("/tsdb/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetrics))
 
 		// DataSource w/ expressions
@@ -437,14 +440,14 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		apiRoute.Get("/annotations", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead, ac.ScopeAnnotationsAll)), routing.Wrap(hs.GetAnnotations))
-		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, routing.Wrap(hs.DeleteAnnotations))
+		apiRoute.Post("/annotations/mass-delete", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
-			annotationsRoute.Post("/", routing.Wrap(hs.PostAnnotation))
-			annotationsRoute.Delete("/:annotationId", routing.Wrap(hs.DeleteAnnotationByID))
+			annotationsRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsCreate)), routing.Wrap(hs.PostAnnotation))
+			annotationsRoute.Delete("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsDelete, ac.ScopeAnnotationsID)), routing.Wrap(hs.DeleteAnnotationByID))
 			annotationsRoute.Put("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.PatchAnnotation))
-			annotationsRoute.Post("/graphite", reqEditorRole, routing.Wrap(hs.PostGraphiteAnnotation))
+			annotationsRoute.Post("/graphite", authorize(reqEditorRole, ac.EvalPermission(ac.ActionAnnotationsCreate, ac.ScopeAnnotationsTypeOrganization)), routing.Wrap(hs.PostGraphiteAnnotation))
 			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsTagsRead, ac.ScopeAnnotationsTagsAll)), routing.Wrap(hs.GetAnnotationTags))
 		})
 
@@ -516,7 +519,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
-		userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
+		userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
 
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
 		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))

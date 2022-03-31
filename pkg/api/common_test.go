@@ -27,11 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -193,7 +195,8 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	authJWTSvc := models.NewFakeJWTService()
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy)
 
 	return ctxHdlr
 }
@@ -231,16 +234,16 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
-	mockStore := sqlstore.InitTestDB(t)
+	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Bus:                bus.GetBus(),
-		Live:               newTestLive(t),
+		Live:               newTestLive(t, store),
 		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(mockStore, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService: searchusers.ProvideUsersService(store, filters.ProvideOSSSearchUserFilter()),
 		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
@@ -352,8 +355,11 @@ func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAc
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = cfg
+	var featureFlags []string
+	if enableAccessControl {
+		featureFlags = append(featureFlags, featuremgmt.FlagAccesscontrol)
+	}
+	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: featureFlags})
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db)
 }
 
@@ -374,7 +380,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		Cfg:                cfg,
 		Features:           features,
 		Bus:                bus.GetBus(),
-		Live:               newTestLive(t),
+		Live:               newTestLive(t, db),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
