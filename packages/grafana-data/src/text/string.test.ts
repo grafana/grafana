@@ -60,11 +60,12 @@ describe('stringToMs', () => {
 describe('[un]escapeStringForRegex', () => {
   it.each([
     '[]',
+    '\\',
     '[(abc])',
     'onetwothree',
     '<namedgroup}(this is not a regex>',
     'string\\with\\backslash',
-    'everyspecialchar([{])}.,/?&*^&<>#',
+    'everyspecialchar([{])}.,/?&*-^&<>#',
   ])('should be symmetric', (input) => {
     const output = unEscapeStringFromRegex(escapeStringForRegex(input));
     expect(output).toEqual(input);
@@ -74,15 +75,14 @@ describe('[un]escapeStringForRegex', () => {
 describe('escapeStringForRegex', () => {
   it.each([
     '[[[',
-    '[]',
+    '[]\\',
     '[(abc])',
     'onetwothree',
     '<namedgroup}(this is not a regex>',
     'string\\with\\backslash',
-    'everyspecialchar([{])}.,/?&*^&<>#',
+    'everyspecialchar([{])}.,/?&*-^&<>#',
   ])('should always produce output that compiles', (value) => {
-    const _ignored = new RegExp(escapeStringForRegex(value));
-    // There should be no error.
+    expect(() => new RegExp(escapeStringForRegex(value))).not.toThrowError();
   });
 
   describe('when using a string without special chars', () => {

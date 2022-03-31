@@ -1,5 +1,5 @@
 import { camelCase } from 'lodash';
-const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
+const specialChars = ['(', '[', '{', '}', ']', ')', '\\', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
 const specialMatcher = '([\\' + specialChars.join('\\') + '])';
 
 const specialCharEscape = new RegExp(specialMatcher, 'g');
