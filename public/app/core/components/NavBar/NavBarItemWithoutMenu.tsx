@@ -76,6 +76,12 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       &:hover {
         background-color: ${theme.colors.action.hover};
         color: ${theme.colors.text.primary};
+
+        // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
+        .navbar-dropdown {
+          opacity: 1;
+          visibility: visible;
+        }
       }
     `,
     element: css`

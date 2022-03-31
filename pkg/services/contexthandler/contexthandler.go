@@ -36,7 +36,7 @@ const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore,
-	tracer tracing.Tracer) *ContextHandler {
+	tracer tracing.Tracer, authProxy *authproxy.AuthProxy) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -45,6 +45,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		RenderService:    renderService,
 		SQLStore:         sqlStore,
 		tracer:           tracer,
+		authProxy:        authProxy,
 	}
 }
 
@@ -57,6 +58,7 @@ type ContextHandler struct {
 	RenderService    rendering.Service
 	SQLStore         sqlstore.Store
 	tracer           tracing.Tracer
+	authProxy        *authproxy.AuthProxy
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -419,10 +421,10 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 	return true
 }
 
-func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
+func logUserIn(reqContext *models.ReqContext, auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
 	logger.Debug("Trying to log user in", "username", username, "ignoreCache", ignoreCache)
 	// Try to log in user via various providers
-	id, err := auth.Login(logger, ignoreCache)
+	id, err := auth.Login(reqContext, ignoreCache)
 	if err != nil {
 		details := err
 		var e authproxy.Error
@@ -451,36 +453,31 @@ func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCo
 
 func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext, orgID int64) bool {
 	username := reqContext.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
-	auth := authproxy.New(h.Cfg, &authproxy.Options{
-		RemoteCache: h.RemoteCache,
-		Ctx:         reqContext,
-		OrgID:       orgID,
-	})
 
 	logger := log.New("auth.proxy")
 
 	// Bail if auth proxy is not enabled
-	if !auth.IsEnabled() {
+	if !h.authProxy.IsEnabled() {
 		return false
 	}
 
 	// If there is no header - we can't move forward
-	if !auth.HasHeader() {
+	if !h.authProxy.HasHeader(reqContext) {
 		return false
 	}
 
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAuthProxy")
 	defer span.End()
 
-	// Check if allowed to continue with this IP
-	if err := auth.IsAllowedIP(); err != nil {
+	// Check if allowed continuing with this IP
+	if err := h.authProxy.IsAllowedIP(reqContext.Req.RemoteAddr); err != nil {
 		h.handleError(reqContext, err, 407, func(details error) {
 			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
 		})
 		return true
 	}
 
-	id, err := logUserIn(auth, username, logger, false)
+	id, err := logUserIn(reqContext, h.authProxy, username, logger, false)
 	if err != nil {
 		h.handleError(reqContext, err, 407, nil)
 		return true
@@ -488,7 +485,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 
 	logger.Debug("Got user ID, getting full user info", "userID", id)
 
-	user, err := auth.GetSignedInUser(id)
+	user, err := h.authProxy.GetSignedInUser(id, orgID)
 	if err != nil {
 		// The reason we couldn't find the user corresponding to the ID might be that the ID was found from a stale
 		// cache entry. For example, if a user is deleted via the API, corresponding cache entries aren't invalidated
@@ -496,18 +493,18 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		// we can't easily derive cache keys to invalidate when deleting a user. To work around this, we try to
 		// log the user in again without the cache.
 		logger.Debug("Failed to get user info given ID, retrying without cache", "userID", id)
-		if err := auth.RemoveUserFromCache(logger); err != nil {
+		if err := h.authProxy.RemoveUserFromCache(reqContext); err != nil {
 			if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
 				logger.Error("Got unexpected error when removing user from auth cache", "error", err)
 			}
 		}
-		id, err = logUserIn(auth, username, logger, true)
+		id, err = logUserIn(reqContext, h.authProxy, username, logger, true)
 		if err != nil {
 			h.handleError(reqContext, err, 407, nil)
 			return true
 		}
 
-		user, err = auth.GetSignedInUser(id)
+		user, err = h.authProxy.GetSignedInUser(id, orgID)
 		if err != nil {
 			h.handleError(reqContext, err, 407, nil)
 			return true
@@ -521,7 +518,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 	reqContext.IsSignedIn = true
 
 	// Remember user data in cache
-	if err := auth.Remember(id); err != nil {
+	if err := h.authProxy.Remember(reqContext, id); err != nil {
 		h.handleError(reqContext, err, 500, func(details error) {
 			logger.Error(
 				"Failed to store user in cache",

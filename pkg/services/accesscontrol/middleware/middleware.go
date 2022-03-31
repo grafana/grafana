@@ -121,6 +121,9 @@ func AuthorizeInOrgMiddleware(ac accesscontrol.AccessControl, db sqlstore.Store)
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
+
+			// Set the signed in user permissions in that org
+			c.SignedInUser.Permissions = userCopy.Permissions
 		}
 	}
 }

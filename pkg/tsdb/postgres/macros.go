@@ -146,7 +146,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 				return "", err
 			}
 		}
-		return fmt.Sprintf("floor(%s/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("floor((%s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
 		tg, err := m.evaluateMacro(timeRange, query, "__unixEpochGroup", args)
 		if err == nil {

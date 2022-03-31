@@ -16,7 +16,6 @@ import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { NavBarContext } from './context';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -60,7 +59,6 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [menuIdOpen, setMenuIdOpen] = useState<string | null>(null);
 
   if (kiosk !== KioskMode.Off) {
     return null;
@@ -68,63 +66,56 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
-      <NavBarContext.Provider
-        value={{
-          menuIdOpen: menuIdOpen,
-          setMenuIdOpen: setMenuIdOpen,
-        }}
-      >
-        <div className={styles.mobileSidemenuLogo} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} key="hamburger">
-          <Icon name="bars" size="xl" />
-        </div>
+      <div className={styles.mobileSidemenuLogo} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} key="hamburger">
+        <Icon name="bars" size="xl" />
+      </div>
 
-        <NavBarSection>
-          <NavBarItemWithoutMenu label="Home" className={styles.grafanaLogo} url={homeUrl}>
-            <Branding.MenuLogo />
-          </NavBarItemWithoutMenu>
-          <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
-            <Icon name="search" size="xl" />
+      <NavBarSection>
+        <NavBarItemWithoutMenu label="Home" className={styles.grafanaLogo} url={homeUrl}>
+          <Branding.MenuLogo />
+        </NavBarItemWithoutMenu>
+        <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
+          <Icon name="search" size="xl" />
+        </NavBarItem>
+      </NavBarSection>
+
+      <NavBarSection>
+        {topItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={isMatchOrChildMatch(link, activeItem)}
+            link={{ ...link, subTitle: undefined, onClick: undefined }}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
           </NavBarItem>
-        </NavBarSection>
+        ))}
+      </NavBarSection>
 
-        <NavBarSection>
-          {topItems.map((link, index) => (
-            <NavBarItem
-              key={`${link.id}-${index}`}
-              isActive={isMatchOrChildMatch(link, activeItem)}
-              link={{ ...link, subTitle: undefined, onClick: undefined }}
-            >
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-            </NavBarItem>
-          ))}
-        </NavBarSection>
+      <div className={styles.spacer} />
 
-        <div className={styles.spacer} />
+      <NavBarSection>
+        {bottomItems.map((link, index) => (
+          <NavBarItem
+            key={`${link.id}-${index}`}
+            isActive={isMatchOrChildMatch(link, activeItem)}
+            reverseMenuDirection
+            link={link}
+          >
+            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+          </NavBarItem>
+        ))}
+      </NavBarSection>
 
-        <NavBarSection>
-          {bottomItems.map((link, index) => (
-            <NavBarItem
-              key={`${link.id}-${index}`}
-              isActive={isMatchOrChildMatch(link, activeItem)}
-              reverseMenuDirection
-              link={link}
-            >
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-            </NavBarItem>
-          ))}
-        </NavBarSection>
-
-        {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-        {mobileMenuOpen && (
-          <NavBarMenu
-            activeItem={activeItem}
-            navItems={[searchItem, ...topItems, ...bottomItems]}
-            onClose={() => setMobileMenuOpen(false)}
-          />
-        )}
-      </NavBarContext.Provider>
+      {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
+      {mobileMenuOpen && (
+        <NavBarMenu
+          activeItem={activeItem}
+          navItems={[searchItem, ...topItems, ...bottomItems]}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+      )}
     </nav>
   );
 });

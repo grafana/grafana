@@ -33,6 +33,7 @@ const NavBarItem = ({
   const { i18n } = useLingui();
   const theme = useTheme2();
   const menuItems = link.children ?? [];
+
   // Spreading `menuItems` here as otherwise we'd be mutating props
   const menuItemsSorted = reverseMenuDirection ? [...menuItems].reverse() : menuItems;
   const filteredItems = menuItemsSorted
@@ -66,12 +67,7 @@ const NavBarItem = ({
 
   return showMenu ? (
     <li className={cx(styles.container, className)}>
-      <NavBarItemMenuTrigger
-        item={section}
-        isActive={isActive}
-        label={linkText}
-        reverseMenuDirection={reverseMenuDirection}
-      >
+      <NavBarItemMenuTrigger item={section} isActive={isActive} label={linkText}>
         <NavBarItemMenu
           items={items}
           reverseMenuDirection={reverseMenuDirection}

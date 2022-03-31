@@ -241,7 +241,8 @@ type SetResourcePermissionCommand struct {
 }
 
 const (
-	GlobalOrgID = 0
+	GlobalOrgID      = 0
+	GeneralFolderUID = "general"
 
 	// Permission actions
 
@@ -296,7 +297,7 @@ const (
 	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
-	ScopeGlobalUsersAll = "global:users:*"
+	ScopeGlobalUsersAll = "global.users:*"
 
 	// APIKeys scope
 	ScopeAPIKeysAll = "apikeys:*"

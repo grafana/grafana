@@ -6,8 +6,10 @@ import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/sh
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { DataSourceApi, SelectableValue } from '@grafana/data';
-import { EditorRow, EditorRows } from '@grafana/experimental';
+import { EditorRow } from '@grafana/experimental';
 import { QueryPreview } from './QueryPreview';
+import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
+import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
   query: LokiVisualQuery;
@@ -36,7 +38,8 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
     }
 
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-    return await datasource.languageProvider.fetchSeriesLabels(expr);
+    const series = await datasource.languageProvider.fetchSeriesLabels(expr);
+    return Object.keys(series).sort();
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
@@ -56,7 +59,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
   };
 
   return (
-    <EditorRows>
+    <>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -69,7 +72,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           onChange={onChangeLabels}
         />
       </EditorRow>
-      <EditorRow>
+      <OperationsEditorRow>
         <OperationList
           queryModeller={lokiQueryModeller}
           query={query}
@@ -77,13 +80,16 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
         />
-      </EditorRow>
+      </OperationsEditorRow>
+      {query.binaryQueries && query.binaryQueries.length > 0 && (
+        <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+      )}
       {!nested && (
         <EditorRow>
           <QueryPreview query={query} />
         </EditorRow>
       )}
-    </EditorRows>
+    </>
   );
 });
 

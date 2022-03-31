@@ -85,6 +85,7 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       left: 100%;
       list-style: none;
       min-width: 140px;
+      position: absolute;
       top: ${reverseDirection ? 'auto' : 0};
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};

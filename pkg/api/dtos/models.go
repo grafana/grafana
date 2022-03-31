@@ -63,7 +63,7 @@ type MetricRequest struct {
 	// queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
 	// queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
 	// required: true
-	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasourceId": 86, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
+	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasource":{ "uid":"PD8C576611E62080A" }, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
 	Queries []*simplejson.Json `json:"queries"`
 	// required: false
 	Debug bool `json:"debug"`

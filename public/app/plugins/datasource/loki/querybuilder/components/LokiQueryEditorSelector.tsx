@@ -1,27 +1,45 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
-import { EditorHeader, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
+import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { Button, useStyles2, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
-import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import React, { SyntheticEvent, useCallback, useState } from 'react';
-import { LokiQueryEditor } from '../../components/LokiQueryEditor';
+import React, { useCallback, useState } from 'react';
 import { LokiQueryEditorProps } from '../../components/types';
-import { LokiQueryType } from '../../types';
+import { LokiQuery } from '../../types';
+
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { getQueryWithDefaults } from '../state';
 import { getDefaultEmptyQuery, LokiVisualQuery } from '../types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplaind';
+import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
+import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
+import { buildVisualQueryFromString } from '../parsing';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
-  const { query, onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
+  const query = getQueryWithDefaults(props.query);
   const [visualQuery, setVisualQuery] = useState<LokiVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
+  const [parseModalOpen, setParseModalOpen] = useState(false);
+  const [pendingChange, setPendingChange] = useState<LokiQuery | undefined>(undefined);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      onChange({ ...query, editorMode: newMetricEditorMode });
+      const change = { ...query, editorMode: newMetricEditorMode };
+      if (newMetricEditorMode === QueryEditorMode.Builder) {
+        const result = buildVisualQueryFromString(query.expr);
+        change.visualQuery = result.query;
+        // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
+        if (result.errors.length) {
+          setParseModalOpen(true);
+          setPendingChange(change);
+          return;
+        }
+        setVisualQuery(change.visualQuery);
+      }
+      onChange(change);
     },
     [onChange, query]
   );
@@ -37,16 +55,23 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     });
   };
 
-  const onInstantChange = (event: SyntheticEvent<HTMLInputElement>) => {
-    onChange({ ...query, queryType: event.currentTarget.checked ? LokiQueryType.Instant : LokiQueryType.Range });
-    onRunQuery();
-  };
-
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
 
   return (
     <>
+      <ConfirmModal
+        isOpen={parseModalOpen}
+        title="Query parsing"
+        body="There were errors while trying to parse the query. Continuing to visual builder may loose some parts of the query."
+        confirmText="Continue"
+        onConfirm={() => {
+          setVisualQuery(pendingChange!.visualQuery!);
+          onChange(pendingChange!);
+          setParseModalOpen(false);
+        }}
+        onDismiss={() => setParseModalOpen(false)}
+      />
       <EditorHeader>
         <FlexItem grow={1} />
         <Button
@@ -60,11 +85,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         >
           Run query
         </Button>
-        <QueryHeaderSwitch
-          label="Instant"
-          value={query.queryType === LokiQueryType.Instant}
-          onChange={onInstantChange}
-        />
         <InlineSelect
           value={null}
           placeholder="Query patterns"
@@ -80,16 +100,21 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
-      {editorMode === QueryEditorMode.Code && <LokiQueryEditor {...props} />}
-      {editorMode === QueryEditorMode.Builder && (
-        <LokiQueryBuilder
-          datasource={props.datasource}
-          query={visualQuery}
-          onChange={onChangeViewModel}
-          onRunQuery={props.onRunQuery}
-        />
-      )}
-      {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={visualQuery} />}
+      <EditorRows>
+        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} />}
+        {editorMode === QueryEditorMode.Builder && (
+          <LokiQueryBuilder
+            datasource={props.datasource}
+            query={visualQuery}
+            onChange={onChangeViewModel}
+            onRunQuery={props.onRunQuery}
+          />
+        )}
+        {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={visualQuery} />}
+        {editorMode !== QueryEditorMode.Explain && (
+          <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} />
+        )}
+      </EditorRows>
     </>
   );
 });

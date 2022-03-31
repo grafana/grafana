@@ -9,15 +9,14 @@ import (
 )
 
 var sqlIDAcceptList = map[string]struct{}{
-	"org_user.user_id":    {},
-	"role.id":             {},
-	"t.id":                {},
-	"team.id":             {},
-	"u.id":                {},
-	"\"user\".\"id\"":     {}, // For Postgres
-	"`user`.`id`":         {}, // For MySQL and SQLite
-	"dashboard.id":        {},
-	"dashboard.folder_id": {},
+	"org_user.user_id": {},
+	"role.id":          {},
+	"t.id":             {},
+	"team.id":          {},
+	"u.id":             {},
+	"\"user\".\"id\"":  {}, // For Postgres
+	"`user`.`id`":      {}, // For MySQL and SQLite
+	"dashboard.uid":    {},
 }
 
 var (
@@ -94,7 +93,7 @@ func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 	}
 
 	parser := parseStringAttribute
-	if strings.HasSuffix(prefix, "id:") {
+	if strings.HasSuffix(prefix, ":id:") {
 		parser = parseIntAttribute
 	}
 
