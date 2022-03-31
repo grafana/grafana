@@ -3,7 +3,13 @@ import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { SettingsService } from 'app/percona/settings/Settings.service';
-import { setSettings, setSettingsLoading, setAuthorized, setIsPlatformUser } from 'app/percona/shared/core/reducers';
+import {
+  setSettings,
+  setSettingsLoading,
+  setAuthorized,
+  fetchServerInfoAction,
+  setIsPlatformUser,
+} from 'app/percona/shared/core/reducers';
 
 import { UserService } from '../../services/user/User.service';
 
@@ -37,6 +43,7 @@ export const PerconaBootstrapper = () => {
 
     getSettings();
     getUserStatus();
+    dispatch(fetchServerInfoAction());
   }, [dispatch]);
 
   return <></>;

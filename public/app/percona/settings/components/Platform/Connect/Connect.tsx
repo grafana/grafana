@@ -1,14 +1,16 @@
-import { logger, TextInputField, PasswordInputField, LoaderButton } from '@percona/platform-core';
+import { logger, LoaderButton, TextInputField } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
+import { AppEvents } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { setSettings } from 'app/percona/shared/core/reducers';
+import { setSettings, fetchServerInfoAction } from 'app/percona/shared/core/reducers';
+import { getPerconaServer } from 'app/percona/shared/core/selectors';
 import validators from 'app/percona/shared/helpers/validators';
 
-import { CONNECT_DELAY, INITIAL_VALUES } from '../Platform.constants';
+import { CONNECT_DELAY } from '../Platform.constants';
 import { Messages } from '../Platform.messages';
 import { PlatformService } from '../Platform.service';
 import { ConnectRenderProps } from '../types';
@@ -19,21 +21,27 @@ export const Connect: FC = () => {
   const styles = useStyles(getStyles);
   const [connecting, setConnecting] = useState(false);
   const dispatch = useDispatch();
+  const { result = { serverId: '' } } = useSelector(getPerconaServer);
+  const initialValues: ConnectRenderProps = {
+    pmmServerName: '',
+    pmmServerId: result.serverId,
+    accessToken: '',
+  };
 
-  const handleConnect = async ({ pmmServerName, email, password }: ConnectRenderProps) => {
+  const handleConnect = async ({ pmmServerName, accessToken }: ConnectRenderProps) => {
     setConnecting(true);
 
     try {
       await PlatformService.connect({
         server_name: pmmServerName,
-        email,
-        password,
+        personal_access_token: accessToken,
       });
 
       // We need some short delay for changes to apply before immediately calling getSettings
       setTimeout(() => {
         appEvents.emit(AppEvents.alertSuccess, [Messages.connectSucceeded]);
         setConnecting(false);
+        dispatch(fetchServerInfoAction());
         dispatch(setSettings({ isConnectedToPortal: true }));
       }, CONNECT_DELAY);
     } catch (e) {
@@ -45,6 +53,7 @@ export const Connect: FC = () => {
   const ConnectForm: FC<FormRenderProps<ConnectRenderProps>> = ({ pristine, valid, handleSubmit }) => (
     <form data-testid="connect-form" className={styles.form} onSubmit={handleSubmit} autoComplete="off">
       <legend className={styles.legend}>{Messages.title}</legend>
+      <TextInputField name="pmmServerId" disabled label={Messages.pmmServerId} />
       <TextInputField
         name="pmmServerName"
         label={Messages.pmmServerName}
@@ -52,15 +61,18 @@ export const Connect: FC = () => {
         showErrorOnBlur
         required
       />
-      <TextInputField
-        name="email"
-        label={Messages.emailLabel}
-        validators={[validators.required, validators.validateEmail]}
-        showErrorOnBlur
-        required
-        parse={(value) => value.trim()}
-      />
-      <PasswordInputField name="password" label={Messages.passwordLabel} validators={[validators.required]} required />
+      <div className={styles.accessTokenRow}>
+        <TextInputField
+          name="accessToken"
+          label={Messages.accessToken}
+          validators={[validators.required]}
+          showErrorOnBlur
+          required
+        />
+        <a href={`${process.env.PERCONA_SAAS_HOST}/profile`} rel="noreferrer" target="_blank">
+          Get token
+        </a>
+      </div>
       <LoaderButton
         data-testid="connect-button"
         type="submit"
@@ -75,5 +87,5 @@ export const Connect: FC = () => {
     </form>
   );
 
-  return <Form onSubmit={handleConnect} initialValues={INITIAL_VALUES} render={ConnectForm} />;
+  return <Form onSubmit={handleConnect} initialValues={initialValues} render={ConnectForm} />;
 };

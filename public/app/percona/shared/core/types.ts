@@ -46,3 +46,8 @@ export interface PrioritizedLabels {
   primary: string[];
   secondary: string[];
 }
+
+export interface ServerInfo {
+  serverName: string;
+  serverId: string;
+}
