@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import CSSTransition from 'react-transition-group/CSSTransition';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -37,6 +38,7 @@ export const NavBarNext = React.memo(() => {
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const theme = useTheme2();
   const styles = getStyles(theme);
+  const animStyles = useStyles2(getAnimStyles);
   const location = useLocation();
   const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
@@ -115,16 +117,16 @@ export const NavBarNext = React.memo(() => {
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
       <div className={styles.menuWrapper}>
-        {menuOpen && (
+        <CSSTransition in={menuOpen} classNames={animStyles} timeout={150} unmountOnExit>
           <NavBarMenu
             activeItem={activeItem}
             navItems={[homeItem, searchItem, ...coreItems, ...pluginItems, ...configItems]}
             onClose={() => setMenuOpen(false)}
           />
-        )}
+        </CSSTransition>
         <IconButton
           name={menuOpen ? 'angle-left' : 'angle-right'}
-          className={cx(styles.menuToggle, { [styles.menuOpen]: menuOpen })}
+          className={styles.menuToggle}
           size="xl"
           onClick={() => setMenuOpen(!menuOpen)}
         />
@@ -233,7 +235,53 @@ const getStyles = (theme: GrafanaTheme2) => ({
       display: 'none',
     },
   }),
-  menuOpen: css({
-    transform: 'translateX(0%)',
-  }),
 });
+
+const getAnimStyles = (theme: GrafanaTheme2) => {
+  const transitionProps = {
+    transitionProperty: 'width, background-color',
+    transitionDuration: '150ms',
+    transitionTimingFunction: 'ease-in-out',
+  };
+
+  const openStyles = {
+    backgroundColor: theme.colors.background.canvas,
+    width: '300px',
+  };
+
+  const closedStyles = {
+    backgroundColor: theme.colors.background.primary,
+    width: theme.spacing(7),
+  };
+
+  const buttonShift = {
+    '& + button': {
+      transform: 'translateX(0%)',
+    },
+  };
+
+  return {
+    enter: css({
+      ...closedStyles,
+      ...buttonShift,
+    }),
+    enterActive: css({
+      ...transitionProps,
+      ...openStyles,
+      ...buttonShift,
+    }),
+    enterDone: css({
+      ...openStyles,
+      ...buttonShift,
+    }),
+    exit: css({
+      ...openStyles,
+      ...buttonShift,
+    }),
+    exitActive: css({
+      ...transitionProps,
+      ...closedStyles,
+      ...buttonShift,
+    }),
+  };
+};
