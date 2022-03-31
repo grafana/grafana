@@ -42,7 +42,7 @@ describe('buildInfo', () => {
     });
 
     it.each([true, false])(
-      `Should return Prometheus with rulerApiEnabled set to %p according to the ruler_config_api value`,
+      `Should return Mimir with rulerApiEnabled set to %p according to the ruler_config_api value`,
       async (rulerApiEnabled) => {
         fetch.mockReturnValue(
           of({
@@ -62,7 +62,7 @@ describe('buildInfo', () => {
 
         const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Prometheus' });
 
-        expect(response.application).toBe(PromApplication.Prometheus);
+        expect(response.application).toBe(PromApplication.Mimir);
         expect(response.features.rulerApiEnabled).toBe(rulerApiEnabled);
         expect(mocks.fetchRules).not.toHaveBeenCalled();
         expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
