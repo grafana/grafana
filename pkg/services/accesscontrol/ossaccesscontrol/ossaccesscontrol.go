@@ -26,7 +26,48 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 		}
 		api.RegisterAPIEndpoints()
 	}
+
+	s.initBuiltInRoles()
+	s.declareOSSRoles()
+
 	return s
+}
+
+func (ac *OSSAccessControlService) initBuiltInRoles() {
+	ac.roles = map[string]*accesscontrol.RoleDTO{
+		string(models.ROLE_ADMIN): {
+			Name:        "fixed:builtins:admin",
+			DisplayName: string(models.ROLE_ADMIN),
+			Description: "Admin role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+		string(models.ROLE_EDITOR): {
+			Name:        "fixed:builtins:editor",
+			DisplayName: string(models.ROLE_EDITOR),
+			Description: "Editor role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+		string(models.ROLE_VIEWER): {
+			Name:        "fixed:builtins:viewer",
+			DisplayName: string(models.ROLE_VIEWER),
+			Description: "Viewer role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+		accesscontrol.RoleGrafanaAdmin: {
+			Name:        "fixed:builtins:grafana_admin",
+			DisplayName: accesscontrol.RoleGrafanaAdmin,
+			Description: "Grafana Admin role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+	}
 }
 
 // ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
@@ -48,6 +89,7 @@ type OSSAccessControlService struct {
 	scopeResolver accesscontrol.ScopeResolver
 	provider      accesscontrol.PermissionsProvider
 	registrations accesscontrol.RegistrationList
+	roles         map[string]*accesscontrol.RoleDTO
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -140,15 +182,9 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 	permissions := make([]*accesscontrol.Permission, 0)
 
 	for _, builtin := range ac.GetUserBuiltInRoles(user) {
-		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
-			for _, name := range roleNames {
-				role, exists := accesscontrol.FixedRoles[name]
-				if !exists {
-					continue
-				}
-				for i := range role.Permissions {
-					permissions = append(permissions, &role.Permissions[i])
-				}
+		if role, ok := ac.roles[builtin]; ok {
+			for i := range role.Permissions {
+				permissions = append(permissions, &role.Permissions[i])
 			}
 		}
 	}
@@ -168,40 +204,6 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	return roles
 }
 
-func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
-	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
-		// If a package wants to override another package's role, the version
-		// needs to be increased. Hence, we don't overwrite a role with a
-		// greater version.
-		if storedRole.Version >= role.Version {
-			ac.log.Debug("the role has already been stored in a greater version, skipping registration", "role", role.Name)
-			return
-		}
-	}
-	// Save role
-	accesscontrol.FixedRoles[role.Name] = role
-}
-
-func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
-	for _, builtInRole := range builtInRoles {
-		// Only record new assignments
-		alreadyAssigned := false
-		assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]
-		if ok {
-			for _, assignedRole := range assignments {
-				if assignedRole == role.Name {
-					ac.log.Debug("the role has already been assigned", "rolename", role.Name, "build_in_role", builtInRole)
-					alreadyAssigned = true
-				}
-			}
-		}
-		if !alreadyAssigned {
-			assignments = append(assignments, role.Name)
-			accesscontrol.FixedRoleGrants[builtInRole] = assignments
-		}
-	}
-}
-
 // RegisterFixedRoles registers all declared roles in RAM
 func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	// If accesscontrol is disabled no need to register roles
@@ -218,8 +220,14 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
-	ac.saveFixedRole(role)
-	ac.assignFixedRole(role, builtInRoles)
+	for _, builtInRole := range builtInRoles {
+		if macroRole, ok := ac.roles[builtInRole]; ok {
+			// TODO dedup permissions
+			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
+		} else {
+			ac.log.Error("Unknown builtin role", "builtInRole", builtInRole)
+		}
+	}
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
