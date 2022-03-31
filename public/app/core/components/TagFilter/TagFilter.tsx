@@ -51,6 +51,7 @@ export const TagFilter: FC<Props> = ({
   const styles = getStyles(theme);
 
   const [selectKey, setSelectKey] = useState<string>(JSON.stringify(tags));
+  const [hasMenuBeenOpened, setHasMenuBeenOpened] = useState(false);
   const [previousTags, setPreviousTags] = useState(tags);
 
   useEffect(() => {
@@ -78,10 +79,18 @@ export const TagFilter: FC<Props> = ({
     onChange((newTags || []).map((tag) => tag.value));
   };
 
+  const onOpenMenu = () => {
+    setHasMenuBeenOpened(true);
+  };
+
   const value = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
 
   const selectOptions = {
     ...(updateOptionsDynamically && { key: selectKey }),
+    ...(updateOptionsDynamically && { onOpenMenu }),
+    ...(((updateOptionsDynamically && hasMenuBeenOpened) || !updateOptionsDynamically) && {
+      loadOptions: debouncedLoadOptions,
+    }),
     allowCreateWhileLoading: true,
     allowCustomValue,
     formatCreateLabel,
@@ -91,7 +100,6 @@ export const TagFilter: FC<Props> = ({
     getOptionValue: (i: any) => i.value,
     inputId,
     isMulti: true,
-    loadOptions: debouncedLoadOptions,
     loadingMessage: 'Loading...',
     noOptionsMessage: 'No tags found',
     onChange: onTagChange,
