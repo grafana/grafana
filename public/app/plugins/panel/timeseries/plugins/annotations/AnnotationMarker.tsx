@@ -7,7 +7,6 @@ import { getCommonAnnotationStyles } from '../styles';
 import { usePopper } from 'react-popper';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { AnnotationTooltip } from './AnnotationTooltip';
-import { contextSrv } from '../../../../../core/services/context_srv';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   timeZone: TimeZone;
@@ -28,7 +27,7 @@ const POPPER_CONFIG = {
 };
 
 export function AnnotationMarker({ annotation, timeZone, style }: Props) {
-  const { canAddAnnotations, ...panelCtx } = usePanelContext();
+  const { canAddAnnotations, canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
   const commonStyles = useStyles2(getCommonAnnotationStyles);
   const styles = useStyles2(getStyles);
 
@@ -83,34 +82,6 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
     [timeZone]
   );
 
-  const canDelete = useCallback(() => {
-    let canDelete = true;
-
-    if (contextSrv.accessControlEnabled()) {
-      if (annotation.dashboardId !== 0) {
-        canDelete = !!panelCtx.annotationPermissions?.dashboard.canDelete;
-      } else {
-        canDelete = !!panelCtx.annotationPermissions?.organization.canDelete;
-      }
-    }
-
-    return canDelete && !!canAddAnnotations && canAddAnnotations();
-  }, [canAddAnnotations, annotation, panelCtx]);
-
-  const canEdit = useCallback(() => {
-    let canEdit = true;
-
-    if (contextSrv.accessControlEnabled()) {
-      if (annotation.dashboardId !== 0) {
-        canEdit = !!panelCtx.annotationPermissions?.dashboard.canEdit;
-      } else {
-        canEdit = !!panelCtx.annotationPermissions?.organization.canEdit;
-      }
-    }
-
-    return canEdit && !!canAddAnnotations && canAddAnnotations();
-  }, [canAddAnnotations, annotation, panelCtx]);
-
   const renderTooltip = useCallback(() => {
     return (
       <AnnotationTooltip
@@ -118,11 +89,11 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
         timeFormatter={timeFormatter}
         onEdit={onAnnotationEdit}
         onDelete={onAnnotationDelete}
-        canEdit={canEdit()}
-        canDelete={canDelete()}
+        canEdit={canEditAnnotations!(annotation.dashboardId)}
+        canDelete={canDeleteAnnotations!(annotation.dashboardId)}
       />
     );
-  }, [canDelete, canEdit, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
+  }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
 
   const isRegionAnnotation = Boolean(annotation.isRegion);
 

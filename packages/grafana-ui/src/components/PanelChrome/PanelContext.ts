@@ -9,7 +9,6 @@ import {
 } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
-import { AnnotationsPermissions } from '../../../../../public/app/types';
 
 /** @alpha */
 export interface PanelContext {
@@ -31,11 +30,11 @@ export interface PanelContext {
   onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
 
   canAddAnnotations?: () => boolean;
+  canEditAnnotations?: (dashboardId: number) => boolean;
+  canDeleteAnnotations?: (dashboardId: number) => boolean;
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
-
-  annotationPermissions?: AnnotationsPermissions;
 
   /**
    * Enables modifying thresholds directly from the panel
