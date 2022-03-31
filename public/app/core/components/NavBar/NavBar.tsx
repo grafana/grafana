@@ -109,6 +109,12 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
 
   if (isPlatformUser) {
     topItems.push({
+      id: 'entitlements',
+      icon: 'cloud',
+      text: 'Entitlements',
+      url: `${config.appSubUrl}/entitlements`,
+    });
+    topItems.push({
       id: 'tickets',
       icon: 'ticket',
       text: 'Support Tickets',
