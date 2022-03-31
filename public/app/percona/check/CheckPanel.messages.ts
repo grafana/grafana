@@ -1,9 +1,9 @@
 export const Messages = {
-  pageTitle: 'Security Checks',
-  failedChecksTitle: 'Failed Checks',
-  allChecksTitle: 'All Checks',
+  pageTitle: 'Advisor Checks',
+  failedChecksTitle: 'Failed',
+  allChecksTitle: 'All',
   silenced: 'Silenced',
-  stt: 'Security Threat Tool',
+  advisors: 'Advisor Checks feature',
   pmmSettings: 'PMM Settings.',
   readMore: 'Read more',
 };

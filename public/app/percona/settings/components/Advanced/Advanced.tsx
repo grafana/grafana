@@ -61,9 +61,9 @@ export const Advanced: FC<AdvancedProps> = ({
       updatesLabel,
       updatesLink,
       updatesTooltip,
-      sttLabel,
+      advisorsLabel,
       sttLink,
-      sttTooltip,
+      advisorsTooltip,
       dbaasLabel,
       dbaasTooltip,
       dbaasLink,
@@ -202,11 +202,11 @@ export const Advanced: FC<AdvancedProps> = ({
             <Field
               name="stt"
               type="checkbox"
-              label={sttLabel}
-              tooltip={sttTooltip}
+              label={advisorsLabel}
+              tooltip={advisorsTooltip}
               tooltipLinkText={tooltipLinkText}
               link={sttLink}
-              dataTestId="advanced-stt"
+              dataTestId="advanced-advisors"
               component={SwitchRow}
             />
             <div className={styles.advancedRow}>

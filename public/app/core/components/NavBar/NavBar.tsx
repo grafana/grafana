@@ -80,9 +80,9 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
 
     if (sttEnabled) {
       topItems.push({
-        id: 'databsase-checks',
+        id: 'database-checks',
         icon: 'percona-database-checks',
-        text: 'Security Checks',
+        text: 'Advisor Checks',
         url: `${config.appSubUrl}/pmm-database-checks`,
       });
     }
