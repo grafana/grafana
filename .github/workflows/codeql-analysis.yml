@@ -12,6 +12,7 @@ on:
     # The branches below must be a subset of the branches above
     branches: [main]
     paths-ignore:
+      - '**/*.cue'
       - '**/*.json'
       - '**/*.md'
       - '**/*.txt'
