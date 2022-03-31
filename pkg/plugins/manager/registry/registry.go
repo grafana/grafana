@@ -45,9 +45,7 @@ func (r *PluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
 
 	res := make([]*plugins.Plugin, 0)
 	for _, p := range r.store {
-		if !p.IsDecommissioned() {
-			res = append(res, p)
-		}
+		res = append(res, p)
 	}
 
 	return res
@@ -61,10 +59,6 @@ func (r *PluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
 	r.mu.Lock()
 	r.store[p.ID] = p
 	r.mu.Unlock()
-
-	if !p.IsCorePlugin() {
-		r.log.Info("Plugin registered", "pluginId", p.ID)
-	}
 
 	return nil
 }
@@ -86,7 +80,7 @@ func (r *PluginRegistry) plugin(pluginID string) (*plugins.Plugin, bool) {
 	defer r.mu.RUnlock()
 	p, exists := r.store[pluginID]
 
-	if !exists || (p.IsDecommissioned()) {
+	if !exists {
 		return nil, false
 	}
 
@@ -94,10 +88,6 @@ func (r *PluginRegistry) plugin(pluginID string) (*plugins.Plugin, bool) {
 }
 
 func (r *PluginRegistry) isRegistered(pluginID string) bool {
-	p, exists := r.plugin(pluginID)
-	if !exists {
-		return false
-	}
-
-	return !p.IsDecommissioned()
+	_, exists := r.plugin(pluginID)
+	return exists
 }

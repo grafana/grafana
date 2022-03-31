@@ -156,12 +156,16 @@ func (m *PluginManager) Routes() []*plugins.StaticRoute {
 	return staticRoutes
 }
 
-func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Plugin) error {
-	if err := m.pluginRegistry.Add(ctx, plugin); err != nil {
+func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin) error {
+	if err := m.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
 
-	return m.start(ctx, plugin)
+	if !p.IsCorePlugin() {
+		m.log.Info("Plugin registered", "pluginId", p.ID)
+	}
+
+	return m.start(ctx, p)
 }
 
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
