@@ -14,9 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -27,12 +29,19 @@ type TestingApiSrv struct {
 	ExpressionService *expr.Service
 	DatasourceCache   datasources.CacheService
 	log               log.Logger
+	accessControl     accesscontrol.AccessControl
 	evaluator         eval.Evaluator
 }
 
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
 	if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
 		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+	}
+
+	if !authorizeDatasourceAccessForRule(&models2.AlertRule{Data: body.GrafanaManagedCondition.Data}, func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
+	}) {
+		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
 	evalCond := ngmodels.Condition{
@@ -107,6 +116,12 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 	now := cmd.Now
 	if now.IsZero() {
 		now = timeNow()
+	}
+
+	if !authorizeDatasourceAccessForRule(&models2.AlertRule{Data: cmd.Data}, func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
+	}) {
+		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
 	if _, err := validateQueriesAndExpressions(c.Req.Context(), cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
