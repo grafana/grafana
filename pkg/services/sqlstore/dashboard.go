@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -92,15 +93,18 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersis
 		},
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
-			permissions.AccessControlDashboardPermissionFilter{User: query.SignedInUser, PermissionLevel: query.Permission},
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
 		}
 	}
 
 	for _, filter := range query.Sort.Filter {
 		filters = append(filters, filter)
 	}
+
+	filters = append(filters, query.Filters...)
 
 	if query.OrgId != 0 {
 		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})

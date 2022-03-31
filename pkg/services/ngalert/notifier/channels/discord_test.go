@@ -98,7 +98,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name:         "Error in initialization",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "discord_testing" of type "discord": could not find webhook url property in settings`,
+			expInitError: `could not find webhook url property in settings`,
 		},
 		{
 			name: "Invalid template returns error",
@@ -151,7 +151,7 @@ func TestDiscordNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			dn, err := NewDiscordNotifier(m, webhookSender, tmpl)
+			cfg, err := NewDiscordConfig(m)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -160,6 +160,7 @@ func TestDiscordNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			dn := NewDiscordNotifier(cfg, webhookSender, tmpl)
 			ok, err := dn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

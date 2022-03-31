@@ -9,6 +9,7 @@ import {
 
 export interface VisualQueryBinary<T> {
   operator: string;
+  vectorMatchesType?: 'on' | 'ignoring';
   vectorMatches?: string;
   query: T;
 }
@@ -66,7 +67,7 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
     let result = leftOperand + ` ${binaryQuery.operator} `;
 
     if (binaryQuery.vectorMatches) {
-      result += `${binaryQuery.vectorMatches} `;
+      result += `${binaryQuery.vectorMatchesType}(${binaryQuery.vectorMatches}) `;
     }
 
     return result + this.renderQuery(binaryQuery.query, true);
