@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -80,7 +82,11 @@ func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger Logger) Service {
+func ProvideService(cfg *setting.Cfg) *Installer {
+	return New(false, cfg.BuildVersion, newLogger("plugin.installer", true))
+}
+
+func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),

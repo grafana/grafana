@@ -40,26 +40,28 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+	pluginInstaller installer.Service) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader)
+	}, pluginLoader, pluginInstaller)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
+	pluginInstaller installer.Service) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
+		pluginInstaller: pluginInstaller,
 		log:             log.New("plugin.manager"),
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 

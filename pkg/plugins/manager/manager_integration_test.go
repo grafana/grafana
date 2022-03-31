@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -94,7 +96,7 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 	pm, err := ProvideService(cfg, registry.NewPluginRegistry(pmCfg), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)))
+		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg))
 	require.NoError(t, err)
 
 	verifyCorePluginCatalogue(t, pm)

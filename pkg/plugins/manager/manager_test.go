@@ -28,7 +28,7 @@ func TestPluginManager_Init(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader)
+		}, loader, &fakePluginInstaller{})
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -315,7 +315,7 @@ func TestPluginManager_registeredPlugins(t *testing.T) {
 				testPluginID: decommissionedPlugin,
 				"test-app":   {},
 			},
-		}, []PluginSource{}, &fakeLoader{})
+		}, []PluginSource{}, &fakeLoader{}, &fakePluginInstaller{})
 
 		rps := pm.registeredPlugins(context.Background())
 		require.Equal(t, 2, len(rps))
@@ -523,7 +523,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, newRegistry(), nil, &fakeLoader{})
+	pm := New(&plugins.Cfg{}, newRegistry(), nil, &fakeLoader{}, &fakePluginInstaller{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -582,7 +582,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.Cloud = "AzureCloud"
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
-	manager := New(cfg, registry.NewPluginRegistry(cfg), nil, &fakeLoader{})
+	manager := New(cfg, registry.NewPluginRegistry(cfg), nil, &fakeLoader{}, &fakePluginInstaller{})
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}

@@ -1,4 +1,4 @@
-package manager
+package installer
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ type InfraLogWrapper struct {
 	debugMode bool
 }
 
-func newInstallerLogger(name string, debugMode bool) (l *InfraLogWrapper) {
+func newLogger(name string, debugMode bool) (l *InfraLogWrapper) {
 	return &InfraLogWrapper{
 		debugMode: debugMode,
 		l:         log.New(name),
