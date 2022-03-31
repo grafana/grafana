@@ -1,3 +1,4 @@
+import React from 'react';
 import { cloneDeep, defaults } from 'lodash';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -56,7 +57,8 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { renderLegendFormat } from './legend';
 import { fetchDataSourceBuildInfo } from 'app/features/alerting/unified/api/buildInfo';
-import { PromBuildInfo } from 'app/types/unified-alerting-dto';
+import { PromApplication, PromBuildInfo } from 'app/types/unified-alerting-dto';
+import { Badge, BadgeColor } from '@grafana/ui';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
@@ -83,6 +85,8 @@ export class PrometheusDatasource
   lookupsDisabled: boolean;
   customQueryParameters: any;
   exemplarsAvailable: boolean;
+  subType: PromApplication;
+  rulerEnabled: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -93,6 +97,8 @@ export class PrometheusDatasource
     super(instanceSettings);
 
     this.type = 'prometheus';
+    this.subType = PromApplication.Prometheus;
+    this.rulerEnabled = false;
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.id = instanceSettings.id;
     this.url = instanceSettings.url!;
@@ -793,6 +799,11 @@ export class PrometheusDatasource
     );
   }
 
+  async getSubtitle(): Promise<JSX.Element | null> {
+    const buildInfo = await this.getBuildInfo();
+    return buildInfo ? this.getBuildInfoMessage(buildInfo) : null;
+  }
+
   async getTagKeys(options?: any) {
     if (options?.series) {
       // Get tags for the provided series only
@@ -824,9 +835,58 @@ export class PrometheusDatasource
   }
 
   getBuildInfoMessage(buildInfo: PromBuildInfo) {
-    return `Data source sub type: ${buildInfo.application} \nRuler API: ${
-      buildInfo.features.rulerApiEnabled ? 'Enabled' : 'Disabled'
-    }`;
+    const enabled = <Badge color="green" icon="check" text="Ruler API enabled" />;
+    const disabled = <Badge color="orange" icon="exclamation-triangle" text="Ruler API not enabled" />;
+
+    const LOGOS = {
+      [PromApplication.Cortex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
+      [PromApplication.Mimir]: '/public/app/plugins/datasource/prometheus/img/mimir_logo.svg',
+      [PromApplication.Prometheus]: '/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
+    };
+
+    const COLORS: Record<PromApplication, BadgeColor> = {
+      [PromApplication.Cortex]: 'blue',
+      [PromApplication.Mimir]: 'orange',
+      [PromApplication.Prometheus]: 'red',
+    };
+
+    // this will inform the user about what "subtype" the datasource is; Mimir, Cortex or vanilla Prometheus
+    const applicationSubType = (
+      <Badge
+        text={
+          <span>
+            <img
+              style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
+              src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
+            />{' '}
+            {buildInfo.application}
+          </span>
+        }
+        color={COLORS[buildInfo.application ?? PromApplication.Prometheus]}
+      />
+    );
+
+    return (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'max-content max-content',
+          rowGap: '0.5rem',
+          columnGap: '2rem',
+          marginTop: '1rem',
+        }}
+      >
+        <div>Type</div>
+        <div>{applicationSubType}</div>
+        {/* Prometheus does not have a Ruler API – so skip for that type */}
+        {buildInfo.application !== PromApplication.Prometheus && (
+          <>
+            <div>Ruler API</div>
+            <div>{buildInfo.features.rulerApiEnabled ? enabled : disabled}</div>
+          </>
+        )}
+      </div>
+    );
   }
 
   async testDatasource() {
@@ -846,7 +906,6 @@ export class PrometheusDatasource
       },
     } as DataQueryRequest<PromQuery>;
 
-    // TODO Tell users what we've been able to discover about the data source
     const buildInfo = await this.getBuildInfo();
 
     return lastValueFrom(this.query(request))
