@@ -54,7 +54,6 @@ export async function getRawIndexData(): Promise<RawIndexData> {
         });
         field.type = FieldType.other; // []string
         field.values = new ArrayVector(values);
-
       }
 
       field.display = getDisplayProcessor({ field, theme: config.theme2 });
