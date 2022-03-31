@@ -41,9 +41,11 @@ export async function getRawIndexData(): Promise<RawIndexData> {
     for (const field of frame.fields) {
       // Parse tags/ds from JSON string
       if (field.name === 'tags' || field.name === 'datasource') {
+        let count = 0;
         const values = field.values.toArray().map((v) => {
           if (v?.length) {
             try {
+              count++;
               const arr = JSON.parse(v);
               return arr.length ? arr : undefined;
             } catch {}
@@ -52,6 +54,8 @@ export async function getRawIndexData(): Promise<RawIndexData> {
         });
         field.type = FieldType.other; // []string
         field.values = new ArrayVector(values);
+
+        console.log('FIELD', { count, size: values.length }, field);
       }
 
       field.display = getDisplayProcessor({ field, theme: config.theme2 });
@@ -154,29 +158,39 @@ export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame 
   const view = new DataFrameView<QueryResult>(frame);
   const keep: number[] = [];
 
+  const ds = filter.datasource ? view.fields.datasource : undefined;
+  const tags = filter.tags ? view.fields.tags : undefined;
+
+  const counters = {
+    all: 0,
+    withDS: 0,
+  };
+
   let ok = true;
   for (let i = 0; i < view.length; i++) {
     ok = true;
-    const row = view.get(i);
-    if (filter.tags) {
-      const tags = row.tags;
-      if (!tags) {
+
+    if (tags) {
+      const v = tags.values.get(i);
+      if (!v) {
         ok = false;
-        continue;
-      }
-      for (const t of filter.tags) {
-        if (!tags.includes(t)) {
-          ok = false;
-          break;
+      } else {
+        for (const t of filter.tags!) {
+          if (!v.includes(t)) {
+            ok = false;
+            break;
+          }
         }
       }
     }
-    if (filter.datasource && ok) {
+
+    if (ok && ds && filter.datasource) {
       ok = false;
-      const dss = row.datasource;
-      if (dss) {
-        for (const ds of dss) {
-          if (ds.uid === filter.datasource) {
+      const v = ds.values.get(i);
+      if (v) {
+        counters.withDS++;
+        for (const d of v) {
+          if (d.uid === filter.datasource) {
             ok = true;
             break;
           }
@@ -184,10 +198,12 @@ export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame 
       }
     }
 
+    counters.all++;
     if (ok) {
       keep.push(i);
     }
   }
+  console.log('CCC', frame.length, counters);
 
   return {
     meta: frame.meta,
