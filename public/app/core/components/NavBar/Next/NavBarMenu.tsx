@@ -66,7 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       left: 0,
       whiteSpace: 'nowrap',
-      marginTop: theme.spacing(1),
+      paddingTop: theme.spacing(1),
       marginRight: theme.spacing(1.5),
       right: 0,
       zIndex: 9999,
