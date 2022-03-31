@@ -138,10 +138,6 @@ export const NavBarNext = React.memo(() => {
 NavBarNext.displayName = 'NavBarNext';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  navBarMenuEnter: css({
-    label: 'enter',
-  }),
-  navBarMenuExit: css({}),
   navWrapper: css({
     position: 'relative',
     display: 'flex',
