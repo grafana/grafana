@@ -1,6 +1,5 @@
 interface AnnotationsDataFrameViewDTO {
   id: string;
-  dashboardId: number;
   time: number;
   timeEnd: number;
   text: string;
@@ -12,4 +11,5 @@ interface AnnotationsDataFrameViewDTO {
   login?: string;
   avatarUrl?: string;
   isRegion?: boolean;
+  dashboardId?: number;
 }
