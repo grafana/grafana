@@ -332,7 +332,102 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: COMMON_LABELS,
-      value: series[0].fields[1].labels,
+      value: {
+        filename: '/var/log/grafana/grafana.log',
+        job: 'grafana',
+      },
+      kind: LogsMetaKind.LabelsMap,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
+      label: LIMIT_LABEL,
+      value: `1000 (2 returned)`,
+      kind: LogsMetaKind.String,
+    });
+  });
+
+  it('given one series with labels-field should return expected logs model', () => {
+    const series: DataFrame[] = [
+      new MutableDataFrame({
+        fields: [
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                filename: '/var/log/grafana/grafana.log',
+                job: 'grafana',
+              },
+              {
+                filename: '/var/log/grafana/grafana.log',
+                job: 'grafana',
+              },
+            ],
+          },
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [
+              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+            ],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['foo', 'bar'],
+          },
+        ],
+        meta: {
+          limit: 1000,
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.hasUniqueLabels).toBeFalsy();
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
+        logLevel: 'info',
+        uniqueLabels: {},
+        uid: 'foo',
+      },
+      {
+        entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
+        logLevel: 'error',
+        uniqueLabels: {},
+        uid: 'bar',
+      },
+    ]);
+
+    expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.series).toMatchObject([
+      {
+        name: 'info',
+        fields: [
+          { type: 'time', values: new ArrayVector([1556270891000, 1556289770000]) },
+          { type: 'number', values: new ArrayVector([1, 0]) },
+        ],
+      },
+      {
+        name: 'error',
+        fields: [
+          { type: 'time', values: new ArrayVector([1556289770000]) },
+          { type: 'number', values: new ArrayVector([1]) },
+        ],
+      },
+    ]);
+    expect(logsModel.meta).toHaveLength(2);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: COMMON_LABELS,
+      value: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({

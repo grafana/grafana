@@ -40,8 +40,8 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import {
   lokiResultsToTableModel,
-  lokiStreamResultToDataFrame,
   lokiStreamsToDataFrames,
+  lokiStreamsToRawDataframe,
   processRangeQueryResponse,
 } from './result_transformer';
 import { transformBackendResult } from './backendResultTransformer';
@@ -54,7 +54,6 @@ import {
   LokiRangeQueryRequest,
   LokiResultType,
   LokiStreamResponse,
-  LokiStreamResult,
 } from './types';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import LanguageProvider from './language_provider';
@@ -538,9 +537,7 @@ export class LokiDatasource
         }),
         switchMap((res) =>
           of({
-            data: res.data
-              ? res.data.data.result.map((stream: LokiStreamResult) => lokiStreamResultToDataFrame(stream, reverse))
-              : [],
+            data: res.data ? [lokiStreamsToRawDataframe(res.data.data.result, reverse)] : [],
           })
         )
       )
@@ -667,33 +664,31 @@ export class LokiDatasource
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
     for (const frame of data) {
-      const labels: { [key: string]: string } = {};
-      for (const field of frame.fields) {
-        if (field.labels) {
-          for (const [key, value] of Object.entries(field.labels)) {
-            labels[key] = String(value).trim();
-          }
-        }
-      }
-
-      const tags: string[] = [
-        ...new Set(
-          Object.entries(labels).reduce((acc: string[], [key, val]) => {
-            if (val === '') {
-              return acc;
-            }
-            if (splitKeys.length && !splitKeys.includes(key)) {
-              return acc;
-            }
-            acc.push.apply(acc, [val]);
-            return acc;
-          }, [])
-        ),
-      ];
-
-      const view = new DataFrameView<{ ts: string; line: string }>(frame);
+      const view = new DataFrameView<{ ts: string; line: string; labels: Labels }>(frame);
 
       view.forEach((row) => {
+        const { labels } = row;
+
+        const maybeDuplicatedTags = Object.entries(labels)
+          .map(([key, val]) => [key, val.trim()]) // trim all label-values
+          .filter(([key, val]) => {
+            if (val === '') {
+              // remove empty
+              return false;
+            }
+
+            // if tags are specified, remove label if does not match tags
+            if (splitKeys.length && !splitKeys.includes(key)) {
+              return false;
+            }
+
+            return true;
+          })
+          .map(([key, val]) => val); // keep only the label-value
+
+        // remove duplicates
+        const tags = Array.from(new Set(maybeDuplicatedTags));
+
         annotations.push({
           time: new Date(row.ts).valueOf(),
           title: renderLegendFormat(titleFormat, labels),
