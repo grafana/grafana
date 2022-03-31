@@ -3026,6 +3026,8 @@ volumes:
 ---
 depends_on:
 - publish-artifacts-public
+- publish-docker-oss-public
+- publish-docker-enterprise-public
 kind: pipeline
 name: publish-packages
 node:
@@ -4427,6 +4429,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 34da09de18d4295faf119f924982bb0f0df454d0976d1354a09da4aa1192a733
+hmac: 64d764ee7d8344c23b0366b4320a93eb9fe3e65541fe434f7a281e27c2e614c2
 
 ...
