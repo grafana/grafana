@@ -83,7 +83,7 @@ var (
 		},
 	}
 
-	settingsReaderRole = RoleDTO{
+	SettingsReaderRole = RoleDTO{
 		Name:        "fixed:settings:reader",
 		DisplayName: "Setting reader",
 		Description: "Read Grafana instance settings.",
@@ -186,6 +186,7 @@ var (
 	}
 )
 
+// Declare OSS roles to the accesscontrol service
 func DeclareFixedRoles(ac AccessControl) {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
@@ -204,7 +205,7 @@ func DeclareFixedRoles(ac AccessControl) {
 		Grants: []string{RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
 	}
 	settingsReader := RoleRegistration{
-		Role:   settingsReaderRole,
+		Role:   SettingsReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
 	statsReader := RoleRegistration{

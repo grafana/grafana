@@ -26,7 +26,7 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 		}
 		api.RegisterAPIEndpoints()
 
-		accesscontrol.DeclareOSSRoles(s)
+		accesscontrol.DeclareFixedRoles(s)
 	}
 
 	return s
