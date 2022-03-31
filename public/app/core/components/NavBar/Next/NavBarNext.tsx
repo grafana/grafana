@@ -149,11 +149,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(1)} 0`,
     position: 'relative',
     width: theme.spacing(7),
+    borderRight: `1px solid ${theme.components.panel.borderColor}`,
 
     [theme.breakpoints.down('md')]: {
       position: 'fixed',
       paddingTop: '0px',
       backgroundColor: 'inherit',
+      borderRight: 0,
     },
 
     '.sidemenu-hidden &': {
