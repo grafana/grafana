@@ -22,7 +22,7 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   const rulerPath = `${grafanaServerPath}/api/v1/rules`;
   const rulerSearchParams = new URLSearchParams();
 
-  rulerSearchParams.set('subtype', rulerConfig.apiVersion === 'legacy' ? '2' : '3');
+  rulerSearchParams.set('subtype', rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir');
 
   return {
     rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => {
@@ -76,7 +76,7 @@ export interface FetchRulerRulesFilter {
 // fetch all ruler rule namespaces and included groups
 export async function fetchRulerRules(rulerConfig: RulerDataSourceConfig, filter?: FetchRulerRulesFilter) {
   if (filter?.dashboardUID && rulerConfig.dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
+    throw new Error('Filtering by dashboard UID is only supported by Grafana.');
   }
 
   // TODO Move params creation to the rules function

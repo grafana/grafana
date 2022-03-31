@@ -38,7 +38,7 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
 
 export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
+    throw new Error('Filtering by dashboard UID is only supported by Grafana.');
   }
 
   const { url, params } = prometheusUrlBuilder({ dataSourceName }).rules(filter);
