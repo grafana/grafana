@@ -44,7 +44,10 @@ export const FileUploader = (props: Props) => {
             .then((data) => {
               getBackendSrv()
                 .get(`api/storage/read/${data.path}`)
-                .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`));
+                .then((res) => {
+                  console.log(res);
+                  setNewValue(`${config.appUrl}api/storage/read/${data.path}`);
+                });
             });
         },
       }}

@@ -51,11 +51,13 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 	indexOfPath := strings.Index(c.Req.RequestURI, "read") + 4
 	path := c.Req.RequestURI[indexOfPath:]
 	file, err := s.store.Read(c.Req.Context(), c.SignedInUser, path)
-	grafanaStorageLogger.Info("path in read", "file path", path)
 	if err != nil {
 		return response.Error(400, "cannot call read", err)
 	}
-	c.Resp.Header().Set("Content-Type", file.MimeType)
+	// set the correct content type for svg
+	if strings.HasSuffix(path, ".svg") {
+		c.Resp.Header().Set("Content-Type", "image/svg+xml")
+	}
 	return response.Respond(200, file.Contents)
 }
 
