@@ -134,10 +134,12 @@ function NavItem({
           isActive={link === activeItem}
         >
           <div className={styles.savedItemsMenuItemWrapper}>
-            {link.img && (
-              <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-            )}
-            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            <div className={styles.iconContainer}>
+              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+              {link.img && (
+                <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
+              )}
+            </div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
@@ -174,6 +176,9 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   }),
   fullWidth: css({
     width: '100%',
+  }),
+  iconContainer: css({
+    placeContent: 'center',
   }),
   savedItemsMenuItemWrapper: css({
     display: 'grid',
