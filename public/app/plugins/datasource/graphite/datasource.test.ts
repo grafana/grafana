@@ -292,6 +292,14 @@ describe('graphiteDatasource', () => {
         },
       });
     });
+
+    it('should use hardcoded list of functions when no functions are returned', async () => {
+      fetchMock.mockImplementation(() => {
+        return of(createFetchResponse('{}'));
+      });
+      const funcDefs = await ctx.ds.getFuncDefs();
+      expect(Object.keys(funcDefs)).not.toHaveLength(0);
+    });
   });
 
   describe('building graphite params', () => {

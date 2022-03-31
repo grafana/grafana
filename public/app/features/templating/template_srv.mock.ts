@@ -1,4 +1,4 @@
-import { ScopedVars, VariableModel } from '@grafana/data';
+import { ScopedVars, TimeRange, VariableModel } from '@grafana/data';
 import { variableRegex } from '../variables/utils';
 import { TemplateSrv } from '@grafana/runtime';
 
@@ -45,4 +45,6 @@ export class TemplateSrvMock implements TemplateSrv {
     }
     return match.slice(1).find((match) => match !== undefined);
   }
+
+  updateTimeRange(timeRange: TimeRange) {}
 }
