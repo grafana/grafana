@@ -6,17 +6,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/web"
-
-	"github.com/grafana/grafana/pkg/services/datasourceproxy"
-
-	"github.com/grafana/grafana/pkg/services/datasources"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
