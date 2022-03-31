@@ -399,7 +399,11 @@ def publish_packages_pipeline():
     ]
 
     return [pipeline(
-        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=['publish-artifacts-public']
+        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=[
+            'publish-artifacts-public',
+            'publish-docker-oss-public',
+            'publish-docker-enterprise-public'
+        ]
     )]
 
 def publish_npm_pipelines(mode):

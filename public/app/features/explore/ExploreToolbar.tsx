@@ -115,6 +115,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
+            <AddToDashboard exploreId={exploreId} />
+
             {!isLive && (
               <ExploreTimeControls
                 exploreId={exploreId}
@@ -130,8 +132,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               />
             )}
-
-            <AddToDashboard exploreId={exploreId} />
 
             <RunButton
               refreshInterval={refreshInterval}
