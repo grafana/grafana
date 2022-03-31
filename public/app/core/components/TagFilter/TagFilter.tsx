@@ -80,7 +80,9 @@ export const TagFilter: FC<Props> = ({
   };
 
   const onOpenMenu = () => {
-    setHasMenuBeenOpened(true);
+    if (!hasMenuBeenOpened) {
+      setHasMenuBeenOpened(true);
+    }
   };
 
   const value = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
