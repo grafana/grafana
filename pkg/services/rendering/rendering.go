@@ -135,9 +135,9 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		}
 	}
 
-	if rs.pluginAvailable(ctx) {
+	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = rs.RendererPluginManager.Renderer(ctx)
+		rs.pluginInfo = rs.RendererPluginManager.Renderer()
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -169,8 +169,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RenderingService) pluginAvailable(ctx context.Context) bool {
-	return rs.RendererPluginManager.Renderer(ctx) != nil
+func (rs *RenderingService) pluginAvailable() bool {
+	return rs.RendererPluginManager.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -178,7 +178,7 @@ func (rs *RenderingService) remoteAvailable() bool {
 }
 
 func (rs *RenderingService) IsAvailable() bool {
-	return rs.remoteAvailable() || rs.pluginAvailable(context.TODO())
+	return rs.remoteAvailable() || rs.pluginAvailable()
 }
 
 func (rs *RenderingService) Version() string {
