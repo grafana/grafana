@@ -129,6 +129,28 @@ steps:
   image: grafana/build-container:1.5.3
   name: initialize
 - commands:
+  - ./bin/grabpl init-enterprise-downstream --github-token $$env:GITHUB_TOKEN
+  depends_on:
+  - initialize
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.3
+  name: init-enterprise-downstream
+- depends_on:
+  - init-enterprise-downstream
+  image: grafana/drone-downstream
+  name: trigger-enterprise-downstream
+  settings:
+    params:
+    - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
+    - SOURCE_COMMIT=${DRONE_COMMIT}
+    repositories:
+    - grafana/grafana-enterprise@${DRONE_BRANCH}
+    server: https://drone.grafana.net
+    token:
+      from_secret: drone_token
+- commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6 --no-pull-enterprise
   depends_on:
@@ -702,7 +724,8 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
-- image: grafana/drone-downstream
+- depends_on: []
+  image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -4384,8 +4407,3 @@ get:
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
----
-kind: signature
-hmac: a14708e4946492b73da169e1d7719ced3508da27df8d1ecd1e3caf0985daad58
-
-...

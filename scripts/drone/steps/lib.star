@@ -182,8 +182,11 @@ def enterprise_init_downstream_step(edition):
         'name': 'init-enterprise-downstream',
         'image': build_image,
         'commands': [
-            './bin/grabpl init-downstream-enterprise',
+            './bin/grabpl init-enterprise-downstream --github-token $$env:GITHUB_TOKEN',
         ],
+        'environment': {
+            'GITHUB_TOKEN': from_secret(github_token),
+        },
         'depends_on': [
             'initialize',
         ],
@@ -195,7 +198,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
     repo = 'grafana/grafana-enterprise@'
     if ver_mode == 'pr':
-        repo += DRONE_BRANCH
+        repo += '${DRONE_BRANCH}'
     else:
         repo += 'main'
 
