@@ -59,6 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     right: 0,
     zIndex: theme.zIndex.sidemenu,
     top: 0,
+    boxSizing: 'content-box',
     [theme.breakpoints.up('md')]: {
       borderRight: `1px solid ${theme.colors.border.weak}`,
       right: 'unset',
@@ -149,6 +150,7 @@ function NavItem({
 const getNavItemStyles = (theme: GrafanaTheme2) => ({
   item: css({
     padding: `${theme.spacing(1)} 0`,
+    whiteSpace: 'normal',
     '&::before': {
       display: 'none',
     },
@@ -236,7 +238,9 @@ function CollapsibleNavItem({
 const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
   menuItem: css({
     position: 'relative',
-    display: 'flex',
+    display: 'grid',
+    gridAutoFlow: 'column',
+    gridTemplateColumns: '56px auto',
   }),
   collapsibleMenuItem: css({
     height: theme.spacing(6),
