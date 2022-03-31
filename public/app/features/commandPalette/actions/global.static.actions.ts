@@ -1,4 +1,5 @@
-import { Action, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { Action } from 'kbar';
 
 // static global actions for the entire app go here
 
