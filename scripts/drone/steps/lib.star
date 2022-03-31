@@ -325,7 +325,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             'GITHUB_TOKEN': from_secret(github_token),
         }
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} ${{DRONE_TAG}}'.format(
                 edition,
             ),
         ]
@@ -336,7 +336,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             build_no = '$${SOURCE_BUILD_NUMBER}'
         env = {}
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{}'.format(
                 edition, build_no, variants_str,
             ),
         ]
@@ -361,13 +361,13 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
+            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
+            '--edition {} ${{DRONE_TAG}}'.format(edition),
         ]
     else:
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) + \
-            '--build-id {} --no-pull-enterprise'.format(build_no),
+            './bin/grabpl build-frontend --jobs 8 --edition {} '.format(edition) + \
+            '--build-id {}'.format(build_no),
         ]
 
     return {
@@ -392,12 +392,12 @@ def build_frontend_package_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'release':
         cmds = [
             './bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
-            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
+            '--edition {} ${{DRONE_TAG}}'.format(edition),
             ]
     else:
         cmds = [
             './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
-            '--build-id {} --no-pull-enterprise'.format(build_no),
+            '--build-id {}'.format(build_no),
             ]
 
     return {
@@ -625,7 +625,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
     if ver_mode == 'release':
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
+            '--github-token $${{GITHUB_TOKEN}}{} ${{DRONE_TAG}}'.format(
                 sign_args
             ),
         ]
@@ -636,7 +636,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
             build_no = '$${SOURCE_BUILD_NUMBER}'
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
+            '--build-id {}{}{}'.format(build_no, variants_str, sign_args),
         ]
 
     return {
