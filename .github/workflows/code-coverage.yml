@@ -10,12 +10,5 @@ on:
       - 'public/app/plugins/datasource/cloudwatch/**'
       - 'public/app/plugins/datasource/cloud-monitoring/**'
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version: '1.17.8'
-      - run: make gen-go
-      - run: go test ./...
+  workflow-call:
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@gen-go
