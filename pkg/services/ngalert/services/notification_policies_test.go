@@ -59,10 +59,11 @@ func TestNotificationPolicyService(t *testing.T) {
 		q := models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
 		}
-		sut.GetAMConfigStore().GetLatestAlertmanagerConfiguration(context.Background(), &q)
+		err := sut.GetAMConfigStore().GetLatestAlertmanagerConfiguration(context.Background(), &q)
+		require.NoError(t, err)
 		expectedConcurrencyToken := q.Result.ConfigurationHash
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceApi)
+		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceApi)
 		require.NoError(t, err)
 
 		fake := sut.GetAMConfigStore().(*fakeAMConfigStore)

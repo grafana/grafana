@@ -186,7 +186,6 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	case http.MethodPost + "/api/provisioning/policies":
 		return middleware.ReqEditorRole
-
 	}
 
 	if eval != nil {
