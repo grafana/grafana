@@ -159,12 +159,7 @@ export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame 
   const keep: number[] = [];
 
   const ds = filter.datasource ? view.fields.datasource : undefined;
-  const tags = filter.tags ? view.fields.tags : undefined;
-
-  const counters = {
-    all: 0,
-    withDS: 0,
-  };
+  const tags = filter.tags?.length ? view.fields.tags : undefined;
 
   let ok = true;
   for (let i = 0; i < view.length; i++) {
@@ -188,7 +183,6 @@ export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame 
       ok = false;
       const v = ds.values.get(i);
       if (v) {
-        counters.withDS++;
         for (const d of v) {
           if (d.uid === filter.datasource) {
             ok = true;
@@ -198,12 +192,10 @@ export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame 
       }
     }
 
-    counters.all++;
     if (ok) {
       keep.push(i);
     }
   }
-  console.log('CCC', frame.length, counters);
 
   return {
     meta: frame.meta,
