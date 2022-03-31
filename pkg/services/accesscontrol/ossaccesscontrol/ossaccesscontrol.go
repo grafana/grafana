@@ -32,7 +32,7 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 	return s
 }
 
-func builtInRoles() map[string]*accesscontrol.RoleDTO {
+func macroRoles() map[string]*accesscontrol.RoleDTO {
 	return map[string]*accesscontrol.RoleDTO{
 		string(models.ROLE_ADMIN): {
 			Name:        "fixed:builtins:admin",
@@ -76,7 +76,7 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 		provider:      provider,
 		log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
-		roles:         builtInRoles(),
+		roles:         macroRoles(),
 	}
 
 	return s
@@ -182,9 +182,9 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 	permissions := make([]*accesscontrol.Permission, 0)
 
 	for _, builtin := range ac.GetUserBuiltInRoles(user) {
-		if role, ok := ac.roles[builtin]; ok {
-			for i := range role.Permissions {
-				permissions = append(permissions, &role.Permissions[i])
+		if macroRole, ok := ac.roles[builtin]; ok {
+			for i := range macroRole.Permissions {
+				permissions = append(permissions, &macroRole.Permissions[i])
 			}
 		}
 	}
