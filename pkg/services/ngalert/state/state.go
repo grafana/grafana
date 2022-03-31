@@ -84,16 +84,10 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
-	if a.StartsAt.IsZero() {
-		a.StartsAt = result.EvaluatedAt
-	}
-	a.setEndsAt(alertRule, result)
-
+	execErrState := eval.Error
 	if alertRule.ExecErrState == ngModels.AlertingErrState {
-		a.State = eval.Alerting
+		execErrState = eval.Alerting
 	} else if alertRule.ExecErrState == ngModels.ErrorErrState {
-		a.State = eval.Error
-
 		// If the evaluation failed because a query returned an error then
 		// update the state with the Datasource UID as a label and the error
 		// message as an annotation so other code can use this metadata to
@@ -109,6 +103,28 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 			}
 			a.Annotations["Error"] = queryError.Error()
 		}
+		execErrState = eval.Error
+	}
+
+	switch a.State {
+	case eval.Alerting, eval.Error:
+		a.setEndsAt(alertRule, result)
+	case eval.Pending:
+		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
+			a.State = execErrState
+			a.StartsAt = result.EvaluatedAt
+			a.setEndsAt(alertRule, result)
+		}
+	default:
+		// For is observed when Alerting is chosen for the alert state
+		// if execution error or timeout.
+		if execErrState == eval.Alerting && alertRule.For > 0 {
+			a.State = eval.Pending
+		} else {
+			a.State = execErrState
+		}
+		a.StartsAt = result.EvaluatedAt
+		a.setEndsAt(alertRule, result)
 	}
 }
 

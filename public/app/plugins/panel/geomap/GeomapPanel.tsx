@@ -112,7 +112,18 @@ export class GeomapPanel extends Component<Props, State> {
       this.dataChanged(nextProps.data);
     }
 
+    // Options changed
+    if (this.props.options !== nextProps.options) {
+      this.optionsChanged(nextProps.options);
+    }
+
     return true; // always?
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.map && (this.props.height !== prevProps.height || this.props.width !== prevProps.width)) {
+      this.map.updateSize();
+    }
   }
 
   /** This function will actually update the JSON model */

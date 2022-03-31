@@ -170,6 +170,32 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       label: headerFilter;
       cursor: pointer;
     `,
+    paginationWrapper: css`
+      display: flex;
+      background: ${headerBg};
+      height: ${cellHeight}px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      border-top: 1px solid ${theme.colors.border.weak};
+      li {
+        margin-bottom: 0;
+      }
+      div:not(:only-child):first-child {
+        flex-grow: 0.6;
+      }
+    `,
+    paginationSummary: css`
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      margin-left: auto;
+    `,
+
+    tableContentWrapper: (totalColumnsWidth: number) => css`
+      width: ${totalColumnsWidth ?? '100%'};
+      display: flex;
+      flex-direction: column;
+    `,
     row: css`
       label: row;
       border-bottom: 1px solid ${borderColor};
