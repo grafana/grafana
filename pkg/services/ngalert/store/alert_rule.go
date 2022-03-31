@@ -283,7 +283,7 @@ func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.S
 		Permission:   models.PERMISSION_VIEW,
 		Sort:         models.SortOption{},
 		Filters: []interface{}{
-			searchstore.FolderThatHaveAlertsFilter{},
+			searchstore.FolderWithAlertsFilter{},
 		},
 	}
 

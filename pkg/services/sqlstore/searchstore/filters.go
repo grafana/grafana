@@ -150,12 +150,12 @@ func sqlIDin(column string, ids []int64) (string, []interface{}) {
 	return fmt.Sprintf("%s IN %s", column, sqlArray), params
 }
 
-// FolderThatHaveAlertsFilter applies a filter that makes the result contain only folders that contain alert rules
-type FolderThatHaveAlertsFilter struct {
+// FolderWithAlertsFilter applies a filter that makes the result contain only folders that contain alert rules
+type FolderWithAlertsFilter struct {
 }
 
-var _ FilterWhere = &FolderThatHaveAlertsFilter{}
+var _ FilterWhere = &FolderWithAlertsFilter{}
 
-func (f FolderThatHaveAlertsFilter) Where() (string, []interface{}) {
+func (f FolderWithAlertsFilter) Where() (string, []interface{}) {
 	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
 }
