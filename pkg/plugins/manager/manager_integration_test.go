@@ -210,7 +210,7 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 	}
 
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
-	for _, r := range pm.Routes() {
+	for _, r := range pm.Routes(context.Background()) {
 		pluginRoutes[r.PluginID] = r
 	}
 
@@ -227,7 +227,7 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 
 func verifyPluginStaticRoutes(t *testing.T, pm *PluginManager) {
 	routes := make(map[string]*plugins.StaticRoute)
-	for _, route := range pm.Routes() {
+	for _, route := range pm.Routes(context.Background()) {
 		routes[route.PluginID] = route
 	}
 

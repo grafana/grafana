@@ -1,6 +1,7 @@
 package frontendlogging
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -83,7 +84,7 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 		}
 		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
-		for _, route := range store.routeResolver.Routes() {
+		for _, route := range store.routeResolver.Routes(context.TODO()) {
 			pluginPrefix := filepath.Join("/public/plugins/", route.PluginID)
 			if strings.HasPrefix(u.Path, pluginPrefix) {
 				return &sourceMapLocation{

@@ -1,6 +1,7 @@
 package rendering
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,7 +13,7 @@ import (
 
 type dummyPluginManager struct{}
 
-func (d *dummyPluginManager) Renderer() *plugins.Plugin {
+func (d *dummyPluginManager) Renderer(ctx context.Context) *plugins.Plugin {
 	return nil
 }
 

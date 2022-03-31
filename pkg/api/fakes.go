@@ -33,7 +33,7 @@ type fakeRendererManager struct {
 	plugins.RendererManager
 }
 
-func (ps *fakeRendererManager) Renderer() *plugins.Plugin {
+func (ps *fakeRendererManager) Renderer(_ context.Context) *plugins.Plugin {
 	return nil
 }
 
@@ -43,6 +43,6 @@ type fakePluginStaticRouteResolver struct {
 	routes []*plugins.StaticRoute
 }
 
-func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.StaticRoute {
+func (psrr *fakePluginStaticRouteResolver) Routes(_ context.Context) []*plugins.StaticRoute {
 	return psrr.routes
 }

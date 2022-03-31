@@ -106,8 +106,8 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 	return nil
 }
 
-func (m *PluginManager) Renderer() *plugins.Plugin {
-	for _, p := range m.availablePlugins(context.TODO()) {
+func (m *PluginManager) Renderer(ctx context.Context) *plugins.Plugin {
+	for _, p := range m.availablePlugins(ctx) {
 		if p.IsRenderer() && !p.IsDecommissioned() {
 			return p
 		}
@@ -145,10 +145,10 @@ func (m *PluginManager) Plugins(ctx context.Context, pluginTypes ...plugins.Type
 	return pluginsList
 }
 
-func (m *PluginManager) Routes() []*plugins.StaticRoute {
+func (m *PluginManager) Routes(ctx context.Context) []*plugins.StaticRoute {
 	staticRoutes := make([]*plugins.StaticRoute, 0)
 
-	for _, p := range m.availablePlugins(context.TODO()) {
+	for _, p := range m.availablePlugins(ctx) {
 		if p.StaticRoute() != nil {
 			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}

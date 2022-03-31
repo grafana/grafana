@@ -44,11 +44,11 @@ type BackendFactoryProvider interface {
 
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
-	Renderer() *Plugin
+	Renderer(ctx context.Context) *Plugin
 }
 
 type StaticRouteResolver interface {
-	Routes() []*StaticRoute
+	Routes(ctx context.Context) []*StaticRoute
 }
 
 type ErrorResolver interface {
