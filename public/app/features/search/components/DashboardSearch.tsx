@@ -1,5 +1,8 @@
-import React, { FC, memo } from 'react';
+import React, { FC, memo, useRef } from 'react';
 import { css } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
+import { useDialog } from '@react-aria/dialog';
+import { useOverlay } from '@react-aria/overlays';
 import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';
@@ -19,48 +22,53 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
     query,
     onCloseSearch
   );
+  const ref = useRef<HTMLDivElement>(null);
+  const { overlayProps } = useOverlay({}, ref);
+  const { dialogProps } = useDialog({}, ref);
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   return (
-    <div tabIndex={0} className={styles.overlay}>
-      <div className={styles.container}>
-        <div className={styles.searchField}>
-          <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
-          <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+    <FocusScope contain autoFocus restoreFocus>
+      <div className={styles.overlay} ref={ref} {...overlayProps} {...dialogProps}>
+        <div className={styles.container}>
+          <div className={styles.searchField}>
+            <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+            <div className={styles.closeBtn}>
+              <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            </div>
+          </div>
+          <div className={styles.search}>
+            <ActionRow
+              {...{
+                onLayoutChange,
+                setShowPreviews,
+                onSortChange,
+                onTagFilterChange,
+                query,
+                showPreviews,
+              }}
+            />
+            <PreviewsSystemRequirements
+              bottomSpacing={3}
+              showPreviews={showPreviews}
+              onRemove={() => setShowPreviews(false)}
+            />
+            <CustomScrollbar>
+              <SearchResults
+                results={results}
+                loading={loading}
+                onTagSelected={onTagAdd}
+                editable={false}
+                onToggleSection={onToggleSection}
+                layout={query.layout}
+                showPreviews={showPreviews}
+              />
+            </CustomScrollbar>
           </div>
         </div>
-        <div className={styles.search}>
-          <ActionRow
-            {...{
-              onLayoutChange,
-              setShowPreviews,
-              onSortChange,
-              onTagFilterChange,
-              query,
-              showPreviews,
-            }}
-          />
-          <PreviewsSystemRequirements
-            bottomSpacing={3}
-            showPreviews={showPreviews}
-            onRemove={() => setShowPreviews(false)}
-          />
-          <CustomScrollbar>
-            <SearchResults
-              results={results}
-              loading={loading}
-              onTagSelected={onTagAdd}
-              editable={false}
-              onToggleSection={onToggleSection}
-              layout={query.layout}
-              showPreviews={showPreviews}
-            />
-          </CustomScrollbar>
-        </div>
       </div>
-    </div>
+    </FocusScope>
   );
 });
 
