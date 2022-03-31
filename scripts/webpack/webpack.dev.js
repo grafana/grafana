@@ -9,6 +9,7 @@ const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const getBabelConfig = require('./babel.config');
+const perconaSaasProdHostRegex = /check.percona.com/gm;
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = (env = {}) =>
@@ -108,6 +109,10 @@ module.exports = (env = {}) =>
       new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
+          PERCONA_SAAS_HOST:
+            perconaSaasProdHostRegex.exec(process.env.PERCONA_TEST_SAAS_HOST) === null
+              ? JSON.stringify('https://platform-dev.percona.com')
+              : JSON.stringify('https://portal.percona.com'),
         },
       }),
       // new BundleAnalyzerPlugin({

@@ -14,6 +14,20 @@ export const getStyles = ({ breakpoints, colors, spacing, typography }: GrafanaT
     min-width: 150px;
     width: 100%;
   `,
+  accessTokenRow: css`
+    display: flex;
+    align-items: center;
+
+    & > div {
+      flex: 0 1 80%;
+    }
+
+    & > a {
+      color: ${colors.linkExternal};
+      flex: 1;
+      text-align: right;
+    }
+  `,
   submitButton: css`
     padding-left: 50px;
     padding-right: 50px;

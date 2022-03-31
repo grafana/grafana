@@ -8,6 +8,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const getBabelConfig = require('./babel.config');
+const perconaSaasProdHostRegex = /check.percona.com/gm;
 
 module.exports = merge(common, {
   devtool: 'inline-source-map',
@@ -88,6 +89,10 @@ module.exports = merge(common, {
     new DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify('development'),
+        PERCONA_SAAS_HOST:
+          perconaSaasProdHostRegex.exec(process.env.PERCONA_TEST_SAAS_HOST) === null
+            ? JSON.stringify('https://platform-dev.percona.com')
+            : JSON.stringify('https://portal.percona.com'),
       },
     }),
   ],

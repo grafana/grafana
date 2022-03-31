@@ -15,8 +15,6 @@ describe('Connect::', () => {
     );
 
     expect(screen.getByTestId('pmmServerName-text-input')).toBeInTheDocument();
-    expect(screen.getByTestId('email-text-input')).toBeInTheDocument();
-    expect(screen.getByTestId('password-password-input')).toBeInTheDocument();
     expect(screen.getByTestId('connect-button')).toBeInTheDocument();
   });
 });
