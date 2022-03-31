@@ -96,6 +96,12 @@ export const NavBar: FC = React.memo(() => {
 
   if (isPlatformUser) {
     topItems.push({
+      id: 'entitlements',
+      icon: 'cloud',
+      text: 'Entitlements',
+      url: `${config.appSubUrl}/entitlements`,
+    });
+    topItems.push({
       id: 'tickets',
       icon: 'ticket',
       text: 'Support Tickets',
