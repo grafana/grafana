@@ -4,7 +4,7 @@ import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2 } from 
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { isMatchOrChildMatch } from '../utils';
@@ -54,10 +54,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     left: 0,
     whiteSpace: 'nowrap',
-    marginTop: theme.spacing(1),
+    paddingTop: theme.spacing(1),
     marginRight: theme.spacing(1.5),
     right: 0,
-    zIndex: 9999,
+    zIndex: theme.zIndex.sidemenu,
     top: 0,
     [theme.breakpoints.up('md')]: {
       borderRight: `1px solid ${theme.colors.border.weak}`,
