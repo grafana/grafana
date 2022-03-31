@@ -75,6 +75,10 @@ const (
 	// Support robust access control
 	FlagAccesscontrol = "accesscontrol"
 
+	// FlagAccesscontrolBuiltins
+	// Simplify access control builtin roles
+	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
+
 	// FlagPrometheusAzureAuth
 	// Use azure authentication for prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
@@ -122,6 +126,10 @@ const (
 	// FlagMigrationLocking
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
+
+	// FlagSaveDashboardDrawer
+	// Use a drawer to show save dashboard dialog
+	FlagSaveDashboardDrawer = "saveDashboardDrawer"
 
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources

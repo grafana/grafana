@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -230,6 +231,7 @@ var wireBasicSet = wire.NewSet(
 	comments.ProvideService,
 	guardian.ProvideService,
 	avatar.ProvideAvatarCacheServer,
+	authproxy.ProvideAuthProxy,
 )
 
 var wireSet = wire.NewSet(
