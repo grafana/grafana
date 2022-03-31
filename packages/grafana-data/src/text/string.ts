@@ -1,12 +1,16 @@
 import { camelCase } from 'lodash';
-const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
+
+const specialChars = ['(', '[', '{', '}', ']', ')', '\\', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
+const specialMatcher = '([\\' + specialChars.join('\\') + '])';
+const specialCharEscape = new RegExp(specialMatcher, 'g');
+const specialCharUnescape = new RegExp('(\\\\)' + specialMatcher, 'g');
 
 export const escapeStringForRegex = (value: string) => {
   if (!value) {
     return value;
   }
 
-  return specialChars.reduce((escaped, currentChar) => escaped.replace(currentChar, '\\' + currentChar), value);
+  return value.replace(specialCharEscape, '\\$1');
 };
 
 export const unEscapeStringFromRegex = (value: string) => {
@@ -14,7 +18,7 @@ export const unEscapeStringFromRegex = (value: string) => {
     return value;
   }
 
-  return specialChars.reduce((escaped, currentChar) => escaped.replace('\\' + currentChar, currentChar), value);
+  return value.replace(specialCharUnescape, '$2');
 };
 
 export function stringStartsAsRegEx(str: string): boolean {
