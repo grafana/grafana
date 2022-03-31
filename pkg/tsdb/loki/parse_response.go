@@ -37,7 +37,7 @@ func lokiResponseToDataFrames(value *loghttp.QueryResponse, query *lokiQuery) (d
 	}
 }
 
-func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, extraStats []data.QueryStat) data.Frames {
+func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []data.QueryStat) data.Frames {
 	frames := data.Frames{}
 
 	for _, v := range matrix {
@@ -59,7 +59,7 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, extraStats 
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
-			Stats: extraStats,
+			Stats: stats,
 		})
 
 		frames = append(frames, frame)
@@ -68,7 +68,7 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, extraStats 
 	return frames
 }
 
-func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, extraStats []data.QueryStat) data.Frames {
+func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, stats []data.QueryStat) data.Frames {
 	frames := data.Frames{}
 
 	for _, v := range vector {
@@ -84,7 +84,7 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, extraStats 
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
-			Stats: extraStats,
+			Stats: stats,
 		})
 
 		frames = append(frames, frame)
@@ -93,7 +93,7 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, extraStats 
 	return frames
 }
 
-func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery, extraStats []data.QueryStat) data.Frames {
+func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery, stats []data.QueryStat) data.Frames {
 	frames := data.Frames{}
 
 	for _, v := range streams {
@@ -115,7 +115,7 @@ func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery, extraSta
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
-			Stats: extraStats,
+			Stats: stats,
 		})
 
 		frames = append(frames, frame)
