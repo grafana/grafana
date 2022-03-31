@@ -81,13 +81,15 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		urlComponents["resourceName"] = azJSONModel.ResourceName
 
 		ub := urlBuilder{
+			ResourceURI: azJSONModel.ResourceURI,
+			// Legacy, used to reconstruct resource URI if it's not present
 			DefaultSubscription: dsInfo.Settings.SubscriptionId,
 			Subscription:        queryJSONModel.Subscription,
-			ResourceGroup:       queryJSONModel.AzureMonitor.ResourceGroup,
+			ResourceGroup:       azJSONModel.ResourceGroup,
 			MetricDefinition:    azJSONModel.MetricDefinition,
 			ResourceName:        azJSONModel.ResourceName,
 		}
-		azureURL := ub.Build()
+		azureURL := ub.BuildMetricsURL()
 
 		alias := azJSONModel.Alias
 
