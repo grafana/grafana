@@ -130,7 +130,7 @@
     "@types/is-hotkey": "0.1.7",
     "@types/jest": "27.4.1",
     "@types/jquery": "3.5.14",
-    "@types/lodash": "4.14.149",
+    "@types/lodash": "4.14.181",
     "@types/mock-raf": "1.0.3",
     "@types/node": "16.11.26",
     "@types/prismjs": "1.26.0",

@@ -5,11 +5,11 @@ import { ExploreId } from '../../../../types';
 import { DescribeLogGroupsRequest } from '../types';
 import { SelectableValue } from '@grafana/data';
 // eslint-disable-next-line lodash/import-scope
-import _, { Cancelable } from 'lodash';
+import _, { DebouncedFunc } from 'lodash';
 
 jest
   .spyOn(_, 'debounce')
-  .mockImplementation((func: (...args: any) => any, wait?: number) => func as typeof func & Cancelable);
+  .mockImplementation((func: (...args: any) => any, wait?: number) => func as DebouncedFunc<typeof func>);
 
 describe('CloudWatchLogsQueryField', () => {
   it('updates upstream query log groups on region change', async () => {
