@@ -24,7 +24,12 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   );
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay({}, ref);
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog(
+    {
+      'aria-label': 'Search dashboards',
+    },
+    ref
+  );
   const theme = useTheme2();
   const styles = getStyles(theme);
 
