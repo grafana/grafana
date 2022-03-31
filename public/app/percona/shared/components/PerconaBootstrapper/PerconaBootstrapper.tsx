@@ -1,8 +1,11 @@
+import { logger } from '@percona/platform-core';
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { SettingsService } from 'app/percona/settings/Settings.service';
-import { setSettings, setSettingsLoading, setAuthorized } from 'app/percona/shared/core/reducers';
+import { setSettings, setSettingsLoading, setAuthorized, setIsPlatformUser } from 'app/percona/shared/core/reducers';
+
+import { UserService } from '../../services/user/User.service';
 
 // This component is only responsible for populating the store with Percona's settings initially
 export const PerconaBootstrapper = () => {
@@ -23,7 +26,17 @@ export const PerconaBootstrapper = () => {
       }
     };
 
+    const getUserStatus = async () => {
+      try {
+        const isPlatformUser = await UserService.getUserStatus(undefined, true);
+        dispatch(setIsPlatformUser(isPlatformUser));
+      } catch (e) {
+        logger.error(e);
+      }
+    };
+
     getSettings();
+    getUserStatus();
   }, [dispatch]);
 
   return <></>;

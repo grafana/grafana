@@ -40,6 +40,7 @@ export const initialSettingsState: PerconaSettingsState = {
     frequentInterval: '10s',
   },
   isLoading: true,
+  isConnectedToPortal: false,
 };
 
 const perconaSettingsSlice = createSlice({
@@ -64,10 +65,12 @@ export const perconaSettingsReducers = perconaSettingsSlice.reducer;
 
 export interface PerconaUserState {
   isAuthorized: boolean;
+  isPlatformUser: boolean;
 }
 
 export const initialUserState: PerconaUserState = {
   isAuthorized: false,
+  isPlatformUser: false,
 };
 
 const perconaUserSlice = createSlice({
@@ -78,10 +81,14 @@ const perconaUserSlice = createSlice({
       ...state,
       isAuthorized: action.payload,
     }),
+    setIsPlatformUser: (state, action: PayloadAction<boolean>): PerconaUserState => ({
+      ...state,
+      isPlatformUser: action.payload,
+    }),
   },
 });
 
-export const { setAuthorized } = perconaUserSlice.actions;
+export const { setAuthorized, setIsPlatformUser } = perconaUserSlice.actions;
 
 export const perconaUserReducers = perconaUserSlice.reducer;
 

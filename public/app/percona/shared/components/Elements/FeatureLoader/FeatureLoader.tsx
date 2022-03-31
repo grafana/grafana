@@ -1,10 +1,8 @@
 import React, { FC } from 'react';
-import { useSelector } from 'react-redux';
 
-import { Spinner, useStyles } from '@grafana/ui';
-import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
+import { useStyles } from '@grafana/ui';
 
-import { EmptyBlock } from '../EmptyBlock';
+import { PermissionLoader } from '../PermissionLoader';
 
 import { PMM_SETTINGS_URL } from './FeatureLoader.constants';
 import { Messages } from './FeatureLoader.messages';
@@ -18,30 +16,19 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
   children,
 }) => {
   const styles = useStyles(getStyles);
-  const featureEnabled = useSelector(featureSelector);
-  const { isAuthorized } = useSelector(getPerconaUser);
-  const { isLoading } = useSelector(getPerconaSettings);
-
-  if (featureEnabled) {
-    return <>{children}</>;
-  }
 
   return (
-    <div className={styles.emptyBlock}>
-      <EmptyBlock dataTestId="empty-block">
-        {isLoading ? (
-          <Spinner />
-        ) : isAuthorized ? (
-          <>
-            {Messages.featureDisabled(featureName)}&nbsp;
-            <a data-testid={messagedataTestId} className={styles.link} href={PMM_SETTINGS_URL}>
-              {Messages.pmmSettings}
-            </a>
-          </>
-        ) : (
-          <div data-testid="unauthorized">{Messages.unauthorized}</div>
-        )}
-      </EmptyBlock>
-    </div>
+    <PermissionLoader
+      featureSelector={featureSelector}
+      renderSuccess={() => children}
+      renderError={() => (
+        <>
+          {Messages.featureDisabled(featureName)}&nbsp;
+          <a data-testid={messagedataTestId} className={styles.link} href={PMM_SETTINGS_URL}>
+            {Messages.pmmSettings}
+          </a>
+        </>
+      )}
+    />
   );
 };

@@ -10,7 +10,7 @@ import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 import { KioskMode, StoreState } from 'app/types';
 
@@ -58,6 +58,7 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const location = useLocation();
   const kiosk = getKioskMode();
   const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = useSelector(getPerconaSettings);
+  const { isPlatformUser } = useSelector(getPerconaUser);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
@@ -104,6 +105,15 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
         url: `${config.appSubUrl}/backup`,
       });
     }
+  }
+
+  if (isPlatformUser) {
+    topItems.push({
+      id: 'tickets',
+      icon: 'ticket',
+      text: 'Support Tickets',
+      url: `${config.appSubUrl}/tickets`,
+    });
   }
 
   if (kiosk !== KioskMode.Off) {
