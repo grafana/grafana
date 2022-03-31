@@ -69,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(1),
       marginRight: theme.spacing(1.5),
       right: 0,
-      zIndex: 9999,
+      zIndex: theme.zIndex.sidemenu,
       top: 0,
       [theme.breakpoints.up('md')]: {
         borderRight: `1px solid ${theme.colors.border.weak}`,
