@@ -18,7 +18,6 @@ import { DashboardSearchHit } from 'app/features/search/types';
 import { getDefaultQueries } from './utils/rule-form';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
-import * as api from 'app/features/manage-dashboards/state/actions';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 import { fetchBuildInfo } from './api/buildInfo';
 
@@ -605,23 +604,12 @@ describe('RuleEditor', () => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
-    mocks.api.fetchBuildInfo.mockResolvedValue({
-      application: PromApplication.Prometheus,
-      features: {
-        rulerConfigApi: true,
-        alertManagerConfigApi: true,
-        federatedRules: false,
-        querySharding: false,
-      },
-    });
-
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    // wait for ui theck each datasource if it supports rule editing
-    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalledTimes(4));
 
     // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
+    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+
     await ui.inputs.name.find();
     userEvent.click(await ui.buttons.lotexAlert.get());
 
