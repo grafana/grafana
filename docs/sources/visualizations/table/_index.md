@@ -105,3 +105,7 @@ Enables value inspection from table cell. The raw value is presented in a modal 
 ## Column filter
 
 You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "./filter-table-columns.md" >}}).
+
+## Pagination
+
+Use this option to enable or disable pagination. It is a front-end option that does not affect queries. When enabled, the page size automatically adjusts to the height of the table.
