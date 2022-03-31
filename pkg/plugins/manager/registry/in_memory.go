@@ -25,7 +25,7 @@ func NewPluginRegistry(cfg *plugins.Cfg) *InMemory {
 	return &InMemory{
 		cfg:   cfg,
 		store: make(map[string]*plugins.Plugin),
-		log:   log.New("int.plugin.registry"),
+		log:   log.New("plugin.registry"),
 	}
 }
 
