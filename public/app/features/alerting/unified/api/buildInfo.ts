@@ -24,7 +24,10 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
     throw e;
   });
 
-  if (!response?.data.data) {
+  const hasBuildInfo = response !== null;
+
+  // dealing with a Cortex datasource since the response for buildinfo came up empty
+  if (!hasBuildInfo) {
     const promRulesSupported = await hasPromRulesSupport(name);
     const rulerSupported = await hasRulerSupport(name);
 
@@ -40,10 +43,20 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
     };
   }
 
+  // if no features are reported but buildinfo was return we're talking to Prometheus
   const { features } = response.data.data;
+  if (!features) {
+    return {
+      application: PromApplication.Prometheus,
+      features: {
+        rulerApiEnabled: false,
+      },
+    };
+  }
 
+  // if we have both features and buildinfo reported we're talking to Mimir
   return {
-    application: PromApplication.Prometheus,
+    application: PromApplication.Mimir,
     features: {
       rulerApiEnabled: features?.ruler_config_api === 'true',
     },
