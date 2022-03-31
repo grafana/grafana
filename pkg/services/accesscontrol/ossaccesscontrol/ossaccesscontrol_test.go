@@ -143,25 +143,36 @@ func TestUsageMetrics(t *testing.T) {
 	}
 }
 
-// TODO dedup test
 func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
+	perm := accesscontrol.Permission{Action: "test:test", Scope: "test:*"}
+
 	role := accesscontrol.RoleDTO{
 		Version:     1,
 		Name:        "fixed:test:test",
-		Permissions: []accesscontrol.Permission{{Action: "test:test", Scope: "test:*"}},
+		Permissions: []accesscontrol.Permission{perm},
 	}
-	builtInRoles := []string{"Editor", "Admin"}
+	builtInRoles := []string{"Editor"}
+
+	// Admin is going to get the role as well
+	includedBuiltInRoles := []string{"Editor", "Admin"}
+
+	// Grafana Admin and Viewer won't get the role
+	excludedbuiltInRoles := []string{"Viewer", "Grafana Admin"}
 
 	ac := setupTestEnv(t)
-	// Empty the macro roles' permissions for this test
-	ac.initBuiltInRoles()
-
+	ac.initBuiltInRoles() // Empty the macro roles' permissions for this test
 	ac.registerFixedRole(role, builtInRoles)
 
-	for _, br := range builtInRoles {
+	for _, br := range includedBuiltInRoles {
 		builtinRole, ok := ac.roles[br]
 		assert.True(t, ok)
-		assert.ElementsMatch(t, role.Permissions, builtinRole.Permissions)
+		assert.Contains(t, builtinRole.Permissions, perm)
+	}
+
+	for _, br := range excludedbuiltInRoles {
+		builtinRole, ok := ac.roles[br]
+		assert.True(t, ok)
+		assert.NotContains(t, builtinRole.Permissions, perm)
 	}
 }
 

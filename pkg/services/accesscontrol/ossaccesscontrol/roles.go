@@ -5,11 +5,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-type RoleRegistry interface {
-	// RegisterFixedRoles registers all roles declared to AccessControl
-	RegisterFixedRoles() error
-}
-
 // Roles definition
 var (
 	ldapReaderRole = accesscontrol.RoleDTO{

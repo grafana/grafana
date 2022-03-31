@@ -193,15 +193,13 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 }
 
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
-	roles := []string{string(user.OrgRole)}
-	for _, role := range user.OrgRole.Children() {
-		roles = append(roles, string(role))
-	}
+	builtInRoles := []string{string(user.OrgRole)}
+
 	if user.IsGrafanaAdmin {
-		roles = append(roles, accesscontrol.RoleGrafanaAdmin)
+		builtInRoles = append(builtInRoles, accesscontrol.RoleGrafanaAdmin)
 	}
 
-	return roles
+	return builtInRoles
 }
 
 // RegisterFixedRoles registers all declared roles in RAM
@@ -210,22 +208,33 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	if ac.IsDisabled() {
 		return nil
 	}
-	var err error
 	ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		ac.registerFixedRole(registration.Role, registration.Grants)
 		return true
 	})
-	return err
+	return nil
 }
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
+	// Inheritance
+	brs := map[string]struct{}{}
 	for _, builtInRole := range builtInRoles {
-		if macroRole, ok := ac.roles[builtInRole]; ok {
-			// TODO dedup permissions
+		if builtInRole == accesscontrol.RoleGrafanaAdmin {
+			brs[builtInRole] = struct{}{}
+		} else {
+			brs[builtInRole] = struct{}{}
+			for _, parent := range models.RoleType(builtInRole).Parent() {
+				brs[string(parent)] = struct{}{}
+			}
+		}
+	}
+
+	for br := range brs {
+		if macroRole, ok := ac.roles[br]; ok {
 			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
 		} else {
-			ac.log.Error("Unknown builtin role", "builtInRole", builtInRole)
+			ac.log.Error("Unknown builtin role", "builtInRole", br)
 		}
 	}
 }

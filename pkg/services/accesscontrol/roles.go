@@ -8,6 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles() error
+}
+
 func ConcatPermissions(permissions ...[]Permission) []Permission {
 	if permissions == nil {
 		return nil
