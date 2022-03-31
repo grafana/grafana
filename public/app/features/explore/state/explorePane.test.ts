@@ -80,7 +80,7 @@ function setup(state?: any) {
       return Object.values(datasources).map((d) => ({ name: d.name }));
     },
     getInstanceSettings(name: string) {
-      return { name, getRef: () => ({ uid: name }) };
+      return { name, getRef: () => ({ uid: name }), meta: { name } };
     },
     get(name?: string) {
       return Promise.resolve(
@@ -90,6 +90,7 @@ function setup(state?: any) {
               testDatasource: jest.fn(),
               init: jest.fn(),
               name: 'default',
+              meta: {},
             }
       );
     },
