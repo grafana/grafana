@@ -17,4 +17,6 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '1.17.8'
+      - run: go install github.com/google/wire/cmd/wire@0.5.0
+      - run: $(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
       - run: go test ./...
