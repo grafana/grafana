@@ -276,7 +276,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 				continue
 			}
 
-			p.DefaultNavURL = path.Join("/d/", include.UID)
+			p.DefaultNavURL = include.DashboardURLPath()
 		}
 	}
 }
