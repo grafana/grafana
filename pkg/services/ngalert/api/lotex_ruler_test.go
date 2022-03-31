@@ -20,7 +20,6 @@ import (
 )
 
 func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
-	//sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 	tc := []struct {
 		name            string
 		namedParams     map[string]string
@@ -67,21 +66,21 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 		{
 			name:            "with a Prometheus datasource and subtype of Cortex",
 			namedParams:     map[string]string{":Recipient": "164"},
-			urlParams:       "?subtype=2",
+			urlParams:       "?subtype=cortex",
 			datasourceCache: fakeCacheService{datasource: &models.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/rules",
 		},
 		{
-			name:            "with a Prometheus datasource and subtype of Cloud",
+			name:            "with a Prometheus datasource and subtype of Mimir",
 			namedParams:     map[string]string{":Recipient": "164"},
-			urlParams:       "?subtype=3",
+			urlParams:       "?subtype=mimir",
 			datasourceCache: fakeCacheService{datasource: &models.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/config/v1/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Prometheus",
 			namedParams:     map[string]string{":Recipient": "164"},
-			urlParams:       "?subtype=1",
+			urlParams:       "?subtype=prometheus",
 			datasourceCache: fakeCacheService{datasource: &models.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/rules",
 		},

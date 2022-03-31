@@ -17,16 +17,16 @@ import (
 )
 
 const (
-	Prometheus = iota + 1
-	Cortex
-	Cloud
+	Prometheus = "prometheus"
+	Cortex     = "cortex"
+	Mimir      = "mimir"
 )
 
 const (
 	PrometheusDatasourceType = "prometheus"
 	LokiDatasourceType       = "loki"
 
-	cloudPrefix      = "/config/v1/rules"
+	mimirPrefix      = "/config/v1/rules"
 	prometheusPrefix = "/rules"
 	lokiPrefix       = "/api/prom/rules"
 
@@ -38,10 +38,10 @@ var dsTypeToRulerPrefix = map[string]string{
 	LokiDatasourceType:       lokiPrefix,
 }
 
-var subtypeToPrefix = map[int]string{
+var subtypeToPrefix = map[string]string{
 	Prometheus: prometheusPrefix,
 	Cortex:     prometheusPrefix,
-	Cloud:      cloudPrefix,
+	Mimir:      mimirPrefix,
 }
 
 type LotexRuler struct {
@@ -200,9 +200,9 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 		return prefix, nil
 	}
 
-	// A Prometheus datasource, can have many subtypes: Cortex, Cloud and vanilla Prometheus.
+	// A Prometheus datasource, can have many subtypes: Cortex, Mimir and vanilla Prometheus.
 	// Based on these subtypes, we want to use a different proxying path.
-	subtype := ctx.QueryInt(subtypeQuery)
+	subtype := ctx.Query(subtypeQuery)
 	subTypePrefix, ok := subtypeToPrefix[subtype]
 	if !ok {
 		r.log.Debug("unable to determine prometheus datasource subtype, using default prefix", "subtype", subtype)
