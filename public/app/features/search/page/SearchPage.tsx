@@ -1,6 +1,6 @@
 import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Input, useStyles2, Spinner } from '@grafana/ui';
+import { Input, useStyles2, Spinner, Button } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
@@ -65,9 +65,14 @@ export default function SearchPage() {
           <div>
             <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagChange} /> <br />
             {query.datasource && (
-              <a onClick={() => onDatasourceChange(undefined)} className={styles.clearClick}>
+              <Button
+                icon="times"
+                variant="secondary"
+                onClick={() => onDatasourceChange(undefined)}
+                className={styles.clearClick}
+              >
                 Datasource: {query.datasource}
-              </a>
+              </Button>
             )}
             <AutoSizer style={{ width: '100%', height: '2000px' }}>
               {({ width }) => {
@@ -105,5 +110,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     &:hover {
       text-decoration: line-through;
     }
+    margin-bottom: 20px;
   `,
 });
