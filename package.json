@@ -313,7 +313,7 @@
     "jquery": "3.6.0",
     "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
-    "kbar": "^0.1.0-beta.30",
+    "kbar": "^0.1.0-beta.33",
     "lezer-promql": "0.22.0",
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
@@ -391,8 +391,7 @@
     "@rushstack/node-core-library": "3.45.1",
     "@rushstack/rig-package": "0.3.8",
     "@rushstack/ts-command-line": "4.10.7",
-    "@storybook/react/webpack": "5.70.0",
-    "kbar": "portal:/Users/kristinadurivage/development/kbar"
+    "@storybook/react/webpack": "5.70.0"
   },
   "workspaces": {
     "packages": [

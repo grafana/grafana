@@ -20802,7 +20802,7 @@ __metadata:
     jquery: 3.6.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
-    kbar: ^0.1.0-beta.30
+    kbar: ^0.1.0-beta.33
     lerna: ^4.0.0
     lezer-promql: 0.22.0
     lint-staged: 12.3.7
@@ -24692,9 +24692,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"kbar@portal:/Users/kristinadurivage/development/kbar::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "kbar@portal:/Users/kristinadurivage/development/kbar::locator=grafana%40workspace%3A."
+"kbar@npm:^0.1.0-beta.33":
+  version: 0.1.0-beta.33
+  resolution: "kbar@npm:0.1.0-beta.33"
   dependencies:
     "@reach/portal": ^0.16.0
     command-score: ^0.1.2
@@ -24704,8 +24704,9 @@ __metadata:
   peerDependencies:
     react: ^16.0.0 || ^17.0.0
     react-dom: ^16.0.0 || ^17.0.0
+  checksum: 545720900a046501157f8aab9530f62dec356438b85f728968fdc08192cc65afd903cd27e3a0c0f92a74ad6d15d808f5eb12c8b6a801cf881208e3dc2594eb8b
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "keycharm@npm:^0.2.0":
   version: 0.2.0
