@@ -106,7 +106,7 @@ To automatically fix incorrectly escaped sequences that Explore has detected:
 1. Click "Escape newlines" to replace the sequences.
 2. Manually review the replacements to confirm their correctness.
 
-After replacing these sequences, Explore changes the option from "Escape newlines" to "Remove escaping". Clicking this option reverts the replacements.
+Explore replaces these sequences. When it does so, the option will change from "Escape newlines" to "Remove escaping". Evaluate the changes as the parsing may not be accurate based on the input received. You can revert the replacements by clicking "Remove escaping".
 
 #### Derived fields links
 
