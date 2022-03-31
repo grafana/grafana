@@ -582,9 +582,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.Cloud = "AzureCloud"
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
-	loader := &fakeLoader{} // inline?
-	manager := New(cfg, registry.NewPluginRegistry(cfg), nil, loader)
-	manager.pluginLoader = loader
+	manager := New(cfg, registry.NewPluginRegistry(cfg), nil, &fakeLoader{})
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}

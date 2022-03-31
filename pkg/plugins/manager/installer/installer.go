@@ -91,7 +91,7 @@ func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Installer {
 
 // Install downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
-func (s *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
 	var checksum string
@@ -103,12 +103,12 @@ func (s *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := s.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
+		plugin, err := i.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
 		if err != nil {
 			return err
 		}
 
-		v, err := s.selectVersion(&plugin, version)
+		v, err := i.selectVersion(&plugin, version)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ func (s *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 		}
 	}
 
-	s.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsDir)
+	i.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsDir)
 
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
@@ -141,14 +141,14 @@ func (s *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 	}
 	defer func() {
 		if err := os.Remove(tmpFile.Name()); err != nil {
-			s.log.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
+			i.log.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
 		}
 	}()
 
-	err = s.DownloadFile(pluginID, tmpFile, pluginZipURL, checksum)
+	err = i.DownloadFile(pluginID, tmpFile, pluginZipURL, checksum)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
-			s.log.Warn("Failed to close file", "err", err)
+			i.log.Warn("Failed to close file", "err", err)
 		}
 		return errutil.Wrap("failed to download plugin archive", err)
 	}
@@ -157,19 +157,19 @@ func (s *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 		return errutil.Wrap("failed to close tmp file", err)
 	}
 
-	err = s.extractFiles(tmpFile.Name(), pluginID, pluginsDir, isInternal)
+	err = i.extractFiles(tmpFile.Name(), pluginID, pluginsDir, isInternal)
 	if err != nil {
 		return errutil.Wrap("failed to extract plugin archive", err)
 	}
 
 	res, _ := toPluginDTO(pluginsDir, pluginID)
 
-	s.log.Successf("Downloaded %s v%s zip successfully", res.ID, res.Info.Version)
+	i.log.Successf("Downloaded %s v%s zip successfully", res.ID, res.Info.Version)
 
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
-		s.log.Infof("Fetching %s dependencies...", res.ID)
-		if err := s.Install(ctx, dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
+		i.log.Infof("Fetching %s dependencies...", res.ID)
+		if err := i.Install(ctx, dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin %s", dep.ID)
 		}
 	}
@@ -178,7 +178,7 @@ func (s *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 }
 
 // Uninstall removes the specified plugin from the provided plugin directory.
-func (s *Installer) Uninstall(ctx context.Context, pluginDir string) error {
+func (i *Installer) Uninstall(ctx context.Context, pluginDir string) error {
 	// verify it's a plugin directory
 	if _, err := os.Stat(filepath.Join(pluginDir, "plugin.json")); err != nil {
 		if os.IsNotExist(err) {
@@ -190,12 +190,12 @@ func (s *Installer) Uninstall(ctx context.Context, pluginDir string) error {
 		}
 	}
 
-	s.log.Infof("Uninstalling plugin %v", pluginDir)
+	i.log.Infof("Uninstalling plugin %v", pluginDir)
 
 	return os.RemoveAll(pluginDir)
 }
 
-func (s *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) (err error) {
+func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(url); err == nil {
 		// We can ignore this gosec G304 warning since `url` stems from command line flag "pluginUrl". If the
@@ -207,7 +207,7 @@ func (s *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				s.log.Warn("Failed to close file", "err", err)
+				i.log.Warn("Failed to close file", "err", err)
 			}
 		}()
 		_, err = io.Copy(tmpFile, f)
@@ -217,13 +217,13 @@ func (s *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 		return nil
 	}
 
-	s.retryCount = 0
+	i.retryCount = 0
 
 	defer func() {
 		if r := recover(); r != nil {
-			s.retryCount++
-			if s.retryCount < 3 {
-				s.log.Debug("Failed downloading. Will retry once.")
+			i.retryCount++
+			if i.retryCount < 3 {
+				i.log.Debug("Failed downloading. Will retry once.")
 				err = tmpFile.Truncate(0)
 				if err != nil {
 					return
@@ -232,9 +232,9 @@ func (s *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 				if err != nil {
 					return
 				}
-				err = s.DownloadFile(pluginID, tmpFile, url, checksum)
+				err = i.DownloadFile(pluginID, tmpFile, url, checksum)
 			} else {
-				s.retryCount = 0
+				i.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
 					err = fmt.Errorf("corrupt HTTP response from source, please try again")
@@ -247,13 +247,13 @@ func (s *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := s.sendRequestWithoutTimeout(url)
+	bodyReader, err := i.sendRequestWithoutTimeout(url)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err := bodyReader.Close(); err != nil {
-			s.log.Warn("Failed to close body", "err", err)
+			i.log.Warn("Failed to close body", "err", err)
 		}
 	}()
 
@@ -271,9 +271,9 @@ func (s *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 	return nil
 }
 
-func (s *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
-	s.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, pluginRepoURL)
-	body, err := s.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
+func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
+	i.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, pluginRepoURL)
+	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
 		return Plugin{}, err
 	}
@@ -281,53 +281,53 @@ func (s *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL stri
 	var data Plugin
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		s.log.Error("Failed to unmarshal plugin repo response error", err)
+		i.log.Error("Failed to unmarshal plugin repo response error", err)
 		return Plugin{}, err
 	}
 
 	return data, nil
 }
 
-func (s *Installer) sendRequestGetBytes(URL string, subPaths ...string) ([]byte, error) {
-	bodyReader, err := s.sendRequest(URL, subPaths...)
+func (i *Installer) sendRequestGetBytes(URL string, subPaths ...string) ([]byte, error) {
+	bodyReader, err := i.sendRequest(URL, subPaths...)
 	if err != nil {
 		return []byte{}, err
 	}
 	defer func() {
 		if err := bodyReader.Close(); err != nil {
-			s.log.Warn("Failed to close stream", "err", err)
+			i.log.Warn("Failed to close stream", "err", err)
 		}
 	}()
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (s *Installer) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
-	req, err := s.createRequest(URL, subPaths...)
+func (i *Installer) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
+	req, err := i.createRequest(URL, subPaths...)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := s.httpClient.Do(req)
+	res, err := i.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return s.handleResponse(res)
+	return i.handleResponse(res)
 }
 
-func (s *Installer) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.ReadCloser, error) {
-	req, err := s.createRequest(URL, subPaths...)
+func (i *Installer) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.ReadCloser, error) {
+	req, err := i.createRequest(URL, subPaths...)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := s.httpClientNoTimeout.Do(req)
+	res, err := i.httpClientNoTimeout.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return s.handleResponse(res)
+	return i.handleResponse(res)
 }
 
-func (s *Installer) createRequest(URL string, subPaths ...string) (*http.Request, error) {
+func (i *Installer) createRequest(URL string, subPaths ...string) (*http.Request, error) {
 	u, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
@@ -342,20 +342,20 @@ func (s *Installer) createRequest(URL string, subPaths ...string) (*http.Request
 		return nil, err
 	}
 
-	req.Header.Set("grafana-version", s.grafanaVersion)
+	req.Header.Set("grafana-version", i.grafanaVersion)
 	req.Header.Set("grafana-os", runtime.GOOS)
 	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+s.grafanaVersion)
+	req.Header.Set("User-Agent", "grafana "+i.grafanaVersion)
 
 	return req, err
 }
 
-func (s *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
+func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
 			if err := res.Body.Close(); err != nil {
-				s.log.Warn("Failed to close response body", "err", err)
+				i.log.Warn("Failed to close response body", "err", err)
 			}
 		}()
 		if err != nil || len(body) == 0 {
@@ -369,7 +369,7 @@ func (s *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: s.fullSystemInfoString()}
+		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: i.fullSystemInfoString()}
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -410,13 +410,13 @@ func normalizeVersion(version string) string {
 	return normalized
 }
 
-func (s *Installer) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
-	plugin, err := s.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
+func (i *Installer) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+	plugin, err := i.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
 	if err != nil {
 		return plugins.UpdateInfo{}, err
 	}
 
-	v, err := s.selectVersion(&plugin, version)
+	v, err := i.selectVersion(&plugin, version)
 	if err != nil {
 		return plugins.UpdateInfo{}, err
 	}
@@ -432,7 +432,7 @@ func (s *Installer) GetUpdateInfo(ctx context.Context, pluginID, version, plugin
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (s *Installer) selectVersion(plugin *Plugin, version string) (*Version, error) {
+func (i *Installer) selectVersion(plugin *Plugin, version string) (*Version, error) {
 	var ver Version
 
 	latestForArch := latestSupportedVersion(plugin)
@@ -440,7 +440,7 @@ func (s *Installer) selectVersion(plugin *Plugin, version string) (*Version, err
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.fullSystemInfoString(),
+			SystemInfo:       i.fullSystemInfoString(),
 		}
 	}
 
@@ -455,30 +455,30 @@ func (s *Installer) selectVersion(plugin *Plugin, version string) (*Version, err
 	}
 
 	if len(ver.Version) == 0 {
-		s.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
 			plugin.ID, version, latestForArch.Version)
 		return nil, ErrVersionNotFound{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.fullSystemInfoString(),
+			SystemInfo:       i.fullSystemInfoString(),
 		}
 	}
 
 	if !supportsCurrentArch(&ver) {
-		s.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
 			plugin.ID, version, latestForArch.Version)
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       s.fullSystemInfoString(),
+			SystemInfo:       i.fullSystemInfoString(),
 		}
 	}
 
 	return &ver, nil
 }
 
-func (s *Installer) fullSystemInfoString() string {
-	return fmt.Sprintf("Grafana v%s %s", s.grafanaVersion, osAndArchString())
+func (i *Installer) fullSystemInfoString() string {
+	return fmt.Sprintf("Grafana v%s %s", i.grafanaVersion, osAndArchString())
 }
 
 func osAndArchString() string {
@@ -509,17 +509,17 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (s *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
+func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
 	var err error
 	dest, err = filepath.Abs(dest)
 	if err != nil {
 		return err
 	}
-	s.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archiveFile, dest))
+	i.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archiveFile, dest))
 
 	existingInstallDir := filepath.Join(dest, pluginID)
 	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
-		s.log.Debugf("Removing existing installation of plugin %s", existingInstallDir)
+		i.log.Debugf("Removing existing installation of plugin %s", existingInstallDir)
 		err = os.RemoveAll(existingInstallDir)
 		if err != nil {
 			return err
@@ -533,7 +533,7 @@ func (s *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 
 	defer func() {
 		if err := r.Close(); err != nil {
-			s.log.Warn("failed to close zip file", "err", err)
+			i.log.Warn("failed to close zip file", "err", err)
 		}
 	}()
 
@@ -576,11 +576,11 @@ func (s *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 
 		if isSymlink(zf) {
 			if !allowSymlinks {
-				s.log.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping", zf.Name)
+				i.log.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping", zf.Name)
 				continue
 			}
 			if err := extractSymlink(zf, dstPath); err != nil {
-				s.log.Warn("failed to extract symlink", "err", err)
+				i.log.Warn("failed to extract symlink", "err", err)
 				continue
 			}
 			continue

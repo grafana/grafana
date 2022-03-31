@@ -9,16 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store provides read capabilities to a plugin store.
+// Store is the storage for plugins.
 type Store interface {
-	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string) error
-	// Remove removes a plugin from the store.
-	Remove(ctx context.Context, pluginID string) error
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
+	// Add adds a plugin to the store.
+	Add(ctx context.Context, pluginID, version string) error
+	// Remove removes a plugin from the store.
+	Remove(ctx context.Context, pluginID string) error
 }
 
 type UpdateInfo struct {

@@ -7,11 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -59,8 +58,8 @@ func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []Plugin
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 		log:             log.New("plugin.manager"),
+		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 
@@ -232,7 +231,7 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 // shutdown stops all backend plugin processes
 func (m *PluginManager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
+	for _, p := range m.availablePlugins(ctx) {
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()
