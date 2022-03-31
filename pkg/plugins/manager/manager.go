@@ -58,7 +58,7 @@ func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []Plugin
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
 		log:             log.New("plugin.manager"),
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.pluginInstaller", true)),
+		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 
@@ -108,7 +108,7 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 
 func (m *PluginManager) Renderer() *plugins.Plugin {
 	for _, p := range m.availablePlugins(context.TODO()) {
-		if p.IsRenderer() && !p.IsDecommissioned() {
+		if p.IsRenderer() {
 			return p
 		}
 	}

@@ -481,7 +481,9 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 			t.Run("Should be able to register plugin", func(t *testing.T) {
 				err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
 				require.NoError(t, err)
-				// require.True(t, ctx.manager.isRegistered(testPluginID))
+				p, exists := ctx.manager.Plugin(context.Background(), testPluginID)
+				require.True(t, exists)
+				require.NotNil(t, p)
 				require.False(t, ctx.pluginClient.managed)
 
 				t.Run("When manager runs should not start plugin", func(t *testing.T) {

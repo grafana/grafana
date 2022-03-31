@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// StoreWriter is the storage for plugins.
+// StoreWriter provides write capabilities to a plugin store.
 type StoreWriter interface {
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string) error
@@ -17,6 +17,7 @@ type StoreWriter interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
+// Store provides read capabilities to a plugin store.
 type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
