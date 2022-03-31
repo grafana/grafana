@@ -101,7 +101,6 @@ type HTTPServer struct {
 	DataProxy                    *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator       models.PluginRequestValidator
 	pluginClient                 plugins.Client
-	pluginStoreWriter            plugins.StoreWriter
 	pluginStore                  plugins.Store
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
@@ -157,7 +156,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
-	pluginStoreWriter plugins.StoreWriter, pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -194,7 +193,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginRequestValidator:       pluginRequestValidator,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
-		pluginStoreWriter:            pluginStoreWriter,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
 		pluginErrorResolver:          pluginErrorResolver,

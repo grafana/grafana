@@ -197,6 +197,8 @@ func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
 }
 
 type fakePluginStore struct {
+	plugins.Store
+
 	plugins map[string]plugins.PluginDTO
 }
 

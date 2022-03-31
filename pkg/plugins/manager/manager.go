@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -39,27 +41,25 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry PluginRegistry, pluginLoader PluginLoader,
-	pluginInstaller PluginInstaller) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry PluginRegistry, pluginLoader PluginLoader) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader, pluginInstaller)
+	}, pluginLoader)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []PluginSource, pluginLoader PluginLoader,
-	pluginInstaller PluginInstaller) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []PluginSource, pluginLoader PluginLoader) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
-		pluginInstaller: pluginInstaller,
+		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 		log:             log.New("plugin.manager"),
 	}
 }

@@ -23,13 +23,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-type Service struct {
+type Installer struct {
 	retryCount int
 
 	httpClient          http.Client
@@ -82,12 +80,8 @@ func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
-	return New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true))
-}
-
-func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Service {
-	return &Service{
+func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Installer {
+	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
@@ -97,7 +91,7 @@ func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Service {
 
 // Install downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
-func (s *Service) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+func (s *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
 	var checksum string
@@ -184,7 +178,7 @@ func (s *Service) Install(ctx context.Context, pluginID, version, pluginsDir, pl
 }
 
 // Uninstall removes the specified plugin from the provided plugin directory.
-func (s *Service) Uninstall(ctx context.Context, pluginDir string) error {
+func (s *Installer) Uninstall(ctx context.Context, pluginDir string) error {
 	// verify it's a plugin directory
 	if _, err := os.Stat(filepath.Join(pluginDir, "plugin.json")); err != nil {
 		if os.IsNotExist(err) {
@@ -201,7 +195,7 @@ func (s *Service) Uninstall(ctx context.Context, pluginDir string) error {
 	return os.RemoveAll(pluginDir)
 }
 
-func (s *Service) DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) (err error) {
+func (s *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(url); err == nil {
 		// We can ignore this gosec G304 warning since `url` stems from command line flag "pluginUrl". If the
@@ -277,7 +271,7 @@ func (s *Service) DownloadFile(pluginID string, tmpFile *os.File, url string, ch
 	return nil
 }
 
-func (s *Service) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
+func (s *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
 	s.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, pluginRepoURL)
 	body, err := s.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
@@ -294,7 +288,7 @@ func (s *Service) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string
 	return data, nil
 }
 
-func (s *Service) sendRequestGetBytes(URL string, subPaths ...string) ([]byte, error) {
+func (s *Installer) sendRequestGetBytes(URL string, subPaths ...string) ([]byte, error) {
 	bodyReader, err := s.sendRequest(URL, subPaths...)
 	if err != nil {
 		return []byte{}, err
@@ -307,7 +301,7 @@ func (s *Service) sendRequestGetBytes(URL string, subPaths ...string) ([]byte, e
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (s *Service) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
+func (s *Installer) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
 	req, err := s.createRequest(URL, subPaths...)
 	if err != nil {
 		return nil, err
@@ -320,7 +314,7 @@ func (s *Service) sendRequest(URL string, subPaths ...string) (io.ReadCloser, er
 	return s.handleResponse(res)
 }
 
-func (s *Service) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.ReadCloser, error) {
+func (s *Installer) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.ReadCloser, error) {
 	req, err := s.createRequest(URL, subPaths...)
 	if err != nil {
 		return nil, err
@@ -333,7 +327,7 @@ func (s *Service) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.
 	return s.handleResponse(res)
 }
 
-func (s *Service) createRequest(URL string, subPaths ...string) (*http.Request, error) {
+func (s *Installer) createRequest(URL string, subPaths ...string) (*http.Request, error) {
 	u, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
@@ -356,7 +350,7 @@ func (s *Service) createRequest(URL string, subPaths ...string) (*http.Request, 
 	return req, err
 }
 
-func (s *Service) handleResponse(res *http.Response) (io.ReadCloser, error) {
+func (s *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
@@ -416,7 +410,7 @@ func normalizeVersion(version string) string {
 	return normalized
 }
 
-func (s *Service) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+func (s *Installer) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
 	plugin, err := s.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
 	if err != nil {
 		return plugins.UpdateInfo{}, err
@@ -438,7 +432,7 @@ func (s *Service) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRe
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (s *Service) selectVersion(plugin *Plugin, version string) (*Version, error) {
+func (s *Installer) selectVersion(plugin *Plugin, version string) (*Version, error) {
 	var ver Version
 
 	latestForArch := latestSupportedVersion(plugin)
@@ -483,7 +477,7 @@ func (s *Service) selectVersion(plugin *Plugin, version string) (*Version, error
 	return &ver, nil
 }
 
-func (s *Service) fullSystemInfoString() string {
+func (s *Installer) fullSystemInfoString() string {
 	return fmt.Sprintf("Grafana v%s %s", s.grafanaVersion, osAndArchString())
 }
 
@@ -515,7 +509,7 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (s *Service) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
+func (s *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
 	var err error
 	dest, err = filepath.Abs(dest)
 	if err != nil {

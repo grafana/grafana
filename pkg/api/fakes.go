@@ -7,6 +7,8 @@ import (
 )
 
 type fakePluginStore struct {
+	plugins.Store
+
 	plugins map[string]plugins.PluginDTO
 }
 

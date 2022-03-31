@@ -446,6 +446,8 @@ func TestMetrics(t *testing.T) {
 }
 
 type fakePluginStore struct {
+	plugins.Store
+
 	plugins map[string]plugins.PluginDTO
 }
 
