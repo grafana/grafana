@@ -203,7 +203,6 @@ func TestVictoropsNotifier(t *testing.T) {
 			expJson, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 			require.JSONEq(t, string(expJson), body)
-
 		})
 	}
 }
