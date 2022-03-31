@@ -41,7 +41,7 @@ export const CheckPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ ma
         renderTab={({ Content }) => (
           <FeatureLoader
             messagedataTestId="db-check-panel-settings-link"
-            featureName={Messages.stt}
+            featureName={Messages.advisors}
             featureSelector={featureSelector}
           >
             <Content />

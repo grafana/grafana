@@ -50,8 +50,8 @@ describe('CheckPanel::', () => {
       <CheckPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />
     );
 
-    expect(wrapper.find('li').at(0).text()).toBe('Failed Checks');
-    expect(wrapper.find('li').at(1).text()).toBe('All Checks');
+    expect(wrapper.find('li').at(0).text()).toBe('Failed');
+    expect(wrapper.find('li').at(1).text()).toBe('All');
     wrapper.unmount();
   });
 });

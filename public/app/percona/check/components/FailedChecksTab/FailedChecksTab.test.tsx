@@ -72,13 +72,13 @@ describe('FailedChecksTab::', () => {
     const runChecksButton = screen.getByRole('button');
 
     fireEvent.click(runChecksButton);
-    expect(screen.queryByText('Run DB checks')).not.toBeInTheDocument();
+    expect(screen.queryByText('Run Checks')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(loggerSpy).toBeCalledTimes(1);
     });
 
-    expect(await screen.findByText('Run DB checks')).toBeInTheDocument();
+    expect(await screen.findByText('Run Checks')).toBeInTheDocument();
 
     loggerSpy.mockClear();
   });
@@ -96,13 +96,13 @@ describe('FailedChecksTab::', () => {
     expect(runChecksSpy).toBeCalledTimes(0);
     fireEvent.click(runChecksButton);
 
-    expect(screen.queryByText('Run DB checks')).not.toBeInTheDocument();
+    expect(screen.queryByText('Run Checks')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(runChecksSpy).toBeCalledTimes(1);
     });
 
-    expect(await screen.findByText('Run DB checks')).toBeInTheDocument();
+    expect(await screen.findByText('Run Checks')).toBeInTheDocument();
 
     runChecksSpy.mockClear();
   });
