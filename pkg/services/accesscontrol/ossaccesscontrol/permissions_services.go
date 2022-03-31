@@ -175,7 +175,11 @@ func ProvideDashboardPermissions(
 				return nil, err
 			}
 			if dashboard.FolderId > 0 {
-				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.Uid)}, nil
+				query := &models.GetDashboardQuery{Id: dashboard.FolderId, OrgId: orgID}
+				if err := sql.GetDashboard(ctx, query); err != nil {
+					return nil, err
+				}
+				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.Result.Uid)}, nil
 			}
 			return []string{}, nil
 		},
