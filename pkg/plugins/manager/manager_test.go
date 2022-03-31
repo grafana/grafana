@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -393,68 +392,6 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 					require.Equal(t, context.Canceled, runErr)
 					require.Equal(t, 1, ctx.pluginClient.stopCount)
 					require.Equal(t, 1, ctx.pluginClient.startCount)
-				})
-
-				t.Run("Unimplemented handlers", func(t *testing.T) {
-					t.Run("Collect metrics should return method not implemented error", func(t *testing.T) {
-						_, err = ctx.manager.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
-						require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
-					})
-
-					t.Run("Check health should return method not implemented error", func(t *testing.T) {
-						_, err = ctx.manager.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
-						require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
-					})
-				})
-
-				t.Run("Implemented handlers", func(t *testing.T) {
-					t.Run("Collect metrics should return expected result", func(t *testing.T) {
-						ctx.pluginClient.CollectMetricsHandlerFunc = func(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-							return &backend.CollectMetricsResult{
-								PrometheusMetrics: []byte("hello"),
-							}, nil
-						}
-
-						res, err := ctx.manager.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
-						require.NoError(t, err)
-						require.NotNil(t, res)
-						require.Equal(t, "hello", string(res.PrometheusMetrics))
-					})
-
-					t.Run("Check health should return expected result", func(t *testing.T) {
-						json := []byte(`{
-							"key": "value"
-						}`)
-						ctx.pluginClient.CheckHealthHandlerFunc = func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-							return &backend.CheckHealthResult{
-								Status:      backend.HealthStatusOk,
-								Message:     "All good",
-								JSONDetails: json,
-							}, nil
-						}
-
-						res, err := ctx.manager.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
-						require.NoError(t, err)
-						require.NotNil(t, res)
-						require.Equal(t, backend.HealthStatusOk, res.Status)
-						require.Equal(t, "All good", res.Message)
-						require.Equal(t, json, res.JSONDetails)
-					})
-
-					t.Run("Call resource should return expected response", func(t *testing.T) {
-						ctx.pluginClient.CallResourceHandlerFunc = func(ctx context.Context,
-							req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-							return sender.Send(&backend.CallResourceResponse{
-								Status: http.StatusOK,
-							})
-						}
-
-						sender := &fakeSender{}
-						err = ctx.manager.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}}, sender)
-						require.NoError(t, err)
-						require.NotNil(t, sender.resp)
-						require.Equal(t, http.StatusOK, sender.resp.Status)
-					})
 				})
 			})
 		})

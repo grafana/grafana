@@ -20,7 +20,6 @@ const (
 	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
-var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
