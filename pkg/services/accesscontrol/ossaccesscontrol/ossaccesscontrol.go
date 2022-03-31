@@ -17,24 +17,23 @@ import (
 
 func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) *OSSAccessControlService {
-	s := ProvideOSSAccessControl(features, usageStats, provider)
-	s.registerUsageMetrics()
+	s := ProvideOSSAccessControl(features, provider)
+	s.registerUsageMetrics(usageStats)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
 			AccessControl: s,
 		}
 		api.RegisterAPIEndpoints()
-	}
 
-	s.initBuiltInRoles()
-	s.declareOSSRoles()
+		accesscontrol.DeclareOSSRoles(s)
+	}
 
 	return s
 }
 
-func (ac *OSSAccessControlService) initBuiltInRoles() {
-	ac.roles = map[string]*accesscontrol.RoleDTO{
+func builtInRoles() map[string]*accesscontrol.RoleDTO {
+	return map[string]*accesscontrol.RoleDTO{
 		string(models.ROLE_ADMIN): {
 			Name:        "fixed:builtins:admin",
 			DisplayName: string(models.ROLE_ADMIN),
@@ -71,20 +70,21 @@ func (ac *OSSAccessControlService) initBuiltInRoles() {
 }
 
 // ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
-func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, usageStats usagestats.Service, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
-	return &OSSAccessControlService{
+func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+	s := &OSSAccessControlService{
 		features:      features,
 		provider:      provider,
-		usageStats:    usageStats,
 		log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
+		roles:         builtInRoles(),
 	}
+
+	return s
 }
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	log           log.Logger
-	usageStats    usagestats.Service
 	features      featuremgmt.FeatureToggles
 	scopeResolver accesscontrol.ScopeResolver
 	provider      accesscontrol.PermissionsProvider
@@ -99,8 +99,8 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
 }
 
-func (ac *OSSAccessControlService) registerUsageMetrics() {
-	ac.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+func (ac *OSSAccessControlService) registerUsageMetrics(usageStats usagestats.Service) {
+	usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{
 			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
 		}, nil

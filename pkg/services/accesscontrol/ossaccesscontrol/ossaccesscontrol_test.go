@@ -22,14 +22,12 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	ac := &OSSAccessControlService{
 		features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
-		usageStats:    &usagestats.UsageStatsMock{T: t},
 		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		scopeResolver: accesscontrol.NewScopeResolver(),
 		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
+		roles:         builtInRoles(),
 	}
-	ac.initBuiltInRoles()
-	ac.declareOSSRoles()
 	require.NoError(t, ac.RegisterFixedRoles())
 	return ac
 }
@@ -92,6 +90,10 @@ func TestEvaluatingPermissions(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			ac := setupTestEnv(t)
 
+			// Use OSS roles for this test to pass
+			accesscontrol.DeclareFixedRoles(ac)
+			ac.RegisterFixedRoles()
+
 			user := &models.SignedInUser{
 				UserId:         1,
 				OrgId:          1,
@@ -129,13 +131,15 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideService(
+			usagestatsmock := &usagestats.UsageStatsMock{T: t}
+
+			ProvideService(
 				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
-				&usagestats.UsageStatsMock{T: t},
+				usagestatsmock,
 				database.ProvideService(sqlstore.InitTestDB(t)),
 				routing.NewRouteRegister(),
 			)
-			report, err := s.usageStats.GetUsageReport(context.Background())
+			report, err := usagestatsmock.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
 			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
@@ -160,7 +164,6 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	excludedbuiltInRoles := []string{"Viewer", "Grafana Admin"}
 
 	ac := setupTestEnv(t)
-	ac.initBuiltInRoles() // Empty the macro roles' permissions for this test
 	ac.registerFixedRole(role, builtInRoles)
 
 	for _, br := range includedBuiltInRoles {
@@ -255,7 +258,6 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 
 			// Reset the registations
 			ac.registrations = accesscontrol.RegistrationList{}
-			ac.initBuiltInRoles()
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
