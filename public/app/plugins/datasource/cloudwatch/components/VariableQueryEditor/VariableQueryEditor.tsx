@@ -92,7 +92,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       <VariableQueryField
         value={parsedQuery.queryType}
         options={queryTypes}
-        onChange={(value: string) => onQueryChange({ ...parsedQuery, queryType: value as VariableQueryType })}
+        onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
         label="Query Type"
       />
       {hasRegionField && (

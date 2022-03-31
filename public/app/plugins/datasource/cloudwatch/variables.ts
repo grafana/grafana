@@ -59,6 +59,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleNamespacesQuery() {
     const namespaces = await this.datasource.getNamespaces();
     return namespaces.map((s: { label: string; value: string }) => ({
@@ -67,6 +68,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleMetricsQuery({ namespace, region }: VariableQuery) {
     const metrics = await this.datasource.getMetrics(namespace, region);
     return metrics.map((s: { label: string; value: string }) => ({
@@ -75,6 +77,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
     const keys = await this.datasource.getDimensionKeys(namespace, region);
     return keys.map((s: { label: string; value: string }) => ({
@@ -83,6 +86,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
@@ -98,6 +102,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleEbsVolumeIdsQuery({ region, instanceID }: VariableQuery) {
     if (!instanceID) {
       return [];
@@ -109,6 +114,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleEc2InstanceAttributeQuery({ region, attributeName, ec2Filters }: VariableQuery) {
     if (!attributeName) {
       return [];
@@ -124,6 +130,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleResourceARNsQuery({ region, resourceType, tags }: VariableQuery) {
     if (!resourceType) {
       return [];
@@ -139,6 +146,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       expandable: true,
     }));
   }
+
   async handleStatisticsQuery() {
     return this.datasource.standardStatistics.map((s: string) => ({
       text: s,
