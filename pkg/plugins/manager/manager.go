@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +18,8 @@ const (
 )
 
 var _ plugins.Client = (*PluginManager)(nil)
-var _ plugins.StoreWriter = (*PluginManager)(nil)
+
+//var _ plugins.StoreWriter = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
@@ -27,7 +27,7 @@ var _ plugins.RendererManager = (*PluginManager)(nil)
 type PluginManager struct {
 	cfg             *plugins.Cfg
 	pluginRegistry  PluginRegistry
-	pluginInstaller pluginInstaller
+	pluginInstaller PluginInstaller
 	pluginLoader    PluginLoader
 	pluginsMu       sync.RWMutex
 	pluginSources   []PluginSource
@@ -39,26 +39,28 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry PluginRegistry, pluginLoader PluginLoader) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry PluginRegistry, pluginLoader PluginLoader,
+	pluginInstaller PluginInstaller) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader)
+	}, pluginLoader, pluginInstaller)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []PluginSource, pluginLoader PluginLoader) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry PluginRegistry, pluginSources []PluginSource, pluginLoader PluginLoader,
+	pluginInstaller PluginInstaller) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
+		pluginInstaller: pluginInstaller,
 		log:             log.New("plugin.manager"),
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 

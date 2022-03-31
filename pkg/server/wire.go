@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -136,6 +137,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	installer.ProvideService,
+	wire.Bind(new(manager.PluginInstaller), new(*installer.Service)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
 	wire.Bind(new(manager.PluginLoader), new(*loader.Loader)),

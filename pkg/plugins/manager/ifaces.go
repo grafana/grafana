@@ -24,8 +24,8 @@ type PluginLoader interface {
 	Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error)
 }
 
-// pluginInstaller is responsible for managing plugins (add / remove) on the file system.
-type pluginInstaller interface {
+// PluginInstaller is responsible for managing plugins (add / remove) on the file system.
+type PluginInstaller interface {
 	// Install downloads the requested plugin in the provided file system location.
 	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the requested plugin from the provided file system location.
