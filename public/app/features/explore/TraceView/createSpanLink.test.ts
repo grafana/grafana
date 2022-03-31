@@ -217,12 +217,12 @@ describe('createSpanLinkFactory', () => {
   });
 
   describe('should return splunk link', () => {
-    const splunkUID = 'PD90232BAD06BE469';
+    const splunkUID = 'splunkUID';
 
     beforeAll(() => {
       setDataSourceSrv({
         getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
-          return { uid: splunkUID, name: 'Splunk 8' } as any;
+          return { uid: splunkUID, name: 'Splunk 8', type: 'grafana-splunk-datasource' } as any;
         },
       } as any);
 

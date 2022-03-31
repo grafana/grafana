@@ -26,7 +26,6 @@ export interface TraceToLogsOptions {
 
 export interface TraceToLogsData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
-  lokiSearch?: TraceToLogsOptions;
 }
 
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
@@ -43,20 +42,16 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       </div>
 
       <InlineFieldRow>
-        <InlineField
-          tooltip="The data source the trace is going to navigate to"
-          label="Tempo Search data source"
-          labelWidth={26}
-        >
+        <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            name="tracesToLogs"
             logs
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}
             onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
                 datasourceUid: ds.uid,
                 tags: options.jsonData.tracesToLogs?.tags,
               })

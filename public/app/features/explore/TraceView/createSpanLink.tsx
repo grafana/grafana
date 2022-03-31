@@ -19,7 +19,6 @@ import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { getFieldLinksForExplore } from '../utils/links';
 
-const splunkUID = 'PD90232BAD06BE469';
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
  * the trace view won't create any links and to capture the datasource and split function making it easier to memoize
@@ -34,12 +33,10 @@ export function createSpanLinkFactory({
   traceToLogsOptions?: TraceToLogsOptions;
   dataFrame?: DataFrame;
 }): SpanLinkFunc | undefined {
-  const isSplunkDS = !!(traceToLogsOptions?.datasourceUid === splunkUID);
-
   if (!dataFrame || dataFrame.fields.length === 1 || !dataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
     // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
     // let's try to use the old legacy path.
-    return legacyCreateSpanLinkFactory(splitOpenFn, isSplunkDS, traceToLogsOptions);
+    return legacyCreateSpanLinkFactory(splitOpenFn, traceToLogsOptions);
   } else {
     return function SpanLink(span: TraceSpan): SpanLinkDef | undefined {
       // We should be here only if there are some links in the dataframe
@@ -49,7 +46,7 @@ export function createSpanLinkFactory({
           field,
           rowIndex: span.dataFrameRowIndex!,
           splitOpenFn,
-          range: getTimeRangeFromSpan(span, isSplunkDS),
+          range: getTimeRangeFromSpan(span),
           dataFrame,
         });
 
@@ -67,17 +64,15 @@ export function createSpanLinkFactory({
   }
 }
 
-function legacyCreateSpanLinkFactory(
-  splitOpenFn: SplitOpen,
-  isSplunkDS: boolean,
-  traceToLogsOptions?: TraceToLogsOptions
-) {
+function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?: TraceToLogsOptions) {
   // We should return if dataSourceUid is undefined otherwise getInstanceSettings would return testDataSource.
   if (!traceToLogsOptions?.datasourceUid) {
     return undefined;
   }
 
   const dataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
+  const isSplunkDS = dataSourceSettings?.type === 'grafana-splunk-datasource';
+
   if (!dataSourceSettings) {
     return undefined;
   }
@@ -87,8 +82,21 @@ function legacyCreateSpanLinkFactory(
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
-    const query = getQueryFromSpan(span, isSplunkDS, traceToLogsOptions);
-    if (!query && !isSplunkDS) {
+    switch (dataSourceSettings?.type) {
+      case 'loki':
+        getLinkForLoki(span, traceToLogsOptions);
+        break;
+      case 'grafana-splunk-datasource':
+        getLinkForSplunk(span, traceToLogsOptions);
+        break;
+      default:
+        return undefined;
+    }
+
+    const query = getLinkForSplunk(span, traceToLogsOptions);
+    const expr = getLinkForLoki(span, traceToLogsOptions);
+
+    if (!expr && dataSourceSettings?.type === 'loki') {
       return undefined;
     }
 
@@ -109,12 +117,16 @@ function legacyCreateSpanLinkFactory(
       link: dataLink,
       internalLink: dataLink.internal!,
       scopedVars: {},
-      range: getTimeRangeFromSpan(span, isSplunkDS, {
-        startMs: traceToLogsOptions.spanStartTimeShift
-          ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-          : 0,
-        endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
-      }),
+      range: getTimeRangeFromSpan(
+        span,
+        {
+          startMs: traceToLogsOptions.spanStartTimeShift
+            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+            : 0,
+          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
+        },
+        isSplunkDS
+      ),
       field: {} as Field,
       onClickFn: splitOpenFn,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
@@ -132,7 +144,7 @@ function legacyCreateSpanLinkFactory(
  * Default keys to use when there are no configured tags.
  */
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
-function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceToLogsOptions): string | undefined {
+function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions): string | undefined {
   const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
 
   // In order, try to use mapped tags -> tags -> default tags
@@ -152,30 +164,51 @@ function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceTo
     return acc;
   }, [] as string[]);
 
-  /** If no tags are found and it's a Loki query, return undefined to prevent
-   * an invalid Loki query. However tags arent required for splunk queries.
-   */
-  if (!tags.length && !isSplunkDS) {
+  // If no tags found, return undefined to prevent an invalid Loki query
+  if (!tags.length) {
     return undefined;
   }
 
+  let query = `{${tags.join(', ')}}`;
+  if (filterByTraceID && span.traceID) {
+    query += ` |="${span.traceID}"`;
+  }
+  if (filterBySpanID && span.spanID) {
+    query += ` |="${span.spanID}"`;
+  }
+  return query;
+}
+
+function getLinkForSplunk(span: TraceSpan, options: TraceToLogsOptions): string | undefined {
+  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
+
+  // In order, try to use mapped tags -> tags -> default tags
+  const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
+  // Build tag portion of query
+  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
+    if (mapTagNamesEnabled) {
+      const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
+      if (keyValue) {
+        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}="${tag.value}"`);
+      }
+    } else {
+      if ((keysToCheck as string[]).includes(tag.key)) {
+        acc.push(`${tag.key}="${tag.value}"`);
+      }
+    }
+    return acc;
+  }, [] as string[]);
+
   let query = '';
   if (tags.length > 0) {
-    if (!isSplunkDS) {
-      query += `{${tags.join(', ')}}`;
-    } else {
-      query += `${tags.join(' ')}`;
-    }
+    query += `${tags.join(' ')}`;
   }
 
-  if (filterByTraceID && span.traceID && !isSplunkDS) {
-    query += ` |="${span.traceID}"`;
-  } else if (filterByTraceID && span.traceID && isSplunkDS) {
-    query += ` TraceID=${span.traceID}`;
+  if (filterByTraceID && span.traceID) {
+    query += ` TraceeeeID=${span.traceID}`;
   }
-  if (filterBySpanID && span.spanID && !isSplunkDS) {
-    query += ` |="${span.spanID}"`;
-  } else if (filterBySpanID && span.spanID && isSplunkDS) {
+
+  if (filterBySpanID && span.spanID) {
     query += ` SpanID=${span.spanID}`;
   }
 
@@ -187,8 +220,8 @@ function getQueryFromSpan(span: TraceSpan, isSplunkDS: boolean, options: TraceTo
  */
 function getTimeRangeFromSpan(
   span: TraceSpan,
-  isSplunkDS: boolean,
-  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 }
+  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 },
+  isSplunkDS = false
 ): TimeRange {
   const adjustedStartTime = Math.floor(span.startTime / 1000 + timeShift.startMs);
   const from = dateTime(adjustedStartTime);

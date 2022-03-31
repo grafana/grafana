@@ -37,7 +37,6 @@ export interface DataSourcePickerProps {
   pluginId?: string;
   /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
   logs?: boolean;
-  name?: string; //If multiple DSPs on a page, we want to pass a name
   // If set to true and there is no value select will be empty, otherwise it will preselect default data source
   noDefault?: boolean;
   width?: number;
@@ -134,6 +133,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         alerting,
         tracing,
         metrics,
+        logs,
         dashboard,
         mixed,
         variables,
@@ -149,12 +149,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         meta: ds.meta,
       }));
 
-    const filteredLogOptions = options.filter(
-      (option) => option.meta.category === 'logging' || option.meta.logs === true
-    );
-
-    // We support both Loki and Splunk logs; filter here for those as you're returning
-    return !logs ? options : filteredLogOptions;
+    return options;
   }
 
   render() {
