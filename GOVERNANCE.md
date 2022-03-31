@@ -105,12 +105,6 @@ The current team members are:
 - Will Browne ([Grafana Labs](https://grafana.com/))
 - Zoltán Bedi ([Grafana Labs](https://grafana.com/))
 
-### Emeritus Members
-
-List of previous team members that have had a big impact on the company or the product and contributed during a long period of time.
-
-- Hugo Häggmark ([School of applied technology](https://salt.study))
-
 ### Maintainers
 
 Maintainers lead one or more project(s) or parts thereof and serve as a point of conflict resolution amongst the contributors to this project. Ideally, maintainers are also team members, but exceptions are possible for suitable maintainers that, for whatever reason, are not yet team members.
