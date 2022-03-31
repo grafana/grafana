@@ -101,7 +101,7 @@ Each log row has an extendable area with its labels and detected fields, for mor
 
 Explore automatically detects some incorrectly escaped sequences in log lines, such as newlines (`\n`, `\r`) or tabs (`\t`). When it detects such sequences, Explore provides an "Escape newlines" option.
 
-To automatically fix detected incorrectly escaped sequences:
+To automatically fix incorrectly escaped sequences that Explore has detected:
 
 1. Click "Escape newlines" to replace the sequences.
 2. Manually review the replacements to confirm their correctness.
