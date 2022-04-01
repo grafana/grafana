@@ -1,6 +1,6 @@
 +++
-title = "Service account HTTP API "
-description = "Grafana Service account HTTP API"
+title = "service account HTTP API "
+description = "Grafana service account HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "serviceaccount"]
 aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 +++
@@ -10,7 +10,7 @@ aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 > If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 > Refer to specific resources to understand what permissions are required.
 
-## Search Service accounts with Paging
+## Search service accounts with Paging
 
 `GET /api/serviceaccounts/search?perpage=10&page=1&query=myserviceaccount`
 
@@ -21,7 +21,6 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 | Action               | Scope                     |
 | -------------------- | ------------------------- |
 | serviceaccounts:read | global:serviceaccounts:\* |
-
 
 **Example Request**:
 
@@ -78,6 +77,54 @@ Content-Type: application/json
 }
 ```
 
+## Create service account
+
+`POST /api/serviceaccounts`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+
+{
+  "name": "grafana",
+  "role": "Admin",
+}
+```
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"id": 1,
+	"name": "test",
+	"login": "sa-test",
+	"orgId": 1,
+	"isDisabled": false,
+	"createdAt": "2022-03-21T14:35:33Z",
+	"updatedAt": "2022-03-21T14:35:33Z",
+	"avatarUrl": "/avatar/8ea890a677d6a223c591a1beea6ea9d2",
+	"role": "Viewer",
+	"teams": []
+}
+```
+
 ## Get single serviceaccount by Id
 
 `GET /api/serviceaccounts/:id`
@@ -121,7 +168,7 @@ Content-Type: application/json
 }
 ```
 
-## Update Service account
+## Update service account
 
 `PATCH /api/serviceaccounts/:id`
 
@@ -171,9 +218,9 @@ Content-Type: application/json
 
 ---
 
-## Service account Tokens
+## Service account tokens
 
-## Get Service account tokens
+## Get service account tokens
 
 `GET /api/serviceaccounts/:id/tokens`
 
@@ -216,7 +263,7 @@ Content-Type: application/json
 ]
 ```
 
-## Create Service account tokens
+## Create service account tokens
 
 `POST /api/serviceaccounts/:id/tokens`
 
@@ -258,7 +305,7 @@ Content-Type: application/json
 }
 ```
 
-## Delete Service account tokens
+## Delete service account tokens
 
 `DELETE /api/serviceaccounts/:id/tokens/:tokenId`
 
