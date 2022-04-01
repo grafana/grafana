@@ -23,11 +23,11 @@ const (
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
-		pm := New(&plugins.Cfg{}, newRegistry(), []PluginSource{
+		pm := New(&plugins.Cfg{}, newRegistry(), []plugins.PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader, &fakePluginInstaller{})
+		}, loader, &fakePluginInstaller{}, &fakePluginProcessManager{})
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -314,7 +314,7 @@ func TestPluginManager_registeredPlugins(t *testing.T) {
 				testPluginID: decommissionedPlugin,
 				"test-app":   {},
 			},
-		}, []PluginSource{}, &fakeLoader{}, &fakePluginInstaller{})
+		}, []plugins.PluginSource{}, &fakeLoader{}, &fakePluginInstaller{}, &fakePluginProcessManager{})
 
 		rps := pm.registeredPlugins(context.Background())
 		require.Equal(t, 2, len(rps))
@@ -443,15 +443,16 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 					require.True(t, ctx.plugin.Exited())
 				})
 
-				t.Run("Should be not be able to start unmanaged plugin", func(t *testing.T) {
-					pCtx := context.Background()
-					cCtx, cancel := context.WithCancel(pCtx)
-					defer cancel()
-					err := ctx.manager.start(cCtx, ctx.plugin)
-					require.Nil(t, err)
-					require.Equal(t, 0, ctx.pluginClient.startCount)
-					require.True(t, ctx.plugin.Exited())
-				})
+				// Move to process_test.go
+				//t.Run("Should be not be able to start unmanaged plugin", func(t *testing.T) {
+				//	pCtx := context.Background()
+				//	cCtx, cancel := context.WithCancel(pCtx)
+				//	defer cancel()
+				//	err := ctx.manager.start(cCtx, ctx.plugin)
+				//	require.Nil(t, err)
+				//	require.Equal(t, 0, ctx.pluginClient.startCount)
+				//	require.True(t, ctx.plugin.Exited())
+				//})
 			})
 		})
 	})
@@ -460,7 +461,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, newRegistry(), nil, &fakeLoader{}, &fakePluginInstaller{})
+	pm := New(&plugins.Cfg{}, newRegistry(), nil, &fakeLoader{}, &fakePluginInstaller{}, newFakePluginProcessManager())
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -519,7 +520,8 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.Cloud = "AzureCloud"
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
-	manager := New(cfg, registry.NewPluginRegistry(cfg), nil, &fakeLoader{}, &fakePluginInstaller{})
+	manager := New(cfg, registry.NewPluginRegistry(cfg), nil, &fakeLoader{}, &fakePluginInstaller{},
+		&fakePluginProcessManager{})
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}
@@ -533,6 +535,32 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 	for _, plugin := range pm.Plugins(context.Background()) {
 		assert.Nil(t, plugin.SignatureError)
 	}
+}
+
+type fakePluginProcessManager struct {
+	started map[string]int
+	stopped map[string]int
+}
+
+func newFakePluginProcessManager() *fakePluginProcessManager {
+	return &fakePluginProcessManager{
+		started: make(map[string]int),
+		stopped: make(map[string]int),
+	}
+}
+
+func (f *fakePluginProcessManager) Start(_ context.Context, p *plugins.Plugin) error {
+	f.started[p.ID] += 1
+	return nil
+}
+
+func (f *fakePluginProcessManager) Stop(_ context.Context, p *plugins.Plugin) error {
+	f.stopped[p.ID] += 1
+	return nil
+}
+
+func (f *fakePluginProcessManager) Shutdown(_ context.Context) {
+
 }
 
 type fakePluginInstaller struct {
@@ -692,16 +720,6 @@ func (l fakeLogger) Info(_ string, _ ...interface{}) {
 
 func (l fakeLogger) Debug(_ string, _ ...interface{}) {
 
-}
-
-type fakeSender struct {
-	resp *backend.CallResourceResponse
-}
-
-func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
-	s.resp = crr
-
-	return nil
 }
 
 type fakeInternalRegistry struct {

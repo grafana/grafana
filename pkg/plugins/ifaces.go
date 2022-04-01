@@ -34,6 +34,17 @@ type Client interface {
 	backend.CollectMetricsHandler
 }
 
+type PluginSource struct {
+	Class Class
+	Paths []string
+}
+
+type ProcessManager interface {
+	Start(ctx context.Context, p *Plugin) error
+	Stop(ctx context.Context, p *Plugin) error
+	Shutdown(ctx context.Context)
+}
+
 // BackendFactoryProvider provides a backend factory for a provided plugin.
 type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
@@ -62,7 +73,7 @@ type ListPluginDashboardFilesArgs struct {
 	PluginID string
 }
 
-// GetPluginDashboardFilesArgs list plugin dashboard files result model.
+// ListPluginDashboardFilesResult list plugin dashboard files result model.
 type ListPluginDashboardFilesResult struct {
 	FileReferences []string
 }

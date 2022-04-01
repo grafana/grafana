@@ -145,6 +145,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	installer.ProvideService,
 	wire.Bind(new(installer.Service), new(*installer.Installer)),
+	manager.ProvideProcessManager,
+	wire.Bind(new(plugins.ProcessManager), new(*manager.ProcessManager)),
 	cloudwatch.ProvideService,
 	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,
