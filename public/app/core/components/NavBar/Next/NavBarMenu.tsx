@@ -1,9 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2 } from '@grafana/ui';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
 import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -17,30 +14,18 @@ export interface Props {
 
 export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
   const styles = useStyles2(getStyles);
-  const ref = useRef(null);
-  const { dialogProps } = useDialog({}, ref);
-  const { overlayProps } = useOverlay(
-    {
-      isDismissable: true,
-      isOpen: true,
-      onClose,
-    },
-    ref
-  );
 
   return (
     <div data-testid="navbarmenu" className={styles.container}>
-      <FocusScope contain restoreFocus autoFocus>
-        <nav className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
-          <CustomScrollbar hideHorizontalTrack>
-            <ul className={styles.itemList}>
-              {navItems.map((link) => (
-                <NavItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
-              ))}
-            </ul>
-          </CustomScrollbar>
+      <CustomScrollbar hideHorizontalTrack>
+        <nav className={styles.content}>
+          <ul className={styles.itemList}>
+            {navItems.map((link) => (
+              <NavItem link={link} activeItem={activeItem} key={link.text} />
+            ))}
+          </ul>
         </nav>
-      </FocusScope>
+      </CustomScrollbar>
     </div>
   );
 }
@@ -49,16 +34,17 @@ NavBarMenu.displayName = 'NavBarMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
+    backgroundColor: theme.colors.background.primary,
     bottom: 0,
     display: 'flex',
     flexDirection: 'column',
     left: 0,
     whiteSpace: 'nowrap',
     paddingTop: theme.spacing(1),
-    marginRight: theme.spacing(1.5),
     right: 0,
     zIndex: theme.zIndex.sidemenu,
     top: 0,
+    overflow: 'hidden',
     boxSizing: 'content-box',
     [theme.breakpoints.up('md')]: {
       borderRight: `1px solid ${theme.colors.border.weak}`,
@@ -76,15 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function NavItem({
-  link,
-  activeItem,
-  onClose,
-}: {
-  link: NavModelItem;
-  activeItem?: NavModelItem;
-  onClose: () => void;
-}) {
+function NavItem({ link, activeItem }: { link: NavModelItem; activeItem?: NavModelItem }) {
   const styles = useStyles2(getNavItemStyles);
 
   if (linkHasChildren(link)) {
@@ -100,7 +78,6 @@ function NavItem({
                   isDivider={childLink.divider}
                   onClick={() => {
                     childLink.onClick?.();
-                    onClose();
                   }}
                   styleOverrides={styles.item}
                   target={childLink.target}
@@ -130,7 +107,6 @@ function NavItem({
           target={link.target}
           onClick={() => {
             link.onClick?.();
-            onClose();
           }}
           isActive={link === activeItem}
         >
