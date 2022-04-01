@@ -35,7 +35,7 @@ type AlertmanagerSrv struct {
 	store   AlertingStore
 	log     log.Logger
 	ac      accesscontrol.AccessControl
-	configs services.AlertmanagerConfigService
+	configs *services.AlertmanagerConfigService
 }
 
 type UnknownReceiverError struct {
