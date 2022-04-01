@@ -16,13 +16,8 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
   const plotInstance = useRef<uPlot>();
   // console.log('in exemplars plugin', exemplars);
   useLayoutEffect(() => {
-    console.log('useLayoutEffect', config);
     config.addHook('init', (u: uPlot) => {
-      console.log('init instance', u);
       plotInstance.current = u;
-    });
-    config.addHook('draw', (u: uPlot) => {
-      console.log('draw hook called', u);
     });
   }, [config]);
 
@@ -36,27 +31,35 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
         return undefined;
       }
 
+      // Don't render a merker if the count is zero
+      if (!count.values.get(dataFrameFieldIndex.fieldIndex)) {
+        return undefined;
+      }
+
       // Filter x, y scales out
       const yScale = Object.keys(plotInstance.current.scales).find((scale) => 'y' === scale) ?? FIXED_UNIT;
+      const xScale = Object.keys(plotInstance.current.scales).find((scale) => 'x' === scale) ?? FIXED_UNIT;
+      const yEnd = plotInstance.current.scales[yScale].max;
+      const yStart = plotInstance.current.scales[yScale].min;
+      const xEnd = plotInstance.current.scales[xScale].max;
+      const xStart = plotInstance.current.scales[xScale].min;
 
-      const yMax = plotInstance.current.scales[yScale].max;
-      //console.log("layout", exemplars);
-      if (exemplars.xBucketSize && exemplars.yBucketSize) {
-        let xStart = xMin.values.get(dataFrameFieldIndex.fieldIndex);
-        let yStart = yMin.values.get(dataFrameFieldIndex.fieldIndex);
+      if (
+        xStart != null &&
+        xEnd != null &&
+        yStart != null &&
+        yEnd != null &&
+        exemplars.xBucketSize &&
+        exemplars.yBucketSize
+      ) {
+        let x = xMin.values.get(dataFrameFieldIndex.fieldIndex) + exemplars.xBucketSize / 2;
+        let y = yMin.values.get(dataFrameFieldIndex.fieldIndex) + exemplars.yBucketSize / 2;
 
-        let x = xStart + exemplars.xBucketSize / 2;
-        let y = yStart + exemplars.yBucketSize / 2;
-        // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
-        if (yMin != null && y < yMin) {
-          y = yMin;
+        if (x < xStart || x > xEnd) {
+          return undefined;
         }
-        if (yMax != null && y > yMax) {
-          y = yMax;
-        }
 
-        // Don't render a merker if the count is zero
-        if (!count.values.get(dataFrameFieldIndex.fieldIndex)) {
+        if (y < yStart || y > yEnd) {
           return undefined;
         }
 
@@ -73,7 +76,6 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      //console.log("rnderEventMarker", dataFrame, dataFrameFieldIndex);
       return (
         <ExemplarMarker
           timeZone={timeZone}
@@ -87,7 +89,6 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
     [config, timeZone, getFieldLinks]
   );
 
-  // console.log('We have exemplars', exemplars, config);
   return (
     <EventsCanvas
       config={config}

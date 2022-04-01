@@ -41,11 +41,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
-  const exemplars = useMemo(
-    () =>
-      data.annotations &&
-      prepareHeatmapData(
+  const info: HeatmapData = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
+  const exemplars = useMemo((): HeatmapData | undefined => {
+    if (data.annotations) {
+      return prepareHeatmapData(
         data.annotations,
         {
           ...options,
@@ -57,10 +56,12 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           },
         },
         theme
-      ),
-    [data, info, options, theme]
-  );
+      );
+    }
+    return undefined;
+  }, [data, info, options, theme]);
 
+  console.log('data.series', data.series, 'data.annotations', data.annotations, 'info', info, 'exemplars', exemplars);
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
   const { onSplitOpen } = usePanelContext();
 
@@ -112,6 +113,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
+  console.log('builder', builder);
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });

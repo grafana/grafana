@@ -129,6 +129,15 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     timeZone,
   ]);
 
+  console.log(
+    'config',
+    config.getSeries().find((s) => {
+      // console.log("s", s);
+      return s.props.dataFrameFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex;
+    }),
+    'frameIndex',
+    dataFrameFieldIndex.frameIndex
+  );
   const seriesColor = config
     .getSeries()
     .find((s) => s.props.dataFrameFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex)?.props.lineColor;
@@ -170,7 +179,6 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       height: 8px;
       box-sizing: content-box;
       transform: translate3d(-50%, 0, 0);
-
       &:hover {
         > svg {
           transform: scale(1.3);
@@ -251,6 +259,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       opacity: 0.5;
       transition: transform 0.15s ease-out;
       fill: rgb(115, 191, 105);
+      stroke: rgb(0, 0, 0);
     `,
     activeMarble: css`
       transform: scale(1.3);
