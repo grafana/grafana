@@ -570,6 +570,7 @@ func createRequestContext(orgID int64, role models2.RoleType, params map[string]
 	ctx.Req = web.SetURLParams(ctx.Req, params)
 
 	return &models2.ReqContext{
+		IsSignedIn: true,
 		SignedInUser: &models2.SignedInUser{
 			OrgRole: role,
 			OrgId:   orgID,
