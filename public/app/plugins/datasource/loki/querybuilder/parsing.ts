@@ -305,8 +305,8 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const opDef = operatorToOpName[op];
 
-  const leftNumber = getChildWithSelector(left, 'MetricExpr.LiteralExpr.Number');
-  const rightNumber = getChildWithSelector(right, 'MetricExpr.LiteralExpr.Number');
+  const leftNumber = getLastChildWithSelector(left, 'MetricExpr.LiteralExpr.Number');
+  const rightNumber = getLastChildWithSelector(right, 'MetricExpr.LiteralExpr.Number');
 
   const rightBinary = right.getChild('BinOpExpr');
 
@@ -398,7 +398,7 @@ function handleQuotes(string: string) {
  * @param node
  * @param selector
  */
-function getChildWithSelector(node: SyntaxNode, selector: string) {
+function getLastChildWithSelector(node: SyntaxNode, selector: string) {
   let child: SyntaxNode | null = node;
   const children = selector.split('.');
   for (const s of children) {
