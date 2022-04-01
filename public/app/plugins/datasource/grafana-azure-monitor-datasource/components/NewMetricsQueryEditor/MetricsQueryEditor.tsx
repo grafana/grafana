@@ -1,6 +1,5 @@
 import React from 'react';
 import { InlineFieldRow } from '@grafana/ui';
-import ResourceField from './ResourceField';
 import AggregationField from '../MetricsQueryEditor/AggregationField';
 import MetricNameField from '../MetricsQueryEditor/MetricNameField';
 import MetricNamespaceField from '../MetricsQueryEditor/MetricNamespaceField';
@@ -8,6 +7,7 @@ import TimeGrainField from '../MetricsQueryEditor/TimeGrainField';
 import DimensionFields from '../MetricsQueryEditor/DimensionFields';
 import TopField from '../MetricsQueryEditor/TopField';
 import LegendFormatField from '../MetricsQueryEditor/LegendFormatField';
+import ResourceField from '../ResourceField';
 import type Datasource from '../../datasource';
 import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import { useMetricNames, useMetricNamespaces, useMetricMetadata } from './dataHooks';
