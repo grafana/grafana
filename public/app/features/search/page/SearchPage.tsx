@@ -1,6 +1,6 @@
 import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Input, useStyles2, Spinner } from '@grafana/ui';
+import { Input, useStyles2, Spinner, Button } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
@@ -22,15 +22,16 @@ const node: NavModelItem = {
 
 export default function SearchPage() {
   const styles = useStyles2(getStyles);
-  const { query, onQueryChange, onTagFilterChange } = useSearchQuery({});
+  const { query, onQueryChange, onTagFilterChange, onDatasourceChange } = useSearchQuery({});
 
   const results = useAsync(() => {
-    const { query: searchQuery, tag: tags } = query;
+    const { query: searchQuery, tag: tags, datasource } = query;
 
     const filters: QueryFilters = {
       tags,
+      datasource,
     };
-    return getGrafanaSearcher().search(searchQuery, tags.length ? filters : undefined);
+    return getGrafanaSearcher().search(searchQuery, tags.length || datasource ? filters : undefined);
   }, [query]);
 
   if (!config.featureToggles.panelTitleSearch) {
@@ -63,11 +64,27 @@ export default function SearchPage() {
         {results.value?.body && (
           <div>
             <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagChange} /> <br />
+            {query.datasource && (
+              <Button
+                icon="times"
+                variant="secondary"
+                onClick={() => onDatasourceChange(undefined)}
+                className={styles.clearClick}
+              >
+                Datasource: {query.datasource}
+              </Button>
+            )}
             <AutoSizer style={{ width: '100%', height: '2000px' }}>
               {({ width }) => {
                 return (
                   <>
-                    <Table data={results.value!.body} width={width} tags={query.tag} onTagFilterChange={onTagChange} />
+                    <Table
+                      data={results.value!.body}
+                      width={width}
+                      tags={query.tag}
+                      onTagFilterChange={onTagChange}
+                      onDatasourceChange={onDatasourceChange}
+                    />
                   </>
                 );
               }}
@@ -87,5 +104,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     height: 100%;
     font-size: 18px;
+  `,
+
+  clearClick: css`
+    &:hover {
+      text-decoration: line-through;
+    }
+    margin-bottom: 20px;
   `,
 });
