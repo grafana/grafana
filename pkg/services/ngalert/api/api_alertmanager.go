@@ -291,41 +291,19 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	// Get the last known working configuration
-	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
-	if err := srv.store.GetLatestAlertmanagerConfiguration(c.Req.Context(), &query); err != nil {
-		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
-		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return ErrResp(http.StatusInternalServerError, err, "failed to get latest configuration")
-		}
+	err := srv.configs.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
+	if err == nil {
+		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
+	}
+	var unknownReceiverError services.UnknownReceiverError
+	if errors.As(err, &unknownReceiverError) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+	if resp := tryMapAMLookupError(err); resp != nil {
+		return resp
 	}
 
-	if err := srv.loadSecureSettings(c.Req.Context(), c.OrgId, body.AlertmanagerConfig.Receivers); err != nil {
-		var unknownReceiverError UnknownReceiverError
-		if errors.As(err, &unknownReceiverError) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-
-	if err := body.ProcessConfig(srv.secrets.Encrypt); err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
-	}
-
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
-	if errResp != nil {
-		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
-		if !errors.Is(errResp.Err(), notifier.ErrAlertmanagerNotReady) {
-			return errResp
-		}
-	}
-
-	if err := am.SaveAndApplyConfig(c.Req.Context(), &body); err != nil {
-		srv.log.Error("unable to save and apply alertmanager configuration", "err", err)
-		return ErrResp(http.StatusBadRequest, err, "failed to save and apply Alertmanager configuration")
-	}
-
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
+	return ErrResp(http.StatusInternalServerError, err, err.Error())
 }
 
 func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.PostableAlerts) response.Response {
@@ -463,19 +441,26 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 }
 
 func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {
-	am, err := srv.mam.AlertmanagerFor(orgID)
+	am, err := srv.configs.AlertmanagerFor(orgID)
 	if err == nil {
 		return am, nil
 	}
 
-	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-		return nil, response.Error(http.StatusNotFound, err.Error(), err)
-	}
-
-	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-		return am, response.Error(http.StatusConflict, err.Error(), err)
+	if resp := tryMapAMLookupError(err); resp != nil {
+		return nil, resp
 	}
 
 	srv.log.Error("unable to obtain the org's Alertmanager", "err", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
+}
+
+// tryMapAMLookupError tries to convert known errors when looking up alertmanagers to the appropriate HTTP status code. It returns nil if the error cannot be converted.
+func tryMapAMLookupError(err error) *response.NormalResponse {
+	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+		return response.Error(http.StatusNotFound, err.Error(), err)
+	}
+	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+		return response.Error(http.StatusConflict, err.Error(), err)
+	}
+	return nil
 }
