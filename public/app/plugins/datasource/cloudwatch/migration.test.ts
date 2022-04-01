@@ -1,6 +1,11 @@
 import { DataQuery } from '@grafana/data';
 
-import { migrateCloudWatchQuery, migrateMultipleStatsAnnotationQuery, migrateMultipleStatsMetricsQuery } from './migrations';
+import {
+  migrateCloudWatchQuery,
+  migrateMultipleStatsAnnotationQuery,
+  migrateMultipleStatsMetricsQuery,
+  migrateQueryAliasFormat,
+} from './migrations';
 import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './types';
 
 describe('migration', () => {
@@ -168,5 +173,26 @@ describe('migration', () => {
     });
   });
 
-  describe('migrateQueryAliasFormat');
+  describe('migrateQueryAliasFormat', () => {
+    const baseQuery: CloudWatchMetricsQuery = {
+      statistic: 'Average',
+      refId: 'A',
+      id: '',
+      region: 'us-east-2',
+      namespace: 'AWS/EC2',
+      period: '300',
+      alias: '',
+      metricName: 'CPUUtilization',
+      dimensions: {},
+      matchExact: false,
+      expression: '',
+    };
+    describe('when using the old {{region}} pattern', () => {
+      it('should be migrated to the ${Region} pattern', () => {
+        const testQuery = { ...baseQuery, alias: '{{region}}' };
+        const result = migrateQueryAliasFormat(testQuery);
+        expect(result.alias).toBe('${Region}');
+      });
+    });
+  });
 });
