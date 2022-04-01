@@ -67,7 +67,7 @@ const ServiceAccountsListPage = ({
 
   useEffect(() => {
     fetchServiceAccounts();
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
   }, [fetchServiceAccounts, fetchACOptions]);

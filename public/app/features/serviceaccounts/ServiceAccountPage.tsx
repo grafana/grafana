@@ -77,7 +77,7 @@ const ServiceAccountPageUnconnected = ({
     const serviceAccountId = parseInt(match.params.id, 10);
     loadServiceAccount(serviceAccountId);
     loadServiceAccountTokens(serviceAccountId);
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
   }, [match, loadServiceAccount, loadServiceAccountTokens, fetchACOptions]);
