@@ -216,7 +216,7 @@ function makeDataSourceColumn(
           </div>
         );
       }
-      return null;
+      return <br />;
     },
     width,
   };
@@ -302,7 +302,7 @@ function makeTagsColumn(
       if (tags) {
         return <TagList className={tagListClass} tags={tags} onClick={updateTagFilter} />;
       }
-      return null;
+      return <br />;
     },
     width,
   };
