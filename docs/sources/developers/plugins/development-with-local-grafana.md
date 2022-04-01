@@ -10,23 +10,15 @@ This guide allows you to setup a development environment where you run Grafana a
 
 If you have git, Go and the required version of NodeJS in your system, you can clone and run Grafana locally:
 
-1. Clone [Grafana](https://github.com/grafana/grafana)
+1. Download and set up Grafana. You can find instructions on how to do it in the [developer-guide](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md).
 
-   a. [optional] Checkout to the specific version you want to target (e.g. `git checkout v8.3.4`)
-
-2. Install its dependencies
-
-   ```bash
-   yarn install
-   ```
-
-3. Grafana will look for plugins, by default, on its `data/plugins` directory. You can create a symbolic link to your plugin repository to detect new changes:
+2. Grafana will look for plugins, by default, on its `data/plugins` directory. You can create a symbolic link to your plugin repository to detect new changes:
 
    ```bash
    ln -s <plugin-path>/dist data/plugins/<plugin-name>
    ```
 
-4. (Optional) If the step above doesn't work for you (e.g. you are running on Windows), you can also modify the default path in the Grafana configuration (that can be found at `conf/custom.ini`) and point to the directory with your plugin:
+3. (Optional) If the step above doesn't work for you (e.g. you are running on Windows), you can also modify the default path in the Grafana configuration (that can be found at `conf/custom.ini`) and point to the directory with your plugin:
 
    ```ini
    [paths]
@@ -37,6 +29,8 @@ If you have git, Go and the required version of NodeJS in your system, you can c
 
 Another possibility is to run Grafana with docker-compose so it runs in a container. For doing so, create the docker-compose file in your plugin directory:
 
+**NOTE**: Some plugins already include a docker-compose file so you can skip this step.
+
 ```yaml
 version: '3.7'
 
@@ -45,16 +39,16 @@ services:
     # Change latest with your target version, if needed
     image: grafana/grafana:latest
     ports:
-      - '3000:3000'
+      - 3000:3000/tcp
     volumes:
       # Use your plugin folder (e.g. redshift-datasource)
-      - ./:/var/lib/grafana/plugins/<plugin-folder>
+      - ./dist:/var/lib/grafana/plugins/<plugin-folder>
+      - ./provisioning:/etc/grafana/provisioning
     environment:
       - TERM=linux
       - GF_LOG_LEVEL=debug
       - GF_DATAPROXY_LOGGING=true
-      # Use your plugin name (e.g. grafana-redshift-datasource)
-      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=<plugin-name>
+      - GF_DEFAULT_APP_MODE=development
 ```
 
 ## Run your plugin
