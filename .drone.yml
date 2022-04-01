@@ -1221,6 +1221,8 @@ trigger:
     - exclude
     include:
     - .drone.yml
+  repo:
+  - grafana/grafana
 type: docker
 ---
 depends_on:
@@ -4399,6 +4401,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 267835dd7621c694dd84c66a9cb2891612ab30d7714e4a758871969637228ca2
+hmac: e6a1070151f63d0eaef8ffcd41a78ead1dba2dad6cc41e0971faa429f8a83a4c
 
 ...
