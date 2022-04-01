@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -80,9 +81,15 @@ func formatValues(alertState *state.State) string {
 		fv = vs[0]
 	default:
 		vs := make([]string, 0, len(values))
+
 		for k, v := range values {
 			vs = append(vs, fmt.Sprintf("%s: %s", k, strconv.FormatFloat(v, 'e', -1, 64)))
 		}
+
+		// Ensure we have a consistent ordering after formatting e.g. A0, A1, A3, etc.
+		sort.Slice(vs, func(i, j int) bool {
+			return vs[i] < vs[j]
+		})
 
 		fv = strings.Join(vs, ", ")
 	}

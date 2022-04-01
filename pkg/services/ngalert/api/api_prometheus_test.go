@@ -58,7 +58,7 @@ func Test_FormatValues(t *testing.T) {
 					{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2}},
 				},
 			},
-			expected: "B1: 1.4e+00, B0: 1.1e+00",
+			expected: "B0: 1.1e+00, B1: 1.4e+00",
 		},
 	}
 
