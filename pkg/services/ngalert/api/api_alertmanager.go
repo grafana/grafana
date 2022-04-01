@@ -30,9 +30,7 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	mam     *notifier.MultiOrgAlertmanager
 	secrets secrets.Service
-	store   AlertingStore
 	log     log.Logger
 	ac      accesscontrol.AccessControl
 	configs *services.AlertmanagerConfigService
@@ -311,7 +309,7 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.loadSecureSettings(c.Req.Context(), c.OrgId, body.Receivers); err != nil {
+	if err := srv.configs.LoadSecureSettings(c.Req.Context(), c.OrgId, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")

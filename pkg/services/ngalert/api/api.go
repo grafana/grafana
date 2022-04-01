@@ -92,7 +92,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger, ac: api.AccessControl, configs: services.NewAlertmanagerConfigService(api.MultiOrgAlertmanager, api.SecretsService, api.AlertingStore, logger)},
+		&AlertmanagerSrv{secrets: api.SecretsService, log: logger, ac: api.AccessControl, configs: services.NewAlertmanagerConfigService(api.MultiOrgAlertmanager, api.SecretsService, api.AlertingStore, logger)},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(

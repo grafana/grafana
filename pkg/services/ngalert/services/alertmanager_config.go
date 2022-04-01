@@ -127,7 +127,7 @@ func (s *AlertmanagerConfigService) ApplyAlertmanagerConfiguration(ctx context.C
 		}
 	}
 
-	if err := s.loadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	if err := s.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return err
 	}
 
@@ -155,26 +155,7 @@ func (s *AlertmanagerConfigService) AlertmanagerFor(orgID int64) (Alertmanager, 
 	return s.mam.AlertmanagerFor(orgID)
 }
 
-func (s *AlertmanagerConfigService) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
-	storedValue, ok := r.SecureSettings[key]
-	if !ok {
-		return "", nil
-	}
-
-	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
-	if err != nil {
-		return "", err
-	}
-
-	decryptedValue, err := s.secrets.Decrypt(context.Background(), decodeValue)
-	if err != nil {
-		return "", err
-	}
-
-	return string(decryptedValue), nil
-}
-
-func (s *AlertmanagerConfigService) loadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
+func (s *AlertmanagerConfigService) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
 	if err := s.store.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
@@ -226,4 +207,23 @@ func (s *AlertmanagerConfigService) loadSecureSettings(ctx context.Context, orgI
 		}
 	}
 	return nil
+}
+
+func (s *AlertmanagerConfigService) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
+	storedValue, ok := r.SecureSettings[key]
+	if !ok {
+		return "", nil
+	}
+
+	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
+	if err != nil {
+		return "", err
+	}
+
+	decryptedValue, err := s.secrets.Decrypt(context.Background(), decodeValue)
+	if err != nil {
+		return "", err
+	}
+
+	return string(decryptedValue), nil
 }
