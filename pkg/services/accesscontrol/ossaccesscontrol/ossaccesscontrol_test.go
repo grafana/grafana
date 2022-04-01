@@ -91,7 +91,9 @@ func TestEvaluatingPermissions(t *testing.T) {
 			ac := setupTestEnv(t)
 
 			// Use OSS roles for this test to pass
-			accesscontrol.DeclareFixedRoles(ac)
+			err := accesscontrol.DeclareFixedRoles(ac)
+			require.NoError(t, err)
+
 			ac.RegisterFixedRoles()
 
 			user := &models.SignedInUser{

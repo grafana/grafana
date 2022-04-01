@@ -16,7 +16,8 @@ import (
 )
 
 func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service,
-	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) *OSSAccessControlService {
+	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
+	var errDeclareRoles error
 	s := ProvideOSSAccessControl(features, provider)
 	s.registerUsageMetrics(usageStats)
 	if !s.IsDisabled() {
@@ -26,10 +27,10 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 		}
 		api.RegisterAPIEndpoints()
 
-		accesscontrol.DeclareFixedRoles(s)
+		errDeclareRoles = accesscontrol.DeclareFixedRoles(s)
 	}
 
-	return s
+	return s, errDeclareRoles
 }
 
 func macroRoles() map[string]*accesscontrol.RoleDTO {
