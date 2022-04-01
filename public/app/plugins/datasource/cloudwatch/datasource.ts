@@ -232,6 +232,13 @@ export class CloudWatchDatasource
     );
   };
 
+  filterQuery(query: CloudWatchQuery): boolean {
+    if (query.queryMode === 'Logs') {
+      return !!query.logGroupNames?.length;
+    }
+    return this.filterMetricQuery(query);
+  }
+
   filterMetricQuery({
     region,
     metricQueryType,

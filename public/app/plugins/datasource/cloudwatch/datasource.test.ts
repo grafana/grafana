@@ -11,7 +11,13 @@ import {
   setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
 import { CloudWatchDatasource } from './datasource';
-import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './types';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from './types';
 
 describe('datasource', () => {
   describe('query', () => {
@@ -140,6 +146,62 @@ describe('datasource', () => {
           'CloudWatch templating error',
           'Multi template variables are not supported for region'
         );
+      });
+    });
+  });
+
+  describe('filterQuery', () => {
+    const datasource = setupMockedDataSource().datasource;
+    datasource.filterMetricQuery = jest.fn();
+    beforeEach(() => {
+      (datasource.filterMetricQuery as jest.Mock).mockClear();
+    });
+    describe('filterMetricQuery', () => {
+      const baseQuery: CloudWatchMetricsQuery = {
+        id: '',
+        region: 'us-east-2',
+        namespace: 'AWS/EC2',
+        period: '',
+        alias: '',
+        metricName: 'CPUUtilization',
+        dimensions: {},
+        matchExact: true,
+        statistic: '',
+        expression: '',
+        refId: '',
+      };
+      it('should be called for undefined queryType', () => {
+        const query: CloudWatchMetricsQuery = {
+          ...baseQuery,
+          queryMode: undefined,
+        };
+        datasource.filterQuery(query);
+        expect(datasource.filterMetricQuery).toBeCalledWith(query);
+      });
+      it('should be called for metrics queryType', () => {
+        const query: CloudWatchMetricsQuery = {
+          ...baseQuery,
+          queryMode: 'Metrics',
+        };
+        datasource.filterQuery(query);
+        expect(datasource.filterMetricQuery).toBeCalledWith(query);
+      });
+    });
+    describe('log queries', () => {
+      const baseQuery: CloudWatchLogsQuery = {
+        queryMode: 'Logs',
+        id: '',
+        region: '',
+        refId: '',
+        logGroupNames: ['foo', 'bar'],
+      };
+      it('should return false if empty logGroupNames', () => {
+        expect(datasource.filterQuery({ ...baseQuery, logGroupNames: undefined })).toBeFalsy();
+        expect(datasource.filterMetricQuery).not.toBeCalled();
+      });
+      it('should return true if has logGroupNames', () => {
+        expect(datasource.filterQuery(baseQuery)).toBeTruthy();
+        expect(datasource.filterMetricQuery).not.toBeCalled();
       });
     });
   });
