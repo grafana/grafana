@@ -214,6 +214,10 @@ describe('migration', () => {
           'some {{combination}} of {{label}} and {{metric}}',
           "some $PROP{'Dim.combination'} of ${LABEL} and ${PROP('MetricName')}",
         ], // can try to make a more realistic example here
+        [
+          'some {{combination  }}{{ label}} and {{metric}}',
+          "some $PROP{'Dim.combination'}${LABEL} and ${PROP('MetricName')}",
+        ],
       ];
       test.each(cases)('given old alias %p, it should return %p', (oldAlias, expectedResult) => {
         const testQuery = { ...baseQuery, alias: `${oldAlias}` };
