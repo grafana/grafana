@@ -63,14 +63,21 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
   }
 }
 
+const aliasPatterns: Record<string, string> = {
+  region: `PROP('Region')`,
+};
+
 export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
   if (!query.alias) {
     return query;
   }
 
-  const regex = /{{\s*(.+?)\s*}}\/g/;
-  query.alias?.replace(regex, (match) => {
-    console.log(match);
+  const regex = /{{\s*(.+?)\s*}}/g;
+  query.alias = query.alias?.replace(regex, (match, value) => {
+    if (aliasPatterns.hasOwnProperty(value)) {
+      return `\${${aliasPatterns[value]}}`;
+    }
+
     return match;
   });
 

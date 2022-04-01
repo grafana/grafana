@@ -189,7 +189,7 @@ describe('migration', () => {
     };
     describe('when using the old {{region}} pattern', () => {
       it('should be migrated to the ${Region} pattern', () => {
-        const testQuery = { ...baseQuery, alias: '{{ period   }}something{{ Erik}}' };
+        const testQuery = { ...baseQuery, alias: '{{region}}' };
         const result = migrateQueryAliasFormat(testQuery);
         expect(result.alias).toBe("${PROP('Region')}");
       });
