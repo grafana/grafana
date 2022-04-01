@@ -1,18 +1,11 @@
 import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { QueryBuilderOperation } from './types';
 
 // This is used for error type for some reason
 export const ErrorName = '⚠';
 
-export function getLeftMostChild(cur: SyntaxNode): SyntaxNode | null {
-  let child = cur;
-  while (true) {
-    if (child.firstChild) {
-      child = child.firstChild;
-    } else {
-      break;
-    }
-  }
-  return child;
+export function getLeftMostChild(cur: SyntaxNode): SyntaxNode {
+  return cur.firstChild ? getLeftMostChild(cur.firstChild) : cur;
 }
 
 export function makeError(expr: string, node: SyntaxNode) {
@@ -68,7 +61,7 @@ const varTypeFunc = [
 ];
 
 /**
- * Get beck the text with variables in their original format.
+ * Get back the text with variables in their original format.
  * @param expr
  */
 function returnVariables(expr: string) {
@@ -102,7 +95,7 @@ export function makeBinOp(
   expr: string,
   numberNode: SyntaxNode,
   hasBool: boolean
-) {
+): QueryBuilderOperation {
   const params: any[] = [parseFloat(getString(expr, numberNode))];
   if (opDef.comparison) {
     params.unshift(hasBool);
@@ -148,8 +141,13 @@ function toJson(expr: string, cur: SyntaxNode) {
   return treeJson;
 }
 
+type JsonNode = {
+  name: string;
+  children: JsonNode[];
+};
+
 function jsonToText(
-  node: Record<string, any>,
+  node: JsonNode,
   context: { lastChild: boolean; indent: string } = {
     lastChild: true,
     indent: '',
