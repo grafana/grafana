@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func (c *tokenCacheFake) GetAccessToken(_ context.Context, credential TokenRetri
 func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &setting.Cfg{}
+	settings := &azsettings.AzureSettings{}
 
 	scopes := []string{
 		"https://management.azure.com/.default",
@@ -33,12 +33,12 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 	t.Cleanup(func() { azureTokenCache = original })
 
 	t.Run("when managed identities enabled", func(t *testing.T) {
-		cfg.Azure.ManagedIdentityEnabled = true
+		settings.ManagedIdentityEnabled = true
 
 		t.Run("should resolve managed identity retriever if auth type is managed identity", func(t *testing.T) {
 			credentials := &azcredentials.AzureManagedIdentityCredentials{}
 
-			provider, err := NewAzureAccessTokenProvider(cfg, credentials)
+			provider, err := NewAzureAccessTokenProvider(settings, credentials)
 			require.NoError(t, err)
 
 			getAccessTokenFunc = func(credential TokenRetriever, scopes []string) {
@@ -52,7 +52,7 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 		t.Run("should resolve client secret retriever if auth type is client secret", func(t *testing.T) {
 			credentials := &azcredentials.AzureClientSecretCredentials{}
 
-			provider, err := NewAzureAccessTokenProvider(cfg, credentials)
+			provider, err := NewAzureAccessTokenProvider(settings, credentials)
 			require.NoError(t, err)
 
 			getAccessTokenFunc = func(credential TokenRetriever, scopes []string) {
@@ -65,12 +65,12 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 	})
 
 	t.Run("when managed identities disabled", func(t *testing.T) {
-		cfg.Azure.ManagedIdentityEnabled = false
+		settings.ManagedIdentityEnabled = false
 
 		t.Run("should return error if auth type is managed identity", func(t *testing.T) {
 			credentials := &azcredentials.AzureManagedIdentityCredentials{}
 
-			_, err := NewAzureAccessTokenProvider(cfg, credentials)
+			_, err := NewAzureAccessTokenProvider(settings, credentials)
 			assert.Error(t, err, "managed identity authentication is not enabled in Grafana config")
 		})
 	})
@@ -78,7 +78,7 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 
 func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 	credentials := &azcredentials.AzureClientSecretCredentials{
-		AzureCloud:   setting.AzurePublic,
+		AzureCloud:   azsettings.AzurePublic,
 		Authority:    "",
 		TenantId:     "7dcf1d1a-4ec0-41f2-ac29-c1538a698bc4",
 		ClientId:     "1af7c188-e5b6-4f96-81b8-911761bdd459",
@@ -101,7 +101,7 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 		originalCloud := credentials.AzureCloud
 		defer func() { credentials.AzureCloud = originalCloud }()
 
-		credentials.AzureCloud = setting.AzureChina
+		credentials.AzureCloud = azsettings.AzureChina
 
 		result := getClientSecretTokenRetriever(credentials)
 		assert.IsType(t, &clientSecretTokenRetriever{}, result)
@@ -115,7 +115,7 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 		originalCloud := credentials.AzureCloud
 		defer func() { credentials.AzureCloud = originalCloud }()
 
-		credentials.AzureCloud = setting.AzureChina
+		credentials.AzureCloud = azsettings.AzureChina
 		credentials.Authority = "https://another.com/"
 
 		result := getClientSecretTokenRetriever(credentials)

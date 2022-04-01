@@ -8,7 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
-import { NavBarItemMenu } from '../NavBarItemMenu';
+import { NavBarItemMenu } from './NavBarItemMenu';
 import { getNavModelItemKey } from '../utils';
 import { useLingui } from '@lingui/react';
 import menuItemTranslations from '../navBarItem-translations';
@@ -82,7 +82,12 @@ const NavBarItem = ({
   } else {
     return (
       <li className={cx(styles.container, className)}>
-        <NavBarItemMenuTrigger item={section} isActive={isActive} label={linkText}>
+        <NavBarItemMenuTrigger
+          item={section}
+          isActive={isActive}
+          label={linkText}
+          reverseMenuDirection={reverseMenuDirection}
+        >
           <NavBarItemMenu
             items={items}
             reverseMenuDirection={reverseMenuDirection}

@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -137,12 +137,12 @@ func TestAddConfigData(t *testing.T) {
 }
 
 func TestGetAzurePortalUrl(t *testing.T) {
-	clouds := []string{setting.AzurePublic, setting.AzureChina, setting.AzureUSGovernment, setting.AzureGermany}
+	clouds := []string{azsettings.AzurePublic, azsettings.AzureChina, azsettings.AzureUSGovernment, azsettings.AzureGermany}
 	expectedAzurePortalUrl := map[string]interface{}{
-		setting.AzurePublic:       "https://portal.azure.com",
-		setting.AzureChina:        "https://portal.azure.cn",
-		setting.AzureUSGovernment: "https://portal.azure.us",
-		setting.AzureGermany:      "https://portal.microsoftazure.de",
+		azsettings.AzurePublic:       "https://portal.azure.com",
+		azsettings.AzureChina:        "https://portal.azure.cn",
+		azsettings.AzureUSGovernment: "https://portal.azure.us",
+		azsettings.AzureGermany:      "https://portal.microsoftazure.de",
 	}
 
 	for _, cloud := range clouds {

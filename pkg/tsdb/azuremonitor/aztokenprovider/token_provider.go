@@ -8,8 +8,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 )
 
 var (
@@ -24,9 +24,9 @@ type tokenProviderImpl struct {
 	tokenRetriever TokenRetriever
 }
 
-func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials) (AzureTokenProvider, error) {
-	if cfg == nil {
-		err := fmt.Errorf("parameter 'cfg' cannot be nil")
+func NewAzureAccessTokenProvider(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) (AzureTokenProvider, error) {
+	if settings == nil {
+		err := fmt.Errorf("parameter 'settings' cannot be nil")
 		return nil, err
 	}
 	if credentials == nil {
@@ -38,11 +38,11 @@ func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.Azu
 
 	switch c := credentials.(type) {
 	case *azcredentials.AzureManagedIdentityCredentials:
-		if !cfg.Azure.ManagedIdentityEnabled {
+		if !settings.ManagedIdentityEnabled {
 			err := fmt.Errorf("managed identity authentication is not enabled in Grafana config")
 			return nil, err
 		} else {
-			tokenRetriever = getManagedIdentityTokenRetriever(cfg, c)
+			tokenRetriever = getManagedIdentityTokenRetriever(settings, c)
 		}
 	case *azcredentials.AzureClientSecretCredentials:
 		tokenRetriever = getClientSecretTokenRetriever(c)
@@ -75,12 +75,12 @@ func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context, scopes []
 	return accessToken, nil
 }
 
-func getManagedIdentityTokenRetriever(cfg *setting.Cfg, credentials *azcredentials.AzureManagedIdentityCredentials) TokenRetriever {
+func getManagedIdentityTokenRetriever(settings *azsettings.AzureSettings, credentials *azcredentials.AzureManagedIdentityCredentials) TokenRetriever {
 	var clientId string
 	if credentials.ClientId != "" {
 		clientId = credentials.ClientId
 	} else {
-		clientId = cfg.Azure.ManagedIdentityClientId
+		clientId = settings.ManagedIdentityClientId
 	}
 	return &managedIdentityTokenRetriever{
 		clientId: clientId,
@@ -105,13 +105,13 @@ func getClientSecretTokenRetriever(credentials *azcredentials.AzureClientSecretC
 func resolveAuthorityForCloud(cloudName string) string {
 	// Known Azure clouds
 	switch cloudName {
-	case setting.AzurePublic:
+	case azsettings.AzurePublic:
 		return azidentity.AzurePublicCloud
-	case setting.AzureChina:
+	case azsettings.AzureChina:
 		return azidentity.AzureChina
-	case setting.AzureUSGovernment:
+	case azsettings.AzureUSGovernment:
 		return azidentity.AzureGovernment
-	case setting.AzureGermany:
+	case azsettings.AzureGermany:
 		return azidentity.AzureGermany
 	default:
 		return ""
