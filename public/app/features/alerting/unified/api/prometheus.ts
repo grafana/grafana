@@ -17,28 +17,36 @@ export interface PrometheusDataSourceConfig {
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
   const { dataSourceName } = dataSourceConfig;
 
-  const searchParams = new URLSearchParams();
-
   return {
     rules: (filter?: FetchPromRulesFilter) => {
-      if (filter?.dashboardUID) {
-        searchParams.set('dashboard_uid', filter.dashboardUID);
-        if (filter?.panelId) {
-          searchParams.set('panel_id', String(filter.panelId));
-        }
-      }
+      const searchParams = new URLSearchParams();
+      const params = prepareRulesFilterQueryParams(searchParams, filter);
 
       return {
         url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
-        params: Object.fromEntries(searchParams),
+        params: params,
       };
     },
   };
 }
 
+export function prepareRulesFilterQueryParams(
+  params: URLSearchParams,
+  filter?: FetchPromRulesFilter
+): Record<string, string> {
+  if (filter?.dashboardUID) {
+    params.set('dashboard_uid', filter.dashboardUID);
+    if (filter?.panelId) {
+      params.set('panel_id', String(filter.panelId));
+    }
+  }
+
+  return Object.fromEntries(params);
+}
+
 export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    throw new Error('Filtering by dashboard UID is only supported by Grafana.');
+    throw new Error('Filtering by dashboard UID is only supported for Grafana Managed rules.');
   }
 
   const { url, params } = prometheusUrlBuilder({ dataSourceName }).rules(filter);

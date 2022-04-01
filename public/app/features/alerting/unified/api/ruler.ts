@@ -5,6 +5,7 @@ import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } fro
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { prepareRulesFilterQueryParams } from './prometheus';
 
 interface ErrorResponseMessage {
   message?: string;
@@ -26,16 +27,11 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
 
   return {
     rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => {
-      if (filter?.dashboardUID) {
-        rulerSearchParams.set('dashboard_uid', filter.dashboardUID);
-        if (filter.panelId) {
-          rulerSearchParams.set('panel_id', String(filter.panelId));
-        }
-      }
+      const params = prepareRulesFilterQueryParams(rulerSearchParams, filter);
 
       return {
         path: `${rulerPath}`,
-        params: Object.fromEntries(rulerSearchParams),
+        params: params,
       };
     },
     namespace: (namespace: string): RulerRequestUrl => ({
