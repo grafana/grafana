@@ -64,5 +64,13 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
 }
 
 export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
+  if (!query.alias) {
+    return query;
+  }
+
+  const formattedQuery = query.alias;
+  formattedQuery = query.alias.replace('{{ period }}', '${Period}');
+  formattedQuery = query.alias.replace('{{period}}', '${Period}');
+
   return query;
 }
