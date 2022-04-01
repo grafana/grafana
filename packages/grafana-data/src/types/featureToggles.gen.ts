@@ -34,6 +34,7 @@ export interface FeatureToggles {
   tempoServiceGraph?: boolean;
   lokiBackendMode?: boolean;
   accesscontrol?: boolean;
+  ['accesscontrol-builtins']?: boolean;
   prometheus_azure_auth?: boolean;
   influxdbBackendMigration?: boolean;
   newNavigation?: boolean;
@@ -48,6 +49,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   saveDashboardDrawer?: boolean;
   storage?: boolean;
+  alertProvisioning?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
 }

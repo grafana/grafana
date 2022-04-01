@@ -71,6 +71,7 @@ interface LokiQueryFieldState {
 
 export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: Plugin[];
+  _isMounted = false;
 
   constructor(props: LokiQueryFieldProps) {
     super(props);
@@ -90,8 +91,15 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   }
 
   async componentDidMount() {
+    this._isMounted = true;
     await this.props.datasource.languageProvider.start();
-    this.setState({ labelsLoaded: true });
+    if (this._isMounted) {
+      this.setState({ labelsLoaded: true });
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   componentDidUpdate(prevProps: LokiQueryFieldProps) {

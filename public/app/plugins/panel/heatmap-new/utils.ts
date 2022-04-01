@@ -126,6 +126,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.addAxis({
     scaleKey: 'x',
     placement: AxisPlacement.Bottom,
+    isTime: true,
     theme: theme,
   });
 

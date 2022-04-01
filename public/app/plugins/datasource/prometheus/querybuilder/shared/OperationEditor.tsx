@@ -201,6 +201,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     infoIcon: css({
       marginLeft: theme.spacing(0.5),
+      color: theme.colors.text.secondary,
+      ':hover': {
+        color: theme.colors.text.primary,
+      },
     }),
     body: css({
       margin: theme.spacing(1, 1, 0.5, 1),
