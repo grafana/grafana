@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { RichHistorySettings, RichHistorySettingsProps } from './RichHistorySettings';
-import { Select, Switch } from '@grafana/ui';
 
 const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {

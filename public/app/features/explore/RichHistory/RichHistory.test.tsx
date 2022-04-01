@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { GrafanaTheme } from '@grafana/data';
 import { ExploreId } from '../../../types/explore';
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
-import { Tab } from '@grafana/ui';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
