@@ -123,6 +123,10 @@ func (a *AvatarCacheServer) Handler(ctx *models.ReqContext) {
 }
 
 func (a *AvatarCacheServer) GetAvatarForHash(hash string) *Avatar {
+	if setting.DisableGravatar {
+		alog.Warn("'GetGravatarForHash' called despite gravatars being disabled; returning default profile image")
+		return a.notFound
+	}
 	return a.getAvatarForHash(hash, gravatarSource)
 }
 
