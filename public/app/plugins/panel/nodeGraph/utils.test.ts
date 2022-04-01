@@ -1,5 +1,5 @@
-import { ArrayVector, createTheme } from '@grafana/data';
-import { makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
+import { ArrayVector, createTheme, DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import { getNodeGraphDataFrames, makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
 
 describe('processNodes', () => {
   const theme = createTheme();
@@ -203,5 +203,49 @@ describe('processNodes', () => {
         name: 'arc__errors',
       },
     ]);
+  });
+
+  it('detects dataframes correctly', () => {
+    const validFrames = [
+      new MutableDataFrame({
+        refId: 'hasPreferredVisualisationType',
+        fields: [],
+        meta: {
+          preferredVisualisationType: 'nodeGraph',
+        },
+      }),
+      new MutableDataFrame({
+        refId: 'hasName',
+        fields: [],
+        name: 'nodes',
+      }),
+      new MutableDataFrame({
+        refId: 'nodes', // hasRefId
+        fields: [],
+      }),
+      new MutableDataFrame({
+        refId: 'hasValidNodesShape',
+        fields: [{ name: 'id', type: FieldType.string }],
+      }),
+      new MutableDataFrame({
+        refId: 'hasValidEdgesShape',
+        fields: [
+          { name: 'id', type: FieldType.string },
+          { name: 'source', type: FieldType.string },
+          { name: 'target', type: FieldType.string },
+        ],
+      }),
+    ];
+    const invalidFrames = [
+      new MutableDataFrame({
+        refId: 'invalidData',
+        fields: [],
+      }),
+    ];
+    const frames = [...validFrames, ...invalidFrames];
+
+    const nodeGraphFrames = getNodeGraphDataFrames(frames as DataFrame[]);
+    expect(nodeGraphFrames.length).toBe(5);
+    expect(nodeGraphFrames).toEqual(validFrames);
   });
 });

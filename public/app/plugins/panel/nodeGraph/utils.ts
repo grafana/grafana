@@ -323,11 +323,18 @@ export function getNodeGraphDataFrames(frames: DataFrame[]) {
   //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
   //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
   //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
+
   return frames.filter((frame) => {
     if (frame.meta?.preferredVisualisationType === 'nodeGraph') {
       return true;
     }
-    if (frame.name === 'nodes' || frame.name === 'edges') {
+
+    if (frame.name === 'nodes' || frame.name === 'edges' || frame.refId === 'nodes' || frame.refId === 'edges') {
+      return true;
+    }
+
+    const fieldsCache = new FieldCache(frame);
+    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id)) {
       return true;
     }
 
