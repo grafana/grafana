@@ -35,7 +35,8 @@ func (a *api) getEvaluators(actionRead, actionWrite, scope string) (read, write 
 		read = accesscontrol.EvalPermission(actionRead, scope)
 		write = accesscontrol.EvalPermission(actionWrite, scope)
 	} else {
-		// Add all context parameters prepared by solveInheritedScopes to the evaluators protecting the endpoint.
+		// Add inherited scopes to the evaluators protecting the endpoint.
+		// Scopes in the request context parameters are to be added by solveInheritedScopes.
 		// If a user got actionRead on any of the inherited scopes, they will be granted access to the endpoint.
 		// Ex: a user inherits dashboards:read from the containing folder (folders:uid:BCeknZL7k)
 		inheritedRead := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionRead, scope)}
