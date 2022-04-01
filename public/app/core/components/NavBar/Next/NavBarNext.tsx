@@ -60,6 +60,7 @@ export const NavBarNext = React.memo(() => {
   );
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useLocalStorage<boolean>('grafana.navigation.menuExpanded', false);
+  const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
   const [menuIdOpen, setMenuIdOpen] = useState<string | null>(null);
 
   if (kiosk !== KioskMode.Off) {
@@ -68,7 +69,7 @@ export const NavBarNext = React.memo(() => {
 
   return (
     <div className={styles.navWrapper}>
-      {!menuOpen && (
+      {!menuOpen && !menuAnimationInProgress && (
         <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
           <NavBarContext.Provider
             value={{
@@ -135,22 +136,30 @@ export const NavBarNext = React.memo(() => {
         </nav>
       )}
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-      <div className={styles.menuWrapper}>
-        <CSSTransition in={menuOpen} classNames={animStyles} timeout={150} unmountOnExit>
+      <CSSTransition
+        appear={menuOpen}
+        onEnter={() => setMenuAnimationInProgress(true)}
+        onExited={() => setMenuAnimationInProgress(false)}
+        in={menuOpen}
+        classNames={animStyles}
+        timeout={150}
+        unmountOnExit
+      >
+        <div className={styles.menuWrapper}>
           <NavBarMenu
             activeItem={activeItem}
             navItems={[homeItem, searchItem, ...coreItems, ...pluginItems, ...configItems]}
             onClose={() => setMenuOpen(false)}
           />
-        </CSSTransition>
-        <IconButton
-          name={menuOpen ? 'angle-left' : 'angle-right'}
-          tabIndex={1}
-          className={styles.menuToggle}
-          size="xl"
-          onClick={() => setMenuOpen(!menuOpen)}
-        />
-      </div>
+        </div>
+      </CSSTransition>
+      <IconButton
+        name={menuOpen ? 'angle-left' : 'angle-right'}
+        tabIndex={1}
+        className={styles.menuToggle}
+        size="xl"
+        onClick={() => setMenuOpen(!menuOpen)}
+      />
     </div>
   );
 });
@@ -238,6 +247,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridAutoFlow: 'column',
     height: '100%',
+    width: '300px',
     zIndex: theme.zIndex.sidemenu,
   }),
   menuToggle: css({
