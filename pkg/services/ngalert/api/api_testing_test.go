@@ -38,9 +38,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
-			srv := &TestingApiSrv{
-				accessControl: ac,
-			}
+			srv := createTestingApiSrv(nil, ac, nil)
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
@@ -72,11 +70,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			var result []eval.Result
 			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := &TestingApiSrv{
-				DatasourceCache: ds,
-				accessControl:   ac,
-				evaluator:       evaluator,
-			}
+			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
@@ -94,9 +88,19 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("when fine-grained access is disabled", func(t *testing.T) {
+		rc := &models2.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			IsSignedIn: false,
+			SignedInUser: &models2.SignedInUser{
+				OrgId: 1,
+			},
+		}
+		ac := acMock.New().WithDisabled()
+
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
-			ac := acMock.New().WithDisabled()
 
 			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
 				{Uid: data1.DatasourceUID},
@@ -106,21 +110,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			var result []eval.Result
 			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := &TestingApiSrv{
-				DatasourceCache: ds,
-				accessControl:   ac,
-				evaluator:       evaluator,
-			}
-
-			rc := &models2.ReqContext{
-				Context: &web.Context{
-					Req: &http.Request{},
-				},
-				IsSignedIn: false,
-				SignedInUser: &models2.SignedInUser{
-					OrgId: 1,
-				},
-			}
+			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
@@ -208,11 +198,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := &TestingApiSrv{
-				DatasourceCache: ds,
-				accessControl:   ac,
-				evaluator:       evaluator,
-			}
+			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: []models.AlertQuery{data1, data2},
@@ -226,9 +212,19 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 
 	t.Run("when fine-grained access is disabled", func(t *testing.T) {
+		rc := &models2.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			IsSignedIn: false,
+			SignedInUser: &models2.SignedInUser{
+				OrgId: 1,
+			},
+		}
+		ac := acMock.New().WithDisabled()
+
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
-			ac := acMock.New().WithDisabled()
 
 			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
 				{Uid: data1.DatasourceUID},
@@ -245,21 +241,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := &TestingApiSrv{
-				DatasourceCache: ds,
-				accessControl:   ac,
-				evaluator:       evaluator,
-			}
-
-			rc := &models2.ReqContext{
-				Context: &web.Context{
-					Req: &http.Request{},
-				},
-				IsSignedIn: false,
-				SignedInUser: &models2.SignedInUser{
-					OrgId: 1,
-				},
-			}
+			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: []models.AlertQuery{data1},
@@ -281,4 +263,16 @@ func TestRouteEvalQueries(t *testing.T) {
 			evaluator.AssertCalled(t, "QueriesAndExpressionsEval", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		})
 	})
+}
+
+func createTestingApiSrv(ds *datasources.FakeCacheService, ac *acMock.Mock, evaluator *eval.FakeEvaluator) *TestingApiSrv {
+	if ac == nil {
+		ac = acMock.New().WithDisabled()
+	}
+
+	return &TestingApiSrv{
+		DatasourceCache: ds,
+		accessControl:   ac,
+		evaluator:       evaluator,
+	}
 }
