@@ -5,6 +5,10 @@ import { applyNullInsertThreshold } from './nullInsertThreshold';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 import { FIXED_UNIT } from './GraphNG';
 
+function noop() {}
+
+noop();
+
 // will mutate the DataFrame's fields' values
 function applySpanNullsThresholds(frame: DataFrame) {
   let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
