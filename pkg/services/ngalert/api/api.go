@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -127,8 +128,12 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			scheduler: api.Schedule,
 		},
 	), m)
-	api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-		log:      logger,
-		policies: api.Policies,
-	}), m)
+
+	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
+		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
+			log:      logger,
+			policies: api.Policies,
+		}), m)
+	}
+
 }
