@@ -7,19 +7,21 @@
         },
         "fields": [
           {
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
-              "handler": "/api/v1/query_range",
-              "job": "prometheus"
+              "job": "prometheus",
+              "handler": "/api/v1/query_range"
             }
           }
         ]

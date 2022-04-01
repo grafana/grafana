@@ -7,6 +7,7 @@
         },
         "fields": [
           {
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
@@ -19,8 +20,8 @@
               "frame": "float64"
             },
             "labels": {
-              "instance": "localhost:9090",
-              "job": "prometheus"
+              "job": "prometheus",
+              "instance": "localhost:9090"
             }
           }
         ]
@@ -43,6 +44,7 @@
         },
         "fields": [
           {
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
