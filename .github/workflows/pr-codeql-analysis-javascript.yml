@@ -6,6 +6,7 @@ on:
     paths:
       - '**/*.js'
       - '**/*.ts'
+      - '**/*.tsx'
 
 jobs:
   analyze:
