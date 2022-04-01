@@ -53,7 +53,7 @@ services:
 
 ## Run your plugin
 
-Finally start your plugin in development mode:
+Finally start your plugin in development mode. Go to your plugin root directory and follow these steps:
 
 1. Build your plugin backend and start the frontend in watch mode:
 
@@ -64,7 +64,7 @@ Finally start your plugin in development mode:
 
 2. Start Grafana backend and frontend:
 
-   2.1 For a local copy of Grafana:
+   2.1 For a local copy of Grafana, go to the directory with Grafana source code and run:
 
    ```bash
    make run
@@ -74,7 +74,7 @@ Finally start your plugin in development mode:
    yarn start
    ```
 
-   2.2 For docker-compose:
+   2.2 Or with docker-compose, in your plugin directory, run:
 
    ```bash
    docker-compose up
