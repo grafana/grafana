@@ -41,10 +41,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 	cfg.IsFeatureToggleEnabled = func(key string) bool {
 		// Enable alert provisioning FF when running tests.
-		if key == featuremgmt.FlagAlertProvisioning {
-			return true
-		}
-		return false
+		return key == featuremgmt.FlagAlertProvisioning
 	}
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
