@@ -187,11 +187,34 @@ describe('migration', () => {
       matchExact: false,
       expression: '',
     };
-    describe('when using the old {{region}} pattern', () => {
-      it('should be migrated to the ${Region} pattern', () => {
+    describe('when using old alias pattern', () => {
+      it('without spaces should be migrated', () => {
         const testQuery = { ...baseQuery, alias: '{{region}}' };
         const result = migrateQueryAliasFormat(testQuery);
         expect(result.alias).toBe("${PROP('Region')}");
+      });
+
+      it('with spaces should be migrated', () => {
+        const testQuery = { ...baseQuery, alias: '{{ region }}' };
+        const result = migrateQueryAliasFormat(testQuery);
+        expect(result.alias).toBe("${PROP('Region')}");
+      });
+    });
+
+    describe('old alias should be migrated', () => {
+      const cases = [
+        ['{{metric}}', "${PROP('MetricName')}"],
+        ['{{namespace}}', "${PROP('Namespace')}"],
+        ['{{period}}', "${PROP('Period')}"],
+        ['{{region}}', "${PROP('Region')}"],
+        ['{{stat}}', "${PROP('Stat')}"],
+        ['{{label}}', '${LABEL}'],
+        ['{{anything_else}}', "$PROP{'Dim.anything_else'}"],
+      ];
+      test.each(cases)('given old alias %p, it should return %p', (oldAlias, expectedResult) => {
+        const testQuery = { ...baseQuery, alias: `${oldAlias}` };
+        const result = migrateQueryAliasFormat(testQuery);
+        expect(result.alias).toBe(expectedResult);
       });
     });
   });

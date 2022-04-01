@@ -64,8 +64,15 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
 }
 
 const aliasPatterns: Record<string, string> = {
+  metric: `PROP('MetricName')`,
+  namespace: `PROP('Namespace')`,
+  period: `PROP('Period')`,
   region: `PROP('Region')`,
+  stat: `PROP('Stat')`,
+  label: `LABEL`,
 };
+
+// test combination (multiple)
 
 export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
   if (!query.alias) {
@@ -77,8 +84,7 @@ export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWat
     if (aliasPatterns.hasOwnProperty(value)) {
       return `\${${aliasPatterns[value]}}`;
     }
-
-    return match;
+    return `\$PROP{'Dim.${value}'}`;
   });
 
   return query;
