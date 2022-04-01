@@ -47,14 +47,13 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 
 func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]queryRowResponse {
 	responseByID := make(map[string]queryRowResponse)
+	errorCodes := map[string]bool{
+		maxMetricsExceeded:         false,
+		maxQueryTimeRangeExceeded:  false,
+		maxQueryResultsExceeded:    false,
+		maxMatchingResultsExceeded: false,
+	}
 	for _, gmdo := range getMetricDataOutputs {
-		errorCodes := map[string]bool{
-			"MaxMetricsExceeded":         false,
-			"MaxQueryTimeRangeExceeded":  false,
-			"MaxQueryResultsExceeded":    false,
-			"MaxMatchingResultsExceeded": false,
-		}
-
 		for _, message := range gmdo.Messages {
 			if _, exists := errorCodes[*message.Code]; exists {
 				errorCodes[*message.Code] = true

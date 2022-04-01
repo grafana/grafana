@@ -18,11 +18,10 @@ func newQueryRowResponse(id string) queryRowResponse {
 	return queryRowResponse{
 		ID: id,
 		ErrorCodes: map[string]bool{
-			"MaxMetricsExceeded":         false,
-			"MaxQueryTimeRangeExceeded":  false,
-			"MaxQueryResultsExceeded":    false,
-			"MaxMatchingResultsExceeded": false,
-		},
+			maxMetricsExceeded:         false,
+			maxQueryTimeRangeExceeded:  false,
+			maxQueryResultsExceeded:    false,
+			maxMatchingResultsExceeded: false},
 		PartialData:            false,
 		HasArithmeticError:     false,
 		ArithmeticErrorMessage: "",
