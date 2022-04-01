@@ -195,6 +195,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     typeIcon: css`
+      margin-left: 5px;
       margin-right: 9.5px;
       vertical-align: middle;
       display: inline-block;
