@@ -15,15 +15,10 @@ const tabs = [{ label: 'Yaml', value: 'yaml' }];
 
 export const RuleInspector: FC<Props> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('yaml');
-  const { setValue, getValues } = useFormContext<RuleFormValues>();
+  const { setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(drawerStyles);
 
-  const defaultValue = dump(getValues());
-  const [yaml, setYaml] = useState<string>(defaultValue);
-
-  const onApply = () => {
-    const formValues = load(yaml) as RuleFormValues;
-
+  const onApply = (formValues: RuleFormValues) => {
     // Need to loop through all values and set them individually
     // TODO this is not type-safe :(
     for (const key in formValues) {
@@ -39,14 +34,11 @@ export const RuleInspector: FC<Props> = ({ onClose }) => {
       subtitle={
         <div className={styles.subtitle}>
           <RuleInspectorSubtitle setActiveTab={setActiveTab} activeTab={activeTab} />
-          <Button type="button" onClick={onApply}>
-            Apply
-          </Button>
         </div>
       }
       onClose={onClose}
     >
-      {activeTab === 'yaml' && <InspectorYamlTab defaultValue={yaml} onBlur={setYaml} />}
+      {activeTab === 'yaml' && <InspectorYamlTab onSubmit={onApply} />}
     </Drawer>
   );
 };
@@ -75,32 +67,45 @@ const RuleInspectorSubtitle: FC<SubtitleProps> = ({ activeTab, setActiveTab }) =
 };
 
 interface YamlTabProps {
-  defaultValue: string;
-  onBlur: (value: string) => void;
+  onSubmit: (newModel: RuleFormValues) => void;
 }
 
-const InspectorYamlTab: FC<YamlTabProps> = ({ defaultValue, onBlur }) => {
+const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
   const styles = useStyles2(yamlTabStyle);
+  const { getValues } = useFormContext<RuleFormValues>();
+  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(getValues()));
+
+  const onApply = () => {
+    onSubmit(load(alertRuleAsYaml) as RuleFormValues);
+  };
 
   return (
-    <div className={styles.content}>
-      <AutoSizer disableWidth>
-        {({ height }) => (
-          <CodeEditor
-            width="100%"
-            height={height}
-            language="yaml"
-            value={defaultValue}
-            onBlur={onBlur}
-            monacoOptions={{
-              minimap: {
-                enabled: false,
-              },
-            }}
-          />
-        )}
-      </AutoSizer>
-    </div>
+    <>
+      <div className={styles.applyButton}>
+        <Button type="button" onClick={onApply}>
+          Apply
+        </Button>
+      </div>
+
+      <div className={styles.content}>
+        <AutoSizer disableWidth>
+          {({ height }) => (
+            <CodeEditor
+              width="100%"
+              height={height}
+              language="yaml"
+              value={alertRuleAsYaml}
+              onBlur={setAlertRuleAsYaml}
+              monacoOptions={{
+                minimap: {
+                  enabled: false,
+                },
+              }}
+            />
+          )}
+        </AutoSizer>
+      </div>
+    </>
   );
 };
 
@@ -111,9 +116,13 @@ const yamlTabStyle = (theme: GrafanaTheme2) => ({
     padding-bottom: 16px;
     margin-bottom: ${theme.spacing(2)};
   `,
+  applyButton: css`
+    display: flex;
+    flex-grow: 0;
+  `,
 });
 
-const drawerStyles = (theme: GrafanaTheme2) => ({
+const drawerStyles = () => ({
   subtitle: css`
     display: flex;
     align-items: center;
