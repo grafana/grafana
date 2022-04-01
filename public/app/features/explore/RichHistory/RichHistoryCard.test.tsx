@@ -1,12 +1,15 @@
 import React from 'react';
-import { render, screen, fireEvent, getByText, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, fireEvent, getByText } from '@testing-library/react';
 import { RichHistoryCard, Props } from './RichHistoryCard';
-import { ExploreId, RichHistoryQuery } from '../../../types/explore';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 import { DataSourceApi, DataQuery } from '@grafana/data';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { ShowConfirmModalEvent } from 'app/types/events';
+import appEvents from 'app/core/app_events';
 
 const starRichHistoryMock = jest.fn();
+const deleteRichHistoryMock = jest.fn();
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -22,6 +25,10 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
     }),
   };
 });
+
+jest.mock('app/core/app_events', () => ({
+  publish: jest.fn(),
+}));
 
 interface MockQuery extends DataQuery {
   query: string;
@@ -46,8 +53,8 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     isRemoved: false,
     changeDatasource: jest.fn(),
     starHistoryItem: starRichHistoryMock,
+    deleteHistoryItem: deleteRichHistoryMock,
     commentHistoryItem: jest.fn(),
-    deleteHistoryItem: jest.fn(),
     setQueries: jest.fn(),
     exploreId: ExploreId.left,
     datasourceInstance: { name: 'Datasource' } as DataSourceApi,
@@ -71,6 +78,10 @@ const starredQueryWithComment: RichHistoryQuery<MockQuery> = {
     { query: 'query3', refId: 'C' },
   ],
 };
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('RichHistoryCard', () => {
   it('should render all queries', async () => {
@@ -185,6 +196,23 @@ describe('RichHistoryCard', () => {
       expect(unstarButton).toHaveLength(1);
       fireEvent.click(unstarButton[0]);
       expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, false);
+    });
+  });
+
+  describe('deleting', () => {
+    it('should delete if not starred', async () => {
+      setup();
+      const deleteButton = await screen.findAllByTitle('Delete query');
+      expect(deleteButton).toHaveLength(1);
+      fireEvent.click(deleteButton[0]);
+      expect(deleteRichHistoryMock).toBeCalledWith(starredQueryWithComment.id);
+    });
+    it('should display modal before deleting if starred', async () => {
+      setup({ query: starredQueryWithComment });
+      const deleteButton = await screen.findByTitle('Delete query');
+      fireEvent.click(deleteButton);
+      expect(deleteRichHistoryMock).not.toBeCalled();
+      expect(appEvents.publish).toHaveBeenCalledWith(new ShowConfirmModalEvent(expect.anything()));
     });
   });
 });
