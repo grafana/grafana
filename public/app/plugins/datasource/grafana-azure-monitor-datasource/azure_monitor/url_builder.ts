@@ -10,7 +10,7 @@ export default class UrlBuilder {
     const metricDefinitionArray = metricDefinition.split('/');
     const resourceNameArray = resourceName.split('/');
     const provider = metricDefinitionArray.shift();
-    const urlArray = [baseUrl, subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
+    const urlArray = [baseUrl, 'subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
     for (const i in metricDefinitionArray) {
       urlArray.push(metricDefinitionArray[i]);
       urlArray.push(resourceNameArray[i]);
@@ -31,7 +31,7 @@ export default class UrlBuilder {
     const metricDefinitionArray = metricDefinition.split('/');
     const resourceNameArray = resourceName.split('/');
     const provider = metricDefinitionArray.shift();
-    const urlArray = [baseUrl, subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
+    const urlArray = [baseUrl, 'subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
     for (const i in metricDefinitionArray) {
       urlArray.push(metricDefinitionArray[i]);
       urlArray.push(resourceNameArray[i]);

@@ -12,7 +12,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
           'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
       );
     });
@@ -29,7 +29,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
           'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
       );
     });
@@ -46,7 +46,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
           'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
       );
     });
@@ -64,7 +64,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
@@ -82,7 +82,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
@@ -100,7 +100,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
@@ -118,7 +118,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
@@ -136,7 +136,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
@@ -154,7 +154,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/tableServices/default/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/tableServices/default/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
@@ -172,7 +172,7 @@ describe('AzureMonitorUrlBuilder', () => {
         '2017-05-01-preview'
       );
       expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/queueServices/default/' +
+        '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/queueServices/default/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
