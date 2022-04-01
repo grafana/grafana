@@ -82,17 +82,6 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
-    switch (dataSourceSettings?.type) {
-      case 'loki':
-        getLinkForLoki(span, traceToLogsOptions);
-        break;
-      case 'grafana-splunk-datasource':
-        getLinkForSplunk(span, traceToLogsOptions);
-        break;
-      default:
-        return undefined;
-    }
-
     const query = getLinkForSplunk(span, traceToLogsOptions);
     const expr = getLinkForLoki(span, traceToLogsOptions);
 
@@ -100,18 +89,44 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
       return undefined;
     }
 
-    const dataLink: DataLink<LokiQuery | DataQuery> = {
-      title: dataSourceSettings.name,
-      url: '',
-      internal: {
-        datasourceUid: dataSourceSettings.uid,
-        datasourceName: dataSourceSettings.name,
-        query: {
-          [isSplunkDS ? 'query' : 'expr']: query,
-          refId: '',
-        },
-      },
-    };
+    let dataLink: DataLink<LokiQuery | DataQuery> = {} as DataLink<LokiQuery | DataQuery>;
+
+    switch (dataSourceSettings?.type) {
+      case 'loki':
+        getLinkForLoki(span, traceToLogsOptions);
+        dataLink = {
+          title: dataSourceSettings.name,
+          url: '',
+          internal: {
+            datasourceUid: dataSourceSettings.uid,
+            datasourceName: dataSourceSettings.name,
+            query: {
+              expr: expr,
+              refId: '',
+            },
+          },
+        } as DataLink<LokiQuery>;
+        break;
+
+      case 'grafana-splunk-datasource':
+        getLinkForSplunk(span, traceToLogsOptions);
+        dataLink = {
+          title: dataSourceSettings.name,
+          url: '',
+          internal: {
+            datasourceUid: dataSourceSettings.uid,
+            datasourceName: dataSourceSettings.name,
+            query: {
+              query: query,
+              refId: '',
+            },
+          },
+        } as DataLink<DataQuery>;
+        break;
+
+      default:
+        return undefined;
+    }
 
     const link = mapInternalLinkToExplore({
       link: dataLink,
@@ -205,11 +220,11 @@ function getLinkForSplunk(span: TraceSpan, options: TraceToLogsOptions): string 
   }
 
   if (filterByTraceID && span.traceID) {
-    query += ` TraceeeeID=${span.traceID}`;
+    query += ` "${span.traceID}"`;
   }
 
   if (filterBySpanID && span.spanID) {
-    query += ` SpanID=${span.spanID}`;
+    query += ` "${span.spanID}"`;
   }
 
   return query;

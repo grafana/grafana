@@ -17,7 +17,7 @@ describe('createSpanLinkFactory', () => {
     beforeAll(() => {
       setDataSourceSrv({
         getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
-          return { uid: 'loki1', name: 'loki1' } as any;
+          return { uid: 'loki1', name: 'loki1', type: 'loki' } as any;
         },
       } as any);
 
@@ -262,12 +262,81 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const linkDef = createLink!(createTraceSpan());
 
-      expect(linkDef!.href).toContain(`${encodeURIComponent(' TraceID=7946b05c2e2e4e5a')}`);
-      expect(linkDef!.href).toContain(`${encodeURIComponent(' TraceID=7946b05c2e2e4e5a SpanID=6605c7b08e715d6c')}`);
-      expect(linkDef!.href).not.toContain(`${encodeURIComponent(' |=7946b05c2e2e4e5a')}`);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" TraceID=7946b05c2e2e4e5a SpanID=6605c7b08e715d6c","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" \\"7946b05c2e2e4e5a\\" \\"6605c7b08e715d6c\\"","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('should format one tag correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: ['ip'],
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [{ key: 'ip', value: '192.168.0.1' }],
+          },
+        })
+      );
+
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"ip=\\"192.168.0.1\\"","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('should format multiple tags correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: ['ip', 'hostname'],
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"hostname=\\"hostname1\\" ip=\\"192.168.0.1\\"","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('handles renamed tags', () => {
+      const createLink = setupSpanLinkFactory({
+        mapTagNamesEnabled: true,
+        mappedTags: [
+          { key: 'service.name', value: 'service' },
+          { key: 'k8s.pod.name', value: 'pod' },
+        ],
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"Splunk 8","queries":[{"query":"service=\\"serviceName\\" pod=\\"podName\\"","refId":""}],"panelsState":{}}'
         )}`
       );
     });
