@@ -7,6 +7,14 @@ import { getDataSourceByName } from '../utils/datasource';
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
+/**
+ * This function will attempt to detect what type of system we are talking to; this could be
+ * Prometheus (vanilla) | Cortex | Mimir
+ *
+ * Cortex and Mimir allow editing rules via their API, Prometheus does not.
+ * Prometheus and Mimir expose a `buildinfo` endpoint, Cortex does not.
+ * Mimir reports which "features" are enabled or available via the buildinfo endpoint, Prometheus does not.
+ */
 export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: string }): Promise<PromBuildInfo> {
   const { url, name } = dsSettings;
 
@@ -18,22 +26,25 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
     })
   ).catch((e) => {
     if ('status' in e && e.status === 404) {
-      return null; // Cortex does not support buildinfo endpoint
+      return null; // Cortex does not support buildinfo endpoint, we return an empty response
     }
 
     throw e;
   });
 
+  // check if the component returns buildinfo
   const hasBuildInfo = response !== null;
 
-  // dealing with a Cortex datasource since the response for buildinfo came up empty
+  // we are dealing with a Cortex datasource since the response for buildinfo came up empty
   if (!hasBuildInfo) {
+    // check if we can fetch rules via the prometheus compatible api
     const promRulesSupported = await hasPromRulesSupport(name);
-    const rulerSupported = await hasRulerSupport(name);
-
     if (!promRulesSupported) {
       throw new Error(`Unable to fetch alert rules. Is the ${name} data source properly configured?`);
     }
+
+    // check if the ruler is enabled
+    const rulerSupported = await hasRulerSupport(name);
 
     return {
       application: PromApplication.Cortex,
@@ -63,6 +74,9 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
   };
 }
 
+/**
+ * Attempt to fetch buildinfo from our component
+ */
 export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildInfo> {
   const dsConfig = getDataSourceByName(dataSourceName);
   if (!dsConfig) {
@@ -76,6 +90,9 @@ export async function fetchBuildInfo(dataSourceName: string): Promise<PromBuildI
   return fetchDataSourceBuildInfo({ name, url });
 }
 
+/**
+ * Check if the component allows us to fetch rules
+ */
 async function hasPromRulesSupport(dataSourceName: string) {
   try {
     await fetchRules(dataSourceName);
@@ -85,6 +102,10 @@ async function hasPromRulesSupport(dataSourceName: string) {
   }
 }
 
+/**
+ * Attempt to check if the ruler API is enabled for Cortex, Prometheus does not support it and Mimir
+ * reports this via the buildInfo "features"
+ */
 async function hasRulerSupport(dataSourceName: string) {
   try {
     await fetchTestRulerRulesGroup(dataSourceName);
@@ -97,6 +118,7 @@ async function hasRulerSupport(dataSourceName: string) {
   }
 }
 
+// there errors indicate that the ruler API might be disabled or not supported for Cortex
 function errorIndicatesMissingRulerSupport(error: any) {
   return (
     (isFetchError(error) &&
