@@ -328,7 +328,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			silence := tesCase.silence()
 
 			if silence.ID != "" {
-				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
+				alertmanagerFor, err := sut.configs.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
 				newID, err := alertmanagerFor.CreateSilence(&silence)
