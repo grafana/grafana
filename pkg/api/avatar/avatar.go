@@ -70,8 +70,8 @@ func (a *Avatar) Encode(wr io.Writer) error {
 	return err
 }
 
-func (a *Avatar) Update() (err error) {
-	baseUrl := gravatarSource + a.hash + "?"
+func (a *Avatar) update(baseUrl string) (err error) {
+	baseUrl += a.hash + "?"
 	select {
 	case <-time.After(time.Second * 3):
 		err = fmt.Errorf("get gravatar image %s timeout", a.hash)
@@ -123,6 +123,10 @@ func (a *AvatarCacheServer) Handler(ctx *models.ReqContext) {
 }
 
 func (a *AvatarCacheServer) GetAvatarForHash(hash string) *Avatar {
+	return a.getAvatarForHash(hash, gravatarSource)
+}
+
+func (a *AvatarCacheServer) getAvatarForHash(hash string, baseUrl string) *Avatar {
 	var avatar *Avatar
 	obj, exists := a.cache.Get(hash)
 	if exists {
@@ -133,7 +137,7 @@ func (a *AvatarCacheServer) GetAvatarForHash(hash string) *Avatar {
 
 	if avatar.Expired() {
 		// The cache item is either expired or newly created, update it from the server
-		if err := avatar.Update(); err != nil {
+		if err := avatar.update(baseUrl); err != nil {
 			alog.Debug("avatar update", "err", err)
 			avatar = a.notFound
 		}
