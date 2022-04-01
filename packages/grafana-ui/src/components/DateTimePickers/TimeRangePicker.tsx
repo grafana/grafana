@@ -45,6 +45,7 @@ export interface TimeRangePickerProps extends Themeable {
   onZoom: () => void;
   history?: TimeRange[];
   hideQuickRanges?: boolean;
+  splitted?: boolean;
 }
 
 export interface State {
@@ -68,6 +69,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
     hideQuickRanges,
+    splitted,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -129,6 +131,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
               quickOptions={quickOptions}
               history={history}
               showHistory
+              splitted={splitted}
               onChangeTimeZone={onChangeTimeZone}
               onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               hideQuickRanges={hideQuickRanges}

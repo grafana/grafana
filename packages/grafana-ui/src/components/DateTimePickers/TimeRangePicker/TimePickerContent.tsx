@@ -29,6 +29,7 @@ interface Props {
   /** Reverse the order of relative and absolute range pickers. Used to left align the picker in forms */
   isReversed?: boolean;
   hideQuickRanges?: boolean;
+  splitted?: boolean;
 }
 
 export interface PropsWithScreenSize extends Props {
@@ -112,8 +113,9 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
 };
 
 export const TimePickerContent: React.FC<Props> = (props) => {
+  const { splitted } = props;
   const theme = useTheme2();
-  const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
+  const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`) && !splitted;
 
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
