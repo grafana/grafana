@@ -394,6 +394,12 @@ function handleQuotes(string: string) {
   return string.replace(/`/g, '');
 }
 
+/**
+ * Simple helper to traverse the syntax tree. Instead of node.getChild('foo')?.getChild('bar')?.getChild('baz') you
+ * can write getChildWithSelector(node, 'foo.bar.baz')
+ * @param node
+ * @param selector
+ */
 function getChildWithSelector(node: SyntaxNode, selector: string) {
   let child: SyntaxNode | null = node;
   const children = selector.split('.');
