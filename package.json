@@ -54,7 +54,8 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer"
+    "betterer": "betterer",
+    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-4/",
@@ -86,6 +87,7 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
+    "@betterer/betterer": "5.1.7",
     "@betterer/cli": "5.1.7",
     "@betterer/regexp": "5.1.7",
     "@emotion/eslint-plugin": "11.7.0",
@@ -170,6 +172,7 @@
     "babel-loader": "8.2.4",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "babel-plugin-macros": "3.1.0",
+    "change-case": "^4.1.2",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.7.1",
     "css-minimizer-webpack-plugin": "3.4.1",
