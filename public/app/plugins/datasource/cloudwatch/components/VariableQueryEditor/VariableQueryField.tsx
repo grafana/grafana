@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
-import React, { FC } from 'react';
+import React from 'react';
 import { VariableQueryType } from '../../types';
 
 const LABEL_WIDTH = 20;
@@ -8,7 +8,7 @@ const LABEL_WIDTH = 20;
 interface VariableQueryFieldProps<T> {
   onChange: (value: T) => void;
   options: SelectableValue[];
-  value: string | null;
+  value: T | null;
   label: string;
   allowCustomValue?: boolean;
   isLoading?: boolean;
