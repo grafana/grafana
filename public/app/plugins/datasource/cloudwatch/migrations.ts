@@ -68,9 +68,11 @@ export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWat
     return query;
   }
 
-  const formattedQuery = query.alias;
-  formattedQuery = query.alias.replace('{{ period }}', '${Period}');
-  formattedQuery = query.alias.replace('{{period}}', '${Period}');
+  const regex = /{{\s*(.+?)\s*}}\/g/;
+  query.alias?.replace(regex, (match) => {
+    console.log(match);
+    return match;
+  });
 
   return query;
 }
