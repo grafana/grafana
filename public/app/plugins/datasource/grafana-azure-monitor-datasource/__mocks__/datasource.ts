@@ -49,6 +49,7 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue([]),
       getResourcesForResourceGroup: jest.fn().mockResolvedValue([]),
       getResourceURIFromWorkspace: jest.fn().mockReturnValue(''),
+      getResourceURIDisplayProperties: jest.fn().mockResolvedValue({}),
     },
     ...overrides,
   };
