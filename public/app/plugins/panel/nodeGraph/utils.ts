@@ -39,9 +39,15 @@ export function getNodeFields(nodes: DataFrame) {
   return {
     id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
     title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title),
-    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
+    subTitle:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle) ??
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle.toLowerCase()),
+    mainStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat) ??
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    secondaryStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat) ??
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
@@ -54,8 +60,12 @@ export function getEdgeFields(edges: DataFrame) {
     id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
     source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source),
     target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
+    mainStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat) ??
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    secondaryStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat) ??
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail),
   };
 }
@@ -323,7 +333,6 @@ export function getNodeGraphDataFrames(frames: DataFrame[]) {
   //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
   //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
   //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
-
   return frames.filter((frame) => {
     if (frame.meta?.preferredVisualisationType === 'nodeGraph') {
       return true;

@@ -1,5 +1,12 @@
 import { ArrayVector, createTheme, DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
-import { getNodeGraphDataFrames, makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
+import {
+  getEdgeFields,
+  getNodeFields,
+  getNodeGraphDataFrames,
+  makeEdgesDataFrame,
+  makeNodesDataFrame,
+  processNodes,
+} from './utils';
 
 describe('processNodes', () => {
   const theme = createTheme();
@@ -247,5 +254,42 @@ describe('processNodes', () => {
     const nodeGraphFrames = getNodeGraphDataFrames(frames as DataFrame[]);
     expect(nodeGraphFrames.length).toBe(5);
     expect(nodeGraphFrames).toEqual(validFrames);
+  });
+
+  it('get lowercase field names as fallback', () => {
+    const nodeFrame = new MutableDataFrame({
+      refId: 'nodes',
+      fields: [
+        { name: 'id', type: FieldType.string, values: ['id'] },
+        { name: 'title', type: FieldType.string, values: ['title'] },
+        { name: 'subtitle', type: FieldType.string, values: ['subTitle'] },
+        { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
+        { name: 'secondarystat', type: FieldType.string, values: ['secondaryStat'] },
+      ],
+    });
+
+    const nodeFields = getNodeFields(nodeFrame);
+    expect(nodeFields.id).toBeDefined();
+    expect(nodeFields.title).toBeDefined();
+    expect(nodeFields.subTitle).toBeDefined();
+    expect(nodeFields.mainStat).toBeDefined();
+    expect(nodeFields.secondaryStat).toBeDefined();
+
+    const edgeFrame = new MutableDataFrame({
+      refId: 'nodes',
+      fields: [
+        { name: 'id', type: FieldType.string, values: ['id'] },
+        { name: 'source', type: FieldType.string, values: ['title'] },
+        { name: 'target', type: FieldType.string, values: ['subTitle'] },
+        { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
+        { name: 'secondarystat', type: FieldType.string, values: ['secondaryStat'] },
+      ],
+    });
+    const edgeFields = getEdgeFields(edgeFrame);
+    expect(edgeFields.id).toBeDefined();
+    expect(edgeFields.source).toBeDefined();
+    expect(edgeFields.target).toBeDefined();
+    expect(edgeFields.mainStat).toBeDefined();
+    expect(edgeFields.secondaryStat).toBeDefined();
   });
 });
