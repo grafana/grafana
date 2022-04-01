@@ -92,7 +92,9 @@ export const generateColumns = (
   // Show datasources if we have any
   if (access.datasource && hasFieldValue(access.datasource)) {
     width = DATASOURCE_COLUMN_WIDTH;
-    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon, onDatasourceChange));
+    columns.push(
+      makeDataSourceColumn(access.datasource, width, styles.typeIcon, styles.datasourceItem, onDatasourceChange)
+    );
     availableWidth -= width;
   }
 
@@ -176,6 +178,7 @@ function makeDataSourceColumn(
   field: Field<DataSourceRef[]>,
   width: number,
   iconClass: string,
+  datasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
   return {
@@ -188,7 +191,7 @@ function makeDataSourceColumn(
       if (dslist?.length) {
         const srv = getDataSourceSrv();
         return (
-          <div>
+          <div className={datasourceItemClass}>
             {dslist.map((v, i) => {
               const settings = srv.getInstanceSettings(v);
               const icon = settings?.meta?.info?.logos?.small;

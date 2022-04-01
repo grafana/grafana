@@ -78,24 +78,6 @@ export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
-            if (
-              cell.column.id === 'column-checkbox' ||
-              cell.column.id === 'column-tags' ||
-              cell.column.id === 'column-datasource'
-            ) {
-              return (
-                <div key={index} className={styles.cellWrapper}>
-                  <TableCell
-                    key={index}
-                    tableStyles={tableStyles}
-                    cell={cell}
-                    columnIndex={index}
-                    columnCount={row.cells.length}
-                  />
-                </div>
-              );
-            }
-
             return (
               <a href={url} key={index}>
                 <div className={styles.cellWrapper}>
@@ -179,6 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     cellWrapper: css`
       display: flex;
+      pointer-events: none;
     `,
     headerCell: css`
       padding-top: 2px;
@@ -201,6 +184,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: inline-block;
       margin-bottom: ${theme.v1.spacing.xxs};
       fill: ${theme.colors.text.secondary};
+    `,
+    datasourceItem: css`
+      pointer-events: auto;
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
