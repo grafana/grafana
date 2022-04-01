@@ -10,7 +10,7 @@ import ResourcePicker from '../ResourcePicker';
 import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceURI } from '../ResourcePicker/utils';
 import { Space } from '../Space';
-import { setResource } from './setQueryValue';
+import { setResource } from '../MetricsQueryEditor/setQueryValue';
 
 function parseResourceDetails(resourceURI: string) {
   const parsed = parseResourceURI(resourceURI);

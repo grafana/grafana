@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { toOption } from '../../utils/common';
-import { setMetricNamespace } from './setQueryValue';
+import { setMetricNamespace } from '../MetricsQueryEditor/setQueryValue';
 
 export interface MetricMetadata {
   aggOptions: AzureMonitorOption[];
