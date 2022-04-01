@@ -192,6 +192,12 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 	return newConcreteLogger(gokitlog.With(&cl.SwapLogger), ctx...)
 }
 
+// New creates a new logger.
+// First ctx argument expected to be the name of the logger.
+// Note: For contextual logger, i.e. a logger with a shared
+// name/context plus additional contextual information for
+// specific context like a request, you must use
+// Logger interface New method for it to work as expected.
 func New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()
