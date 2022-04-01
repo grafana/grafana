@@ -76,7 +76,7 @@ func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Conte
 	return nil
 }
 
-func (f *fakeAMConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (f *fakeAMConfigStore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	f.config = models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		ConfigurationVersion:      cmd.ConfigurationVersion,

@@ -9,7 +9,7 @@ import (
 // AMStore is a store of Alertmanager configurations.
 type AMConfigStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
-	SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
+	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
 // ProvisioningStore is a store of provisioning data for arbitrary objects.

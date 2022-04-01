@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/require"
 )
@@ -23,6 +24,7 @@ func TestProvisioning(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{featuremgmt.FlagAlertProvisioning},
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

@@ -99,7 +99,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		OrgID:                     orgID,
 	}
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = nps.amStore.SaveAlertmanagerConfiguration(ctx, &cmd)
+		err = nps.amStore.UpdateAlertmanagerConfiguration(ctx, &cmd)
 		if err != nil {
 			return err
 		}
