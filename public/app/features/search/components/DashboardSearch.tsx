@@ -1,4 +1,4 @@
-import React, { FC, memo, useRef } from 'react';
+import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
 import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -23,7 +23,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   const styles = getStyles(theme);
 
   return (
-    <div className={styles.overlay}>
+    <div tabIndex={0} className={styles.overlay}>
       <div className={styles.container}>
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
