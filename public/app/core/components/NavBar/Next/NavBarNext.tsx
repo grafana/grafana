@@ -269,18 +269,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const getAnimStyles = (theme: GrafanaTheme2) => {
   const transitionProps = {
-    transitionProperty: 'width, background-color',
+    transitionProperty: 'width',
     transitionDuration: '150ms',
     transitionTimingFunction: 'ease-in-out',
   };
 
   const openStyles = {
-    backgroundColor: theme.colors.background.canvas,
     width: '300px',
   };
 
   const closedStyles = {
-    backgroundColor: theme.colors.background.primary,
     width: theme.spacing(7),
   };
 
