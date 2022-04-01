@@ -17,13 +17,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -1084,49 +1082,37 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 		require.Fail(t, "Alert rule with desired evaluation result NoData is not supported yet")
 	}
 
-	err := dbstore.UpdateRuleGroup(ctx, store.UpdateRuleGroupCmd{
-		OrgID:        orgID,
-		NamespaceUID: "namespace",
-		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
-			Name:     ruleGroup,
-			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
-			Rules: []apimodels.PostableExtendedRuleNode{
-				{
-					ApiRuleNode: &apimodels.ApiRuleNode{
-						Annotations: map[string]string{"testAnnoKey": "testAnnoValue"},
-						For:         model.Duration(forDuration),
-					},
-					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title:     fmt.Sprintf("an alert definition %d", d),
-						Condition: "A",
-						Data: []models.AlertQuery{
-							{
-								DatasourceUID: "-100",
-								Model:         json.RawMessage(expression),
-								RelativeTimeRange: models.RelativeTimeRange{
-									From: models.Duration(5 * time.Hour),
-									To:   models.Duration(3 * time.Hour),
-								},
-								RefID: "A",
-							},
-						},
-					},
+	rule := &models.AlertRule{
+		ID:        1,
+		OrgID:     orgID,
+		Title:     fmt.Sprintf("an alert definition %d", d),
+		Condition: "A",
+		Data: []models.AlertQuery{
+			{
+				DatasourceUID: "-100",
+				Model:         json.RawMessage(expression),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(5 * time.Hour),
+					To:   models.Duration(3 * time.Hour),
 				},
+				RefID: "A",
 			},
 		},
-	})
-	require.NoError(t, err)
-
-	q := models.ListRuleGroupAlertRulesQuery{
-		OrgID:        orgID,
-		NamespaceUID: "namespace",
-		RuleGroup:    ruleGroup,
+		Updated:         time.Now(),
+		IntervalSeconds: intervalSeconds,
+		Version:         1,
+		UID:             util.GenerateShortUID(),
+		NamespaceUID:    "namespace",
+		RuleGroup:       ruleGroup,
+		NoDataState:     models.NoData,
+		ExecErrState:    models.AlertingErrState,
+		For:             forDuration,
+		Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
+		Labels:          nil,
 	}
-	err = dbstore.GetRuleGroupAlertRules(ctx, &q)
-	require.NoError(t, err)
-	require.NotEmpty(t, q.Result)
 
-	rule := q.Result[0]
+	dbstore.PutRule(ctx, rule)
+
 	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
 	return rule
 }

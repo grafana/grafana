@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,8 +30,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 		orgs: []int64{1, 2, 3},
 	}
 
-	tmpDir, err := ioutil.TempDir("", "test")
-	require.NoError(t, err)
+	tmpDir := t.TempDir()
 	kvStore := NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
@@ -49,8 +47,6 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
-
-	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 
 	// Ensure that one Alertmanager is created per org.
 	{
@@ -159,8 +155,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		orgs: []int64{1, 2, 3},
 	}
 
-	tmpDir, err := ioutil.TempDir("", "test")
-	require.NoError(t, err)
+	tmpDir := t.TempDir()
 	kvStore := NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
@@ -213,8 +208,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
-	tmpDir, err := ioutil.TempDir("", "test")
-	require.NoError(t, err)
+	tmpDir := t.TempDir()
 	cfg := &setting.Cfg{
 		DataPath:        tmpDir,
 		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
@@ -227,8 +221,6 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
-
-	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 
 	// Ensure that one Alertmanagers is created per org.
 	{
@@ -267,13 +259,6 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		_, err := mam.AlertmanagerFor(2)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
-	}
-}
-
-// nolint:unused
-func cleanOrgDirectories(path string, t *testing.T) func() {
-	return func() {
-		require.NoError(t, os.RemoveAll(path))
 	}
 }
 

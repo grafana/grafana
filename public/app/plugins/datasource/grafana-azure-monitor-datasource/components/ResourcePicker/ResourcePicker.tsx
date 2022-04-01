@@ -10,10 +10,12 @@ import NestedResourceTable from './NestedResourceTable';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { addResources, findRow, parseResourceURI } from './utils';
 
+const TEMPLATE_VARIABLE_GROUP_ID = '$$grafana-templateVariables$$';
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
   templateVariables: string[];
+  selectableEntryTypes: ResourceRowType[];
 
   onApply: (resourceURI: string | undefined) => void;
   onCancel: () => void;
@@ -25,18 +27,19 @@ const ResourcePicker = ({
   templateVariables,
   onApply,
   onCancel,
+  selectableEntryTypes,
 }: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
 
   type LoadingStatus = 'NotStarted' | 'Started' | 'Done';
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('NotStarted');
   const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
-  const [internalSelected, setInternalSelected] = useState<string | undefined>(resourceURI);
+  const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
-    setInternalSelected(resourceURI);
+    setInternalSelectedURI(resourceURI);
   }, [resourceURI]);
 
   // Request initial data on first mount
@@ -46,13 +49,13 @@ const ResourcePicker = ({
         try {
           setLoadingStatus('Started');
           let resources = await resourcePickerData.getSubscriptions();
-          if (!internalSelected) {
+          if (!internalSelectedURI) {
             setAzureRows(resources);
             setLoadingStatus('Done');
             return;
           }
 
-          const parsedURI = parseResourceURI(internalSelected ?? '');
+          const parsedURI = parseResourceURI(internalSelectedURI ?? '');
           if (parsedURI) {
             const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
 
@@ -61,7 +64,7 @@ const ResourcePicker = ({
               const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId(
                 parsedURI.subscriptionID
               );
-              resources = addResources(resources, parsedURI.subscriptionID, resourceGroups);
+              resources = addResources(resources, `/subscriptions/${parsedURI.subscriptionID}`, resourceGroups);
             }
 
             // if a resource was previously selected, but the resources under the parent resource group have not been loaded yet
@@ -80,16 +83,16 @@ const ResourcePicker = ({
 
       loadInitialData();
     }
-  }, [resourcePickerData, internalSelected, azureRows, loadingStatus]);
+  }, [resourcePickerData, internalSelectedURI, azureRows, loadingStatus]);
 
   const rows = useMemo(() => {
-    const templateVariableRow = resourcePickerData.transformVariablesToRow(templateVariables);
+    const templateVariableRow = transformVariablesToRow(templateVariables);
     return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
-  }, [resourcePickerData, azureRows, templateVariables]);
+  }, [azureRows, templateVariables]);
 
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
-    const found = internalSelected && findRow(rows, internalSelected);
+    const found = internalSelectedURI && findRow(rows, internalSelectedURI);
     return found
       ? [
           {
@@ -98,7 +101,7 @@ const ResourcePicker = ({
           },
         ]
       : [];
-  }, [internalSelected, rows]);
+  }, [internalSelectedURI, rows]);
 
   // Request resources for a expanded resource group
   const requestNestedRows = useCallback(
@@ -110,7 +113,7 @@ const ResourcePicker = ({
       // template variable group, though that shouldn't happen in practice
       if (
         resourceGroupOrSubscription.children?.length ||
-        resourceGroupOrSubscription.id === ResourcePickerData.templateVariableGroupID
+        resourceGroupOrSubscription.uri === TEMPLATE_VARIABLE_GROUP_ID
       ) {
         return;
       }
@@ -121,7 +124,7 @@ const ResourcePicker = ({
             ? await resourcePickerData.getResourceGroupsBySubscriptionId(resourceGroupOrSubscription.id)
             : await resourcePickerData.getResourcesForResourceGroup(resourceGroupOrSubscription.id);
 
-        const newRows = addResources(azureRows, resourceGroupOrSubscription.id, rows);
+        const newRows = addResources(azureRows, resourceGroupOrSubscription.uri, rows);
 
         setAzureRows(newRows);
       } catch (error) {
@@ -132,14 +135,13 @@ const ResourcePicker = ({
     [resourcePickerData, azureRows]
   );
 
-  // Select
   const handleSelectionChanged = useCallback((row: ResourceRow, isSelected: boolean) => {
-    isSelected ? setInternalSelected(row.id) : setInternalSelected(undefined);
+    isSelected ? setInternalSelectedURI(row.uri) : setInternalSelectedURI(undefined);
   }, []);
 
   const handleApply = useCallback(() => {
-    onApply(internalSelected);
-  }, [internalSelected, onApply]);
+    onApply(internalSelectedURI);
+  }, [internalSelectedURI, onApply]);
 
   return (
     <div>
@@ -154,6 +156,7 @@ const ResourcePicker = ({
             requestNestedRows={requestNestedRows}
             onRowSelectedChange={handleSelectionChanged}
             selectedRows={selectedResourceRows}
+            selectableEntryTypes={selectableEntryTypes}
           />
 
           <div className={styles.selectionFooter}>
@@ -167,6 +170,7 @@ const ResourcePicker = ({
                   onRowSelectedChange={handleSelectionChanged}
                   selectedRows={selectedResourceRows}
                   noHeader={true}
+                  selectableEntryTypes={selectableEntryTypes}
                 />
               </>
             )}
@@ -211,3 +215,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
 });
+
+function transformVariablesToRow(templateVariables: string[]): ResourceRow {
+  return {
+    id: TEMPLATE_VARIABLE_GROUP_ID,
+    uri: TEMPLATE_VARIABLE_GROUP_ID,
+    name: 'Template variables',
+    type: ResourceRowType.VariableGroup,
+    typeLabel: 'Variables',
+    children: templateVariables.map((v) => ({
+      id: v,
+      uri: v,
+      name: v,
+      type: ResourceRowType.Variable,
+      typeLabel: 'Variable',
+    })),
+  };
+}

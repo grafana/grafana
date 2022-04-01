@@ -183,6 +183,15 @@ describe('graphiteDatasource', () => {
 
   describe('when fetching Graphite Events as annotations', () => {
     let results: any;
+    let errorSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    });
+
+    afterEach(() => {
+      errorSpy.mockRestore();
+    });
 
     const options = {
       annotation: {
@@ -260,6 +269,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
       expect(results).toEqual([]);
+      expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/Unable to get annotations/));
     });
   });
 
