@@ -94,7 +94,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 			err := accesscontrol.DeclareFixedRoles(ac)
 			require.NoError(t, err)
 
-			ac.RegisterFixedRoles()
+			errRegisterRoles := ac.RegisterFixedRoles()
+			require.NoError(t, errRegisterRoles)
 
 			user := &models.SignedInUser{
 				UserId:         1,
@@ -135,12 +136,13 @@ func TestUsageMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			usagestatsmock := &usagestats.UsageStatsMock{T: t}
 
-			ProvideService(
+			_, errInitAc := ProvideService(
 				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
 				usagestatsmock,
 				database.ProvideService(sqlstore.InitTestDB(t)),
 				routing.NewRouteRegister(),
 			)
+			require.NoError(t, errInitAc)
 			report, err := usagestatsmock.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
