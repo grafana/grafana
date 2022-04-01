@@ -42,4 +42,6 @@ type Options struct {
 	UidSolver UidSolver
 	// InheritedScopesSolver if configured can generate additional scopes that will be used when fetching permissions for a resource
 	InheritedScopesSolver InheritedScopesSolver
+	// InheritedScopePrefixes is used to create evaluators TODO
+	InheritedScopePrefixes []string
 }
