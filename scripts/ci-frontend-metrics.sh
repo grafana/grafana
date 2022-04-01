@@ -41,10 +41,8 @@ echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
 echo -e "Number of enzyme tests: $ENZYME_TEST_COUNT"
 
 BETTERER_STATS=""
-
-while read line || [[ -n $line ]]
+while read -r name value
 do
-  read -r name value <<< "$line"
   BETTERER_STATS+=$'\n  '
   BETTERER_STATS+="\"grafana.ci-code.betterer.${name}\": \"${value}\","
 done <<< "$(yarn betterer:stats)"
