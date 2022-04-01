@@ -1,3 +1,8 @@
+// To change feature flags, edit:
+//  pkg/services/featuremgmt/registry.go
+// Then run tests in:
+//  pkg/services/featuremgmt/toggles_gen_test.go
+
 package featuremgmt
 
 var (
@@ -176,6 +181,11 @@ var (
 		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "alertProvisioning",
+			Description: "Provisioning-friendly routes for alerting",
 			State:       FeatureStateAlpha,
 		},
 		{
