@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	ttl           = 30 * time.Second
-	cleanInterval = 2 * time.Minute
+	ttl            = 30 * time.Second
+	cleanInterval  = 2 * time.Minute
+	maxPrefixParts = 2
 )
 
 func GetResourceScope(resource string, resourceID string) string {
@@ -156,10 +157,15 @@ func (s *ScopeResolver) GetResolveAttributeScopeMutator(orgID int64) ScopeMutato
 	}
 }
 
+// scopePrefix returns the prefix associated to a given scope
+// we assume prefixes are all in the form <resource>:<attribute>:<value>
+// ex: "datasources:name:test" returns "datasources:name:"
 func scopePrefix(scope string) string {
 	parts := strings.Split(scope, ":")
-	n := len(parts) - 1
-	parts[n] = ""
+	// We assume prefixes don't have more than maxPrefixParts parts
+	if len(parts) > maxPrefixParts {
+		parts = append(parts[:maxPrefixParts], "")
+	}
 	return strings.Join(parts, ":")
 }
 

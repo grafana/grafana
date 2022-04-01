@@ -482,12 +482,6 @@ func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDa
 	return nil // TODO: Implement
 }
 
-func (m *SQLStoreMock) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-	cmd.Id = m.ExpectedDashboard.Id
-	cmd.OrgId = m.ExpectedDashboard.OrgId
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	return m.ExpectedError
 }

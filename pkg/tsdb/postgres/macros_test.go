@@ -137,11 +137,11 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		t.Run("interpolate __unixEpochGroup function", func(t *testing.T) {
-			sql, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroup(time_column,'5m')")
+			sql, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroup(time_column+time_adjustment,'5m')")
 			require.NoError(t, err)
-			sql2, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroupAlias(time_column,'5m')")
+			sql2, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroupAlias(time_column+time_adjustment,'5m')")
 			require.NoError(t, err)
-			require.Equal(t, "SELECT floor(time_column/300)*300", sql)
+			require.Equal(t, "SELECT floor((time_column+time_adjustment)/300)*300", sql)
 			require.Equal(t, sql2, sql+" AS \"time\"")
 		})
 	})

@@ -202,6 +202,8 @@ Another way is to put a web server like Nginx or Apache in front of Grafana and 
 
 ### domain
 
+This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
+
 ### enforce_domain
 
 Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
@@ -1342,6 +1344,22 @@ For more information about this feature, refer to [Explore]({{< relref "../explo
 ### enabled
 
 Enable or disable the Explore section. Default is `enabled`.
+
+## [help]
+
+Configures the help section.
+
+### enabled
+
+Enable or disable the Help section. Default is `enabled`.
+
+## [profile]
+
+Configures the Profile section.
+
+### enabled
+
+Enable or disable the Profile section. Default is `enabled`.
 
 ## [metrics]
 

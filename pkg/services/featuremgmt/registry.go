@@ -1,3 +1,8 @@
+// To change feature flags, edit:
+//  pkg/services/featuremgmt/registry.go
+// Then run tests in:
+//  pkg/services/featuremgmt/toggles_gen_test.go
+
 package featuremgmt
 
 var (
@@ -100,6 +105,12 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:            "accesscontrol-builtins",
+			Description:     "Simplify access control builtin roles",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "prometheus_azure_auth",
 			Description: "Use azure authentication for prometheus datasource",
 			State:       FeatureStateBeta,
@@ -163,8 +174,18 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:        "saveDashboardDrawer",
+			Description: "Use a drawer to show save dashboard dialog",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "alertProvisioning",
+			Description: "Provisioning-friendly routes for alerting",
 			State:       FeatureStateAlpha,
 		},
 		{

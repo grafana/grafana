@@ -83,8 +83,8 @@ const ui = {
     addLabel: byRole('button', { name: /Add label/ }),
     // alert type buttons
     grafanaManagedAlert: byRole('button', { name: /Grafana managed/ }),
-    lotexAlert: byRole('button', { name: /Cortex or Loki alert/ }),
-    lotexRecordingRule: byRole('button', { name: /Cortex or Loki recording rule/ }),
+    lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
+    lotexRecordingRule: byRole('button', { name: /Mimir or Loki recording rule/ }),
   },
 };
 
@@ -132,6 +132,7 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalled());
 
     userEvent.type(await ui.inputs.name.find(), 'my great new rule');
     userEvent.click(await ui.buttons.lotexAlert.get());
@@ -522,15 +523,14 @@ describe('RuleEditor', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
 
-    // render rule editor, select cortex/loki managed alerts
+    // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    // wait for ui theck each datasource if it supports rule editing
+    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalledTimes(4));
 
     await ui.inputs.name.find();
     userEvent.click(await ui.buttons.lotexAlert.get());
-
-    // wait for ui theck each datasource if it supports rule editing
-    await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalledTimes(4));
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -98,6 +98,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         content: attr(data-label);
       }
     `,
+    serviceName: css`
+      margin-right: 8px;
+    `,
   };
 };
 
@@ -134,7 +137,9 @@ export function References(props: ReferenceItemProps) {
               <span className={styles.itemContent}>
                 {reference.span ? (
                   <span>
-                    <span className="span-svc-name">{reference.span.process.serviceName}</span>
+                    <span className={cx('span-svc-name', styles.serviceName)}>
+                      {reference.span.process.serviceName}
+                    </span>
                     <small className="endpoint-name">{reference.span.operationName}</small>
                   </span>
                 ) : (
