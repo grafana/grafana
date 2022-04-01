@@ -1345,6 +1345,22 @@ For more information about this feature, refer to [Explore]({{< relref "../explo
 
 Enable or disable the Explore section. Default is `enabled`.
 
+## [help]
+
+Configures the help section.
+
+### enabled
+
+Enable or disable the Help section. Default is `enabled`.
+
+## [profile]
+
+Configures the Profile section.
+
+### enabled
+
+Enable or disable the Profile section. Default is `enabled`.
+
 ## [metrics]
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "view-server/internal-metrics.md" >}}).

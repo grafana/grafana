@@ -30,7 +30,7 @@ export const CollapsableSection: FC<Props> = ({
 }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
-  const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
+
   const onClick = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
       return;
@@ -48,7 +48,7 @@ export const CollapsableSection: FC<Props> = ({
 
   return (
     <>
-      <div onClick={onClick} className={cx(styles.header, className)} title={tooltip}>
+      <div onClick={onClick} className={cx(styles.header, className)}>
         <button
           id={`collapse-button-${id}`}
           className={styles.button}
@@ -87,9 +87,6 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
-  }),
-  headerClosed: css({
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   button: css({
     all: 'unset',

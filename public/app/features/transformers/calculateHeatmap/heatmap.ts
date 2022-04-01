@@ -47,12 +47,11 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
 
 /** Given existing buckets, create a values style frame */
 // Assumes frames have already been sorted ASC and de-accumulated.
-export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
-  // assumes all Time fields are identical
+export function bucketsToScanlines(frame: DataFrame): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
-  const xField = frames[0].fields[0];
+  const xField = frame.fields[0];
   const xValues = xField.values.toArray();
-  const yField = frames[0].fields[1];
+  const yField = frame.fields[1];
 
   // similar to initBins() below
   const len = xValues.length * frames.length;
@@ -60,7 +59,7 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
   const ys = new Array(len);
   const counts2 = new Array(len);
 
-  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
+  const counts = frame.fields.slice(1).map((field) => field.values.toArray().slice());
 
   // transpose
   counts.forEach((bucketCounts, bi) => {
@@ -69,22 +68,7 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
     }
   });
 
-  const bucketBounds = frames.map((frame, i) => {
-    return i; // until we have y ordinal scales working for facets/scatter
-
-    /*
-    let bound: number;
-
-    if (frame.name === '+Inf') {
-      // TODO: until we have labeled y, treat +Inf as previous bucket + 10%
-      bound = +(frames[i - 1].name ?? 0) * 1.1;
-    } else {
-      bound = +(frame.name ?? 0);
-    }
-
-    return bound;
-    */
-  });
+  const bucketBounds = Array.from({ length: frame.fields.length - 1 }, (v, i) => i);
 
   // fill flat/repeating array
   for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {

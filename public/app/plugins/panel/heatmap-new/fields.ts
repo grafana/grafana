@@ -1,5 +1,12 @@
-import { DataFrame, DataFrameType, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
-import { calculateHeatmapFromData, createHeatmapFromBuckets } from 'app/features/transformers/calculateHeatmap/heatmap';
+import {
+  DataFrame,
+  DataFrameType,
+  FieldType,
+  getDisplayProcessor,
+  getFieldDisplayName,
+  GrafanaTheme2,
+} from '@grafana/data';
+import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
@@ -42,26 +49,23 @@ export function prepareHeatmapData(
   }
 
   // Find a well defined heatmap
-  let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
-  if (heatmap) {
-    return getHeatmapData(heatmap, theme);
+  let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
+  if (scanlinesHeatmap) {
+    return getHeatmapData(scanlinesHeatmap, theme);
+  }
+
+  let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
+  if (bucketsHeatmap) {
+    return {
+      yAxisValues: frames[0].fields.flatMap((field) =>
+        field.type === FieldType.number ? getFieldDisplayName(field) : []
+      ),
+      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), theme),
+    };
   }
 
   if (source === HeatmapSourceMode.Data) {
-    // TODO: check for names xMin, yMin etc...
-    return getHeatmapData(createHeatmapFromBuckets(frames), theme);
-  }
-
-  // detect a frame-per-bucket heatmap frame
-  // TODO: improve heuristic? infer from fields[1].labels.le === '+Inf' ?
-  if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.startsWith('+Inf'))) {
-    // already done by the Prometheus datasource frontend
-    //frames = prepBucketFrames(frames);
-
-    return {
-      yAxisValues: frames.map((f) => f.name ?? null),
-      ...getHeatmapData(createHeatmapFromBuckets(frames), theme),
-    };
+    return getHeatmapData(bucketsToScanlines(frames[0]), theme);
   }
 
   // TODO, check for error etc

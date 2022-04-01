@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 )
 
 type Cfg struct {
@@ -19,7 +20,7 @@ type Cfg struct {
 	AWSAssumeRoleEnabled    bool
 
 	// Azure Cloud settings
-	Azure setting.AzureSettings
+	Azure *azsettings.AzureSettings
 
 	BuildVersion string // TODO Remove
 }
