@@ -41,7 +41,7 @@ type RuleStore interface {
 	GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(ctx context.Context, query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
-	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
+	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
@@ -270,7 +270,7 @@ func (st DBstore) GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRul
 }
 
 // GetNamespaces returns the folders that are visible to the user and have at least one alert in it
-func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
+func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
 	namespaceMap := make(map[string]*models.Folder)
 
 	searchQuery := models.FindPersistedDashboardsQuery{
