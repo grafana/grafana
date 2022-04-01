@@ -17,6 +17,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/services"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -34,6 +35,7 @@ type AlertmanagerSrv struct {
 	store   AlertingStore
 	log     log.Logger
 	ac      accesscontrol.AccessControl
+	configs services.AlertmanagerConfigService
 }
 
 type UnknownReceiverError struct {
@@ -192,59 +194,14 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
-	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
-	if err := srv.store.GetLatestAlertmanagerConfiguration(c.Req.Context(), &query); err != nil {
+	config, err := srv.configs.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
+	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to get latest configuration")
+		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
-
-	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
-	}
-
-	result := apimodels.GettableUserConfig{
-		TemplateFiles: cfg.TemplateFiles,
-		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
-			Config: cfg.AlertmanagerConfig.Config,
-		},
-	}
-	for _, recv := range cfg.AlertmanagerConfig.Receivers {
-		receivers := make([]*apimodels.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
-		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			secureFields := make(map[string]bool, len(pr.SecureSettings))
-			for k := range pr.SecureSettings {
-				decryptedValue, err := srv.getDecryptedSecret(pr, k)
-				if err != nil {
-					return ErrResp(http.StatusInternalServerError, err, "failed to decrypt stored secure setting: %s", k)
-				}
-				if decryptedValue == "" {
-					continue
-				}
-				secureFields[k] = true
-			}
-			gr := apimodels.GettableGrafanaReceiver{
-				UID:                   pr.UID,
-				Name:                  pr.Name,
-				Type:                  pr.Type,
-				DisableResolveMessage: pr.DisableResolveMessage,
-				Settings:              pr.Settings,
-				SecureFields:          secureFields,
-			}
-			receivers = append(receivers, &gr)
-		}
-		gettableApiReceiver := apimodels.GettableApiReceiver{
-			GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
-				GrafanaManagedReceivers: receivers,
-			},
-		}
-		gettableApiReceiver.Name = recv.Name
-		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
-	}
-
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, config)
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
