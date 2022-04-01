@@ -34,7 +34,6 @@ NavBarMenu.displayName = 'NavBarMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    backgroundColor: theme.colors.background.primary,
     bottom: 0,
     display: 'flex',
     flexDirection: 'column',
