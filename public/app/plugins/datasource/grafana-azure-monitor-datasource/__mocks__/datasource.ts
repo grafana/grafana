@@ -31,6 +31,14 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       supportedTimeGrains: [],
       dimensions: [],
     }),
+    newGetMetricNamespaces: jest.fn().mockResolvedValueOnce([]),
+    newGetMetricNames: jest.fn().mockResolvedValueOnce([]),
+    newGetMetricMetadata: jest.fn().mockResolvedValueOnce({
+      primaryAggType: 'Average',
+      supportedAggTypes: ['Average', 'Maximum', 'Minimum'],
+      supportedTimeGrains: [],
+      dimensions: [],
+    }),
 
     azureLogAnalyticsDatasource: {
       getKustoSchema: () => Promise.resolve(),
