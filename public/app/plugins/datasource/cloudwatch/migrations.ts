@@ -1,6 +1,7 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { MetricEditorMode, CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricQueryType } from './types';
+
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './types';
 
 // Migrates a metric query that use more than one statistic into multiple queries
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
@@ -60,4 +61,8 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
       query.metricEditorMode = query.expression ? MetricEditorMode.Code : MetricEditorMode.Builder;
     }
   }
+}
+
+export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
+  return query;
 }

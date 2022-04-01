@@ -1,10 +1,7 @@
 import { DataQuery } from '@grafana/data';
-import {
-  migrateMultipleStatsAnnotationQuery,
-  migrateMultipleStatsMetricsQuery,
-  migrateCloudWatchQuery,
-} from './migrations';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from './types';
+
+import { migrateCloudWatchQuery, migrateMultipleStatsAnnotationQuery, migrateMultipleStatsMetricsQuery } from './migrations';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './types';
 
 describe('migration', () => {
   describe('migrateMultipleStatsMetricsQuery', () => {
@@ -170,4 +167,6 @@ describe('migration', () => {
       });
     });
   });
+
+  describe('migrateQueryAliasFormat');
 });
