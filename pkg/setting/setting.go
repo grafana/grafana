@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -302,7 +303,7 @@ type Cfg struct {
 	AWSListMetricsPageLimit int
 
 	// Azure Cloud settings
-	Azure AzureSettings
+	Azure *azsettings.AzureSettings
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -824,6 +825,7 @@ func NewCfg() *Cfg {
 	return &Cfg{
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
+		Azure:  &azsettings.AzureSettings{},
 	}
 }
 
