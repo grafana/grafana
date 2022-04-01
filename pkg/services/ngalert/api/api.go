@@ -135,5 +135,4 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			policies: api.Policies,
 		}), m)
 	}
-
 }
