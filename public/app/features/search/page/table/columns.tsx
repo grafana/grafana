@@ -14,7 +14,8 @@ export const generateColumns = (
   availableWidth: number,
   styles: { [key: string]: string },
   tags: string[],
-  onTagFilterChange: (tags: string[]) => void
+  onTagFilterChange: (tags: string[]) => void,
+  onDatasourceChange: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const urlField = data.fields.url!;
@@ -91,7 +92,7 @@ export const generateColumns = (
   // Show datasources if we have any
   if (access.datasource && hasFieldValue(access.datasource)) {
     width = DATASOURCE_COLUMN_WIDTH;
-    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
+    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon, onDatasourceChange));
     availableWidth -= width;
   }
 
@@ -171,7 +172,12 @@ function getIconForKind(v: string): IconName {
   return 'question-circle';
 }
 
-function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, iconClass: string): TableColumn {
+function makeDataSourceColumn(
+  field: Field<DataSourceRef[]>,
+  width: number,
+  iconClass: string,
+  onDatasourceChange: (datasource?: string) => void
+): TableColumn {
   return {
     Cell: DefaultCell,
     id: `column-datasource`,
@@ -188,10 +194,18 @@ function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, icon
               const icon = settings?.meta?.info?.logos?.small;
               if (icon) {
                 return (
-                  <span key={i}>
+                  <a
+                    key={i}
+                    href={`datasources/edit/${settings.uid}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      onDatasourceChange(settings.uid);
+                    }}
+                  >
                     <SVG src={icon} width={14} height={14} title={settings.type} className={iconClass} />
                     {settings.name}
-                  </span>
+                  </a>
                 );
               }
               return <span key={i}>{v.type}</span>;

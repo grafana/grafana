@@ -243,7 +243,22 @@ function shouldKeep(filter: QueryFilters, doc: InputDoc, index: number): boolean
       }
     }
   }
-  return true;
+
+  let keep = true;
+  // Any is OK
+  if (filter.datasource) {
+    keep = false;
+    const dss = doc.datasource?.get(index);
+    if (dss) {
+      for (const ds of dss) {
+        if (ds.uid === filter.datasource) {
+          keep = true;
+          break;
+        }
+      }
+    }
+  }
+  return keep;
 }
 
 function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc {

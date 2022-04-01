@@ -59,6 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     right: 0,
     zIndex: theme.zIndex.sidemenu,
     top: 0,
+    boxSizing: 'content-box',
     [theme.breakpoints.up('md')]: {
       borderRight: `1px solid ${theme.colors.border.weak}`,
       right: 'unset',
@@ -134,10 +135,12 @@ function NavItem({
           isActive={link === activeItem}
         >
           <div className={styles.savedItemsMenuItemWrapper}>
-            {link.img && (
-              <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-            )}
-            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            <div className={styles.iconContainer}>
+              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+              {link.img && (
+                <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
+              )}
+            </div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
@@ -149,6 +152,7 @@ function NavItem({
 const getNavItemStyles = (theme: GrafanaTheme2) => ({
   item: css({
     padding: `${theme.spacing(1)} 0`,
+    whiteSpace: 'normal',
     '&::before': {
       display: 'none',
     },
@@ -174,6 +178,9 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   }),
   fullWidth: css({
     width: '100%',
+  }),
+  iconContainer: css({
+    placeContent: 'center',
   }),
   savedItemsMenuItemWrapper: css({
     display: 'grid',
@@ -236,7 +243,9 @@ function CollapsibleNavItem({
 const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
   menuItem: css({
     position: 'relative',
-    display: 'flex',
+    display: 'grid',
+    gridAutoFlow: 'column',
+    gridTemplateColumns: '56px auto',
   }),
   collapsibleMenuItem: css({
     height: theme.spacing(6),
