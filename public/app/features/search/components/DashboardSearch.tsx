@@ -80,6 +80,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       background: ${theme.colors.background.canvas};
 
       ${theme.breakpoints.up('md')} {
+        left: ${theme.components.sidemenu.width}px;
         z-index: ${theme.zIndex.navbarFixed + 1};
       }
     `,
