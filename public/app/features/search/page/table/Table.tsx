@@ -219,6 +219,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-top: 5px;
     `,
     infoWrap: css`
+      color: ${theme.colors.text.secondary};
       span {
         margin-right: 10px;
       }
