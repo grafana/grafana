@@ -4,7 +4,6 @@ import {
   ErrorName,
   getLeftMostChild,
   getString,
-  log,
   makeBinOp,
   makeError,
   replaceVariables,
@@ -26,7 +25,6 @@ interface ParsingError {
 }
 
 export function buildVisualQueryFromString(expr: string): Context {
-  log(expr, parser.parse(expr).topNode);
   const replacedExpr = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
