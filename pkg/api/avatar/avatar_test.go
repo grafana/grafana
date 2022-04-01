@@ -106,13 +106,13 @@ func setupMockGravatarServer(counter *int, simulateError bool) *httptest.Server 
 			if urlHash == DEFAULT_NONSENSE_HASH {
 				w.WriteHeader(404)
 			} else {
-				w.Write(NONSENSE_BODY)
+				_, _ = w.Write(NONSENSE_BODY)
 			}
 		} else {
 			if simulateError {
 				w.WriteHeader(500)
 			} else {
-				w.Write(NONSENSE_BODY)
+				_, _ = w.Write(NONSENSE_BODY)
 			}
 		}
 	}))
