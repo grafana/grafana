@@ -1,6 +1,6 @@
 package setting
 
-import "github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
+import "github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 func (cfg *Cfg) readAzureSettings() {
 	azureSettings := &azsettings.AzureSettings{}
