@@ -76,7 +76,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       right: 0;
       bottom: 0;
       z-index: ${theme.zIndex.sidemenu};
-      position: absolute;
+      position: fixed;
       background: ${theme.colors.background.canvas};
 
       ${theme.breakpoints.up('md')} {
