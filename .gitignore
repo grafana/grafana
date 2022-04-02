@@ -120,6 +120,7 @@ debug.test
 
 # Ignoring frontend packages specifics
 /packages/**/dist
+/packages/**/stats.html
 /packages/**/compiled
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json

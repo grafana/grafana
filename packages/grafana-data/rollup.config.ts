@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import sourceMaps from 'rollup-plugin-sourcemaps';
 import json from '@rollup/plugin-json';
 import { terser } from 'rollup-plugin-terser';
+import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path';
 
 const pkg = require('./package.json');
@@ -25,6 +26,12 @@ const buildCjsPackage = ({ env }) => {
     external: [
       'lodash',
       'rxjs',
+      'rxjs/operators',
+      'moment',
+      'react',
+      'react-dom',
+      'regenerator-runtime',
+      'moment-timezone',
       '@grafana/schema', // Load from host
     ],
     plugins: [
@@ -37,6 +44,7 @@ const buildCjsPackage = ({ env }) => {
       }),
       resolve(),
       sourceMaps(),
+      env === 'development' && visualizer(),
       env === 'production' && terser(),
     ],
   };

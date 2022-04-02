@@ -2,6 +2,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import image from '@rollup/plugin-image';
 import { terser } from 'rollup-plugin-terser';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 const pkg = require('./package.json');
 
@@ -28,6 +29,7 @@ const buildCjsPackage = ({ env }) => {
     external: [
       'react',
       'react-dom',
+      'lodash',
       '@grafana/aws-sdk',
       '@grafana/data',
       '@grafana/schema',
@@ -42,6 +44,7 @@ const buildCjsPackage = ({ env }) => {
       }),
       resolve(),
       image(),
+      env === 'development' && visualizer(),
       env === 'production' && terser(),
     ],
   };
