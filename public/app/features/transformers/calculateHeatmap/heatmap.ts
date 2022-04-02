@@ -54,7 +54,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
   const yField = frame.fields[1];
 
   // similar to initBins() below
-  const len = xValues.length * frames.length;
+  const len = xValues.length * (frame.fields.length - 1);
   const xs = new Array(len);
   const ys = new Array(len);
   const counts2 = new Array(len);
