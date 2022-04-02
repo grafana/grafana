@@ -22,6 +22,14 @@ func (e UnknownReceiverError) Error() string {
 	return fmt.Sprintf("unknown receiver: %s", e.UID)
 }
 
+type AlertmanagerConfigRejectedError struct {
+	Inner error
+}
+
+func (e AlertmanagerConfigRejectedError) Error() string {
+	return fmt.Sprintf("failed to save and apply Alertmanager configuration: %s", e.Inner.Error())
+}
+
 // AlertmanagerConfigService is a domain-layer service which manages configs for the Grafana alertmanager.
 type AlertmanagerConfigService struct {
 	mam     *notifier.MultiOrgAlertmanager
@@ -145,7 +153,7 @@ func (s *AlertmanagerConfigService) ApplyAlertmanagerConfiguration(ctx context.C
 
 	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
 		s.log.Error("unable to save and apply alertmanager configuration", "err", err)
-		return fmt.Errorf("failed to save and apply Alertmanager configuration: %w", err)
+		return AlertmanagerConfigRejectedError{err}
 	}
 
 	return nil

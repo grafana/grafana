@@ -297,6 +297,10 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	if errors.As(err, &unknownReceiverError) {
 		return ErrResp(http.StatusBadRequest, unknownReceiverError, "")
 	}
+	var configRejectedError services.AlertmanagerConfigRejectedError
+	if errors.As(err, &configRejectedError) {
+		return ErrResp(http.StatusBadRequest, configRejectedError, "")
+	}
 	if resp := tryMapAMLookupError(err); resp != nil {
 		return resp
 	}
