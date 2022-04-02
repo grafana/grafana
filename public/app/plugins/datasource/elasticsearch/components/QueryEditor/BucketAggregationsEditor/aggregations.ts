@@ -1,6 +1,6 @@
 import { bucketAggregationConfig } from './utils';
 
-export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram';
+export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram' | 'nested';
 
 interface BaseBucketAggregation {
   id: string;
@@ -62,7 +62,12 @@ interface GeoHashGrid extends BucketAggregationWithField {
   };
 }
 
-export type BucketAggregation = DateHistogram | Histogram | Terms | Filters | GeoHashGrid;
+export interface Nested extends BucketAggregationWithField {
+  type: 'nested';
+  settings?: {};
+}
+
+export type BucketAggregation = DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested;
 
 export const isBucketAggregationWithField = (
   bucketAgg: BucketAggregation | BucketAggregationWithField
@@ -74,6 +79,7 @@ export const BUCKET_AGGREGATION_TYPES: BucketAggregationType[] = [
   'terms',
   'filters',
   'geohash_grid',
+  'nested',
 ];
 
 export const isBucketAggregationType = (s: BucketAggregationType | string): s is BucketAggregationType =>

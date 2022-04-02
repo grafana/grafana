@@ -45,6 +45,11 @@ export const bucketAggregationConfig: BucketsConfiguration = {
       min_doc_count: '0',
     },
   },
+  nested: {
+    label: 'Nested',
+    requiresField: true,
+    defaultSettings: {},
+  },
 };
 
 export const orderByOptions: Array<SelectableValue<string>> = [
