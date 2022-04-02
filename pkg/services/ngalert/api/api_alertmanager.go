@@ -295,13 +295,13 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	}
 	var unknownReceiverError services.UnknownReceiverError
 	if errors.As(err, &unknownReceiverError) {
-		return ErrResp(http.StatusBadRequest, err, "")
+		return ErrResp(http.StatusBadRequest, unknownReceiverError, "")
 	}
 	if resp := tryMapAMLookupError(err); resp != nil {
 		return resp
 	}
 
-	return ErrResp(http.StatusInternalServerError, err, err.Error())
+	return ErrResp(http.StatusInternalServerError, err, "")
 }
 
 func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.PostableAlerts) response.Response {
