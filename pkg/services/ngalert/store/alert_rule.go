@@ -6,13 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/guardian"
-
 	"github.com/grafana/grafana/pkg/models"
-
+	"github.com/grafana/grafana/pkg/services/guardian"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,7 +41,7 @@ type RuleStore interface {
 	GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(ctx context.Context, query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
-	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
+	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
@@ -270,23 +269,44 @@ func (st DBstore) GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRul
 	})
 }
 
-// GetNamespaces returns the folders that are visible to the user
-func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
+// GetNamespaces returns the folders that are visible to the user and have at least one alert in it
+func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
 	namespaceMap := make(map[string]*models.Folder)
+
+	searchQuery := models.FindPersistedDashboardsQuery{
+		OrgId:        orgID,
+		SignedInUser: user,
+		Type:         searchstore.TypeAlertFolder,
+		Limit:        -1,
+		Permission:   models.PERMISSION_VIEW,
+		Sort:         models.SortOption{},
+		Filters: []interface{}{
+			searchstore.FolderWithAlertsFilter{},
+		},
+	}
+
 	var page int64 = 1
 	for {
-		// if limit is negative; it fetches at most 1000
-		folders, err := st.FolderService.GetFolders(ctx, user, orgID, -1, page)
+		query := searchQuery
+		query.Page = page
+		proj, err := st.SQLStore.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(folders) == 0 {
+		if len(proj) == 0 {
 			break
 		}
 
-		for _, f := range folders {
-			namespaceMap[f.Uid] = f
+		for _, hit := range proj {
+			if !hit.IsFolder {
+				continue
+			}
+			namespaceMap[hit.UID] = &models.Folder{
+				Id:    hit.ID,
+				Uid:   hit.UID,
+				Title: hit.Title,
+			}
 		}
 		page += 1
 	}
@@ -300,7 +320,8 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 		return nil, err
 	}
 
-	if withCanSave {
+	// if access control is disabled, check that the user is allowed to save in the folder.
+	if withCanSave && st.AccessControl.IsDisabled() {
 		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
