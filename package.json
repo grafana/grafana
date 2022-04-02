@@ -179,7 +179,7 @@
     "eslint": "8.11.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-jest": "26.1.2",
-    "eslint-plugin-jsdoc": "38.0.6",
+    "eslint-plugin-jsdoc": "38.1.6",
     "eslint-plugin-lodash": "7.4.0",
     "eslint-plugin-react": "7.29.4",
     "eslint-plugin-react-hooks": "4.3.0",
