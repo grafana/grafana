@@ -38,11 +38,12 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   },
 };
 
-export function sortAscStrInf(aName?: string | null, bName?: string | null) {
-  let aBound = aName === '+Inf' ? Infinity : +(aName ?? 0);
-  let bBound = bName === '+Inf' ? Infinity : +(bName ?? 0);
+function parseNumeric(v?: string | null) {
+  return v === '+Inf' ? Infinity : v === '-Inf' ? -Infinity : +(v ?? 0);
+}
 
-  return aBound - bBound;
+export function sortAscStrInf(aName?: string | null, bName?: string | null) {
+  return parseNumeric(aName) - parseNumeric(bName);
 }
 
 /** Given existing buckets, create a values style frame */
@@ -54,7 +55,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
   const yField = frame.fields[1];
 
   // similar to initBins() below
-  const len = xValues.length * frames.length;
+  const len = xValues.length * (frame.fields.length - 1);
   const xs = new Array(len);
   const ys = new Array(len);
   const counts2 = new Array(len);
