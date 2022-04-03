@@ -163,7 +163,7 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 	return rsp
 }
 
-// For consistent ordering read values to an aray not a map
+// For consistent ordering read values to an array not a map
 func readLabelsAsPairs(iter *jsoniter.Iterator) [][2]string {
 	pairs := make([][2]string, 0, 10)
 	for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
