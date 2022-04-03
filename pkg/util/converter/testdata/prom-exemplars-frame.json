@@ -27,6 +27,13 @@
             "typeInfo": {
               "frame": "string"
             }
+          },
+          {
+            "name": "a",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
           }
         ]
       },
@@ -40,6 +47,9 @@
           ],
           [
             "EpTxMJ40fUus7aGY"
+          ],
+          [
+            "not in next"
           ]
         ]
       }
@@ -60,9 +70,9 @@
               "frame": "float64"
             },
             "labels": {
-              "service": "foo",
               "instance": "localhost:8090",
-              "job": "prometheus"
+              "job": "prometheus",
+              "service": "foo"
             }
           },
           {

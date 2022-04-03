@@ -11,7 +11,8 @@
             "exemplars": [
                 {
                     "labels": {
-                        "traceID": "EpTxMJ40fUus7aGY"
+                        "traceID": "EpTxMJ40fUus7aGY",
+                        "a": "not in next"
                     },
                     "value": "6",
                     "timestamp": 1600096945.479

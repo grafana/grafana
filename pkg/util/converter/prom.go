@@ -101,10 +101,11 @@ func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
 	return rsp
 }
 
-// will always return strings for now
+// will return strings or exemplars
 func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 	lookup := make(map[string]*data.Field)
 
+	var labelFrame *data.Frame
 	rsp := &backend.DataResponse{}
 	stringField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	stringField.Name = "Value"
@@ -115,12 +116,12 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 
 		// Either label or exemplars
 		case jsoniter.ObjectValue:
-			f, pairs := readLabelsOrExemplars(iter)
-			if f != nil {
-				rsp.Frames = append(rsp.Frames, f)
-			} else if pairs != nil {
+			exemplar, labelPairs := readLabelsOrExemplars(iter)
+			if exemplar != nil {
+				rsp.Frames = append(rsp.Frames, exemplar)
+			} else if labelPairs != nil {
 				max := 0
-				for _, pair := range pairs {
+				for _, pair := range labelPairs {
 					k := pair[0]
 					v := pair[1]
 					f, ok := lookup[k]
@@ -129,10 +130,11 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 						f.Name = k
 						lookup[k] = f
 
-						if len(rsp.Frames) == 0 {
-							rsp.Frames = append(rsp.Frames, data.NewFrame(""))
+						if labelFrame == nil {
+							labelFrame = data.NewFrame("")
+							rsp.Frames = append(rsp.Frames, labelFrame)
 						}
-						rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, f)
+						labelFrame.Fields = append(labelFrame.Fields, f)
 					}
 					f.Append(fmt.Sprintf("%v", v))
 					if f.Len() > max {
@@ -140,9 +142,11 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 					}
 				}
 
+				// Make sure all fields have equal length
 				for _, f := range lookup {
-					if f.Len() != max {
-						f.Append("") // no matching label
+					diff := max - f.Len()
+					if diff > 0 {
+						f.Extend(diff)
 					}
 				}
 			}
@@ -156,8 +160,8 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 		}
 	}
 
-	if rsp.Frames == nil {
-		rsp.Frames = data.Frames{data.NewFrame("", stringField)}
+	if rsp.Frames == nil || stringField.Len() > 0 {
+		rsp.Frames = append(rsp.Frames, data.NewFrame("", stringField))
 	}
 
 	return rsp
@@ -218,9 +222,12 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 								max = f.Len()
 							}
 						}
+
+						// Make sure all fields have equal length
 						for _, f := range lookup {
-							if f.Len() != max {
-								f.Append("") // no matching label
+							diff := max - f.Len()
+							if diff > 0 {
+								f.Extend(diff)
 							}
 						}
 
