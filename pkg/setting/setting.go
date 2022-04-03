@@ -138,14 +138,6 @@ var (
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
-	// analytics
-	GoogleAnalyticsId       string
-	GoogleTagManagerId      string
-	RudderstackDataPlaneUrl string
-	RudderstackWriteKey     string
-	RudderstackSdkUrl       string
-	RudderstackConfigUrl    string
-
 	// LDAP
 	LDAPEnabled           bool
 	LDAPConfigFile        string
@@ -385,6 +377,12 @@ type Cfg struct {
 	ReportingEnabled                    bool
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
+	GoogleAnalyticsId                   string
+	GoogleTagManagerId                  string
+	RudderstackDataPlaneUrl             string
+	RudderstackWriteKey                 string
+	RudderstackSdkUrl                   string
+	RudderstackConfigUrl                string
 
 	// LDAP
 	LDAPEnabled     bool
@@ -922,12 +920,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
-	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
-	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
-	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
-	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
-	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
-	RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
+	cfg.GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	cfg.GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	cfg.RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
+	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	cfg.RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 	if len(cfg.ReportingDistributor) >= 100 {
