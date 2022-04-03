@@ -10,6 +10,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+// helpful while debugging all the options that may appear
+func logf(format string, a ...interface{}) {
+	//fmt.Printf(format, a...)
+}
+
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
 func ReadPrometheusStyleResult(iter *jsoniter.Iterator) *backend.DataResponse {
 	var rsp *backend.DataResponse
@@ -28,12 +33,12 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator) *backend.DataResponse {
 		// case "warnings":
 		default:
 			v := iter.Read()
-			fmt.Printf("[ROOT] TODO, support key: %s / %v\n", l1Field, v)
+			logf("[ROOT] TODO, support key: %s / %v\n", l1Field, v)
 		}
 	}
 
 	if status != "success" {
-		fmt.Printf("ERROR: %s\n", status)
+		logf("ERROR: %s\n", status)
 	}
 
 	return rsp
@@ -87,15 +92,12 @@ func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
 				}
 			}
 
-			fmt.Printf("[data] TODO, support stats: %v\n", v)
-
 		default:
 			v := iter.Read()
-			fmt.Printf("[data] TODO, support key: %s / %v\n", l1Field, v)
+			logf("[data] TODO, support key: %s / %v\n", l1Field, v)
 		}
 	}
 
-	fmt.Printf("result: %s\n", resultType)
 	return rsp
 }
 
@@ -356,54 +358,22 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	return rsp
 }
 
-func readStreamFrames(iter *jsoniter.Iterator) *backend.DataResponse {
-	rsp := &backend.DataResponse{}
-
-	for iter.ReadArray() {
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0) // for now!
-		timeField.Name = "Time"
-		lineField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-		lineField.Name = "Line"
-		lineField.Labels = data.Labels{}
-
-		// Nanoseconds time field
-		tsField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-		tsField.Name = "TS"
-
-		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
-			switch l1Field {
-			case "stream":
-				iter.ReadVal(&lineField.Labels)
-
-			case "values":
-				for iter.ReadArray() {
-					iter.ReadArray()
-					ts := iter.ReadString()
-					iter.ReadArray()
-					line := iter.ReadString()
-					iter.ReadArray()
-
-					t := timeFromLokiString(ts)
-
-					timeField.Append(t)
-					lineField.Append(line)
-					tsField.Append(ts)
-				}
-			}
-		}
-	}
-
-	return rsp
-}
-
 func timeFromFloat(fv float64) time.Time {
-	ms := int64(fv * 1000.0)
-	return time.UnixMilli(ms).UTC()
+	return time.UnixMilli(int64(fv * 1000.0)).UTC()
 }
 
 func timeFromLokiString(str string) time.Time {
-	// 1645228233
-	// 1645030246277587968
+	// normal time values look like: 1645030246277587968
+	// and are less than: math.MaxInt65=9223372036854775807
+	// This will do a fast path for any date before 2033
+	s := len(str)
+	if s < 19 || (s == 19 && str[0] == '1') {
+		ns, err := strconv.ParseInt(str, 10, 64)
+		if err == nil {
+			return time.Unix(0, ns).UTC()
+		}
+	}
+
 	ss, _ := strconv.ParseInt(str[0:10], 10, 64)
 	ns, _ := strconv.ParseInt(str[10:], 10, 64)
 	return time.Unix(ss, ns).UTC()

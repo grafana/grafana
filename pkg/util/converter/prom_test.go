@@ -76,4 +76,8 @@ func TestTimeConversions(t *testing.T) {
 	assert.Equal(t,
 		time.Date(2022, time.February, 16, 16, 50, 46, 277587968, time.UTC),
 		timeFromLokiString("1645030246277587968"))
+
+	assert.Equal(t,
+		time.Date(2033, time.May, 18, 3, 33, 20, 0, time.UTC),
+		timeFromLokiString("2000000000000000000"))
 }
