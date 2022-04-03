@@ -332,7 +332,6 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	labelString := labels.String()
 
 	for iter.ReadArray() {
-
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
 			case "stream":
