@@ -179,6 +179,44 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses metrics query with function and aggregation with grouping', () => {
+    expect(buildVisualQueryFromString('sum by (job,name) (rate({app="frontend"} | json [5m]))')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'json', params: [] },
+          { id: 'rate', params: ['5m'] },
+          { id: '__sum_by', params: ['job', 'name'] },
+        ],
+      })
+    );
+  });
+
+  it('parses metrics query with function and aggregation with grouping at the end', () => {
+    expect(buildVisualQueryFromString('sum(rate({app="frontend"} | json [5m])) without(job,name)')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'json', params: [] },
+          { id: 'rate', params: ['5m'] },
+          { id: '__sum_without', params: ['job', 'name'] },
+        ],
+      })
+    );
+  });
+
   it('parses metrics query with function and aggregation and filters', () => {
     expect(buildVisualQueryFromString('sum(rate({app="frontend"} |~ `abc` | json | bar="baz" [5m]))')).toEqual(
       noErrors({

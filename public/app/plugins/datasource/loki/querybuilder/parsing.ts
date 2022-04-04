@@ -2,6 +2,7 @@ import { parser } from '@grafana/lezer-logql';
 import { SyntaxNode } from '@lezer/common';
 import {
   ErrorName,
+  getAllByType,
   getLeftMostChild,
   getString,
   makeBinOp,
@@ -217,7 +218,6 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  // Not implemented in visual query builder yet
   const id = 'line_format';
   const string = handleQuotes(getString(expr, node.getChild('String')));
 
@@ -228,7 +228,6 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  // Not implemented in visual query builder yet
   const id = 'label_format';
   const identifier = node.getChild('Identifier');
   const op = identifier!.nextSibling;
@@ -270,8 +269,25 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const nameNode = node.getChild('VectorOp');
   let funcName = getString(expr, nameNode);
 
+  const grouping = node.getChild('Grouping');
+  const labels: string[] = [];
+
+  if (grouping) {
+    const byModifier = grouping.getChild(`By`);
+    if (byModifier && funcName) {
+      funcName = `__${funcName}_by`;
+    }
+
+    const withoutModifier = grouping.getChild(`Without`);
+    if (withoutModifier) {
+      funcName = `__${funcName}_without`;
+    }
+
+    labels.push(...getAllByType(expr, grouping, 'Identifier'));
+  }
+
   const metricExpr = node.getChild('MetricExpr');
-  const op: QueryBuilderOperation = { id: funcName, params: [] };
+  const op: QueryBuilderOperation = { id: funcName, params: labels };
 
   if (metricExpr) {
     handleExpression(expr, metricExpr, context);
