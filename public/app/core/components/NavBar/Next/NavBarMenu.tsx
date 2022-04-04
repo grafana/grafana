@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
@@ -11,18 +11,19 @@ import { isMatchOrChildMatch } from '../utils';
 
 export interface Props {
   activeItem?: NavModelItem;
+  isOpen: boolean;
   navItems: NavModelItem[];
   onClose: () => void;
 }
 
-export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
+export function NavBarMenu({ activeItem, isOpen, navItems, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
-      isOpen: true,
+      isOpen,
       onClose,
     },
     ref
@@ -32,6 +33,12 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
     <div data-testid="navbarmenu" className={styles.container}>
       <FocusScope contain restoreFocus autoFocus>
         <nav className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
+          <IconButton
+            name={isOpen ? 'angle-left' : 'angle-right'}
+            className={styles.menuCollapseIcon}
+            size="xl"
+            onClick={onClose}
+          />
           <CustomScrollbar hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link) => (
@@ -73,6 +80,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
+  }),
+  menuCollapseIcon: css({
+    backgroundColor: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    position: 'absolute',
+    marginRight: 0,
+    top: '43px',
+    right: '0px',
+    zIndex: theme.zIndex.sidemenu,
+    borderRadius: '50%',
+
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
   }),
 });
 
