@@ -126,15 +126,18 @@ export class DashboardExporter {
     };
 
     const processPanel = (panel: PanelModel) => {
-      if (panel.datasource !== undefined && panel.datasource !== null) {
+      const isRegularPanel =
+        (panel.repeatPanelId === undefined || panel.repeatPanelId === null) &&
+        !('collapsed' in panel) &&
+        !('panels' in panel);
+
+      if (isRegularPanel) {
         templateizeDatasourceUsage(panel);
       }
 
       if (panel.targets) {
         for (const target of panel.targets) {
-          if (target.datasource !== undefined) {
-            templateizeDatasourceUsage(target);
-          }
+          templateizeDatasourceUsage(target);
         }
       }
 

@@ -276,6 +276,10 @@ describe('given dashboard with repeated panels', () => {
             },
           ],
         },
+        {
+          id: 5,
+          targets: [{ scenarioId: 'random_walk', refId: 'A' }],
+        },
       ],
     };
 
@@ -310,6 +314,12 @@ describe('given dashboard with repeated panels', () => {
   it('should replace datasource refs', () => {
     const panel = exported.panels[0];
     expect(panel.datasource.uid).toBe('${DS_GFDB}');
+  });
+
+  it('should explicitly specify default datasources', () => {
+    const panel = exported.panels[7];
+    expect(panel.datasource.uid).toBe('${DS_GFDB}');
+    expect(panel.targets[0].datasource).toBe('${DS_GFDB}');
   });
 
   it('should replace datasource refs in collapsed row', () => {
