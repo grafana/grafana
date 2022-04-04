@@ -160,7 +160,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
     `,
     cellWrapper: css`
-      display: flex;
+      div {
+        border-right: none;
+        &:hover {
+          box-shadow: none;
+        }
+      }
     `,
     headerCell: css`
       padding-top: 2px;
