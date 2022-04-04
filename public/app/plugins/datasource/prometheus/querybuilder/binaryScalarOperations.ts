@@ -77,12 +77,12 @@ export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDe
   const params: QueryBuilderOperationParamDef[] = [{ name: 'Value', type: 'number' }];
   const defaultParams: any[] = [2];
   if (opDef.comparison) {
-    params.unshift({
+    params.push({
       name: 'Bool',
       type: 'boolean',
       description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
     });
-    defaultParams.unshift(false);
+    defaultParams.push(false);
   }
 
   return {
@@ -102,8 +102,7 @@ function getSimpleBinaryRenderer(operator: string) {
     let param = model.params[0];
     let bool = '';
     if (model.params.length === 2) {
-      param = model.params[1];
-      bool = model.params[0] ? ' bool' : '';
+      bool = model.params[1] ? ' bool' : '';
     }
 
     return `${innerExpr} ${operator}${bool} ${param}`;

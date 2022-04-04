@@ -24,11 +24,11 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "21.0.1",
+    "@rollup/plugin-commonjs": "21.0.2",
     "@rollup/plugin-node-resolve": "13.1.3",
-    "@types/node": "16.11.22",
+    "@types/node": "16.11.26",
     "rimraf": "3.0.2",
-    "rollup": "2.70.0",
+    "rollup": "2.70.1",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2"
   },

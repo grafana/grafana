@@ -390,6 +390,26 @@ func TestDashboardFileReader(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should not create dashboard folder with uid general", func(t *testing.T) {
+		setup()
+		cfg := &config{
+			Name:      "DefaultB",
+			Type:      "file",
+			OrgID:     1,
+			Folder:    "TEAM B",
+			FolderUID: "general",
+			Options: map[string]interface{}{
+				"folder": defaultDashboards,
+			},
+		}
+
+		r, err := NewDashboardFileReader(cfg, logger, nil)
+		require.NoError(t, err)
+
+		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
+		require.ErrorIs(t, err, models.ErrFolderInvalidUID)
+	})
+
 	t.Run("Walking the folder with dashboards", func(t *testing.T) {
 		setup()
 		noFiles := map[string]os.FileInfo{}

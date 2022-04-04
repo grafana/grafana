@@ -3,13 +3,11 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -408,7 +406,7 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.Dispatch(ctx, cmd)
+	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
 }
 
 func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *m.SaveDashboardDTO) (
@@ -450,7 +448,6 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *m.SaveDashboardDTO, dash *models.Dashboard, provisioned bool) error {
 	inFolder := dash.FolderId > 0
 	if dr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		resourceID := strconv.FormatInt(dash.Id, 10)
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if !provisioned {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
@@ -470,7 +467,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 			svc = dr.folderPermissions
 		}
 
-		_, err := svc.SetPermissions(ctx, dto.OrgId, resourceID, permissions...)
+		_, err := svc.SetPermissions(ctx, dto.OrgId, dash.Uid, permissions...)
 		if err != nil {
 			return err
 		}

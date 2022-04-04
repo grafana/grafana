@@ -19,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1441,7 +1443,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, permissionsServices)
 	ac := acmock.New()
-	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, permissionsServices, ac)
+	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, permissionsServices, ac, nil)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
@@ -1477,6 +1479,8 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 }
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	store := mockstore.NewSQLStoreMock()
+	guardian.InitLegacyGuardian(store)
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
@@ -1542,7 +1546,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		folderService := dashboardservice.ProvideFolderService(
 			cfg, dashboardService, dashboardStore, nil,
-			features, permissionsServices, ac,
+			features, permissionsServices, ac, nil,
 		)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)

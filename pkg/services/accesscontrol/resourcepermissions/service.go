@@ -111,12 +111,13 @@ func (s *Service) GetPermissions(ctx context.Context, user *models.SignedInUser,
 	}
 
 	return s.store.GetResourcePermissions(ctx, user.OrgId, types.GetResourcePermissionsQuery{
-		User:            user,
-		Actions:         s.actions,
-		Resource:        s.options.Resource,
-		ResourceID:      resourceID,
-		InheritedScopes: inheritedScopes,
-		OnlyManaged:     s.options.OnlyManaged,
+		User:              user,
+		Actions:           s.actions,
+		Resource:          s.options.Resource,
+		ResourceID:        resourceID,
+		ResourceAttribute: s.options.ResourceAttribute,
+		InheritedScopes:   inheritedScopes,
+		OnlyManaged:       s.options.OnlyManaged,
 	})
 }
 
@@ -135,10 +136,11 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	}
 
 	return s.store.SetUserResourcePermission(ctx, orgID, user, types.SetResourcePermissionCommand{
-		Actions:    actions,
-		Permission: permission,
-		ResourceID: resourceID,
-		Resource:   s.options.Resource,
+		Actions:           actions,
+		Permission:        permission,
+		Resource:          s.options.Resource,
+		ResourceID:        resourceID,
+		ResourceAttribute: s.options.ResourceAttribute,
 	}, s.options.OnSetUser)
 }
 
@@ -157,10 +159,11 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	}
 
 	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, types.SetResourcePermissionCommand{
-		Actions:    actions,
-		Permission: permission,
-		ResourceID: resourceID,
-		Resource:   s.options.Resource,
+		Actions:           actions,
+		Permission:        permission,
+		Resource:          s.options.Resource,
+		ResourceID:        resourceID,
+		ResourceAttribute: s.options.ResourceAttribute,
 	}, s.options.OnSetTeam)
 }
 
@@ -179,10 +182,11 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	}
 
 	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, types.SetResourcePermissionCommand{
-		Actions:    actions,
-		Permission: permission,
-		ResourceID: resourceID,
-		Resource:   s.options.Resource,
+		Actions:           actions,
+		Permission:        permission,
+		Resource:          s.options.Resource,
+		ResourceID:        resourceID,
+		ResourceAttribute: s.options.ResourceAttribute,
 	}, s.options.OnSetBuiltInRole)
 }
 
@@ -220,10 +224,11 @@ func (s *Service) SetPermissions(
 			TeamID:      cmd.TeamID,
 			BuiltinRole: cmd.BuiltinRole,
 			SetResourcePermissionCommand: types.SetResourcePermissionCommand{
-				Actions:    actions,
-				Resource:   s.options.Resource,
-				ResourceID: resourceID,
-				Permission: cmd.Permission,
+				Actions:           actions,
+				Resource:          s.options.Resource,
+				ResourceID:        resourceID,
+				ResourceAttribute: s.options.ResourceAttribute,
+				Permission:        cmd.Permission,
 			},
 		})
 	}
@@ -301,7 +306,7 @@ func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     5,
+			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
 			DisplayName: s.options.ReaderRoleName,
 			Group:       s.options.RoleGroup,
@@ -314,7 +319,7 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     5,
+			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
 			DisplayName: s.options.WriterRoleName,
 			Group:       s.options.RoleGroup,

@@ -253,6 +253,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	}
 	hs.registerRoutes()
 
+	// Register access control scope resolver for annotations
+	hs.AccessControl.RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
+
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
 	}
@@ -494,6 +497,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.healthzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
+	m.Use(hs.pluginMetricsEndpoint)
 
 	m.Use(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg))

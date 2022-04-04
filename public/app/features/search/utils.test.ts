@@ -7,7 +7,7 @@ import {
   mergeReducers,
   parseRouteParams,
 } from './utils';
-import { sections, searchResults } from './testData';
+import { sections, searchResults, checkedGeneralFolder, checkedOtherFolder, folderViewAllChecked } from './testData';
 import { SearchQueryParams } from './types';
 
 describe('Search utils', () => {
@@ -131,21 +131,35 @@ describe('Search utils', () => {
   });
 
   describe('getCheckedUids', () => {
-    it('should return object with empty arrays if no checked items are available', () => {
-      expect(getCheckedUids(sections as any[])).toEqual({ folders: [], dashboards: [] });
+    it('should not return any UIDs if no items are checked', () => {
+      expect(getCheckedUids(sections)).toEqual({ folders: [], dashboards: [] });
     });
 
-    it('should return uids for all checked items', () => {
-      expect(getCheckedUids(searchResults as any[])).toEqual({
-        folders: ['JB_zdOUWk'],
-        dashboards: ['lBdLINUWk', '8DY63kQZk'],
+    it('should return only dashboard UIDs if the General folder is checked', () => {
+      expect(getCheckedUids(checkedGeneralFolder)).toEqual({
+        folders: [],
+        dashboards: ['general-abc', 'general-def', 'general-ghi'],
+      });
+    });
+
+    it('should return only dashboard UIDs if all items are checked when viewing a folder', () => {
+      expect(getCheckedUids(folderViewAllChecked)).toEqual({
+        folders: [],
+        dashboards: ['other-folder-dash-abc', 'other-folder-dash-def'],
+      });
+    });
+
+    it('should return folder + dashboard UIDs when folder is checked in the root view', () => {
+      expect(getCheckedUids(checkedOtherFolder)).toEqual({
+        folders: ['other-folder-abc'],
+        dashboards: ['other-folder-dash-abc', 'other-folder-dash-def'],
       });
     });
   });
 
   describe('getCheckedDashboardsUids', () => {
     it('should get uids of all checked dashboards', () => {
-      expect(getCheckedDashboardsUids(searchResults as any[])).toEqual(['lBdLINUWk', '8DY63kQZk']);
+      expect(getCheckedDashboardsUids(searchResults)).toEqual(['lBdLINUWk', '8DY63kQZk']);
     });
   });
 

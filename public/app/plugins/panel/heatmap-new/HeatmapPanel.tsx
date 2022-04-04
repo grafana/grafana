@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
+import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -37,6 +37,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
+  // ugh
+  let timeRangeRef = useRef<TimeRange>(timeRange);
+  timeRangeRef.current = timeRange;
+
   const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
 
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
@@ -70,19 +74,22 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     [options, data.structureRev]
   );
 
+  // ugh
   const dataRef = useRef<HeatmapData>(info);
-
   dataRef.current = info;
 
   const builder = useMemo(() => {
     return prepConfig({
       dataRef,
       theme,
-      onhover: options.tooltip.show ? onhover : () => {},
-      onclick: options.tooltip.show ? onclick : () => {},
+      onhover: options.tooltip.show ? onhover : null,
+      onclick: options.tooltip.show ? onclick : null,
+      onzoom: (evt) => {
+        onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+      },
       isToolTipOpen,
       timeZone,
-      timeRange,
+      getTimeRange: () => timeRangeRef.current,
       palette,
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
@@ -99,9 +106,15 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
     const display = field.display ? (v: number) => formattedValueToString(field.display!(v)) : (v: number) => `${v}`;
 
+    let hoverValue: number | undefined = undefined;
+    if (hover && info.heatmap.fields) {
+      const countField = info.heatmap.fields[2];
+      hoverValue = countField?.values.get(hover.index);
+    }
+
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale colorPalette={palette} min={min} max={max} display={display} />
+        <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={display} />
       </VizLayout.Legend>
     );
   };

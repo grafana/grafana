@@ -21,7 +21,6 @@ var dashboardPermissionTranslation = map[models.PermissionType][]string{
 	models.PERMISSION_EDIT: {
 		ac.ActionDashboardsRead,
 		ac.ActionDashboardsWrite,
-		ac.ActionDashboardsCreate,
 		ac.ActionDashboardsDelete,
 	},
 	models.PERMISSION_ADMIN: {
@@ -39,6 +38,7 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 		dashboards.ActionFoldersRead,
 	}...),
 	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
+		ac.ActionDashboardsCreate,
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
 		dashboards.ActionFoldersCreate,
@@ -56,6 +56,7 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 
 func AddDashboardPermissionsMigrator(mg *migrator.Migrator) {
 	mg.AddMigration("dashboard permissions", &dashboardPermissionsMigrator{})
+	mg.AddMigration("dashboard permissions uid scopes", &dashboardUidPermissionMigrator{})
 }
 
 var _ migrator.CodeMigration = new(dashboardPermissionsMigrator)
@@ -129,7 +130,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 
 	var allRoles []*ac.Role
 	rolesToCreate := []*ac.Role{}
-	assignments := map[int64]map[string]struct{}{}
 	for orgID, roles := range permissionMap {
 		for name := range roles {
 			role, err := m.findRole(orgID, name)
@@ -138,10 +138,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 			}
 			if role.ID == 0 {
 				rolesToCreate = append(rolesToCreate, &ac.Role{OrgID: orgID, Name: name})
-				if _, ok := assignments[orgID]; !ok {
-					assignments[orgID] = map[string]struct{}{}
-				}
-				assignments[orgID][name] = struct{}{}
 			} else {
 				allRoles = append(allRoles, &role)
 			}
@@ -153,16 +149,11 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		return err
 	}
 
-	rolesToAssign := map[int64]map[string]*ac.Role{}
 	for i := range createdRoles {
-		if _, ok := rolesToAssign[createdRoles[i].OrgID]; !ok {
-			rolesToAssign[createdRoles[i].OrgID] = map[string]*ac.Role{}
-		}
-		rolesToAssign[createdRoles[i].OrgID][createdRoles[i].Name] = createdRoles[i]
 		allRoles = append(allRoles, createdRoles[i])
 	}
 
-	if err := m.bulkAssignRoles(rolesToAssign, assignments); err != nil {
+	if err := m.bulkAssignRoles(createdRoles); err != nil {
 		return err
 	}
 
@@ -228,4 +219,64 @@ func getRoleName(p models.DashboardAcl) string {
 		return fmt.Sprintf("managed:teams:%d:permissions", p.TeamID)
 	}
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(string(*p.Role)))
+}
+
+var _ migrator.CodeMigration = new(dashboardUidPermissionMigrator)
+
+type dashboardUidPermissionMigrator struct {
+	migrator.MigrationBase
+}
+
+func (d *dashboardUidPermissionMigrator) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (d *dashboardUidPermissionMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	if err := d.migrateWildcards(sess); err != nil {
+		return err
+	}
+	return d.migrateIdScopes(sess)
+}
+
+func (d *dashboardUidPermissionMigrator) migrateWildcards(sess *xorm.Session) error {
+	if _, err := sess.Exec("DELETE FROM permission WHERE action = 'dashboards:create' AND scope LIKE 'dashboards%'"); err != nil {
+		return err
+	}
+	if _, err := sess.Exec("UPDATE permission SET scope = 'dashboards:uid:*' WHERE scope = 'dashboards:id:*'"); err != nil {
+		return err
+	}
+	if _, err := sess.Exec("UPDATE permission SET scope = 'folders:uid:*' WHERE scope = 'folders:id:*'"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *dashboardUidPermissionMigrator) migrateIdScopes(sess *xorm.Session) error {
+	type dashboard struct {
+		ID       int64  `xorm:"id"`
+		UID      string `xorm:"uid"`
+		IsFolder bool
+	}
+	var dashboards []dashboard
+	if err := sess.SQL("SELECT id, uid, is_folder FROM dashboard").Find(&dashboards); err != nil {
+		return err
+	}
+
+	for _, d := range dashboards {
+		var idScope string
+		var uidScope string
+
+		if d.IsFolder {
+			idScope = ac.Scope("folders", "id", strconv.FormatInt(d.ID, 10))
+			uidScope = ac.Scope("folders", "uid", d.UID)
+		} else {
+			idScope = ac.Scope("dashboards", "id", strconv.FormatInt(d.ID, 10))
+			uidScope = ac.Scope("dashboards", "uid", d.UID)
+		}
+
+		if _, err := sess.Exec("UPDATE permission SET scope = ? WHERE scope = ?", uidScope, idScope); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -1,7 +1,8 @@
 package azuremonitor
 
 import (
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -59,22 +60,22 @@ var (
 	// The different Azure routes are identified by its cloud (e.g. public or gov)
 	// and the service to query (e.g. Azure Monitor or Azure Log Analytics)
 	routes = map[string]map[string]types.AzRoute{
-		setting.AzurePublic: {
+		azsettings.AzurePublic: {
 			azureMonitor:                 azManagement,
 			azureLogAnalytics:            azLogAnalytics,
 			azureResourceGraph:           azManagement,
 			deprecated.AppInsights:       deprecated.AzAppInsights,
 			deprecated.InsightsAnalytics: deprecated.AzAppInsights,
 		},
-		setting.AzureUSGovernment: {
+		azsettings.AzureUSGovernment: {
 			azureMonitor:       azUSGovManagement,
 			azureLogAnalytics:  azUSGovLogAnalytics,
 			azureResourceGraph: azUSGovManagement,
 		},
-		setting.AzureGermany: {
+		azsettings.AzureGermany: {
 			azureMonitor: azGermanyManagement,
 		},
-		setting.AzureChina: {
+		azsettings.AzureChina: {
 			azureMonitor:                 azChinaManagement,
 			azureLogAnalytics:            azChinaLogAnalytics,
 			azureResourceGraph:           azChinaManagement,
