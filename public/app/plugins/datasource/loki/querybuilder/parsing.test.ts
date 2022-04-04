@@ -142,6 +142,27 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with with simple unwrap', () => {
+    expect(
+      buildVisualQueryFromString('sum_over_time({app="frontend"} | logfmt | unwrap bytes_processed [1m])')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: 'unwrap', params: ['bytes_processed'] },
+          { id: 'sum_over_time', params: ['1m'] },
+        ],
+      })
+    );
+  });
+
   it('parses metrics query with function', () => {
     expect(buildVisualQueryFromString('rate({app="frontend"} | json [5m])')).toEqual(
       noErrors({

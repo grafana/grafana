@@ -84,6 +84,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case 'UnwrapExpr': {
+      visQuery.operations.push(getUnwrap(expr, node));
+      break;
+    }
+
     case 'RangeAggregationExpr': {
       visQuery.operations.push(handleRangeAggregation(expr, node, context));
       break;
@@ -238,6 +243,16 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   return {
     id,
     params: [getString(expr, identifier), getString(expr, op), valueString],
+  };
+}
+
+function getUnwrap(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  const id = 'unwrap';
+  const string = getString(expr, node.getChild('Identifier'));
+
+  return {
+    id,
+    params: [string],
   };
 }
 
