@@ -218,6 +218,7 @@ def enterprise_downstream_step(edition, ver_mode):
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
+                'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
         'depends_on': dependencies,
