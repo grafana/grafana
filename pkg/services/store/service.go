@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -112,7 +114,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		message:    "Uploaded successfully",
 	}
 	upload, _ := s.tree.getRoot("upload")
-	grafanaStorageLogger.Info("upload", "upload", s.tree.lookup)
+
 	if upload == nil {
 		return &response, fmt.Errorf("upload feature is not enabled")
 	}
@@ -120,25 +122,33 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	files := form.File["file"]
 	for _, fileHeader := range files {
 		// Restrict the size of each uploaded file to 1MB.
-		// TODO: To prevent the aggregate size from exceeding
-		// a specified value, use the http.MaxBytesReader() method
-		// before calling ParseMultipartForm()
 		if fileHeader.Size > MAX_UPLOAD_SIZE {
+			response.statusCode = 400
+			response.message = "The uploaded image is too big"
 			return &response, fmt.Errorf("The uploaded image is too big: %s. Please use an image less than 1MB in size", strconv.FormatInt(fileHeader.Size, 10))
 		}
+
 		// open each file to copy contents
 		file, err := fileHeader.Open()
 		if err != nil {
 			response.statusCode = 500
-			response.message = "error in opening file to read"
-			return &response, err
+			response.message = "server error in opening file to read"
+			return &response, fmt.Errorf("server error in opening file to read")
 		}
 		defer file.Close()
 		data, err := ioutil.ReadAll(file)
 		if err != nil {
 			response.statusCode = 500
-			response.message = "error in reading file"
+			response.message = "server error in reading file"
 			return &response, err
+		}
+		filetype := http.DetectContentType(data)
+		// only allow images to be uploaded
+		if (filetype != "image/jpeg") && (filetype != "image/jpg") && (filetype != "image/gif") && (filetype != "image/png") && (filetype != "image/svg+xml") && !strings.HasSuffix(fileHeader.Filename, ".svg") {
+			return &Response{
+				statusCode: 400,
+				message:    "unsupported file type uploaded",
+			}, fmt.Errorf("only image files are supported")
 		}
 		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
 			Path:     "/" + fileHeader.Filename,
@@ -146,7 +156,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		})
 		if err != nil {
 			response.statusCode = 500
-			response.message = "error in uploading file"
+			response.message = "server error in uploading file"
 			return &response, err
 		}
 		response.fileName = fileHeader.Filename
