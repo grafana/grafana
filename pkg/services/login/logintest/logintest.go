@@ -34,7 +34,6 @@ func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models
 }
 
 func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
-	fmt.Println("==== GET AUTH INFO === ", query, a.ExpectedError)
 	a.LatestUserID = query.UserId
 	return a.ExpectedError
 }
