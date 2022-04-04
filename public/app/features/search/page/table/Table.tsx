@@ -15,6 +15,7 @@ type Props = {
   width: number;
   tags: string[];
   onTagFilterChange: (tags: string[]) => void;
+  onDatasourceChange: (datasource?: string) => void;
 };
 
 export type TableColumn = Column & {
@@ -36,7 +37,7 @@ export interface FieldAccess {
   datasource: DataSourceRef[];
 }
 
-export const Table = ({ data, width, tags, onTagFilterChange }: Props) => {
+export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange }: Props) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 
@@ -54,8 +55,8 @@ export const Table = ({ data, width, tags, onTagFilterChange }: Props) => {
   const access = useMemo(() => new DataFrameView<FieldAccess>(data), [data]);
   const memoizedColumns = useMemo(() => {
     const isDashboardList = data.meta?.type === DataFrameType.DirectoryListing;
-    return generateColumns(access, isDashboardList, width, styles, tags, onTagFilterChange);
-  }, [data.meta?.type, access, width, styles, tags, onTagFilterChange]);
+    return generateColumns(access, isDashboardList, width, styles, tags, onTagFilterChange, onDatasourceChange);
+  }, [data.meta?.type, access, width, styles, tags, onTagFilterChange, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({
@@ -77,7 +78,11 @@ export const Table = ({ data, width, tags, onTagFilterChange }: Props) => {
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
-            if (cell.column.id === 'column-checkbox' || cell.column.id === 'column-tags') {
+            if (
+              cell.column.id === 'column-checkbox' ||
+              cell.column.id === 'column-tags' ||
+              cell.column.id === 'column-datasource'
+            ) {
               return (
                 <div key={index} className={styles.cellWrapper}>
                   <TableCell
@@ -174,7 +179,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     cellWrapper: css`
       display: flex;
-      pointer-events: none;
     `,
     headerCell: css`
       padding-top: 2px;

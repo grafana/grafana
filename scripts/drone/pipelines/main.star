@@ -197,6 +197,9 @@ def main_pipelines(edition):
     drone_change_trigger = {
         'event': ['push',],
         'branch': 'main',
+        'repo': [
+            'grafana/grafana',
+        ],
         'paths': {
             'include': [
                 '.drone.yml',
