@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
+import { NavBarToggle } from './NavBarToggle';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -79,12 +80,12 @@ export const NavBarNext = React.memo(() => {
               <Icon name="bars" size="xl" />
             </div>
 
-            <IconButton
-              name={'angle-right'}
+            <NavBarToggle
               className={styles.menuExpandIcon}
-              size="xl"
-              onClick={() => setMenuOpen(true)}
+              isExpanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
             />
+
             <ul className={styles.itemList}>
               <NavBarItemWithoutMenu
                 isActive={isMatchOrChildMatch(homeItem, activeItem)}
@@ -235,19 +236,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.sidemenu,
   }),
   menuExpandIcon: css({
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
     position: 'absolute',
     marginRight: 0,
     top: '43px',
     right: '0px',
-    zIndex: theme.zIndex.sidemenu,
     transform: `translateX(50%)`,
-    borderRadius: '50%',
-
-    [theme.breakpoints.down('md')]: {
-      display: 'none',
-    },
   }),
 });
 
@@ -268,34 +261,23 @@ const getAnimStyles = (theme: GrafanaTheme2) => {
     width: theme.spacing(7),
   };
 
-  const buttonShift = {
-    '& + button': {
-      transform: 'translateX(0%)',
-    },
-  };
-
   return {
     enter: css({
       ...closedStyles,
-      ...buttonShift,
     }),
     enterActive: css({
       ...transitionProps,
       ...openStyles,
-      ...buttonShift,
     }),
     enterDone: css({
       ...openStyles,
-      ...buttonShift,
     }),
     exit: css({
       ...openStyles,
-      ...buttonShift,
     }),
     exitActive: css({
       ...transitionProps,
       ...closedStyles,
-      ...buttonShift,
     }),
   };
 };

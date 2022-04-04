@@ -8,6 +8,7 @@ import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { isMatchOrChildMatch } from '../utils';
+import { NavBarToggle } from './NavBarToggle';
 
 export interface Props {
   activeItem?: NavModelItem;
@@ -33,12 +34,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose }: Props) {
     <div data-testid="navbarmenu" className={styles.container}>
       <FocusScope contain restoreFocus autoFocus>
         <nav className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
-          <IconButton
-            name={isOpen ? 'angle-left' : 'angle-right'}
-            className={styles.menuCollapseIcon}
-            size="xl"
-            onClick={onClose}
-          />
+          <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
           <CustomScrollbar hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link) => (
@@ -82,18 +78,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
   }),
   menuCollapseIcon: css({
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
     position: 'absolute',
     marginRight: 0,
     top: '43px',
     right: '0px',
-    zIndex: theme.zIndex.sidemenu,
-    borderRadius: '50%',
-
-    [theme.breakpoints.down('md')]: {
-      display: 'none',
-    },
   }),
 });
 
