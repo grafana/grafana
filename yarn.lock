@@ -3239,7 +3239,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:^5.1.7":
+"@betterer/betterer@npm:5.1.7, @betterer/betterer@npm:^5.1.7":
   version: 5.1.7
   resolution: "@betterer/betterer@npm:5.1.7"
   dependencies:
@@ -20425,6 +20425,7 @@ __metadata:
     "@babel/preset-env": 7.16.11
     "@babel/preset-react": 7.16.7
     "@babel/preset-typescript": 7.16.7
+    "@betterer/betterer": 5.1.7
     "@betterer/cli": 5.1.7
     "@betterer/regexp": 5.1.7
     "@emotion/css": 11.7.1
