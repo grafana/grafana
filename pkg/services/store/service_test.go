@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"mime/multipart"
+	"os"
 	"path"
 	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,27 +52,16 @@ func TestListFiles(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
-	publicRoot, err := filepath.Abs("../../../public")
+	features := featuremgmt.WithFeatures(featuremgmt.FlagStorageLocalUpload)
+	path, err := os.Getwd()
 	require.NoError(t, err)
-	roots := []storageRuntime{
-		newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
-			Path: publicRoot,
-			Roots: []string{
-				"/testdata/",
-				"/img/icons/",
-				"/img/bg/",
-				"/gazetteer/",
-				"/maps/",
-				"/upload/",
-			},
-		}).setReadOnly(true).setBuiltin(true),
-	}
-	store := newStandardStorageService(roots)
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/", DataPath: path}
+	s := ProvideService(nil, features, cfg)
 	testForm := &multipart.Form{
 		Value: map[string][]string{},
 		File:  map[string][]*multipart.FileHeader{},
 	}
-	res, err := store.Upload(context.Background(), nil, testForm)
+	res, err := s.Upload(context.Background(), nil, testForm)
 	require.NoError(t, err)
-	assert.Equal(t, res.statusCode, "200")
+	assert.Equal(t, res.statusCode, 200)
 }
