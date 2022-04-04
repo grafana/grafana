@@ -351,7 +351,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		Email: "",
 	}
 
-	mockAuthenticateUserFunc(user, "", nil)
+	hs.authenticator = &fakeAuthenticator{user, "", nil}
 
 	redirectCases := []redirectCase{
 		{
@@ -683,7 +683,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
-			mockAuthenticateUserFunc(c.authUser, c.authModule, c.authErr)
+			hs.authenticator = &fakeAuthenticator{c.authUser, c.authModule, c.authErr}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertions("POST", sc.url).exec()
 
@@ -730,10 +730,14 @@ func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error)
 	return m.socialConnector, m.err
 }
 
-func mockAuthenticateUserFunc(user *models.User, authmodule string, err error) {
-	login.AuthenticateUserFunc = func(ctx context.Context, query *models.LoginUserQuery) error {
-		query.User = user
-		query.AuthModule = authmodule
-		return err
-	}
+type fakeAuthenticator struct {
+	ExpectedUser       *models.User
+	ExpectedAuthModule string
+	ExpectedError      error
+}
+
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+	query.User = fa.ExpectedUser
+	query.AuthModule = fa.ExpectedAuthModule
+	return fa.ExpectedError
 }

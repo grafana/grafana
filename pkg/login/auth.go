@@ -31,10 +31,6 @@ type Authenticator interface {
 	AuthenticateUser(context.Context, *models.LoginUserQuery) error
 }
 
-var AuthenticateUserFunc = func(context.Context, *models.LoginUserQuery) error {
-	panic("AuthenticateUserFunc is not implemented")
-}
-
 type AuthenticatorService struct {
 	store        sqlstore.Store
 	loginService login.Service
@@ -45,7 +41,6 @@ func ProvideService(store sqlstore.Store, loginService login.Service) *Authentic
 		store:        store,
 		loginService: loginService,
 	}
-	AuthenticateUserFunc = a.AuthenticateUser
 	bus.AddHandler("auth", a.AuthenticateUser)
 	return a
 }
