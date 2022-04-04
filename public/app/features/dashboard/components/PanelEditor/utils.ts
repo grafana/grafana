@@ -71,7 +71,7 @@ export function setOptionImmutably<T extends object>(options: T, path: string | 
   if (key.endsWith(']')) {
     const idx = key.lastIndexOf('[');
     const index = +key.substring(idx + 1, key.length - 1);
-    const propKey = key.substr(0, idx);
+    const propKey = key.substring(0, idx);
     let current = (options as Record<string, any>)[propKey];
     const arr = Array.isArray(current) ? [...current] : [];
     if (splat.length) {

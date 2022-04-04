@@ -34,7 +34,7 @@
     "@rollup/plugin-commonjs": "21.0.2",
     "@rollup/plugin-node-resolve": "13.1.3",
     "@types/chrome-remote-interface": "0.31.4",
-    "@types/lodash": "4.14.180",
+    "@types/lodash": "4.14.181",
     "@types/node": "16.11.26",
     "@types/uuid": "8.3.4",
     "rollup": "2.70.1",

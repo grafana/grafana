@@ -32,14 +32,14 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase {
       {
         name: 'Rate then sum',
         operations: [
-          { id: 'rate', params: ['auto'] },
+          { id: 'rate', params: ['$__rate_interval'] },
           { id: 'sum', params: [] },
         ],
       },
       {
         name: 'Rate then sum by(label) then avg',
         operations: [
-          { id: 'rate', params: ['auto'] },
+          { id: 'rate', params: ['$__rate_interval'] },
           { id: '__sum_by', params: [''] },
           { id: 'avg', params: [] },
         ],
@@ -47,7 +47,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase {
       {
         name: 'Histogram quantile on rate',
         operations: [
-          { id: 'rate', params: ['auto'] },
+          { id: 'rate', params: ['$__rate_interval'] },
           { id: '__sum_by', params: ['le'] },
           { id: 'histogram_quantile', params: [0.95] },
         ],
@@ -55,7 +55,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase {
       {
         name: 'Histogram quantile on increase ',
         operations: [
-          { id: 'increase', params: ['auto'] },
+          { id: 'increase', params: ['$__rate_interval'] },
           { id: '__max_by', params: ['le'] },
           { id: 'histogram_quantile', params: [0.95] },
         ],

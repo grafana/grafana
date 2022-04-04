@@ -14,11 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandleRequest(t *testing.T) {
+	cfg := &setting.Cfg{}
+
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
 		origOAuthIsOAuthPassThruEnabledFunc := oAuthIsOAuthPassThruEnabledFunc
 		oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *models.DataSource) bool {
@@ -36,7 +39,7 @@ func TestHandleRequest(t *testing.T) {
 			return backend.NewQueryDataResponse(), nil
 		}
 		secretsStore := kvstore.SetupTestService(t)
-		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := datasourceservice.ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 		s := ProvideService(client, nil, dsService)
 
 		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}

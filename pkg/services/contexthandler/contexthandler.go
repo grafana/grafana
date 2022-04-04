@@ -137,7 +137,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	case h.initContextWithAnonymousUser(reqContext):
 	}
 
-	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
+	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
 	span.AddEvents(
 		[]string{"uname", "orgId", "userId"},
 		[]tracing.EventValue{

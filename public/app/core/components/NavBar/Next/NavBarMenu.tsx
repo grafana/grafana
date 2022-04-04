@@ -4,34 +4,37 @@ import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2 } from 
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { isMatchOrChildMatch } from '../utils';
+import { NavBarToggle } from './NavBarToggle';
 
 export interface Props {
   activeItem?: NavModelItem;
+  isOpen: boolean;
   navItems: NavModelItem[];
   onClose: () => void;
 }
 
-export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
+export function NavBarMenu({ activeItem, isOpen, navItems, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
-      isOpen: true,
+      isOpen,
       onClose,
     },
     ref
   );
 
   return (
-    <FocusScope contain restoreFocus autoFocus>
-      <div data-testid="navbarmenu" className={styles.container} ref={ref} {...overlayProps} {...dialogProps}>
-        <nav className={styles.content}>
+    <div data-testid="navbarmenu" className={styles.container}>
+      <FocusScope contain restoreFocus autoFocus>
+        <nav className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
+          <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
           <CustomScrollbar hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link) => (
@@ -40,53 +43,47 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
             </ul>
           </CustomScrollbar>
         </nav>
-      </div>
-    </FocusScope>
+      </FocusScope>
+    </div>
   );
 }
 
 NavBarMenu.displayName = 'NavBarMenu';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  const fadeIn = keyframes`
-    from {
-      background-color: ${theme.colors.background.primary};
-      width: ${theme.spacing(7)};
-    }
-    to {
-      background-color: ${theme.colors.background.canvas};
-      width: 300px;
-    }`;
-
-  return {
-    container: css({
-      animation: `150ms ease-in 0s 1 normal forwards ${fadeIn}`,
-      bottom: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      left: 0,
-      whiteSpace: 'nowrap',
-      marginTop: theme.spacing(1),
-      marginRight: theme.spacing(1.5),
-      right: 0,
-      zIndex: 9999,
-      top: 0,
-      [theme.breakpoints.up('md')]: {
-        borderRight: `1px solid ${theme.colors.border.weak}`,
-        right: 'unset',
-      },
-    }),
-    content: css({
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'auto',
-    }),
-    itemList: css({
-      display: 'grid',
-      gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
-    }),
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    bottom: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    left: 0,
+    whiteSpace: 'nowrap',
+    paddingTop: theme.spacing(1),
+    marginRight: theme.spacing(1.5),
+    overflow: 'hidden',
+    right: 0,
+    zIndex: theme.zIndex.sidemenu,
+    top: 0,
+    boxSizing: 'content-box',
+    [theme.breakpoints.up('md')]: {
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      right: 'unset',
+    },
+  }),
+  content: css({
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'auto',
+  }),
+  itemList: css({
+    display: 'grid',
+    gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
+  }),
+  menuCollapseIcon: css({
+    position: 'absolute',
+    top: '43px',
+    right: '0px',
+  }),
+});
 
 function NavItem({
   link,
@@ -147,10 +144,12 @@ function NavItem({
           isActive={link === activeItem}
         >
           <div className={styles.savedItemsMenuItemWrapper}>
-            {link.img && (
-              <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-            )}
-            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+            <div className={styles.iconContainer}>
+              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+              {link.img && (
+                <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
+              )}
+            </div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
@@ -162,6 +161,7 @@ function NavItem({
 const getNavItemStyles = (theme: GrafanaTheme2) => ({
   item: css({
     padding: `${theme.spacing(1)} 0`,
+    whiteSpace: 'normal',
     '&::before': {
       display: 'none',
     },
@@ -186,13 +186,18 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
   }),
   fullWidth: css({
+    height: '100%',
     width: '100%',
+  }),
+  iconContainer: css({
+    placeContent: 'center',
   }),
   savedItemsMenuItemWrapper: css({
     display: 'grid',
     gridAutoFlow: 'column',
     gridTemplateColumns: `${theme.spacing(7)} auto`,
     alignItems: 'center',
+    height: '100%',
   }),
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
@@ -249,7 +254,9 @@ function CollapsibleNavItem({
 const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
   menuItem: css({
     position: 'relative',
-    display: 'flex',
+    display: 'grid',
+    gridAutoFlow: 'column',
+    gridTemplateColumns: '56px auto',
   }),
   collapsibleMenuItem: css({
     height: theme.spacing(6),

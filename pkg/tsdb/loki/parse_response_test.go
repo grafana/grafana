@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/loki/pkg/loghttp"
+	"github.com/grafana/loki/pkg/logqlmodel/stats"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -104,5 +105,78 @@ func TestParseResponse(t *testing.T) {
 		timeFieldConfig := timeField.Config
 		require.NotNil(t, timeFieldConfig)
 		require.Equal(t, float64(42000), timeFieldConfig.Interval)
+	})
+
+	t.Run("should parse response stats", func(t *testing.T) {
+		stats := stats.Result{
+			Summary: stats.Summary{
+				BytesProcessedPerSecond: 1,
+				LinesProcessedPerSecond: 2,
+				TotalBytesProcessed:     3,
+				TotalLinesProcessed:     4,
+				ExecTime:                5.5,
+			},
+			Store: stats.Store{
+				TotalChunksRef:        6,
+				TotalChunksDownloaded: 7,
+				ChunksDownloadTime:    8.8,
+				HeadChunkBytes:        9,
+				HeadChunkLines:        10,
+				DecompressedBytes:     11,
+				DecompressedLines:     12,
+				CompressedBytes:       13,
+				TotalDuplicates:       14,
+			},
+			Ingester: stats.Ingester{
+				TotalReached:       15,
+				TotalChunksMatched: 16,
+				TotalBatches:       17,
+				TotalLinesSent:     18,
+				HeadChunkBytes:     19,
+				HeadChunkLines:     20,
+				DecompressedBytes:  21,
+				DecompressedLines:  22,
+				CompressedBytes:    23,
+				TotalDuplicates:    24,
+			},
+		}
+
+		expected := []data.QueryStat{
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: bytes processed per second", Unit: "Bps"}, Value: 1},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: lines processed per second", Unit: ""}, Value: 2},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: total bytes processed", Unit: "decbytes"}, Value: 3},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: total lines processed", Unit: ""}, Value: 4},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: exec time", Unit: "s"}, Value: 5.5},
+
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: total chunks ref", Unit: ""}, Value: 6},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: total chunks downloaded", Unit: ""}, Value: 7},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: chunks download time", Unit: "s"}, Value: 8.8},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: head chunk bytes", Unit: "decbytes"}, Value: 9},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: head chunk lines", Unit: ""}, Value: 10},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: decompressed bytes", Unit: "decbytes"}, Value: 11},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: decompressed lines", Unit: ""}, Value: 12},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: compressed bytes", Unit: "decbytes"}, Value: 13},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: total duplicates", Unit: ""}, Value: 14},
+
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total reached", Unit: ""}, Value: 15},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total chunks matched", Unit: ""}, Value: 16},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total batches", Unit: ""}, Value: 17},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total lines sent", Unit: ""}, Value: 18},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: head chunk bytes", Unit: "decbytes"}, Value: 19},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: head chunk lines", Unit: ""}, Value: 20},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: decompressed bytes", Unit: "decbytes"}, Value: 21},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: decompressed lines", Unit: ""}, Value: 22},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: compressed bytes", Unit: "decbytes"}, Value: 23},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total duplicates", Unit: ""}, Value: 24},
+		}
+
+		result := parseStats((stats))
+
+		// NOTE: i compare it item-by-item otherwise the test-fail-error-message is very hard to read
+		require.Len(t, result, len(expected))
+
+		for i := 0; i < len(result); i++ {
+			require.Equal(t, expected[i], result[i])
+		}
 	})
 }

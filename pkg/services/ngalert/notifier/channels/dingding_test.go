@@ -80,6 +80,64 @@ func TestDingdingNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
+			name: "Missing field in template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ .NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "I'm a custom template ",
+					"title":      "",
+				},
+				"msgtype": "link",
+			},
+			expMsgError: nil,
+		}, {
+			name: "Invalid template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ {.NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "",
+					"title":      "",
+				},
+				"msgtype": "link",
+			},
+			expMsgError: nil,
+		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
 			expInitError: `could not find url property in settings`,
@@ -117,6 +175,8 @@ func TestDingdingNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.True(t, ok)
+
+			require.NotEmpty(t, webhookSender.Webhook.Url)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)

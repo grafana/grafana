@@ -12,7 +12,10 @@ export const generateColumns = (
   data: DataFrameView<FieldAccess>,
   isDashboardList: boolean,
   availableWidth: number,
-  styles: { [key: string]: string }
+  styles: { [key: string]: string },
+  tags: string[],
+  onTagFilterChange: (tags: string[]) => void,
+  onDatasourceChange: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const urlField = data.fields.url!;
@@ -89,7 +92,7 @@ export const generateColumns = (
   // Show datasources if we have any
   if (access.datasource && hasFieldValue(access.datasource)) {
     width = DATASOURCE_COLUMN_WIDTH;
-    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
+    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon, onDatasourceChange));
     availableWidth -= width;
   }
 
@@ -143,7 +146,7 @@ export const generateColumns = (
   // Show tags if we have any
   if (access.tags && hasFieldValue(access.tags)) {
     width = Math.max(availableWidth, 250);
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList));
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
   }
 
   return columns;
@@ -169,7 +172,12 @@ function getIconForKind(v: string): IconName {
   return 'question-circle';
 }
 
-function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, iconClass: string): TableColumn {
+function makeDataSourceColumn(
+  field: Field<DataSourceRef[]>,
+  width: number,
+  iconClass: string,
+  onDatasourceChange: (datasource?: string) => void
+): TableColumn {
   return {
     Cell: DefaultCell,
     id: `column-datasource`,
@@ -186,10 +194,18 @@ function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, icon
               const icon = settings?.meta?.info?.logos?.small;
               if (icon) {
                 return (
-                  <span key={i}>
+                  <a
+                    key={i}
+                    href={`datasources/edit/${settings.uid}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      onDatasourceChange(settings.uid);
+                    }}
+                  >
                     <SVG src={icon} width={14} height={14} title={settings.type} className={iconClass} />
                     {settings.name}
-                  </span>
+                  </a>
                 );
               }
               return <span key={i}>{v.type}</span>;
@@ -260,7 +276,19 @@ function makeTypeColumn(
   };
 }
 
-function makeTagsColumn(field: Field<string[]>, width: number, tagListClass: string): TableColumn {
+function makeTagsColumn(
+  field: Field<string[]>,
+  width: number,
+  tagListClass: string,
+  currentTagFilter: string[],
+  onTagFilterChange: (tags: string[]) => void
+): TableColumn {
+  const updateTagFilter = (tag: string) => {
+    if (!currentTagFilter.includes(tag)) {
+      onTagFilterChange([...currentTagFilter, tag]);
+    }
+  };
+
   return {
     Cell: DefaultCell,
     id: `column-tags`,
@@ -269,7 +297,7 @@ function makeTagsColumn(field: Field<string[]>, width: number, tagListClass: str
     accessor: (row: any, i: number) => {
       const tags = field.values.get(i);
       if (tags) {
-        return <TagList className={tagListClass} tags={tags} onClick={(v) => alert('CLICKED TAG: ' + v)} />;
+        return <TagList className={tagListClass} tags={tags} onClick={updateTagFilter} />;
       }
       return null;
     },
