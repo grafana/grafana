@@ -2,7 +2,7 @@
 title: 'Add a token to a service account in Grafana'
 menuTitle: 'Add token for service account'
 aliases: [docs/sources/administration/service-accounts/add.md]
-description: 'This contains information about createing a token for a service account'
+description: 'This contains information about adding a token to a service account'
 weight: 60
 ---
 

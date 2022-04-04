@@ -23,25 +23,24 @@ It can also be used in combination with FGAC to grant specific scopes.
 
 A service account can be associated with multiple api keys. As a result, we recommend starting off by creating one service account per use case.
 
-> **Note:** Service accounts act on an organization level, if you have the same task that is needed for multiple organizations, we recommend provisioning service accounts for each organization. See <link to provisining via terraform>
+> **Note:** Service accounts act on an organization level, if you have the same task that is needed for multiple organizations, we recommend provisioning service accounts for each organization.
 
 ---
 
-## Grafana Service account vs APIKey
+## Grafana Service account vs API key
 
-We have created service accounts for improved access control of programmatic access to Grafana. A service account token is a token that is used to authenticate a service account to Grafana and are very similiar to apikeys.
+We have created service accounts for improved access control of programmatic access to Grafana. A service account token is a token that is used to authenticate a service account to Grafana and are very similar to API keys.
 
-We recommend to start using service accounts over apikeys.
+We recommend to start using service accounts over API keys.
 
-### Service accounts benefits over APIkeys
+### Service accounts benefits over API keys
 
-When creating a token for a service account, we call them service account token; which are essentially a apikey. The main difference to apikeys is that permission is set ontop of the apikey when creating apikeys, where as a service account token gets their permission from the service account.
+When creating a token for a service account, we call them service account token; which are essentially a API key. The main difference to API keys is that permission is set on top of the API key when creating API keys, where as a service account token gets their permission from the service account.
 
-The added benefits of service accounts to apikeys are:
+The added benefits of service accounts to API keys are:
 
 - Service accounts act like users in Grafana and can be disabled/enabled and granted permissions.
 - Service accounts can be associated with multiple api keys.
-- Service accounts can be assigned to teams.
 - Service account tokens are not tied to a specific user, therefore making sure applications can be authenticated even if a Grafana user is deleted.
-- Service accounts can be granted granular permissions. More information on spefic permission refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
+- Service accounts can be granted granular permissions. More information on specific permission refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
 - Eventually API keys will be deprecated
