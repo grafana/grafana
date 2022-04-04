@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';

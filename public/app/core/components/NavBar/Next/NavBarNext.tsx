@@ -4,7 +4,7 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
