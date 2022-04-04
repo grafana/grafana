@@ -10,6 +10,7 @@ import {
   DataSourceRef,
 } from '@grafana/data';
 import { of } from 'rxjs';
+import { config } from '../config';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
@@ -90,6 +91,94 @@ describe('DataSourceWithBackend', () => {
         "url": "/api/ds/query",
       }
     `);
+  });
+
+  describe.each([
+    {
+      title: 'feature toggle disabled',
+      featureToggle: false,
+      userCanEditDashboard: true,
+      dashboardUid: 'potato',
+      panelId: 1,
+      expectedUrl: '/api/ds/query',
+    },
+    {
+      title: 'feature toggle enabled',
+      featureToggle: true,
+      userCanEditDashboard: true,
+      dashboardUid: 'potato',
+      panelId: 1,
+      expectedUrl: '/api/ds/query',
+    },
+    {
+      title: 'can edit dashboard',
+      featureToggle: true,
+      userCanEditDashboard: true,
+      dashboardUid: 'potato',
+      panelId: 1,
+      expectedUrl: '/api/ds/query',
+    },
+    {
+      title: 'missing dashboardUid',
+      featureToggle: true,
+      userCanEditDashboard: true,
+      dashboardUid: null,
+      panelId: 1,
+      expectedUrl: '/api/ds/query',
+    },
+    {
+      title: 'missing panelId',
+      featureToggle: true,
+      userCanEditDashboard: true,
+      dashboardUid: 'abcd',
+      panelId: null,
+      expectedUrl: '/api/ds/query',
+    },
+    {
+      title: 'feature toggle enabled, edit user',
+      featureToggle: true,
+      userCanEditDashboard: false,
+      dashboardUid: 'potato',
+      panelId: 1,
+      expectedUrl: '/api/dashboards/org/7/uid/potato/panels/1/query',
+    },
+  ])('$title', ({ featureToggle, userCanEditDashboard, dashboardUid, panelId, expectedUrl }) => {
+    config.featureToggles.validatedQueries = featureToggle;
+    config.bootData.user.orgId = 7;
+
+    const settings = {
+      name: 'test',
+      id: 1234,
+      uid: 'abc',
+      type: 'dummy',
+      jsonData: {},
+    } as DataSourceInstanceSettings<DataSourceJsonData>;
+
+    mockDatasourceRequest.mockReset();
+    mockDatasourceRequest.mockReturnValue(Promise.resolve({}));
+    const ds = new MyDataSource(settings);
+
+    let q = {
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      userCanEditDashboard,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+    } as DataQueryRequest;
+
+    if (dashboardUid) {
+      q['dashboardUid'] = dashboardUid;
+    }
+    if (panelId) {
+      q['panelId'] = panelId;
+    }
+
+    ds.query(q);
+
+    const mock = mockDatasourceRequest.mock;
+    expect(mock.calls.length).toBe(1);
+
+    const args = mock.calls[0][0];
+    expect(args.url).toBe(expectedUrl);
   });
 
   test('it converts results with channels to streaming queries', () => {
