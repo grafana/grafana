@@ -40,7 +40,7 @@ function Cell(props: CellProps) {
           ) : (
             <img src={card.imgUrl} className={styles.img} />
           )}
-          <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
+          <h6 className={styles.text}>{card.label.slice(0, -4)}</h6>
         </div>
       )}
     </div>

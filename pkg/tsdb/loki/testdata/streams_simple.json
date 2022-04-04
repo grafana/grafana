@@ -50,26 +50,26 @@
       },
       "store": {
         "totalChunksRef": 2,
-        "totalChunksDownloaded": 2,
+        "totalChunksDownloaded": 3,
         "chunksDownloadTime": 0.000390958,
-        "headChunkBytes": 0,
-        "headChunkLines": 0,
+        "headChunkBytes": 4,
+        "headChunkLines": 5,
         "decompressedBytes": 7772,
         "decompressedLines": 55,
         "compressedBytes": 31432,
-        "totalDuplicates": 0
+        "totalDuplicates": 6
       },
       "ingester": {
-        "totalReached": 0,
-        "totalChunksMatched": 0,
-        "totalBatches": 0,
-        "totalLinesSent": 0,
-        "headChunkBytes": 0,
-        "headChunkLines": 0,
-        "decompressedBytes": 0,
-        "decompressedLines": 0,
-        "compressedBytes": 0,
-        "totalDuplicates": 0
+        "totalReached": 7,
+        "totalChunksMatched": 8,
+        "totalBatches": 9,
+        "totalLinesSent": 10,
+        "headChunkBytes": 11,
+        "headChunkLines": 12,
+        "decompressedBytes": 13,
+        "decompressedLines": 14,
+        "compressedBytes": 15,
+        "totalDuplicates": 16
       }
     }
   }

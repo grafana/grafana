@@ -43,7 +43,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.Unwrap, params: [''] },
-          { id: LokiOperationId.SumOverTime, params: ['auto'] },
+          { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },

@@ -87,7 +87,7 @@ export function ServiceAccountProfile({
                 builtInRoles={builtInRoles}
                 roleOptions={roleOptions}
               />
-              <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} />
+              {/* <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} /> */}
               <ServiceAccountProfileRow
                 label="Creation date"
                 value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}

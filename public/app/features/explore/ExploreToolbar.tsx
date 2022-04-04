@@ -118,6 +118,12 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
+            {config.featureToggles.explore2Dashboard && (
+              <Suspense fallback={null}>
+                <AddToDashboard exploreId={exploreId} />
+              </Suspense>
+            )}
+
             {!isLive && (
               <ExploreTimeControls
                 exploreId={exploreId}
@@ -132,12 +138,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 onChangeTimeZone={onChangeTimeZone}
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               />
-            )}
-
-            {config.featureToggles.explore2Dashboard && (
-              <Suspense fallback={null}>
-                <AddToDashboard exploreId={exploreId} />
-              </Suspense>
             )}
 
             <RunButton
