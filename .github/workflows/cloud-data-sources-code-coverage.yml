@@ -72,7 +72,7 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            Code coverage report for PR #${{ github.event.pull_request.number }}
+            Code coverage on cloud data sources for PR #${{ github.event.pull_request.number }}
             |      |          Go                         | TypeScript |
             |------| ----------------------------------- | ---------------- |
             | main | ${{ env.go-main-cov }}%             | ${{ env.ts-main-cov }}% |
