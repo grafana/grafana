@@ -141,29 +141,31 @@ func (ls *Implementation) DisableExternalUser(ctx context.Context, username stri
 	}
 
 	userInfo := userQuery.Result
-	if !userInfo.IsDisabled {
+	if userInfo.IsDisabled {
+		return nil
+	}
+	
+	logger.Debug(
+		"Disabling external user",
+		"user",
+		userQuery.Result.Login,
+	)
+
+	// Mark user as disabled in grafana db
+	disableUserCmd := &models.DisableUserCommand{
+		UserId:     userQuery.Result.UserId,
+		IsDisabled: true,
+	}
+
+	if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
 		logger.Debug(
-			"Disabling external user",
+			"Error disabling external user",
 			"user",
 			userQuery.Result.Login,
+			"message",
+			err.Error(),
 		)
-
-		// Mark user as disabled in grafana db
-		disableUserCmd := &models.DisableUserCommand{
-			UserId:     userQuery.Result.UserId,
-			IsDisabled: true,
-		}
-
-		if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
-			logger.Debug(
-				"Error disabling external user",
-				"user",
-				userQuery.Result.Login,
-				"message",
-				err.Error(),
-			)
-			return err
-		}
+		return err
 	}
 	return nil
 }
