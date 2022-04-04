@@ -113,7 +113,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
           </InlineField>
         </InlineFieldRow>
         {query.queryType === 'nativeSearch' && (
-          <p style={{ maxWidth: '65ch' }}>
+          <div style={{ maxWidth: '65ch' }}>
             <Badge icon="rocket" text="Beta" color="blue" />
             {config.featureToggles.tempoBackendSearch ? (
               <>&nbsp;Tempo search is currently in beta.</>
@@ -124,7 +124,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
                 future!
               </>
             )}
-          </p>
+          </div>
         )}
         {query.queryType === 'search' && (
           <SearchSection
@@ -201,7 +201,6 @@ function SearchSection({ logsDatasourceUid, onChange, onRunQuery, query }: Searc
     return (
       <>
         <InlineLabel>Tempo uses {ds.name} to find traces.</InlineLabel>
-
         <LokiQueryField
           datasource={ds}
           onChange={onChange}
