@@ -84,48 +84,44 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
-    let dataLink: DataLink<LokiQuery | DataQuery> = {} as DataLink<LokiQuery | DataQuery>;
+    let dataLink: DataLink<LokiQuery | DataQuery> | undefined = {} as DataLink<LokiQuery | DataQuery> | undefined;
     let link: LinkModel<Field>;
 
     /** getLinkForLoki will return undefined if there are no tags in the datasource config;
      * in that case we skip building a dataLink below and return undefined for SpanLink function
      */
-    let lokiQuery = getLinkForLoki(span, traceToLogsOptions, dataSourceSettings);
-    if (!lokiQuery) {
-      return undefined;
-    } else {
-      switch (dataSourceSettings?.type) {
-        case 'loki':
-          dataLink = lokiQuery?.dataLink;
-          break;
-        case 'grafana-splunk-datasource':
-          dataLink = getLinkForSplunk(span, traceToLogsOptions, dataSourceSettings).dataLink;
-          break;
-        default:
+    switch (dataSourceSettings?.type) {
+      case 'loki':
+        dataLink = getLinkForLoki(span, traceToLogsOptions, dataSourceSettings);
+        if (!dataLink) {
           return undefined;
-      }
-
-      link = mapInternalLinkToExplore({
-        link: dataLink,
-        internalLink: dataLink?.internal!,
-        scopedVars: {},
-        range: getTimeRangeFromSpan(
-          span,
-          {
-            startMs: traceToLogsOptions.spanStartTimeShift
-              ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-              : 0,
-            endMs: traceToLogsOptions.spanEndTimeShift
-              ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-              : 0,
-          },
-          isSplunkDS
-        ),
-        field: {} as Field,
-        onClickFn: splitOpenFn,
-        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      });
+        }
+        break;
+      case 'grafana-splunk-datasource':
+        dataLink = getLinkForSplunk(span, traceToLogsOptions, dataSourceSettings);
+        break;
+      default:
+        return undefined;
     }
+
+    link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink?.internal!,
+      scopedVars: {},
+      range: getTimeRangeFromSpan(
+        span,
+        {
+          startMs: traceToLogsOptions.spanStartTimeShift
+            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+            : 0,
+          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
+        },
+        isSplunkDS
+      ),
+      field: {} as Field,
+      onClickFn: splitOpenFn,
+      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+    });
 
     return {
       href: link.href,
@@ -184,10 +180,7 @@ function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSource
     },
   };
 
-  return {
-    expr,
-    dataLink,
-  };
+  return dataLink;
 }
 
 function getLinkForSplunk(
@@ -238,7 +231,7 @@ function getLinkForSplunk(
     },
   } as DataLink<DataQuery>;
 
-  return { query, dataLink };
+  return dataLink;
 }
 
 /**
