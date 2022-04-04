@@ -4,9 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,10 +23,55 @@ type notificationChannel struct {
 }
 
 // channelsPerOrg maps notification channels per organisation
-type channelsPerOrg map[int64]map[interface{}]*notificationChannel
+type channelsPerOrg map[int64][]*notificationChannel
 
 // channelMap maps notification channels per organisation
 type defaultChannelsPerOrg map[int64][]*notificationChannel
+
+// Union type for receiver map that contains both uid -> receiver and ID -> receiver
+type uidOrID interface{}
+
+// Start channel and alert migrations. This creates Alertmanager configs as well as migrates receivers and creates the initial root-level route.
+// Returns per org maps containing: The alertmanager config, all migrated receivers, all migrated default receivers
+func (m *migration) setupAlertManagerConfigs() (amConfigsPerOrg, map[int64]map[uidOrID]*PostableApiReceiver, map[int64]map[string]struct{}, error) {
+	// allChannels: channelUID -> channelConfig
+	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	amConfigPerOrg := make(amConfigsPerOrg, len(allChannelsPerOrg))
+	receiversPerOrg := make(map[int64]map[uidOrID]*PostableApiReceiver, len(allChannelsPerOrg))
+	defaultReceiversPerOrg := make(map[int64]map[string]struct{}, len(allChannelsPerOrg))
+	for orgID := range allChannelsPerOrg {
+		amConfig, ok := amConfigPerOrg[orgID]
+		if !ok {
+			amConfig = &PostableUserConfig{
+				AlertmanagerConfig: PostableApiAlertingConfig{
+					Receivers: make([]*PostableApiReceiver, 0),
+				},
+			}
+			amConfigPerOrg[orgID] = amConfig
+		}
+
+		defaultChannels := defaultChannelsPerOrg[orgID]
+		defaultReceiversPerOrg[orgID] = make(map[string]struct{})
+		for _, c := range defaultChannels {
+			defaultReceiversPerOrg[orgID][c.Name] = struct{}{}
+		}
+
+		// Create all new receivers and add to amConfig
+		contactPoints, err := m.createReceivers(amConfig, allChannelsPerOrg[orgID], defaultChannels)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		receiversPerOrg[orgID] = contactPoints
+
+		amConfig.AlertmanagerConfig.Route = createDefaultRoute(defaultChannels)
+	}
+
+	return amConfigPerOrg, receiversPerOrg, defaultReceiversPerOrg, nil
+}
 
 func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannelsPerOrg, error) {
 	q := `
@@ -58,15 +100,8 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 	allChannelsMap := make(channelsPerOrg)
 	defaultChannelsMap := make(defaultChannelsPerOrg)
 	for i, c := range allChannels {
-		if _, ok := allChannelsMap[c.OrgID]; !ok { // new seen org
-			allChannelsMap[c.OrgID] = make(map[interface{}]*notificationChannel)
-		}
-		if c.Uid != "" {
-			allChannelsMap[c.OrgID][c.Uid] = &allChannels[i]
-		}
-		if c.ID != 0 {
-			allChannelsMap[c.OrgID][c.ID] = &allChannels[i]
-		}
+		allChannelsMap[c.OrgID] = append(allChannelsMap[c.OrgID], &allChannels[i])
+
 		if c.IsDefault {
 			defaultChannelsMap[c.OrgID] = append(defaultChannelsMap[c.OrgID], &allChannels[i])
 		}
@@ -75,245 +110,200 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 	return allChannelsMap, defaultChannelsMap, nil
 }
 
-func (m *migration) updateReceiverAndRoute(allChannels channelsPerOrg, defaultChannels defaultChannelsPerOrg, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
-	// Create receiver and route for this rule.
-	if allChannels == nil {
-		return nil
+func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaReceiver, error) {
+	if c.Type == "hipchat" || c.Type == "sensu" {
+		m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
+		return nil, nil
 	}
 
-	channelIDs := extractChannelIDs(da)
-	if len(channelIDs) == 0 {
-		// If there are no channels associated, we skip adding any routes,
-		// receivers or labels to rules so that it goes through the default
-		// route.
-		return nil
+	uid, ok := m.generateChannelUID()
+	if !ok {
+		return nil, errors.New("failed to generate UID for notification channel")
 	}
 
-	recv, route, err := m.makeReceiverAndRoute(rule.UID, rule.OrgID, channelIDs, defaultChannels[rule.OrgID], allChannels[rule.OrgID])
+	settings, decryptedSecureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PostableGrafanaReceiver{
+		UID:                   uid,
+		Name:                  c.Name,
+		Type:                  c.Type,
+		DisableResolveMessage: c.DisableResolveMessage,
+		Settings:              settings,
+		SecureSettings:        decryptedSecureSettings,
+	}, nil
+}
+
+// Create one receiver for every unique notification channel. If there are multiple existing default notification channels, these will be stored in a separate receiver
+// containing them all to be used only on the root-level route. This is to simplify the structure of the migrated routes  as we are currently limited to one receiver per route,
+// so nesting the root-level route will require a significantly more complex setup.
+func (m *migration) createReceivers(amConfig *PostableUserConfig, allChannels []*notificationChannel, defaultChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, error) {
+	receivers := make(map[uidOrID]*PostableApiReceiver)
+
+	for _, c := range allChannels {
+
+		notifier, err := m.createNotifier(c)
+		if err != nil {
+			return nil, err
+		}
+
+		recv := &PostableApiReceiver{
+			Name:                    c.Name, // Channel name is unique within an Org
+			GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
+		}
+
+		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+
+		// Store receivers for creating routes from alert rules later.
+		if c.Uid != "" {
+			receivers[c.Uid] = recv
+		}
+		if c.ID != 0 {
+			// In certain circumstances, the alert rule uses ID instead of uid. So, we add this to be able to lookup by ID in case.
+			receivers[c.ID] = recv
+		}
+	}
+
+	if len(defaultChannels) != 1 {
+		// If there are zero or more than one default channels we create a separate contact group that is used only in the root policy. This is to simplify the migrated notification policy structure.
+		// If we ever allow more than one receiver per route this won't be necessary
+		defaultReceiver := &PostableApiReceiver{
+			Name:                    "autogen-contact-point-default",
+			GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
+		}
+
+		for _, c := range defaultChannels {
+			// Need to create a new notifier to prevent uid conflict.
+			defaultNotifier, err := m.createNotifier(c)
+			if err != nil {
+				return nil, err
+			}
+
+			defaultReceiver.GrafanaManagedReceivers = append(defaultReceiver.GrafanaManagedReceivers, defaultNotifier)
+		}
+
+		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, defaultReceiver)
+	}
+
+	return receivers, nil
+
+}
+
+// Create the root-level route with the default receiver
+func createDefaultRoute(defaultChannels []*notificationChannel) *Route {
+	defaultReceiverName := "autogen-contact-point-default"
+	if len(defaultChannels) == 1 {
+		// If there is only a single default channel, we don't need a separate receiver to hold it. We can reuse the existing receiver for that single notifier.
+		defaultReceiverName = defaultChannels[0].Name
+	}
+
+	return &Route{
+		Receiver:   defaultReceiverName,
+		Routes:     make([]*Route, 0),
+		GroupByStr: []string{"..."}, // Root policy should have grouping disabled (group by all) to keep parity with pre-migration notifications
+	}
+}
+
+// Wrapper to select receivers for given alert rules based on associated notification channels and then create the migrated route
+func (m *migration) createRouteForAlert(ruleUID string, da dashAlert, amConfig *PostableUserConfig, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) error {
+	// Create route(s) for alert
+	filteredReceiverNames, err := m.filterReceiversForAlert(da, receivers, defaultReceivers)
 	if err != nil {
 		return err
 	}
 
-	if recv != nil {
-		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
-	}
-	if route != nil {
+	if len(filteredReceiverNames) != 0 {
+		// Only create a route if there are specific receivers, otherwise it defaults to the root-level route
+		route, err := m.createRoute(ruleUID, filteredReceiverNames)
+		if err != nil {
+			return err
+		}
+
 		amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
 	}
 
 	return nil
 }
 
-func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUids []interface{}, defaultChannels []*notificationChannel, allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, *Route, error) {
-	portedChannels := []*PostableGrafanaReceiver{}
-	var receiver *PostableApiReceiver
-
-	addChannel := func(c *notificationChannel) error {
-		if c.Type == "hipchat" || c.Type == "sensu" {
-			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
-			return nil
-		}
-
-		uid, ok := m.generateChannelUID()
-		if !ok {
-			return errors.New("failed to generate UID for notification channel")
-		}
-
-		if _, ok := m.migratedChannelsPerOrg[orgID]; !ok {
-			m.migratedChannelsPerOrg[orgID] = make(map[*notificationChannel]struct{})
-		}
-		m.migratedChannelsPerOrg[orgID][c] = struct{}{}
-		settings, decryptedSecureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
-		if err != nil {
-			return err
-		}
-
-		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
-			UID:                   uid,
-			Name:                  c.Name,
-			Type:                  c.Type,
-			DisableResolveMessage: c.DisableResolveMessage,
-			Settings:              settings,
-			SecureSettings:        decryptedSecureSettings,
-		})
-
-		return nil
-	}
-
-	// Remove obsolete notification channels.
-	filteredChannelUids := make(map[interface{}]struct{})
-	for _, uid := range channelUids {
-		c, ok := allChannels[uid]
-		if ok {
-			// always store the channel UID to prevent duplicates
-			filteredChannelUids[c.Uid] = struct{}{}
-		} else {
-			m.mg.Logger.Warn("ignoring obsolete notification channel", "uid", uid)
-		}
-	}
-	// Add default channels that are not obsolete.
-	for _, c := range defaultChannels {
-		id := interface{}(c.Uid)
-		if c.Uid == "" {
-			id = c.ID
-		}
-		c, ok := allChannels[id]
-		if ok {
-			// always store the channel UID to prevent duplicates
-			filteredChannelUids[c.Uid] = struct{}{}
-		}
-	}
-
-	if len(filteredChannelUids) == 0 && ruleUid != "default_route" {
-		// We use the default route instead. No need to add additional route.
-		return nil, nil, nil
-	}
-
-	chanKey, err := makeKeyForChannelGroup(filteredChannelUids)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var receiverName string
-
-	if _, ok := m.portedChannelGroupsPerOrg[orgID]; !ok {
-		m.portedChannelGroupsPerOrg[orgID] = make(map[string]string)
-	}
-	if rn, ok := m.portedChannelGroupsPerOrg[orgID][chanKey]; ok {
-		// We have ported these exact set of channels already. Re-use it.
-		receiverName = rn
-		if receiverName == "autogen-contact-point-default" {
-			// We don't need to create new routes if it's the default contact point.
-			return nil, nil, nil
-		}
-	} else {
-		for n := range filteredChannelUids {
-			if err := addChannel(allChannels[n]); err != nil {
-				return nil, nil, err
-			}
-		}
-
-		if ruleUid == "default_route" {
-			receiverName = "autogen-contact-point-default"
-		} else {
-			m.lastReceiverID++
-			receiverName = fmt.Sprintf("autogen-contact-point-%d", m.lastReceiverID)
-		}
-
-		m.portedChannelGroupsPerOrg[orgID][chanKey] = receiverName
-		receiver = &PostableApiReceiver{
-			Name:                    receiverName,
-			GrafanaManagedReceivers: portedChannels,
-		}
-	}
-
-	n, v := getLabelForRouteMatching(ruleUid)
+// Create route(s) for the given alert ruleUID and receivers.
+// If the alert had a single channel, it will now have a single route/policy. If the alert had multiple channels, it will now have multiple nested routes/policies.
+func (m *migration) createRoute(ruleUID string, filteredReceiverNames map[string]interface{}) (*Route, error) {
+	n, v := getLabelForRouteMatching(ruleUID)
 	mat, err := labels.NewMatcher(labels.MatchEqual, n, v)
 	if err != nil {
-		return nil, nil, err
-	}
-	route := &Route{
-		Receiver: receiverName,
-		Matchers: Matchers{mat},
+		return nil, err
 	}
 
-	return receiver, route, nil
-}
-
-// makeKeyForChannelGroup generates a unique for this group of channels UIDs.
-func makeKeyForChannelGroup(channelUids map[interface{}]struct{}) (string, error) {
-	uids := make([]string, 0, len(channelUids))
-	for u := range channelUids {
-		switch uid := u.(type) {
-		case string:
-			uids = append(uids, uid)
-		case int, int32, int64:
-			uids = append(uids, fmt.Sprintf("%d", uid))
-		default:
-			// Should never happen.
-			return "", fmt.Errorf("unknown channel UID type: %T", u)
-		}
-	}
-
-	sort.Strings(uids)
-	return strings.Join(uids, "::sep::"), nil
-}
-
-// addDefaultChannels should be called before adding any other routes.
-func (m *migration) addDefaultChannels(amConfigsPerOrg amConfigsPerOrg, allChannels channelsPerOrg, defaultChannels defaultChannelsPerOrg) error {
-	for orgID := range allChannels {
-		if _, ok := amConfigsPerOrg[orgID]; !ok {
-			amConfigsPerOrg[orgID] = &PostableUserConfig{
-				AlertmanagerConfig: PostableApiAlertingConfig{
-					Receivers: make([]*PostableApiReceiver, 0),
-					Route: &Route{
-						Routes: make([]*Route, 0),
-					},
-				},
+	var route *Route
+	if len(filteredReceiverNames) == 1 {
+		for name := range filteredReceiverNames {
+			route = &Route{
+				Receiver: name,
+				Matchers: Matchers{mat},
 			}
 		}
-		// Default route and receiver.
-		recv, route, err := m.makeReceiverAndRoute("default_route", orgID, nil, defaultChannels[orgID], allChannels[orgID])
-		if err != nil {
-			// if one fails it will fail the migration
-			return err
+	} else {
+		nestedRoutes := []*Route{}
+		for name := range filteredReceiverNames {
+			r := &Route{
+				Receiver: name,
+				Matchers: Matchers{mat},
+				Continue: true,
+			}
+			nestedRoutes = append(nestedRoutes, r)
 		}
 
-		if recv != nil {
-			amConfigsPerOrg[orgID].AlertmanagerConfig.Receivers = append(amConfigsPerOrg[orgID].AlertmanagerConfig.Receivers, recv)
-		}
-		if route != nil {
-			route.Matchers = nil // Don't need matchers for root route.
-			amConfigsPerOrg[orgID].AlertmanagerConfig.Route = route
+		route = &Route{
+			Matchers: Matchers{mat},
+			Routes:   nestedRoutes,
 		}
 	}
-	return nil
+
+	return route, nil
 }
 
-func (m *migration) addUnmigratedChannels(orgID int64, amConfigs *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
-	// Unmigrated channels.
-	portedChannels := []*PostableGrafanaReceiver{}
-	receiver := &PostableApiReceiver{
-		Name: "autogen-unlinked-channel-recv",
+// Filter receivers to select those that were associated to the given rule as channels.
+func (m *migration) filterReceiversForAlert(da dashAlert, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) (map[string]interface{}, error) {
+	channelIDs := extractChannelIDs(da)
+	if len(channelIDs) == 0 {
+		// If there are no channels associated, we use the default route.
+		return nil, nil
 	}
-	for _, c := range allChannels {
-		if _, ok := m.migratedChannelsPerOrg[orgID]; !ok {
-			m.migratedChannelsPerOrg[orgID] = make(map[*notificationChannel]struct{})
-		}
-		_, ok := m.migratedChannelsPerOrg[orgID][c]
+
+	// Filter receiver names
+	filteredReceiverNames := make(map[string]interface{})
+	for _, uidOrId := range channelIDs {
+		recv, ok := receivers[uidOrId]
 		if ok {
-			continue
+			filteredReceiverNames[recv.Name] = struct{}{} // Deduplicate on contact point name
+		} else {
+			m.mg.Logger.Warn("ignoring obsolete notification channel", "uid", uidOrId)
 		}
-		if c.Type == "hipchat" || c.Type == "sensu" {
-			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
-			continue
-		}
-
-		uid, ok := m.generateChannelUID()
-		if !ok {
-			return errors.New("failed to generate UID for notification channel")
-		}
-
-		m.migratedChannelsPerOrg[orgID][c] = struct{}{}
-		settings, decryptedSecureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
-		if err != nil {
-			return err
-		}
-		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
-			UID:                   uid,
-			Name:                  c.Name,
-			Type:                  c.Type,
-			DisableResolveMessage: c.DisableResolveMessage,
-			Settings:              settings,
-			SecureSettings:        decryptedSecureSettings,
-		})
-	}
-	receiver.GrafanaManagedReceivers = portedChannels
-	if len(portedChannels) > 0 {
-		amConfigs.AlertmanagerConfig.Receivers = append(amConfigs.AlertmanagerConfig.Receivers, receiver)
 	}
 
-	return nil
+	coveredByDefault := func(names map[string]interface{}) bool {
+		// Check if all receivers are also default ones and if so, just use the default route.
+		for n := range names {
+			if _, ok := defaultReceivers[n]; !ok {
+				return false
+			}
+		}
+		return true
+	}
+
+	if len(filteredReceiverNames) == 0 || coveredByDefault(filteredReceiverNames) {
+		// Use the default route instead.
+		return nil, nil
+	}
+
+	// Add default receivers alongside rule-specific ones
+	for n := range defaultReceivers {
+		filteredReceiverNames[n] = struct{}{}
+	}
+
+	return filteredReceiverNames, nil
 }
 
 func (m *migration) generateChannelUID() (string, bool) {
@@ -428,9 +418,11 @@ type PostableApiAlertingConfig struct {
 }
 
 type Route struct {
-	Receiver string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	Matchers Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
-	Routes   []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
+	Receiver   string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	Matchers   Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	Routes     []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
+	Continue   bool     `yaml:"continue,omitempty" json:"continue,omitempty"`
+	GroupByStr []string `yaml:"group_by,omitempty" json:"group_by,omitempty"`
 }
 
 type Matchers labels.Matchers

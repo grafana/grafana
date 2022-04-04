@@ -70,10 +70,8 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:           make(map[string]struct{}),
-			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
-			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
-			silences:                  make(map[int64][]*pb.MeshSilence),
+			seenChannelUIDs: make(map[string]struct{}),
+			silences:        make(map[int64][]*pb.MeshSilence),
 		})
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
@@ -214,11 +212,8 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs           map[string]struct{}
-	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
-	silences                  map[int64][]*pb.MeshSilence
-	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
-	lastReceiverID            int                         // For the auto generated receivers.
+	seenChannelUIDs map[string]struct{}
+	silences        map[int64][]*pb.MeshSilence
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -248,14 +243,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	// allChannels: channelUID -> channelConfig
-	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
-	if err != nil {
-		return err
-	}
-
-	amConfigPerOrg := make(amConfigsPerOrg, len(allChannelsPerOrg))
-	err = m.addDefaultChannels(amConfigPerOrg, allChannelsPerOrg, defaultChannelsPerOrg)
+	amConfigPerOrg, receiversPerOrg, defaultReceiversPerOrg, err := m.setupAlertManagerConfigs()
 	if err != nil {
 		return err
 	}
@@ -362,7 +350,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
 			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
 		} else {
-			if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
+			if err := m.createRouteForAlert(rule.UID, da, amConfigPerOrg[rule.OrgID], receiversPerOrg[rule.OrgID], defaultReceiversPerOrg[rule.OrgID]); err != nil {
 				return err
 			}
 		}
@@ -394,14 +382,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	for orgID, amConfig := range amConfigPerOrg {
-		// Create a separate receiver for all the unmigrated channels.
-		err = m.addUnmigratedChannels(orgID, amConfig, allChannelsPerOrg[orgID], defaultChannelsPerOrg[orgID])
-		if err != nil {
-			return err
-		}
-
 		// No channels, hence don't require Alertmanager config - skip it.
-		if len(allChannelsPerOrg[orgID]) == 0 {
+		if len(receiversPerOrg[orgID]) == 0 {
 			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
 			continue
 		}
