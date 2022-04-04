@@ -58,7 +58,7 @@ import PrometheusMetricFindQuery from './metric_find_query';
 import { renderLegendFormat } from './legend';
 import { fetchDataSourceBuildInfo } from 'app/features/alerting/unified/api/buildInfo';
 import { PromApplication, PromBuildInfo } from 'app/types/unified-alerting-dto';
-import { Badge, BadgeColor } from '@grafana/ui';
+import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
@@ -837,6 +837,16 @@ export class PrometheusDatasource
   getBuildInfoMessage(buildInfo: PromBuildInfo) {
     const enabled = <Badge color="green" icon="check" text="Ruler API enabled" />;
     const disabled = <Badge color="orange" icon="exclamation-triangle" text="Ruler API not enabled" />;
+    const unsupported = (
+      <Tooltip
+        placement="top"
+        content="Prometheus does not allow editing rules, connect to either a Mimir or Cortex datasource to manage alerts via Grafana."
+      >
+        <div>
+          <Badge color="red" icon="exclamation-triangle" text="Ruler API not supported" />
+        </div>
+      </Tooltip>
+    );
 
     const LOGOS = {
       [PromApplication.Cortex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
@@ -878,13 +888,14 @@ export class PrometheusDatasource
       >
         <div>Type</div>
         <div>{applicationSubType}</div>
-        {/* Prometheus does not have a Ruler API – so skip for that type */}
-        {buildInfo.application !== PromApplication.Prometheus && (
-          <>
-            <div>Ruler API</div>
+        <>
+          <div>Ruler API</div>
+          {/* Prometheus does not have a Ruler API – so show that it is not supported */}
+          {buildInfo.application === PromApplication.Prometheus && <div>{unsupported}</div>}
+          {buildInfo.application !== PromApplication.Prometheus && (
             <div>{buildInfo.features.rulerApiEnabled ? enabled : disabled}</div>
-          </>
-        )}
+          )}
+        </>
       </div>
     );
   }
