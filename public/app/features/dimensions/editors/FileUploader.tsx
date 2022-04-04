@@ -40,7 +40,8 @@ export const FileUploader = (props: Props) => {
           })
             .then((r) => r.json())
             .then((data) => {
-              if (!data.error) {
+              // TODO: manually trigger error ui
+              if (!data.err) {
                 getBackendSrv()
                   .get(`api/storage/read/${data.path}`)
                   .then(() => {

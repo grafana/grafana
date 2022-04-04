@@ -30,13 +30,12 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 	// 32 MB is the default used by FormFile()
 	if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
-		grafanaStorageLogger.Error("error in parsing form", err)
 		return response.Error(400, "error in parsing form", err)
 	}
 	res, err := s.store.Upload(c.Req.Context(), c.SignedInUser, c.Req.MultipartForm)
 
 	if err != nil {
-		return response.Error(res.statusCode, res.message, err)
+		return response.Error(500, "Internal Server Error", err)
 	}
 
 	return response.JSON(res.statusCode, map[string]string{

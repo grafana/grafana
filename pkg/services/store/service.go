@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -47,6 +46,7 @@ type Response struct {
 	statusCode int
 	message    string
 	fileName   string
+	err        bool
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
@@ -112,6 +112,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		path:       "upload",
 		statusCode: 200,
 		message:    "Uploaded successfully",
+		err:        false,
 	}
 	upload, _ := s.tree.getRoot("upload")
 
@@ -125,22 +126,19 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		if fileHeader.Size > MAX_UPLOAD_SIZE {
 			response.statusCode = 400
 			response.message = "The uploaded image is too big"
-			return &response, fmt.Errorf("The uploaded image is too big: %s. Please use an image less than 1MB in size", strconv.FormatInt(fileHeader.Size, 10))
+			response.err = true
+			return &response, nil
 		}
 
 		// open each file to copy contents
 		file, err := fileHeader.Open()
 		if err != nil {
-			response.statusCode = 500
-			response.message = "server error in opening file to read"
-			return &response, fmt.Errorf("server error in opening file to read")
+			return nil, err
 		}
 		defer file.Close()
 		data, err := ioutil.ReadAll(file)
 		if err != nil {
-			response.statusCode = 500
-			response.message = "server error in reading file"
-			return &response, err
+			return nil, err
 		}
 		filetype := http.DetectContentType(data)
 		// only allow images to be uploaded
@@ -148,16 +146,15 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 			return &Response{
 				statusCode: 400,
 				message:    "unsupported file type uploaded",
-			}, fmt.Errorf("only image files are supported")
+				err:        true,
+			}, nil
 		}
 		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
 			Path:     "/" + fileHeader.Filename,
 			Contents: &data,
 		})
 		if err != nil {
-			response.statusCode = 500
-			response.message = "server error in uploading file"
-			return &response, err
+			return nil, err
 		}
 		response.fileName = fileHeader.Filename
 		response.path = "upload/" + fileHeader.Filename
