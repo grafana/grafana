@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"encoding/json"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 
 func loadGetMetricDataOutputsFromFile(filePath string) ([]*cloudwatch.GetMetricDataOutput, error) {
 	var getMetricDataOutputs []*cloudwatch.GetMetricDataOutput
+	filePath = filepath.Clean(filePath)
 	jsonBody, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return getMetricDataOutputs, err
