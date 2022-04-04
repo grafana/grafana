@@ -32,10 +32,10 @@ export function NavBarItemWithoutMenu({
 
   const content = highlightText ? (
     <NavFeatureHighlight>
-      <span className={styles.icon}>{children}</span>
+      <div className={styles.icon}>{children}</div>
     </NavFeatureHighlight>
   ) : (
-    <span className={styles.icon}>{children}</span>
+    <div className={styles.icon}>{children}</div>
   );
 
   const elStyle = cx(styles.element, elClassName);
