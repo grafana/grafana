@@ -58,7 +58,7 @@ function openDashboard(openInNewTab: boolean, dashboardUid?: string) {
   if (!openInNewTab) {
     locationService.push(url);
   } else {
-    window.open(config.appUrl + url, '_blank');
+    global.open(config.appUrl + url, '_blank');
   }
 }
 

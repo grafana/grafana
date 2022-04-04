@@ -42,7 +42,7 @@ export async function addPanelToDashboard(options: AddPanelToDashboardOptions) {
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
 
-export function getPanelType(queries: DataQuery[], queryResponse?: ExplorePanelData) {
+function getPanelType(queries: DataQuery[], queryResponse?: ExplorePanelData) {
   if (!queryResponse) {
     // return table if no response
     return 'table';
