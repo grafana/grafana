@@ -1,9 +1,9 @@
-import React, { PureComponent, RefObject } from 'react';
+import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { ExploreId } from 'app/types/explore';
 import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
+import { config, DataSourcePicker } from '@grafana/runtime';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from './state/datasource';
@@ -18,7 +18,10 @@ import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { AddToDashboard } from './AddToDashboard';
+
+const AddToDashboard = lazy(() =>
+  import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
+);
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -131,7 +134,11 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               />
             )}
 
-            <AddToDashboard exploreId={exploreId} />
+            {config.featureToggles.explore2Dashboard && (
+              <Suspense fallback={null}>
+                <AddToDashboard exploreId={exploreId} />
+              </Suspense>
+            )}
 
             <RunButton
               refreshInterval={refreshInterval}
