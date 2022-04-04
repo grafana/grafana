@@ -197,9 +197,8 @@ function makeDataSourceColumn(
               const icon = settings?.meta?.info?.logos?.small;
               if (icon) {
                 return (
-                  <a
+                  <span
                     key={i}
-                    href={`datasources/edit/${settings.uid}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -208,7 +207,7 @@ function makeDataSourceColumn(
                   >
                     <SVG src={icon} width={14} height={14} title={settings.type} className={iconClass} />
                     {settings.name}
-                  </a>
+                  </span>
                 );
               }
               return <span key={i}>{v.type}</span>;

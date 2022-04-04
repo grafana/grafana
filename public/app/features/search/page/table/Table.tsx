@@ -161,7 +161,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     cellWrapper: css`
       display: flex;
-      pointer-events: none;
     `,
     headerCell: css`
       padding-top: 2px;
