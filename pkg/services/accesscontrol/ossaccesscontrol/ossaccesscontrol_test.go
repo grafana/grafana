@@ -350,7 +350,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 			// Check
 			for _, registration := range tt.registrations {
-				// Preparle list of builtin roles to check
+				// Prepare list of builtin roles to check
 				brAndParents := map[string]struct{}{}
 				for _, br := range registration.Grants {
 					brAndParents[br] = struct{}{}

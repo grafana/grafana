@@ -98,11 +98,11 @@ var (
 	}
 
 	statsReaderRole = RoleDTO{
-		Version:     3,
 		Name:        "fixed:stats:reader",
 		DisplayName: "Statistics reader",
 		Description: "Read Grafana instance statistics.",
 		Group:       "Statistics",
+		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
