@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azhttpclient"
 )
 
 type Service struct {

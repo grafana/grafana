@@ -5,10 +5,11 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azhttpclient"
 	"github.com/grafana/grafana/pkg/util/maputil"
 )
 

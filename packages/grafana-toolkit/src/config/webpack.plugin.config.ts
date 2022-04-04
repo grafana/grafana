@@ -197,7 +197,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       (context, request, callback) => {
         const prefix = 'grafana/';
         if (request.indexOf(prefix) === 0) {
-          return callback(null, request.substr(prefix.length));
+          return callback(null, request.slice(prefix.length));
         }
 
         // @ts-ignore

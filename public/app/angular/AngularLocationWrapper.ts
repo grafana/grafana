@@ -35,7 +35,7 @@ export class AngularLocationWrapper {
     navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: hash');
 
     if (!newHash) {
-      return locationService.getLocation().hash.substr(1);
+      return locationService.getLocation().hash.slice(1);
     } else {
       throw new Error('AngularLocationWrapper method not implemented.');
     }
