@@ -352,7 +352,6 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 
 	mockAuthenticateUserFunc(user, "", nil)
-	t.Cleanup(resetAuthenticateUserFunc)
 
 	redirectCases := []redirectCase{
 		{
@@ -685,7 +684,6 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
 			mockAuthenticateUserFunc(c.authUser, c.authModule, c.authErr)
-			t.Cleanup(resetAuthenticateUserFunc)
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertions("POST", sc.url).exec()
 
@@ -738,7 +736,4 @@ func mockAuthenticateUserFunc(user *models.User, authmodule string, err error) {
 		query.AuthModule = authmodule
 		return err
 	}
-}
-func resetAuthenticateUserFunc() {
-	// login.AuthenticateUserFunc = login.AuthenticateUser
 }
