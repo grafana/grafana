@@ -360,7 +360,7 @@ export function addLokiOperation(
           modeller,
           (def) => def.category === LokiVisualQueryOperationCategory.Functions
         );
-        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['auto'] });
+        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['$__interval'] });
       }
       operations.push(newOperation);
       break;
