@@ -1178,6 +1178,20 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid);
   };
 
+  canEditAnnotations(dashboardId: number) {
+    let canEdit = true;
+
+    // if FGAC is enabled there are additional conditions to check
+    if (contextSrv.accessControlEnabled()) {
+      if (dashboardId === 0) {
+        canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
+      } else {
+        canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
+      }
+    }
+    return this.canAddAnnotations() && canEdit;
+  }
+
   canAddAnnotations() {
     return this.meta.canEdit || this.meta.canMakeEditable;
   }
