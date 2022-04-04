@@ -141,9 +141,7 @@ func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaRece
 // so nesting the root-level route will require a significantly more complex setup.
 func (m *migration) createReceivers(amConfig *PostableUserConfig, allChannels []*notificationChannel, defaultChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, error) {
 	receivers := make(map[uidOrID]*PostableApiReceiver)
-
 	for _, c := range allChannels {
-
 		notifier, err := m.createNotifier(c)
 		if err != nil {
 			return nil, err
@@ -188,7 +186,6 @@ func (m *migration) createReceivers(amConfig *PostableUserConfig, allChannels []
 	}
 
 	return receivers, nil
-
 }
 
 // Create the root-level route with the default receiver
