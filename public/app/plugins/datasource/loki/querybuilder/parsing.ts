@@ -249,7 +249,7 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 
 function getUnwrap(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const id = 'unwrap';
-  const string = handleQuotes(getString(expr, node.getChild('Identifier')));
+  const string = getString(expr, node.getChild('Identifier'));
 
   return {
     id,
