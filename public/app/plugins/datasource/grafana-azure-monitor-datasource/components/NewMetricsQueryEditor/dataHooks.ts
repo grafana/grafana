@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { toOption } from '../../utils/common';
-import { useAsyncState, DataHook } from '../MetricsQueryEditor/dataHooks';
+import { useAsyncState } from '../../utils/useAsyncState';
+import { DataHook } from '../MetricsQueryEditor/dataHooks';
 import { setMetricNamespace } from '../MetricsQueryEditor/setQueryValue';
 
 export interface MetricMetadata {
