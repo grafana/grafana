@@ -69,6 +69,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 	if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
 		upload := filepath.Join(storage, "upload")
+		grafanaStorageLogger.Info("inside provide service", "flag", true)
 		_ = os.MkdirAll(upload, 0700)
 		roots = append(roots, newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
 			Path: upload,
@@ -115,7 +116,6 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		err:        false,
 	}
 	upload, _ := s.tree.getRoot("upload")
-
 	if upload == nil {
 		return &response, fmt.Errorf("upload feature is not enabled")
 	}
