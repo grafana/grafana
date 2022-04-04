@@ -422,7 +422,7 @@ describe('buildVisualQueryFromString', () => {
         operations: [
           {
             id: '__less_or_equal',
-            params: [false, 2.5],
+            params: [2.5, false],
           },
         ],
       },
@@ -438,7 +438,7 @@ describe('buildVisualQueryFromString', () => {
         operations: [
           {
             id: '__less_or_equal',
-            params: [true, 2],
+            params: [2, true],
           },
         ],
       },

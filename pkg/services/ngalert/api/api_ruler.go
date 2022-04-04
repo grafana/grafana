@@ -196,7 +196,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 }
 
 func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response {
-	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
