@@ -80,24 +80,49 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
             addPromGroupsToCombinedNamespace(ns, groups);
           });
 
-          const result = Object.values(namespaces);
-          if (isGrafanaRulesSource(rulesSource)) {
-            // merge all groups in case of grafana managed, essentially treating namespaces (folders) as gorups
-            result.forEach((namespace) => {
-              namespace.groups = [
-                {
-                  name: 'default',
-                  rules: namespace.groups.flatMap((g) => g.rules).sort((a, b) => a.name.localeCompare(b.name)),
-                },
-              ];
-            });
-          }
+          const result = isGrafanaRulesSource(rulesSource)
+            ? transformGrafanaManagedRules(Object.values(namespaces))
+            : Object.values(namespaces);
+
           cache.current[rulesSourceName] = { promRules, rulerRules, result };
           return result;
         })
         .flat(),
     [promRulesResponses, rulerRulesResponses, rulesSources]
   );
+}
+
+// merge all groups in case of grafana managed, essentially treating namespaces (folders) as gorups
+export function transformGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) {
+  return namespaces.map((namespace) => {
+    const newNamespace: CombinedRuleNamespace = {
+      ...namespace,
+      groups: [],
+    };
+
+    let ungroupedRules: CombinedRule[] = [];
+    namespace.groups.forEach((group) => {
+      // if the group only has a single rule and the group name matches the rule name we assume it to be an ungrouped group
+      const ungroupedGroup = group.rules.length === 1 && group.name === group.rules[0].name;
+      if (ungroupedGroup) {
+        ungroupedRules = ungroupedRules.concat(group.rules);
+      } else {
+        newNamespace.groups.push(group);
+      }
+    });
+
+    // add default group with ungrouped rules
+    newNamespace.groups.push({
+      name: 'default',
+      rules: sortRulesByName(ungroupedRules),
+    });
+
+    return newNamespace;
+  });
+}
+
+export function sortRulesByName(rules: CombinedRule[]) {
+  return rules.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[]): void {

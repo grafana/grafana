@@ -114,7 +114,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
     );
   }
 
-  const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
+  // ungrouped rules are rules that are in the "default" group name
+  const isUngrouped = group.name === 'default';
+  const groupName = isUngrouped ? namespace.name : `${namespace.name} > ${group.name}`;
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
