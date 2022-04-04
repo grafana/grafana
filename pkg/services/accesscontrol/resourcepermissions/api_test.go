@@ -470,7 +470,6 @@ func withSolver(options Options, solver UidSolver) Options {
 	return options
 }
 
-// inheritanceSolver := solveInheritedScopes(a.service.options.InheritedScopesSolver)
 type inheritSolverTestCase struct {
 	desc           string
 	resourceID     string
