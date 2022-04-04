@@ -217,7 +217,6 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  // Not implemented in visual query builder yet
   const id = 'line_format';
   const string = handleQuotes(getString(expr, node.getChild('String')));
 
@@ -228,7 +227,6 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  // Not implemented in visual query builder yet
   const id = 'label_format';
   const identifier = node.getChild('Identifier');
   const op = identifier!.nextSibling;
@@ -270,8 +268,25 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const nameNode = node.getChild('VectorOp');
   let funcName = getString(expr, nameNode);
 
+  const grouping = node.getChild('Grouping');
+  const labels: string[] = [];
+
+  if (grouping) {
+    const byModifier = grouping.getChild(`By`);
+    if (byModifier && funcName) {
+      funcName = `__${funcName}_by`;
+    }
+
+    const withoutModifier = grouping.getChild(`Without`);
+    if (withoutModifier) {
+      funcName = `__${funcName}_without`;
+    }
+
+    labels.push(...getAllByType(expr, grouping, 'Identifier'));
+  }
+
   const metricExpr = node.getChild('MetricExpr');
-  const op: QueryBuilderOperation = { id: funcName, params: [] };
+  const op: QueryBuilderOperation = { id: funcName, params: labels };
 
   if (metricExpr) {
     handleExpression(expr, metricExpr, context);
@@ -408,4 +423,27 @@ function getLastChildWithSelector(node: SyntaxNode, selector: string) {
     }
   }
   return child;
+}
+
+/**
+ * Get all nodes with type in the tree. This traverses the tree so it is safe only when you know there shouldn't be
+ * too much nesting but you just want to skip some of the wrappers. For example getting function args this way would
+ * not be safe is it would also find arguments of nested functions.
+ * @param expr
+ * @param cur
+ * @param type
+ */
+function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
+  if (cur.name === type) {
+    return [getString(expr, cur)];
+  }
+  const values: string[] = [];
+  let pos = 0;
+  let child = cur.childAfter(pos);
+  while (child) {
+    values.push(...getAllByType(expr, child, type));
+    pos = child.to;
+    child = cur.childAfter(pos);
+  }
+  return values;
 }
