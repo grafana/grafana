@@ -1,7 +1,7 @@
 ---
 title: Create a service account in Grafana
 menuTitle: Create a service account
-aliases: [docs/sources/administration/service-accounts/add.md]
+aliases: [docs/sources/administration/service-accounts/add-service-account-token.md]
 description: 'How to create a service account in Grafana'
 weight: 50
 keywords:
@@ -10,18 +10,16 @@ keywords:
 
 # Create a service account in Grafana
 
-You can create a service account in the service account tab of the organization. To manage your comuted workload with a user that is not tied to a user specifically.
+You can create a service account in the service account tab of the organization. To manage your computed workload with a user that is not tied to a user specifically.
 
 Consider the following restriction when you create a service account:
 
 - A service account is identified by its name, which is unique to the entire suite of organizations. The name is set upon creation of the service account
-- Service accounts do not have passwords, and cannot log in via browsers or cookies
-- Service accounts are associated with private/public RSA key-pairs that are used for authentication to Grafana
 - Service accounts live on a organizational level and are restricted as such
 
 For more information about service accounts refer to [About service accounts in Grafana]({{< relref "./about-service-accounts.md">}}).
 
-For more information about creating service accounts via the API, refer to [Create service account via API]({{< relref "../../http_api/serviceaccount.md#get-single-serviceaccount-by-id">}}).
+For more information about creating service accounts via the API, refer to [Create service account via API]({{< relref "../../http_api/serviceaccount.md#create-service-account">}}).
 
 Before you begin:
 
@@ -33,4 +31,5 @@ Before you begin:
 1. Hover your mouse over the organization icon in the sidebar.
 1. Click service accounts. Grafana opens the service accounts tab.
 1. Click **New service account**.
-1. Enter a display name, this will be unique within the organization and then create the service account.
+1. Enter a display name, this will be unique within the organization
+1. Click **Create service account**.

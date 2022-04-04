@@ -29,9 +29,7 @@ A service account can be associated with multiple api keys. As a result, we reco
 
 ## Grafana Service account vs APIKey
 
-We have created service accounts for improved access control of programmatic access to Grafana.
-
-A service account token is a token that is used to authenticate a service account to Grafana and are very similiar to apikeys.
+We have created service accounts for improved access control of programmatic access to Grafana. A service account token is a token that is used to authenticate a service account to Grafana and are very similiar to apikeys.
 
 We recommend to start using service accounts over apikeys.
 
@@ -44,6 +42,6 @@ The added benefits of service accounts to apikeys are:
 - Service accounts act like users in Grafana and can be disabled/enabled and granted permissions.
 - Service accounts can be associated with multiple api keys.
 - Service accounts can be assigned to teams.
-- Service accounts represent a programmatic access to your Grafana instance.
 - Service account tokens are not tied to a specific user, therefore making sure applications can be authenticated even if a Grafana user is deleted.
 - Service accounts can be granted granular permissions. More information on spefic permission refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
+- Eventually API keys will be deprecated
