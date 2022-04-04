@@ -27,7 +27,6 @@ func ProvideHTTPService(store StorageService) HTTPStorageService {
 }
 
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
-
 	// 32 MB is the default used by FormFile()
 	if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
 		return response.Error(400, "error in parsing form", err)

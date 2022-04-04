@@ -135,14 +135,17 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
+		err = file.Close()
+		if err != nil {
+			return nil, err
+		}
 		data, err := ioutil.ReadAll(file)
 		if err != nil {
 			return nil, err
 		}
 		filetype := http.DetectContentType(data)
 		// only allow images to be uploaded
-		if (filetype != "image/jpeg") && (filetype != "image/jpg") && (filetype != "image/gif") && (filetype != "image/png") && (filetype != "image/svg+xml") && !strings.HasSuffix(fileHeader.Filename, ".svg") {
+		if (filetype != "image/jpeg") && (filetype != "image/jpg") && (filetype != "image/gif") && (filetype != "image/png") && (filetype != "image/svg+xml") && (filetype != "image/webp") && !strings.HasSuffix(fileHeader.Filename, ".svg") {
 			return &Response{
 				statusCode: 400,
 				message:    "unsupported file type uploaded",
