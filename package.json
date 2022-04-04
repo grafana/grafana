@@ -55,7 +55,8 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer"
+    "betterer": "betterer",
+    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-4/",
@@ -87,6 +88,7 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
+    "@betterer/betterer": "5.1.7",
     "@betterer/cli": "5.1.7",
     "@betterer/regexp": "5.1.7",
     "@emotion/eslint-plugin": "11.7.0",
@@ -129,9 +131,10 @@
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/jest": "27.4.1",
     "@types/jquery": "3.5.14",
+    "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
     "@types/lingui__macro": "^3",
-    "@types/lodash": "4.14.149",
+    "@types/lodash": "4.14.181",
     "@types/logfmt": "^1.2.1",
     "@types/mousetrap": "1.6.9",
     "@types/node": "16.11.26",
@@ -312,6 +315,7 @@
     "immer": "9.0.12",
     "immutable": "4.0.0",
     "jquery": "3.6.0",
+    "js-yaml": "^4.1.0",
     "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
     "lezer-promql": "0.22.0",

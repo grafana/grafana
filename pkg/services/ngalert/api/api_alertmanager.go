@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -32,6 +33,7 @@ type AlertmanagerSrv struct {
 	secrets secrets.Service
 	store   AlertingStore
 	log     log.Logger
+	ac      accesscontrol.AccessControl
 }
 
 type UnknownReceiverError struct {
@@ -128,6 +130,18 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
+	}
+
+	action := accesscontrol.ActionAlertingInstanceUpdate
+	if postableSilence.ID == "" {
+		action = accesscontrol.ActionAlertingInstanceCreate
+	}
+	if !accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqOrgAdminOrEditor, accesscontrol.EvalPermission(action)) {
+		errAction := "update"
+		if postableSilence.ID == "" {
+			errAction = "create"
+		}
+		return ErrResp(http.StatusUnauthorized, fmt.Errorf("user is not authorized to %s silences", errAction), "")
 	}
 
 	silenceID, err := am.CreateSilence(&postableSilence)

@@ -82,7 +82,7 @@ export const FolderPickerTab = (props: Props) => {
                   cards.push({
                     value: `${folder}/${item.name}`,
                     label: item.name,
-                    search: (idx ? item.name.substr(0, idx) : item.name).toLowerCase(),
+                    search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
                     imgUrl: `public/${folder}/${item.name}`,
                   });
                 }

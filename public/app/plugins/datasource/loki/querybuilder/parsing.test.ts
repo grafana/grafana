@@ -290,26 +290,58 @@ describe('buildVisualQueryFromString', () => {
   it('parses binary query', () => {
     expect(buildVisualQueryFromString('rate({project="bar"}[5m]) / rate({project="foo"}[5m])')).toEqual(
       noErrors({
-        labels: [
-          {
-            op: '=',
-            value: 'bar',
-            label: 'project',
-          },
-        ],
+        labels: [{ op: '=', value: 'bar', label: 'project' }],
         operations: [{ id: 'rate', params: ['5m'] }],
         binaryQueries: [
           {
             operator: '/',
             query: {
-              labels: [
+              labels: [{ op: '=', value: 'foo', label: 'project' }],
+              operations: [{ id: 'rate', params: ['5m'] }],
+            },
+          },
+        ],
+      })
+    );
+  });
+
+  it('parses binary scalar query', () => {
+    expect(buildVisualQueryFromString('rate({project="bar"}[5m]) / 2')).toEqual(
+      noErrors({
+        labels: [{ op: '=', value: 'bar', label: 'project' }],
+        operations: [
+          { id: 'rate', params: ['5m'] },
+          { id: '__divide_by', params: [2] },
+        ],
+      })
+    );
+  });
+
+  it('parses chained binary query', () => {
+    expect(
+      buildVisualQueryFromString('rate({project="bar"}[5m]) * 2 / rate({project="foo"}[5m]) + rate({app="test"}[1m])')
+    ).toEqual(
+      noErrors({
+        labels: [{ op: '=', value: 'bar', label: 'project' }],
+        operations: [
+          { id: 'rate', params: ['5m'] },
+          { id: '__multiply_by', params: [2] },
+        ],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              labels: [{ op: '=', value: 'foo', label: 'project' }],
+              operations: [{ id: 'rate', params: ['5m'] }],
+              binaryQueries: [
                 {
-                  op: '=',
-                  value: 'foo',
-                  label: 'project',
+                  operator: '+',
+                  query: {
+                    labels: [{ op: '=', value: 'test', label: 'app' }],
+                    operations: [{ id: 'rate', params: ['1m'] }],
+                  },
                 },
               ],
-              operations: [{ id: 'rate', params: ['5m'] }],
             },
           },
         ],
