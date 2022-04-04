@@ -16,8 +16,8 @@ import (
 
 func loadGetMetricDataOutputsFromFile(filePath string) ([]*cloudwatch.GetMetricDataOutput, error) {
 	var getMetricDataOutputs []*cloudwatch.GetMetricDataOutput
-	filePath = filepath.Clean(filePath)
-	jsonBody, err := ioutil.ReadFile(filePath)
+    cleanFilePath := filepath.Clean(filePath)
+	jsonBody, err := ioutil.ReadFile(cleanFilePath)
 	if err != nil {
 		return getMetricDataOutputs, err
 	}
