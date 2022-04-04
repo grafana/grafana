@@ -1031,5 +1031,5 @@ function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => v
 
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
-  return logIdentifier.substr(colonIndex + 1);
+  return logIdentifier.slice(colonIndex + 1);
 }
