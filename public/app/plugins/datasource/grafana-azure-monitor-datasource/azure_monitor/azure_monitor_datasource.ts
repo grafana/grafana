@@ -54,10 +54,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return !this.validateDatasource();
   }
 
-  hasValue(item?: string) {
-    return item && item !== defaultDropdownValue;
-  }
-
   filterQuery(item: AzureMonitorQuery): boolean {
     const resourceUriAvailable = item?.azureMonitor?.resourceUri;
     const legacyQueryAvailable =
