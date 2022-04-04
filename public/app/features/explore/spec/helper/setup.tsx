@@ -147,8 +147,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
 }
 
 export const waitForExplore = async (exploreId: ExploreId = ExploreId.left) => {
-  const container = await screen.findAllByTestId('data-testid Explore');
-  return await within(container[exploreId === ExploreId.left ? 0 : 1]).findByText(/Editor/i);
+  return await withinExplore(exploreId).findByText(/Editor/i);
 };
 
 export const tearDown = () => {
