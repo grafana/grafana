@@ -52,7 +52,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf
 	github.com/grafana/grafana-aws-sdk v0.10.1
-	github.com/grafana/grafana-azure-sdk-go v1.0.0
+	github.com/grafana/grafana-azure-sdk-go v1.1.0
 	github.com/grafana/grafana-plugin-sdk-go v0.129.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -127,13 +127,6 @@ require (
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v0.7.0 // indirect
-	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
-	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
-	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
-	github.com/Azure/go-autorest/logger v0.2.1 // indirect
-	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/FZambia/eagle v0.0.1 // indirect
 	github.com/FZambia/sentinel v1.1.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -174,7 +167,7 @@ require (
 	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.0 // indirect
-	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -257,9 +250,17 @@ require (
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.22.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.13.2 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v0.9.1 // indirect
+	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.17 // indirect
+	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
+	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
+	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
+	github.com/Azure/go-autorest/logger v0.2.1 // indirect
+	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v0.4.0 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
@@ -270,9 +271,11 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.6.2 // indirect
 	github.com/getkin/kin-openapi v0.91.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
+	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/segmentio/asm v1.1.1 // indirect
