@@ -210,37 +210,41 @@ export function fetchAllPromBuildInfoAction(): ThunkResult<Promise<void>> {
 export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
   'unifiedalerting/fetchPromBuildinfo',
   async ({ rulesSourceName }: { rulesSourceName: string }): Promise<PromBasedDataSource> => {
-    if (rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-      return {
-        name: GRAFANA_RULES_SOURCE_NAME,
-        id: GRAFANA_RULES_SOURCE_NAME,
-        rulerConfig: {
-          dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-          apiVersion: 'legacy',
-        },
-      };
-    }
-
-    const ds = getRulesDataSource(rulesSourceName);
-    if (!ds) {
-      throw new Error(`Missing data source configuration for ${rulesSourceName}`);
-    }
-
-    const { id, name } = ds;
-    const buildInfo = await fetchBuildInfo(name);
-
-    const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
-      ? {
-          dataSourceName: name,
-          apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
+    return withSerializedError<PromBasedDataSource>(
+      (async (): Promise<PromBasedDataSource> => {
+        if (rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
+          return {
+            name: GRAFANA_RULES_SOURCE_NAME,
+            id: GRAFANA_RULES_SOURCE_NAME,
+            rulerConfig: {
+              dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+              apiVersion: 'legacy',
+            },
+          };
         }
-      : undefined;
 
-    return {
-      name: name,
-      id: id,
-      rulerConfig,
-    };
+        const ds = getRulesDataSource(rulesSourceName);
+        if (!ds) {
+          throw new Error(`Missing data source configuration for ${rulesSourceName}`);
+        }
+
+        const { id, name } = ds;
+        const buildInfo = await fetchBuildInfo(name);
+
+        const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
+          ? {
+              dataSourceName: name,
+              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
+            }
+          : undefined;
+
+        return {
+          name: name,
+          id: id,
+          rulerConfig,
+        };
+      })()
+    );
   },
   {
     condition: ({ rulesSourceName }, { getState }) => {
