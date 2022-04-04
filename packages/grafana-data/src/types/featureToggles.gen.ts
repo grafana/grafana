@@ -49,6 +49,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   saveDashboardDrawer?: boolean;
   storage?: boolean;
+  alertProvisioning?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
 }

@@ -10112,6 +10112,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/js-yaml@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "@types/js-yaml@npm:4.0.5"
+  checksum: 7dcac8c50fec31643cc9d6444b5503239a861414cdfaa7ae9a38bc22597c4d850c4b8cec3d82d73b3fbca408348ce223b0408d598b32e094470dfffc6d486b4d
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:*, @types/json-schema@npm:^7.0.4, @types/json-schema@npm:^7.0.5, @types/json-schema@npm:^7.0.7, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
   version: 7.0.9
   resolution: "@types/json-schema@npm:7.0.9"
@@ -20496,6 +20503,7 @@ __metadata:
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
+    "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
     "@types/lodash": 4.14.181
@@ -20604,6 +20612,7 @@ __metadata:
     jest-matcher-utils: 27.5.1
     jest-mock-console: 1.2.3
     jquery: 3.6.0
+    js-yaml: ^4.1.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     lerna: ^4.0.0
