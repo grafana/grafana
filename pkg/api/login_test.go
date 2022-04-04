@@ -740,5 +740,5 @@ func mockAuthenticateUserFunc(user *models.User, authmodule string, err error) {
 	}
 }
 func resetAuthenticateUserFunc() {
-	login.AuthenticateUserFunc = login.AuthenticateUser
+	// login.AuthenticateUserFunc = login.AuthenticateUser
 }

@@ -119,6 +119,7 @@ func (s *Server) init() error {
 	}
 
 	login.Init()
+	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login) // XXX hack
 	social.ProvideService(s.cfg)
 
 	if err := s.roleRegistry.RegisterFixedRoles(); err != nil {

@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -168,7 +169,7 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	sqlStore             sqlstore.Store
-	authInfoService      *mockAuthInfoService
+	authInfoService      *logintest.AuthInfoServiceFake
 }
 
 func (sc *scenarioContext) exec() {
