@@ -36,7 +36,7 @@ async function fetchDashboard(
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
   // When creating new or adding panels to a dashboard from explore we load it from local storage
-  const model = store.getObject<DashboardDTO | null>(DASHBOARD_FROM_LS_KEY, null);
+  const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
   if (model) {
     store.delete(DASHBOARD_FROM_LS_KEY);
     return model;
