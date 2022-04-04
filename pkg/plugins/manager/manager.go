@@ -18,6 +18,8 @@ const (
 	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
+var _ plugins.Manager = (*PluginManager)(nil)
+
 type PluginManager struct {
 	cfg             *plugins.Cfg
 	processManager  process.Service
