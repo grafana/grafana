@@ -47,7 +47,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     onHoverChange: (isHovering) => {
       if (isHovering) {
         state.open();
-        setMenuIdOpen(ref.current?.id || null);
+        setMenuIdOpen(item.id);
       } else {
         state.close();
       }
@@ -57,13 +57,13 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   useEffect(() => {
     // close the menu when changing submenus
     // or when the state of the overlay changes (i.e hovering outside)
-    if (menuIdOpen !== ref.current?.id || !state.isOpen) {
+    if (menuIdOpen !== item.id || !state.isOpen) {
       state.close();
       setMenuHasFocus(false);
     } else {
       state.open();
     }
-  }, [menuIdOpen, state]);
+  }, [menuIdOpen, state, item.id]);
 
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
@@ -75,7 +75,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           setMenuHasFocus(true);
           break;
         case 'Tab':
-          setMenuIdOpen(null);
+          setMenuIdOpen(undefined);
           break;
         default:
           break;
@@ -160,7 +160,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     onFocusWithin: (e) => {
       if (e.target.id === ref.current?.id) {
         // If focussing on the trigger itself, set the menu id that is open
-        setMenuIdOpen(ref.current?.id);
+        setMenuIdOpen(item.id);
         state.open();
       }
     },
@@ -168,7 +168,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       if (e.target?.getAttribute('role') === 'menuitem' && !overlayRef.current?.contains(e.relatedTarget)) {
         // If it is blurring from a menuitem to an element outside the current overlay
         // close the menu that is open
-        setMenuIdOpen(null);
+        setMenuIdOpen(undefined);
       }
     },
   });
@@ -203,7 +203,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isActive?: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, isActive?: boolean, isMenuOpen?: boolean) => ({
   element: css({
     backgroundColor: 'transparent',
     border: 'none',
