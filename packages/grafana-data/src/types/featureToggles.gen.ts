@@ -52,4 +52,5 @@ export interface FeatureToggles {
   alertProvisioning?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
+  explore2Dashboard?: boolean;
 }

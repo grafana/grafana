@@ -201,5 +201,11 @@ var (
 			RequiresDevMode: true,
 			FrontendOnly:    true,
 		},
+		{
+			Name:         "explore2Dashboard",
+			Description:  "Experimental Explore to Dashboard workflow",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
 	}
 )
