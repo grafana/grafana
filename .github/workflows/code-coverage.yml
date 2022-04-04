@@ -1,5 +1,5 @@
-# Reports Go and TypeScript test code coverage for cloud data sources
-name: Code Coverage
+name: Cloud data sources test code coverage
+# Please be aware that this report targets cloud data source paths -- may not be as accurate as full coverage reports
 on:
   pull_request:
     paths:
@@ -30,7 +30,7 @@ jobs:
       - name: generate go for github.com/grafana/grafana
         run: make gen-go
 
-      - name: Get go coverage for PR
+      - name: Get Go coverage for PR
         run: |
           go test -v -coverpkg=./... -coverprofile=profile.cov ./pkg/tsdb/azuremonitor/... ./pkg/tsdb/cloudmonitoring/... ./pkg/tsdb/cloudwatch/...
           echo "go-pr-cov=$(go tool cover -func profile.cov | grep total: | awk '{print substr($NF,1,length($NF)-1)}')" >> $GITHUB_ENV
@@ -45,7 +45,7 @@ jobs:
       - name: generate go for github.com/grafana/grafana
         run: make gen-go
 
-      - name: Get go coverage on main
+      - name: Get Go coverage on main
         run: |
           go test -v -coverpkg=./... -coverprofile=profile.cov ./pkg/tsdb/azuremonitor/... ./pkg/tsdb/cloudmonitoring/... ./pkg/tsdb/cloudwatch/...
           echo "go-main-cov=$(go tool cover -func profile.cov | grep total: | awk '{print substr($NF,1,length($NF)-1)}')" >> $GITHUB_ENV
