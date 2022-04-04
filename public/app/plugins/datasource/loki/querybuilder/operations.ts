@@ -95,12 +95,12 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.LineFormats,
-      renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=${model.params[0]}`,
+      renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=\`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level". 
 
-        Example: error_level=level
+        Example: error_level=\`level\`
 
         [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
         `,
