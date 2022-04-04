@@ -60,6 +60,16 @@ func Test_FormatValues(t *testing.T) {
 			},
 			expected: "B0: 1.1e+00, B1: 1.4e+00",
 		},
+		{
+			name: "with a high number of values, it renders the value based on their refID and position using a natural order",
+			alertState: &state.State{
+				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
+				Results: []state.Evaluation{
+					{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2, "B2": &val1, "B10": &val2, "B11": &val1}},
+				},
+			},
+			expected: "B0: 1.1e+00, B1: 1.4e+00, B2: 1.1e+00, B10: 1.4e+00, B11: 1.1e+00",
+		},
 	}
 
 	for _, tt := range tc {

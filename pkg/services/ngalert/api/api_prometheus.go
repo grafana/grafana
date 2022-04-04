@@ -73,12 +73,11 @@ func formatValues(alertState *state.State) string {
 	case 0:
 		fv = alertState.LastEvaluationString
 	case 1:
-		vs := make([]string, 0, len(values))
 		for _, v := range values {
-			vs = append(vs, strconv.FormatFloat(v, 'e', -1, 64))
+			fv = strconv.FormatFloat(v, 'e', -1, 64)
+			break
 		}
 
-		fv = vs[0]
 	default:
 		vs := make([]string, 0, len(values))
 
@@ -86,9 +85,12 @@ func formatValues(alertState *state.State) string {
 			vs = append(vs, fmt.Sprintf("%s: %s", k, strconv.FormatFloat(v, 'e', -1, 64)))
 		}
 
-		// Ensure we have a consistent ordering after formatting e.g. A0, A1, A3, etc.
+		// Ensure we have a consistent ordering after formatting e.g. A0, A1, A3, A10, A11, etc.
 		sort.Slice(vs, func(i, j int) bool {
-			return vs[i] < vs[j]
+			a, _ := strconv.Atoi(vs[i])
+			b, _ := strconv.Atoi(vs[j])
+
+			return a < b
 		})
 
 		fv = strings.Join(vs, ", ")
