@@ -1,6 +1,9 @@
 package level
 
-import "github.com/go-kit/log"
+import (
+	"github.com/go-kit/log"
+	gokitlevel "github.com/go-kit/log/level"
+)
 
 // Error returns a logger that includes a Key/ErrorValue pair.
 func Error(logger log.Logger) log.Logger {
@@ -51,6 +54,12 @@ func (l *logger) Log(keyvals ...interface{}) error {
 		if v, ok := keyvals[i].(*levelValue); ok {
 			hasLevel = true
 			levelAllowed = l.allowed&v.level != 0
+			break
+		}
+
+		if v, ok := keyvals[i].(gokitlevel.Value); ok {
+			hasLevel = true
+			levelAllowed = l.allowed&levelFromGokitLevel(v) != 0
 			break
 		}
 	}
@@ -203,3 +212,16 @@ type levelValue struct {
 
 func (v *levelValue) String() string { return v.name }
 func (v *levelValue) levelVal()      {}
+
+func levelFromGokitLevel(l gokitlevel.Value) level {
+	switch l.String() {
+	case gokitlevel.ErrorValue().String():
+		return levelError
+	case gokitlevel.WarnValue().String():
+		return levelWarn
+	case gokitlevel.DebugValue().String():
+		return levelDebug
+	}
+
+	return levelInfo
+}
