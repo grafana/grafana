@@ -8,21 +8,23 @@ import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { isMatchOrChildMatch } from '../utils';
+import { NavBarToggle } from './NavBarToggle';
 
 export interface Props {
   activeItem?: NavModelItem;
+  isOpen: boolean;
   navItems: NavModelItem[];
   onClose: () => void;
 }
 
-export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
+export function NavBarMenu({ activeItem, isOpen, navItems, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
-      isOpen: true,
+      isOpen,
       onClose,
     },
     ref
@@ -32,6 +34,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
     <div data-testid="navbarmenu" className={styles.container}>
       <FocusScope contain restoreFocus autoFocus>
         <nav className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
+          <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
           <CustomScrollbar hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link) => (
@@ -74,6 +77,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
+  }),
+  menuCollapseIcon: css({
+    position: 'absolute',
+    top: '43px',
+    right: '0px',
   }),
 });
 

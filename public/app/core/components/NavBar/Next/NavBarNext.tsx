@@ -4,7 +4,7 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
+import { NavBarToggle } from './NavBarToggle';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -79,6 +80,12 @@ export const NavBarNext = React.memo(() => {
               <Icon name="bars" size="xl" />
             </div>
 
+            <NavBarToggle
+              className={styles.menuExpandIcon}
+              isExpanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+            />
+
             <ul className={styles.itemList}>
               <NavBarItemWithoutMenu
                 isActive={isMatchOrChildMatch(homeItem, activeItem)}
@@ -132,16 +139,11 @@ export const NavBarNext = React.memo(() => {
         <CSSTransition in={menuOpen} classNames={animStyles} timeout={150} unmountOnExit>
           <NavBarMenu
             activeItem={activeItem}
+            isOpen={menuOpen}
             navItems={[homeItem, searchItem, ...coreItems, ...pluginItems, ...configItems]}
             onClose={() => setMenuOpen(false)}
           />
         </CSSTransition>
-        <IconButton
-          name={menuOpen ? 'angle-left' : 'angle-right'}
-          className={styles.menuToggle}
-          size="xl"
-          onClick={() => setMenuOpen(!menuOpen)}
-        />
       </div>
     </div>
   );
@@ -233,20 +235,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     zIndex: theme.zIndex.sidemenu,
   }),
-  menuToggle: css({
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
+  menuExpandIcon: css({
     position: 'absolute',
-    marginRight: 0,
     top: '43px',
     right: '0px',
-    zIndex: theme.zIndex.sidemenu,
-    transform: `translateX(calc(${theme.spacing(7)} + 50%))`,
-    borderRadius: '50%',
-
-    [theme.breakpoints.down('md')]: {
-      display: 'none',
-    },
+    transform: `translateX(50%)`,
   }),
 });
 
@@ -267,34 +260,23 @@ const getAnimStyles = (theme: GrafanaTheme2) => {
     width: theme.spacing(7),
   };
 
-  const buttonShift = {
-    '& + button': {
-      transform: 'translateX(0%)',
-    },
-  };
-
   return {
     enter: css({
       ...closedStyles,
-      ...buttonShift,
     }),
     enterActive: css({
       ...transitionProps,
       ...openStyles,
-      ...buttonShift,
     }),
     enterDone: css({
       ...openStyles,
-      ...buttonShift,
     }),
     exit: css({
       ...openStyles,
-      ...buttonShift,
     }),
     exitActive: css({
       ...transitionProps,
       ...closedStyles,
-      ...buttonShift,
     }),
   };
 };
