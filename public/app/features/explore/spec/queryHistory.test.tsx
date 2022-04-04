@@ -92,7 +92,7 @@ describe('Explore: Query History', () => {
     await openQueryHistory(ExploreId.left);
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
     await openQueryHistory(ExploreId.right);
-    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
+    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.right);
 
     // star one one query
     starQueryHistory(1, ExploreId.left);
