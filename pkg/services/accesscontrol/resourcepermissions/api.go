@@ -43,7 +43,7 @@ func (a *api) getEvaluators(actionRead, actionWrite, scope string) (read, write 
 		inheritedWrite := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionWrite, scope)}
 		for _, scopePrefix := range a.service.options.InheritedScopePrefixes {
 			inheritedRead = append(inheritedRead,
-				accesscontrol.EvalPermission(actionWrite, accesscontrol.Parameter(scopePrefix)))
+				accesscontrol.EvalPermission(actionRead, accesscontrol.Parameter(scopePrefix)))
 			inheritedWrite = append(inheritedWrite,
 				accesscontrol.EvalPermission(actionWrite, accesscontrol.Parameter(scopePrefix)))
 		}
