@@ -167,16 +167,7 @@ func TestApi_getPermissions(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
+				checkSeededPermissions(t, permissions)
 			}
 		})
 	}
@@ -468,18 +459,7 @@ func TestApi_UidSolver(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
-			} else {
-				assert.Equal(t, tt.expectedStatus, recorder.Code)
+				checkSeededPermissions(t, permissions)
 			}
 		})
 	}
@@ -539,18 +519,7 @@ func TestApi_InheritSolver(t *testing.T) {
 			require.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
-			} else {
-				assert.Equal(t, tt.expectedStatus, recorder.Code)
+				checkSeededPermissions(t, permissions)
 			}
 		})
 	}
@@ -641,6 +610,19 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 	server.ServeHTTP(recorder, req)
 
 	return recorder
+}
+
+func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
+	assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
+	for _, p := range permissions {
+		if p.UserID != 0 {
+			assert.Equal(t, "View", p.Permission)
+		} else if p.TeamID != 0 {
+			assert.Equal(t, "Edit", p.Permission)
+		} else {
+			assert.Equal(t, "Edit", p.Permission)
+		}
+	}
 }
 
 func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {
