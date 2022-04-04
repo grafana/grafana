@@ -54,7 +54,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	)
 	folderService := dashboardservice.ProvideFolderService(
 		cfg, dashboardService, dashboardStore, nil,
-		features, permissionsServices, ac,
+		features, permissionsServices, ac, nil,
 	)
 
 	ng, err := ngalert.ProvideService(
@@ -109,12 +109,12 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 	})
 	require.NoError(t, err)
 
-	q := models.ListRuleGroupAlertRulesQuery{
+	q := models.GetAlertRulesQuery{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
-		RuleGroup:    ruleGroup,
+		RuleGroup:    &ruleGroup,
 	}
-	err = dbstore.GetRuleGroupAlertRules(ctx, &q)
+	err = dbstore.GetAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, q.Result)
 

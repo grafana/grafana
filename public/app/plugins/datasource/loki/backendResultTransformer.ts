@@ -2,6 +2,7 @@ import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType,
 import { LokiQuery, LokiQueryType } from './types';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { makeIdField } from './makeIdField';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
@@ -22,6 +23,10 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
+    custom: {
+      // used by logs_model
+      lokiQueryStatKey: 'Summary: total bytes processed',
+    },
   };
   const newFrame = setFrameMeta(frame, meta);
   const newFields = frame.fields.map((field) => {
@@ -35,6 +40,9 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
       return field;
     }
   });
+
+  // we add a calculated id-field
+  newFields.push(makeIdField(frame));
 
   return {
     ...newFrame,

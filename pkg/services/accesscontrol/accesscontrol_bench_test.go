@@ -31,7 +31,7 @@ func benchGetMetadata(b *testing.B, resourceCount, permissionPerResource int) {
 
 	var metadata map[string]Metadata
 	for n := 0; n < b.N; n++ {
-		metadata = GetResourcesMetadata(context.Background(), permissions, "resources", ids)
+		metadata = GetResourcesMetadata(context.Background(), permissions, "resources:id:", ids)
 		assert.Len(b, metadata, resourceCount)
 		for _, resourceMetadata := range metadata {
 			assert.Len(b, resourceMetadata, permissionPerResource)

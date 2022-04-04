@@ -1,10 +1,13 @@
 import React, { Component, ReactNode } from 'react';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
-import { Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
+import { Collection, Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
+import { createEmpty, extend, isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
+import BaseLayer from 'ol/layer/Base';
+import VectorLayer from 'ol/layer/Vector';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
 import {
@@ -43,6 +46,7 @@ type Props = PanelProps<GeomapPanelOptions>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
+  legends: ReactNode[];
 }
 
 export interface GeomapLayerActions {
@@ -79,7 +83,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { ttipOpen: false };
+    this.state = { ttipOpen: false, legends: [] };
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
@@ -108,10 +112,21 @@ export class GeomapPanel extends Component<Props, State> {
       this.dataChanged(nextProps.data);
     }
 
+    // Options changed
+    if (this.props.options !== nextProps.options) {
+      this.optionsChanged(nextProps.options);
+    }
+
     return true; // always?
   }
 
-  /** This funciton will actually update the JSON model */
+  componentDidUpdate(prevProps: Props) {
+    if (this.map && (this.props.height !== prevProps.height || this.props.width !== prevProps.width)) {
+      this.map.updateSize();
+    }
+  }
+
+  /** This function will actually update the JSON model */
   private doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
@@ -121,7 +136,7 @@ export class GeomapPanel extends Component<Props, State> {
       layers: layers.slice(1).map((v) => v.options),
     });
 
-    // Notify the the panel editor
+    // Notify the panel editor
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         map: this.map,
@@ -130,6 +145,8 @@ export class GeomapPanel extends Component<Props, State> {
         actions: this.actions,
       });
     }
+
+    this.setState({ legends: this.getLegends() });
   }
 
   getNextLayerName = () => {
@@ -219,7 +236,7 @@ export class GeomapPanel extends Component<Props, State> {
 
     if (options.view !== oldOptions.view) {
       console.log('View changed');
-      this.map!.setView(this.initMapView(options.view));
+      this.map!.setView(this.initMapView(options.view, this.map!.getLayers()));
     }
 
     if (options.controls !== oldOptions.controls) {
@@ -252,7 +269,7 @@ export class GeomapPanel extends Component<Props, State> {
     const { options } = this.props;
 
     const map = (this.map = new OpenLayersMap({
-      view: this.initMapView(options.view),
+      view: this.initMapView(options.view, undefined),
       pixelRatio: 1, // or zoom?
       layers: [], // loaded explicitly below
       controls: [],
@@ -282,6 +299,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
     this.layers = layers;
     this.map = map; // redundant
+    this.initViewExtent(map.getView(), options.view, map.getLayers());
 
     this.mouseWheelZoom = new MouseWheelZoom();
     this.map.addInteraction(this.mouseWheelZoom);
@@ -304,6 +322,8 @@ export class GeomapPanel extends Component<Props, State> {
         actions: this.actions,
       });
     }
+
+    this.setState({ legends: this.getLegends() });
   };
 
   clearTooltip = () => {
@@ -443,6 +463,9 @@ export class GeomapPanel extends Component<Props, State> {
       return false;
     }
 
+    // Just to trigger a state update
+    this.setState({ legends: [] });
+
     this.layers = layers;
     this.doOptionsUpdate(layerIndex);
     return true;
@@ -477,6 +500,7 @@ export class GeomapPanel extends Component<Props, State> {
     if (!options.name) {
       options.name = this.getNextLayerName();
     }
+
     const UID = options.name;
     const state: MapLayerState<any> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
@@ -492,12 +516,13 @@ export class GeomapPanel extends Component<Props, State> {
         this.updateLayer(UID, cfg);
       },
     };
+
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
     return state;
   }
 
-  initMapView(config: MapViewConfig): View {
+  initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {
     let view = new View({
       center: [0, 0],
       zoom: 1,
@@ -512,13 +537,31 @@ export class GeomapPanel extends Component<Props, State> {
         view = sharedView;
       }
     }
+    if (layers) {
+      this.initViewExtent(view, config, layers);
+    }
+    return view;
+  }
 
+  initViewExtent(view: View, config: MapViewConfig, layers: Collection<BaseLayer>) {
     const v = centerPointRegistry.getIfExists(config.id);
     if (v) {
       let coord: Coordinate | undefined = undefined;
       if (v.lat == null) {
         if (v.id === MapCenterID.Coordinates) {
           coord = [config.lon ?? 0, config.lat ?? 0];
+        } else if (v.id === MapCenterID.Fit) {
+          var extent = layers
+            .getArray()
+            .filter((l) => l instanceof VectorLayer)
+            .map((l) => (l as VectorLayer<any>).getSource().getExtent() ?? [])
+            .reduce(extend, createEmpty());
+          if (!isEmpty(extent)) {
+            view.fit(extent, {
+              padding: [30, 30, 30, 30],
+              maxZoom: config.zoom ?? config.maxZoom,
+            });
+          }
         } else {
           console.log('TODO, view requires special handling', v);
         }
@@ -536,10 +579,9 @@ export class GeomapPanel extends Component<Props, State> {
     if (config.minZoom) {
       view.setMaxZoom(config.minZoom);
     }
-    if (config.zoom) {
+    if (config.zoom && v?.id !== MapCenterID.Fit) {
       view.setZoom(config.zoom);
     }
-    return view;
   }
 
   initControls(options: ControlsOptions) {
@@ -576,15 +618,26 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ topRight });
   }
 
+  getLegends() {
+    const legends: ReactNode[] = [];
+    for (const state of this.layers) {
+      if (state.handler.legend) {
+        legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+      }
+    }
+
+    return legends;
+  }
+
   render() {
-    const { ttip, ttipOpen, topRight, bottomLeft } = this.state;
+    const { ttip, ttipOpen, topRight, legends } = this.state;
 
     return (
       <>
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
+          <GeomapOverlay bottomLeft={legends} topRight={topRight} />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>

@@ -236,6 +236,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	dash := &features.DashboardHandler{
 		Publisher:   g.Publish,
 		ClientCount: g.ClientCount,
+		Store:       sqlStore,
 	}
 	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash

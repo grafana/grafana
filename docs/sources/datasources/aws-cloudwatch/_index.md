@@ -323,7 +323,16 @@ If you're not currently logged in to the CloudWatch console, the link will forwa
 
 ## Alerting
 
-Since CloudWatch Logs queries can return numeric data, for example through the use of the `stats` command, alerts are supported.
+Alerting require queries that return numeric data, which CloudWatch Logs support. For example through the use of the `stats` command, alerts are supported. For example, this is a valid query for alerting on messages that include the text "Exception":
+
+```
+filter @message like /Exception/
+    | stats count(*) as exceptionCount by bin(1h)
+    | sort exceptionCount desc
+```
+
+**NOTE**: When trying to alert on a query, if an error like `input data must be a wide series but got ...` is received, make sure that your query returns valid numeric data that can be printed in a Time series panel.
+
 For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting/_index.md" >}}) documentation.
 
 ## Configure CloudWatch with grafana.ini
