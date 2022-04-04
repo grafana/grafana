@@ -10,7 +10,7 @@ weight: 30
 
 # About service accounts in Grafana
 
-A service account is generally a regular user account used to run automated or compute workload which are intended for programmatic use either internally for a Grafana feature or communicate outside of the Grafana environment. Applications use service account tokens to authorize themselves as a service account.
+A service account is a regular user account used to run automated or compute workloads which are intended for programmatic use either internally for a Grafana feature or to communicate outside of the Grafana environment. Applications use service account tokens to authorize themselves as a service account.
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
 
