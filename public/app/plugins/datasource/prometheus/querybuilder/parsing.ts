@@ -3,7 +3,15 @@ import { SyntaxNode } from '@lezer/common';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
 import { binaryScalarDefs } from './binaryScalarOperations';
-import { ErrorName, getLeftMostChild, getString, makeBinOp, makeError, replaceVariables } from './shared/parsingUtils';
+import {
+  ErrorName,
+  getAllByType,
+  getLeftMostChild,
+  getString,
+  makeBinOp,
+  makeError,
+  replaceVariables,
+} from './shared/parsingUtils';
 
 /**
  * Parses a PromQL query into a visual query model.
@@ -364,27 +372,4 @@ function getBinaryModifier(
       matchType: matcher.getChild('On') ? 'on' : 'ignoring',
     };
   }
-}
-
-/**
- * Get all nodes with type in the tree. This traverses the tree so it is safe only when you know there shouldn't be
- * too much nesting but you just want to skip some of the wrappers. For example getting function args this way would
- * not be safe is it would also find arguments of nested functions.
- * @param expr
- * @param cur
- * @param type
- */
-function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
-  if (cur.name === type) {
-    return [getString(expr, cur)];
-  }
-  const values: string[] = [];
-  let pos = 0;
-  let child = cur.childAfter(pos);
-  while (child) {
-    values.push(...getAllByType(expr, child, type));
-    pos = child.to;
-    child = cur.childAfter(pos);
-  }
-  return values;
 }
