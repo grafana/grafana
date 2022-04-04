@@ -506,20 +506,22 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID, dsUID s
 	}
 	clonedReq.URL = urlPath
 
-	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	if dsUID != "" {
+		ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
 
-	if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
-		handleCallResourceError(err, c)
-		return
-	}
+		if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
+			handleCallResourceError(err, c)
+			return
+		}
 
-	if ds != nil && hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
-			clonedReq.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
+		if ds != nil && hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
+			if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
+				clonedReq.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				clonedReq.Header.Add("X-ID-Token", idToken)
+				idToken, ok := token.Extra("id_token").(string)
+				if ok && idToken != "" {
+					clonedReq.Header.Add("X-ID-Token", idToken)
+				}
 			}
 		}
 	}
