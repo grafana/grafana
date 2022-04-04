@@ -35,9 +35,6 @@ var AuthenticateUserFunc = func(context.Context, *models.LoginUserQuery) error {
 	panic("AuthenticateUserFunc is not implemented")
 }
 
-func Init() {
-}
-
 type AuthenticatorService struct {
 	store        sqlstore.Store
 	loginService login.Service

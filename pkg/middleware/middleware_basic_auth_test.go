@@ -79,8 +79,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const salt = "Salt"
 
-		login.ProvideService(sc.sqlStore, &logintest.LoginServiceFake{}) // XXX hack
-		login.Init()
+		login.ProvideService(sc.sqlStore, &logintest.LoginServiceFake{})
 
 		bus.AddHandler("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
 			encoded, err := util.EncodePassword(password, salt)
