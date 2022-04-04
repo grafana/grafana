@@ -9,6 +9,73 @@ on:
       - 'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
       - 'public/app/plugins/datasource/cloudwatch/**'
       - 'public/app/plugins/datasource/cloud-monitoring/**'
+    branches-ignore:
+      - dependabot/**
+      - backport-**
+
 jobs:
-  workflow-call:
-    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@gen-go
+  comment-coverage-difference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 17.x
+          cache: yarn
+      - name: yarn install for caller's PR
+        run: yarn install
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.8'
+      - name: generate go for github.com/grafana/grafana
+        run: make gen-go
+
+      - name: Get go coverage for PR
+        run: |
+          go test -v -coverpkg=./... -coverprofile=profile.cov ./pkg/tsdb/azuremonitor/... ./pkg/tsdb/cloudmonitoring/... ./pkg/tsdb/cloudwatch/...
+          echo "go-pr-cov=$(go tool cover -func profile.cov | grep total: | awk '{print substr($NF,1,length($NF)-1)}')" >> $GITHUB_ENV
+      - name: Get TypeScript coverage for PR
+        run: |
+          echo "ts-pr-cov=$(yarn test:coverage:cloud-data-sources | grep 'All files' | awk '{print $10}')" >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+      - name: yarn install for caller's main
+        run: yarn install
+      - name: generate go for github.com/grafana/grafana
+        run: make gen-go
+
+      - name: Get go coverage on main
+        run: |
+          go test -v -coverpkg=./... -coverprofile=profile.cov ./pkg/tsdb/azuremonitor/... ./pkg/tsdb/cloudmonitoring/... ./pkg/tsdb/cloudwatch/...
+          echo "go-main-cov=$(go tool cover -func profile.cov | grep total: | awk '{print substr($NF,1,length($NF)-1)}')" >> $GITHUB_ENV
+      - name: Get TypeScript coverage on main
+        run: |
+          echo "ts-main-cov=$(yarn test:coverage:cloud-data-sources | grep 'All files' | awk '{print $10}')" >> $GITHUB_ENV
+      - name: Calculate coverage difference
+        run: |
+          echo "go-cov-difference=$(bc <<< '${{ env.go-pr-cov }} - ${{ env.go-main-cov }}')" >> $GITHUB_ENV
+          echo "ts-cov-difference=$(bc <<< '${{ env.ts-pr-cov }} - ${{ env.ts-main-cov }}')" >> $GITHUB_ENV
+      - name: Find previous comment, if any
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: |
+            Code coverage report for PR #${{ github.event.pull_request.number }}
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v2
+        # Check if the event is not triggered by a fork
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            Code coverage report for PR #${{ github.event.pull_request.number }}
+            |      |          Go                         | TypeScript |
+            |------| ----------------------------------- | ---------------- |
+            | main | ${{ env.go-main-cov }}%             | ${{ env.ts-main-cov }}% |
+            | PR   | ${{ env.go-pr-cov }}%               | ${{ env.ts-pr-cov }}%   |
+            | difference | ${{ env.go-cov-difference }}% | ${{ env.ts-cov-difference }}% |
+          edit-mode: replace

@@ -17,6 +17,7 @@
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
+    "test:coverage:cloud-data-sources": "jest --coverage -- ./public/app/plugins/datasource/cloudwatch/** ./public/app/plugins/datasource/cloud-monitoring/** ./public/app/plugins/datasource/grafana-azure-monitor-datasource/**",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",
     "lint": "yarn run lint:ts && yarn run lint:sass",
     "lint:ts": "eslint . --ext .js,.tsx,.ts --cache",
