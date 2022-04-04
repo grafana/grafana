@@ -58,7 +58,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
         return;
       }
 
-      const results = await datasource.newGetMetricNamespaces(resourceUri);
+      const results = await datasource.azureMonitorDatasource.newGetMetricNamespaces(resourceUri);
       const options = formatOptions(results, metricNamespace);
 
       // Do some cleanup of the query state if need be
@@ -84,7 +84,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
         return;
       }
 
-      const results = await datasource.newGetMetricNames(resourceUri, metricNamespace);
+      const results = await datasource.azureMonitorDatasource.newGetMetricNames(resourceUri, metricNamespace);
       const options = formatOptions(results, metricName);
 
       return options;
@@ -112,22 +112,24 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
       return;
     }
 
-    datasource.newGetMetricMetadata(resourceUri, metricNamespace, metricName).then((metadata) => {
-      // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
-      const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({
-        label: v,
-        value: v,
-      }));
+    datasource.azureMonitorDatasource
+      .newGetMetricMetadata(resourceUri, metricNamespace, metricName)
+      .then((metadata) => {
+        // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
+        const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({
+          label: v,
+          value: v,
+        }));
 
-      setMetricMetadata({
-        aggOptions: aggregations,
-        timeGrains: metadata.supportedTimeGrains,
-        dimensions: metadata.dimensions,
-        isLoading: false,
-        supportedAggTypes: metadata.supportedAggTypes ?? [],
-        primaryAggType: metadata.primaryAggType,
+        setMetricMetadata({
+          aggOptions: aggregations,
+          timeGrains: metadata.supportedTimeGrains,
+          dimensions: metadata.dimensions,
+          isLoading: false,
+          supportedAggTypes: metadata.supportedAggTypes ?? [],
+          primaryAggType: metadata.primaryAggType,
+        });
       });
-    });
   }, [datasource, resourceUri, metricNamespace, metricName]);
 
   // Update the query state in response to the meta data changing

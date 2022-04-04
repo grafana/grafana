@@ -97,7 +97,7 @@ describe('MetricsQueryEditor', () => {
     const mockDatasource = createMockDatasource({ resourcePickerData });
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
-    mockDatasource.newGetMetricNames = jest.fn().mockResolvedValue([
+    mockDatasource.azureMonitorDatasource.newGetMetricNames = jest.fn().mockResolvedValue([
       {
         value: 'metric-a',
         text: 'Metric A',

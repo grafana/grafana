@@ -21,6 +21,10 @@ import UrlBuilder from './url_builder';
 
 const defaultDropdownValue = 'select';
 
+function hasValue(item?: string) {
+  return !!(item && item !== defaultDropdownValue);
+}
+
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
@@ -50,18 +54,22 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return !this.validateDatasource();
   }
 
+  hasValue(item?: string) {
+    return item && item !== defaultDropdownValue;
+  }
+
   filterQuery(item: AzureMonitorQuery): boolean {
     const resourceUriAvailable = item?.azureMonitor?.resourceUri;
     const legacyQueryAvailable =
-      item?.azureMonitor?.resourceGroup !== defaultDropdownValue &&
-      item?.azureMonitor?.resourceName !== defaultDropdownValue &&
-      item?.azureMonitor?.metricDefinition !== defaultDropdownValue;
+      hasValue(item?.azureMonitor?.resourceGroup) &&
+      hasValue(item?.azureMonitor?.resourceName) &&
+      hasValue(item?.azureMonitor?.metricDefinition);
 
     return !!(
       item.hide !== true &&
       (resourceUriAvailable || legacyQueryAvailable) &&
-      item?.azureMonitor?.metricName !== defaultDropdownValue &&
-      item?.azureMonitor?.aggregation !== defaultDropdownValue
+      hasValue(item?.azureMonitor?.metricName) &&
+      hasValue(item?.azureMonitor?.aggregation)
     );
   }
 
@@ -245,9 +253,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   newGetMetricNamespaces(resourceUri: string) {
+    const templateSrv = getTemplateSrv();
     const url = UrlBuilder.newBuildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
-      resourceUri,
+      templateSrv.replace(resourceUri),
       this.apiPreviewVersion
     );
 
@@ -279,10 +288,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   newGetMetricNames(resourceUri: string, metricNamespace: string) {
+    const templateSrv = getTemplateSrv();
     const url = UrlBuilder.newBuildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      resourceUri,
-      metricNamespace,
+      templateSrv.replace(resourceUri),
+      templateSrv.replace(metricNamespace),
       this.apiVersion
     );
 
@@ -315,10 +325,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   newGetMetricMetadata(resourceUri: string, metricNamespace: string, metricName: string) {
+    const templateSrv = getTemplateSrv();
     const url = UrlBuilder.newBuildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      resourceUri,
-      metricNamespace,
+      templateSrv.replace(resourceUri),
+      templateSrv.replace(metricNamespace),
       this.apiVersion
     );
 
