@@ -1,6 +1,14 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Field, formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
+import {
+  Field,
+  formattedValueToString,
+  GrafanaTheme2,
+  PanelProps,
+  reduceField,
+  ReducerID,
+  dateTime,
+} from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -42,7 +50,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const styles = useStyles2(getStyles);
 
   const info: HeatmapData = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
-  const exemplars = useMemo((): HeatmapData | undefined => {
+  const exemplars: HeatmapData | undefined = useMemo((): HeatmapData | undefined => {
     if (data.annotations) {
       return prepareHeatmapData(
         data.annotations,
@@ -115,8 +123,37 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   }, [options, data.structureRev]);
   console.log('builder', builder);
 
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
+  const getFieldLinks = (xField: Field, yField: Field, count: number, row: number) => {
+    // Find the timerange for this cell
+    if (xField.type !== 'time') {
+      console.error('Only time supported for xFields. Got', xField.type);
+      return undefined;
+    }
+
+    const xMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === xField.name);
+    const yMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === yField.name);
+
+    if (yMatch && xMatch && exemplars) {
+      const xOrig = data.series[0].fields.find((f) => f.name === xMatch.config.custom.originalName);
+      // Get the indicies in the original data. Then use that to find the proper
+      console.log('xOrig', xOrig, 'data', data, 'row', row);
+      console.log(
+        'row time',
+        xMatch.values.get(row),
+        'start time',
+        dateTime(data.request?.startTime!).format(),
+        'end time',
+        dateTime(data.request?.endTime!).format(),
+        'diff',
+        xMatch.values.get(row) - data.request?.startTime!
+      );
+      const startIndex = (xMatch.values.get(row) - data.request?.startTime!) / data.request?.intervalMs!;
+      const endIndex =
+        (xMatch?.values.get(row) + exemplars?.xBucketSize - data.request?.startTime!) / data.request?.intervalMs!;
+      console.log('startIndex', startIndex, 'endIndex', endIndex);
+      return getFieldLinksForExplore({ field: yField, rowIndex: row, splitOpenFn: onSplitOpen, range: timeRange });
+    }
+    return undefined;
   };
 
   const renderLegend = () => {

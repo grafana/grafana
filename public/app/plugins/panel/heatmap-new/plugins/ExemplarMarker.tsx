@@ -4,14 +4,13 @@ import {
   DataFrameFieldIndex,
   dateTimeFormat,
   Field,
-  FieldType,
   GrafanaTheme,
   LinkModel,
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
+import { Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
 import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
@@ -20,7 +19,7 @@ interface ExemplarMarkerProps {
   dataFrame: DataFrame;
   dataFrameFieldIndex: DataFrameFieldIndex;
   config: UPlotConfigBuilder;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks: (xField: Field, yField: Field, count: number, row: number) => Array<LinkModel<Field>> | undefined;
 }
 
 export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
@@ -93,23 +92,29 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
             <div>
               <table className={styles.exemplarsTable}>
                 <tbody>
-                  {dataFrame.fields.map((field, i) => {
-                    const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-                    const links = field.config.links?.length
-                      ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
-                      : undefined;
-                    return (
-                      <tr key={i}>
-                        <td valign="top">{field.name}</td>
-                        <td>
-                          <div className={styles.valueWrapper}>
-                            <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
-                            {links && <FieldLinkList links={links} />}
-                          </div>
-                        </td>
-                      </tr>
+                  {(() => {
+                    const count = dataFrame.fields[2].values.get(dataFrameFieldIndex.fieldIndex);
+                    // const links = field.config.links?.length
+                    const links = getFieldLinks(
+                      dataFrame.fields[0],
+                      dataFrame.fields[1],
+                      count,
+                      dataFrameFieldIndex.fieldIndex
                     );
-                  })}
+                    console.log('links', links);
+                    return (
+                      <></>
+                      // <tr key={i}>
+                      //   <td valign="top">{field.name}</td>
+                      //   <td>
+                      //     <div className={styles.valueWrapper}>
+                      //       <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
+                      //       {links && <FieldLinkList links={links} />}
+                      //     </div>
+                      //   </td>
+                      // </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -129,19 +134,6 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     timeZone,
   ]);
 
-  console.log(
-    'config',
-    config.getSeries().find((s) => {
-      // console.log("s", s);
-      return s.props.dataFrameFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex;
-    }),
-    'frameIndex',
-    dataFrameFieldIndex.frameIndex
-  );
-  const seriesColor = config
-    .getSeries()
-    .find((s) => s.props.dataFrameFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex)?.props.lineColor;
-
   return (
     <>
       <div
@@ -155,7 +147,10 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
           viewBox="0 0 7 7"
           width="7"
           height="7"
-          style={{ fill: seriesColor }}
+          style={{
+            fill: 'rgb(115, 191, 105)',
+            stroke: 'rgb(0, 0, 0)',
+          }}
           className={cx(styles.marble, isOpen && styles.activeMarble)}
         >
           {getSymbol()}
@@ -258,8 +253,6 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       display: block;
       opacity: 0.5;
       transition: transform 0.15s ease-out;
-      fill: rgb(115, 191, 105);
-      stroke: rgb(0, 0, 0);
     `,
     activeMarble: css`
       transform: scale(1.3);

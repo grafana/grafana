@@ -221,13 +221,23 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         name: 'xMin',
         type: xField.type,
         values: new ArrayVector(heat2d.x),
-        config: xField.config,
+        config: {
+          ...xField.config,
+          custom: {
+            originalName: xField.name,
+          },
+        },
       },
       {
         name: 'yMin',
         type: FieldType.number,
         values: new ArrayVector(heat2d.y),
-        config: yField.config, // keep units from the original source
+        config: {
+          ...yField.config,
+          custom: {
+            originalName: yField.name,
+          },
+        },
       },
       {
         name: 'count',

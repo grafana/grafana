@@ -9,7 +9,7 @@ interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;
   exemplars: HeatmapData;
   timeZone: TimeZone;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks: (x: Field, y: Field, count: number, row: number) => Array<LinkModel<Field>> | undefined;
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
