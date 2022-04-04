@@ -5,6 +5,7 @@ import { deleteQueryHistory, inputQuery, openQueryHistory, runQuery, starQueryHi
 import { assertQueryHistory, assertQueryHistoryExists, assertQueryHistoryIsStarred } from './helper/assert';
 import { makeLogsQueryResponse } from './helper/query';
 import { ExploreId } from '../../../types';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -18,6 +19,8 @@ jest.mock('react-virtualized-auto-sizer', () => {
 describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
   const RAW_QUERY = `{"expr":"${USER_INPUT}"}`;
+
+  silenceConsoleOutput();
 
   afterEach(() => {
     tearDown();
