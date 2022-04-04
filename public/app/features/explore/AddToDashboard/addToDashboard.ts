@@ -11,7 +11,15 @@ interface AddPanelToDashboardOptions {
   dashboardUid?: string;
 }
 
-// TODO: rename this to something like "setDashboardInLocalStorage"
+function createDashboard() {
+  const dto = getNewDashboardModelData();
+
+  // getNewDashboardModelData adds by default the "add-panel" panel. We don't want that.
+  dto.dashboard.panels = [];
+
+  return dto;
+}
+
 export async function addPanelToDashboard(options: AddPanelToDashboardOptions) {
   const queries = options.exploreItem?.queries || [];
   const datasource = options.exploreItem?.datasourceInstance;
@@ -24,9 +32,7 @@ export async function addPanelToDashboard(options: AddPanelToDashboardOptions) {
     datasource,
   };
 
-  const dto = options.dashboardUid
-    ? await backendSrv.getDashboardByUid(options.dashboardUid)
-    : getNewDashboardModelData();
+  const dto = options.dashboardUid ? await backendSrv.getDashboardByUid(options.dashboardUid) : createDashboard();
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
 
