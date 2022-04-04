@@ -98,7 +98,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     };
   }
 
-  canEditDashboard = Boolean(this.props.dashboard.meta.canEdit || this.props.dashboard.meta.canMakeEditable);
+  canEditDashboard = () => Boolean(this.props.dashboard.meta.canEdit || this.props.dashboard.meta.canMakeEditable);
 
   canAddAnnotation = () => {
     let canAdd = true;
@@ -106,7 +106,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (contextSrv.accessControlEnabled()) {
       canAdd = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canAdd;
     }
-    return canAdd && this.canEditDashboard;
+    return canAdd && this.canEditDashboard();
   };
 
   canEditAnnotation = (dashboardId: number) => {
@@ -119,7 +119,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         canEdit = !!this.props.dashboard.meta.annotationsPermissions?.organization.canEdit;
       }
     }
-    return canEdit && this.canEditDashboard;
+    return canEdit && this.canEditDashboard();
   };
 
   canDeleteAnnotation = (dashboardId: number) => {
@@ -132,7 +132,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         canDelete = !!this.props.dashboard.meta.annotationsPermissions?.organization.canDelete;
       }
     }
-    return canDelete && this.canEditDashboard;
+    return canDelete && this.canEditDashboard();
   };
 
   // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
