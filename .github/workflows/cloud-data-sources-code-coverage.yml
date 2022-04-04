@@ -36,7 +36,7 @@ jobs:
           echo "go-pr-cov=$(go tool cover -func profile.cov | grep total: | awk '{print substr($NF,1,length($NF)-1)}')" >> $GITHUB_ENV
       - name: Get TypeScript coverage for PR
         run: |
-          echo "ts-pr-cov=$(yarn test:coverage:cloud-data-sources | grep 'All files' | awk '{print $10}')" >> $GITHUB_ENV
+          echo "ts-pr-cov=$(yarn test:coverage -- ./public/app/plugins/datasource/cloudwatch/** ./public/app/plugins/datasource/cloud-monitoring/** ./public/app/plugins/datasource/grafana-azure-monitor-datasource/** | grep 'All files' | awk '{print $10}')" >> $GITHUB_ENV
       - uses: actions/checkout@v3
         with:
           ref: main
@@ -51,7 +51,7 @@ jobs:
           echo "go-main-cov=$(go tool cover -func profile.cov | grep total: | awk '{print substr($NF,1,length($NF)-1)}')" >> $GITHUB_ENV
       - name: Get TypeScript coverage on main
         run: |
-          echo "ts-main-cov=$(yarn test:coverage:cloud-data-sources | grep 'All files' | awk '{print $10}')" >> $GITHUB_ENV
+          echo "ts-main-cov=$(yarn test:coverage -- ./public/app/plugins/datasource/cloudwatch/** ./public/app/plugins/datasource/cloud-monitoring/** ./public/app/plugins/datasource/grafana-azure-monitor-datasource/** | grep 'All files' | awk '{print $10}')" >> $GITHUB_ENV
       - name: Calculate coverage difference
         run: |
           echo "go-cov-difference=$(bc <<< '${{ env.go-pr-cov }} - ${{ env.go-main-cov }}')" >> $GITHUB_ENV
