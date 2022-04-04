@@ -16,7 +16,7 @@ import {
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import { getTimeZone, NavModel } from '@grafana/data';
-import { Button, VerticalGroup } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 import { CreateTokenModal } from './CreateTokenModal';
 import { contextSrv } from 'app/core/core';
 
