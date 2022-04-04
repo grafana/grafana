@@ -79,7 +79,6 @@ const ServiceAccountsListPage = ({
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h2>Service accounts</h2>
         <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
           <FilterInput
             placeholder="Search service account by name."
