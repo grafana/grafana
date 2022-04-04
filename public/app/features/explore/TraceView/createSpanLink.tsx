@@ -87,9 +87,6 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     let dataLink: DataLink<LokiQuery | DataQuery> | undefined = {} as DataLink<LokiQuery | DataQuery> | undefined;
     let link: LinkModel<Field>;
 
-    /** getLinkForLoki will return undefined if there are no tags in the datasource config;
-     * in that case we skip building a dataLink below and return undefined for SpanLink function
-     */
     switch (dataSourceSettings?.type) {
       case 'loki':
         dataLink = getLinkForLoki(span, traceToLogsOptions, dataSourceSettings);
