@@ -84,7 +84,7 @@ export const getTimeZoneGroups = memoize(
         return groups;
       }
 
-      const group = zone.substr(0, delimiter);
+      const group = zone.slice(0, delimiter);
       groups[group] = groups[group] ?? [];
       groups[group].push(zone);
 

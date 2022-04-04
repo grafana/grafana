@@ -49,7 +49,7 @@ export function stringToMs(str: string): number {
   }
 
   const nr = parseInt(str, 10);
-  const unit = str.substr(String(nr).length);
+  const unit = str.slice(String(nr).length);
   const s = 1000;
   const m = s * 60;
   const h = m * 60;
