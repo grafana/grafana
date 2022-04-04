@@ -8,9 +8,11 @@ import DimensionFields from '../MetricsQueryEditor/DimensionFields';
 import TopField from '../MetricsQueryEditor/TopField';
 import LegendFormatField from '../MetricsQueryEditor/LegendFormatField';
 import ResourceField from '../ResourceField';
+import { ResourceRowType } from '../ResourcePicker/types';
 import type Datasource from '../../datasource';
 import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import { useMetricNames, useMetricNamespaces, useMetricMetadata } from './dataHooks';
+import { setResource } from '../MetricsQueryEditor/setQueryValue';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -39,6 +41,9 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
           setError={setError}
+          selectableEntryTypes={[ResourceRowType.Resource]}
+          setResource={setResource}
+          resourceUri={query.azureMonitor?.resourceUri}
         />
       </InlineFieldRow>
 

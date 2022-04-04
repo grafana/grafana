@@ -4,13 +4,12 @@ import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Datasource from '../../datasource';
-import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorQuery, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
 import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceURI } from '../ResourcePicker/utils';
 import { Space } from '../Space';
-import { setResource } from '../MetricsQueryEditor/setQueryValue';
 
 function parseResourceDetails(resourceURI: string) {
   const parsed = parseResourceURI(resourceURI);
@@ -26,9 +25,21 @@ function parseResourceDetails(resourceURI: string) {
   };
 }
 
-const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
+interface ResourceFieldProps extends AzureQueryEditorFieldProps {
+  setResource: (query: AzureMonitorQuery, resourceURI?: string) => AzureMonitorQuery;
+  selectableEntryTypes: ResourceRowType[];
+  resourceUri?: string;
+}
+
+const ResourceField: React.FC<ResourceFieldProps> = ({
+  query,
+  datasource,
+  onQueryChange,
+  setResource,
+  selectableEntryTypes,
+  resourceUri,
+}) => {
   const styles = useStyles2(getStyles);
-  const { resourceUri } = query.azureMonitor ?? {};
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
   const handleOpenPicker = useCallback(() => {
@@ -44,7 +55,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
       onQueryChange(setResource(query, resourceURI));
       closePicker();
     },
-    [closePicker, onQueryChange, query]
+    [closePicker, onQueryChange, query, setResource]
   );
 
   return (
@@ -63,7 +74,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
           resourceURI={resourceUri}
           onApply={handleApply}
           onCancel={closePicker}
-          selectableEntryTypes={[ResourceRowType.Resource]}
+          selectableEntryTypes={selectableEntryTypes}
         />
       </Modal>
 
