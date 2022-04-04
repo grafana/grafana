@@ -190,7 +190,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       fill: ${theme.colors.text.secondary};
     `,
     datasourceItem: css`
-      pointer-events: auto;
+      span {
+        &:hover {
+          color: ${theme.colors.text.link};
+        }
+      }
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
