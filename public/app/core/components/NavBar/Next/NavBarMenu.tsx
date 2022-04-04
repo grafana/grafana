@@ -177,6 +177,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
   }),
   fullWidth: css({
+    height: '100%',
     width: '100%',
   }),
   iconContainer: css({
@@ -187,6 +188,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     gridAutoFlow: 'column',
     gridTemplateColumns: `${theme.spacing(7)} auto`,
     alignItems: 'center',
+    height: '100%',
   }),
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
