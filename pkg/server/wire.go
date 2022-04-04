@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/dashboard"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -149,8 +150,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(loader.ErrorResolver), new(*loader.Loader)),
 	installer.ProvideService,
 	wire.Bind(new(installer.Service), new(*installer.Installer)),
-	manager.ProvideProcessManager,
-	wire.Bind(new(plugins.ProcessManager), new(*manager.ProcessManager)),
+	process.ProvideProcessManager,
+	wire.Bind(new(process.Service), new(*process.Manager)),
 	cloudwatch.ProvideService,
 	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,

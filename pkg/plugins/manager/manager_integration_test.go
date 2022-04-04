@@ -7,14 +7,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -99,7 +99,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	pluginRegistry := registry.NewPluginRegistry(pmCfg)
 
 	pm, err := ProvideService(cfg, registry.NewPluginRegistry(pmCfg), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), ProvideProcessManager(pluginRegistry))
+		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), process.ProvideProcessManager(pluginRegistry))
 	require.NoError(t, err)
 
 	verifyCorePluginCatalogue(t, pm)

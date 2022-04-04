@@ -1,4 +1,4 @@
-package manager
+package process
 
 import (
 	"context"
@@ -12,23 +12,23 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
-var _ plugins.ProcessManager = (*ProcessManager)(nil)
+var _ Service = (*Manager)(nil)
 
-type ProcessManager struct {
+type Manager struct {
 	pluginRegistry registry.Service
 
 	mu  sync.Mutex
 	log log.Logger
 }
 
-func ProvideProcessManager(pluginRegistry registry.Service) *ProcessManager {
-	return &ProcessManager{
+func ProvideProcessManager(pluginRegistry registry.Service) *Manager {
+	return &Manager{
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugin.process.manager"),
 	}
 }
 
-func (pm *ProcessManager) Start(ctx context.Context, p *plugins.Plugin) error {
+func (m *Manager) Start(ctx context.Context, p *plugins.Plugin) error {
 	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
 		return nil
 	}
@@ -37,21 +37,21 @@ func (pm *ProcessManager) Start(ctx context.Context, p *plugins.Plugin) error {
 		return nil
 	}
 
-	pm.log.Debug("Starting plugin process", "pluginId", p.ID)
-	pm.mu.Lock()
+	m.log.Debug("Starting plugin process", "pluginId", p.ID)
+	m.mu.Lock()
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
 	}
 
 	p.Logger().Debug("Successfully started backend plugin process")
-	pm.mu.Unlock()
+	m.mu.Unlock()
 	return nil
 }
 
-func (pm *ProcessManager) Stop(ctx context.Context, p *plugins.Plugin) error {
-	pm.log.Debug("Stopping plugin process", "pluginId", p.ID)
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
+func (m *Manager) Stop(ctx context.Context, p *plugins.Plugin) error {
+	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	if err := p.Decommission(); err != nil {
 		return err
@@ -65,9 +65,9 @@ func (pm *ProcessManager) Stop(ctx context.Context, p *plugins.Plugin) error {
 }
 
 // Shutdown stops all backend plugin processes
-func (pm *ProcessManager) Shutdown(ctx context.Context) {
+func (m *Manager) Shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range pm.pluginRegistry.Plugins(ctx) { // skip decommissioned?
+	for _, p := range m.pluginRegistry.Plugins(ctx) { // skip decommissioned?
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()

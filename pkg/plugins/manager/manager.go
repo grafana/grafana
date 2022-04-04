@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -19,7 +20,7 @@ const (
 
 type PluginManager struct {
 	cfg             *plugins.Cfg
-	processManager  plugins.ProcessManager
+	processManager  process.Service
 	pluginRegistry  registry.Service
 	pluginInstaller installer.Service
 	pluginLoader    loader.Service
@@ -28,7 +29,7 @@ type PluginManager struct {
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginInstaller installer.Service, processManager plugins.ProcessManager) (*PluginManager, error) {
+	pluginInstaller installer.Service, processManager process.Service) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader, pluginInstaller, processManager)
 	if err := pm.Init(); err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plugins.PluginSource,
-	pluginLoader loader.Service, pluginInstaller installer.Service, processManager plugins.ProcessManager) *PluginManager {
+	pluginLoader loader.Service, pluginInstaller installer.Service, processManager process.Service) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		processManager:  processManager,
