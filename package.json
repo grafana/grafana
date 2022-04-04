@@ -172,7 +172,6 @@
     "babel-loader": "8.2.4",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "babel-plugin-macros": "3.1.0",
-    "change-case": "^4.1.2",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.7.1",
     "css-minimizer-webpack-plugin": "3.4.1",

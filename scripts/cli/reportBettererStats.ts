@@ -1,5 +1,5 @@
 import { betterer } from '@betterer/betterer';
-import { camelCase } from 'change-case';
+import { camelCase } from 'lodash';
 
 function logStat(name: string, value: number) {
   // Note that this output format must match the parsing in ci-frontend-metrics.sh
