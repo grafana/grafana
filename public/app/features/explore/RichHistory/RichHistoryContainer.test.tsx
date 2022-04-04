@@ -33,12 +33,14 @@ describe('RichHistoryContainer', () => {
     const { container } = setup();
     expect(container.firstElementChild!.getAttribute('style')).toContain('height: 400px');
   });
-  it('should request loading rich history when mounted', () => {
+  it('should re-request rich history every time the component is mounted', () => {
     const loadRichHistory = jest.fn();
     const { unmount } = setup({ loadRichHistory });
     expect(loadRichHistory).toBeCalledTimes(1);
 
     unmount();
+    expect(loadRichHistory).toBeCalledTimes(1);
+
     setup({ loadRichHistory });
     expect(loadRichHistory).toBeCalledTimes(2);
   });
