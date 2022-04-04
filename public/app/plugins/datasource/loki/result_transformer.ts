@@ -290,12 +290,10 @@ export function createMetricLabel(labelData: { [key: string]: string }, options?
 }
 
 function getOriginalMetricName(labelData: { [key: string]: string }) {
-  // we do not want to mutate the original labels-structure
-  const labels = { ...labelData };
-  const labelPart = Object.entries(labels)
+  const labelPart = Object.entries(labelData)
     .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
-  return `${metricName}{${labelPart}}`;
+  return `{${labelPart}}`;
 }
 
 export function decamelize(s: string): string {
