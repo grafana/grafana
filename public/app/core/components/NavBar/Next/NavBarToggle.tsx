@@ -30,8 +30,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   icon: css({
     backgroundColor: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.weak}`,
-    zIndex: theme.zIndex.sidemenu,
     borderRadius: '50%',
+    marginRight: 0,
+    zIndex: theme.zIndex.sidemenu,
 
     [theme.breakpoints.down('md')]: {
       display: 'none',

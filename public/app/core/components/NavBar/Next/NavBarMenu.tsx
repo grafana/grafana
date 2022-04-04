@@ -79,7 +79,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   menuCollapseIcon: css({
     position: 'absolute',
-    marginRight: 0,
     top: '43px',
     right: '0px',
   }),
