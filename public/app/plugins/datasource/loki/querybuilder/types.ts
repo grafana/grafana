@@ -31,6 +31,7 @@ export enum LokiOperationId {
   Json = 'json',
   Logfmt = 'logfmt',
   LineFormat = 'line_format',
+  LabelFormat = 'label_format',
   Rate = 'rate',
   CountOverTime = 'count_over_time',
   SumOverTime = 'sum_over_time',
