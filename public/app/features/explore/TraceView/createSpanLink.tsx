@@ -2,9 +2,11 @@ import {
   DataFrame,
   DataLink,
   DataQuery,
+  DataSourceInstanceSettings,
   dateTime,
   Field,
   KeyValue,
+  LinkModel,
   mapInternalLinkToExplore,
   rangeUtil,
   SplitOpen,
@@ -82,70 +84,48 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
-    const query = getLinkForSplunk(span, traceToLogsOptions);
-    const expr = getLinkForLoki(span, traceToLogsOptions);
-
-    if (!expr && dataSourceSettings?.type === 'loki') {
-      return undefined;
-    }
-
     let dataLink: DataLink<LokiQuery | DataQuery> = {} as DataLink<LokiQuery | DataQuery>;
+    let link: LinkModel<Field>;
 
-    switch (dataSourceSettings?.type) {
-      case 'loki':
-        getLinkForLoki(span, traceToLogsOptions);
-        dataLink = {
-          title: dataSourceSettings.name,
-          url: '',
-          internal: {
-            datasourceUid: dataSourceSettings.uid,
-            datasourceName: dataSourceSettings.name,
-            query: {
-              expr: expr,
-              refId: '',
-            },
+    /** getLinkForLoki will return undefined if there are no tags in the datasource config;
+     * in that case we skip building a dataLink below and return undefined for SpanLink function
+     */
+    let lokiQuery = getLinkForLoki(span, traceToLogsOptions, dataSourceSettings);
+    if (!lokiQuery) {
+      return undefined;
+    } else {
+      switch (dataSourceSettings?.type) {
+        case 'loki':
+          dataLink = lokiQuery?.dataLink;
+          break;
+        case 'grafana-splunk-datasource':
+          dataLink = getLinkForSplunk(span, traceToLogsOptions, dataSourceSettings).dataLink;
+          break;
+        default:
+          return undefined;
+      }
+
+      link = mapInternalLinkToExplore({
+        link: dataLink,
+        internalLink: dataLink?.internal!,
+        scopedVars: {},
+        range: getTimeRangeFromSpan(
+          span,
+          {
+            startMs: traceToLogsOptions.spanStartTimeShift
+              ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+              : 0,
+            endMs: traceToLogsOptions.spanEndTimeShift
+              ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
+              : 0,
           },
-        } as DataLink<LokiQuery>;
-        break;
-
-      case 'grafana-splunk-datasource':
-        getLinkForSplunk(span, traceToLogsOptions);
-        dataLink = {
-          title: dataSourceSettings.name,
-          url: '',
-          internal: {
-            datasourceUid: dataSourceSettings.uid,
-            datasourceName: dataSourceSettings.name,
-            query: {
-              query: query,
-              refId: '',
-            },
-          },
-        } as DataLink<DataQuery>;
-        break;
-
-      default:
-        return undefined;
+          isSplunkDS
+        ),
+        field: {} as Field,
+        onClickFn: splitOpenFn,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+      });
     }
-
-    const link = mapInternalLinkToExplore({
-      link: dataLink,
-      internalLink: dataLink.internal!,
-      scopedVars: {},
-      range: getTimeRangeFromSpan(
-        span,
-        {
-          startMs: traceToLogsOptions.spanStartTimeShift
-            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-            : 0,
-          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
-        },
-        isSplunkDS
-      ),
-      field: {} as Field,
-      onClickFn: splitOpenFn,
-      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-    });
 
     return {
       href: link.href,
@@ -159,7 +139,7 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
  * Default keys to use when there are no configured tags.
  */
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
-function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions): string | undefined {
+function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSourceSettings: DataSourceInstanceSettings) {
   const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
 
   // In order, try to use mapped tags -> tags -> default tags
@@ -183,18 +163,38 @@ function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions): string | 
   if (!tags.length) {
     return undefined;
   }
-
-  let query = `{${tags.join(', ')}}`;
+  let expr = `{${tags.join(', ')}}`;
   if (filterByTraceID && span.traceID) {
-    query += ` |="${span.traceID}"`;
+    expr += ` |="${span.traceID}"`;
   }
   if (filterBySpanID && span.spanID) {
-    query += ` |="${span.spanID}"`;
+    expr += ` |="${span.spanID}"`;
   }
-  return query;
+
+  const dataLink: DataLink<LokiQuery> = {
+    title: dataSourceSettings.name,
+    url: '',
+    internal: {
+      datasourceUid: dataSourceSettings.uid,
+      datasourceName: dataSourceSettings.name,
+      query: {
+        expr: expr,
+        refId: '',
+      },
+    },
+  };
+
+  return {
+    expr,
+    dataLink,
+  };
 }
 
-function getLinkForSplunk(span: TraceSpan, options: TraceToLogsOptions): string | undefined {
+function getLinkForSplunk(
+  span: TraceSpan,
+  options: TraceToLogsOptions,
+  dataSourceSettings: DataSourceInstanceSettings
+) {
   const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
 
   // In order, try to use mapped tags -> tags -> default tags
@@ -218,16 +218,27 @@ function getLinkForSplunk(span: TraceSpan, options: TraceToLogsOptions): string 
   if (tags.length > 0) {
     query += `${tags.join(' ')}`;
   }
-
   if (filterByTraceID && span.traceID) {
     query += ` "${span.traceID}"`;
   }
-
   if (filterBySpanID && span.spanID) {
     query += ` "${span.spanID}"`;
   }
 
-  return query;
+  const dataLink: DataLink<DataQuery> = {
+    title: dataSourceSettings.name,
+    url: '',
+    internal: {
+      datasourceUid: dataSourceSettings.uid,
+      datasourceName: dataSourceSettings.name,
+      query: {
+        query: query,
+        refId: '',
+      },
+    },
+  } as DataLink<DataQuery>;
+
+  return { query, dataLink };
 }
 
 /**
