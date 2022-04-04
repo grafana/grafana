@@ -26,7 +26,7 @@ export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], expl
   const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
   await waitFor(() =>
     expectedStars.forEach((starred, queryIndex) => {
-      expect(starButtons[queryIndex].getAttribute('title')).toBe(starred ? 'Unstar query' : 'Star query');
+      expect(starButtons[queryIndex]).toHaveAccessibleName(starred ? 'Unstar query' : 'Star query');
     })
   );
 };
