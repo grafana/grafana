@@ -493,7 +493,7 @@ func withSolver(options Options, solver UidSolver) Options {
 // inheritanceSolver := solveInheritedScopes(a.service.options.InheritedScopesSolver)
 type inheritSolverTestCase struct {
 	desc           string
-	id             string
+	resourceID     string
 	expectedStatus int
 }
 
@@ -501,17 +501,17 @@ func TestApi_InheritSolver(t *testing.T) {
 	tests := []inheritSolverTestCase{
 		{
 			desc:           "expect parents permission to apply",
-			id:             "resourceID",
+			resourceID:     "resourceID",
 			expectedStatus: http.StatusOK,
 		},
 		{
 			desc:           "expect direct permissions to apply (no inheritance)",
-			id:             "orphanedID",
+			resourceID:     "orphanedID",
 			expectedStatus: http.StatusOK,
 		},
 		{
 			desc:           "expect 404 when resource is not found",
-			id:             "notfound",
+			resourceID:     "notfound",
 			expectedStatus: http.StatusNotFound,
 		},
 	}
@@ -524,6 +524,7 @@ func TestApi_InheritSolver(t *testing.T) {
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
 				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			}
+			// Add the inheritance solver "resourceID -> [parentID]" "orphanedID -> []"
 			service, sql := setupTestEnvironment(t, userPermissions,
 				withInheritance(testOptions, testInheritedScopeSolver, testInheritedScopePrefixes),
 			)
@@ -531,9 +532,10 @@ func TestApi_InheritSolver(t *testing.T) {
 				1: accesscontrol.GroupScopesByAction(userPermissions),
 			}}, service)
 
-			seedPermissions(t, tt.id, sql, service)
+			// Seed permissions for users/teams/built-in roles specific to the test case resourceID
+			seedPermissions(t, tt.resourceID, sql, service)
 
-			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.id)
+			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
 			require.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
