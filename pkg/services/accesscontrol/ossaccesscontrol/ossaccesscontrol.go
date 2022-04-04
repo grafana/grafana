@@ -221,10 +221,8 @@ func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO,
 	// Inheritance
 	brs := map[string]struct{}{}
 	for _, builtInRole := range builtInRoles {
-		if builtInRole == accesscontrol.RoleGrafanaAdmin {
-			brs[builtInRole] = struct{}{}
-		} else {
-			brs[builtInRole] = struct{}{}
+		brs[builtInRole] = struct{}{}
+		if builtInRole != accesscontrol.RoleGrafanaAdmin {
 			for _, parent := range models.RoleType(builtInRole).Parent() {
 				brs[string(parent)] = struct{}{}
 			}
