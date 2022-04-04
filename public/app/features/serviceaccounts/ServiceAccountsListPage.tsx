@@ -271,6 +271,7 @@ const ServiceAccountListItem = memo(
             <span>
               <Icon name={'key-skeleton-alt'}></Icon>
             </span>
+            &nbsp;
             {serviceAccount.tokens}
           </a>
         </td>
