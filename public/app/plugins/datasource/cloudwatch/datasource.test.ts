@@ -10,8 +10,13 @@ import {
   namespaceVariable,
   setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
-import { CloudWatchDatasource } from './datasource';
-import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './types';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from './types';
 
 describe('datasource', () => {
   describe('query', () => {
@@ -144,111 +149,124 @@ describe('datasource', () => {
     });
   });
 
-  describe('filterMetricQuery', () => {
-    let baseQuery: CloudWatchMetricsQuery;
-    let datasource: CloudWatchDatasource;
-
-    beforeEach(() => {
-      datasource = setupMockedDataSource().datasource;
-      baseQuery = {
+  describe('filterQuery', () => {
+    const datasource = setupMockedDataSource().datasource;
+    describe('CloudWatchLogsQuery', () => {
+      const baseQuery: CloudWatchLogsQuery = {
+        queryMode: 'Logs',
         id: '',
-        region: 'us-east-2',
-        namespace: '',
-        period: '',
-        alias: '',
-        metricName: '',
-        dimensions: {},
-        matchExact: true,
-        statistic: '',
-        expression: '',
+        region: '',
         refId: '',
+        logGroupNames: ['foo', 'bar'],
       };
+      it('should return false if empty logGroupNames', () => {
+        expect(datasource.filterQuery({ ...baseQuery, logGroupNames: undefined })).toBeFalsy();
+      });
+      it('should return true if has logGroupNames', () => {
+        expect(datasource.filterQuery(baseQuery)).toBeTruthy();
+      });
     });
-
-    it('should error if invalid mode', async () => {
-      expect(() => datasource.filterMetricQuery(baseQuery)).toThrowError('invalid metric editor mode');
-    });
-
-    describe('metric search queries', () => {
+    describe('CloudWatchMetricsQuery', () => {
+      let baseQuery: CloudWatchMetricsQuery;
       beforeEach(() => {
-        datasource = setupMockedDataSource().datasource;
         baseQuery = {
-          ...baseQuery,
-          namespace: 'AWS/EC2',
-          metricName: 'CPUUtilization',
-          statistic: 'Average',
-          metricQueryType: MetricQueryType.Search,
-          metricEditorMode: MetricEditorMode.Builder,
+          id: '',
+          region: 'us-east-2',
+          namespace: '',
+          period: '',
+          alias: '',
+          metricName: '',
+          dimensions: {},
+          matchExact: true,
+          statistic: '',
+          expression: '',
+          refId: '',
         };
       });
 
-      it('should not allow builder queries that dont have namespace, metric or statistic', async () => {
-        expect(datasource.filterMetricQuery({ ...baseQuery, statistic: undefined })).toBeFalsy();
-        expect(datasource.filterMetricQuery({ ...baseQuery, metricName: undefined })).toBeFalsy();
-        expect(datasource.filterMetricQuery({ ...baseQuery, namespace: '' })).toBeFalsy();
+      it('should error if invalid mode', async () => {
+        expect(() => datasource.filterQuery(baseQuery)).toThrowError('invalid metric editor mode');
       });
 
-      it('should allow builder queries that have namespace, metric or statistic', async () => {
-        expect(datasource.filterMetricQuery(baseQuery)).toBeTruthy();
+      describe('metric search queries', () => {
+        beforeEach(() => {
+          baseQuery = {
+            ...baseQuery,
+            namespace: 'AWS/EC2',
+            metricName: 'CPUUtilization',
+            statistic: 'Average',
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
+          };
+        });
+
+        it('should not allow builder queries that dont have namespace, metric or statistic', async () => {
+          expect(datasource.filterQuery({ ...baseQuery, statistic: undefined })).toBeFalsy();
+          expect(datasource.filterQuery({ ...baseQuery, metricName: undefined })).toBeFalsy();
+          expect(datasource.filterQuery({ ...baseQuery, namespace: '' })).toBeFalsy();
+        });
+
+        it('should allow builder queries that have namespace, metric or statistic', async () => {
+          expect(datasource.filterQuery(baseQuery)).toBeTruthy();
+        });
+
+        it('should not allow code queries that dont have an expression', async () => {
+          expect(
+            datasource.filterQuery({ ...baseQuery, expression: undefined, metricEditorMode: MetricEditorMode.Code })
+          ).toBeFalsy();
+        });
+
+        it('should allow code queries that have an expression', async () => {
+          expect(
+            datasource.filterQuery({ ...baseQuery, expression: 'x * 2', metricEditorMode: MetricEditorMode.Code })
+          ).toBeTruthy();
+        });
       });
 
-      it('should not allow code queries that dont have an expression', async () => {
-        expect(
-          datasource.filterMetricQuery({ ...baseQuery, expression: undefined, metricEditorMode: MetricEditorMode.Code })
-        ).toBeFalsy();
+      describe('metric search expression queries', () => {
+        beforeEach(() => {
+          baseQuery = {
+            ...baseQuery,
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Code,
+          };
+        });
+
+        it('should not allow queries that dont have an expression', async () => {
+          const valid = datasource.filterQuery(baseQuery);
+          expect(valid).toBeFalsy();
+        });
+
+        it('should allow queries that have an expression', async () => {
+          baseQuery.expression = 'SUM([a,x])';
+          const valid = datasource.filterQuery(baseQuery);
+          expect(valid).toBeTruthy();
+        });
       });
 
-      it('should allow code queries that have an expression', async () => {
-        expect(
-          datasource.filterMetricQuery({ ...baseQuery, expression: 'x * 2', metricEditorMode: MetricEditorMode.Code })
-        ).toBeTruthy();
-      });
-    });
+      describe('metric query queries', () => {
+        beforeEach(() => {
+          baseQuery = {
+            ...baseQuery,
+            metricQueryType: MetricQueryType.Query,
+            metricEditorMode: MetricEditorMode.Code,
+          };
+        });
 
-    describe('metric search expression queries', () => {
-      beforeEach(() => {
-        datasource = setupMockedDataSource().datasource;
-        baseQuery = {
-          ...baseQuery,
-          metricQueryType: MetricQueryType.Search,
-          metricEditorMode: MetricEditorMode.Code,
-        };
-      });
+        it('should not allow queries that dont have a sql expresssion', async () => {
+          const valid = datasource.filterQuery(baseQuery);
+          expect(valid).toBeFalsy();
+        });
 
-      it('should not allow queries that dont have an expresssion', async () => {
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeFalsy();
-      });
-
-      it('should allow queries that have an expresssion', async () => {
-        baseQuery.expression = 'SUM([a,x])';
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeTruthy();
-      });
-    });
-
-    describe('metric query queries', () => {
-      beforeEach(() => {
-        datasource = setupMockedDataSource().datasource;
-        baseQuery = {
-          ...baseQuery,
-          metricQueryType: MetricQueryType.Query,
-          metricEditorMode: MetricEditorMode.Code,
-        };
-      });
-
-      it('should not allow queries that dont have a sql expresssion', async () => {
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeFalsy();
-      });
-
-      it('should allow queries that have a sql expresssion', async () => {
-        baseQuery.sqlExpression = 'select SUM(CPUUtilization) from "AWS/EC2"';
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeTruthy();
+        it('should allow queries that have a sql expresssion', async () => {
+          baseQuery.sqlExpression = 'select SUM(CPUUtilization) from "AWS/EC2"';
+          const valid = datasource.filterQuery(baseQuery);
+          expect(valid).toBeTruthy();
+        });
       });
     });
   });
+
   describe('resource requests', () => {
     it('should map resource response to metric response', async () => {
       const datasource = setupMockedDataSource().datasource;
