@@ -120,11 +120,10 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
-				dboardPath := include.DashboardURLPath()
-
-				if dboardPath != "" {
+				dboardURL := include.DashboardURLPath()
+				if dboardURL != "" {
 					link := &dtos.NavLink{
-						Url:  path.Join(hs.Cfg.AppSubURL, dboardPath),
+						Url:  path.Join(hs.Cfg.AppSubURL, dboardURL),
 						Text: include.Name,
 					}
 					appLink.Children = append(appLink.Children, link)
