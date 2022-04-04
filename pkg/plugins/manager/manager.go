@@ -153,27 +153,6 @@ func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.P
 	return p, true
 }
 
-// availablePlugins returns all non-decommissioned plugins from the registry
-func (m *PluginManager) availablePlugins(ctx context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
-		if !p.IsDecommissioned() {
-			res = append(res, p)
-		}
-	}
-	return res
-}
-
-// registeredPlugins returns all registered plugins from the registry
-func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct{} {
-	pluginsByID := make(map[string]struct{})
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
-		pluginsByID[p.ID] = struct{}{}
-	}
-
-	return pluginsByID
-}
-
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
 	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
 	err := m.processManager.Stop(ctx, p)
