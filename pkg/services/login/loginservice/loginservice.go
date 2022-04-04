@@ -144,7 +144,7 @@ func (ls *Implementation) DisableExternalUser(ctx context.Context, username stri
 	if userInfo.IsDisabled {
 		return nil
 	}
-	
+
 	logger.Debug(
 		"Disabling external user",
 		"user",
