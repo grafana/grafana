@@ -12,20 +12,20 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var _ plugins.Client = (*PluginClientManager)(nil)
+var _ plugins.Client = (*Service)(nil)
 
-type PluginClientManager struct {
+type Service struct {
 	pluginRegistry registry.Service
 }
 
-func ProvidePluginClient(pluginRegistry registry.Service) *PluginClientManager {
-	return &PluginClientManager{
+func ProvideService(pluginRegistry registry.Service) *Service {
+	return &Service{
 		pluginRegistry: pluginRegistry,
 	}
 }
 
-func (m *PluginClientManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -60,8 +60,8 @@ func (m *PluginClientManager) QueryData(ctx context.Context, req *backend.QueryD
 	return resp, err
 }
 
-func (m *PluginClientManager) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -79,8 +79,8 @@ func (m *PluginClientManager) CallResource(ctx context.Context, req *backend.Cal
 	return nil
 }
 
-func (m *PluginClientManager) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
+func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -97,8 +97,8 @@ func (m *PluginClientManager) CollectMetrics(ctx context.Context, req *backend.C
 	return resp, nil
 }
 
-func (m *PluginClientManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -124,8 +124,8 @@ func (m *PluginClientManager) CheckHealth(ctx context.Context, req *backend.Chec
 	return resp, nil
 }
 
-func (m *PluginClientManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -133,8 +133,8 @@ func (m *PluginClientManager) SubscribeStream(ctx context.Context, req *backend.
 	return plugin.SubscribeStream(ctx, req)
 }
 
-func (m *PluginClientManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -142,8 +142,8 @@ func (m *PluginClientManager) PublishStream(ctx context.Context, req *backend.Pu
 	return plugin.PublishStream(ctx, req)
 }
 
-func (m *PluginClientManager) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
+func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -152,8 +152,8 @@ func (m *PluginClientManager) RunStream(ctx context.Context, req *backend.RunStr
 }
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
-func (m *PluginClientManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := s.pluginRegistry.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, false
 	}

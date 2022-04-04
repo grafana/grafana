@@ -1,4 +1,4 @@
-package manager
+package dashboard
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing/fstest"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -186,11 +187,11 @@ func TestDashboardFileStore(t *testing.T) {
 	})
 }
 
-func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
+func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	t.Helper()
 
-	return &PluginManager{
-		pluginRegistry: &fakeInternalRegistry{
+	return &FileStoreManager{
+		pluginRegistry: &fakePluginRegistry{
 			store: map[string]*plugins.Plugin{
 				"pluginWithoutDashboards": {
 					JSONData: plugins.JSONData{
@@ -222,4 +223,15 @@ func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
 			},
 		},
 	}
+}
+
+type fakePluginRegistry struct {
+	registry.Service
+
+	store map[string]*plugins.Plugin
+}
+
+func (f *fakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
+	p, exists := f.store[id]
+	return p, exists
 }

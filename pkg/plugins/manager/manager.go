@@ -17,11 +17,6 @@ const (
 	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
-var _ plugins.Store = (*PluginManager)(nil)
-var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
-var _ plugins.RendererManager = (*PluginManager)(nil)
-var _ plugins.DashboardFileStore = (*PluginManager)(nil)
-
 type PluginManager struct {
 	cfg             *plugins.Cfg
 	processManager  plugins.ProcessManager
@@ -29,8 +24,7 @@ type PluginManager struct {
 	pluginInstaller installer.Service
 	pluginLoader    loader.Service
 	pluginSources   []plugins.PluginSource
-	//pluginsMu       sync.RWMutex
-	log log.Logger
+	log             log.Logger
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
@@ -56,7 +50,7 @@ func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plug
 }
 
 func (m *PluginManager) Init() error {
-	return m.Sync(context.Background(), m.pluginSources...)
+	return m.sync(context.Background(), m.pluginSources...)
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
@@ -65,52 +59,13 @@ func (m *PluginManager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (m *PluginManager) Sync(ctx context.Context, pluginSources ...plugins.PluginSource) error {
+func (m *PluginManager) sync(ctx context.Context, pluginSources ...plugins.PluginSource) error {
 	// TODO merge sources with existing
 
 	for _, ps := range pluginSources {
 		err := m.loadPlugins(ctx, ps.Class, ps.Paths...)
 		if err != nil {
 			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *PluginManager) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := m.plugin(ctx, pluginID)
-	if !exists {
-		return plugins.PluginDTO{}, false
-	}
-
-	return p.ToDTO(), true
-}
-
-func (m *PluginManager) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	// if no types passed, assume all
-	if len(pluginTypes) == 0 {
-		pluginTypes = plugins.PluginTypes
-	}
-
-	var requestedTypes = make(map[plugins.Type]struct{})
-	for _, pt := range pluginTypes {
-		requestedTypes[pt] = struct{}{}
-	}
-
-	pluginsList := make([]plugins.PluginDTO, 0)
-	for _, p := range m.availablePlugins(ctx) {
-		if _, exists := requestedTypes[p.Type]; exists {
-			pluginsList = append(pluginsList, p.ToDTO())
-		}
-	}
-	return pluginsList
-}
-
-func (m *PluginManager) Renderer() *plugins.Plugin {
-	for _, p := range m.availablePlugins(context.TODO()) {
-		if p.IsRenderer() {
-			return p
 		}
 	}
 
@@ -181,17 +136,6 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 	}
 
 	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
-}
-
-func (m *PluginManager) Routes() []*plugins.StaticRoute {
-	staticRoutes := make([]*plugins.StaticRoute, 0)
-
-	for _, p := range m.availablePlugins(context.TODO()) {
-		if p.StaticRoute() != nil {
-			staticRoutes = append(staticRoutes, p.StaticRoute())
-		}
-	}
-	return staticRoutes
 }
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned

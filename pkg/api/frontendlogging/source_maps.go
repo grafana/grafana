@@ -1,6 +1,7 @@
 package frontendlogging
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -42,19 +43,23 @@ func ReadSourceMapFromFS(dir string, path string) ([]byte, error) {
 	return ioutil.ReadAll(file)
 }
 
+type StaticPluginRouteResolver interface {
+	PluginRoutes() []*plugins.StaticRoute
+}
+
 type SourceMapStore struct {
 	sync.Mutex
 	cache         map[string]*sourceMap
 	cfg           *setting.Cfg
 	readSourceMap ReadSourceMapFn
-	routeResolver plugins.StaticRouteResolver
+	pluginStore   plugins.Store
 }
 
-func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolver, readSourceMap ReadSourceMapFn) *SourceMapStore {
+func NewSourceMapStore(cfg *setting.Cfg, pluginStore plugins.Store, readSourceMap ReadSourceMapFn) *SourceMapStore {
 	return &SourceMapStore{
 		cache:         make(map[string]*sourceMap),
 		cfg:           cfg,
-		routeResolver: routeResolver,
+		pluginStore:   pluginStore,
 		readSourceMap: readSourceMap,
 	}
 }
@@ -83,7 +88,7 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 		}
 		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
-		for _, route := range store.routeResolver.Routes() {
+		for _, route := range store.PluginRoutes() {
 			pluginPrefix := filepath.Join("/public/plugins/", route.PluginID)
 			if strings.HasPrefix(u.Path, pluginPrefix) {
 				return &sourceMapLocation{
@@ -164,4 +169,15 @@ func (store *SourceMapStore) resolveSourceLocation(frame sentry.Frame) (*sentry.
 		Function: function,
 		Module:   module,
 	}, nil
+}
+
+func (store *SourceMapStore) PluginRoutes() []*plugins.StaticRoute {
+	staticRoutes := make([]*plugins.StaticRoute, 0)
+
+	for _, p := range store.pluginStore.Plugins(context.TODO()) {
+		if p.StaticRoute() != nil {
+			staticRoutes = append(staticRoutes, p.StaticRoute())
+		}
+	}
+	return staticRoutes
 }

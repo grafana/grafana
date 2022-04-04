@@ -11,3 +11,7 @@ type Service interface {
 	// Load will return a list of plugins found in the provided file system paths.
 	Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error)
 }
+
+type ErrorResolver interface {
+	PluginErrors() []*plugins.Error
+}

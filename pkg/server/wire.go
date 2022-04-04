@@ -26,9 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/dashboard"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -132,17 +134,19 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
-	client.ProvidePluginClient,
-	wire.Bind(new(plugins.Client), new(*client.PluginClientManager)),
+	client.ProvideService, // background?
+	wire.Bind(new(plugins.Client), new(*client.Service)),
+	managerStore.ProvideService, // background?
+	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
+	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),
+	dashboard.ProvideFileStoreManager, // background?
+	wire.Bind(new(plugins.DashboardFileStore), new(*dashboard.FileStoreManager)),
 	manager.ProvideService,
-	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
-	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
+	wire.Bind(new(loader.ErrorResolver), new(*loader.Loader)),
 	installer.ProvideService,
 	wire.Bind(new(installer.Service), new(*installer.Installer)),
 	manager.ProvideProcessManager,

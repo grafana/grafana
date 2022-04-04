@@ -31,7 +31,8 @@ var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
-var _ plugins.ErrorResolver = (*Loader)(nil)
+var _ ErrorResolver = (*Loader)(nil)
+var _ Service = (*Loader)(nil)
 
 type Loader struct {
 	cfg                *plugins.Cfg
@@ -43,12 +44,12 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func ProvideService(cfg *setting.Cfg, license models.Licensing, signatureAuthorizer signature.Authorizer,
 	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
+	return New(plugins.FromGrafanaCfg(cfg), license, signatureAuthorizer, backendProvider), nil
 }
 
-func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func New(cfg *plugins.Cfg, license models.Licensing, authorizer signature.Authorizer,
 	backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
 		cfg:                cfg,

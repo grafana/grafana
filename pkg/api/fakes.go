@@ -38,13 +38,3 @@ type fakeRendererManager struct {
 func (ps *fakeRendererManager) Renderer() *plugins.Plugin {
 	return nil
 }
-
-type fakePluginStaticRouteResolver struct {
-	plugins.StaticRouteResolver
-
-	routes []*plugins.StaticRoute
-}
-
-func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.StaticRoute {
-	return psrr.routes
-}

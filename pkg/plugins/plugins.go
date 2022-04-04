@@ -96,6 +96,14 @@ func (p PluginDTO) IncludedInSignature(file string) bool {
 	return true
 }
 
+func (p PluginDTO) StaticRoute() *StaticRoute {
+	if p.IsCorePlugin() {
+		return nil
+	}
+
+	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
+}
+
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
@@ -333,14 +341,6 @@ func (p *Plugin) ToDTO() PluginDTO {
 		BaseURL:         p.BaseURL,
 		StreamHandler:   c,
 	}
-}
-
-func (p *Plugin) StaticRoute() *StaticRoute {
-	if p.IsCorePlugin() {
-		return nil
-	}
-
-	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {

@@ -92,7 +92,7 @@ func newScenario(t *testing.T, cbs []func(*plugins.Plugin), fn func(t *testing.T
 	p, pc := createPlugin(t, cbs...)
 
 	ctx := &scenarioCtx{
-		pluginClientManager: &PluginClientManager{pluginRegistry: &fakeInternalRegistry{
+		pluginClientManager: &Service{pluginRegistry: &fakeInternalRegistry{
 			store: map[string]*plugins.Plugin{
 				testPluginID: p,
 			},
@@ -104,7 +104,7 @@ func newScenario(t *testing.T, cbs []func(*plugins.Plugin), fn func(t *testing.T
 }
 
 type scenarioCtx struct {
-	pluginClientManager *PluginClientManager
+	pluginClientManager *Service
 	pluginClient        *fakePluginClient
 }
 
