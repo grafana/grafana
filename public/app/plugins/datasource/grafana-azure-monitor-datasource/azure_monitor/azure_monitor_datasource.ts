@@ -55,15 +55,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    const resourceUriAvailable = item?.azureMonitor?.resourceUri;
-    const legacyQueryAvailable =
+    const hasResourceUri = !!item?.azureMonitor?.resourceUri;
+    const hasLegacyQuery =
       hasValue(item?.azureMonitor?.resourceGroup) &&
       hasValue(item?.azureMonitor?.resourceName) &&
       hasValue(item?.azureMonitor?.metricDefinition);
 
     return !!(
       item.hide !== true &&
-      (resourceUriAvailable || legacyQueryAvailable) &&
+      (hasResourceUri || hasLegacyQuery) &&
       hasValue(item?.azureMonitor?.metricName) &&
       hasValue(item?.azureMonitor?.aggregation)
     );
