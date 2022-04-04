@@ -4,6 +4,7 @@ WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
 COPY packages packages
+COPY plugins-bundled plugins-bundled
 
 RUN apt-get update && apt-get install -yq git
 RUN yarn install --pure-lockfile
@@ -19,10 +20,13 @@ RUN yarn build
 
 FROM golang:1.17.3 AS go-builder
 
+RUN apk add --no-cache make
+
 WORKDIR /src/grafana
 
 COPY go.mod go.sum embed.go ./
-COPY build.go package.json ./
+COPY Makefile build.go package.json ./
+COPY .bingo .bingo
 COPY pkg pkg/
 COPY cue cue/
 COPY cue.mod cue.mod/
@@ -30,7 +34,7 @@ COPY packages/grafana-schema packages/grafana-schema/
 COPY public/app/plugins public/app/plugins/
 
 RUN go mod verify
-RUN go run build.go build
+RUN make build-go
 
 FROM ubuntu:20.04
 
