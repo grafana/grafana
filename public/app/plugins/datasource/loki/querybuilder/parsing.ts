@@ -248,7 +248,6 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getUnwrap(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  // Not implemented in visual query builder yet
   const id = 'unwrap';
   const string = handleQuotes(getString(expr, node.getChild('Identifier')));
 
