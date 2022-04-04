@@ -19,10 +19,8 @@ export function FileDropzoneCustomChildren({
       <Icon name="upload" size="xxl" />
       <h3>{primaryText}</h3>
       <small className={styles.small}>{secondaryText}</small>
-      <text>Or</text>
-      <Button icon="upload" className={styles.uploadButton}>
-        Upload
-      </Button>
+      <h6>Or</h6>
+      <Button icon="upload">Upload</Button>
     </div>
   );
 }
@@ -42,13 +40,15 @@ export const FileUploader = (props: Props) => {
           })
             .then((r) => r.json())
             .then((data) => {
-              getBackendSrv()
-                .get(`api/storage/read/${data.path}`)
-                .then((res) => {
-                  console.log(res);
-                  setNewValue(`${config.appUrl}api/storage/read/${data.path}`);
-                });
-            });
+              if (!data.error) {
+                getBackendSrv()
+                  .get(`api/storage/read/${data.path}`)
+                  .then(() => {
+                    setNewValue(`${config.appUrl}api/storage/read/${data.path}`);
+                  });
+              }
+            })
+            .catch((error) => console.error('cannot upload file', error));
         },
       }}
     >
@@ -85,10 +85,6 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
     `,
     small: css`
       color: ${theme.colors.text.secondary};
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    uploadButton: css`
-      margin-top: ${theme.spacing(2)};
     `,
   };
 }
