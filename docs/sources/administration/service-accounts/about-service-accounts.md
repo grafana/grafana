@@ -29,7 +29,7 @@ A service account can be associated with multiple api keys. As a result, we reco
 
 ## Grafana Service account vs API key
 
-We have created service accounts for improved access control of programmatic access to Grafana. A service account token is a token that is used to authenticate a service account to Grafana and are very similar to API keys.
+We have created service accounts for improved access control of programmatic access to Grafana. A service account token is a token that is used to authenticate a service account to Grafana and is very similar to an API key.
 
 We recommend to start using service accounts over API keys.
 
