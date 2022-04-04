@@ -110,13 +110,15 @@ const ServiceAccountPageUnconnected = ({
             />
           </>
         )}
-        <VerticalGroup spacing="md">
+        <div className="page-action-bar" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 className="page-heading" style={{ marginBottom: '0px' }}>
+            Tokens
+          </h3>
           <Button onClick={() => setIsModalOpen(true)}>Add token</Button>
-          <h3 className="page-heading">Tokens</h3>
-          {tokens && (
-            <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
-          )}
-        </VerticalGroup>
+        </div>
+        {tokens && (
+          <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
+        )}
         <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
       </Page.Contents>
     </Page>
