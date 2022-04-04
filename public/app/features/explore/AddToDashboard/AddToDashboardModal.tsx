@@ -88,7 +88,9 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
     addPanelToDashboard({
       dashboardUid,
-      exploreItem,
+      datasource: exploreItem.datasourceInstance?.getRef(),
+      queries: exploreItem.queries,
+      queryResponse: exploreItem.queryResponse,
     });
 
     onClose();

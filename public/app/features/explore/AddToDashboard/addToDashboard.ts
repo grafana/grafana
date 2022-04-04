@@ -1,13 +1,15 @@
-import { DataFrame, DataQuery } from '@grafana/data';
+import { DataFrame, DataQuery, DataSourceRef } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   getNewDashboardModelData,
   setDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
-import { ExploreItemState, ExplorePanelData } from 'app/types';
+import { ExplorePanelData } from 'app/types';
 
 interface AddPanelToDashboardOptions {
-  exploreItem: ExploreItemState;
+  queries: DataQuery[];
+  queryResponse: ExplorePanelData;
+  datasource?: DataSourceRef;
   dashboardUid?: string;
 }
 
@@ -21,15 +23,13 @@ function createDashboard() {
 }
 
 export async function addPanelToDashboard(options: AddPanelToDashboardOptions) {
-  const queries = options.exploreItem?.queries || [];
-  const datasource = options.exploreItem?.datasourceInstance;
-  const panelType = getPanelType(queries, options.exploreItem?.queryResponse);
+  const panelType = getPanelType(options.queries, options.queryResponse);
   const panel = {
-    targets: queries,
+    targets: options.queries,
     type: panelType,
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
-    datasource,
+    datasource: options.datasource,
   };
 
   const dto = options.dashboardUid ? await backendSrv.getDashboardByUid(options.dashboardUid) : createDashboard();
@@ -42,12 +42,7 @@ export async function addPanelToDashboard(options: AddPanelToDashboardOptions) {
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
 
-function getPanelType(queries: DataQuery[], queryResponse?: ExplorePanelData) {
-  if (!queryResponse) {
-    // return table if no response
-    return 'table';
-  }
-
+function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
   for (const { refId } of queries.filter(isVisible)) {
     // traceview is not supported in dashboards, skipping it for now.
     const hasQueryRefId = hasRefId(refId);
