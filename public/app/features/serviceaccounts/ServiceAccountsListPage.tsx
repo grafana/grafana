@@ -95,6 +95,11 @@ const ServiceAccountsListPage = ({
             value={filters.find((f) => f.name === 'expiredTokens')?.value}
             className={styles.filter}
           />
+          {serviceAccounts.length !== 0 && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
+              Add service account
+            </LinkButton>
+          )}
         </div>
         {isLoading && <PageLoader />}
         {!isLoading && serviceAccounts.length === 0 && (
@@ -103,7 +108,7 @@ const ServiceAccountsListPage = ({
               title="You haven't created any service accounts yet."
               buttonIcon="key-skeleton-alt"
               buttonLink="org/serviceaccounts/create"
-              buttonTitle=" New service account"
+              buttonTitle="Add service account"
               buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
               proTip="Remember, you can provide specific permissions for API access to other applications."
               proTipLink=""
@@ -114,11 +119,6 @@ const ServiceAccountsListPage = ({
         )}
         {!isLoading && serviceAccounts.length !== 0 && (
           <>
-            {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-              <LinkButton href="org/serviceaccounts/create" variant="primary">
-                New service account
-              </LinkButton>
-            )}
             <div className={cx(styles.table, 'admin-list-table')}>
               <table className="filter-table form-inline filter-table--hover">
                 <thead>
