@@ -56,6 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
     paddingTop: theme.spacing(1),
     marginRight: theme.spacing(1.5),
+    overflow: 'hidden',
     right: 0,
     zIndex: theme.zIndex.sidemenu,
     top: 0,
