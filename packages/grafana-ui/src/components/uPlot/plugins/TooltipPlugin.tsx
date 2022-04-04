@@ -244,11 +244,13 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       if (sortOrder !== SortOrder.None) {
         // create sort reference series array, as Array.sort() mutates the original array
         const sortRef = [...series];
+        const sortFn = arrayUtils.sortValues(sortOrder);
+
         series.sort((a, b) => {
           // get compared values indices to retrieve raw values from sortIdx
           const aIdx = sortRef.indexOf(a);
           const bIdx = sortRef.indexOf(b);
-          return arrayUtils.sortValues(sortOrder)(sortIdx[aIdx], sortIdx[bIdx]);
+          return sortFn(sortIdx[aIdx], sortIdx[bIdx]);
         });
       }
 
