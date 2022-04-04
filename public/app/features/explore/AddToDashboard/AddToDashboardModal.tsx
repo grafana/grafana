@@ -3,11 +3,12 @@ import { Button, Field, InputControl, Modal, RadioButtonGroup, useStyles2 } from
 import { SelectableValue } from '@grafana/data';
 import { addPanelToDashboard } from './addToDashboard';
 import { useSelector } from 'react-redux';
-import { ExploreId, StoreState } from 'app/types';
+import { ExploreId } from 'app/types';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
 import { css } from '@emotion/css';
 import { config, locationService } from '@grafana/runtime';
+import { getExploreItemSelector } from '../state/selectors';
 
 enum SaveTarget {
   NewDashboard,
@@ -67,7 +68,7 @@ interface Props {
 }
 
 export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
-  const state = useSelector((state: StoreState) => state);
+  const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
   const radioGroupStyles = useStyles2(
     (theme) => css`
       margin-bottom: ${theme.spacing(2)};
@@ -87,7 +88,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
     addPanelToDashboard({
       dashboardUid,
-      exploreItem: state.explore[exploreId]!,
+      exploreItem,
     });
 
     onClose();
