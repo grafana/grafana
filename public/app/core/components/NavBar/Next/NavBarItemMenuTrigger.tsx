@@ -50,6 +50,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         setMenuIdOpen(item.id);
       } else {
         state.close();
+        setMenuIdOpen(undefined);
       }
     },
   });
@@ -142,7 +143,10 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const { dialogProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
-      onClose: () => state.close(),
+      onClose: () => {
+        state.close();
+        setMenuIdOpen(undefined);
+      },
       isOpen: state.isOpen,
       isDismissable: true,
     },
