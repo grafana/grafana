@@ -1,5 +1,7 @@
-import { createAggregationOperation } from '../../prometheus/querybuilder/aggregations';
-import { getPromAndLokiOperationDisplayName } from '../../prometheus/querybuilder/shared/operationUtils';
+import {
+  createAggregationOperation,
+  getPromAndLokiOperationDisplayName,
+} from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -77,7 +79,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => `${innerExpr} | line_format "${model.params[0]}"`,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
+        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels.
 
         Example: \`{{.status_code}} - {{.message}}\`
 
