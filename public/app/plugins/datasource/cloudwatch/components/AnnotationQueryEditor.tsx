@@ -5,7 +5,7 @@ import React, { ChangeEvent } from 'react';
 
 import { CloudWatchDatasource } from '../datasource';
 import { useRegions } from '../hooks';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery, CloudWatchQuery } from '../types';
 import { MetricStatEditor } from './MetricStatEditor';
 
 // datasource: DSType;
@@ -14,7 +14,7 @@ import { MetricStatEditor } from './MetricStatEditor';
 // onChange: (value: TVQuery) => void;
 
 export type Props = {
-  query: CloudWatchAnnotationQuery;
+  query: CloudWatchQuery;
   datasource: CloudWatchDatasource;
   onChange: (value: CloudWatchAnnotationQuery) => void;
   data?: PanelData;
