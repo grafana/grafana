@@ -185,3 +185,36 @@ func (kv *secretsKVStoreSQL) Keys(ctx context.Context, orgId int64, namespace st
 	})
 	return keys, err
 }
+
+// Rename an item in the store
+func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
+	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		item := Item{
+			OrgId:     &orgId,
+			Namespace: &namespace,
+			Type:      &typ,
+		}
+
+		has, err := dbSession.Get(&item)
+		if err != nil {
+			kv.log.Debug("error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			return err
+		}
+
+		item.Namespace = &newNamespace
+		item.Updated = time.Now()
+
+		if has {
+			// if item already exists we update it
+			_, err = dbSession.ID(item.Id).Update(&item)
+			if err != nil {
+				kv.log.Debug("error updating secret namespace", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			} else {
+				kv.log.Debug("secret namespace updated", "orgId", orgId, "type", typ, "namespace", namespace)
+			}
+			return err
+		}
+
+		return err
+	})
+}
