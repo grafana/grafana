@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type FakeCacheService struct {
 	DataSources []*models.DataSource
 }
 
-var _ CacheService = &FakeCacheService{}
+var _ datasources.CacheService = &FakeCacheService{}
 
 func (c *FakeCacheService) GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
 	for _, datasource := range c.DataSources {
