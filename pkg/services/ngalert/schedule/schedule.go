@@ -26,6 +26,7 @@ import (
 
 // ScheduleService is an interface for a service that schedules the evaluation
 // of alert rules.
+//go:generate mockery --name ScheduleService --structname FakeScheduleService --inpackage --filename schedule_mock.go
 type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
@@ -75,7 +76,7 @@ type schedule struct {
 
 	log log.Logger
 
-	evaluator *eval.Evaluator
+	evaluator eval.Evaluator
 
 	ruleStore         store.RuleStore
 	instanceStore     store.InstanceStore
@@ -108,7 +109,7 @@ type SchedulerCfg struct {
 	EvalAppliedFunc         func(models.AlertRuleKey, time.Time)
 	MaxAttempts             int64
 	StopAppliedFunc         func(models.AlertRuleKey)
-	Evaluator               *eval.Evaluator
+	Evaluator               eval.Evaluator
 	RuleStore               store.RuleStore
 	OrgStore                store.OrgStore
 	InstanceStore           store.InstanceStore

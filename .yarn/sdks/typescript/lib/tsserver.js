@@ -18,6 +18,7 @@ const moduleWrapper = tsserver => {
   const pnpApi = require(`pnpapi`);
 
   const isVirtual = str => str.match(/\/(\$\$virtual|__virtual__)\//);
+  const isPortal = str => str.startsWith("portal:/");
   const normalize = str => str.replace(/\\/g, `/`).replace(/^\/?/, `/`);
 
   const dependencyTreeRoots = new Set(pnpApi.getDependencyTreeRoots().map(locator => {
@@ -44,7 +45,7 @@ const moduleWrapper = tsserver => {
       const resolved = isVirtual(str) ? pnpApi.resolveVirtual(str) : str;
       if (resolved) {
         const locator = pnpApi.findPackageLocator(resolved);
-        if (locator && dependencyTreeRoots.has(`${locator.name}@${locator.reference}`)) {
+        if (locator && (dependencyTreeRoots.has(`${locator.name}@${locator.reference}`) || isPortal(locator.reference))) {
           str = resolved;
         }
       }
@@ -85,7 +86,7 @@ const moduleWrapper = tsserver => {
           // everything else is up to neovim
           case `neovim`: {
             str = normalize(resolved).replace(/\.zip\//, `.zip::`);
-            str = `zipfile:${str}`;
+            str = `zipfile://${str}`;
           } break;
 
           default: {
@@ -100,8 +101,7 @@ const moduleWrapper = tsserver => {
 
   function fromEditorPath(str) {
     switch (hostInfo) {
-      case `coc-nvim`:
-      case `neovim`: {
+      case `coc-nvim`: {
         str = str.replace(/\.zip::/, `.zip/`);
         // The path for coc-nvim is in format of /<pwd>/zipfile:/<pwd>/.yarn/...
         // So in order to convert it back, we use .* to match all the thing
@@ -109,6 +109,12 @@ const moduleWrapper = tsserver => {
         return process.platform === `win32`
           ? str.replace(/^.*zipfile:\//, ``)
           : str.replace(/^.*zipfile:/, ``);
+      } break;
+
+      case `neovim`: {
+        str = str.replace(/\.zip::/, `.zip/`);
+        // The path for neovim is in format of zipfile:///<pwd>/.yarn/...
+        return str.replace(/^zipfile:\/\//, ``);
       } break;
 
       case `vscode`:

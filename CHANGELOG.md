@@ -1,3 +1,63 @@
+<!-- 8.4.5 START -->
+
+# 8.4.5 (2022-03-31)
+
+### Features and enhancements
+
+- **Instrumentation:** Make backend plugin metrics endpoints available with optional authentication. [#46467](https://github.com/grafana/grafana/pull/46467), [@marefr](https://github.com/marefr)
+- **Table panel:** Show datalinks for cell display modes JSON View and Gauge derivates. [#46020](https://github.com/grafana/grafana/pull/46020), [@mdvictor](https://github.com/mdvictor)
+
+### Bug fixes
+
+- **Azure Monitor:** Small bug fixes for Resource Picker. [#46665](https://github.com/grafana/grafana/pull/46665), [@sarahzinger](https://github.com/sarahzinger)
+- **Logger:** Use specified format for file logger. [#46970](https://github.com/grafana/grafana/pull/46970), [@sakjur](https://github.com/sakjur)
+- **Logs:** Handle missing fields in dataframes better. [#46963](https://github.com/grafana/grafana/pull/46963), [@gabor](https://github.com/gabor)
+- **ManageDashboards:** Fix error when deleting all dashboards from folder view. [#46877](https://github.com/grafana/grafana/pull/46877), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 8.4.5 END -->
+<!-- 8.4.4 START -->
+
+# 8.4.4 (2022-03-16)
+
+### Features and enhancements
+
+- **Loki:** Add unpack to autocomplete suggestions (#44623). [#46573](https://github.com/grafana/grafana/pull/46573), [@glintik](https://github.com/glintik)
+- **Plugins:** allow using both Function and Class components for app plugins. [#46148](https://github.com/grafana/grafana/pull/46148), [@leventebalogh](https://github.com/leventebalogh)
+- **TimeSeries:** Add migration for Graph panel's transform series override. [#46577](https://github.com/grafana/grafana/pull/46577), [@dprokop](https://github.com/dprokop)
+- **TimeSeries:** Preserve null/undefined values when performing negative y transform. [#46584](https://github.com/grafana/grafana/pull/46584), [@dprokop](https://github.com/dprokop)
+
+### Bug fixes
+
+- **CloudWatch:** Use default http client from aws-sdk-go. [#46370](https://github.com/grafana/grafana/pull/46370), [@sunker](https://github.com/sunker)
+- **Dashboards:** Fixes repeating by row and no refresh. [#46565](https://github.com/grafana/grafana/pull/46565), [@torkelo](https://github.com/torkelo)
+- **Gauge:** Fixes blank viz when data link exists and orientation was horizontal. [#46335](https://github.com/grafana/grafana/pull/46335), [@torkelo](https://github.com/torkelo)
+- **Search:** sort results correctly when using postgres. [#46466](https://github.com/grafana/grafana/pull/46466), [@xlson](https://github.com/xlson)
+- **TagsInput:** fix tags remove button accessibility issues. [#46254](https://github.com/grafana/grafana/pull/46254), [@Elfo404](https://github.com/Elfo404)
+- **TextPanel:** Sanitize after markdown has been rendered to html. [#46166](https://github.com/grafana/grafana/pull/46166), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 8.4.4 END -->
+<!-- 8.4.3 START -->
+
+# 8.4.3 (2022-03-02)
+
+### Features and enhancements
+
+- **Alerting:** Grafana uses > instead of >= when checking the For duration. [#46010](https://github.com/grafana/grafana/issues/46010)
+- **Alerting:** Use expanded labels in dashboard annotations. [#45726](https://github.com/grafana/grafana/pull/45726), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Logs:** Escape windows newline into single newline. [#45771](https://github.com/grafana/grafana/pull/45771), [@perosb](https://github.com/perosb)
+
+### Bug fixes
+
+- **Alerting:** Fix use of > instead of >= when checking the For duration. [#46011](https://github.com/grafana/grafana/pull/46011), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Azure Monitor:** Fixes broken log queries that use workspace. [#45820](https://github.com/grafana/grafana/pull/45820), [@sunker](https://github.com/sunker)
+- **CloudWatch:** Remove error message when using multi-valued template vars in region field. [#45886](https://github.com/grafana/grafana/pull/45886), [@sunker](https://github.com/sunker)
+- **Middleware:** Fix IPv6 host parsing in CSRF check. [#45911](https://github.com/grafana/grafana/pull/45911), [@ying-jeanne](https://github.com/ying-jeanne)
+
+### Plugin development fixes & changes
+
+- **ClipboardButton:** Use a fallback when the Clipboard API is unavailable. [#45831](https://github.com/grafana/grafana/pull/45831), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 8.4.3 END -->
 <!-- 8.4.2 START -->
 
 # 8.4.2 (2022-02-23)
@@ -100,6 +160,16 @@ AngularJS plugin support is now in a deprecated state, meaning it will be remove
 - **Navigation:** Implement Keyboard Navigation. [#41618](https://github.com/grafana/grafana/pull/41618), [@axelavargas](https://github.com/axelavargas)
 - **News:** Reload feed when changing the time range or refreshing. [#42217](https://github.com/grafana/grafana/pull/42217), [@ashharrison90](https://github.com/ashharrison90)
 - **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
+
+<!-- 8.3.7 START -->
+
+# 8.3.7 (2022-03-01)
+
+### Bug fixes
+
+- **Provisioning:** Ensure that the default value for orgID is set when provisioning datasources to be deleted. [#44244](https://github.com/grafana/grafana/pull/44244), [@filewalkwithme](https://github.com/filewalkwithme)
+
+<!-- 8.3.7 END -->
 
 <!-- 8.3.6 START -->
 

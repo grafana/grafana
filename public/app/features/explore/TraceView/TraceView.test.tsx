@@ -4,18 +4,45 @@ import { TraceView } from './TraceView';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { ExploreId } from 'app/types';
 import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
-import { MutableDataFrame } from '@grafana/data';
+import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { configureStore } from '../../../store/configureStore';
 import { Provider } from 'react-redux';
+import { transformDataFrames } from './utils/transform';
 import userEvent from '@testing-library/user-event';
 
-function renderTraceView(frames = [frameOld]) {
+function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
-  const { container, baseElement } = render(
+  const mockPanelData = {
+    state: LoadingState.Done,
+    series: [],
+    timeRange: getDefaultTimeRange(),
+  };
+
+  const traceView = (
     <Provider store={store}>
-      <TraceView exploreId={ExploreId.left} dataFrames={frames} splitOpenFn={() => {}} />
+      <TraceView
+        exploreId={ExploreId.left}
+        dataFrames={frames}
+        splitOpenFn={() => {}}
+        traceProp={transformDataFrames(frames[0])!}
+        search=""
+        focusedSpanIdForSearch=""
+        expandOne={() => {}}
+        expandAll={() => {}}
+        collapseOne={() => {}}
+        collapseAll={() => {}}
+        childrenToggle={() => {}}
+        childrenHiddenIDs={new Set()}
+        queryResponse={mockPanelData}
+      />
     </Provider>
   );
+  return traceView;
+}
+
+function renderTraceView(frames = [frameOld]) {
+  const { container, baseElement } = render(getTraceView(frames));
+
   return {
     header: container.children[0],
     timeline: container.children[1],
@@ -73,42 +100,6 @@ describe('TraceView', () => {
     expect(screen.queryByText(/Tags/)).toBeFalsy();
   });
 
-  it('toggles children visibility', () => {
-    renderTraceViewNew();
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(1);
-
-    userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-  });
-
-  it('toggles collapses and expands one level of spans', () => {
-    renderTraceViewNew();
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getByLabelText('Collapse +1'));
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(2);
-    userEvent.click(screen.getByLabelText('Expand +1'));
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-  });
-
-  it('toggles collapses and expands all levels', () => {
-    renderTraceViewNew();
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getByLabelText('Collapse All'));
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(1);
-    userEvent.click(screen.getByLabelText('Expand All'));
-    expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-  });
-
-  it('searches for spans', () => {
-    renderTraceViewNew();
-    userEvent.type(screen.getByPlaceholderText('Find...'), '1ed38015486087ca');
-    expect(
-      (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[0].parentNode! as HTMLElement).className
-    ).toContain('rowMatchingFilter');
-  });
-
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {
@@ -145,22 +136,13 @@ describe('TraceView', () => {
   });
 
   it('resets detail view for new trace with the identical spanID', () => {
-    const store = configureStore();
-    const { rerender } = render(
-      <Provider store={store}>
-        <TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} />
-      </Provider>
-    );
+    const { rerender } = render(getTraceView([frameOld]));
     const span = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
     userEvent.click(span);
     //Process is in detail view
     expect(screen.getByText(/Process/)).toBeInTheDocument();
 
-    rerender(
-      <Provider store={store}>
-        <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />
-      </Provider>
-    );
+    rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Process/)).not.toBeInTheDocument();
   });
 });
@@ -276,7 +258,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
   warnings: null as any,
 };
 
-const frameOld = new MutableDataFrame({
+export const frameOld = new MutableDataFrame({
   fields: [
     {
       name: 'trace',

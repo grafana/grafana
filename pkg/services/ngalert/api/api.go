@@ -8,9 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -62,6 +64,7 @@ type API struct {
 	ExpressionService    *expr.Service
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
+	TransactionManager   store.TransactionManager
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
@@ -70,6 +73,7 @@ type API struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	SecretsService       secrets.Service
+	AccessControl        accesscontrol.AccessControl
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -83,7 +87,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger},
+		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger, ac: api.AccessControl},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
@@ -95,16 +99,25 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		&RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, scheduleService: api.Schedule, store: api.RuleStore, log: logger, cfg: &api.Cfg.UnifiedAlerting},
+		&RulerSrv{
+			DatasourceCache: api.DatasourceCache,
+			QuotaService:    api.QuotaService,
+			scheduleService: api.Schedule,
+			store:           api.RuleStore,
+			xactManager:     api.TransactionManager,
+			log:             logger,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			ac:              api.AccessControl,
+		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
 		&TestingApiSrv{
 			AlertingProxy:     proxy,
-			Cfg:               api.Cfg,
 			ExpressionService: api.ExpressionService,
 			DatasourceCache:   api.DatasourceCache,
-			secretsService:    api.SecretsService,
 			log:               logger,
+			accessControl:     api.AccessControl,
+			evaluator:         eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService),
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
 		&AdminSrv{

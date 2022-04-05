@@ -56,7 +56,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
   /**
    * Function that configures transformation and returns a transformer
+   * @param map
    * @param options
+   * @param theme
    */
   create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
     // Assert default values
@@ -78,18 +80,18 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       source,
     });
 
-    if(!style.fields) {
+    if (!style.fields) {
       // Set a global style
       vectorLayer.setStyle(style.maker(style.base));
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx = feature.get("rowIndex") as number;
+        const idx = feature.get('rowIndex') as number;
         const dims = style.dims;
-        if(!dims || !(isNumber(idx))) {
+        if (!dims || !isNumber(idx)) {
           return style.maker(style.base);
         }
 
-        const values = {...style.base};
+        const values = { ...style.base };
 
         if (dims.color) {
           values.color = dims.color.get(idx);
@@ -103,10 +105,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if (dims.rotation) {
           values.rotation = dims.rotation.get(idx);
         }
-        return style.maker(values)
+        return style.maker(values);
       });
     }
-    
+
     return {
       init: () => vectorLayer,
       legend: legend,
@@ -137,8 +139,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           // Post updates to the legend component
           if (legend) {
             legendProps.next({
-              color: style.dims?.color,
+              styleConfig: style,
               size: style.dims?.size,
+              layerName: options.name,
             });
           }
 

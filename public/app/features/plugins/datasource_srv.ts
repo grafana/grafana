@@ -212,6 +212,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.tracing && !x.meta.tracing) {
         return false;
       }
+      if (filters.logs && x.meta.category !== 'logging' && !x.meta.logs) {
+        return false;
+      }
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
@@ -308,7 +311,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ annotations: true, variables: true }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
@@ -321,7 +324,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
@@ -345,5 +348,3 @@ export function variableInterpolation(value: any[]) {
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
-
-export default DatasourceSrv;

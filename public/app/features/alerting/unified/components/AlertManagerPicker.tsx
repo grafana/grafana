@@ -25,7 +25,7 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = fa
       ...getAllDataSources()
         .filter((ds) => ds.type === DataSourceType.Alertmanager)
         .map((ds) => ({
-          label: ds.name.substr(0, 37),
+          label: ds.name.slice(0, 37),
           value: ds.name,
           imgUrl: ds.meta.info.logos.small,
           meta: ds.meta,

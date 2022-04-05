@@ -38,63 +38,29 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   },
 };
 
-export function sortAscStrInf(aName?: string | null, bName?: string | null) {
-  let aBound = aName === '+Inf' ? Infinity : +(aName ?? 0);
-  let bBound = bName === '+Inf' ? Infinity : +(bName ?? 0);
+function parseNumeric(v?: string | null) {
+  return v === '+Inf' ? Infinity : v === '-Inf' ? -Infinity : +(v ?? 0);
+}
 
-  return aBound - bBound;
+export function sortAscStrInf(aName?: string | null, bName?: string | null) {
+  return parseNumeric(aName) - parseNumeric(bName);
 }
 
 /** Given existing buckets, create a values style frame */
-export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
-  frames = frames.slice();
-
-  // sort ASC by frame.name (Prometheus bucket bound)
-  // or use frame.fields[1].config.displayNameFromDS ?
-  frames.sort((a, b) => sortAscStrInf(a.name, b.name));
-
-  const bucketBounds = frames.map((frame, i) => {
-    return i; // until we have y ordinal scales working for facets/scatter
-
-    /*
-    let bound: number;
-
-    if (frame.name === '+Inf') {
-      // TODO: until we have labeled y, treat +Inf as previous bucket + 10%
-      bound = +(frames[i - 1].name ?? 0) * 1.1;
-    } else {
-      bound = +(frame.name ?? 0);
-    }
-
-    return bound;
-    */
-  });
-
-  // assumes all Time fields are identical
+// Assumes frames have already been sorted ASC and de-accumulated.
+export function bucketsToScanlines(frame: DataFrame): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
-  const xField = frames[0].fields[0];
+  const xField = frame.fields[0];
   const xValues = xField.values.toArray();
-  const yField = frames[0].fields[1];
+  const yField = frame.fields[1];
 
   // similar to initBins() below
-  const len = xValues.length * bucketBounds.length;
+  const len = xValues.length * (frame.fields.length - 1);
   const xs = new Array(len);
   const ys = new Array(len);
   const counts2 = new Array(len);
 
-  // cumulative counts
-  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
-
-  // de-accumulate
-  counts.reverse();
-  counts.forEach((bucketCounts, bi) => {
-    if (bi < counts.length - 1) {
-      for (let i = 0; i < bucketCounts.length; i++) {
-        bucketCounts[i] -= counts[bi + 1][i];
-      }
-    }
-  });
-  counts.reverse();
+  const counts = frame.fields.slice(1).map((field) => field.values.toArray().slice());
 
   // transpose
   counts.forEach((bucketCounts, bi) => {
@@ -102,6 +68,8 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
       counts2[counts.length * i + bi] = bucketCounts[i];
     }
   });
+
+  const bucketBounds = Array.from({ length: frame.fields.length - 1 }, (v, i) => i);
 
   // fill flat/repeating array
   for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
@@ -142,6 +110,41 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
       },
     ],
   };
+}
+
+// Sorts frames ASC by numeric bucket name and de-accumulates values in each frame's Value field [1]
+// similar to Prometheus result_transformer.ts -> transformToHistogramOverTime()
+export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
+  frames = frames.slice();
+
+  // sort ASC by frame.name (Prometheus bucket bound)
+  // or use frame.fields[1].config.displayNameFromDS ?
+  frames.sort((a, b) => sortAscStrInf(a.name, b.name));
+
+  // cumulative counts
+  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
+
+  // de-accumulate
+  counts.reverse();
+  counts.forEach((bucketCounts, bi) => {
+    if (bi < counts.length - 1) {
+      for (let i = 0; i < bucketCounts.length; i++) {
+        bucketCounts[i] -= counts[bi + 1][i];
+      }
+    }
+  });
+  counts.reverse();
+
+  return frames.map((frame, i) => ({
+    ...frame,
+    fields: [
+      frame.fields[0],
+      {
+        ...frame.fields[1],
+        values: new ArrayVector(counts[i]),
+      },
+    ],
+  }));
 }
 
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {

@@ -102,7 +102,7 @@ func TestEngineProcessJob(t *testing.T) {
 	require.NoError(t, err)
 
 	store := &AlertStoreMock{}
-	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg())
+	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3

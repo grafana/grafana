@@ -27,15 +27,15 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
-- **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
-- **Map tag names -** When enabled, allows configuring how Tempo tag names map to Loki label names. For example, map `service.name` to `service`.
-- **Span start time shift -** A shift in the start time for the Loki query based on the start time for the span. To extend the time to the past, use a negative value. You can use time units, for example, 5s, 1m, 3h. The default is 0.
-- **Span end time shift -** Shift in the end time for the Loki query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
-- **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
-- **Filter by Span ID -** Toggle to append the span ID to the Loki query.
+- **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+- **Map tag names -** When enabled, allows configuring how Tempo tag names map to logs label names. For example, map `service.name` to `service`.
+- **Span start time shift -** A shift in the start time for the logs query based on the start time for the span. To extend the time to the past, use a negative value. You can use time units, for example, 5s, 1m, 3h. The default is 0.
+- **Span end time shift -** Shift in the end time for the logs query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
+- **Filter by Trace ID -** Toggle to append the trace ID to the logs query.
+- **Filter by Span ID -** Toggle to append the span ID to the logs query.
 
 {{< figure src="/static/img/docs/explore/traces-to-logs-settings-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
 
@@ -57,12 +57,41 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
 
+### Loki Search
+
+This is a configuration for the Loki search query type.
+
+-- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
+
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
-You can search for traces if you set up the trace to logs setting in the data source configuration page. To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
+
+### Tempo search
+
+Tempo search is an experimental feature behind a feature toggle. Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application’s instrumentation, such as HTTP status code and customer ID.
+
+{{< figure src="/static/img/docs/explore/tempo-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo search feature with a trace rendered in the right panel" >}}
+
+#### Search recent traces
+
+Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data, and this search is disabled. Enable this search capability by setting the `tempoSearch` feature toggle.
+
+You must also configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
+
+#### Search backend datastore
+
+Tempo includes the ability to search the entire backend datastore. You can enable this capability by setting the `tempoSearch` and `tempoBackendSearch` feature toggles.
+
+You must also configure your Tempo data source to use this feature.Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
+
+### Loki search
+
+To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the search tab" >}}
+
+### Trace ID search
 
 To query a particular trace, select the **TraceID** query type, and then put the ID into the Trace ID field.
 
@@ -174,11 +203,12 @@ datasources:
         spanEndTimeShift: '1h'
         filterByTraceID: false
         filterBySpanID: false
-        lokiSearch: true
       serviceMap:
         datasourceUid: 'prometheus'
       search:
         hide: false
       nodeGraph:
         enabled: true
+      lokiSearch:
+        datasourceUid: 'loki'
 ```

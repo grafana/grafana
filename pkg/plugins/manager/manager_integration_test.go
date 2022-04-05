@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -81,20 +80,20 @@ func TestPluginManager_int_init(t *testing.T) {
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, tracer)
+	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService(cfg, features)
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(sqlstore.InitTestDB(t))
-	graf := grafanads.ProvideService(cfg, sv2)
+	graf := grafanads.ProvideService(cfg, sv2, nil)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 	pm, err := ProvideService(cfg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)), &service.DashboardServiceImpl{})
+		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
 
 	verifyCorePluginCatalogue(t, pm)

@@ -12,6 +12,7 @@ import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { getProfileRoutes } from 'app/features/profile/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 
 export const extraRoutes: RouteDescriptor[] = [];
@@ -124,9 +125,15 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/permissions',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
-      ),
+      component:
+        config.featureToggles['accesscontrol'] && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
+          ? SafeDynamicImport(
+              () =>
+                import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
+            )
+          : SafeDynamicImport(
+              () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
+            ),
     },
     {
       path: '/dashboards/f/:uid/:slug/settings',
@@ -240,24 +247,6 @@ export function getAppRoutes(): RouteDescriptor[] {
           [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
-    },
-    {
-      path: '/profile',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserProfileEditPage" */ 'app/features/profile/UserProfileEditPage')
-      ),
-    },
-    {
-      path: '/profile/password',
-      component: SafeDynamicImport(
-        () => import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
-      ),
-    },
-    {
-      path: '/profile/select-org',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')
-      ),
     },
     // ADMIN
 
@@ -392,6 +381,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/search',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SearchPage"*/ 'app/features/search/page/SearchPage')
+      ),
+    },
+    {
       path: '/sandbox/benchmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
@@ -410,6 +405,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/f/:uid/:slug/alerting',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
+      ),
+    },
+    {
       path: '/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
@@ -418,6 +419,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
+    ...getProfileRoutes(),
     ...extraRoutes,
     {
       path: '/*',

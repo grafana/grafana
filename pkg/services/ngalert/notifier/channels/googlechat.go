@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -26,32 +27,50 @@ type GoogleChatNotifier struct {
 	content string
 }
 
-func NewGoogleChatNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*GoogleChatNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
+type GoogleChatConfig struct {
+	*NotificationChannelConfig
+	URL     string
+	Content string
+}
 
-	url := model.Settings.Get("url").MustString()
+func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewGoogleChatConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewGoogleChatNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewGoogleChatConfig(config *NotificationChannelConfig) (*GoogleChatConfig, error) {
+	url := config.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
+		return nil, errors.New("could not find url property in settings")
 	}
+	return &GoogleChatConfig{
+		NotificationChannelConfig: config,
+		URL:                       url,
+		Content:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+	}, nil
+}
 
-	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
-
+func NewGoogleChatNotifier(config *GoogleChatConfig, ns notifications.WebhookSender, t *template.Template) *GoogleChatNotifier {
 	return &GoogleChatNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		URL:     url,
+		content: config.Content,
+		URL:     config.URL,
 		log:     log.New("alerting.notifier.googlechat"),
 		ns:      ns,
 		tmpl:    t,
-		content: content,
-	}, nil
+	}
 }
 
 // Notify send an alert notification to Google Chat.
@@ -120,9 +139,15 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		},
 	}
 
-	u := tmpl(gcn.URL)
 	if tmplErr != nil {
 		gcn.log.Warn("failed to template GoogleChat message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
+	u := tmpl(gcn.URL)
+	if tmplErr != nil {
+		gcn.log.Warn("failed to template GoogleChat URL", "err", tmplErr.Error(), "fallback", gcn.URL)
+		u = gcn.URL
 	}
 
 	body, err := json.Marshal(res)

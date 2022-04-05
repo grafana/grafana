@@ -12,6 +12,7 @@ import { TableFieldOptions } from '@grafana/schema';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { TableSuggestionsSupplier } from './suggestions';
+import { PaginationEditor } from './PaginationEditor';
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -76,6 +77,21 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           defaultValue: defaultPanelFieldConfig.displayMode,
         })
         .addBooleanSwitch({
+          path: 'inspect',
+          name: 'Cell value inspect',
+          description: 'Enable cell value inspection in a modal window',
+          defaultValue: false,
+          showIf: (cfg) => {
+            return (
+              cfg.displayMode === TableCellDisplayMode.Auto ||
+              cfg.displayMode === TableCellDisplayMode.JSONView ||
+              cfg.displayMode === TableCellDisplayMode.ColorText ||
+              cfg.displayMode === TableCellDisplayMode.ColorBackground ||
+              cfg.displayMode === TableCellDisplayMode.ColorBackgroundSolid
+            );
+          },
+        })
+        .addBooleanSwitch({
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
@@ -93,18 +109,21 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
     builder
       .addBooleanSwitch({
         path: 'showHeader',
+        category: ['Header and footer'],
         name: 'Show header',
         description: "To display table's header or not to display",
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
         path: 'footer.show',
+        category: ['Header and footer'],
         name: 'Show Footer',
         description: "To display table's footer or not to display",
         defaultValue: defaultPanelOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
+        category: ['Header and footer'],
         path: 'footer.reducer',
         name: 'Calculation',
         description: 'Choose a reducer function / calculation',
@@ -114,6 +133,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       })
       .addMultiSelect({
         path: 'footer.fields',
+        category: ['Header and footer'],
         name: 'Fields',
         description: 'Select the fields that should be calculated',
         settings: {
@@ -137,6 +157,13 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         },
         defaultValue: '',
         showIf: (cfg) => cfg.footer?.show,
+      })
+      .addCustomEditor({
+        id: 'footer.enablePagination',
+        category: ['Header and footer'],
+        path: 'footer.enablePagination',
+        name: 'Enable pagination',
+        editor: PaginationEditor,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

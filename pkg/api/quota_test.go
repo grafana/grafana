@@ -38,7 +38,7 @@ func setupDBAndSettingsForAccessControlQuotaTests(t *testing.T, sc accessControl
 	setting.Quota = sc.hs.Cfg.Quota
 
 	// Create two orgs with the context user
-	setupOrgsDBForAccessControlTests(t, *sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
 }
 
 func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {

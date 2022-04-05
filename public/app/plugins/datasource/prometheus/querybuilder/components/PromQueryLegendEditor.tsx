@@ -1,12 +1,13 @@
 import React, { useRef } from 'react';
 import { EditorField } from '@grafana/experimental';
 import { SelectableValue } from '@grafana/data';
-import { Input, Select } from '@grafana/ui';
-import { LegendFormatMode, PromQuery } from '../../types';
+import { Select } from '@grafana/ui';
+import { LegendFormatMode } from '../../types';
+import { AutoSizeInput } from '../shared/AutoSizeInput';
 
 export interface Props {
-  query: PromQuery;
-  onChange: (update: PromQuery) => void;
+  legendFormat: string | undefined;
+  onChange: (legendFormat: string) => void;
   onRunQuery: () => void;
 }
 
@@ -23,33 +24,36 @@ const legendModeOptions = [
 /**
  * Tests for this component are on the parent level (PromQueryBuilderOptions).
  */
-export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRunQuery }) => {
-  const mode = getLegendMode(query.legendFormat);
+export const PromQueryLegendEditor = React.memo<Props>(({ legendFormat, onChange, onRunQuery }) => {
+  const mode = getLegendMode(legendFormat);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const onLegendFormatChanged = (evt: React.FocusEvent<HTMLInputElement>) => {
-    let legendFormat = evt.currentTarget.value;
-    if (legendFormat.length === 0) {
-      legendFormat = LegendFormatMode.Auto;
+  const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
+    let newFormat = evt.currentTarget.value;
+    if (newFormat.length === 0) {
+      newFormat = LegendFormatMode.Auto;
     }
-    onChange({ ...query, legendFormat });
-    onRunQuery();
+
+    if (newFormat !== legendFormat) {
+      onChange(newFormat);
+      onRunQuery();
+    }
   };
 
   const onLegendModeChanged = (value: SelectableValue<LegendFormatMode>) => {
     switch (value.value!) {
       case LegendFormatMode.Auto:
-        onChange({ ...query, legendFormat: LegendFormatMode.Auto });
+        onChange(LegendFormatMode.Auto);
         break;
       case LegendFormatMode.Custom:
-        onChange({ ...query, legendFormat: '{{label_name}}' });
+        onChange('{{label_name}}');
         setTimeout(() => {
           inputRef.current?.focus();
           inputRef.current?.setSelectionRange(2, 12, 'forward');
         }, 10);
         break;
       case LegendFormatMode.Verbose:
-        onChange({ ...query, legendFormat: '' });
+        onChange('');
         break;
     }
     onRunQuery();
@@ -62,12 +66,12 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
     >
       <>
         {mode === LegendFormatMode.Custom && (
-          <Input
+          <AutoSizeInput
             id="legendFormat"
-            width={22}
+            minWidth={22}
             placeholder="auto"
-            defaultValue={query.legendFormat}
-            onBlur={onLegendFormatChanged}
+            defaultValue={legendFormat}
+            onCommitChange={onLegendFormatChanged}
             ref={inputRef}
           />
         )}

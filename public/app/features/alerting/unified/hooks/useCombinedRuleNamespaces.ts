@@ -105,6 +105,7 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
       interval: group.interval,
+      source_tenants: group.source_tenants,
       rules: [],
     };
     combinedGroup.rules = group.rules.map((rule) => rulerRuleToCombinedRule(rule, namespace, combinedGroup));
@@ -227,7 +228,7 @@ function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, c
 function hashQuery(query: string) {
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
-    query = query.substr(1, query.length - 2);
+    query = query.slice(1, -1);
   }
   // whitespace could be added or removed
   query = query.replace(/\s|\n/g, '');

@@ -104,6 +104,17 @@ export function matcherFieldToMatcher(field: MatcherFieldValue): Matcher {
   };
 }
 
+export function matchersToString(matchers: Matcher[]) {
+  const matcherFields = matchers.map(matcherToMatcherField);
+
+  const combinedMatchers = matcherFields.reduce((acc, current) => {
+    const currentMatcherString = `${current.name}${current.operator}"${current.value}"`;
+    return acc ? `${acc},${currentMatcherString}` : currentMatcherString;
+  }, '');
+
+  return `{${combinedMatchers}}`;
+}
+
 export const matcherFieldOptions: SelectableValue[] = [
   { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
   { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
@@ -132,8 +143,8 @@ export function parseMatcher(matcher: string): Matcher {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }
   const [operator, idx] = operatorsFound[0];
-  const name = trimmed.substr(0, idx).trim();
-  const value = trimmed.substr(idx + operator.length).trim();
+  const name = trimmed.slice(0, idx).trim();
+  const value = trimmed.slice(idx + operator.length).trim();
   if (!name) {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }
@@ -224,12 +235,12 @@ export function getWeekdayString(weekdays?: string[]): string {
             .split(':')
             .map((d) => {
               const abbreviated = d.slice(0, 3);
-              return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+              return abbreviated[0].toLocaleUpperCase() + abbreviated.slice(1);
             })
             .join('-');
         } else {
           const abbreviated = day.slice(0, 3);
-          return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+          return abbreviated[0].toLocaleUpperCase() + abbreviated.slice(1);
         }
       })
       .join(', ') ?? 'All')

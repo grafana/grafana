@@ -35,6 +35,7 @@ func TestDuplicatesValidator(t *testing.T) {
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
+
 		r, err := NewDashboardFileReader(cfg, logger, nil)
 		require.NoError(t, err)
 		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(6)
@@ -89,6 +90,7 @@ func TestDuplicatesValidator(t *testing.T) {
 
 	t.Run("Duplicates validator should not collect info about duplicate UIDs and titles within folders for different orgs", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
+
 		r, err := NewDashboardFileReader(cfg, logger, nil)
 		require.NoError(t, err)
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
@@ -165,7 +167,6 @@ func TestDuplicatesValidator(t *testing.T) {
 			Name: "third", Type: "file", OrgID: 2, Folder: "duplicates-validator-folder",
 			Options: map[string]interface{}{"path": twoDashboardsWithUID},
 		}
-
 		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)

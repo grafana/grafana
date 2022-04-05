@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -264,7 +265,8 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
 		}
-		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp); err != nil {
+		_, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp)
+		if err != nil {
 			return provisioningMetadata, err
 		}
 	} else {
@@ -310,6 +312,9 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		dash.Overwrite = true
 		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
+		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
+			return 0, models.ErrFolderInvalidUID
+		}
 		dash.Dashboard.SetUid(cfg.FolderUID)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {

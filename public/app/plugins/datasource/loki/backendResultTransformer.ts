@@ -2,6 +2,7 @@ import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType,
 import { LokiQuery, LokiQueryType } from './types';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { makeIdField } from './makeIdField';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
@@ -18,14 +19,41 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   };
 }
 
+function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): DataFrame {
+  const meta: QueryResultMeta = {
+    preferredVisualisationType: 'logs',
+    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
+    custom: {
+      // used by logs_model
+      lokiQueryStatKey: 'Summary: total bytes processed',
+    },
+  };
+  const newFrame = setFrameMeta(frame, meta);
+  const newFields = frame.fields.map((field) => {
+    // the nanosecond-timestamp field must have a type-time
+    if (field.name === 'tsNs') {
+      return {
+        ...field,
+        type: FieldType.time,
+      };
+    } else {
+      return field;
+    }
+  });
+
+  // we add a calculated id-field
+  newFields.push(makeIdField(frame));
+
+  return {
+    ...newFrame,
+    fields: newFields,
+  };
+}
+
 function processStreamsFrames(frames: DataFrame[], queryMap: Map<string, LokiQuery>): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    const meta: QueryResultMeta = {
-      preferredVisualisationType: 'logs',
-      searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
-    };
-    return setFrameMeta(frame, meta);
+    return processStreamFrame(frame, query);
   });
 }
 

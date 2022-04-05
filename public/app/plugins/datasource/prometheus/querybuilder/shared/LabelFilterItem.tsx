@@ -120,4 +120,5 @@ const operators = [
   { label: '=~', value: '=~' },
   { label: '=', value: '=' },
   { label: '!=', value: '!=' },
+  { label: '!~', value: '!~' },
 ];

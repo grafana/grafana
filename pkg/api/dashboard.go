@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -100,6 +101,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	canEdit, _ := guardian.CanEdit()
 	canSave, _ := guardian.CanSave()
 	canAdmin, _ := guardian.CanAdmin()
+	canDelete, _ := guardian.CanDelete()
 
 	isStarred, err := hs.isDashboardStarredByUser(c, dash.Id)
 	if err != nil {
@@ -114,24 +116,33 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		creator = hs.getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
+	annotationPermissions := &dtos.AnnotationPermission{}
+
+	if !hs.AccessControl.IsDisabled() {
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
+	}
+
 	meta := dtos.DashboardMeta{
-		IsStarred:   isStarred,
-		Slug:        dash.Slug,
-		Type:        models.DashTypeDB,
-		CanStar:     c.IsSignedIn,
-		CanSave:     canSave,
-		CanEdit:     canEdit,
-		CanAdmin:    canAdmin,
-		Created:     dash.Created,
-		Updated:     dash.Updated,
-		UpdatedBy:   updater,
-		CreatedBy:   creator,
-		Version:     dash.Version,
-		HasAcl:      dash.HasAcl,
-		IsFolder:    dash.IsFolder,
-		FolderId:    dash.FolderId,
-		Url:         dash.GetUrl(),
-		FolderTitle: "General",
+		IsStarred:              isStarred,
+		Slug:                   dash.Slug,
+		Type:                   models.DashTypeDB,
+		CanStar:                c.IsSignedIn,
+		CanSave:                canSave,
+		CanEdit:                canEdit,
+		CanAdmin:               canAdmin,
+		CanDelete:              canDelete,
+		Created:                dash.Created,
+		Updated:                dash.Updated,
+		UpdatedBy:              updater,
+		CreatedBy:              creator,
+		Version:                dash.Version,
+		HasAcl:                 dash.HasAcl,
+		IsFolder:               dash.IsFolder,
+		FolderId:               dash.FolderId,
+		Url:                    dash.GetUrl(),
+		FolderTitle:            "General",
+		AnnotationsPermissions: annotationPermissions,
 	}
 
 	// lookup folder title
@@ -188,6 +199,22 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(200, dto)
 }
 
+func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, actions *dtos.AnnotationActions, scope string) {
+	var err error
+
+	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
+	actions.CanDelete, err = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	if err != nil {
+		hs.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsDelete, "scope", scope)
+	}
+
+	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, scope)
+	actions.CanEdit, err = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	if err != nil {
+		hs.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsWrite, "scope", scope)
+	}
+}
+
 func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
 	query := models.GetUserByIdQuery{Id: userID}
 	err := hs.SQLStore.GetUserById(ctx, &query)
@@ -223,7 +250,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return rsp
 	}
 	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+	if canDelete, err := guardian.CanDelete(); err != nil || !canDelete {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -354,14 +381,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if err != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
-	}
-
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := hs.dashboardService.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
-		}
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID

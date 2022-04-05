@@ -8,27 +8,28 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	m "github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		bus.ClearBusHandlers()
 
-		fakeStore := database.FakeDashboardStore{}
+		fakeStore := m.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 		service := &DashboardServiceImpl{
-			log:            log.New("test.logger"),
-			dashboardStore: &fakeStore,
+			log:                log.New("test.logger"),
+			dashboardStore:     &fakeStore,
+			dashAlertExtractor: &dummyDashAlertExtractor{},
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -175,35 +176,34 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Given provisioned dashboard", func(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
-				result := setupDeleteHandlers(t)
+				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1}
+				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
-				require.True(t, result.deleteWasCalled)
 			})
 
-			t.Run("DeleteDashboard should fail to delete it", func(t *testing.T) {
+			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{}, nil).Once()
-				result := setupDeleteHandlers(t)
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.Equal(t, err, models.ErrDashboardCannotDeleteProvisionedDashboard)
-				require.False(t, result.deleteWasCalled)
 			})
 		})
 
 		t.Run("Given non provisioned dashboard", func(t *testing.T) {
-			result := setupDeleteHandlers(t)
 
-			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
+			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
+				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1, ForceDeleteFolderRules: false}
+				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
-				require.True(t, result.deleteWasCalled)
 			})
 
 			t.Run("DeleteDashboard should delete it", func(t *testing.T) {
+				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1}
+				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(nil, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
-				require.True(t, result.deleteWasCalled)
 			})
 		})
 	})
@@ -211,18 +211,4 @@ func TestDashboardService(t *testing.T) {
 
 type Result struct {
 	deleteWasCalled bool
-}
-
-func setupDeleteHandlers(t *testing.T) *Result {
-	t.Helper()
-
-	result := &Result{}
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-		require.Equal(t, cmd.Id, int64(1))
-		require.Equal(t, cmd.OrgId, int64(1))
-		result.deleteWasCalled = true
-		return nil
-	})
-
-	return result
 }

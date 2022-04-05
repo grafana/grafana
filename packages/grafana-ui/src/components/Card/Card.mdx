@@ -126,7 +126,7 @@ Tags can be rendered inside the Card, by being wrapped in `Card.Tags` component.
 
 ### As a link
 
-Card can be used as a clickable link item by specifying `href` prop. In this case the Card's content will be rendered inside `a`.
+Card can be used as a clickable link item by specifying `href` prop.
 
 ```jsx
 <Card href="https://grafana.com">
@@ -139,6 +139,45 @@ Card can be used as a clickable link item by specifying `href` prop. In this cas
   <Card href="https://grafana.com">
     <Card.Heading>Redirect to Grafana</Card.Heading>
     <Card.Description>Clicking this card will redirect to grafana website</Card.Description>
+  </Card>
+</Preview>
+
+### As a button
+
+Card can be used as a clickable buttons item by specifying `onClick` prop.
+
+```jsx
+<Card onClick={() => alert('Hello, Grafana!')}>
+  <Card.Heading>Hello, Grafana</Card.Heading>
+  <Card.Description>Clicking this card will create an alert</Card.Description>
+</Card>
+```
+
+<Preview>
+  <Card onClick={() => alert('Hello, Grafana!')}>
+    <Card.Heading>Hello, Grafana</Card.Heading>
+    <Card.Description>Clicking this card will create an alert</Card.Description>
+  </Card>
+</Preview>
+
+> **Note**: When used in conjunction with [Metadata elements](#multiple-metadata-elements), clicking on any element
+> inside `<Card.Meta>` will prevent the card action to be executed (either `href` to be followed or `onClick` to be called).
+>
+> Example:
+
+```jsx
+<Card onClick={() => alert('Hello, Grafana!')}>
+  <Card.Heading>Hello, Grafana</Card.Heading>
+  <Card.Meta>Clicking on this text (Meta) WILL NOT trigger the alert!</Card.Meta>
+  <Card.Description>Clicking on this text (Description) WILL trigger the alert!</Card.Description>
+</Card>
+```
+
+<Preview>
+  <Card onClick={() => alert('Hello, Grafana!')}>
+    <Card.Heading>Hello, Grafana</Card.Heading>
+    <Card.Meta>Clicking on this text (Meta) WILL NOT trigger the alert!</Card.Meta>
+    <Card.Description>Clicking on this text (Description) WILL trigger the alert!</Card.Description>
   </Card>
 </Preview>
 
@@ -381,6 +420,28 @@ Card can have a disabled state, effectively making it and its actions non-clicka
       <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />
       <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
     </Card.SecondaryActions>
+  </Card>
+</Preview>
+
+### Selectable
+
+```jsx
+<Card isSelected disabled>
+  <Card.Heading>Option #1</Card.Heading>
+  <Card.Meta>This is a really great option, you won't regret it.</Card.Meta>
+  <Card.Figure>
+    <img src={logo} alt="Grafana Logo" width="40" height="40" />
+  </Card.Figure>
+</Card>
+```
+
+<Preview>
+  <Card isSelected disabled>
+    <Card.Heading>Option #1</Card.Heading>
+    <Card.Description>This is a really great option, you won't regret it.</Card.Description>
+    <Card.Figure>
+      <img src={logo} alt="Grafana Logo" width="40" height="40" />
+    </Card.Figure>
   </Card>
 </Preview>
 

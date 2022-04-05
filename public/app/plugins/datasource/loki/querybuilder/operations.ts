@@ -1,7 +1,5 @@
-import {
-  functionRendererLeft,
-  getPromAndLokiOperationDisplayName,
-} from '../../prometheus/querybuilder/shared/operationUtils';
+import { createAggregationOperation } from '../../prometheus/querybuilder/aggregations';
+import { getPromAndLokiOperationDisplayName } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -9,9 +7,24 @@ import {
   VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
 import { FUNCTIONS } from '../syntax';
-import { LokiOperationId, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
+import { binaryScalarOperations } from './binaryScalarOperations';
+import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
+  const aggregations = [
+    LokiOperationId.Sum,
+    LokiOperationId.Min,
+    LokiOperationId.Max,
+    LokiOperationId.Avg,
+    LokiOperationId.TopK,
+    LokiOperationId.BottomK,
+  ].flatMap((opId) =>
+    createAggregationOperation(opId, {
+      addOperationHandler: addLokiOperation,
+      orderRank: LokiOperationOrder.Last,
+    })
+  );
+
   const list: QueryBuilderOperationDef[] = [
     createRangeOperation(LokiOperationId.Rate),
     createRangeOperation(LokiOperationId.CountOverTime),
@@ -19,10 +32,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     createRangeOperation(LokiOperationId.BytesRate),
     createRangeOperation(LokiOperationId.BytesOverTime),
     createRangeOperation(LokiOperationId.AbsentOverTime),
-    createAggregationOperation(LokiOperationId.Sum),
-    createAggregationOperation(LokiOperationId.Avg),
-    createAggregationOperation(LokiOperationId.Min),
-    createAggregationOperation(LokiOperationId.Max),
+    ...aggregations,
     {
       id: LokiOperationId.Json,
       name: 'Json',
@@ -30,6 +40,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
     },
@@ -40,18 +51,78 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expressions and used as values for a range aggregation via the unwrap operation. `,
     },
     {
+      id: LokiOperationId.LineFormat,
+      name: 'Line format',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: '{{.status_code}}',
+          description: 'A line template that can refer to stream labels and extracted labels.',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | line_format "${model.params[0]}"`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
+
+        Example: \`{{.status_code}} - {{.message}}\`
+
+        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
+        `,
+    },
+    {
+      id: LokiOperationId.LabelFormat,
+      name: 'Label format',
+      params: [
+        { name: 'Label', type: 'string' },
+        { name: 'Rename', type: 'string' },
+      ],
+      defaultParams: ['', ''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=\`${model.params[0]}\``,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level". 
+
+        Example: error_level=\`level\`
+
+        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
+        `,
+    },
+
+    {
       id: LokiOperationId.LineContains,
       name: 'Line contains',
-      params: [{ name: 'String', type: 'string' }],
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to find',
+          description: 'Find log lines that contains this text',
+          minWidth: 20,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|='),
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => `Return log lines that contain string \`${op.params[0]}\`.`,
@@ -59,10 +130,20 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineContainsNot,
       name: 'Line does not contain',
-      params: [{ name: 'String', type: 'string' }],
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Text to exclude',
+          description: 'Find log lines that does not contain this text',
+          minWidth: 26,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!='),
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => `Return log lines that does not contain string \`${op.params[0]}\`.`,
@@ -70,10 +151,20 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegex,
       name: 'Line contains regex match',
-      params: [{ name: 'Regex', type: 'string' }],
+      params: [
+        {
+          name: 'Regex',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Pattern to match',
+          description: 'Find log lines that match this regex pattern',
+          minWidth: 30,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|~'),
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => `Return log lines that match regex \`${op.params[0]}\`.`,
@@ -81,10 +172,20 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.LineMatchesRegexNot,
       name: 'Line does not match regex',
-      params: [{ name: 'Regex', type: 'string' }],
+      params: [
+        {
+          name: 'Regex',
+          type: 'string',
+          hideName: true,
+          placeholder: 'Pattern to exclude',
+          description: 'Find log lines that does not match this regex pattern',
+          minWidth: 30,
+        },
+      ],
       defaultParams: [''],
       alternativesKey: 'line filter',
       category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => `Return log lines that does not match regex \`${op.params[0]}\`.`,
@@ -99,6 +200,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       ],
       defaultParams: ['', '=', ''],
       category: LokiVisualQueryOperationCategory.LabelFilters,
+      orderRank: LokiOperationOrder.LabelFilters,
       renderer: labelFilterRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `Label expression filter allows filtering using original and extracted labels.`,
@@ -109,6 +211,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       params: [],
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.LabelFilters,
+      orderRank: LokiOperationOrder.NoErrors,
       renderer: (model, def, innerExpr) => `${innerExpr} | __error__=""`,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `Filter out all formatting and parsing errors.`,
@@ -116,13 +219,26 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Unwrap,
       name: 'Unwrap',
-      params: [{ name: 'Identifier', type: 'string' }],
+      params: [{ name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' }],
       defaultParams: [''],
       category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.Unwrap,
       renderer: (op, def, innerExpr) => `${innerExpr} | unwrap ${op.params[0]}`,
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) =>
-        `Use the extracted label \`${op.params[0]}\` as sample values instead of log lines for the subsequent range aggregation.`,
+      explainHandler: (op) => {
+        let label = String(op.params[0]).length > 0 ? op.params[0] : '<label>';
+        return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.`;
+      },
+    },
+    ...binaryScalarOperations,
+    {
+      id: LokiOperationId.NestedQuery,
+      name: 'Binary operation with query',
+      params: [],
+      defaultParams: [],
+      category: LokiVisualQueryOperationCategory.BinaryOps,
+      renderer: (model, def, innerExpr) => innerExpr,
+      addOperationHandler: addNestedQueryHandler,
     },
   ];
 
@@ -137,6 +253,7 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
     defaultParams: ['$__interval'],
     alternativesKey: 'range function',
     category: LokiVisualQueryOperationCategory.RangeFunctions,
+    orderRank: LokiOperationOrder.RangeVectorFunction,
     renderer: operationWithRangeVectorRenderer,
     addOperationHandler: addLokiOperation,
     explainHandler: (op, def) => {
@@ -147,23 +264,6 @@ function createRangeOperation(name: string): QueryBuilderOperationDef {
       } else {
         return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
       }
-    },
-  };
-}
-
-function createAggregationOperation(name: string): QueryBuilderOperationDef {
-  return {
-    id: name,
-    name: getPromAndLokiOperationDisplayName(name),
-    params: [],
-    defaultParams: [],
-    alternativesKey: 'plain aggregation',
-    category: LokiVisualQueryOperationCategory.Aggregations,
-    renderer: functionRendererLeft,
-    addOperationHandler: addLokiOperation,
-    explainHandler: (op, def) => {
-      const opDocs = FUNCTIONS.find((x) => x.insertText === op.id);
-      return `${opDocs?.documentation}.`;
     },
   };
 }
@@ -220,7 +320,11 @@ function getIndexOfOrLast(
   condition: (def: QueryBuilderOperationDef) => boolean
 ) {
   const index = operations.findIndex((x) => {
-    return condition(queryModeller.getOperationDef(x.id));
+    const opDef = queryModeller.getOperationDef(x.id);
+    if (!opDef) {
+      return false;
+    }
+    return condition(opDef);
   });
 
   return index === -1 ? operations.length : index;
@@ -238,58 +342,62 @@ export function addLokiOperation(
 
   const operations = [...query.operations];
 
+  const existingRangeVectorFunction = operations.find((x) => {
+    const opDef = modeller.getOperationDef(x.id);
+    if (!opDef) {
+      return false;
+    }
+    return isRangeVectorFunction(opDef);
+  });
+
   switch (def.category) {
     case LokiVisualQueryOperationCategory.Aggregations:
-    case LokiVisualQueryOperationCategory.Functions: {
-      const rangeVectorFunction = operations.find((x) => {
-        return isRangeVectorFunction(modeller.getOperationDef(x.id));
-      });
-
+    case LokiVisualQueryOperationCategory.Functions:
       // If we are adding a function but we have not range vector function yet add one
-      if (!rangeVectorFunction) {
+      if (!existingRangeVectorFunction) {
         const placeToInsert = getIndexOfOrLast(
           operations,
           modeller,
           (def) => def.category === LokiVisualQueryOperationCategory.Functions
         );
-        operations.splice(placeToInsert, 0, { id: 'rate', params: ['auto'] });
+        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['$__interval'] });
       }
-
       operations.push(newOperation);
       break;
-    }
     case LokiVisualQueryOperationCategory.RangeFunctions:
-      // Add range functions after any formats, line filters and label filters
-      const placeToInsert = getIndexOfOrLast(operations, modeller, (x) => {
-        return (
-          x.category !== LokiVisualQueryOperationCategory.Formats &&
-          x.category !== LokiVisualQueryOperationCategory.LineFilters &&
-          x.category !== LokiVisualQueryOperationCategory.LabelFilters
-        );
-      });
+      // If adding a range function and range function is already added replace it
+      if (existingRangeVectorFunction) {
+        const index = operations.indexOf(existingRangeVectorFunction);
+        operations[index] = newOperation;
+        break;
+      }
+
+    // Add range functions after any formats, line filters and label filters
+    default:
+      const placeToInsert = getIndexOfOrLast(
+        operations,
+        modeller,
+        (x) => (def.orderRank ?? 100) < (x.orderRank ?? 100)
+      );
       operations.splice(placeToInsert, 0, newOperation);
       break;
-    case LokiVisualQueryOperationCategory.Formats:
-    case LokiVisualQueryOperationCategory.LineFilters: {
-      const placeToInsert = getIndexOfOrLast(operations, modeller, (x) => {
-        return x.category !== LokiVisualQueryOperationCategory.LineFilters;
-      });
-      operations.splice(placeToInsert, 0, newOperation);
-      break;
-    }
-    case LokiVisualQueryOperationCategory.LabelFilters: {
-      const placeToInsert = getIndexOfOrLast(operations, modeller, (x) => {
-        return (
-          x.category !== LokiVisualQueryOperationCategory.LineFilters &&
-          x.category !== LokiVisualQueryOperationCategory.Formats
-        );
-      });
-      operations.splice(placeToInsert, 0, newOperation);
-    }
   }
 
   return {
     ...query,
     operations,
+  };
+}
+
+function addNestedQueryHandler(def: QueryBuilderOperationDef, query: LokiVisualQuery): LokiVisualQuery {
+  return {
+    ...query,
+    binaryQueries: [
+      ...(query.binaryQueries ?? []),
+      {
+        operator: '/',
+        query,
+      },
+    ],
   };
 }

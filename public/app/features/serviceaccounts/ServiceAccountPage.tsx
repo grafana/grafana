@@ -12,10 +12,11 @@ import {
   createServiceAccountToken,
   fetchACOptions,
   updateServiceAccount,
+  deleteServiceAccount,
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, NavModel, OrgRole } from '@grafana/data';
-import { Button, VerticalGroup } from '@grafana/ui';
+import { getTimeZone, NavModel } from '@grafana/data';
+import { Button } from '@grafana/ui';
 import { CreateTokenModal } from './CreateTokenModal';
 import { contextSrv } from 'app/core/core';
 
@@ -44,6 +45,8 @@ const mapDispatchToProps = {
   loadServiceAccountTokens,
   createServiceAccountToken,
   deleteServiceAccountToken,
+  deleteServiceAccount,
+  updateServiceAccount,
   fetchACOptions,
 };
 
@@ -63,6 +66,8 @@ const ServiceAccountPageUnconnected = ({
   loadServiceAccountTokens,
   createServiceAccountToken,
   deleteServiceAccountToken,
+  deleteServiceAccount,
+  updateServiceAccount,
   fetchACOptions,
 }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,7 +77,7 @@ const ServiceAccountPageUnconnected = ({
     const serviceAccountId = parseInt(match.params.id, 10);
     loadServiceAccount(serviceAccountId);
     loadServiceAccountTokens(serviceAccountId);
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
   }, [match, loadServiceAccount, loadServiceAccountTokens, fetchACOptions]);
@@ -90,12 +95,6 @@ const ServiceAccountPageUnconnected = ({
     setNewToken('');
   };
 
-  const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
-    const updatedServiceAccount = { ...serviceAccount, role: role };
-
-    updateServiceAccount(updatedServiceAccount);
-  };
-
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={isLoading}>
@@ -104,31 +103,22 @@ const ServiceAccountPageUnconnected = ({
             <ServiceAccountProfile
               serviceAccount={serviceAccount}
               timeZone={timezone}
-              onServiceAccountDelete={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountUpdate={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountDisable={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountEnable={() => {
-                console.log(`not implemented`);
-              }}
-              onRoleChange={onRoleChange}
               roleOptions={roleOptions}
               builtInRoles={builtInRoles}
+              updateServiceAccount={updateServiceAccount}
+              deleteServiceAccount={deleteServiceAccount}
             />
           </>
         )}
-        <VerticalGroup spacing="md">
+        <div className="page-action-bar" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 className="page-heading" style={{ marginBottom: '0px' }}>
+            Tokens
+          </h3>
           <Button onClick={() => setIsModalOpen(true)}>Add token</Button>
-          <h3 className="page-heading">Tokens</h3>
-          {tokens && (
-            <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
-          )}
-        </VerticalGroup>
+        </div>
+        {tokens && (
+          <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
+        )}
         <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
       </Page.Contents>
     </Page>

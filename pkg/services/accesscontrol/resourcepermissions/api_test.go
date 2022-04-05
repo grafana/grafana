@@ -36,7 +36,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should return description",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        true,
@@ -64,7 +65,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should only return user assignment",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        false,
@@ -90,7 +92,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should return 403 when missing read permission",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        false,
@@ -136,9 +139,13 @@ type getPermissionsTestCase struct {
 func TestApi_getPermissions(t *testing.T) {
 	tests := []getPermissionsTestCase{
 		{
-			desc:           "expect permissions for resource with id 1",
-			resourceID:     "1",
-			permissions:    []*accesscontrol.Permission{{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"}},
+			desc:       "expect permissions for resource with id 1",
+			resourceID: "1",
+			permissions: []*accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			},
 			expectedStatus: 200,
 		},
 		{
@@ -152,7 +159,7 @@ func TestApi_getPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			seedPermissions(t, tt.resourceID, sql, service)
 
@@ -195,6 +202,8 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -206,6 +215,8 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -234,7 +245,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, _ := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
@@ -269,6 +280,8 @@ func TestApi_setTeamPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -280,6 +293,8 @@ func TestApi_setTeamPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -308,7 +323,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
 			_, err := sql.CreateTeam("test", "test@test.com", 1)
@@ -348,6 +363,8 @@ func TestApi_setUserPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -359,6 +376,8 @@ func TestApi_setUserPermission(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -387,7 +406,7 @@ func TestApi_setUserPermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed user
 			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
@@ -432,9 +451,17 @@ func TestApi_UidSolver(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			userPermissions := []*accesscontrol.Permission{{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"}}
+			userPermissions := []*accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			}
+
 			service, sql := setupTestEnvironment(t, userPermissions, withSolver(testOptions, testSolver))
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+				1: accesscontrol.GroupScopesByAction(userPermissions),
+			}}, service)
+
 			seedPermissions(t, tt.resourceID, sql, service)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.uid)
@@ -458,7 +485,7 @@ func TestApi_UidSolver(t *testing.T) {
 	}
 }
 
-func withSolver(options Options, solver uidSolver) Options {
+func withSolver(options Options, solver UidSolver) Options {
 	options.UidSolver = solver
 	return options
 }
@@ -490,7 +517,8 @@ func contextProvider(tc *testContext) web.Handler {
 }
 
 var testOptions = Options{
-	Resource: "dashboards",
+	Resource:          "dashboards",
+	ResourceAttribute: "id",
 	Assignments: Assignments{
 		Users:        true,
 		Teams:        true,

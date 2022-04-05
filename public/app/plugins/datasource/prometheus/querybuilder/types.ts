@@ -1,7 +1,5 @@
-import { CoreApp } from '@grafana/data';
-import { LegendFormatMode, PromQuery } from '../types';
 import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryEditorMode } from './shared/types';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 
 /**
  * Visual query model
@@ -102,44 +100,26 @@ export enum PromOperationId {
   Tanh = 'tanh',
   Time = 'time',
   Timestamp = 'timestamp',
-  Topk = 'topk',
+  TopK = 'topk',
   Vector = 'vector',
   Year = 'year',
+  // Binary ops
+  Addition = '__addition',
+  Subtraction = '__subtraction',
   MultiplyBy = '__multiply_by',
   DivideBy = '__divide_by',
+  Modulo = '__modulo',
+  Exponent = '__exponent',
   NestedQuery = '__nested_query',
+  EqualTo = '__equal_to',
+  NotEqualTo = '__not_equal_to',
+  GreaterThan = '__greater_than',
+  LessThan = '__less_than',
+  GreaterOrEqual = '__greater_or_equal',
+  LessOrEqual = '__less_or_equal',
 }
 
 export interface PromQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
-}
-
-/**
- * Returns query with defaults, and boolean true/false depending on change was required
- */
-export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): PromQuery {
-  // If no expr (ie new query) then default to builder
-  let result = query;
-  const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
-
-  if (result.editorMode !== editorMode) {
-    result = { ...result, editorMode };
-  }
-
-  if (query.expr == null) {
-    result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto };
-  }
-
-  // Default to range query
-  if (query.range == null) {
-    result = { ...result, range: true };
-  }
-
-  // In explore we default to both instant & range
-  if (query.instant == null && app === CoreApp.Explore) {
-    result = { ...result, instant: true };
-  }
-
-  return result;
 }

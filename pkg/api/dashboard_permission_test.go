@@ -5,32 +5,39 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
-		dashboardStore := &database.FakeDashboardStore{}
+		dashboardStore := &dashboards.FakeDashboardStore{}
 		defer dashboardStore.AssertExpectations(t)
 
+		features := featuremgmt.WithFeatures()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
 		hs := &HTTPServer{
-			Cfg:              settings,
-			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore),
-			SQLStore:         mockSQLStore,
+			Cfg:      settings,
+			SQLStore: mockSQLStore,
+			Features: features,
+			dashboardService: dashboardservice.ProvideDashboardService(
+				settings, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			),
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
@@ -40,12 +47,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			})
 
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
-
-			getDashboardQueryResult := models.NewDashboard("Dash")
-			mockSQLStore := mockstore.NewSQLStoreMock()
-			mockSQLStore.ExpectedDashboard = getDashboardQueryResult
-			mockSQLStore.ExpectedError = nil
-			hs.SQLStore = mockSQLStore
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					callGetDashboardPermissions(sc, hs)
@@ -88,10 +89,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: models.PERMISSION_ADMIN},
 				},
 			})
-
-			mockSQLStore := mockstore.NewSQLStoreMock()
-			mockSQLStore.ExpectedDashboard = models.NewDashboard("Dash")
-			hs.SQLStore = mockSQLStore
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -259,24 +256,24 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				settings.HiddenUsers = make(map[string]struct{})
 			})
 
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-				CanAdminValue:                    true,
-				CheckPermissionBeforeUpdateValue: true,
-				GetAclValue: []*models.DashboardAclInfoDTO{
-					{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
-					{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
-					{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
-				},
-				GetHiddenAclValue: []*models.DashboardAcl{
-					{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
-				},
-			})
-
 			mockSQLStore := mockstore.NewSQLStoreMock()
 			var resp []*models.DashboardAclInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 					setUp()
+					guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+						CanAdminValue:                    true,
+						CheckPermissionBeforeUpdateValue: true,
+						GetAclValue: []*models.DashboardAclInfoDTO{
+							{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
+							{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
+							{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
+						},
+						GetHiddenAclValue: []*models.DashboardAcl{
+							{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
+						},
+					})
+
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
 

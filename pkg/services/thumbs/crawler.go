@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -21,17 +22,17 @@ type simpleCrawler struct {
 	renderService rendering.Service
 	threadCount   int
 
-	glive            *live.GrafanaLive
-	thumbnailRepo    thumbnailRepo
-	mode             CrawlerMode
-	thumbnailKind    models.ThumbnailKind
-	opts             rendering.Opts
-	status           crawlStatus
-	statusMutex      sync.RWMutex
-	queue            []*models.DashboardWithStaleThumbnail
-	queueMutex       sync.Mutex
-	log              log.Logger
-	renderingSession rendering.Session
+	glive                   *live.GrafanaLive
+	thumbnailRepo           thumbnailRepo
+	mode                    CrawlerMode
+	thumbnailKind           models.ThumbnailKind
+	opts                    rendering.Opts
+	status                  crawlStatus
+	statusMutex             sync.RWMutex
+	queue                   []*models.DashboardWithStaleThumbnail
+	queueMutex              sync.Mutex
+	log                     log.Logger
+	renderingSessionByOrgId map[int64]rendering.Session
 }
 
 func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
@@ -46,23 +47,45 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 			Complete: 0,
 			Queue:    0,
 		},
-		queue: nil,
+		renderingSessionByOrgId: make(map[int64]rendering.Session),
+		queue:                   nil,
 	}
 	c.broadcastStatus()
 	return c
 }
 
-func (r *simpleCrawler) next() *models.DashboardWithStaleThumbnail {
+func (r *simpleCrawler) next(ctx context.Context) (*models.DashboardWithStaleThumbnail, rendering.Session, rendering.AuthOpts, error) {
 	r.queueMutex.Lock()
 	defer r.queueMutex.Unlock()
 
 	if r.queue == nil || len(r.queue) < 1 {
-		return nil
+		return nil, nil, rendering.AuthOpts{}, nil
 	}
 
 	v := r.queue[0]
 	r.queue = r.queue[1:]
-	return v
+
+	authOpts := rendering.AuthOpts{
+		OrgID:   v.OrgId,
+		UserID:  r.opts.AuthOpts.UserID,
+		OrgRole: r.opts.AuthOpts.OrgRole,
+	}
+
+	if renderingSession, ok := r.renderingSessionByOrgId[v.OrgId]; ok {
+		return v, renderingSession, authOpts, nil
+	}
+
+	renderingSession, err := r.renderService.CreateRenderingSession(ctx, authOpts, rendering.SessionOpts{
+		Expiry:                     5 * time.Minute,
+		RefreshExpiryOnEachRequest: true,
+	})
+
+	if err != nil {
+		return nil, nil, authOpts, err
+	}
+
+	r.renderingSessionByOrgId[v.OrgId] = renderingSession
+	return v, renderingSession, authOpts, nil
 }
 
 func (r *simpleCrawler) broadcastStatus() {
@@ -82,6 +105,12 @@ func (r *simpleCrawler) broadcastStatus() {
 		return
 	}
 }
+
+type byOrgId []*models.DashboardWithStaleThumbnail
+
+func (d byOrgId) Len() int           { return len(d) }
+func (d byOrgId) Less(i, j int) bool { return d[i].OrgId > d[j].OrgId }
+func (d byOrgId) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 
 func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
 	res, err := r.renderService.HasCapability(rendering.ScalingDownImages)
@@ -115,6 +144,10 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 		return nil
 	}
 
+	// sort the items so that we render all items from each org before moving on to the next one
+	// helps us avoid having to maintain multiple active rendering sessions
+	sort.Sort(byOrgId(items))
+
 	r.mode = mode
 	r.thumbnailKind = thumbnailKind
 	r.opts = rendering.Opts{
@@ -126,17 +159,8 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 		Theme:           theme,
 		ConcurrentLimit: 10,
 	}
-	renderingSession, err := r.renderService.CreateRenderingSession(ctx, r.opts.AuthOpts, rendering.SessionOpts{
-		Expiry:                     5 * time.Minute,
-		RefreshExpiryOnEachRequest: true,
-	})
-	if err != nil {
-		r.log.Error("Error when creating rendering session", "err", err.Error())
-		r.queueMutex.Unlock()
-		return err
-	}
 
-	r.renderingSession = renderingSession
+	r.renderingSessionByOrgId = make(map[int64]rendering.Session)
 	r.queue = items
 	r.status = crawlStatus{
 		Started:  now,
@@ -237,8 +261,13 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 			break
 		}
 
-		item := r.next()
-		if item == nil {
+		item, renderingSession, authOpts, err := r.next(ctx)
+		if err != nil {
+			r.log.Error("Render item retrieval error", "walkerId", id, "error", err)
+			break
+		}
+
+		if item == nil || renderingSession == nil {
 			break
 		}
 
@@ -249,12 +278,12 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 			Width:             320,
 			Height:            240,
 			Path:              strings.TrimPrefix(url, "/"),
-			AuthOpts:          r.opts.AuthOpts,
+			AuthOpts:          authOpts,
 			TimeoutOpts:       r.opts.TimeoutOpts,
 			ConcurrentLimit:   r.opts.ConcurrentLimit,
 			Theme:             r.opts.Theme,
 			DeviceScaleFactor: -5, // negative numbers will render larger and then scale down.
-		}, r.renderingSession)
+		}, renderingSession)
 		if err != nil {
 			r.log.Warn("Error getting image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
 			r.newErrorResult()
