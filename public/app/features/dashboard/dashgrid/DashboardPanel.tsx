@@ -6,7 +6,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
 import { setPanelInstanceState } from '../../panel/state/reducers';
-import { cleanUpPanelState, initPanelState } from '../../panel/state/actions';
+import { initPanelState } from '../../panel/state/actions';
 import { LazyLoader } from './LazyLoader';
 
 export interface OwnProps {
@@ -34,7 +34,6 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 
 const mapDispatchToProps = {
   initPanelState,
-  cleanUpPanelState,
   setPanelInstanceState,
 };
 
