@@ -548,10 +548,13 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		u.help_flags1    as help_flags1,
 		u.last_seen_at   as last_seen_at,
 		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
+		user_auth.auth_module as user_auth_module,
+		user_auth.auth_id as user_auth_id,
 		org.name         as org_name,
 		org_user.role    as org_role,
 		org.id           as org_id
 		FROM ` + dialect.Quote("user") + ` as u
+		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
