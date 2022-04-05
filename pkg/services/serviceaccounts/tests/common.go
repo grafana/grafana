@@ -67,20 +67,26 @@ func SetupMockAccesscontrol(t *testing.T,
 var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
-	CreateServiceAccount      []interface{}
-	RetrieveServiceAccount    []interface{}
-	DeleteServiceAccount      []interface{}
-	UpgradeServiceAccounts    []interface{}
-	ConvertServiceAccounts    []interface{}
-	ListTokens                []interface{}
-	DeleteServiceAccountToken []interface{}
-	UpdateServiceAccount      []interface{}
-	AddServiceAccountToken    []interface{}
-	SearchOrgServiceAccounts  []interface{}
+	CreateServiceAccount           []interface{}
+	RetrieveServiceAccount         []interface{}
+	DeleteServiceAccount           []interface{}
+	UpgradeServiceAccounts         []interface{}
+	ConvertServiceAccounts         []interface{}
+	ListTokens                     []interface{}
+	DeleteServiceAccountToken      []interface{}
+	UpdateServiceAccount           []interface{}
+	AddServiceAccountToken         []interface{}
+	SearchOrgServiceAccounts       []interface{}
+	RetrieveServiceAccountIdByName []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
 	Calls Calls
+}
+
+func (s *ServiceAccountsStoreMock) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+	s.Calls.RetrieveServiceAccountIdByName = append(s.Calls.RetrieveServiceAccountIdByName, []interface{}{ctx, orgID, name})
+	return 0, nil
 }
 
 func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {

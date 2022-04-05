@@ -68,3 +68,11 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
+
+func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
+		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
+		return 0, nil
+	}
+	return sa.store.RetrieveServiceAccountIdByName(ctx, orgID, name)
+}

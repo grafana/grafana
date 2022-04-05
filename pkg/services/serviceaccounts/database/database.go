@@ -231,6 +231,47 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	return serviceAccount, nil
 }
 
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+	serviceAccount := &struct {
+		Id int64
+	}{}
+
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sess := dbSession.Table("user")
+
+		whereConditions := []string{
+			fmt.Sprintf("%s.name = ?",
+				s.sqlStore.Dialect.Quote("user")),
+			fmt.Sprintf("%s.org_id = ?",
+				s.sqlStore.Dialect.Quote("user")),
+			fmt.Sprintf("%s.is_service_account = %s",
+				s.sqlStore.Dialect.Quote("user"),
+				s.sqlStore.Dialect.BooleanStr(true)),
+		}
+		whereParams := []interface{}{name, orgID}
+
+		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+
+		sess.Cols(
+			"user.id",
+		)
+
+		if ok, err := sess.Get(serviceAccount); err != nil {
+			return err
+		} else if !ok {
+			return serviceaccounts.ErrServiceAccountNotFound
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return serviceAccount.Id, nil
+}
+
 func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	orgID, serviceAccountID int64,
 	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
