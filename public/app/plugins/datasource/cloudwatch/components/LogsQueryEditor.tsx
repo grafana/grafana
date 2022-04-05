@@ -41,9 +41,6 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
       exploreId={exploreId}
       datasource={datasource}
       query={query}
-      onBlur={() => {
-        console.log('fluffles');
-      }}
       onChange={onChange}
       onRunQuery={onRunQuery}
       history={[]}
