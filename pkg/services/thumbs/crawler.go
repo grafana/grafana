@@ -26,6 +26,7 @@ type simpleCrawler struct {
 	thumbnailRepo           thumbnailRepo
 	mode                    CrawlerMode
 	thumbnailKind           models.ThumbnailKind
+	crawlerAccountIds       CrawlerAccountIds
 	opts                    rendering.Opts
 	status                  crawlStatus
 	statusMutex             sync.RWMutex
@@ -67,7 +68,7 @@ func (r *simpleCrawler) next(ctx context.Context) (*models.DashboardWithStaleThu
 
 	authOpts := rendering.AuthOpts{
 		OrgID:   v.OrgId,
-		UserID:  r.opts.AuthOpts.UserID,
+		UserID:  r.crawlerAccountIds.GetForOrgId(v.OrgId),
 		OrgRole: r.opts.AuthOpts.OrgRole,
 	}
 
@@ -112,7 +113,7 @@ func (d byOrgId) Len() int           { return len(d) }
 func (d byOrgId) Less(i, j int) bool { return d[i].OrgId > d[j].OrgId }
 func (d byOrgId) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 
-func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
+func (r *simpleCrawler) Run(ctx context.Context, crawlerAccountIds CrawlerAccountIds, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
 	res, err := r.renderService.HasCapability(rendering.ScalingDownImages)
 	if err != nil {
 		return err
@@ -150,8 +151,11 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 
 	r.mode = mode
 	r.thumbnailKind = thumbnailKind
+	r.crawlerAccountIds = crawlerAccountIds
 	r.opts = rendering.Opts{
-		AuthOpts: authOpts,
+		AuthOpts: rendering.AuthOpts{
+			OrgRole: models.ROLE_VIEWER,
+		},
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout:                  20 * time.Second,
 			RequestTimeoutMultiplier: 3,

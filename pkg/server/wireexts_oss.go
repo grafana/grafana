@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -46,6 +47,8 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideService,
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*ossaccesscontrol.OSSAccessControlService)),
 	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.OSSAccessControlService)),
+	thumbs.ProvideCrawlerAccountSetupService,
+	wire.Bind(new(thumbs.CrawlerAccountSetupService), new(*thumbs.OSSCrawlerAccountSetupService)),
 	validations.ProvideValidator,
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
