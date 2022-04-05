@@ -5,7 +5,7 @@ keywords = ["grafana", "alerting", "guide", "rules", "create"]
 weight = 400
 +++
 
-# Create a Mimir or Loki managed alerting rule
+# Create a Grafana Mimir or Loki managed alerting rule
 
 Grafana allows you to create alerting rules for an external Mimir or Loki instance.
 
