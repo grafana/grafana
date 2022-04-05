@@ -41,7 +41,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
+  const info = useMemo(
+    () => prepareHeatmapData(data.series, options, timeRange, theme),
+    [data, options, timeRange, theme]
+  );
 
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
 

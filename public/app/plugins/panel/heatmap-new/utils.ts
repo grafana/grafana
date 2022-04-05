@@ -13,6 +13,7 @@ interface PathbuilderOpts {
   hideThreshold?: number;
   xCeil?: boolean;
   yCeil?: boolean;
+  getLayout: () => HeatmapData | null;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -198,10 +199,16 @@ export function prepConfig(opts: PrepConfigOpts) {
     range: (u, dataMin, dataMax) => {
       let bucketSize = dataRef.current?.yBucketSize;
 
-      if (dataRef.current?.yLayout === BucketLayout.le) {
-        dataMin -= bucketSize!;
+      // single y bucket
+      if (dataMin === dataMax) {
+        dataMin -= bucketSize! * 2;
+        dataMax += bucketSize! * 2;
       } else {
-        dataMax += bucketSize!;
+        if (dataRef.current?.yLayout === BucketLayout.le) {
+          dataMin -= bucketSize!;
+        } else {
+          dataMax += bucketSize!;
+        }
       }
 
       return [dataMin, dataMax];
@@ -278,6 +285,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           index: palette,
         },
       },
+      getLayout: () => dataRef.current,
     }) as any,
     theme,
     scaleKey: '', // facets' scales used (above)
@@ -324,7 +332,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 }
 
 export function heatmapPaths(opts: PathbuilderOpts) {
-  const { disp, each, gap, hideThreshold = 0, xCeil = false, yCeil = false } = opts;
+  const { disp, each, gap, hideThreshold = 0, xCeil = false, yCeil = false, getLayout } = opts;
 
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
@@ -363,8 +371,9 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         // detect x and y bin qtys by detecting layout repetition in x & y data
         let yBinQty = dlen - ys.lastIndexOf(ys[0]);
         let xBinQty = dlen / yBinQty;
-        let yBinIncr = ys[1] - ys[0];
-        let xBinIncr = xs[yBinQty] - xs[0];
+        let { xBucketSize: xBinIncr, yBucketSize: yBinIncr } = getLayout()!;
+        // let yBinIncr = ys.length > 1 ? ys[1] - ys[0] : ys[0];
+        // let xBinIncr = yBinQty > xs.length ? xs[yBinQty] - xs[0] : 3600 * 1000;
 
         // uniform tile sizes based on zoom level
         let xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
@@ -443,6 +452,12 @@ export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) =>
       minCount = Math.min(minCount, counts[i]);
       maxCount = Math.max(maxCount, counts[i]);
     }
+  }
+
+  // put count in middle of palette
+  if (maxCount === minCount) {
+    maxCount *= 2;
+    minCount = 0;
   }
 
   let range = maxCount - minCount;

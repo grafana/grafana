@@ -15,4 +15,8 @@ export interface HeatmapCalculationOptions {
   yAxis?: HeatmapCalculationAxisConfig;
   xAxisField?: string; // name of the x field
   encoding?: DataFrameType.HeatmapBuckets | DataFrameType.HeatmapScanlines;
+
+  // these typically come from dashboard TimeRange timestamps
+  xFrom: number;
+  xTo: number;
 }

@@ -5,8 +5,10 @@ import {
   getDisplayProcessor,
   getFieldDisplayName,
   GrafanaTheme2,
+  TimeRange,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
@@ -36,16 +38,23 @@ export interface HeatmapData {
 export function prepareHeatmapData(
   frames: DataFrame[] | undefined,
   options: PanelOptions,
+  timeRange: TimeRange,
   theme: GrafanaTheme2
 ): HeatmapData {
   if (!frames?.length) {
     return {};
   }
 
+  const calcOpts: HeatmapCalculationOptions = {
+    ...options.heatmap,
+    xFrom: timeRange.from.valueOf(),
+    xTo: timeRange.to.valueOf(),
+  };
+
   const { source } = options;
   if (source === HeatmapSourceMode.Calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, calcOpts), theme);
   }
 
   // Find a well defined heatmap
@@ -69,8 +78,13 @@ export function prepareHeatmapData(
   }
 
   // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
+  return getHeatmapData(calculateHeatmapFromData(frames, calcOpts), theme);
 }
+
+// this is used when timeField.config.interval is absent, and we only have 1 datapoint in result
+// TODO?: pull this at runtime from query.interval ?? query.intervalMs
+const xBucketSizeDefault = 15000;
+const yBucketSizeDefault = 50;
 
 const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapScanlines) {
@@ -80,7 +94,7 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
     };
   }
 
-  if (frame.fields.length < 2 || frame.length < 2) {
+  if (frame.fields.length < 2 || frame.length === 0) {
     return { heatmap: frame };
   }
 
@@ -102,8 +116,8 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
   // detect x and y bin qtys by detecting layout repetition in x & y data
   let yBinQty = dlen - ys.lastIndexOf(ys[0]);
   let xBinQty = dlen / yBinQty;
-  let yBinIncr = ys[1] - ys[0];
-  let xBinIncr = xs[yBinQty] - xs[0];
+  let yBinIncr = ys.length > 1 ? ys[1] - ys[0] : frame.fields[1].config.interval ?? yBucketSizeDefault;
+  let xBinIncr = yBinQty > xs.length ? xs[yBinQty] - xs[0] : frame.fields[0].config.interval ?? xBucketSizeDefault;
 
   return {
     heatmap: frame,

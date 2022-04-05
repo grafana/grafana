@@ -195,6 +195,8 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     xSize: +(options.xAxis?.value ?? 0),
     yMode: options.yAxis?.mode,
     ySize: +(options.yAxis?.value ?? 0),
+    xFrom: options.xFrom,
+    xTo: options.xTo,
   });
 
   const frame = {
@@ -208,13 +210,19 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         name: 'xMin',
         type: xField.type,
         values: new ArrayVector(heat2d.x),
-        config: xField.config,
+        config: {
+          ...xField.config,
+          interval: heat2d.xSize, // x bucket size
+        },
       },
       {
         name: 'yMin',
         type: FieldType.number,
         values: new ArrayVector(heat2d.y),
-        config: yField.config, // keep units from the original source
+        config: {
+          ...yField.config, // keep units from the original source
+          interval: heat2d.ySize, // y bucket size
+        },
       },
       {
         name: 'count',
@@ -255,6 +263,13 @@ interface HeatmapOpts {
   xMax?: number;
   yMin?: number;
   yMax?: number;
+
+  // used to subdivide visible range into logical buckets rather than relying on x data limits
+  // provides a more uniform experience at a given zoom level. typucally TimeRange for x
+  xFrom: number;
+  xTo: number;
+  yFrom?: number;
+  yTo?: number;
 
   xSorted?: boolean;
   ySorted?: boolean;
@@ -304,8 +319,9 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   }
 
   if (xMode === HeatmapCalculationMode.Count) {
-    // TODO: optionally use view range min/max instead of data range for bucket sizing
-    let approx = (maxX - minX) / Math.max(xBinIncr - 1, 1);
+    let xRange = (opts?.xTo ?? maxX) - (opts?.xFrom ?? minX);
+
+    let approx = xRange / Math.max(xBinIncr - 1, 1);
     // nice-ify
     let xIncrs = opts?.xTime ? niceTimeIncrs : niceLinearIncrs;
     let xIncrIdx = xIncrs.findIndex((bucketSize) => bucketSize > approx) - 1;
@@ -313,8 +329,13 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   }
 
   if (yMode === HeatmapCalculationMode.Count) {
-    // TODO: optionally use view range min/max instead of data range for bucket sizing
-    let approx = (maxY - minY) / Math.max(yBinIncr - 1, 1);
+    let yRange = (opts?.yTo ?? maxY) - (opts?.yFrom ?? minY);
+
+    if (yRange === 0) {
+      yRange = opts?.yTo ?? maxY;
+    }
+
+    let approx = yRange / Math.max(yBinIncr - 1, 1);
     // nice-ify
     let yIncrs = opts?.yTime ? niceTimeIncrs : niceLinearIncrs;
     let yIncrIdx = yIncrs.findIndex((bucketSize) => bucketSize > approx) - 1;
@@ -351,6 +372,14 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     x: xs2,
     y: ys2,
     count: counts,
+    xSize: xBinIncr,
+    ySize: yBinIncr,
+
+    // since buckets are aligned to one edge, this returns the required view expansion to prevent tile clipping at the edges
+    // xFrom
+    // xTo
+    // yFrom
+    // yTo
   };
 }
 
