@@ -17,8 +17,6 @@ require (
 	cloud.google.com/go/storage v1.18.2
 	cuelang.org/go v0.4.0
 	github.com/Azure/azure-sdk-for-go v59.3.0+incompatible
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0
 	github.com/Azure/go-autorest/autorest v0.11.22
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
@@ -54,6 +52,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf
 	github.com/grafana/grafana-aws-sdk v0.10.1
+	github.com/grafana/grafana-azure-sdk-go v1.0.0
 	github.com/grafana/grafana-plugin-sdk-go v0.129.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -258,6 +257,8 @@ require (
 )
 
 require (
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.17 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect

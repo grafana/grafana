@@ -62,7 +62,7 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
 
   for (const [ts, line] of stream.values) {
     // num ns epoch in string, we convert it to iso string here so it matches old format
-    times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+    times.add(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
     timesNs.add(ts);
     lines.add(line);
     uids.add(createUid(ts, labelsString, line, usedUids, refId));
@@ -148,7 +148,7 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      tsField.values.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+      tsField.values.add(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
       tsNsField.values.add(ts);
       lineField.values.add(line);
       labelsField.values.add(unique);
@@ -290,12 +290,10 @@ export function createMetricLabel(labelData: { [key: string]: string }, options?
 }
 
 function getOriginalMetricName(labelData: { [key: string]: string }) {
-  const metricName = labelData.__name__ || '';
-  delete labelData.__name__;
   const labelPart = Object.entries(labelData)
     .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
-  return `${metricName}{${labelPart}}`;
+  return `{${labelPart}}`;
 }
 
 export function decamelize(s: string): string {

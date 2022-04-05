@@ -106,6 +106,29 @@ export function makeBinOp(
   };
 }
 
+/**
+ * Get all nodes with type in the tree. This traverses the tree so it is safe only when you know there shouldn't be
+ * too much nesting but you just want to skip some of the wrappers. For example getting function args this way would
+ * not be safe is it would also find arguments of nested functions.
+ * @param expr
+ * @param cur
+ * @param type
+ */
+export function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
+  if (cur.name === type) {
+    return [getString(expr, cur)];
+  }
+  const values: string[] = [];
+  let pos = 0;
+  let child = cur.childAfter(pos);
+  while (child) {
+    values.push(...getAllByType(expr, child, type));
+    pos = child.to;
+    child = cur.childAfter(pos);
+  }
+  return values;
+}
+
 // Debugging function for convenience. Gives you nice output similar to linux tree util.
 // @ts-ignore
 export function log(expr: string, cur?: SyntaxNode) {

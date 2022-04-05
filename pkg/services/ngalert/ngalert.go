@@ -93,6 +93,7 @@ func (ng *AlertNG) init() error {
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
 		FolderService:   ng.folderService,
+		AccessControl:   ng.accesscontrol,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue

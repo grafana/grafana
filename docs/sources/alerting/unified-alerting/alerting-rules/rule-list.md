@@ -9,11 +9,14 @@ weight = 402
 
 The Alerting page lists existing Grafana 8 alerting rules. By default, rules are grouped by types of data sources. The Grafana section lists all Grafana managed rules. Alerting rules for Prometheus compatible data sources are also listed here. You can view alerting rules for Prometheus compatible data sources but you cannot edit them.
 
-The Cortex/Loki rules section lists all rules for external Prometheus or Loki data sources. Cloud alerting rules are also listed in this section.
+The Mimir/Loki rules section lists all rules for external Prometheus or Loki data sources. Cloud alerting rules are also listed in this section.
 
-- [View alerting rules](#view-alerting-rule)
-- [Filter alerting rules](#filter-alerting-rules)
-- [Edit or delete an alerting rule](#edit-or-delete-an-alerting-rule)
+- [Manage alerting rules](#manage-alerting-rules)
+  - [View alerting rules](#view-alerting-rules)
+    - [Group view](#group-view)
+    - [State view](#state-view)
+  - [Filter alerting rules](#filter-alerting-rules)
+  - [Edit or delete an alerting rule](#edit-or-delete-an-alerting-rule)
 
 ## View alerting rules
 
@@ -47,9 +50,9 @@ To filter alerting rules:
 
 ## Edit or delete an alerting rule
 
-Grafana managed alerting rules can only be edited or deleted by users with Edit permissions for the folder storing the rules. Alerting rules for an external Cortex or Loki instance can be edited or deleted by users with Editor or Admin roles.
+Grafana managed alerting rules can only be edited or deleted by users with Edit permissions for the folder storing the rules. Alerting rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
 To edit or delete a rule:
 
 1. Expand a rule row until you can see the rule controls of **View**, **Edit**, and **Delete**.
-1. Click **Edit** to open the create rule page. Make updates following instructions in [Create a Grafana managed alerting rule]({{< relref "./create-grafana-managed-rule.md" >}}) or [Create a Cortex or Loki managed alerting rule]({{< relref "./create-cortex-loki-managed-rule.md" >}}).
+1. Click **Edit** to open the create rule page. Make updates following instructions in [Create a Grafana managed alerting rule]({{< relref "./create-grafana-managed-rule.md" >}}) or [Create a Grafana Mimir or Loki managed alerting rule]({{< relref "./create-mimir-loki-managed-rule.md" >}}).
 1. Click **Delete** to delete a rule.

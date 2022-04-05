@@ -54,7 +54,8 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer"
+    "betterer": "betterer",
+    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-4/",
@@ -71,6 +72,9 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*.{star}": [
+      "make drone"
     ]
   },
   "devDependencies": {
@@ -86,6 +90,7 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
+    "@betterer/betterer": "5.1.7",
     "@betterer/cli": "5.1.7",
     "@betterer/regexp": "5.1.7",
     "@emotion/eslint-plugin": "11.7.0",
@@ -327,7 +332,7 @@
     "monaco-promql": "^1.7.2",
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
-    "moveable": "0.27.3",
+    "moveable": "0.28.0",
     "ol": "6.14.1",
     "papaparse": "5.3.2",
     "pluralize": "^8.0.0",
@@ -388,11 +393,12 @@
   "resolutions": {
     "underscore": "1.13.2",
     "@types/slate": "0.47.2",
-    "@microsoft/api-extractor-model": "7.15.4",
+    "@microsoft/api-extractor-model": "7.16.0",
     "@rushstack/node-core-library": "3.45.1",
     "@rushstack/rig-package": "0.3.8",
     "@rushstack/ts-command-line": "4.10.7",
-    "@storybook/react/webpack": "5.70.0"
+    "@storybook/react/webpack": "5.70.0",
+    "node-fetch": "2.6.7"
   },
   "workspaces": {
     "packages": [
