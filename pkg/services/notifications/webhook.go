@@ -46,7 +46,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		webhook.HttpMethod = http.MethodPost
 	}
 
-	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
+	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod, "body", webhook.Body)
 
 	if webhook.HttpMethod != http.MethodPost && webhook.HttpMethod != http.MethodPut {
 		return fmt.Errorf("webhook only supports HTTP methods PUT or POST")
@@ -82,18 +82,18 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		}
 	}()
 
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
 	if resp.StatusCode/100 == 2 {
-		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status)
+		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
 		// flushing the body enables the transport to reuse the same connection
 		if _, err := io.Copy(ioutil.Discard, resp.Body); err != nil {
 			ns.log.Error("Failed to copy resp.Body to ioutil.Discard", "err", err)
 		}
 		return nil
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
 	}
 
 	ns.log.Debug("Webhook failed", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
