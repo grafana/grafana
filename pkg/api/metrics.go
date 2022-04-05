@@ -145,6 +145,7 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 // POST /api/tsdb/query
 //nolint: staticcheck // legacydata.DataResponse deprecated
 //nolint: staticcheck // legacydata.DataQueryResult deprecated
+// Deprecated: use QueryMetricsV2 instead.
 func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
 	reqDto := dtos.MetricRequest{}
 	if err := web.Bind(c.Req, &reqDto); err != nil {

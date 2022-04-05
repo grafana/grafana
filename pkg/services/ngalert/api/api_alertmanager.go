@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -32,6 +33,7 @@ type AlertmanagerSrv struct {
 	secrets secrets.Service
 	store   AlertingStore
 	log     log.Logger
+	ac      accesscontrol.AccessControl
 }
 
 type UnknownReceiverError struct {
@@ -125,13 +127,21 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
-	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
-	}
-
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
+	}
+
+	action := accesscontrol.ActionAlertingInstanceUpdate
+	if postableSilence.ID == "" {
+		action = accesscontrol.ActionAlertingInstanceCreate
+	}
+	if !accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqOrgAdminOrEditor, accesscontrol.EvalPermission(action)) {
+		errAction := "update"
+		if postableSilence.ID == "" {
+			errAction = "create"
+		}
+		return ErrResp(http.StatusUnauthorized, fmt.Errorf("user is not authorized to %s silences", errAction), "")
 	}
 
 	silenceID, err := am.CreateSilence(&postableSilence)
@@ -150,10 +160,6 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
-	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
-	}
-
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
@@ -168,10 +174,6 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
-	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
-	}
-
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
@@ -188,10 +190,6 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
-	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
-	}
-
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -334,10 +332,6 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
-	}
-
 	// Get the last known working configuration
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(c.Req.Context(), &query); err != nil {
@@ -380,10 +374,6 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return accessForbiddenResp()
-	}
-
 	if err := srv.loadSecureSettings(c.Req.Context(), c.OrgId, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {

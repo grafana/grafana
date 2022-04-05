@@ -28,15 +28,15 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki and Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
-- **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
-- **Map tag names -** When enabled, allows configuring how Jaeger tag names map to Loki label names. For example, map `service.name` to `service`.
-- **Span start time shift -** Shift in the start time for the Loki query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
-- **Span end time shift -** Shift in the end time for the Loki query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
-- **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
-- **Filter by Span ID -** Toggle to append the span ID to the Loki query.
+- **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+- **Map tag names -** When enabled, allows configuring how Jaeger tag names map to logs label names. For example, map `service.name` to `service`.
+- **Span start time shift -** Shift in the start time for the logs query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
+- **Span end time shift -** Shift in the end time for the logs query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
+- **Filter by Trace ID -** Toggle to append the trace ID to the logs query.
+- **Filter by Span ID -** Toggle to append the span ID to the logs query.
 
 ![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
 
@@ -146,8 +146,8 @@ datasources:
     isDefault: false
     jsonData:
       tracesToLogs:
-        # Field with internal link pointing to a Loki data source in Grafana.
-        # datasourceUid value must match the `datasourceUid` value of the Loki data source.
+        # Field with internal link pointing to a logs data source in Grafana.
+        # datasourceUid value must match the `datasourceUid` value of the logs data source.
         datasourceUid: 'loki'
         tags: ['job', 'instance', 'pod', 'namespace']
         mappedTags: [{ key: 'service.name', value: 'service' }]

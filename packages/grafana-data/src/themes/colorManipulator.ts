@@ -29,7 +29,7 @@ function clamp(value: number, min = 0, max = 1) {
  * @beta
  */
 export function hexToRgb(color: string) {
-  color = color.substr(1);
+  color = color.slice(1);
 
   const re = new RegExp(`.{1,${color.length >= 6 ? 2 : 1}}`, 'g');
   let colors = color.match(re);
@@ -141,7 +141,7 @@ export function decomposeColor(color: string | DecomposeColor): DecomposeColor {
     values = values.split(' ');
     colorSpace = values.shift();
     if (values.length === 4 && values[3].charAt(0) === '/') {
-      values[3] = values[3].substr(1);
+      values[3] = values[3].slice(1);
     }
     if (['srgb', 'display-p3', 'a98-rgb', 'prophoto-rgb', 'rec-2020'].indexOf(colorSpace) === -1) {
       throw new Error(

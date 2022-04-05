@@ -1928,7 +1928,23 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       type: 'other',
       config: {},
       labels: undefined,
-      values: [[]],
+      values: [
+        [
+          {
+            spanID: 'spanId',
+            traceID: 'traceId',
+            tags: [
+              { key: 'key', value: 'Value' },
+              { key: 'intValue', value: 4 },
+            ],
+          },
+          {
+            spanID: 'spanId2',
+            traceID: 'traceId2',
+            tags: [],
+          },
+        ],
+      ],
       state: {
         displayName: 'references',
       },
@@ -2118,6 +2134,32 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
         displayName: 'tags',
       },
     },
+    {
+      name: 'references',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [
+        [
+          {
+            spanID: 'spanId',
+            traceID: 'traceId',
+            tags: [
+              { key: 'key', value: 'Value' },
+              { key: 'intValue', value: 4 },
+            ],
+          },
+          {
+            spanID: 'spanId2',
+            traceID: 'traceId2',
+            tags: [],
+          },
+        ],
+      ],
+      state: {
+        displayName: 'references',
+      },
+    },
   ],
   first: ['60ba2abb44f13eae'],
   length: 1,
@@ -2152,6 +2194,31 @@ export const otlpResponse = {
                 { key: 'http.method', value: { stringValue: 'GET' } },
                 { key: 'http.url', value: { stringValue: '/' } },
                 { key: 'component', value: { stringValue: 'net/http' } },
+              ],
+              links: [
+                {
+                  spanId: 'spanId',
+                  traceId: 'traceId',
+                  attributes: [
+                    {
+                      key: 'key',
+                      value: {
+                        stringValue: 'Value',
+                      },
+                    },
+                    {
+                      key: 'intValue',
+                      value: {
+                        intValue: 4,
+                      },
+                    },
+                  ],
+                },
+                {
+                  spanId: 'spanId2',
+                  traceId: 'traceId2',
+                  attributes: [],
+                },
               ],
             },
           ],

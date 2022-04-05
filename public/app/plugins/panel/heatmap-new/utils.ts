@@ -27,22 +27,39 @@ export interface HeatmapHoverEvent {
   pageY: number;
 }
 
+export interface HeatmapZoomEvent {
+  xMin: number;
+  xMax: number;
+}
+
 interface PrepConfigOpts {
   dataRef: RefObject<HeatmapData>;
   theme: GrafanaTheme2;
-  onhover: (evt?: HeatmapHoverEvent | null) => void;
-  onclick: (evt?: any) => void;
+  onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
+  onclick?: null | ((evt?: any) => void);
+  onzoom?: null | ((evt: HeatmapZoomEvent) => void);
   isToolTipOpen: MutableRefObject<boolean>;
   timeZone: string;
-  timeRange: TimeRange; // should be getTimeRange() cause dynamic?
+  getTimeRange: () => TimeRange;
   palette: string[];
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
-  const { dataRef, theme, onhover, onclick, isToolTipOpen, timeZone, timeRange, palette, cellGap, hideThreshold } =
-    opts;
+  const {
+    dataRef,
+    theme,
+    onhover,
+    onclick,
+    onzoom,
+    isToolTipOpen,
+    timeZone,
+    getTimeRange,
+    palette,
+    cellGap,
+    hideThreshold,
+  } = opts;
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -59,7 +76,46 @@ export function prepConfig(opts: PrepConfigOpts) {
         background: 'transparent',
       });
     });
-    u.over.addEventListener('click', onclick);
+
+    onclick &&
+      u.over.addEventListener(
+        'mouseup',
+        (e) => {
+          // @ts-ignore
+          let isDragging: boolean = u.cursor.drag._x || u.cursor.drag._y;
+
+          if (!isDragging) {
+            onclick(e);
+          }
+        },
+        true
+      );
+  });
+
+  onzoom &&
+    builder.addHook('setSelect', (u) => {
+      onzoom({
+        xMin: u.posToVal(u.select.left, 'x'),
+        xMax: u.posToVal(u.select.left + u.select.width, 'x'),
+      });
+      u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
+    });
+
+  // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
+  // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
+  builder.addHook('setData', (u) => {
+    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, 'x');
+
+    let { min: xMin, max: xMax } = u.scales!.x;
+
+    let min = getTimeRange().from.valueOf();
+    let max = getTimeRange().to.valueOf();
+
+    if (xMin !== min || xMax !== max) {
+      queueMicrotask(() => {
+        u.setScale('x', { min, max });
+      });
+    }
   });
 
   // rect of .u-over (grid area)
@@ -69,34 +125,35 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   let pendingOnleave = 0;
 
-  builder.addHook('setLegend', (u) => {
-    if (u.cursor.idxs != null) {
-      for (let i = 0; i < u.cursor.idxs.length; i++) {
-        const sel = u.cursor.idxs[i];
-        if (sel != null && !isToolTipOpen.current) {
-          if (pendingOnleave) {
-            clearTimeout(pendingOnleave);
-            pendingOnleave = 0;
+  onhover &&
+    builder.addHook('setLegend', (u) => {
+      if (u.cursor.idxs != null) {
+        for (let i = 0; i < u.cursor.idxs.length; i++) {
+          const sel = u.cursor.idxs[i];
+          if (sel != null && !isToolTipOpen.current) {
+            if (pendingOnleave) {
+              clearTimeout(pendingOnleave);
+              pendingOnleave = 0;
+            }
+
+            onhover({
+              index: sel,
+              pageX: rect.left + u.cursor.left!,
+              pageY: rect.top + u.cursor.top!,
+            });
+
+            return; // only show the first one
           }
-
-          onhover({
-            index: sel,
-            pageX: rect.left + u.cursor.left!,
-            pageY: rect.top + u.cursor.top!,
-          });
-
-          return; // only show the first one
         }
       }
-    }
 
-    if (!isToolTipOpen.current) {
-      // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
-      if (!pendingOnleave) {
-        pendingOnleave = setTimeout(() => onhover(null), 100) as any;
+      if (!isToolTipOpen.current) {
+        // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
+        if (!pendingOnleave) {
+          pendingOnleave = setTimeout(() => onhover(null), 100) as any;
+        }
       }
-    }
-  });
+    });
 
   builder.addHook('drawClear', (u) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
@@ -120,12 +177,15 @@ export function prepConfig(opts: PrepConfigOpts) {
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
     // TODO: expand by x bucket size and layout
-    range: [timeRange.from.valueOf(), timeRange.to.valueOf()],
+    range: () => {
+      return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
+    },
   });
 
   builder.addAxis({
     scaleKey: 'x',
     placement: AxisPlacement.Bottom,
+    isTime: true,
     theme: theme,
   });
 
@@ -224,6 +284,11 @@ export function prepConfig(opts: PrepConfigOpts) {
   });
 
   builder.setCursor({
+    drag: {
+      x: true,
+      y: false,
+      setScale: false,
+    },
     dataIdx: (u, seriesIdx) => {
       if (seriesIdx === 1) {
         hRect = null;

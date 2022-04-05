@@ -29,7 +29,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
 				accesscontrol.ActionAlertingRuleRead,
-				accesscontrol.ActionAlertingRuleUpdate,
+				accesscontrol.ActionAlertingRuleCreate,
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
 				accesscontrol.ActionAlertingRuleRead,
-				accesscontrol.ActionAlertingRuleUpdate,
+				accesscontrol.ActionAlertingRuleCreate,
 			},
 		},
 		{
@@ -108,7 +108,7 @@ func TestAccessControlDashboardPermissionFilter_Where(t *testing.T) {
 			title:            "folder and dashboard actions are defined",
 			dashboardActions: []string{"test"},
 			folderActions:    []string{"test"},
-			expectedResult:   "((( 1 = 0 OR  1 = 0) AND NOT dashboard.is_folder) OR ( 1 = 0 AND dashboard.is_folder))",
+			expectedResult:   "((( 1 = 0 OR dashboard.folder_id IN(SELECT id FROM dashboard WHERE  1 = 0)) AND NOT dashboard.is_folder) OR ( 1 = 0 AND dashboard.is_folder))",
 		},
 		{
 			title:            "folder actions are defined but not dashboard actions",
@@ -120,7 +120,7 @@ func TestAccessControlDashboardPermissionFilter_Where(t *testing.T) {
 			title:            "dashboard actions are defined but not folder actions",
 			dashboardActions: []string{"test"},
 			folderActions:    nil,
-			expectedResult:   "((( 1 = 0 OR  1 = 0) AND NOT dashboard.is_folder))",
+			expectedResult:   "((( 1 = 0 OR dashboard.folder_id IN(SELECT id FROM dashboard WHERE  1 = 0)) AND NOT dashboard.is_folder))",
 		},
 		{
 			title:            "dashboard actions are defined but not folder actions",

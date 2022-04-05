@@ -105,6 +105,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
+		"helpEnabled":                         setting.HelpEnabled,
+		"profileEnabled":                      setting.ProfileEnabled,
 		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
@@ -163,6 +165,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		},
 		"recordedQueries": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
+		},
+		"reporting": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 	}

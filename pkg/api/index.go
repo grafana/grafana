@@ -221,9 +221,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.IsSignedIn {
-		navTree = append(navTree, hs.getProfileNode(c))
-	}
+	navTree = hs.addProfile(navTree, c)
 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
@@ -364,23 +362,37 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		navTree = append(navTree, serverAdminNode)
 	}
 
-	helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
-	if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
-		helpVersion = setting.ApplicationName
-	}
-
-	navTree = append(navTree, &dtos.NavLink{
-		Text:       "Help",
-		SubTitle:   helpVersion,
-		Id:         "help",
-		Url:        "#",
-		Icon:       "question-circle",
-		SortWeight: dtos.WeightHelp,
-		Section:    dtos.NavSectionConfig,
-		Children:   []*dtos.NavLink{},
-	})
+	navTree = hs.addHelpLinks(navTree, c)
 
 	return navTree, nil
+}
+
+func (hs *HTTPServer) addProfile(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
+	if setting.ProfileEnabled && c.IsSignedIn {
+		navTree = append(navTree, hs.getProfileNode(c))
+	}
+	return navTree
+}
+
+func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
+	if setting.HelpEnabled {
+		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
+		if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
+			helpVersion = setting.ApplicationName
+		}
+
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Help",
+			SubTitle:   helpVersion,
+			Id:         "help",
+			Url:        "#",
+			Icon:       "question-circle",
+			SortWeight: dtos.WeightHelp,
+			Section:    dtos.NavSectionConfig,
+			Children:   []*dtos.NavLink{},
+		})
+	}
+	return navTree
 }
 
 func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {

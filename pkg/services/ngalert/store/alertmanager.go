@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"crypto/md5"
 	"fmt"
 
 	"xorm.io/builder"
@@ -13,6 +14,9 @@ import (
 var (
 	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
 	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an Alertmanager configuration")
+	// ErrVersionLockedObjectNotFound is returned when an object is not
+	// found using the current hash.
+	ErrVersionLockedObjectNotFound = fmt.Errorf("could not find object using provided id and hash")
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -64,6 +68,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
 			ConfigurationVersion:      cmd.ConfigurationVersion,
 			Default:                   cmd.Default,
 			OrgID:                     cmd.OrgID,
@@ -77,5 +82,33 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		}
 
 		return nil
+	})
+}
+
+func (st *DBstore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		config := models.AlertConfiguration{
+			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
+			ConfigurationVersion:      cmd.ConfigurationVersion,
+			Default:                   cmd.Default,
+			OrgID:                     cmd.OrgID,
+		}
+		rows, err := sess.Table("alert_configuration").Where(`
+			EXISTS (
+				SELECT 1 
+				FROM alert_configuration 
+				WHERE 
+					org_id = ? 
+				AND 
+					id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+				AND 
+					configuration_hash = ?
+			)`,
+			cmd.OrgID, cmd.OrgID, cmd.FetchedConfigurationHash).Insert(config)
+		if rows == 0 {
+			return ErrVersionLockedObjectNotFound
+		}
+		return err
 	})
 }
