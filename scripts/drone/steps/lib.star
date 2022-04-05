@@ -259,7 +259,7 @@ def build_storybook_step(edition, ver_mode):
     }
 
 
-def store_storybook_step(edition, ver_mode):
+def store_storybook_step(edition, ver_mode, trigger=None):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
@@ -278,7 +278,7 @@ def store_storybook_step(edition, ver_mode):
                         for c in channels
                     ])
 
-    return {
+    step = {
         'name': 'store-storybook',
         'image': publish_image,
         'depends_on': ['build-storybook',] + end_to_end_tests_deps(edition),
@@ -288,6 +288,9 @@ def store_storybook_step(edition, ver_mode):
         },
         'commands': commands,
     }
+    if trigger:
+        step.update(trigger)
+    return step
 
 def e2e_tests_artifacts(edition):
     return {
