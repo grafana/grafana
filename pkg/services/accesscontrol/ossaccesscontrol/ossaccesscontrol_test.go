@@ -355,7 +355,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 				for _, br := range registration.Grants {
 					brAndParents[br] = struct{}{}
 					if br != accesscontrol.RoleGrafanaAdmin {
-						for _, parent := range models.RoleType(br).Parent() {
+						for _, parent := range models.RoleType(br).Parents() {
 							brAndParents[string(parent)] = struct{}{}
 						}
 					}

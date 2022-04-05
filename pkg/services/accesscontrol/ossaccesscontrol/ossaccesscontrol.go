@@ -230,7 +230,7 @@ func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO,
 	for _, builtInRole := range builtInRoles {
 		brs[builtInRole] = struct{}{}
 		if builtInRole != accesscontrol.RoleGrafanaAdmin {
-			for _, parent := range models.RoleType(builtInRole).Parent() {
+			for _, parent := range models.RoleType(builtInRole).Parents() {
 				brs[string(parent)] = struct{}{}
 			}
 		}

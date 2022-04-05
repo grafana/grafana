@@ -49,7 +49,7 @@ func (r RoleType) Children() []RoleType {
 	}
 }
 
-func (r RoleType) Parent() []RoleType {
+func (r RoleType) Parents() []RoleType {
 	switch r {
 	case ROLE_EDITOR:
 		return []RoleType{ROLE_ADMIN}
