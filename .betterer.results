@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-// 
+//
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -113,8 +113,8 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:1551927716": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:3570129984": [
-      [0, 19, 13, "RegExp match", "2409514259"]
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3399719410": [
+      [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
       [0, 17, 13, "RegExp match", "2409514259"]

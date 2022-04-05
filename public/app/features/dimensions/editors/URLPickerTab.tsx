@@ -20,7 +20,10 @@ export const URLPickerTab = (props: Props) => {
 
   const imgSrc = getPublicOrAbsoluteUrl(newValue!);
 
-  let shortName = newValue?.slice(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.') !== -1 ? newValue.lastIndexOf('.') : 0);
+  let shortName = newValue?.slice(
+    newValue.lastIndexOf('/') + 1,
+    newValue.lastIndexOf('.') !== -1 ? newValue.lastIndexOf('.') : 0
+  );
   if (shortName.length > 20) {
     shortName = shortName.slice(0, 20) + '...';
   }
