@@ -360,7 +360,7 @@ function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOper
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
-  return `${innerExpr} | ${model.params[0]}${model.params[1]}"${model.params[2]}"`;
+  return `${innerExpr} | ${model.params[0]}${model.params[1]}\`${model.params[2]}\``;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {

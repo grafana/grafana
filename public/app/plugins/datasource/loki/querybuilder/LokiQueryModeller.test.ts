@@ -82,7 +82,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: LokiOperationId.LabelFilter, params: ['__error__', '=', 'value'] }],
       })
-    ).toBe('{app="grafana"} | __error__="value"');
+    ).toBe('{app="grafana"} | __error__=`value`');
   });
 
   it('Can query with label filter expression using greater than operator', () => {
@@ -100,7 +100,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: LokiOperationId.LabelFilterNoErrors, params: [] }],
       })
-    ).toBe('{app="grafana"} | __error__=""');
+    ).toBe('{app="grafana"} | __error__=``');
   });
 
   it('Can query with unwrap operation', () => {
@@ -118,7 +118,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: LokiOperationId.LineFormat, params: ['{{.status_code}}'] }],
       })
-    ).toBe('{app="grafana"} | line_format "{{.status_code}}"');
+    ).toBe('{app="grafana"} | line_format `{{.status_code}}`');
   });
 
   it('Can render with label_format operation', () => {
