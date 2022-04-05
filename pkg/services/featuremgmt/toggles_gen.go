@@ -16,7 +16,7 @@ const (
 	FlagEnvelopeEncryption = "envelopeEncryption"
 
 	// FlagHttpclientproviderAzureAuth
-	// use http client for azure auth
+	// Experimental. Allow datasources to configure Azure authentication directly via JsonData
 	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
 
 	// FlagServiceAccounts
@@ -84,7 +84,7 @@ const (
 	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
 
 	// FlagPrometheusAzureAuth
-	// Use azure authentication for prometheus datasource
+	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
 
 	// FlagInfluxdbBackendMigration

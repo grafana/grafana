@@ -1,11 +1,17 @@
 import { parser } from '@grafana/lezer-logql';
-import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { SyntaxNode } from '@lezer/common';
+import {
+  ErrorName,
+  getAllByType,
+  getLeftMostChild,
+  getString,
+  makeBinOp,
+  makeError,
+  replaceVariables,
+} from '../../prometheus/querybuilder/shared/parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { LokiVisualQuery, LokiVisualQueryBinary } from './types';
-
-// This is used for error type
-const ErrorName = '⚠';
 
 interface Context {
   query: LokiVisualQuery;
@@ -75,6 +81,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 
     case 'LabelFormatMatcher': {
       visQuery.operations.push(getLabelFormat(expr, node));
+      break;
+    }
+
+    case 'UnwrapExpr': {
+      visQuery.operations.push(getUnwrap(expr, node));
       break;
     }
 
@@ -212,7 +223,6 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  // Not implemented in visual query builder yet
   const id = 'line_format';
   const string = handleQuotes(getString(expr, node.getChild('String')));
 
@@ -223,7 +233,6 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  // Not implemented in visual query builder yet
   const id = 'label_format';
   const identifier = node.getChild('Identifier');
   const op = identifier!.nextSibling;
@@ -234,6 +243,16 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   return {
     id,
     params: [getString(expr, identifier), getString(expr, op), valueString],
+  };
+}
+
+function getUnwrap(expr: string, node: SyntaxNode): QueryBuilderOperation {
+  const id = 'unwrap';
+  const string = getString(expr, node.getChild('Identifier'));
+
+  return {
+    id,
+    params: [string],
   };
 }
 
@@ -265,8 +284,25 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const nameNode = node.getChild('VectorOp');
   let funcName = getString(expr, nameNode);
 
+  const grouping = node.getChild('Grouping');
+  const labels: string[] = [];
+
+  if (grouping) {
+    const byModifier = grouping.getChild(`By`);
+    if (byModifier && funcName) {
+      funcName = `__${funcName}_by`;
+    }
+
+    const withoutModifier = grouping.getChild(`Without`);
+    if (withoutModifier) {
+      funcName = `__${funcName}_without`;
+    }
+
+    labels.push(...getAllByType(expr, grouping, 'Identifier'));
+  }
+
   const metricExpr = node.getChild('MetricExpr');
-  const op: QueryBuilderOperation = { id: funcName, params: [] };
+  const op: QueryBuilderOperation = { id: funcName, params: labels };
 
   if (metricExpr) {
     handleExpression(expr, metricExpr, context);
@@ -300,8 +336,8 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const opDef = operatorToOpName[op];
 
-  const leftNumber = left.getChild('NumberLiteral');
-  const rightNumber = right.getChild('NumberLiteral');
+  const leftNumber = getLastChildWithSelector(left, 'MetricExpr.LiteralExpr.Number');
+  const rightNumber = getLastChildWithSelector(right, 'MetricExpr.LiteralExpr.Number');
 
   const rightBinary = right.getChild('BinOpExpr');
 
@@ -320,7 +356,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.name === 'NumberLiteral') {
+    if (leftMostChild?.name === 'Number') {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
@@ -376,51 +412,6 @@ function getBinaryModifier(
   }
 }
 
-function makeBinOp(
-  opDef: { id: string; comparison?: boolean },
-  expr: string,
-  numberNode: SyntaxNode,
-  hasBool: boolean
-) {
-  const params: any[] = [parseFloat(getString(expr, numberNode))];
-  if (opDef.comparison) {
-    params.unshift(hasBool);
-  }
-  return {
-    id: opDef.id,
-    params,
-  };
-}
-
-function getLeftMostChild(cur: SyntaxNode): SyntaxNode | null {
-  let child = cur;
-  while (true) {
-    if (child.firstChild) {
-      child = child.firstChild;
-    } else {
-      break;
-    }
-  }
-  return child;
-}
-
-function getString(expr: string, node: SyntaxNode | TreeCursor | null | undefined) {
-  if (!node) {
-    return '';
-  }
-
-  return returnVariables(expr.substring(node.from, node.to));
-}
-
-function makeError(expr: string, node: SyntaxNode) {
-  return {
-    text: getString(expr, node),
-    from: node.from,
-    to: node.to,
-    parentType: node.parent?.name,
-  };
-}
-
 function isIntervalVariableError(node: SyntaxNode) {
   return node?.parent?.name === 'Range';
 }
@@ -432,53 +423,20 @@ function handleQuotes(string: string) {
   return string.replace(/`/g, '');
 }
 
-// Template variables
-// Taken from template_srv, but copied so to not mess with the regex.index which is manipulated in the service
-/*
- * This regex matches 3 types of variable reference with an optional format specifier
- * \$(\w+)                          $var1
- * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
- * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
- */
-const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
-
 /**
- * As variables with $ are creating parsing errors, we first replace them with magic string that is parseable and at
- * the same time we can get the variable and it's format back from it.
- * @param expr
+ * Simple helper to traverse the syntax tree. Instead of node.getChild('foo')?.getChild('bar')?.getChild('baz') you
+ * can write getChildWithSelector(node, 'foo.bar.baz')
+ * @param node
+ * @param selector
  */
-function replaceVariables(expr: string) {
-  return expr.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-    const fmt = fmt2 || fmt3;
-    let variable = var1;
-    let varType = '0';
-
-    if (var2) {
-      variable = var2;
-      varType = '1';
+function getLastChildWithSelector(node: SyntaxNode, selector: string) {
+  let child: SyntaxNode | null = node;
+  const children = selector.split('.');
+  for (const s of children) {
+    child = child.getChild(s);
+    if (!child) {
+      return null;
     }
-
-    if (var3) {
-      variable = var3;
-      varType = '2';
-    }
-
-    return `__V_${varType}__` + variable + '__V__' + (fmt ? '__F__' + fmt + '__F__' : '');
-  });
-}
-
-const varTypeFunc = [
-  (v: string, f?: string) => `\$${v}`,
-  (v: string, f?: string) => `[[${v}${f ? `:${f}` : ''}]]`,
-  (v: string, f?: string) => `\$\{${v}${f ? `:${f}` : ''}\}`,
-];
-
-/**
- * Get beck the text with variables in their original format.
- * @param expr
- */
-function returnVariables(expr: string) {
-  return expr.replace(/__V_(\d)__(.+)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
-    return varTypeFunc[parseInt(type, 10)](v, f);
-  });
+  }
+  return child;
 }

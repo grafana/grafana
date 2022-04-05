@@ -35,6 +35,17 @@ export interface DashboardMeta {
   fromScript?: boolean;
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
+  annotationsPermissions?: AnnotationsPermissions;
+}
+
+export interface AnnotationActions {
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+export interface AnnotationsPermissions {
+  dashboard: AnnotationActions;
+  organization: AnnotationActions;
 }
 
 export interface DashboardDataDTO {

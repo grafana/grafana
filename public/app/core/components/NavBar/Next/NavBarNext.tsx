@@ -4,7 +4,7 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -14,6 +14,9 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { FocusScope } from '@react-aria/focus';
+import { NavBarContext } from '../context';
+import { NavBarToggle } from './NavBarToggle';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -22,7 +25,7 @@ const onOpenSearch = () => {
 const searchItem: NavModelItem = {
   id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
-  text: 'Search dashboards',
+  text: 'Search Dashboards',
   icon: 'search',
 };
 
@@ -57,6 +60,7 @@ export const NavBarNext = React.memo(() => {
   );
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuIdOpen, setMenuIdOpen] = useState<string | null>(null);
 
   if (kiosk !== KioskMode.Off) {
     return null;
@@ -65,71 +69,81 @@ export const NavBarNext = React.memo(() => {
   return (
     <div className={styles.navWrapper}>
       <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
-        <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
-          <Icon name="bars" size="xl" />
-        </div>
+        <NavBarContext.Provider
+          value={{
+            menuIdOpen: menuIdOpen,
+            setMenuIdOpen: setMenuIdOpen,
+          }}
+        >
+          <FocusScope>
+            <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
+              <Icon name="bars" size="xl" />
+            </div>
 
-        <ul className={styles.itemList}>
-          <NavBarItemWithoutMenu
-            isActive={isMatchOrChildMatch(homeItem, activeItem)}
-            label="Home"
-            className={styles.grafanaLogo}
-            url={homeItem.url}
-          >
-            <Icon name="grafana" size="xl" />
-          </NavBarItemWithoutMenu>
-          <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
-            <Icon name="search" size="xl" />
-          </NavBarItem>
+            <NavBarToggle
+              className={styles.menuExpandIcon}
+              isExpanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+            />
 
-          {coreItems.map((link, index) => (
-            <NavBarItem
-              key={`${link.id}-${index}`}
-              isActive={isMatchOrChildMatch(link, activeItem)}
-              link={{ ...link, subTitle: undefined, onClick: undefined }}
-            >
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-            </NavBarItem>
-          ))}
-
-          {pluginItems.length > 0 &&
-            pluginItems.map((link, index) => (
-              <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
-                {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+            <ul className={styles.itemList}>
+              <NavBarItemWithoutMenu
+                isActive={isMatchOrChildMatch(homeItem, activeItem)}
+                label="Home"
+                className={styles.grafanaLogo}
+                url={homeItem.url}
+              >
+                <Icon name="grafana" size="xl" />
+              </NavBarItemWithoutMenu>
+              <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
+                <Icon name="search" size="xl" />
               </NavBarItem>
-            ))}
 
-          {configItems.map((link, index) => (
-            <NavBarItem
-              key={`${link.id}-${index}`}
-              isActive={isMatchOrChildMatch(link, activeItem)}
-              reverseMenuDirection
-              link={link}
-              className={cx({ [styles.verticalSpacer]: index === 0 })}
-            >
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-            </NavBarItem>
-          ))}
-        </ul>
+              {coreItems.map((link, index) => (
+                <NavBarItem
+                  key={`${link.id}-${index}`}
+                  isActive={isMatchOrChildMatch(link, activeItem)}
+                  link={{ ...link, subTitle: undefined, onClick: undefined }}
+                >
+                  {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                  {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                </NavBarItem>
+              ))}
+
+              {pluginItems.length > 0 &&
+                pluginItems.map((link, index) => (
+                  <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
+                    {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                    {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                  </NavBarItem>
+                ))}
+
+              {configItems.map((link, index) => (
+                <NavBarItem
+                  key={`${link.id}-${index}`}
+                  isActive={isMatchOrChildMatch(link, activeItem)}
+                  reverseMenuDirection
+                  link={link}
+                  className={cx({ [styles.verticalSpacer]: index === 0 })}
+                >
+                  {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                  {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                </NavBarItem>
+              ))}
+            </ul>
+          </FocusScope>
+        </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
       <div className={styles.menuWrapper}>
         <CSSTransition in={menuOpen} classNames={animStyles} timeout={150} unmountOnExit>
           <NavBarMenu
             activeItem={activeItem}
+            isOpen={menuOpen}
             navItems={[homeItem, searchItem, ...coreItems, ...pluginItems, ...configItems]}
             onClose={() => setMenuOpen(false)}
           />
         </CSSTransition>
-        <IconButton
-          name={menuOpen ? 'angle-left' : 'angle-right'}
-          className={styles.menuToggle}
-          size="xl"
-          onClick={() => setMenuOpen(!menuOpen)}
-        />
       </div>
     </div>
   );
@@ -141,6 +155,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   navWrapper: css({
     position: 'relative',
     display: 'flex',
+
+    '.sidemenu-hidden &': {
+      display: 'none',
+    },
   }),
   sidemenu: css({
     label: 'sidemenu',
@@ -158,10 +176,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       paddingTop: '0px',
       backgroundColor: 'inherit',
       borderRight: 0,
-    },
-
-    '.sidemenu-hidden &': {
-      visibility: 'hidden',
     },
   }),
   mobileSidemenuLogo: css({
@@ -221,20 +235,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     zIndex: theme.zIndex.sidemenu,
   }),
-  menuToggle: css({
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
+  menuExpandIcon: css({
     position: 'absolute',
-    marginRight: 0,
     top: '43px',
     right: '0px',
-    zIndex: theme.zIndex.sidemenu,
-    transform: `translateX(calc(${theme.spacing(7)} + 50%))`,
-    borderRadius: '50%',
-
-    [theme.breakpoints.down('md')]: {
-      display: 'none',
-    },
+    transform: `translateX(50%)`,
   }),
 });
 
@@ -255,34 +260,23 @@ const getAnimStyles = (theme: GrafanaTheme2) => {
     width: theme.spacing(7),
   };
 
-  const buttonShift = {
-    '& + button': {
-      transform: 'translateX(0%)',
-    },
-  };
-
   return {
     enter: css({
       ...closedStyles,
-      ...buttonShift,
     }),
     enterActive: css({
       ...transitionProps,
       ...openStyles,
-      ...buttonShift,
     }),
     enterDone: css({
       ...openStyles,
-      ...buttonShift,
     }),
     exit: css({
       ...openStyles,
-      ...buttonShift,
     }),
     exitActive: css({
       ...transitionProps,
       ...closedStyles,
-      ...buttonShift,
     }),
   };
 };

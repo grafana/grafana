@@ -35,6 +35,8 @@ export interface DataSourcePickerProps {
   variables?: boolean;
   alerting?: boolean;
   pluginId?: string;
+  /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
+  logs?: boolean;
   // If set to true and there is no value select will be empty, otherwise it will preselect default data source
   noDefault?: boolean;
   width?: number;
@@ -105,7 +107,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
     if (ds) {
       return {
-        label: ds.name.substr(0, 37),
+        label: ds.name.slice(0, 37),
         value: ds.uid,
         imgUrl: ds.meta.info.logos.small,
         hideText: hideTextValue,
@@ -123,12 +125,15 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   getDataSourceOptions() {
-    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter } = this.props;
+    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
+      this.props;
+
     const options = this.dataSourceSrv
       .getList({
         alerting,
         tracing,
         metrics,
+        logs,
         dashboard,
         mixed,
         variables,

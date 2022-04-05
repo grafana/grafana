@@ -20,7 +20,7 @@ var (
 		},
 		{
 			Name:        "httpclientprovider_azure_auth",
-			Description: "use http client for azure auth",
+			Description: "Experimental. Allow datasources to configure Azure authentication directly via JsonData",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -112,7 +112,7 @@ var (
 		},
 		{
 			Name:        "prometheus_azure_auth",
-			Description: "Use azure authentication for prometheus datasource",
+			Description: "Experimental. Azure authentication for Prometheus datasource",
 			State:       FeatureStateBeta,
 		},
 		{

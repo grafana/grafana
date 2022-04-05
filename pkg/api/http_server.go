@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -134,6 +135,7 @@ type HTTPServer struct {
 	queryDataService             *query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
+	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.PermissionsService
 	permissionServices           accesscontrol.PermissionsServices
 	NotificationService          *notifications.NotificationService
@@ -160,7 +162,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
-	loginService login.Service, accessControl accesscontrol.AccessControl,
+	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
@@ -236,6 +238,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
+		authenticator:                authenticator,
 		NotificationService:          notificationService,
 		dashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
