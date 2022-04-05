@@ -11,7 +11,7 @@ wix_image = 'grafana/ci-wix:0.1.1'
 
 disable_tests = False
 trigger_oss = {
-    'trigger': {
+    'when': {
         'repo': [
             'grafana/grafana',
         ]
