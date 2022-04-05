@@ -179,6 +179,13 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPost + "/api/v1/ngalert/admin_config",
 		http.MethodGet + "/api/v1/ngalert/alertmanagers":
 		return middleware.ReqOrgAdmin
+
+	// Grafana-only Provisioning Read Paths
+	case http.MethodGet + "/api/provisioning/policies":
+		return middleware.ReqSignedIn
+
+	case http.MethodPost + "/api/provisioning/policies":
+		return middleware.ReqEditorRole
 	}
 
 	if eval != nil {
