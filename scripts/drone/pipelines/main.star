@@ -38,7 +38,8 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
-    'test_a11y_frontend_step'
+    'test_a11y_frontend_step',
+    'trigger_oss'
 )
 
 load(
@@ -65,13 +66,6 @@ load('scripts/drone/vault.star', 'from_secret')
 
 
 ver_mode = 'main'
-trigger_oss = {
-    'trigger': {
-        'repo': [
-            'grafana/grafana',
-        ]
-    }
-}
 
 def get_steps(edition, is_downstream=False):
     services = integration_test_services(edition)

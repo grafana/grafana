@@ -4,7 +4,6 @@ load(
     'download_grabpl_step',
     'initialize_step',
     'lint_drone_step',
-    'test_release_ver',
     'build_image',
     'publish_image',
     'lint_backend_step',
@@ -38,7 +37,8 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
-    'publish_images_step'
+    'publish_images_step',
+    'trigger_oss'
 )
 
 load(
@@ -228,8 +228,8 @@ def get_steps(edition, ver_mode):
       integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     if should_upload:
-        publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode))
-        publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
+        publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss))
+        publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss))
     if should_publish:
         publish_step = store_storybook_step(edition=edition, ver_mode=ver_mode)
         build_npm_step = build_npm_packages_step(edition=edition, ver_mode=ver_mode)
@@ -432,9 +432,6 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
                 ]
             },
             'ref': ['refs/tags/v*',],
-            'repo': {
-              'exclude': ['grafana/grafana'],
-            },
         }
 
     should_publish = ver_mode == 'release'
