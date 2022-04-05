@@ -72,7 +72,7 @@ import {
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute, isFetchError } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
-import { isEmpty, reject } from 'lodash';
+import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
