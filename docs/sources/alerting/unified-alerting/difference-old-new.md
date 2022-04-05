@@ -21,7 +21,7 @@ Since unified alerts are no longer directly tied to panel queries, they do not i
 
 ## Create Loki and Mimir alerting rules
 
-In Grafana alerting, you can manage Loki and Mimir alerting rules using the same UI and API as your Grafana managed alerts.
+In Grafana alerting, you can manage Loki and Grafana Mimir alerting rules using the same UI and API as your Grafana managed alerts.
 
 ## View and search for alerts from Prometheus compatible data sources
 
