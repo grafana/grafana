@@ -5,7 +5,7 @@ keywords = ["grafana", "alerting", "guide", "group", "namespace", "mimir", "loki
 weight = 405
 +++
 
-# Mimir or Loki rule groups and namespaces
+# Grafana Mimir or Loki rule groups and namespaces
 
 A namespace contains one or more groups. The rules within a group are run sequentially at a regular interval. The default interval is one (1) minute. You can rename Mimir or Loki rule namespaces and groups, and edit group evaluation intervals.
 
