@@ -565,8 +565,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -668,8 +666,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -986,6 +982,9 @@ steps:
       from_secret: gcp_key
   image: google/cloud-sdk
   name: publish-images-grafana
+  trigger:
+    repo:
+    - grafana/grafana
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1004,6 +1003,9 @@ steps:
       from_secret: gcp_key
   image: google/cloud-sdk
   name: publish-images-grafana-oss
+  trigger:
+    repo:
+    - grafana/grafana
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1048,8 +1050,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1132,8 +1132,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1319,8 +1317,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
   status:
   - failure
 type: docker
@@ -4431,6 +4427,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 430843c058dc4f40a3f881e13fc61ab12f5b6dc823f99067e56ab49fc1bdd459
+hmac: b3197cd671410deaa970f0d86875dcfb9a259e86c31877f968b1642cdc8c7488
 
 ...

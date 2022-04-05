@@ -65,6 +65,13 @@ load('scripts/drone/vault.star', 'from_secret')
 
 
 ver_mode = 'main'
+trigger_oss = {
+    'trigger': {
+        'repo': [
+            'grafana/grafana',
+        ]
+    }
+}
 
 def get_steps(edition, is_downstream=False):
     services = integration_test_services(edition)
@@ -124,8 +131,8 @@ def get_steps(edition, is_downstream=False):
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
-        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', ubuntu=False),
-        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', ubuntu=True)
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', trigger=trigger_oss),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', trigger=trigger_oss)
     ])
 
     if include_enterprise2:
@@ -190,9 +197,6 @@ def main_pipelines(edition):
     trigger = {
         'event': ['push',],
         'branch': 'main',
-        'repo': [
-          'grafana/grafana',
-        ],
     }
     drone_change_trigger = {
         'event': ['push',],
@@ -233,7 +237,7 @@ def main_pipelines(edition):
             volumes=volumes,
         ),
         pipeline(
-            name='windows-main', edition=edition, trigger=trigger,
+            name='windows-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
             depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
         ), notify_pipeline(
@@ -242,7 +246,7 @@ def main_pipelines(edition):
     ]
     if edition != 'enterprise':
         pipelines.append(pipeline(
-            name='publish-main', edition=edition, trigger=trigger,
+            name='publish-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + store_steps,
             depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main',],
         ))

@@ -322,7 +322,7 @@ def e2e_tests_artifacts(edition):
     }
 
 
-def upload_cdn_step(edition, ver_mode):
+def upload_cdn_step(edition, ver_mode, trigger=None):
     src_dir = ''
     if ver_mode == "release":
         bucket = "$${PRERELEASE_BUCKET}"
@@ -340,7 +340,7 @@ def upload_cdn_step(edition, ver_mode):
             'grafana-server',
         ])
 
-    return {
+    step = {
         'name': 'upload-cdn-assets' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': deps,
@@ -352,6 +352,9 @@ def upload_cdn_step(edition, ver_mode):
             './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
+    if trigger:
+        step.update(trigger)
+    return step
 
 
 def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
@@ -581,11 +584,11 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     }
 
 
-def frontend_metrics_step(edition):
+def frontend_metrics_step(edition, trigger=None):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-    return {
+    step = {
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
@@ -599,6 +602,9 @@ def frontend_metrics_step(edition):
             './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
     }
+    if trigger:
+        step.update(trigger)
+    return step
 
 
 def codespell_step():
@@ -798,7 +804,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         },
     }
 
-def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
+def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     if mode == 'security':
         mode = '--{} '.format(mode)
     else:
@@ -812,7 +818,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
     else:
         deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
-    return {
+    step = {
         'name': 'publish-images-{}'.format(docker_repo),
         'image': 'google/cloud-sdk',
         'environment': {
@@ -827,6 +833,10 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
             'path': '/var/run/docker.sock'
         }],
     }
+    if trigger:
+        step.update(trigger)
+
+    return step
 
 
 def postgres_integration_tests_step(edition, ver_mode):
@@ -923,11 +933,11 @@ def memcached_integration_tests_step(edition, ver_mode):
     }
 
 
-def release_canary_npm_packages_step(edition):
+def release_canary_npm_packages_step(edition, trigger=None):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-    return {
+    step = {
         'name': 'release-canary-npm-packages',
         'image': build_image,
         'depends_on': end_to_end_tests_deps(edition),
@@ -938,6 +948,9 @@ def release_canary_npm_packages_step(edition):
             './scripts/circle-release-canary-packages.sh',
         ],
     }
+    if trigger:
+        step.update(trigger)
+    return step
 
 
 def enterprise2_suffix(edition):
@@ -946,7 +959,7 @@ def enterprise2_suffix(edition):
     return ''
 
 
-def upload_packages_step(edition, ver_mode, is_downstream=False):
+def upload_packages_step(edition, ver_mode, is_downstream=False, trigger=None):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
@@ -966,7 +979,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     else:
         deps.extend(end_to_end_tests_deps(edition))
 
-    return {
+    step = {
         'name': 'upload-packages' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': deps,
@@ -976,6 +989,9 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         },
         'commands': [cmd, ],
     }
+    if trigger:
+        step.update(trigger)
+    return step
 
 
 def store_packages_step(edition, ver_mode, is_downstream=False):
