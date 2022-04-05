@@ -19,7 +19,7 @@ Unlike legacy dashboard alerts, Grafana alerts allow you to create queries and e
 
 Since unified alerts are no longer directly tied to panel queries, they do not include images or query values in the notification email. You can use customized notification templates to view query values.
 
-## Create Loki and Mimir alerting rules
+## Create Loki and Grafana Mimir alerting rules
 
 In Grafana alerting, you can manage Loki and Grafana Mimir alerting rules using the same UI and API as your Grafana managed alerts.
 
