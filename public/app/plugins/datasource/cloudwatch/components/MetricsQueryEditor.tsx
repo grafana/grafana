@@ -1,20 +1,14 @@
 import { QueryEditorProps } from '@grafana/data';
-import { Space, EditorRow, EditorField } from '@grafana/experimental';
+import { EditorField, EditorRow, Space } from '@grafana/experimental';
+import { Input } from '@grafana/ui/src';
 import React, { ChangeEvent, PureComponent } from 'react';
 
 import { CloudWatchDatasource } from '../datasource';
 import { isMetricsQuery } from '../guards';
-import {
-  CloudWatchJsonData,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-  MetricEditorMode,
-  MetricQueryType,
-} from '../types';
-import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor, Alias } from './';
-import QueryHeader from './QueryHeader';
 import { migrateQueryAliasFormat } from '../migrations';
-import { Input } from '@grafana/ui/src';
+import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { Alias, MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from './';
+import QueryHeader from './QueryHeader';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
@@ -177,7 +171,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             tooltip="Change time series legend name using this field. See documentation for replacement variable formats."
           >
             <Alias
-              value={metricsQuery.alias ?? ''}
+              value={query.alias ?? ''}
               onChange={(value: string) => this.onChange({ ...metricsQuery, alias: value })}
             />
           </EditorField>
