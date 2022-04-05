@@ -171,7 +171,7 @@ function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuild
   const ipLineFilter = getAllByType(expr, node, 'Ip');
   if (ipLineFilter.length > 0) {
     return {
-      error: 'Matching IP addresses not supported in query builder',
+      error: 'Matching ip addresses not supported in query builder',
     };
   }
 

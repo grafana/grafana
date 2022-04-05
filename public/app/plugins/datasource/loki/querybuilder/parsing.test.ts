@@ -71,7 +71,7 @@ describe('buildVisualQueryFromString', () => {
     const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16")');
     expect(context.errors).toEqual([
       {
-        text: 'Matching IP addresses not supported in query builder: |= ip("192.168.4.5/16")',
+        text: 'Matching ip addresses not supported in query builder: |= ip("192.168.4.5/16")',
         from: 17,
         to: 40,
         parentType: 'LineFilters',
