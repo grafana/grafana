@@ -10,7 +10,6 @@ const { merge } = require('webpack-merge');
 
 const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
-const perconaSaasProdHostRegex = /check.percona.com/gm;
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -83,14 +82,6 @@ module.exports = (env = {}) =>
         chunksSortMode: 'none',
       }),
       new HTMLWebpackCSSChunks(),
-      new DefinePlugin({
-        'process.env': {
-          PERCONA_SAAS_HOST:
-            perconaSaasProdHostRegex.exec(process.env.PERCONA_TEST_SAAS_HOST) === null
-              ? JSON.stringify('https://platform-dev.percona.com')
-              : JSON.stringify('https://portal.percona.com'),
-        },
-      }),
       function () {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {
