@@ -31,6 +31,33 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} | logfmt');
   });
 
+  it('Can query with pipeline operation regexp', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Regexp, params: ['re'] }],
+      })
+    ).toBe('{app="grafana"} | regexp `re`');
+  });
+
+  it('Can query with pipeline operation pattern', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Pattern, params: ['<pattern>'] }],
+      })
+    ).toBe('{app="grafana"} | pattern `<pattern>`');
+  });
+
+  it('Can query with pipeline operation unpack', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Unpack, params: [] }],
+      })
+    ).toBe('{app="grafana"} | unpack');
+  });
+
   it('Can query with line filter contains operation', () => {
     expect(
       modeller.renderQuery({
