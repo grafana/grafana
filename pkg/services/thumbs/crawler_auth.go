@@ -2,30 +2,38 @@ package thumbs
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
-type CrawlerAccountSetupService interface {
-	Setup(ctx context.Context) (CrawlerAccountIds, error)
+type CrawlerAuthSetupService interface {
+	Setup(ctx context.Context) (CrawlerAuth, error)
 }
 
-func ProvideCrawlerAccountSetupService() *OSSCrawlerAccountSetupService {
-	return &OSSCrawlerAccountSetupService{}
+func ProvideCrawlerAuthSetupService() *OSSCrawlerAuthSetupService {
+	return &OSSCrawlerAuthSetupService{}
 }
 
-type OSSCrawlerAccountSetupService struct{}
+type OSSCrawlerAuthSetupService struct{}
 
-type CrawlerAccountIds interface {
-	GetForOrgId(orgId int64) int64
+type CrawlerAuth interface {
+	GetUserId(orgId int64) int64
+	GetOrgRole() models.RoleType
 }
 
-type staticCrawlerAccountIds struct {
-	userId int64
+type staticCrawlerAuth struct {
+	userId  int64
+	orgRole models.RoleType
 }
 
-func (o *staticCrawlerAccountIds) GetForOrgId(orgId int64) int64 {
+func (o *staticCrawlerAuth) GetOrgRole() models.RoleType {
+	return o.orgRole
+}
+
+func (o *staticCrawlerAuth) GetUserId(orgId int64) int64 {
 	return o.userId
 }
 
-func (o *OSSCrawlerAccountSetupService) Setup(ctx context.Context) (CrawlerAccountIds, error) {
-	return &staticCrawlerAccountIds{userId: 0}, nil
+func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, error) {
+	return &staticCrawlerAuth{userId: 0, orgRole: models.ROLE_ADMIN}, nil
 }
