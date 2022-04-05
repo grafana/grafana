@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	domain "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/services"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -120,11 +120,11 @@ func newFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (services.EmbeddedRoutingTree, error) {
+func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error) {
 	if orgID != 1 {
-		return services.EmbeddedRoutingTree{}, store.ErrNoAlertmanagerConfiguration
+		return provisioning.EmbeddedRoutingTree{}, store.ErrNoAlertmanagerConfiguration
 	}
-	return services.EmbeddedRoutingTree{
+	return provisioning.EmbeddedRoutingTree{
 		Route:      f.tree,
 		Provenance: f.prov,
 	}, nil
@@ -141,8 +141,8 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 
 type fakeFailingNotificationPolicyService struct{}
 
-func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (services.EmbeddedRoutingTree, error) {
-	return services.EmbeddedRoutingTree{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error) {
+	return provisioning.EmbeddedRoutingTree{}, fmt.Errorf("something went wrong")
 }
 
 func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
