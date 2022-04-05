@@ -187,22 +187,9 @@ describe('migration', () => {
       matchExact: false,
       expression: '',
     };
-    describe('when using old alias pattern', () => {
-      it('without spaces should be migrated', () => {
-        const testQuery = { ...baseQuery, alias: '{{region}}' };
-        const result = migrateQueryAliasFormat(testQuery);
-        expect(result.alias).toBe("${PROP('Region')}");
-      });
-
-      it('with spaces should be migrated', () => {
-        const testQuery = { ...baseQuery, alias: '{{ region }}' };
-        const result = migrateQueryAliasFormat(testQuery);
-        expect(result.alias).toBe("${PROP('Region')}");
-      });
-    });
-
     describe('old alias should be migrated', () => {
       const cases = [
+        ['{{  metric     }}', "${PROP('MetricName')}"],
         ['{{metric}}', "${PROP('MetricName')}"],
         ['{{namespace}}', "${PROP('Namespace')}"],
         ['{{period}}', "${PROP('Period')}"],
@@ -213,7 +200,7 @@ describe('migration', () => {
         [
           'some {{combination}} of {{label}} and {{metric}}',
           "some $PROP{'Dim.combination'} of ${LABEL} and ${PROP('MetricName')}",
-        ], // can try to make a more realistic example here
+        ],
         [
           'some {{combination  }}{{ label}} and {{metric}}',
           "some $PROP{'Dim.combination'}${LABEL} and ${PROP('MetricName')}",
