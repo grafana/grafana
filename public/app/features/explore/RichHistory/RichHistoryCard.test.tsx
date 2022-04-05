@@ -95,7 +95,7 @@ describe('RichHistoryCard', () => {
   it('should render data source icon and name', async () => {
     setup();
     const datasourceIcon = await screen.findByLabelText('Data source icon');
-    const datasourceName = await screen.findByLabelText('Data source name');
+    const datasourceName = screen.getByLabelText('Data source name');
     expect(datasourceIcon).toBeInTheDocument();
     expect(datasourceName).toBeInTheDocument();
   });
