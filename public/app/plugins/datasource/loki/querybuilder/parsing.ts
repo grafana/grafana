@@ -58,7 +58,16 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     case 'LineFilter': {
-      visQuery.operations.push(getLineFilter(expr, node));
+      const { operation, error } = getLineFilter(expr, node);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      // Show error for query patterns not supported in visual query builder
+      if (error) {
+        const err = makeError(expr, node);
+        err.text = `${error}: ${err.text}`;
+        context.errors.push(err);
+      }
       break;
     }
 
@@ -68,11 +77,25 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     case 'LabelFilter': {
-      visQuery.operations.push(getLabelFilter(expr, node));
+      const { operation, error } = getLabelFilter(expr, node);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      // Show error for query patterns not supported in visual query builder
+      if (error) {
+        const err = makeError(expr, node);
+        err.text = `${error}: ${err.text}`;
+        context.errors.push(err);
+      }
       break;
     }
 
-    // Need to figure out JsonExpressionParser
+    case 'JsonExpressionParser': {
+      // JsonExpressionParser is not supported in query builder
+      const err = makeError(expr, node);
+      err.text = `JsonExpressionParser not supported in visual query builder: ${err.text}`;
+      context.errors.push(err);
+    }
 
     case 'LineFormatExpr': {
       visQuery.operations.push(getLineFormat(expr, node));
@@ -85,7 +108,17 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     case 'UnwrapExpr': {
-      visQuery.operations.push(getUnwrap(expr, node));
+      const { operation, error } = getUnwrap(expr, node);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      // Show error for query patterns not supported in visual query builder
+      if (error) {
+        const err = makeError(expr, node);
+        err.text = `${error}: ${err.text}`;
+        context.errors.push(err);
+      }
+
       break;
     }
 
@@ -139,7 +172,15 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   };
 }
 
-function getLineFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
+function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+  // Check for nodes not supported in visual builder and return error
+  const ipLineFilter = getAllByType(expr, node, 'Ip');
+  if (ipLineFilter.length > 0) {
+    return {
+      error: 'Matching IP addresses not supported in query builder',
+    };
+  }
+
   const mapFilter: any = {
     '|=': '__line_contains',
     '!=': '__line_contains_not',
@@ -150,8 +191,10 @@ function getLineFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const filterExpr = handleQuotes(getString(expr, node.getChild('String')));
 
   return {
-    id: mapFilter[filter],
-    params: [filterExpr],
+    operation: {
+      id: mapFilter[filter],
+      params: [filterExpr],
+    },
   };
 }
 
@@ -167,9 +210,20 @@ function getLabelParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
   };
 }
 
-function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  const id = '__label_filter';
+function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+  // Check for nodes not supported in visual builder and return error
+  if (node.getChild('Or') || node.getChild('And') || node.getChild('Comma')) {
+    return {
+      error: 'Label filter with comma, "and", "or" not supported in query builder',
+    };
+  }
+  if (node.firstChild!.name === 'IpLabelFilter') {
+    return {
+      error: 'IpLabelFilter not supported in query builder',
+    };
+  }
 
+  const id = '__label_filter';
   if (node.firstChild!.name === 'UnitFilter') {
     const filter = node.firstChild!.firstChild;
     const label = filter!.firstChild;
@@ -178,48 +232,35 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
     const valueString = handleQuotes(getString(expr, value));
 
     return {
-      id,
-      params: [getString(expr, label), getString(expr, op), valueString],
+      operation: {
+        id,
+        params: [getString(expr, label), getString(expr, op), valueString],
+      },
     };
   }
+  // In this case it is Matcher or NumberFilter
+  const filter = node.firstChild;
+  const label = filter!.firstChild;
+  const op = label!.nextSibling;
+  const value = op!.nextSibling;
+  const params = [getString(expr, label), getString(expr, op), handleQuotes(getString(expr, value))];
 
-  if (node.firstChild!.name === 'IpLabelFilter') {
-    // Not implemented in visual query builder yet
-    const filter = node.firstChild!;
-    const label = filter.firstChild!;
-    const op = label.nextSibling!;
-    const ip = label.nextSibling;
-    const value = op.nextSibling!;
+  // Special case of pipe filtering - no errors
+  if (params.join('') === `__error__=`) {
     return {
-      id,
-      params: [
-        getString(expr, label),
-        getString(expr, op),
-        handleQuotes(getString(expr, ip)),
-        handleQuotes(getString(expr, value)),
-      ],
-    };
-  } else {
-    // In this case it is Matcher or NumberFilter
-    const filter = node.firstChild;
-    const label = filter!.firstChild;
-    const op = label!.nextSibling;
-    const value = op!.nextSibling;
-    const params = [getString(expr, label), getString(expr, op), getString(expr, value).replace(/"/g, '')];
-
-    //Special case of pipe filtering - no errors
-    if (params.join('') === `__error__=`) {
-      return {
+      operation: {
         id: '__label_filter_no_errors',
         params: [],
-      };
-    }
-
-    return {
-      id,
-      params,
+      },
     };
   }
+
+  return {
+    operation: {
+      id,
+      params,
+    },
+  };
 }
 
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
@@ -242,17 +283,26 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 
   return {
     id,
-    params: [getString(expr, identifier), getString(expr, op), valueString],
+    params: [getString(expr, identifier), valueString],
   };
 }
 
-function getUnwrap(expr: string, node: SyntaxNode): QueryBuilderOperation {
+function getUnwrap(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+  // Check for nodes not supported in visual builder and return error
+  if (node.getChild('ConvOp')) {
+    return {
+      error: 'Unwrap with conversion operator not supported in query builder',
+    };
+  }
+
   const id = 'unwrap';
   const string = getString(expr, node.getChild('Identifier'));
 
   return {
-    id,
-    params: [string],
+    operation: {
+      id,
+      params: [string],
+    },
   };
 }
 
