@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
@@ -17,8 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -192,13 +195,16 @@ type dashboardFakePluginClient struct {
 func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	sc := setupHTTPServerWithMockDb(t, false, false)
 
+	ss := kvstore.SetupTestService(t)
+	ds := datasources.ProvideService(bus.New(), nil, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+
 	setInitCtxSignedInViewer(sc.initCtx)
 	sc.hs.queryDataService = query.ProvideService(
 		nil,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
-		fakes.NewFakeSecretsService(),
+		ds,
 		&dashboardFakePluginClient{},
 		&fakeOAuthTokenService{},
 	)
