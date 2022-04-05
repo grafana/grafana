@@ -118,7 +118,7 @@ func (a *AvatarCacheServer) Handler(ctx *models.ReqContext) {
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
 		ctx.Logger.Warn("avatar encode error:", "err", err)
-		ctx.Resp.WriteHeader(500)
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
