@@ -208,7 +208,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isActive?: boolean, isMenuOpen?: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, isActive?: boolean) => ({
   element: css({
     backgroundColor: 'transparent',
     border: 'none',
