@@ -151,7 +151,7 @@ describe('buildVisualQueryFromString', () => {
     ]);
   });
 
-  it('returns error for query with IP label filter', () => {
+  it('returns error for query with ip label filter', () => {
     const context = buildVisualQueryFromString('{app="frontend"} | logfmt | address=ip("192.168.4.5/16")');
     expect(context.errors).toEqual([
       {
