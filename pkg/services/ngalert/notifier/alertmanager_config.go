@@ -29,7 +29,7 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 	return fmt.Sprintf("failed to save and apply Alertmanager configuration: %s", e.Inner.Error())
 }
 
-// AlertmanagerConfigService is a domain-layer service which manages configs for the Grafana alertmanager.
+// AlertmanagerConfigService manages configs for the Grafana alertmanager.
 type AlertmanagerConfigService struct {
 	mam     *MultiOrgAlertmanager
 	secrets secrets.Service
