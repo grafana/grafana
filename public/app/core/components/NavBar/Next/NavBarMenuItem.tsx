@@ -2,6 +2,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
+import { getAllowedItemKeyIdIcons } from '../utils';
 
 export interface Props {
   icon?: IconName;
@@ -14,6 +15,7 @@ export interface Props {
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
+  itemKey?: string;
 }
 
 export function NavBarMenuItem({
@@ -26,13 +28,17 @@ export function NavBarMenuItem({
   text,
   url,
   isMobile = false,
+  itemKey,
 }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const elStyle = cx(styles.element, styleOverrides);
-
+  const allowedItemKeysIdsIcons = getAllowedItemKeyIdIcons();
   const linkContent = (
     <div className={styles.linkContent}>
+      {icon && itemKey && allowedItemKeysIdsIcons.includes(itemKey) && (
+        <Icon data-testid="dropdown-child-icon" name={icon} />
+      )}
       <span>{text}</span>
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
