@@ -1,12 +1,20 @@
 import { QueryEditorProps } from '@grafana/data';
-import { Space } from '@grafana/experimental';
+import { Space, EditorRow, EditorField } from '@grafana/experimental';
 import React, { ChangeEvent, PureComponent } from 'react';
 
 import { CloudWatchDatasource } from '../datasource';
 import { isMetricsQuery } from '../guards';
-import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from '../types';
-import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from './';
+import {
+  CloudWatchJsonData,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from '../types';
+import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor, Alias } from './';
 import QueryHeader from './QueryHeader';
+import { migrateQueryAliasFormat } from '../migrations';
+import { Input } from '@grafana/ui/src';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
@@ -29,7 +37,7 @@ export const normalizeQuery = ({
   metricEditorMode,
   ...rest
 }: CloudWatchMetricsQuery): CloudWatchMetricsQuery => {
-  const normalizedQuery = {
+  const normalizedQuery = migrateQueryAliasFormat({
     queryMode: 'Metrics' as const,
     namespace: namespace ?? '',
     metricName: metricName ?? '',
@@ -44,7 +52,7 @@ export const normalizeQuery = ({
     metricEditorMode: metricEditorMode ?? MetricEditorMode.Builder,
     sqlExpression: sqlExpression ?? '',
     ...rest,
-  };
+  });
   return !rest.hasOwnProperty('matchExact') ? { ...normalizedQuery, matchExact: true } : normalizedQuery;
 };
 
@@ -131,6 +139,49 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
           </>
         )}
         <Space v={0.5} />
+        <EditorRow>
+          <EditorField
+            label="ID"
+            width={26}
+            optional
+            tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
+          >
+            <Input
+              id={`${query.refId}-cloudwatch-metric-query-editor-id`}
+              onBlur={onRunQuery}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                this.onChange({ ...metricsQuery, id: event.target.value })
+              }
+              type="text"
+              invalid={!!query.id && !/^$|^[a-z][a-zA-Z0-9_]*$/.test(query.id)}
+              value={query.id}
+            />
+          </EditorField>
+
+          <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
+            <Input
+              id={`${query.refId}-cloudwatch-metric-query-editor-period`}
+              value={query.period || ''}
+              placeholder="auto"
+              onBlur={onRunQuery}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                this.onChange({ ...metricsQuery, period: event.target.value })
+              }
+            />
+          </EditorField>
+
+          <EditorField
+            label="Alias"
+            width={26}
+            optional
+            tooltip="Change time series legend name using this field. See documentation for replacement variable formats."
+          >
+            <Alias
+              value={metricsQuery.alias ?? ''}
+              onChange={(value: string) => this.onChange({ ...metricsQuery, alias: value })}
+            />
+          </EditorField>
+        </EditorRow>
       </>
     );
   }
