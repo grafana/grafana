@@ -32,7 +32,7 @@ import "github.com/grafana/grafana/pkg/services/ngalert/models"
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/contactpoints provisioning RouteDeleteContactpoints
+// swagger:route DELETE /api/provisioning/contactpoints/{ID} provisioning RouteDeleteContactpoints
 //
 // Create a contactpoint
 //

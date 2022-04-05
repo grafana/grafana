@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/services"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -77,6 +78,7 @@ type API struct {
 	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ContactpointService  *services.EmbeddedContactPointService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -132,8 +134,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
 		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-			log:      logger,
-			policies: api.Policies,
+			log:                 logger,
+			policies:            api.Policies,
+			contactpointService: api.ContactpointService,
 		}), m)
 	}
 }

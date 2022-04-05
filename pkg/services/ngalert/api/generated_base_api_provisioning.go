@@ -53,11 +53,11 @@ func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) re
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
-			toMacaronPath("/api/provisioning/contactpoints"),
-			api.authorize(http.MethodDelete, "/api/provisioning/contactpoints"),
+			toMacaronPath("/api/provisioning/contactpoints/{ID}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/contactpoints/{ID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/contactpoints",
+				"/api/provisioning/contactpoints/{ID}",
 				srv.RouteDeleteContactpoints,
 				m,
 			),

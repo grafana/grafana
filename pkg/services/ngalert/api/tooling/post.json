@@ -3217,6 +3217,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3275,17 +3276,14 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
    "properties": {
@@ -3344,12 +3342,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3478,7 +3475,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3518,7 +3514,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
    "properties": {
@@ -4767,27 +4765,6 @@
    }
   },
   "/api/provisioning/contactpoints": {
-   "delete": {
-    "consumes": [
-     "application/json"
-    ],
-    "description": "Create a contactpoint",
-    "operationId": "RouteDeleteContactpoints",
-    "responses": {
-     "202": {
-      "$ref": "#/responses/Accepted"
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "tags": [
-     "provisioning"
-    ]
-   },
    "get": {
     "operationId": "RouteGetContactpoints",
     "responses": {
@@ -4854,6 +4831,29 @@
       }
      }
     ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/contactpoints/{ID}": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Create a contactpoint",
+    "operationId": "RouteDeleteContactpoints",
     "responses": {
      "202": {
       "$ref": "#/responses/Accepted"
