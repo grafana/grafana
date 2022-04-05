@@ -19,7 +19,7 @@ For Mimir and Loki data sources to work with Grafana 8.0 alerting, enable the ru
 
 > **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings page and clear the **Manage alerts via Alerting UI** checkbox.
 
-## Add a Mimir or Loki managed recording rule
+## Add a Grafana Mimir or Loki managed recording rule
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **New alert rule**.
