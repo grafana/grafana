@@ -23,7 +23,8 @@ export interface Props {
 export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnimationInProgress }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const animStyles = getAnimStyles(theme);
+  const ANIMATION_DURATION = theme.transitions.duration.standard;
+  const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps, underlayProps } = useOverlay(
@@ -44,7 +45,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           appear={isOpen}
           in={isOpen}
           classNames={animStyles.overlay}
-          timeout={theme.transitions.duration.standard}
+          timeout={ANIMATION_DURATION}
         >
           <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
             <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
@@ -60,12 +61,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           </div>
         </CSSTransition>
       </FocusScope>
-      <CSSTransition
-        appear={isOpen}
-        in={isOpen}
-        classNames={animStyles.underlay}
-        timeout={theme.transitions.duration.standard}
-      >
+      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.underlay} timeout={ANIMATION_DURATION}>
         <div className={styles.underlay} {...underlayProps} />
       </CSSTransition>
     </OverlayContainer>
@@ -120,16 +116,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const getAnimStyles = (theme: GrafanaTheme2) => {
+const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const commonTransition = {
     transitionProperty: 'width, background-color, opacity',
-    transitionDuration: `${theme.transitions.duration.standard}ms`,
+    transitionDuration: `${animationDuration}ms`,
     transitionTimingFunction: theme.transitions.easing.easeInOut,
   };
 
   const overlayTransition = {
     ...commonTransition,
-    transitionProperty: 'width, background-color',
+    transitionProperty: 'width, background-color, box-shadow',
   };
 
   const underlayTransition = {
@@ -139,11 +135,13 @@ const getAnimStyles = (theme: GrafanaTheme2) => {
 
   const overlayOpen = {
     backgroundColor: theme.colors.background.canvas,
+    boxShadow: theme.shadows.z3,
     width: '300px',
   };
 
   const overlayClosed = {
     backgroundColor: theme.colors.background.primary,
+    boxShadow: 'none',
     width: theme.spacing(7),
   };
 
