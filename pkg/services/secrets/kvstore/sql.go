@@ -92,6 +92,7 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 		kv.log.Debug("error encrypting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 		return err
 	}
+	encodedValue := b64.EncodeToString(encryptedValue)
 	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		item := Item{
 			OrgId:     &orgId,
@@ -105,12 +106,12 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			return err
 		}
 
-		if has && item.Value == value {
+		if has && item.Value == encodedValue {
 			kv.log.Debug("secret value not changed", "orgId", orgId, "type", typ, "namespace", namespace)
 			return nil
 		}
 
-		item.Value = b64.EncodeToString(encryptedValue)
+		item.Value = encodedValue
 		item.Updated = time.Now()
 
 		if has {

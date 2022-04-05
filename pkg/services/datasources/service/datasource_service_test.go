@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	encJson "encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -195,12 +195,12 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsStore := kvstore.SetupTestService(t)
 		dsService := ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
-		rt1, err := dsService.GetHTTPTransport(&ds, provider)
+		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt1)
 		tr1 := configuredTransport
 
-		rt2, err := dsService.GetHTTPTransport(&ds, provider)
+		rt2, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -236,7 +236,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Updated:        time.Now().Add(-2 * time.Minute),
 		}
 
-		rt1, err := dsService.GetHTTPTransport(&ds, provider)
+		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NotNil(t, rt1)
 		require.NoError(t, err)
 
@@ -250,7 +250,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		ds.SecureJsonData = map[string][]byte{}
 		ds.Updated = time.Now()
 
-		rt2, err := dsService.GetHTTPTransport(&ds, provider)
+		rt2, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -277,16 +277,23 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		ds := models.DataSource{
 			Id:       1,
+			OrgId:    1,
+			Name:     "kubernetes",
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: json,
-			SecureJsonData: map[string][]byte{
-				"tlsClientCert": []byte(clientCert),
-				"tlsClientKey":  []byte(clientKey),
-			},
 		}
 
-		rt, err := dsService.GetHTTPTransport(&ds, provider)
+		secureJsonData, err := encJson.Marshal(map[string]string{
+			"tlsClientCert": clientCert,
+			"tlsClientKey":  clientKey,
+		})
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
+		require.NoError(t, err)
+
+		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
@@ -314,15 +321,22 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		ds := models.DataSource{
 			Id:       1,
+			OrgId:    1,
+			Name:     "kubernetes",
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: json,
-			SecureJsonData: map[string][]byte{
-				"tlsCACert": []byte(caCert),
-			},
 		}
 
-		rt, err := dsService.GetHTTPTransport(&ds, provider)
+		secureJsonData, err := encJson.Marshal(map[string]string{
+			"tlsCACert": caCert,
+		})
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
+		require.NoError(t, err)
+
+		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
@@ -353,12 +367,12 @@ func TestService_GetHttpTransport(t *testing.T) {
 			JsonData: json,
 		}
 
-		rt1, err := dsService.GetHTTPTransport(&ds, provider)
+		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt1)
 		tr1 := configuredTransport
 
-		rt2, err := dsService.GetHTTPTransport(&ds, provider)
+		rt2, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -378,12 +392,21 @@ func TestService_GetHttpTransport(t *testing.T) {
 		dsService := ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		ds := models.DataSource{
-			Id:             1,
-			Url:            "http://k8s:8001",
-			Type:           "Kubernetes",
-			JsonData:       json,
-			SecureJsonData: map[string][]byte{"httpHeaderValue1": []byte(`Bearer xf5yhfkpsnmgo`)},
+			Id:       1,
+			OrgId:    1,
+			Name:     "kubernetes",
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
 		}
+
+		secureJsonData, err := encJson.Marshal(map[string]string{
+			"httpHeaderValue1": "Bearer xf5yhfkpsnmgo",
+		})
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
+		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(json, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
 		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
@@ -405,7 +428,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		// 2. Get HTTP transport from datasource which uses the test server as backend
 		ds.Url = backend.URL
-		rt, err := dsService.GetHTTPTransport(&ds, provider)
+		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 
@@ -440,7 +463,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			JsonData: json,
 		}
 
-		client, err := dsService.GetHTTPClient(&ds, provider)
+		client, err := dsService.GetHTTPClient(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, client)
 		require.Equal(t, 19*time.Second, client.Timeout)
@@ -471,7 +494,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			JsonData: json,
 		}
 
-		_, err = dsService.GetHTTPTransport(&ds, provider)
+		_, err = dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, configuredOpts)
 		require.NotNil(t, configuredOpts.SigV4)
@@ -539,9 +562,9 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsStore := kvstore.SetupTestService(t)
-				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
-				opts, err := dsService.httpClientOptions(&ds)
+				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
 
 				require.NotNil(t, opts.Middlewares)
@@ -556,9 +579,9 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsStore := kvstore.SetupTestService(t)
-				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
-				opts, err := dsService.httpClientOptions(&ds)
+				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
 
 				if opts.Middlewares != nil {
@@ -575,9 +598,9 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsStore := kvstore.SetupTestService(t)
-				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
-				_, err := dsService.httpClientOptions(&ds)
+				_, err := dsService.httpClientOptions(context.Background(), &ds)
 				assert.Error(t, err)
 			})
 
@@ -593,9 +616,9 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsStore := kvstore.SetupTestService(t)
-				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
-				opts, err := dsService.httpClientOptions(ctx, &ds)
+				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
 
 				require.NotNil(t, opts.Middlewares)
@@ -610,10 +633,10 @@ func TestService_HTTPClientOptions(t *testing.T) {
 					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 				})
 
-				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				secretsStore := kvstore.SetupTestService(t)
+				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
-				opts, err := dsService.httpClientOptions(&ds)
+				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
 
 				if opts.Middlewares != nil {
@@ -632,10 +655,10 @@ func TestService_HTTPClientOptions(t *testing.T) {
 					"azureEndpointResourceId": "invalid",
 				})
 
-				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				secretsStore := kvstore.SetupTestService(t)
+				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
-				_, err := dsService.httpClientOptions(&ds)
+				_, err := dsService.httpClientOptions(context.Background(), &ds)
 				assert.Error(t, err)
 			})
 		})
@@ -652,10 +675,10 @@ func TestService_HTTPClientOptions(t *testing.T) {
 					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 				})
 
-				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+				secretsStore := kvstore.SetupTestService(t)
+				dsService := ProvideService(bus.New(), nil, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
-				opts, err := dsService.httpClientOptions(&ds)
+				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
 
 				if opts.Middlewares != nil {

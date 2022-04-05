@@ -401,7 +401,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
 		}
 
-		if val, exists, err := s.DecryptedValue(ctx, ds, "sigV4AccessKey"); err != nil {
+		if val, exists, err := s.DecryptedValue(ctx, ds, "sigV4AccessKey"); err == nil {
 			if exists {
 				opts.SigV4.AccessKey = val
 			}
@@ -409,7 +409,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 			return opts, err
 		}
 
-		if val, exists, err := s.DecryptedValue(ctx, ds, "sigV4SecretKey"); err != nil {
+		if val, exists, err := s.DecryptedValue(ctx, ds, "sigV4SecretKey"); err == nil {
 			if exists {
 				opts.SigV4.SecretKey = val
 			}
@@ -439,7 +439,7 @@ func (s *Service) dsTLSOptions(ctx context.Context, ds *models.DataSource) (sdkh
 
 	if tlsClientAuth || tlsAuthWithCACert {
 		if tlsAuthWithCACert {
-			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsCACert"); err != nil {
+			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsCACert"); err == nil {
 				if exists && len(val) > 0 {
 					opts.CACertificate = val
 				}
@@ -449,14 +449,15 @@ func (s *Service) dsTLSOptions(ctx context.Context, ds *models.DataSource) (sdkh
 		}
 
 		if tlsClientAuth {
-			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientCert"); err != nil {
+			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientCert"); err == nil {
+				fmt.Print("\n\n\n\n", val, exists, err, "\n\n\n\n")
 				if exists && len(val) > 0 {
 					opts.ClientCertificate = val
 				}
 			} else {
 				return opts, err
 			}
-			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientKey"); err != nil {
+			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientKey"); err == nil {
 				if exists && len(val) > 0 {
 					opts.ClientKey = val
 				}
