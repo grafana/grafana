@@ -71,11 +71,11 @@ func (a *Avatar) Encode(wr io.Writer) error {
 }
 
 func (a *Avatar) update(baseUrl string) (err error) {
-	baseUrl += a.hash + "?"
+	customUrl := baseUrl + a.hash + "?"
 	select {
 	case <-time.After(time.Second * 3):
 		err = fmt.Errorf("get gravatar image %s timeout", a.hash)
-	case err = <-thunder.GoFetch(baseUrl, a):
+	case err = <-thunder.GoFetch(customUrl, a):
 	}
 	return err
 }
@@ -85,7 +85,7 @@ func (a *Avatar) GetIsCustom() bool {
 }
 
 // Quick error handler to avoid multiple copy pastes
-func (a *Avatar) HandleErrorResponse() {
+func (a *Avatar) setAvatarNotFound() {
 	a.notFound = true
 	a.isCustom = false
 }
@@ -281,7 +281,7 @@ type ResponseHandler func(av *Avatar, resp *http.Response) error
 // Verifies the Gravatar response code was 200, then stores the image byte slice
 func getGravatarHandler(av *Avatar, resp *http.Response) error {
 	if resp.StatusCode != http.StatusOK {
-		av.HandleErrorResponse()
+		av.setAvatarNotFound()
 		return fmt.Errorf("status code: %d", resp.StatusCode)
 	}
 
@@ -312,7 +312,7 @@ func performGet(url string, av *Avatar, handler ResponseHandler) error {
 	alog.Debug("Fetching avatar url with parameters", "url", url)
 	resp, err := client.Do(req)
 	if err != nil {
-		av.HandleErrorResponse()
+		av.setAvatarNotFound()
 		return fmt.Errorf("gravatar unreachable: %w", err)
 	}
 	defer func() {
