@@ -35,6 +35,7 @@ const PROM_STYLE_METRIC_LABEL = '__name__';
 enum PushMode {
   wide,
   labels,
+  decodeLabels,
   // long
 }
 
@@ -212,8 +213,13 @@ export class StreamingDataFrame implements DataFrame {
         firstField.type === FieldType.string &&
         (firstField.name === 'labels' || firstField.name === 'Labels')
       ) {
-        this.pushMode = PushMode.labels;
-        this.timeFieldIndex = 0; // after labels are removed!
+        if(this.options.decodeLabelsOnly) {
+          this.pushMode = PushMode.decodeLabels;
+
+        } else {
+          this.pushMode = PushMode.labels;
+          this.timeFieldIndex = 0; // after labels are removed!
+        }
       }
 
       const niceSchemaFields = this.pushMode === PushMode.labels ? schema.fields.slice(1) : schema.fields;
@@ -240,17 +246,20 @@ export class StreamingDataFrame implements DataFrame {
       } else {
         this.packetInfo.schemaChanged = true;
         const isWide = this.pushMode === PushMode.wide;
-        this.fields = niceSchemaFields.map((f) => {
+        this.fields = niceSchemaFields.map((f, idx) => {
           const config = f.config ?? {};
           if (displayNameFormat) {
             const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...f.labels };
             config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
+          // when `decodeLabels` mode, the labels that arrive in strings will get decoded,
+          // and the field should have the `other` type.
+          const type = ((this.pushMode === PushMode.decodeLabels) && (idx === 0)) ? FieldType.other : (f.type ?? FieldType.other);
           return {
             config,
             name: f.name,
             labels: f.labels,
-            type: f.type ?? FieldType.other,
+            type,
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
               ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
@@ -296,6 +305,11 @@ export class StreamingDataFrame implements DataFrame {
         });
 
         values = join(tables);
+      }
+
+      if (this.pushMode === PushMode.decodeLabels) {
+        // first field is the labels-field
+        values[0] = values[0].map(v => parseLabelsFromField(v))
       }
 
       if (values.length !== this.fields.length) {
@@ -460,6 +474,7 @@ export class StreamingDataFrame implements DataFrame {
 
 export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions {
   return {
+    decodeLabelsOnly: opts?.decodeLabelsOnly,
     maxLength: opts?.maxLength ?? 1000,
     maxDelta: opts?.maxDelta ?? Infinity,
     action: opts?.action ?? StreamingFrameAction.Append,

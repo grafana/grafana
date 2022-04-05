@@ -831,6 +831,101 @@ describe('Streaming JSON', () => {
     `);
   });
 
+  describe('streaming labels column, decodeLabelsOnly-mode', () => {
+    const stream = StreamingDataFrame.fromDataFrameJSON(
+      {
+        schema: {
+          fields: [
+            { name: 'labels', type: FieldType.string },
+            { name: 'time', type: FieldType.time },
+            { name: 'line', type: FieldType.string },
+          ],
+        },
+      },
+      {
+        maxLength: 4,
+        decodeLabelsOnly: true,
+      }
+    );
+
+    stream.push({
+      data: {
+        values: [
+          ['level=info', 'level=error'],
+          [101, 102],
+          ['line1', 'line2'],
+        ],
+      },
+    });
+
+    stream.push({
+      data: {
+        values: [
+          ['level=error', 'level=error'],
+          [102, 103],
+          ['line3', 'line4'],
+        ],
+      },
+    });
+
+    stream.push({
+      data: {
+        values: [
+          ['level=error', 'level=info'],
+          [104, 105],
+          ['line5', 'line6'],
+        ],
+      },
+    });
+
+    expect(stream.fields.map((f) => ({ name: f.name, type: f.type, labels: f.labels, values: f.values.buffer })))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "labels": undefined,
+          "name": "labels",
+          "type": "other",
+          "values": Array [
+            Object {
+              "level": "error",
+            },
+            Object {
+              "level": "error",
+            },
+            Object {
+              "level": "error",
+            },
+            Object {
+              "level": "info",
+            },
+          ],
+        },
+        Object {
+          "labels": undefined,
+          "name": "time",
+          "type": "time",
+          "values": Array [
+            102,
+            103,
+            104,
+            105,
+          ],
+        },
+        Object {
+          "labels": undefined,
+          "name": "line",
+          "type": "string",
+          "values": Array [
+            "line3",
+            "line4",
+            "line5",
+            "line6",
+          ],
+        },
+      ]
+    `);
+  });
+
   describe('keep track of packets', () => {
     const json: DataFrameJSON = {
       schema: {
