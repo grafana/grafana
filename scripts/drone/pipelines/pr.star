@@ -9,6 +9,7 @@ load(
     'shellcheck_step',
     'build_backend_step',
     'build_frontend_step',
+    'build_frontend_package_step',
     'build_plugins_step',
     'test_backend_step',
     'test_backend_integration_step',
@@ -42,6 +43,12 @@ load(
     'pipeline',
 )
 
+load(
+    'scripts/drone/pipelines/docs.star',
+    'docs_pipelines',
+    'trigger_docs',
+)
+
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
@@ -62,6 +69,7 @@ def pr_pipelines(edition):
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
@@ -129,5 +137,5 @@ def pr_pipelines(edition):
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
             volumes=volumes,
-        ),
+        ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]

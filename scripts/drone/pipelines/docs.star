@@ -1,14 +1,14 @@
 load(
     'scripts/drone/steps/lib.star',
+    'build_image',
     'initialize_step',
     'download_grabpl_step',
     'lint_frontend_step',
     'codespell_step',
-    'shellcheck_step',
-    'build_frontend_step',
     'test_frontend_step',
     'build_storybook_step',
     'build_frontend_docs_step',
+    'build_frontend_package_step',
     'build_docs_website_step',
 )
 
@@ -23,22 +23,42 @@ load(
     'pipeline',
 )
 
-ver_mode = 'pr'
 
-def docs_pipelines(edition):
+def docs_pipelines(edition, ver_mode, trigger):
     steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-    steps.extend([
-        build_frontend_step(edition=edition, ver_mode=ver_mode),
-    ])
 
     # Insert remaining steps
     steps.extend([
+        codespell_step(),
+        lint_docs(),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
     ])
 
-    trigger = {
-        'event':  [
+    return pipeline(
+        name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps,
+    )
+
+def lint_docs():
+    return {
+        'name': 'lint-docs',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=8192',
+        },
+        'commands': [
+            'yarn run prettier:checkDocs',
+        ],
+    }
+
+
+def trigger_docs():
+    return {
+        'event': [
             'pull_request',
         ],
         'paths': {
@@ -48,8 +68,3 @@ def docs_pipelines(edition):
             ],
         },
     }
-    return [
-        pipeline(
-            name='pr-docs', edition=edition, trigger=trigger, services=[], steps=steps,
-        ),
-    ]
