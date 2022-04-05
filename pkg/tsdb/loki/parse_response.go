@@ -1,7 +1,6 @@
 package loki
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -89,27 +88,13 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery) data.Frames
 	return frames
 }
 
-func labelsToString(labels map[string]string) (string, error) {
-	// FIXME: i THINK this guarantees a sorted order, not 100% sure :-(
-	data, err := json.Marshal(labels)
-	if err != nil {
-		return "", err
-	}
-
-	// FIXME: does this deal well with non-ascii?
-	return string(data), nil
-}
-
 func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery) (data.Frames, error) {
 	timeVector := make([]time.Time, 0) // FIXME: we can allocate it to the right size
 	values := make([]string, 0)        // FIXME: we can allocate it to the right size
 	labelsVector := make([]string, 0)  // FIXME: we can allocate it to the right size
 
 	for _, v := range streams {
-		labelsText, err := labelsToString(v.Labels.Map())
-		if err != nil {
-			return nil, err
-		}
+		labelsText := data.Labels(v.Labels.Map()).String()
 
 		for _, k := range v.Entries {
 			timeVector = append(timeVector, k.Timestamp.UTC())
@@ -122,5 +107,5 @@ func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery) (data.Fr
 	valueField := data.NewField("line", nil, values)
 	labelsField := data.NewField("labels", nil, labelsVector)
 
-	return data.Frames{data.NewFrame("", timeField, valueField, labelsField)}, nil
+	return data.Frames{data.NewFrame("", labelsField, timeField, valueField)}, nil
 }

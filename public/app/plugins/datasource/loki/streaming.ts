@@ -39,6 +39,7 @@ export function doLokiChannelStream(
           maxLength,
           maxDelta,
           displayNameFormat: query.legendFormat,
+          noLabelFields: true,
         });
       } else {
         frame.push(p);

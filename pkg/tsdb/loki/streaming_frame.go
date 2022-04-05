@@ -33,10 +33,7 @@ func lokiBytesToLabeledFrame(msg []byte, query lokiQuery) (*data.Frame, error) {
 	lineField.Name = "line"
 
 	for _, stream := range rsp.Streams {
-		label, err := labelsToString(stream.Stream) // TODO -- make it match prom labels!
-		if err != nil {
-			return nil, err
-		}
+		label := stream.Stream.String()
 		for _, value := range stream.Values {
 			n, err := strconv.ParseInt(value[0], 10, 64)
 			if err != nil {
@@ -51,7 +48,7 @@ func lokiBytesToLabeledFrame(msg []byte, query lokiQuery) (*data.Frame, error) {
 		}
 	}
 
-	frame := data.NewFrame("", timeField, lineField, labelField)
+	frame := data.NewFrame("", labelField, timeField, lineField)
 	err = adjustFrame(frame, &lokiQuery{})
 	if err != nil {
 		return nil, err

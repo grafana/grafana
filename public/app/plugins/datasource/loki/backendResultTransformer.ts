@@ -10,6 +10,7 @@ import {
 import { LokiQuery, LokiQueryType } from './types';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { parseLabelsFromField } from 'app/features/live/data/StreamingDataFrame';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
@@ -34,12 +35,13 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
   const newFrame = setFrameMeta(frame, meta);
 
   const newFields = newFrame.fields.map((field) => {
-    if (field.name === 'labels') {
+    // an unprocessed labels-field, coming from not-streaming
+    if (field.name === 'labels' && field.type === FieldType.string) {
       return {
         name: field.name,
         type: FieldType.other,
         config: field.config,
-        values: new ArrayVector(field.values.toArray().map((text) => JSON.parse(text))),
+        values: new ArrayVector(field.values.toArray().map((text) => parseLabelsFromField(text))),
       };
     } else {
       return field;

@@ -35,6 +35,7 @@ const PROM_STYLE_METRIC_LABEL = '__name__';
 enum PushMode {
   wide,
   labels,
+  decodeLabels,
   // long
 }
 
@@ -212,8 +213,13 @@ export class StreamingDataFrame implements DataFrame {
         firstField.type === FieldType.string &&
         (firstField.name === 'labels' || firstField.name === 'Labels')
       ) {
-        this.pushMode = PushMode.labels;
-        this.timeFieldIndex = 0; // after labels are removed!
+        if(this.options.noLabelFields) {
+          this.pushMode = PushMode.decodeLabels;
+
+        } else {
+          this.pushMode = PushMode.labels;
+          this.timeFieldIndex = 0; // after labels are removed!
+        }
       }
 
       const niceSchemaFields = this.pushMode === PushMode.labels ? schema.fields.slice(1) : schema.fields;
@@ -240,17 +246,18 @@ export class StreamingDataFrame implements DataFrame {
       } else {
         this.packetInfo.schemaChanged = true;
         const isWide = this.pushMode === PushMode.wide;
-        this.fields = niceSchemaFields.map((f) => {
+        this.fields = niceSchemaFields.map((f, idx) => {
           const config = f.config ?? {};
           if (displayNameFormat) {
             const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...f.labels };
             config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
+          const type = ((this.pushMode === PushMode.decodeLabels) && (idx === 0)) ? FieldType.other : (f.type ?? FieldType.other);
           return {
             config,
             name: f.name,
             labels: f.labels,
-            type: f.type ?? FieldType.other,
+            type,
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
               ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
@@ -298,6 +305,11 @@ export class StreamingDataFrame implements DataFrame {
         values = join(tables);
       }
 
+      if (this.pushMode === PushMode.decodeLabels) {
+        // first field is the labels-field
+        values[0] = values[0].map(v => parseLabelsFromField(v))
+      }
+
       if (values.length !== this.fields.length) {
         if (this.fields.length) {
           throw new Error(
@@ -309,7 +321,7 @@ export class StreamingDataFrame implements DataFrame {
 
         this.fields = values.map((vals, idx) => {
           let name = `Field ${idx}`;
-          let type = guessFieldTypeFromValue(vals[0]);
+          let type = (idx ===0 && this.pushMode === PushMode.decodeLabels) ? FieldType.other : guessFieldTypeFromValue(vals[0]);
           const isTime = idx === 0 && type === FieldType.number && vals[0] > 1600016688632;
           if (isTime) {
             type = FieldType.time;
@@ -460,6 +472,7 @@ export class StreamingDataFrame implements DataFrame {
 
 export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>): StreamingFrameOptions {
   return {
+    noLabelFields: opts?.noLabelFields,
     maxLength: opts?.maxLength ?? 1000,
     maxDelta: opts?.maxDelta ?? Infinity,
     action: opts?.action ?? StreamingFrameAction.Append,

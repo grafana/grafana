@@ -82,7 +82,7 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 		return err
 	}
 
-	idField, err := makeIdField(stringTimeField, frame.Fields[1], frame.Fields[2])
+	idField, err := makeIdField(stringTimeField, frame.Fields[2], frame.Fields[0])
 	if err != nil {
 		return err
 	}
