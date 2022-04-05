@@ -5,7 +5,7 @@ import { CurrentUserDTO } from '@grafana/data';
 /**
  * Returns an opaque identifier for a user, for reporting purposes.
  * Because this is for use when reporting across multiple Grafana installations
- * It cannot simply be user.id
+ * It cannot simply be user.id because that's not unique across two installations.
  */
 export function getUserIdentifier(user: CurrentUserDTO) {
   if (user.externalUserId.length) {
