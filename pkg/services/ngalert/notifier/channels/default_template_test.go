@@ -86,7 +86,7 @@ func TestDefaultTemplateString(t *testing.T) {
 	}{
 		{
 			templateString: DefaultMessageTitleEmbed,
-			expected:       `[FIRING:2]  (alert1)`,
+			expected:       `[FIRING:2, RESOLVED:2]  (alert1)`,
 		},
 		{
 			templateString: `{{ template "default.message" .}}`,

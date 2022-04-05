@@ -7,7 +7,8 @@ import {
   PanelProps,
   reduceField,
   ReducerID,
-  dateTime,
+  //dateTime,
+  TimeRange,
 } from '@grafana/data';
 import {
   Portal,
@@ -49,7 +50,11 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const info: HeatmapData = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
+  // ugh
+  let timeRangeRef = useRef<TimeRange>(timeRange);
+  timeRangeRef.current = timeRange;
+
+  const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
   const exemplars: HeatmapData | undefined = useMemo((): HeatmapData | undefined => {
     if (data.annotations) {
       return prepareHeatmapData(
@@ -102,58 +107,60 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     [options, data.structureRev]
   );
 
+  // ugh
   const dataRef = useRef<HeatmapData>(info);
-
   dataRef.current = info;
 
   const builder = useMemo(() => {
     return prepConfig({
       dataRef,
       theme,
-      onhover: options.tooltip.show ? onhover : () => {},
-      onclick: options.tooltip.show ? onclick : () => {},
+      onhover: options.tooltip.show ? onhover : null,
+      onclick: options.tooltip.show ? onclick : null,
+      onzoom: (evt) => {
+        onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+      },
       isToolTipOpen,
       timeZone,
-      timeRange,
+      getTimeRange: () => timeRangeRef.current,
       palette,
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
-  console.log('builder', builder);
 
-  const getFieldLinks = (xField: Field, yField: Field, count: number, row: number) => {
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
+  };
+
+  const getFieldsInCell = (xField: Field, yField: Field, column: number, row: number) => {
+    return data.annotations?.[0].fields || [];
     // Find the timerange for this cell
-    if (xField.type !== 'time') {
-      console.error('Only time supported for xFields. Got', xField.type);
-      return undefined;
-    }
+    // if (xField.type !== 'time') {
+    //   console.error('Only time supported for xFields. Got', xField.type);
+    //   return undefined;
+    // }
 
-    const xMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === xField.name);
-    const yMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === yField.name);
+    // const xMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === xField.name);
+    // const yMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === yField.name);
 
-    if (yMatch && xMatch && exemplars) {
-      const xOrig = data.series[0].fields.find((f) => f.name === xMatch.config.custom.originalName);
-      // Get the indicies in the original data. Then use that to find the proper
-      console.log('xOrig', xOrig, 'data', data, 'row', row);
-      console.log(
-        'row time',
-        xMatch.values.get(row),
-        'start time',
-        dateTime(data.request?.startTime!).format(),
-        'end time',
-        dateTime(data.request?.endTime!).format(),
-        'diff',
-        xMatch.values.get(row) - data.request?.startTime!
-      );
-      const startIndex = (xMatch.values.get(row) - data.request?.startTime!) / data.request?.intervalMs!;
-      const endIndex =
-        (xMatch?.values.get(row) + exemplars?.xBucketSize - data.request?.startTime!) / data.request?.intervalMs!;
-      console.log('startIndex', startIndex, 'endIndex', endIndex);
-      return getFieldLinksForExplore({ field: yField, rowIndex: row, splitOpenFn: onSplitOpen, range: timeRange });
-    }
-    return undefined;
+    // if (yMatch && xMatch && exemplars) {
+    //   const xOrig: Field | undefined = data.annotations?.[0].fields.find((f) => f.name === xMatch.config.custom.originalName);
+    //   // Get the indicies in the original data. Then use that to find the proper
+
+    //   const startIndex = (xMatch.values.get(row) - xOrig?.values.get(0)) / data.request?.intervalMs!;
+    //   const endIndex =
+    //     (xMatch?.values.get(row) + exemplars?.xBucketSize - xOrig?.values.get(0)) / data.request?.intervalMs!;
+    //   console.log('startIndex', startIndex, 'endIndex', endIndex);
+    //   if (data.annotations) {
+    //     return data.annotations[0].fields.map((field: Field) => {
+    //       return getFieldLinksForExplore({ field, rowIndex: startIndex, splitOpenFn: onSplitOpen, range: timeRange });
+    //     }).flat();
+    //   }
+    //   return undefined;
+    // }
+    // return undefined;
   };
 
   const renderLegend = () => {
@@ -193,6 +200,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                 config={builder}
                 exemplars={exemplars}
                 timeZone={timeZone}
+                getFieldsInCell={getFieldsInCell}
                 getFieldLinks={getFieldLinks}
               />
             )}

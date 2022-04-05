@@ -9,10 +9,17 @@ interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;
   exemplars: HeatmapData;
   timeZone: TimeZone;
-  getFieldLinks: (x: Field, y: Field, count: number, row: number) => Array<LinkModel<Field>> | undefined;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldsInCell: (x: Field, y: Field, column: number, row: number) => Field[];
 }
 
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
+export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
+  exemplars,
+  timeZone,
+  getFieldLinks,
+  getFieldsInCell,
+  config,
+}) => {
   const plotInstance = useRef<uPlot>();
   // console.log('in exemplars plugin', exemplars);
   useLayoutEffect(() => {
@@ -79,6 +86,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
       return (
         <ExemplarMarker
           timeZone={timeZone}
+          getFieldsInCell={getFieldsInCell}
           getFieldLinks={getFieldLinks}
           dataFrame={dataFrame}
           dataFrameFieldIndex={dataFrameFieldIndex}
@@ -86,7 +94,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
         />
       );
     },
-    [config, timeZone, getFieldLinks]
+    [config, timeZone, getFieldLinks, getFieldsInCell]
   );
 
   return (

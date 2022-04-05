@@ -1,4 +1,4 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, DataSourceRef } from '@grafana/data';
 
 export interface QueryResult {
   kind: string; // panel, dashboard, folder
@@ -6,13 +6,20 @@ export interface QueryResult {
   description?: string;
   url: string; // link to value (unique)
   tags?: string[];
-  location?: string; // the folder name
+  location?: LocationInfo[]; // the folder name
+  datasource?: DataSourceRef[];
   score?: number;
+}
+
+export interface LocationInfo {
+  kind: 'folder' | 'dashboard';
+  name: string;
 }
 
 export interface QueryFilters {
   kind?: string; // limit to a single type
   tags?: string[]; // match all tags
+  datasource?: string; // limit to a single datasource
 }
 
 export interface QueryResponse {

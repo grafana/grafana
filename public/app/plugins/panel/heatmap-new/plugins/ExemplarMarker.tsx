@@ -1,25 +1,30 @@
+import React, { useCallback, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   DataFrame,
   DataFrameFieldIndex,
-  dateTimeFormat,
+  // dateTimeFormat,
   Field,
+  // FieldType,
   GrafanaTheme,
   LinkModel,
-  systemDateFormats,
+  // systemDateFormats,
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
-import React, { useCallback, useRef, useState } from 'react';
-import { usePopper } from 'react-popper';
+import { Portal, UPlotConfigBuilder, useStyles, VizTooltipContainer } from '@grafana/ui';
+import { DataHoverView } from '../../geomap/components/DataHoverView';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+// import { usePopper } from 'react-popper';
+const TOOLTIP_OFFSET = 10;
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
   dataFrame: DataFrame;
   dataFrameFieldIndex: DataFrameFieldIndex;
   config: UPlotConfigBuilder;
-  getFieldLinks: (xField: Field, yField: Field, count: number, row: number) => Array<LinkModel<Field>> | undefined;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldsInCell: (x: Field, y: Field, column: number, row: number) => Field[];
 }
 
 export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
@@ -28,12 +33,17 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   dataFrameFieldIndex,
   config,
   getFieldLinks,
+  getFieldsInCell,
 }) => {
   const styles = useStyles(getExemplarMarkerStyles);
-  const [isOpen, setIsOpen] = useState(false);
-  const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
-  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement);
+  const [coords, setCoords] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
+  const isToolTipOpen = useRef<boolean>(false);
+
+  // const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
+  // const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+
+  // const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement);
   const popoverRenderTimeout = useRef<NodeJS.Timer>();
 
   const getSymbol = () => {
@@ -54,92 +64,117 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
   };
 
-  const onMouseEnter = useCallback(() => {
-    if (popoverRenderTimeout.current) {
-      clearTimeout(popoverRenderTimeout.current);
-    }
-    setIsOpen(true);
-  }, [setIsOpen]);
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setCoords({ x: null, y: null });
+    setShouldDisplayCloseButton(false);
+  };
+
+  const onMouseEnter = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (popoverRenderTimeout.current) {
+        clearTimeout(popoverRenderTimeout.current);
+      }
+      console.log('setting coords', e.pageX, e.pageY);
+      setCoords({ x: e.pageX, y: e.pageY });
+    },
+    [setCoords]
+  );
 
   const onMouseLeave = useCallback(() => {
     popoverRenderTimeout.current = setTimeout(() => {
-      setIsOpen(false);
+      if (!shouldDisplayCloseButton) {
+        setCoords({ x: null, y: null });
+      }
     }, 100);
-  }, [setIsOpen]);
+  }, [shouldDisplayCloseButton, setCoords]);
+
+  const onClick = useCallback(() => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  }, [isToolTipOpen]);
 
   const renderMarker = useCallback(() => {
-    const timeFormatter = (value: number) => {
-      return dateTimeFormat(value, {
-        format: systemDateFormats.fullDate,
-        timeZone,
-      });
-    };
-
+    // const timeFormatter = (value: number) => {
+    //   return dateTimeFormat(value, {
+    //     format: systemDateFormats.fullDate,
+    //     timeZone,
+    //   });
+    // };
     return (
-      <div
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        className={styles.tooltip}
-        ref={setPopperElement}
-        style={popperStyles.popper}
-        {...attributes.popper}
-      >
-        <div className={styles.wrapper}>
-          <div className={styles.header}>
-            <span className={styles.title}>Exemplar</span>
-          </div>
-          <div className={styles.body}>
-            <div>
-              <table className={styles.exemplarsTable}>
-                <tbody>
-                  {(() => {
-                    const count = dataFrame.fields[2].values.get(dataFrameFieldIndex.fieldIndex);
-                    // const links = field.config.links?.length
-                    const links = getFieldLinks(
-                      dataFrame.fields[0],
-                      dataFrame.fields[1],
-                      count,
-                      dataFrameFieldIndex.fieldIndex
-                    );
-                    console.log('links', links);
-                    return (
-                      <></>
-                      // <tr key={i}>
-                      //   <td valign="top">{field.name}</td>
-                      //   <td>
-                      //     <div className={styles.valueWrapper}>
-                      //       <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
-                      //       {links && <FieldLinkList links={links} />}
-                      //     </div>
-                      //   </td>
-                      // </tr>
-                    );
-                  })()}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
+      coords.x !== null &&
+      coords.y !== null && (
+        <VizTooltipContainer
+          position={{ x: coords.x, y: coords.y }}
+          offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+          allowPointerEvents={isToolTipOpen.current}
+        >
+          {shouldDisplayCloseButton && (
+            <>
+              <CloseButton onClick={onCloseToolTip} />
+              <div className={styles.closeButtonSpacer} />
+            </>
+          )}
+          <DataHoverView data={dataFrame} rowIndex={0} columnIndex={0} />
+        </VizTooltipContainer>
+      )
     );
-  }, [
-    attributes.popper,
-    dataFrame.fields,
-    getFieldLinks,
-    dataFrameFieldIndex,
-    onMouseEnter,
-    onMouseLeave,
-    popperStyles.popper,
-    styles,
-    timeZone,
-  ]);
+
+    // return (
+    //   <div
+    //     onMouseEnter={onMouseEnter}
+    //     onMouseLeave={onMouseLeave}
+    //     className={styles.tooltip}
+    //     ref={setPopperElement}
+    //     style={popperStyles.popper}
+    //     {...attributes.popper}
+    //   >
+    //     <div className={styles.wrapper}>
+    //       <div className={styles.header}>
+    //         <span className={styles.title}>Exemplar</span>
+    //       </div>
+    //       <div className={styles.body}>
+    //         <div>
+    //           <table className={styles.exemplarsTable}>
+    //             <tbody>
+    //               {getFieldsInCell(
+    //                 dataFrame.fields[0].values.get(dataFrameFieldIndex.fieldIndex),
+    //                 dataFrame.fields[1].values.get(dataFrameFieldIndex.fieldIndex),
+    //                 dataFrame.fields[2].values.get(dataFrameFieldIndex.fieldIndex),
+    //                 dataFrameFieldIndex.fieldIndex).map((field, i) => {
+    //                   console.log('field', field);
+    //                 const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+    //                 const links = field.config.links?.length
+    //                   ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
+    //                   : undefined;
+    //                 return (
+    //                   <tr key={i}>
+    //                     <td valign="top">{field.name}</td>
+    //                     <td>
+    //                       <div className={styles.valueWrapper}>
+    //                         <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
+    //                         {links && <FieldLinkList links={links} />}
+    //                       </div>
+    //                     </td>
+    //                   </tr>
+    //                 );
+    //               })}
+    //             </tbody>
+    //           </table>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   </div>
+    // );
+  }, [dataFrame, coords, shouldDisplayCloseButton, styles]);
 
   return (
     <>
       <div
-        ref={setMarkerElement}
+        // ref={setMarkerElement}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
+        onClick={onClick}
         className={styles.markerWrapper}
         aria-label={selectors.components.DataSource.Prometheus.exemplarMarker}
       >
@@ -151,12 +186,12 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
             fill: 'rgb(115, 191, 105)',
             stroke: 'rgb(0, 0, 0)',
           }}
-          className={cx(styles.marble, isOpen && styles.activeMarble)}
+          className={cx(styles.marble, coords.x !== null && styles.activeMarble)}
         >
           {getSymbol()}
         </svg>
       </div>
-      {isOpen && <Portal>{renderMarker()}</Portal>}
+      {coords.x !== null && <Portal>{renderMarker()}</Portal>}
     </>
   );
 };
@@ -258,6 +293,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       transform: scale(1.3);
       opacity: 1;
       filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+    `,
+    closeButtonSpacer: css`
+      margin-bottom: 15px;
     `,
   };
 };

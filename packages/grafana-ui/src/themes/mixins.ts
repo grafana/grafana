@@ -43,7 +43,9 @@ export const focusCss = (theme: GrafanaTheme) => `
   outline: 2px dotted transparent;
   outline-offset: 2px;
   box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
-  transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+  transition-property: outline, outline-offset, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
 export function getMouseFocusStyles(theme: GrafanaTheme2): CSSObject {
@@ -58,7 +60,9 @@ export function getFocusStyles(theme: GrafanaTheme2): CSSObject {
     outline: '2px dotted transparent',
     outlineOffset: '2px',
     boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main}`,
-    transition: `all 0.2s cubic-bezier(0.19, 1, 0.22, 1)`,
+    transitionTimingFunction: `cubic-bezier(0.19, 1, 0.22, 1)`,
+    transitionDuration: '0.2s',
+    transitionProperty: 'outline, outline-offset, box-shadow',
   };
 }
 
