@@ -21,7 +21,7 @@ Grafana allows you to create alerting rules for an external Grafana Mimir or Lok
 
 > **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 
-## Add a Mimir or Loki managed alerting rule
+## Add a Grafana Mimir or Loki managed alerting rule
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **New alert rule**.
