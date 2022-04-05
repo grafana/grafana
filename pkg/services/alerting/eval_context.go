@@ -31,6 +31,7 @@ type EvalContext struct {
 	ImageOnDiskPath string
 	NoDataFound     bool
 	PrevAlertState  models.AlertStateType
+	PrevEvalMatches []*EvalMatch
 
 	RequestValidator models.PluginRequestValidator
 
@@ -42,11 +43,14 @@ type EvalContext struct {
 // NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
 	return &EvalContext{
-		Ctx:              alertCtx,
-		StartTime:        time.Now(),
-		Rule:             rule,
-		Logs:             make([]*ResultLogEntry, 0),
-		EvalMatches:      make([]*EvalMatch, 0),
+		Ctx:         alertCtx,
+		StartTime:   time.Now(),
+		Rule:        rule,
+		Logs:        make([]*ResultLogEntry, 0),
+		EvalMatches: make([]*EvalMatch, 0),
+		// TODO: is it better to make a copy of the slice to prevent modifications
+		// to the underlying array of rule.EvalMatches affecting PrevEvalMatches?
+		PrevEvalMatches:  rule.EvalMatches,
 		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
@@ -188,11 +192,15 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 // evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as
 // templates, and evaluate the templates using data from the alert evaluation's tags
 func (c *EvalContext) evaluateNotificationTemplateFields() error {
+	matches := c.EvalMatches
 	if len(c.EvalMatches) < 1 {
-		return nil
+		if len(c.PrevEvalMatches) < 1 {
+			return nil
+		}
+		matches = c.PrevEvalMatches
 	}
 
-	templateDataMap, err := buildTemplateDataMap(c.EvalMatches)
+	templateDataMap, err := buildTemplateDataMap(matches)
 	if err != nil {
 		return err
 	}
