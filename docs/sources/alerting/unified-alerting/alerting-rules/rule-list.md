@@ -50,7 +50,7 @@ To filter alerting rules:
 
 ## Edit or delete an alerting rule
 
-Grafana managed alerting rules can only be edited or deleted by users with Edit permissions for the folder storing the rules. Alerting rules for an external Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
+Grafana managed alerting rules can only be edited or deleted by users with Edit permissions for the folder storing the rules. Alerting rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
 To edit or delete a rule:
 
 1. Expand a rule row until you can see the rule controls of **View**, **Edit**, and **Delete**.
