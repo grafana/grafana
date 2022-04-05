@@ -154,7 +154,7 @@ func (r *simpleCrawler) Run(ctx context.Context, crawlerAccountIds CrawlerAccoun
 	r.crawlerAccountIds = crawlerAccountIds
 	r.opts = rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
-			OrgRole: models.ROLE_VIEWER,
+			OrgRole: models.ROLE_ADMIN,
 		},
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout:                  20 * time.Second,
