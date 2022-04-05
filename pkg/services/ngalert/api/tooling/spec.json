@@ -1136,13 +1136,13 @@
         }
       }
     },
-    "/api/provisioning/policies": {
+    "/api/provisioning/contactpoints": {
       "get": {
         "tags": [
           "provisioning"
         ],
-        "summary": "Get the notification policy tree.",
-        "operationId": "RouteGetPolicyTree",
+        "summary": "Get all the contactpoints.",
+        "operationId": "RouteGetContactpoints",
         "responses": {
           "200": {
             "description": "Route",
@@ -1158,24 +1158,75 @@
           }
         }
       },
-      "post": {
+      "put": {
+        "description": "Create a contactpoint",
         "consumes": [
           "application/json"
         ],
         "tags": [
           "provisioning"
         ],
-        "summary": "Sets the notification policy tree.",
-        "operationId": "RoutePostPolicyTree",
+        "operationId": "RoutePutContactpoints",
         "parameters": [
           {
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/Route"
+              "$ref": "#/definitions/Contactpoint"
             }
           }
         ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create a contactpoint",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Contactpoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Create a contactpoint",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "operationId": "RouteDeleteContactpoints",
         "responses": {
           "202": {
             "$ref": "#/responses/Accepted"
@@ -2151,6 +2202,9 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "Contactpoint": {
+      "$ref": "#/definitions/EmbeddedContactPoint"
+    },
     "CreateDashboardSnapshotCommand": {
       "type": "object",
       "required": [
@@ -2368,6 +2422,36 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "EmbeddedContactPoint": {
+      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "provanance": {
+          "type": "string",
+          "x-go-name": "Provenance"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
     },
     "ErrorType": {
       "type": "string",
@@ -4875,12 +4959,11 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
       },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroups"
     },
     "alertStatus": {
@@ -5065,11 +5148,12 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {

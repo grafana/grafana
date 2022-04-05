@@ -20,41 +20,75 @@ import (
 )
 
 type ProvisioningApiForkingService interface {
-	RouteGetPolicyTree(*models.ReqContext) response.Response
-	RoutePostPolicyTree(*models.ReqContext) response.Response
+	RouteDeleteContactpoints(*models.ReqContext) response.Response
+	RouteGetContactpoints(*models.ReqContext) response.Response
+	RoutePostContactpoints(*models.ReqContext) response.Response
+	RoutePutContactpoints(*models.ReqContext) response.Response
 }
 
-func (f *ForkedProvisioningApi) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetPolicyTree(ctx)
+func (f *ForkedProvisioningApi) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteContactpoints(ctx)
 }
 
-func (f *ForkedProvisioningApi) RoutePostPolicyTree(ctx *models.ReqContext) response.Response {
-	conf := apimodels.Route{}
+func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetContactpoints(ctx)
+}
+
+func (f *ForkedProvisioningApi) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
+	conf := apimodels.Contactpoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostPolicyTree(ctx, conf)
+	return f.forkRoutePostContactpoints(ctx, conf)
+}
+
+func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) response.Response {
+	conf := apimodels.Contactpoint{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePutContactpoints(ctx, conf)
 }
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Delete(
+			toMacaronPath("/api/provisioning/contactpoints"),
+			api.authorize(http.MethodDelete, "/api/provisioning/contactpoints"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/provisioning/contactpoints",
+				srv.RouteDeleteContactpoints,
+				m,
+			),
+		)
 		group.Get(
-			toMacaronPath("/api/provisioning/policies"),
-			api.authorize(http.MethodGet, "/api/provisioning/policies"),
+			toMacaronPath("/api/provisioning/contactpoints"),
+			api.authorize(http.MethodGet, "/api/provisioning/contactpoints"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/policies",
-				srv.RouteGetPolicyTree,
+				"/api/provisioning/contactpoints",
+				srv.RouteGetContactpoints,
 				m,
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/provisioning/policies"),
-			api.authorize(http.MethodPost, "/api/provisioning/policies"),
+			toMacaronPath("/api/provisioning/contactpoints"),
+			api.authorize(http.MethodPost, "/api/provisioning/contactpoints"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/policies",
-				srv.RoutePostPolicyTree,
+				"/api/provisioning/contactpoints",
+				srv.RoutePostContactpoints,
+				m,
+			),
+		)
+		group.Put(
+			toMacaronPath("/api/provisioning/contactpoints"),
+			api.authorize(http.MethodPut, "/api/provisioning/contactpoints"),
+			metrics.Instrument(
+				http.MethodPut,
+				"/api/provisioning/contactpoints",
+				srv.RoutePutContactpoints,
 				m,
 			),
 		)

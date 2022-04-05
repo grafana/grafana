@@ -341,6 +341,9 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "Contactpoint": {
+   "$ref": "#/definitions/EmbeddedContactPoint"
+  },
   "CreateDashboardSnapshotCommand": {
    "properties": {
     "Result": {
@@ -557,6 +560,36 @@
    "title": "EmailConfig configures notifications via mail.",
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
+  "EmbeddedContactPoint": {
+   "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+   "properties": {
+    "disableResolveMessage": {
+     "type": "boolean",
+     "x-go-name": "DisableResolveMessage"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "provanance": {
+     "type": "string",
+     "x-go-name": "Provenance"
+    },
+    "settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "type": {
+     "type": "string",
+     "x-go-name": "Type"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -3060,12 +3093,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3248,11 +3280,12 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
    "properties": {
@@ -4733,9 +4766,30 @@
     ]
    }
   },
-  "/api/provisioning/policies": {
+  "/api/provisioning/contactpoints": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Create a contactpoint",
+    "operationId": "RouteDeleteContactpoints",
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "provisioning"
+    ]
+   },
    "get": {
-    "operationId": "RouteGetPolicyTree",
+    "operationId": "RouteGetContactpoints",
     "responses": {
      "200": {
       "description": "Route",
@@ -4750,7 +4804,7 @@
       }
      }
     },
-    "summary": "Get the notification policy tree.",
+    "summary": "Get all the contactpoints.",
     "tags": [
      "provisioning"
     ]
@@ -4759,13 +4813,14 @@
     "consumes": [
      "application/json"
     ],
-    "operationId": "RoutePostPolicyTree",
+    "description": "Create a contactpoint",
+    "operationId": "RoutePostContactpoints",
     "parameters": [
      {
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/Route"
+       "$ref": "#/definitions/Contactpoint"
       }
      }
     ],
@@ -4780,7 +4835,36 @@
       }
      }
     },
-    "summary": "Sets the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Create a contactpoint",
+    "operationId": "RoutePutContactpoints",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/Contactpoint"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
     "tags": [
      "provisioning"
     ]
