@@ -1,6 +1,6 @@
 +++
-title = "Create Mimir or Loki managed recording rule"
-description = "Create Mimir or Loki managed recording rule"
+title = "Create Grafana Mimir or Loki managed recording rule"
+description = "Create Grafana Mimir or Loki managed recording rule"
 keywords = ["grafana", "alerting", "guide", "rules", "recording rules", "create"]
 weight = 400
 +++
