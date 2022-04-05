@@ -202,7 +202,13 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, actions *dtos.AnnotationActions, scope string) {
 	var err error
 
-	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
+	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
+	actions.CanAdd, err = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	if err != nil {
+		hs.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsCreate, "scope", scope)
+	}
+
+	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
 	actions.CanDelete, err = hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
 	if err != nil {
 		hs.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsDelete, "scope", scope)

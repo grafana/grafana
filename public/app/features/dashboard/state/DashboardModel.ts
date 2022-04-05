@@ -1189,10 +1189,21 @@ export class DashboardModel implements TimeModel {
         canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
       }
     }
-    return this.canAddAnnotations() && canEdit;
+    return this.canEditDashboard() && canEdit;
   }
 
   canAddAnnotations() {
+    let canAdd = true;
+
+    // if FGAC is enabled there are additional conditions to check
+    if (contextSrv.accessControlEnabled()) {
+      canAdd = !!this.meta.annotationsPermissions?.dashboard.canAdd;
+    }
+
+    return this.canEditDashboard() && canAdd;
+  }
+
+  canEditDashboard() {
     return this.meta.canEdit || this.meta.canMakeEditable;
   }
 
