@@ -309,7 +309,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 			cmd.UserWasDeleted = true
 		} else {
 			// no orgs, but keep the user -> clean up orgId
-			err = setUsingOrgInTransaction(sess, user.Id, 0)
+			err = removeUserOrg(sess, user.Id)
 			if err != nil {
 				return err
 			}

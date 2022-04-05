@@ -441,6 +441,16 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 		OrgId: orgID,
 	}
 
+	_, err := sess.ID(userID).Update(&user)
+	return err
+}
+
+func removeUserOrg(sess *DBSession, userID int64) error {
+	user := models.User{
+		Id:    userID,
+		OrgId: 0,
+	}
+
 	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
 	return err
 }
