@@ -243,7 +243,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	amConfigPerOrg, receiversPerOrg, defaultReceiversPerOrg, err := m.setupAlertManagerConfigs()
+	amConfigPerOrg, receiversPerOrg, defaultReceiversPerOrg, err := m.setupAlertmanagerConfigs()
 	if err != nil {
 		return err
 	}
@@ -350,8 +350,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
 			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
 		} else {
-			if err := m.createRouteForAlert(rule.UID, da, amConfigPerOrg[rule.OrgID], receiversPerOrg[rule.OrgID], defaultReceiversPerOrg[rule.OrgID]); err != nil {
+			route, err := m.createRouteForAlert(rule.UID, da, receiversPerOrg[rule.OrgID], defaultReceiversPerOrg[rule.OrgID])
+			if err != nil {
 				return err
+			}
+
+			if route != nil {
+				amConfigPerOrg[rule.OrgID].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[rule.OrgID].AlertmanagerConfig.Route.Routes, route)
 			}
 		}
 

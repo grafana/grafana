@@ -33,7 +33,7 @@ type uidOrID interface{}
 
 // Start channel and alert migrations. This creates Alertmanager configs as well as migrates receivers and creates the initial root-level route.
 // Returns per org maps containing: The alertmanager config, all migrated receivers, all migrated default receivers
-func (m *migration) setupAlertManagerConfigs() (amConfigsPerOrg, map[int64]map[uidOrID]*PostableApiReceiver, map[int64]map[string]struct{}, error) {
+func (m *migration) setupAlertmanagerConfigs() (amConfigsPerOrg, map[int64]map[uidOrID]*PostableApiReceiver, map[int64]map[string]struct{}, error) {
 	// allChannels: channelUID -> channelConfig
 	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
 	if err != nil {
@@ -204,24 +204,24 @@ func createDefaultRoute(defaultChannels []*notificationChannel) *Route {
 }
 
 // Wrapper to select receivers for given alert rules based on associated notification channels and then create the migrated route
-func (m *migration) createRouteForAlert(ruleUID string, da dashAlert, amConfig *PostableUserConfig, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) error {
+func (m *migration) createRouteForAlert(ruleUID string, da dashAlert, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) (*Route, error) {
 	// Create route(s) for alert
 	filteredReceiverNames, err := m.filterReceiversForAlert(da, receivers, defaultReceivers)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(filteredReceiverNames) != 0 {
 		// Only create a route if there are specific receivers, otherwise it defaults to the root-level route
 		route, err := m.createRoute(ruleUID, filteredReceiverNames)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
+		return route, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // Create route(s) for the given alert ruleUID and receivers.
