@@ -509,12 +509,17 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID, dsUID s
 	if dsUID != "" {
 		ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
 
-		if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
-			handleCallResourceError(err, c)
+		if err != nil {
+			if errors.Is(err, models.ErrDataSourceNotFound) {
+				c.JsonApiErr(404, "Datasource not found", err)
+				return
+			}
+
+			c.JsonApiErr(500, "Failed to get datasource", err)
 			return
 		}
 
-		if ds != nil && hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
+		if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
 			if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
 				clonedReq.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
