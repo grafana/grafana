@@ -301,8 +301,11 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	if errors.As(err, &configRejectedError) {
 		return ErrResp(http.StatusBadRequest, configRejectedError, "")
 	}
-	if resp := tryMapAMLookupError(err); resp != nil {
-		return resp
+	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+		return response.Error(http.StatusNotFound, err.Error(), err)
+	}
+	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+		return response.Error(http.StatusConflict, err.Error(), err)
 	}
 
 	return ErrResp(http.StatusInternalServerError, err, "")
@@ -448,21 +451,13 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response
 		return am, nil
 	}
 
-	if resp := tryMapAMLookupError(err); resp != nil {
-		return nil, resp
+	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+		return nil, response.Error(http.StatusNotFound, err.Error(), err)
+	}
+	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+		return am, response.Error(http.StatusConflict, err.Error(), err)
 	}
 
 	srv.log.Error("unable to obtain the org's Alertmanager", "err", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
-}
-
-// tryMapAMLookupError tries to convert known errors when looking up alertmanagers to the appropriate HTTP status code. It returns nil if the error cannot be converted.
-func tryMapAMLookupError(err error) *response.NormalResponse {
-	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-		return response.Error(http.StatusNotFound, err.Error(), err)
-	}
-	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-		return response.Error(http.StatusConflict, err.Error(), err)
-	}
-	return nil
 }
