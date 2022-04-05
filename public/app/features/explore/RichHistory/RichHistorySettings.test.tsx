@@ -21,7 +21,7 @@ const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
 describe('RichHistorySettings', () => {
   it('should render component with correct retention period', () => {
     setup();
-    expect(screen.queryByText('2 weeks')).toBeVisible();
+    expect(screen.queryByText('2 weeks')).toBeInTheDocument();
   });
   it('should render component with correctly checked starredTabAsFirstTab and uncheched toggleActiveDatasourceOnly settings', () => {
     setup();

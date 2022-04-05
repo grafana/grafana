@@ -24,18 +24,18 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
 };
 
 describe('RichHistory', () => {
-  it('should tabs as defined', async () => {
+  it('should render tabs as defined', () => {
     setup();
-    const tabs = await screen.getAllByLabelText(/Tab*/);
+    const tabs = screen.getAllByLabelText(/Tab*/);
     expect(tabs).toHaveLength(3);
     expect(tabs[0]).toHaveTextContent('Query history');
     expect(tabs[1]).toHaveTextContent('Starred');
     expect(tabs[2]).toHaveTextContent('Settings');
   });
 
-  it('should render defined default', async () => {
+  it('should render defined default', () => {
     setup();
-    const tabs = await screen.getAllByLabelText(/Tab*/);
+    const tabs = screen.getAllByLabelText(/Tab*/);
     expect(tabs[0].className).toMatch(/-*activeTabStyle/);
     expect(tabs[1].className).not.toMatch(/-*activeTabStyle/);
   });

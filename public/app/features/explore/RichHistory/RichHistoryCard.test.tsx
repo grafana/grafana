@@ -94,10 +94,10 @@ describe('RichHistoryCard', () => {
   });
   it('should render data source icon and name', async () => {
     setup();
-    const datasourceIcon = await screen.findAllByLabelText('Data source icon');
-    const datasourceName = await screen.findAllByLabelText('Data source name');
-    expect(datasourceIcon).toHaveLength(1);
-    expect(datasourceName).toHaveLength(1);
+    const datasourceIcon = await screen.findByLabelText('Data source icon');
+    const datasourceName = await screen.findByLabelText('Data source name');
+    expect(datasourceIcon).toBeInTheDocument();
+    expect(datasourceName).toBeInTheDocument();
   });
   it('should render "Data source does not exist anymore" if removed data source', async () => {
     setup({ isRemoved: true });
@@ -108,93 +108,93 @@ describe('RichHistoryCard', () => {
   describe('commenting', () => {
     it('should render comment, if comment present', async () => {
       setup({ query: starredQueryWithComment });
-      const queryComment = await screen.findAllByLabelText('Query comment');
-      expect(queryComment).toHaveLength(1);
-      expect(queryComment[0]).toHaveTextContent('test comment');
+      const queryComment = await screen.findByLabelText('Query comment');
+      expect(queryComment).toBeInTheDocument();
+      expect(queryComment).toHaveTextContent('test comment');
     });
     it('should have title "Edit comment" at comment icon, if comment present', async () => {
       setup({ query: starredQueryWithComment });
       const editComment = await screen.findByTitle('Edit comment');
-      const addComment = await screen.queryByTitle('Add comment');
-      expect(editComment).toBeVisible();
-      expect(addComment).toBeNull();
+      const addComment = screen.queryByTitle('Add comment');
+      expect(editComment).toBeInTheDocument();
+      expect(addComment).not.toBeInTheDocument();
     });
     it('should have title "Add comment" at comment icon, if no comment present', async () => {
       setup();
       const addComment = await screen.findByTitle('Add comment');
       const editComment = await screen.queryByTitle('Edit comment');
-      expect(addComment).toBeVisible();
-      expect(editComment).toBeNull();
+      expect(addComment).toBeInTheDocument();
+      expect(editComment).not.toBeInTheDocument();
     });
     it('should open update comment form when edit comment button clicked', async () => {
       setup({ query: starredQueryWithComment });
       const editComment = await screen.findByTitle('Edit comment');
       fireEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
-      expect(updateCommentForm).toBeVisible();
+      expect(updateCommentForm).toBeInTheDocument();
     });
     it('should close update comment form when escape key pressed', async () => {
       setup({ query: starredQueryWithComment });
       const editComment = await screen.findByTitle('Edit comment');
       fireEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
-      fireEvent.keyDown(getByText(updateCommentForm || new HTMLElement(), starredQueryWithComment.comment), {
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
         key: 'Escape',
       });
       const findCommentForm = screen.queryByLabelText('Update comment form');
-      expect(findCommentForm).toBeNull();
+      expect(findCommentForm).not.toBeInTheDocument();
     });
     it('should close update comment form when enter and shift keys pressed', async () => {
       setup({ query: starredQueryWithComment });
       const editComment = await screen.findByTitle('Edit comment');
       fireEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
-      fireEvent.keyDown(getByText(updateCommentForm || new HTMLElement(), starredQueryWithComment.comment), {
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
         key: 'Enter',
         shiftKey: true,
       });
       const findCommentForm = screen.queryByLabelText('Update comment form');
-      expect(findCommentForm).toBeNull();
+      expect(findCommentForm).not.toBeInTheDocument();
     });
     it('should close update comment form when enter and ctrl keys pressed', async () => {
       setup({ query: starredQueryWithComment });
       const editComment = await screen.findByTitle('Edit comment');
       fireEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
-      fireEvent.keyDown(getByText(updateCommentForm || new HTMLElement(), starredQueryWithComment.comment), {
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
         key: 'Enter',
         ctrlKey: true,
       });
       const findCommentForm = screen.queryByLabelText('Update comment form');
-      expect(findCommentForm).toBeNull();
+      expect(findCommentForm).not.toBeInTheDocument();
     });
     it('should not close update comment form when enter key pressed', async () => {
       setup({ query: starredQueryWithComment });
       const editComment = await screen.findByTitle('Edit comment');
       fireEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
-      fireEvent.keyDown(getByText(updateCommentForm || new HTMLElement(), starredQueryWithComment.comment), {
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
         key: 'Enter',
         shiftKey: false,
       });
       const findCommentForm = screen.queryByLabelText('Update comment form');
-      expect(findCommentForm).toBeVisible();
+      expect(findCommentForm).toBeInTheDocument();
     });
   });
 
   describe('starring', () => {
     it('should have title "Star query", if not starred', async () => {
       setup();
-      const starButton = await screen.findAllByTitle('Star query');
-      expect(starButton).toHaveLength(1);
-      fireEvent.click(starButton[0]);
+      const starButton = await screen.findByTitle('Star query');
+      expect(starButton).toBeInTheDocument();
+      fireEvent.click(starButton);
       expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, true);
     });
     it('should have title "Unstar query", if not starred', async () => {
       setup({ query: starredQueryWithComment });
-      const unstarButton = await screen.findAllByTitle('Unstar query');
-      expect(unstarButton).toHaveLength(1);
-      fireEvent.click(unstarButton[0]);
+      const unstarButton = await screen.findByTitle('Unstar query');
+      expect(unstarButton).toBeInTheDocument();
+      fireEvent.click(unstarButton);
       expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, false);
     });
   });
@@ -202,9 +202,9 @@ describe('RichHistoryCard', () => {
   describe('deleting', () => {
     it('should delete if not starred', async () => {
       setup();
-      const deleteButton = await screen.findAllByTitle('Delete query');
-      expect(deleteButton).toHaveLength(1);
-      fireEvent.click(deleteButton[0]);
+      const deleteButton = await screen.findByTitle('Delete query');
+      expect(deleteButton).toBeInTheDocument();
+      fireEvent.click(deleteButton);
       expect(deleteRichHistoryMock).toBeCalledWith(starredQueryWithComment.id);
     });
     it('should display modal before deleting if starred', async () => {
