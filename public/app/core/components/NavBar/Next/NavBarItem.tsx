@@ -83,7 +83,7 @@ const NavBarItem = ({
     );
   } else {
     return (
-      <li className={cx(styles.container, section.id === menuIdOpen && styles.containerHover, className)}>
+      <li className={cx(styles.container, { [styles.containerHover]: section.id === menuIdOpen }, className)}>
         <NavBarItemMenuTrigger
           item={section}
           isActive={isActive}
