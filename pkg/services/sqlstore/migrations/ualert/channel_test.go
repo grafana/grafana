@@ -201,7 +201,15 @@ func TestCreateRoute(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
+			// Compare route slice separately since order is not guaranteed
+			expRoutes := tt.expected.Routes
+			tt.expected.Routes = nil
+			actRoutes := res.Routes
+			res.Routes = nil
+
 			require.Equal(t, tt.expected, res)
+			require.ElementsMatch(t, expRoutes, actRoutes)
 		})
 	}
 }
@@ -355,7 +363,7 @@ func TestCreateReceivers(t *testing.T) {
 			}
 
 			require.Equal(t, tt.expected, res)
-			require.Equal(t, tt.expAmConfigReceivers, tt.amConfig.AlertmanagerConfig.Receivers)
+			require.ElementsMatch(t, tt.expAmConfigReceivers, tt.amConfig.AlertmanagerConfig.Receivers)
 		})
 	}
 }
