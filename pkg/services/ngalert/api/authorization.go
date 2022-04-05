@@ -186,6 +186,11 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	case http.MethodPost + "/api/provisioning/policies":
 		return middleware.ReqEditorRole
+	case http.MethodGet + "/api/provisioning/contactpoints",
+		http.MethodPost + "/api/provisioning/contactpoints",
+		http.MethodPut + "/api/provisioning/contactpoints",
+		http.MethodDelete + "/api/provisioning/contactpoints/{ID}":
+		return middleware.ReqOrgAdmin
 	}
 
 	if eval != nil {
