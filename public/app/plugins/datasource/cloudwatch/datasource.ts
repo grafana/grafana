@@ -1,4 +1,5 @@
 import {
+  AnnotationQuery,
   DataFrame,
   DataQueryError,
   DataQueryErrorType,
@@ -31,7 +32,6 @@ import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxj
 import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
 
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
-import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import { CloudWatchLanguageProvider } from './language_provider';
 import memoizedDebounce from './memoizedDebounce';
@@ -102,7 +102,12 @@ export class CloudWatchDatasource
 
   // This will support annotation queries for 7.2+
   annotations = {
-    QueryEditor: AnnotationQueryEditor,
+    prepareAnnotation: (json: any) => {
+      console.log({ json });
+      return {} as AnnotationQuery<CloudWatchQuery>;
+    },
+
+    // QueryEditor: AnnotationQueryEditor,
   };
 
   debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
