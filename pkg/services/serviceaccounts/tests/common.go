@@ -38,6 +38,10 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 // create mock for serviceaccountservice
 type ServiceAccountMock struct{}
 
+func (s *ServiceAccountMock) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+	return 0, nil
+}
+
 func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
 	return nil, nil
 }
@@ -65,6 +69,7 @@ func SetupMockAccesscontrol(t *testing.T,
 // this is a way to see
 // that the Mock implements the store interface
 var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
+var _ serviceaccounts.Service = new(ServiceAccountMock)
 
 type Calls struct {
 	CreateServiceAccount           []interface{}
