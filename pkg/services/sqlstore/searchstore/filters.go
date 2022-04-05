@@ -38,8 +38,9 @@ type FilterSelect interface {
 }
 
 const (
-	TypeFolder    = "dash-folder"
-	TypeDashboard = "dash-db"
+	TypeFolder      = "dash-folder"
+	TypeDashboard   = "dash-db"
+	TypeAlertFolder = "dash-folder-alerting"
 )
 
 type TypeFilter struct {
@@ -48,7 +49,7 @@ type TypeFilter struct {
 }
 
 func (f TypeFilter) Where() (string, []interface{}) {
-	if f.Type == TypeFolder {
+	if f.Type == TypeFolder || f.Type == TypeAlertFolder {
 		return "dashboard.is_folder = " + f.Dialect.BooleanStr(true), nil
 	}
 
@@ -147,4 +148,14 @@ func sqlIDin(column string, ids []int64) (string, []interface{}) {
 		params = append(params, id)
 	}
 	return fmt.Sprintf("%s IN %s", column, sqlArray), params
+}
+
+// FolderWithAlertsFilter applies a filter that makes the result contain only folders that contain alert rules
+type FolderWithAlertsFilter struct {
+}
+
+var _ FilterWhere = &FolderWithAlertsFilter{}
+
+func (f FolderWithAlertsFilter) Where() (string, []interface{}) {
+	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
 }

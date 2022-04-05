@@ -1,18 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Input, useStyles2 } from '@grafana/ui';
+import { Input, useStyles2, Spinner, Button } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
-import { SearchPageDashboards } from './SearchPageDashboards';
-import { SearchPageDashboardList } from './SearchPageDashboardList';
-import { loadResults } from './state/actions';
-import { StoreState } from 'app/types';
-import { SearchPageStats } from './SearchPageStats';
-import { buildStatsTable } from './data';
+import { useAsync } from 'react-use';
+import { getGrafanaSearcher, QueryFilters } from '../service';
+import { Table } from './table/Table';
+import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { getTermCounts } from '../service/backend';
+import { useSearchQuery } from '../hooks/useSearchQuery';
 
 const node: NavModelItem = {
   id: 'search',
@@ -22,51 +21,71 @@ const node: NavModelItem = {
 };
 
 export default function SearchPage() {
-  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const { query, onQueryChange, onTagFilterChange, onDatasourceChange } = useSearchQuery({});
 
-  const dashboards = useSelector((state: StoreState) => state.searchPage.data.dashboards);
-  const panels = useSelector((state: StoreState) => state.searchPage.data.panels);
+  const results = useAsync(() => {
+    const { query: searchQuery, tag: tags, datasource } = query;
 
-  const [query, setQuery] = useState('');
-
-  const loadDashboardResults = useCallback(async () => {
-    await dispatch(loadResults(query));
-  }, [query, dispatch]);
-
-  useEffect(() => {
-    loadDashboardResults();
-  }, [query, loadDashboardResults]);
+    const filters: QueryFilters = {
+      tags,
+      datasource,
+    };
+    return getGrafanaSearcher().search(searchQuery, tags.length || datasource ? filters : undefined);
+  }, [query]);
 
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
   }
 
+  const getTagOptions = (): Promise<TermCount[]> => {
+    const tags = results.value?.body.fields.find((f) => f.name === 'tags');
+
+    if (tags) {
+      return Promise.resolve(getTermCounts(tags));
+    }
+    return Promise.resolve([]);
+  };
+
+  const onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onQueryChange(event.currentTarget.value);
+  };
+
+  const onTagChange = (tags: string[]) => {
+    onTagFilterChange(tags);
+  };
+
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
-        <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} autoFocus spellCheck={false} />
-        <br /> <br />
-        {!dashboards && <div>Loading....</div>}
-        {dashboards && (
+        <Input value={query.query} onChange={onSearchQueryChange} autoFocus spellCheck={false} />
+        <br />
+        {results.loading && <Spinner />}
+        {results.value?.body && (
           <div>
-            <AutoSizer style={{ width: '100%', height: '1000px' }}>
+            <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagChange} /> <br />
+            {query.datasource && (
+              <Button
+                icon="times"
+                variant="secondary"
+                onClick={() => onDatasourceChange(undefined)}
+                className={styles.clearClick}
+              >
+                Datasource: {query.datasource}
+              </Button>
+            )}
+            <AutoSizer style={{ width: '100%', height: '2000px' }}>
               {({ width }) => {
                 return (
-                  <div>
-                    {dashboards && <SearchPageDashboardList dashboards={dashboards} />}
-                    <br />
-                    {dashboards.dataFrame && dashboards.dataFrame.length > 0 && (
-                      <SearchPageDashboards dashboards={dashboards.dataFrame} width={width} />
-                    )}
-
-                    {panels && (
-                      <SearchPageStats
-                        panelTypes={buildStatsTable(panels.fields.find((f) => f.name === 'Type'))}
-                        width={width}
-                      />
-                    )}
-                  </div>
+                  <>
+                    <Table
+                      data={results.value!.body}
+                      width={width}
+                      tags={query.tag}
+                      onTagFilterChange={onTagChange}
+                      onDatasourceChange={onDatasourceChange}
+                    />
+                  </>
                 );
               }}
             </AutoSizer>
@@ -85,5 +104,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     height: 100%;
     font-size: 18px;
+  `,
+
+  clearClick: css`
+    &:hover {
+      text-decoration: line-through;
+    }
+    margin-bottom: 20px;
   `,
 });

@@ -288,7 +288,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 }
 
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
-	ctx context.Context, orgID int64, query string, page int, limit int,
+	ctx context.Context, orgID int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
 	signedInUser *models.SignedInUser,
 ) (*serviceaccounts.SearchServiceAccountsResult, error) {
 	searchResult := &serviceaccounts.SearchServiceAccountsResult{
@@ -314,7 +314,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 				s.sqlStore.Dialect.BooleanStr(true)))
 
 		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts", serviceaccounts.ActionRead)
+			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 			if err != nil {
 				return err
 			}
@@ -326,6 +326,20 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 			queryWithWildcards := "%" + query + "%"
 			whereConditions = append(whereConditions, "(email "+s.sqlStore.Dialect.LikeStr()+" ? OR name "+s.sqlStore.Dialect.LikeStr()+" ? OR login "+s.sqlStore.Dialect.LikeStr()+" ?)")
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
+
+		switch filter {
+		case serviceaccounts.FilterIncludeAll:
+			// pass
+		case serviceaccounts.FilterOnlyExpiredTokens:
+			now := time.Now().Unix()
+			// we do a subquery to remove duplicates coming from joining in api_keys, if we find more than one api key that has expired
+			whereConditions = append(
+				whereConditions,
+				"(SELECT count(*) FROM api_key WHERE api_key.service_account_id = org_user.user_id AND api_key.expires < ?) > 0")
+			whereParams = append(whereParams, now)
+		default:
+			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
 		}
 
 		if len(whereConditions) > 0 {

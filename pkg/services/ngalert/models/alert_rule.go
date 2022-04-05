@@ -18,12 +18,9 @@ var (
 	// ErrAlertRuleFailedGenerateUniqueUID is an error for failure to generate alert rule UID
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
 	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
-	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
-	// ErrRuleGroupNamespaceNotFound
-	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
-	// ErrAlertRuleFailedValidation
-	ErrAlertRuleFailedValidation = errors.New("invalid alert rule")
-	// ErrAlertRuleUniqueConstraintViolation
+	ErrCannotEditNamespace                = errors.New("user does not have permissions to edit the namespace")
+	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
+	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 )
 
@@ -77,6 +74,12 @@ const (
 	OkErrState       ExecutionErrorState = "OK"
 )
 
+// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
+var InternalLabelNameSet = map[string]struct{}{
+	RuleUIDLabel:      {},
+	NamespaceUIDLabel: {},
+}
+
 const (
 	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
@@ -108,6 +111,29 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+type LabelOption func(map[string]string)
+
+func WithoutInternalLabels() LabelOption {
+	return func(labels map[string]string) {
+		for k := range labels {
+			if _, ok := InternalLabelNameSet[k]; ok {
+				delete(labels, k)
+			}
+		}
+	}
+}
+
+// GetLabels returns the labels specified as part of the alert rule.
+func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
+	labels := alertRule.Labels
+
+	for _, opt := range opts {
+		opt(labels)
+	}
+
+	return labels
 }
 
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
@@ -224,12 +250,12 @@ type ListNamespaceAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
-// ListRuleGroupAlertRulesQuery is the query for listing rule group alert rules
-type ListRuleGroupAlertRulesQuery struct {
+// GetAlertRulesQuery is the query for listing rule group alert rules
+type GetAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
-	RuleGroup    string
+	RuleGroup    *string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.

@@ -56,12 +56,14 @@ go.sum @grafana/backend-platform
 # Grafana edge
 /pkg/services/live/ @grafana/grafana-edge-squad
 /pkg/services/searchV2/ @grafana/grafana-edge-squad
+/pkg/services/store/ @grafana/grafana-edge-squad
 /pkg/infra/filestore/ @grafana/grafana-edge-squad
 
 # Alerting
 /pkg/services/ngalert @grafana/alerting-squad-backend
 /pkg/services/sqlstore/migrations/ualert @grafana/alerting-squad-backend
 /pkg/services/alerting @grafana/alerting-squad-backend
+/pkg/tests/api/alerting @grafana/alerting-squad-backend
 /public/app/features/alerting @grafana/alerting-squad-frontend
 
 # Library Services

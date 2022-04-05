@@ -1,3 +1,41 @@
+<!-- 8.4.5 START -->
+
+# 8.4.5 (2022-03-31)
+
+### Features and enhancements
+
+- **Instrumentation:** Make backend plugin metrics endpoints available with optional authentication. [#46467](https://github.com/grafana/grafana/pull/46467), [@marefr](https://github.com/marefr)
+- **Table panel:** Show datalinks for cell display modes JSON View and Gauge derivates. [#46020](https://github.com/grafana/grafana/pull/46020), [@mdvictor](https://github.com/mdvictor)
+
+### Bug fixes
+
+- **Azure Monitor:** Small bug fixes for Resource Picker. [#46665](https://github.com/grafana/grafana/pull/46665), [@sarahzinger](https://github.com/sarahzinger)
+- **Logger:** Use specified format for file logger. [#46970](https://github.com/grafana/grafana/pull/46970), [@sakjur](https://github.com/sakjur)
+- **Logs:** Handle missing fields in dataframes better. [#46963](https://github.com/grafana/grafana/pull/46963), [@gabor](https://github.com/gabor)
+- **ManageDashboards:** Fix error when deleting all dashboards from folder view. [#46877](https://github.com/grafana/grafana/pull/46877), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 8.4.5 END -->
+<!-- 8.4.4 START -->
+
+# 8.4.4 (2022-03-16)
+
+### Features and enhancements
+
+- **Loki:** Add unpack to autocomplete suggestions (#44623). [#46573](https://github.com/grafana/grafana/pull/46573), [@glintik](https://github.com/glintik)
+- **Plugins:** allow using both Function and Class components for app plugins. [#46148](https://github.com/grafana/grafana/pull/46148), [@leventebalogh](https://github.com/leventebalogh)
+- **TimeSeries:** Add migration for Graph panel's transform series override. [#46577](https://github.com/grafana/grafana/pull/46577), [@dprokop](https://github.com/dprokop)
+- **TimeSeries:** Preserve null/undefined values when performing negative y transform. [#46584](https://github.com/grafana/grafana/pull/46584), [@dprokop](https://github.com/dprokop)
+
+### Bug fixes
+
+- **CloudWatch:** Use default http client from aws-sdk-go. [#46370](https://github.com/grafana/grafana/pull/46370), [@sunker](https://github.com/sunker)
+- **Dashboards:** Fixes repeating by row and no refresh. [#46565](https://github.com/grafana/grafana/pull/46565), [@torkelo](https://github.com/torkelo)
+- **Gauge:** Fixes blank viz when data link exists and orientation was horizontal. [#46335](https://github.com/grafana/grafana/pull/46335), [@torkelo](https://github.com/torkelo)
+- **Search:** sort results correctly when using postgres. [#46466](https://github.com/grafana/grafana/pull/46466), [@xlson](https://github.com/xlson)
+- **TagsInput:** fix tags remove button accessibility issues. [#46254](https://github.com/grafana/grafana/pull/46254), [@Elfo404](https://github.com/Elfo404)
+- **TextPanel:** Sanitize after markdown has been rendered to html. [#46166](https://github.com/grafana/grafana/pull/46166), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 8.4.4 END -->
 <!-- 8.4.3 START -->
 
 # 8.4.3 (2022-03-02)

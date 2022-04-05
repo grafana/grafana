@@ -115,7 +115,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} />}
+      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly checked={isSelected} />}
     </h2>
   );
 };

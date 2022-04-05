@@ -93,6 +93,7 @@ func (ng *AlertNG) init() error {
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
 		FolderService:   ng.folderService,
+		AccessControl:   ng.accesscontrol,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
@@ -144,6 +145,7 @@ func (ng *AlertNG) init() error {
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		SecretsService:       ng.SecretsService,
+		TransactionManager:   store,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
@@ -154,7 +156,7 @@ func (ng *AlertNG) init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	return api.DeclareFixedRoles()
+	return DeclareFixedRoles(ng.accesscontrol)
 }
 
 // Run starts the scheduler and Alertmanager.

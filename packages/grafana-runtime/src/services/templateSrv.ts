@@ -1,4 +1,4 @@
-import { VariableModel, ScopedVars } from '@grafana/data';
+import { VariableModel, ScopedVars, TimeRange } from '@grafana/data';
 
 /**
  * Via the TemplateSrv consumers get access to all the available template variables
@@ -22,6 +22,11 @@ export interface TemplateSrv {
    * Checks if a target contains template variables.
    */
   containsTemplate(target?: string): boolean;
+
+  /**
+   * Update the current time range to be used when interpolating __from / __to variables.
+   */
+  updateTimeRange(timeRange: TimeRange): void;
 }
 
 let singletonInstance: TemplateSrv;

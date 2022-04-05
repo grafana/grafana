@@ -1,15 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { IconSize, useStyles2 } from '@grafana/ui';
 import React, { FC, useState } from 'react';
+import { CollapseToggle } from '../../CollapseToggle';
 
 interface Props {
   label: string;
   description?: string;
   className?: string;
+  size?: IconSize;
 }
 
-export const CollapsibleSection: FC<Props> = ({ label, description, children, className }) => {
+export const CollapsibleSection: FC<Props> = ({ label, description, children, className, size = 'xl' }) => {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -18,7 +20,7 @@ export const CollapsibleSection: FC<Props> = ({ label, description, children, cl
   return (
     <div className={cx(styles.wrapper, className)}>
       <div className={styles.heading} onClick={toggleCollapse}>
-        <Icon className={styles.caret} size="xl" name={isCollapsed ? 'angle-right' : 'angle-down'} />
+        <CollapseToggle className={styles.caret} size={size} onToggle={toggleCollapse} isCollapsed={isCollapsed} />
         <h6>{label}</h6>
       </div>
       {description && <p className={styles.description}>{description}</p>}

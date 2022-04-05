@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Modal } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { useDashboardSave } from './useDashboardSave';
-import { SaveDashboardModalProps } from './types';
+import { SaveDashboardModalProps, SaveDashboardOptions, SaveDashboardData } from './types';
 
 export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboard, onDismiss, onSaveSuccess }) => {
   const { state, onDashboardSave } = useDashboardSave(dashboard);
   const [dashboardSaveModelClone, setDashboardSaveModelClone] = useState();
+  const [options, setOptions] = useState<SaveDashboardOptions>({});
+
+  const data = useMemo<SaveDashboardData>(() => {
+    const clone = dashboard.getSaveModelClone({
+      saveTimerange: Boolean(options.saveTimerange),
+      saveVariables: Boolean(options.saveVariables),
+    });
+
+    return { clone, diff: {}, diffCount: 0, hasChanges: true };
+  }, [dashboard, options]);
 
   return (
     <>
@@ -33,6 +43,8 @@ export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboar
           <SaveDashboardForm
             dashboard={dashboard}
             onCancel={onDismiss}
+            saveModel={data}
+            options={options}
             onSuccess={() => {
               onDismiss();
               if (onSaveSuccess) {
@@ -43,6 +55,7 @@ export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboar
               setDashboardSaveModelClone(clone);
               return onDashboardSave(clone, options, dashboard);
             }}
+            onOptionsChange={setOptions}
           />
         </Modal>
       )}

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import {
   DataSourceJsonData,
+  DataSourceInstanceSettings,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme,
   KeyValue,
@@ -20,7 +21,7 @@ export interface TraceToLogsOptions {
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
-  lokiSearch?: boolean;
+  lokiSearch?: boolean; // legacy
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -44,12 +45,13 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            pluginId="loki"
+            logs
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
                 datasourceUid: ds.uid,
                 tags: options.jsonData.tracesToLogs?.tags,
               })
@@ -200,22 +202,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 ...options.jsonData.tracesToLogs,
                 filterBySpanID: event.currentTarget.checked,
-              })
-            }
-          />
-        </InlineField>
-      </InlineFieldRow>
-
-      <InlineFieldRow>
-        <InlineField label="Loki Search" labelWidth={26} grow tooltip="Use this logs data source to search for traces.">
-          <InlineSwitch
-            id="lokiSearch"
-            defaultChecked={true}
-            value={options.jsonData.tracesToLogs?.lokiSearch}
-            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
-                ...options.jsonData.tracesToLogs,
-                lokiSearch: event.currentTarget.checked,
               })
             }
           />
