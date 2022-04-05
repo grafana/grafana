@@ -425,7 +425,7 @@ export function buildLayout(props: Props): BigValueLayout {
   const useWideLayout = width / height > 2.5;
 
   if (useWideLayout) {
-    if (height > 50 && !!sparkline) {
+    if (height > 50 && !!sparkline && sparkline.y.values.length > 1) {
       return new WideWithChartLayout(props);
     } else {
       return new WideNoChartLayout(props);
