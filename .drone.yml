@@ -1021,6 +1021,9 @@ steps:
       from_secret: npm_token
   image: grafana/build-container:1.5.3
   name: release-canary-npm-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
@@ -1035,6 +1038,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
   depends_on:
@@ -1046,6 +1052,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
+  when:
+    repo:
+    - grafana/grafana
 trigger:
   branch: main
   event:
@@ -3329,8 +3338,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3431,8 +3438,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3518,8 +3523,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3576,8 +3579,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3913,8 +3914,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4058,8 +4057,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4192,8 +4189,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4274,8 +4269,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4427,6 +4420,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ad6c2f361ab597850d43ef9e74e396f6b16c322b3580202c19ffe87653e3ace8
+hmac: 2a60dab1750e2b4ba806a1dd65a38326a898e25b468f65ba27ee5c43fe587fba
 
 ...

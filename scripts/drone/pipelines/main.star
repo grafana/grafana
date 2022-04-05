@@ -133,9 +133,9 @@ def get_steps(edition, is_downstream=False):
       integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     build_steps.extend([
-        release_canary_npm_packages_step(edition),
-        upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        upload_cdn_step(edition=edition, ver_mode=ver_mode)
+        release_canary_npm_packages_step(edition, trigger=trigger_oss),
+        upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, trigger=trigger_oss),
+        upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)
     ])
 
     if include_enterprise2:
