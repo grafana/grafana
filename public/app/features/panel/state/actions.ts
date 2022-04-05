@@ -2,7 +2,7 @@ import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPlugi
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
-import { panelModelAndPluginReady } from './reducers';
+import { cleanUpAngularComponent, panelModelAndPluginReady, removePanel, removePanels } from './reducers';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
@@ -28,6 +28,24 @@ export function initPanelState(panel: PanelModel): ThunkResult<void> {
     }
 
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+  };
+}
+
+export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const store = getStore().panels;
+    cleanUpAngularComponent(store[panelKey]);
+    dispatch(removePanel({ key: panelKey }));
+  };
+}
+
+export function cleanAndRemoveMany(panelKeys: string[]): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const store = getStore().panels;
+    for (const key of panelKeys) {
+      cleanUpAngularComponent(store[key]);
+    }
+    dispatch(removePanels({ keys: panelKeys }));
   };
 }
 
