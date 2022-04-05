@@ -65,6 +65,7 @@ export const generateColumns = (
   const DATASOURCE_COLUMN_WIDTH = 200;
   const INFO_COLUMN_WIDTH = 100;
   const LOCATION_COLUMN_WIDTH = 200;
+  const TAGS_COLUMN_WIDTH = 200;
 
   width = TYPE_COLUMN_WIDTH;
   if (isDashboardList) {
@@ -93,13 +94,27 @@ export const generateColumns = (
   if (access.datasource && hasFieldValue(access.datasource)) {
     width = DATASOURCE_COLUMN_WIDTH;
     columns.push(
-      makeDataSourceColumn(access.datasource, width, styles.typeIcon, styles.datasourceItem, onDatasourceChange)
+      makeDataSourceColumn(
+        access.datasource,
+        width,
+        styles.typeIcon,
+        styles.datasourceItem,
+        styles.invalidDatasourceItem,
+        onDatasourceChange
+      )
     );
     availableWidth -= width;
   }
 
+  // Show tags if we have any
+  if (access.tags && hasFieldValue(access.tags)) {
+    width = TAGS_COLUMN_WIDTH;
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
+    availableWidth -= width;
+  }
+
   if (isDashboardList) {
-    width = INFO_COLUMN_WIDTH;
+    width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
     columns.push({
       Cell: DefaultCell,
       id: `column-info`,
@@ -111,8 +126,8 @@ export const generateColumns = (
       },
       width: width,
     });
-    availableWidth -= width;
   } else {
+    width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
     columns.push({
       Cell: DefaultCell,
       id: `column-location`,
@@ -140,15 +155,8 @@ export const generateColumns = (
         }
         return null;
       },
-      width: LOCATION_COLUMN_WIDTH,
+      width: width,
     });
-    availableWidth -= width;
-  }
-
-  // Show tags if we have any
-  if (access.tags && hasFieldValue(access.tags)) {
-    width = Math.max(availableWidth, 250);
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
   }
 
   return columns;
@@ -179,6 +187,7 @@ function makeDataSourceColumn(
   width: number,
   iconClass: string,
   datasourceItemClass: string,
+  invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
   return {
@@ -210,7 +219,11 @@ function makeDataSourceColumn(
                   </span>
                 );
               }
-              return <span key={i}>{v.type}</span>;
+              return (
+                <span className={invalidDatasourceItemClass} key={i}>
+                  {v.type}
+                </span>
+              );
             })}
           </div>
         );

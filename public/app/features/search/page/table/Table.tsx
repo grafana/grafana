@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
+import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { DataFrame, DataFrameType, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
+import { useStyles2 } from '@grafana/ui';
 
 import { LocationInfo } from '../../service';
 import { generateColumns } from './columns';
@@ -66,7 +66,7 @@ export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange
     [memoizedColumns, memoizedData]
   );
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useBlockLayout);
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
 
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
@@ -79,16 +79,14 @@ export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
             return (
-              <a href={url} key={index}>
-                <div className={styles.cellWrapper}>
-                  <TableCell
-                    key={index}
-                    tableStyles={tableStyles}
-                    cell={cell}
-                    columnIndex={index}
-                    columnCount={row.cells.length}
-                  />
-                </div>
+              <a href={url} key={index} className={styles.cellWrapper}>
+                <TableCell
+                  key={index}
+                  tableStyles={tableStyles}
+                  cell={cell}
+                  columnIndex={index}
+                  columnCount={row.cells.length}
+                />
               </a>
             );
           })}
@@ -177,6 +175,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
     `,
     rowContainer: css`
+      label: row;
       &:hover {
         background-color: ${rowHoverBg};
       }
@@ -195,6 +194,10 @@ const getStyles = (theme: GrafanaTheme2) => {
           color: ${theme.colors.text.link};
         }
       }
+    `,
+    invalidDatasourceItem: css`
+      color: ${theme.colors.error.main};
+      text-decoration: line-through;
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
@@ -220,7 +223,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     tagList: css`
       justify-content: flex-start;
-      pointer-events: auto;
+      flex-wrap: nowrap;
     `,
   };
 };
