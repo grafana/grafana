@@ -15,7 +15,7 @@ For Mimir and Loki data sources to work with Grafana 8.0 alerting, enable the ru
 
 **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.
 
-**Mimir** - When configuring a Grafana Prometheus data source to point to Mimir, use the legacy `/api/prom` prefix, not `/prometheus`. Currently, we support only single-binary mode and you cannot provide a separate URL for the ruler API.
+**Grafana Mimir** - When configuring a Grafana Prometheus data source to point to Grafana Mimir, use the legacy `/api/prom` prefix, not `/prometheus`. Currently, we support only single-binary mode and you cannot provide a separate URL for the ruler API.
 
 > **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings page and clear the **Manage alerts via Alerting UI** checkbox.
 
