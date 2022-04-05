@@ -18,7 +18,6 @@ import (
 	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 
 	"github.com/stretchr/testify/require"
@@ -120,16 +119,6 @@ func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.S
 
 func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
 	return ts.passThruEnabled
-}
-
-type fakeSecretsService struct {
-	secrets.Service
-
-	decryptedJson map[string]string
-}
-
-func (s *fakeSecretsService) DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error) {
-	return s.decryptedJson, nil
 }
 
 type fakeDataSourceCache struct {
