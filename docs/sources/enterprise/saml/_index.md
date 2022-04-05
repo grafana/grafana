@@ -1,6 +1,6 @@
 ---
-title: 'SAML Authentication'
-description: 'Grafana SAML Authentication'
+title: 'SAML authentication'
+description: 'Grafana SAML authentication'
 keywords: ['grafana', 'saml', 'documentation', 'saml-auth']
 aliases: ['/docs/grafana/latest/auth/saml/']
 weight: 10

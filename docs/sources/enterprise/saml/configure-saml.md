@@ -1,15 +1,15 @@
 ---
-title: 'SAML Configuration in Grafana'
-menuTitle: 'SAML Configuration'
+title: 'Configure SAML authentication in Grafana'
+menuTitle: 'Configure SAML'
 description: 'This contains information on how to configure SAML authentication in Grafana'
 keywords: ['grafana', 'saml', 'documentation', 'saml-configuration']
 aliases: ['/docs/grafana/latest/auth/saml/']
 weight: 40
 ---
 
-# SAML Configuration
+# Configure SAML authentication in Grafana
 
-The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../administration/configuration.md#configure-with-environment-variables" >}}).
+The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../../administration/configuration.md#configure-with-environment-variables" >}}).
 
 | Setting                                                    | Required | Description                                                                                                                                                                                         | Default       |
 | ---------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -98,24 +98,24 @@ Grafana provides configuration options that let you modify which keys to look at
 
 > Team sync support for SAML only available in Grafana v7.0+
 
-To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "./enterprise-configuration.md#assertion-attribute-groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
+To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref ".././enterprise-configuration.md#assertion-attribute-groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
-[Learn more about Team Sync]({{< relref "../enterprise/team-sync.md" >}})
+[Learn more about Team Sync]({{< relref "../../enterprise/team-sync.md" >}})
 
 ### Configure role sync
 
 > Only available in Grafana v7.0+
 
-Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [About users and permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
 
-1. In the configuration file, set [`assertion_attribute_role`]({{< relref "./enterprise-configuration.md#assertion-attribute-role" >}}) option to the attribute name where the role information will be extracted from.
-1. Set the [`role_values_editor`]({{< relref "./enterprise-configuration.md#role-values-editor" >}}) option to the values mapped to the `Editor` role.
-1. Set the [`role_values_admin`]({{< relref "./enterprise-configuration.md#role-values-admin" >}}) option to the values mapped to the organization `Admin` role.
-1. Set the [`role_values_grafana_admin`]({{< relref "./enterprise-configuration.md#role-values-grafana-admin" >}}) option to the values mapped to the `Grafana Admin` role.
+1. In the configuration file, set [`assertion_attribute_role`]({{< relref ".././enterprise-configuration.md#assertion-attribute-role" >}}) option to the attribute name where the role information will be extracted from.
+1. Set the [`role_values_editor`]({{< relref ".././enterprise-configuration.md#role-values-editor" >}}) option to the values mapped to the `Editor` role.
+1. Set the [`role_values_admin`]({{< relref ".././enterprise-configuration.md#role-values-admin" >}}) option to the values mapped to the organization `Admin` role.
+1. Set the [`role_values_grafana_admin`]({{< relref ".././enterprise-configuration.md#role-values-grafana-admin" >}}) option to the values mapped to the `Grafana Admin` role.
 
 If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
 
-Refer to [About users and permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}) for more information about roles and permissions in Grafana.
+Refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}) for more information about roles and permissions in Grafana.
 
 Example configuration:
 
@@ -135,8 +135,8 @@ role_values_grafana_admin = superadmin
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
-1. In configuration file, set [`assertion_attribute_org`]({{< relref "./enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
-1. Set [`org_mapping`]({{< relref "./enterprise-configuration.md#org-mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
+1. In configuration file, set [`assertion_attribute_org`]({{< relref ".././enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
+1. Set [`org_mapping`]({{< relref ".././enterprise-configuration.md#org-mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
 
 For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` as Editor and users from `Sales` - to the org with id `3` as Admin, based on `Org` assertion attribute value:
 
@@ -159,7 +159,7 @@ You can use `*` as an Organization if you want all your users to be in some orga
 
 > Only available in Grafana v7.0+
 
-With the [`allowed_organizations`]({{< relref "./enterprise-configuration.md#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+With the [`allowed_organizations`]({{< relref ".././enterprise-configuration.md#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
 ## Example SAML configuration
 

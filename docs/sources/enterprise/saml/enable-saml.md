@@ -1,21 +1,21 @@
 ---
-title: 'Enable SAML Authentication'
-menuTitle: 'Enable SAML Authentication'
-description: 'This contains information to enable SAML Authentication in Grafana'
+title: 'Enable SAML authentication in Grafana'
+menuTitle: 'Enable SAML authentication'
+description: 'This contains information to enable SAML authentication in Grafana'
 keywords: ['grafana', 'saml', 'documentation', 'saml-auth']
 aliases: ['/docs/grafana/latest/auth/saml/']
 weight: 30
 ---
 
-# Enable SAML authentication
+# Enable SAML authentication in Grafana
 
 To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
-Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana.
+Refer to [Configuration]({{< relref "../../administration/configuration.md" >}}) for more information about configuring Grafana.
 
 ## Certificate and private key
 
-The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part.
+The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part. The private key needs to be issued in a [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
 Grafana supports two ways of specifying both the `certificate` and `private_key`.
 
