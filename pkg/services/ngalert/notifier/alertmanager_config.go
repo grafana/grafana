@@ -1,4 +1,4 @@
-package services
+package notifier
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -32,7 +31,7 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 
 // AlertmanagerConfigService is a domain-layer service which manages configs for the Grafana alertmanager.
 type AlertmanagerConfigService struct {
-	mam     *notifier.MultiOrgAlertmanager
+	mam     *MultiOrgAlertmanager
 	secrets secrets.Service
 	store   AlertingStore
 	log     log.Logger
@@ -42,27 +41,7 @@ type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
-type Alertmanager interface {
-	// Configuration
-	SaveAndApplyConfig(ctx context.Context, config *definitions.PostableUserConfig) error
-	SaveAndApplyDefaultConfig(ctx context.Context) error
-	GetStatus() definitions.GettableStatus
-
-	// Silences
-	CreateSilence(ps *definitions.PostableSilence) (string, error)
-	DeleteSilence(silenceID string) error
-	GetSilence(silenceID string) (definitions.GettableSilence, error)
-	ListSilences(filter []string) (definitions.GettableSilences, error)
-
-	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (definitions.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (definitions.AlertGroups, error)
-
-	// Testing
-	TestReceivers(ctx context.Context, c definitions.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
-}
-
-func NewAlertmanagerConfigService(mam *notifier.MultiOrgAlertmanager, secrets secrets.Service, store AlertingStore, log log.Logger) *AlertmanagerConfigService {
+func NewAlertmanagerConfigService(mam *MultiOrgAlertmanager, secrets secrets.Service, store AlertingStore, log log.Logger) *AlertmanagerConfigService {
 	return &AlertmanagerConfigService{
 		mam:     mam,
 		secrets: secrets,
@@ -77,7 +56,7 @@ func (s *AlertmanagerConfigService) GetAlertmanagerConfiguration(ctx context.Con
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
-	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	cfg, err := Load([]byte(query.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
 	}
@@ -146,7 +125,7 @@ func (s *AlertmanagerConfigService) ApplyAlertmanagerConfiguration(ctx context.C
 	am, err := s.AlertmanagerFor(org)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
-		if !errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+		if !errors.Is(err, ErrAlertmanagerNotReady) {
 			return err
 		}
 	}
@@ -159,7 +138,7 @@ func (s *AlertmanagerConfigService) ApplyAlertmanagerConfiguration(ctx context.C
 	return nil
 }
 
-func (s *AlertmanagerConfigService) AlertmanagerFor(orgID int64) (Alertmanager, error) {
+func (s *AlertmanagerConfigService) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
 	return s.mam.AlertmanagerFor(orgID)
 }
 
@@ -175,7 +154,7 @@ func (s *AlertmanagerConfigService) LoadSecureSettings(ctx context.Context, orgI
 
 	currentReceiverMap := make(map[string]*definitions.PostableGrafanaReceiver)
 	if query.Result != nil {
-		currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+		currentConfig, err := Load([]byte(query.Result.AlertmanagerConfiguration))
 		if err != nil {
 			return fmt.Errorf("failed to load latest configuration: %w", err)
 		}
