@@ -64,9 +64,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       }
       // Show error for query patterns not supported in visual query builder
       if (error) {
-        const err = makeError(expr, node);
-        err.text = `${error}: ${err.text}`;
-        context.errors.push(err);
+        context.errors.push(createNotSupportedError(expr, node, error));
       }
       break;
     }
@@ -83,18 +81,16 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       }
       // Show error for query patterns not supported in visual query builder
       if (error) {
-        const err = makeError(expr, node);
-        err.text = `${error}: ${err.text}`;
-        context.errors.push(err);
+        context.errors.push(createNotSupportedError(expr, node, error));
       }
       break;
     }
 
     case 'JsonExpressionParser': {
       // JsonExpressionParser is not supported in query builder
-      const err = makeError(expr, node);
-      err.text = `JsonExpressionParser not supported in visual query builder: ${err.text}`;
-      context.errors.push(err);
+      const error = 'JsonExpressionParser not supported in visual query builder';
+
+      context.errors.push(createNotSupportedError(expr, node, error));
     }
 
     case 'LineFormatExpr': {
@@ -114,9 +110,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       }
       // Show error for query patterns not supported in visual query builder
       if (error) {
-        const err = makeError(expr, node);
-        err.text = `${error}: ${err.text}`;
-        context.errors.push(err);
+        context.errors.push(createNotSupportedError(expr, node, error));
       }
 
       break;
@@ -489,4 +483,16 @@ function getLastChildWithSelector(node: SyntaxNode, selector: string) {
     }
   }
   return child;
+}
+
+/**
+ * Helper function to enrich error text with information that visual query builder doesn't support that logQL
+ * @param expr
+ * @param node
+ * @param error
+ */
+function createNotSupportedError(expr: string, node: SyntaxNode, error: string) {
+  const err = makeError(expr, node);
+  err.text = `${error}: ${err.text}`;
+  return err;
 }
