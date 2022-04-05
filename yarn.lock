@@ -3239,7 +3239,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:^5.1.7":
+"@betterer/betterer@npm:5.1.7, @betterer/betterer@npm:^5.1.7":
   version: 5.1.7
   resolution: "@betterer/betterer@npm:5.1.7"
   dependencies:
@@ -4002,7 +4002,7 @@ __metadata:
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/marked": 4.0.3
     "@types/node": 16.11.26
     "@types/papaparse": 5.3.2
@@ -4070,7 +4070,7 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.2
     "@rollup/plugin-node-resolve": 13.1.3
     "@types/chrome-remote-interface": 0.31.4
-    "@types/lodash": 4.14.180
+    "@types/lodash": 4.14.181
     "@types/node": 16.11.26
     "@types/uuid": 8.3.4
     babel-loader: 8.2.4
@@ -4156,6 +4156,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-logql@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "@grafana/lezer-logql@npm:0.0.11"
+  dependencies:
+    lezer: ^0.13.5
+  peerDependencies:
+    "@lezer/lr": ^0.15.8
+  checksum: 0427e59528ea5092e53a70b9b6be37b0ed29ca4c0ddf452cc192f8bd14d21a725ba1959b2e33e7567b42e4d0391cff4e4f36c249d7099a157d0f1e9093ba64e4
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -4173,7 +4184,7 @@ __metadata:
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/react": 17.0.42
     "@types/react-dom": 17.0.14
     "@types/systemjs": ^0.20.6
@@ -4388,7 +4399,7 @@ __metadata:
     "@types/is-hotkey": 0.1.7
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.26
     "@types/prismjs": 1.26.0
@@ -4585,7 +4596,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/prop-types": ^15
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
@@ -10101,6 +10112,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/js-yaml@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "@types/js-yaml@npm:4.0.5"
+  checksum: 7dcac8c50fec31643cc9d6444b5503239a861414cdfaa7ae9a38bc22597c4d850c4b8cec3d82d73b3fbca408348ce223b0408d598b32e094470dfffc6d486b4d
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:*, @types/json-schema@npm:^7.0.4, @types/json-schema@npm:^7.0.5, @types/json-schema@npm:^7.0.7, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
   version: 7.0.9
   resolution: "@types/json-schema@npm:7.0.9"
@@ -10140,10 +10158,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.180":
-  version: 4.14.180
-  resolution: "@types/lodash@npm:4.14.180"
-  checksum: fc42ae3473695cac6e91553f832fef8eb51a31c1c0381cafa81b00dc3efe18e279786bdda77caf0b90a8340ba2ba7aa46ae6541d69870565f775d04c89128bc1
+"@types/lodash@npm:4.14.181":
+  version: 4.14.181
+  resolution: "@types/lodash@npm:4.14.181"
+  checksum: 0d1863d8383fd2f8bb42e9e3fc1d6255bb88ff034d6df848941063698944313dae944fc1270315613e3d303fae7c7a9a86085ad3235ed6204c56c4b0b3699aa9
   languageName: node
   linkType: hard
 
@@ -20407,6 +20425,7 @@ __metadata:
     "@babel/preset-env": 7.16.11
     "@babel/preset-react": 7.16.7
     "@babel/preset-typescript": 7.16.7
+    "@betterer/betterer": 5.1.7
     "@betterer/cli": 5.1.7
     "@betterer/regexp": 5.1.7
     "@emotion/css": 11.7.1
@@ -20420,6 +20439,7 @@ __metadata:
     "@grafana/eslint-config": 3.0.0
     "@grafana/experimental": 0.0.2-canary.22
     "@grafana/google-sdk": 0.0.3
+    "@grafana/lezer-logql": ^0.0.11
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -20484,9 +20504,10 @@ __metadata:
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
+    "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/logfmt": ^1.2.1
     "@types/mousetrap": 1.6.9
     "@types/node": 16.11.26
@@ -20592,6 +20613,7 @@ __metadata:
     jest-matcher-utils: 27.5.1
     jest-mock-console: 1.2.3
     jquery: 3.6.0
+    js-yaml: ^4.1.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     lerna: ^4.0.0
@@ -24751,6 +24773,22 @@ __metadata:
   peerDependencies:
     "@lezer/lr": ^0.15.8
   checksum: cdce054700874ef95c779899bc8a6a774f83bc613d509011b7d3b8003f07fa853962291c44edf9232e7a927d0753fec77ec55d795abddda9d2efc044f78bb58a
+  languageName: node
+  linkType: hard
+
+"lezer-tree@npm:^0.13.2":
+  version: 0.13.2
+  resolution: "lezer-tree@npm:0.13.2"
+  checksum: b8be213c780191e0669c7f440aa563218ada762d2cf399b94e755a563cc7da8951929fa3ee65df9ef6586a81223c55cd662e1ec5b49060d892acca4198cf3596
+  languageName: node
+  linkType: hard
+
+"lezer@npm:^0.13.5":
+  version: 0.13.5
+  resolution: "lezer@npm:0.13.5"
+  dependencies:
+    lezer-tree: ^0.13.2
+  checksum: a5c3aa01c539aba3377a927063bcd63b311737a7abfd71ad2c2229ed4e48b7858f2e8e11e925f8f5286c2629251f77dfabf7505ea6c707499cd9917ca90934c8
   languageName: node
   linkType: hard
 

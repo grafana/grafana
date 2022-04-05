@@ -2,8 +2,6 @@ package resourcegraph
 
 import (
 	"bytes"
-	"time"
-
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,9 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -268,13 +269,13 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 func GetAzurePortalUrl(azureCloud string) (string, error) {
 	switch azureCloud {
-	case setting.AzurePublic:
+	case azsettings.AzurePublic:
 		return "https://portal.azure.com", nil
-	case setting.AzureChina:
+	case azsettings.AzureChina:
 		return "https://portal.azure.cn", nil
-	case setting.AzureUSGovernment:
+	case azsettings.AzureUSGovernment:
 		return "https://portal.azure.us", nil
-	case setting.AzureGermany:
+	case azsettings.AzureGermany:
 		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")
