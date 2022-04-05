@@ -85,14 +85,8 @@ func formatValues(alertState *state.State) string {
 			vs = append(vs, fmt.Sprintf("%s: %s", k, strconv.FormatFloat(v, 'e', -1, 64)))
 		}
 
-		// Ensure we have a consistent ordering after formatting e.g. A0, A1, A3, A10, A11, etc.
-		sort.Slice(vs, func(i, j int) bool {
-			a, _ := strconv.Atoi(vs[i])
-			b, _ := strconv.Atoi(vs[j])
-
-			return a < b
-		})
-
+		// Ensure we have a consistent natural ordering after formatting e.g. A0, A1, A10, A11, A3, etc.
+		sort.Strings(vs)
 		fv = strings.Join(vs, ", ")
 	}
 
