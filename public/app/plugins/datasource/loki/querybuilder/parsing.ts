@@ -205,8 +205,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): QueryBuilderOperation {
     const label = filter!.firstChild;
     const op = label!.nextSibling;
     const value = op!.nextSibling;
-    const params = [getString(expr, label), getString(expr, op), getString(expr, value).replace(/"/g, '')];
-
+    const params = [getString(expr, label), getString(expr, op), handleQuotes(getString(expr, value))];
     //Special case of pipe filtering - no errors
     if (params.join('') === `__error__=`) {
       return {
