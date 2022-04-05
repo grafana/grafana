@@ -11,7 +11,7 @@ You can create and manage recording rules for an external Grafana Mimir or Loki 
 
 ## Before you begin
 
-For Mimir and Loki data sources to work with Grafana 8.0 alerting, enable the ruler API by configuring their respective services.
+For Grafana Mimir and Loki data sources to work with Grafana 8.0 alerting, enable the ruler API by configuring their respective services.
 
 **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.
 
