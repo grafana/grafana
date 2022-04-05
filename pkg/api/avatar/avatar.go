@@ -280,7 +280,7 @@ type ResponseHandler func(av *Avatar, resp *http.Response) error
 
 // Verifies the Gravatar response code was 200, then stores the image byte slice
 func getGravatarHandler(av *Avatar, resp *http.Response) error {
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		av.HandleErrorResponse()
 		return fmt.Errorf("status code: %d", resp.StatusCode)
 	}
