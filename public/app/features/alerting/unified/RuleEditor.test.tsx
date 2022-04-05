@@ -21,8 +21,6 @@ import { searchFolders } from '../../../../app/features/manage-dashboards/state/
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 import { fetchBuildInfo } from './api/buildInfo';
 
-jest.setTimeout(60 * 1000);
-
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
