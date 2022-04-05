@@ -30,7 +30,6 @@ load(
     'memcached_integration_tests_step',
     'get_windows_steps',
     'benchmark_ldap_step',
-    'frontend_metrics_step',
     'store_storybook_step',
     'upload_packages_step',
     'store_packages_step',

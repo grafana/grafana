@@ -288,7 +288,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
         },
         'commands': commands,
     }
-    if trigger:
+    if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)
     return step
 
@@ -361,7 +361,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
-    if trigger:
+    if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)
     return step
 
@@ -842,7 +842,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
             'path': '/var/run/docker.sock'
         }],
     }
-    if trigger:
+    if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)
 
     return step
@@ -998,7 +998,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False, trigger=None):
         },
         'commands': [cmd, ],
     }
-    if trigger:
+    if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)
     return step
 
