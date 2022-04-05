@@ -294,7 +294,7 @@ func getGravatarHandler(av *Avatar, resp *http.Response) error {
 
 // Uses the d=404 fallback to see if the gravatar we got back is custom
 func checkIsCustomHandler(av *Avatar, resp *http.Response) error {
-	av.isCustom = resp.StatusCode != 404
+	av.isCustom = resp.StatusCode != http.StatusNotFound
 	return nil
 }
 
