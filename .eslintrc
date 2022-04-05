@@ -7,6 +7,11 @@
     "import/external-module-folders": ["node_modules", ".yarn"]
   },
   "rules": {
+    "no-restricted-properties": [
+      "error",
+      { "property": "substring", "message": "Use .slice instead of .substring." },
+      { "property": "substr", "message": "Use .slice instead of .substr." }
+    ],
     "react/prop-types": "off",
     "@emotion/jsx-import": "error",
     "lodash/import-scope": [2, "member"],
