@@ -431,6 +431,9 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
                 ]
             },
             'ref': ['refs/tags/v*',],
+            'repo': {
+                'exclude': ['grafana/grafana'],
+            },
         }
 
     should_publish = ver_mode == 'release'

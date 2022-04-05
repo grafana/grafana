@@ -1631,6 +1631,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1735,6 +1738,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1824,6 +1830,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1888,6 +1897,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2222,6 +2234,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2372,6 +2387,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2511,6 +2529,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2599,6 +2620,9 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4416,6 +4440,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 5dc1d54b43c65a7db7663407d45a3b03fcab7b1e02cd134e8911739938c85afd
+hmac: 61a04d046f8fcafcd1b3e5ba483ec7c0d87f502ee77829a9ed12e8d181d3f120
 
 ...
