@@ -30,6 +30,9 @@ export enum LokiVisualQueryOperationCategory {
 export enum LokiOperationId {
   Json = 'json',
   Logfmt = 'logfmt',
+  Regexp = 'regexp',
+  Pattern = 'pattern',
+  Unpack = 'unpack',
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
   Rate = 'rate',
