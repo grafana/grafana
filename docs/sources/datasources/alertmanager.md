@@ -29,7 +29,6 @@ datasources:
     url: http://localhost:9093
     access: proxy
     jsonData:
-      implementation: 'prometheus' # alternatively 'mimir'
     # optionally
     basicAuth: true
     basicAuthUser: my_user
