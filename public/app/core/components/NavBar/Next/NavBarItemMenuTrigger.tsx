@@ -72,6 +72,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         case 'ArrowRight':
           if (!state.isOpen) {
             state.open();
+            setMenuIdOpen(item.id);
           }
           setMenuHasFocus(true);
           break;
