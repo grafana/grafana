@@ -61,8 +61,8 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           </div>
         </CSSTransition>
       </FocusScope>
-      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.underlay} timeout={ANIMATION_DURATION}>
-        <div className={styles.underlay} {...underlayProps} />
+      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.backdrop} timeout={ANIMATION_DURATION}>
+        <div className={styles.backdrop} {...underlayProps} />
       </CSSTransition>
     </OverlayContainer>
   );
@@ -71,6 +71,16 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
 NavBarMenu.displayName = 'NavBarMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  backdrop: css({
+    backdropFilter: 'blur(1px)',
+    backgroundColor: theme.components.overlay.background,
+    bottom: 0,
+    left: 0,
+    position: 'fixed',
+    right: 0,
+    top: 0,
+    zIndex: theme.zIndex.modalBackdrop,
+  }),
   container: css({
     bottom: 0,
     display: 'flex',
@@ -104,16 +114,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     right: '0px',
     transform: `translateX(50%)`,
   }),
-  underlay: css({
-    position: 'fixed',
-    zIndex: theme.zIndex.modalBackdrop,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: theme.components.overlay.background,
-    backdropFilter: 'blur(1px)',
-  }),
 });
 
 const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
@@ -128,7 +128,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
     transitionProperty: 'width, background-color, box-shadow',
   };
 
-  const underlayTransition = {
+  const backdropTransition = {
     ...commonTransition,
     transitionProperty: 'opacity',
   };
@@ -145,52 +145,28 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
     width: theme.spacing(7),
   };
 
-  const underlayOpen = {
+  const backdropOpen = {
     opacity: 1,
   };
 
-  const underlayClosed = {
+  const backdropClosed = {
     opacity: 0,
   };
 
   return {
-    underlay: {
-      appear: css({
-        ...underlayClosed,
-      }),
-      appearActive: css({
-        ...underlayTransition,
-        ...underlayOpen,
-      }),
-      appearDone: css({
-        ...underlayOpen,
-      }),
-      exit: css({
-        ...underlayOpen,
-      }),
-      exitActive: css({
-        ...underlayTransition,
-        ...underlayClosed,
-      }),
+    backdrop: {
+      appear: css(backdropClosed),
+      appearActive: css(backdropTransition, backdropOpen),
+      appearDone: css(backdropOpen),
+      exit: css(backdropOpen),
+      exitActive: css(backdropTransition, backdropClosed),
     },
     overlay: {
-      appear: css({
-        ...overlayClosed,
-      }),
-      appearActive: css({
-        ...overlayTransition,
-        ...overlayOpen,
-      }),
-      appearDone: css({
-        ...overlayOpen,
-      }),
-      exit: css({
-        ...overlayOpen,
-      }),
-      exitActive: css({
-        ...overlayTransition,
-        ...overlayClosed,
-      }),
+      appear: css(overlayClosed),
+      appearActive: css(overlayTransition, overlayOpen),
+      appearDone: css(overlayOpen),
+      exit: css(overlayOpen),
+      exitActive: css(overlayTransition, overlayClosed),
     },
   };
 };
