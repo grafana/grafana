@@ -185,7 +185,7 @@ function NavItem({
   if (linkHasChildren(link)) {
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
-        <ul>
+        <ul className={styles.children}>
           {link.children.map(
             (childLink) =>
               !childLink.divider && (
@@ -250,8 +250,12 @@ function NavItem({
 }
 
 const getNavItemStyles = (theme: GrafanaTheme2) => ({
+  children: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
   item: css({
-    padding: `${theme.spacing(1)} 0`,
+    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
     whiteSpace: 'normal',
     '&::before': {
       display: 'none',
@@ -293,6 +297,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
+    paddingLeft: theme.spacing(0.5),
   }),
 });
 
@@ -369,18 +374,27 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   collapseWrapper: css({
-    borderRadius: theme.shape.borderRadius(2),
+    paddingLeft: theme.spacing(0.5),
     paddingRight: theme.spacing(4.25),
     height: theme.spacing(6),
     alignItems: 'center',
+    color: theme.colors.text.secondary,
+    '&:hover, &:focus-within': {
+      backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
+    },
+    '&:focus-within': {
+      boxShadow: 'none',
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '-2px',
+      transition: 'none',
+    },
   }),
   collapseContent: css({
     padding: 0,
-    paddingLeft: theme.spacing(1.25),
   }),
   labelWrapper: css({
     fontSize: '15px',
-    color: theme.colors.text.secondary,
   }),
   primary: css({
     color: theme.colors.text.primary,
