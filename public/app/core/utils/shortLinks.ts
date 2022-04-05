@@ -13,7 +13,7 @@ function buildHostUrl() {
 
 function getRelativeURLPath(url: string) {
   let path = url.replace(buildHostUrl(), '');
-  return path.startsWith('/') ? path.substring(1, path.length) : path;
+  return path.startsWith('/') ? path.slice(1) : path;
 }
 
 export const createShortLink = memoizeOne(async function (path: string) {

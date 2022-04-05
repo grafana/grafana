@@ -11,7 +11,7 @@ export function findInsertIndex(line: string): { index: number; prefix: string }
     if (ch === '$') {
       return {
         index: i,
-        prefix: line.substring(i),
+        prefix: line.slice(i),
       };
     }
 
@@ -19,7 +19,7 @@ export function findInsertIndex(line: string): { index: number; prefix: string }
     if (ch === ' ' || ch === '\t' || ch === '"' || ch === "'") {
       return {
         index: i + 1,
-        prefix: line.substring(i + 1),
+        prefix: line.slice(i + 1),
       };
     }
   }

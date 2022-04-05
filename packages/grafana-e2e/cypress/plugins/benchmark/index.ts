@@ -10,7 +10,7 @@ const getOrAddRemoteDebuggingPort = (args: string[]) => {
   const existing = args.find((arg) => arg.startsWith(remoteDebuggingPortOptionPrefix));
 
   if (existing) {
-    return Number(existing.substring(remoteDebuggingPortOptionPrefix.length));
+    return Number(existing.slice(remoteDebuggingPortOptionPrefix.length));
   }
 
   const port = 40000 + Math.round(Math.random() * 25000);

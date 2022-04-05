@@ -40,7 +40,7 @@ export default class MySQLQueryModel {
   // remove identifier quoting from identifier to use in metadata queries
   unquoteIdentifier(value: string) {
     if (value[0] === '"' && value[value.length - 1] === '"') {
-      return value.substring(1, value.length - 1).replace(/""/g, '"');
+      return value.slice(1, -1).replace(/""/g, '"');
     } else {
       return value;
     }

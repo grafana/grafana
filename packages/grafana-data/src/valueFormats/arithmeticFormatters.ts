@@ -21,8 +21,8 @@ export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
     return { text: '' };
   }
   const asHex = toHex(value, decimals);
-  if (asHex.text.substring(0, 1) === '-') {
-    asHex.text = '-0x' + asHex.text.substring(1);
+  if (asHex.text.slice(0, 1) === '-') {
+    asHex.text = '-0x' + asHex.text.slice(1);
   } else {
     asHex.text = '0x' + asHex.text;
   }

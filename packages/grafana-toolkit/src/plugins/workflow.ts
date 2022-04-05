@@ -64,7 +64,7 @@ export const agregateCoverageInfo = (): CoverageInfo[] => {
               summary: raw.total,
             };
             if (fs.existsSync(r)) {
-              info.report = r.substring(ciDir.length);
+              info.report = r.slice(ciDir.length);
             }
             coverage.push(info);
           }

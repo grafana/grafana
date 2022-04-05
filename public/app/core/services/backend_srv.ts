@@ -164,7 +164,7 @@ export class BackendSrv implements BackendService {
       }
 
       if (options.url.startsWith('/')) {
-        options.url = options.url.substring(1);
+        options.url = options.url.slice(1);
       }
 
       if (options.headers?.Authorization) {

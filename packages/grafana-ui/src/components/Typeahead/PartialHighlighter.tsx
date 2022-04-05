@@ -49,7 +49,7 @@ export const PartialHighlighter: React.FC<Props> = (props: Props) => {
           key: i - 1,
           className: highlighted ? highlightClassName : undefined,
         },
-        text.substring(start, end)
+        text.slice(start, end)
       )
     );
     highlighted = !highlighted;

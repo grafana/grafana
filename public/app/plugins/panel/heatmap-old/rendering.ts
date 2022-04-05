@@ -355,7 +355,7 @@ export class HeatmapRenderer {
         } else if (valueFormatted && typeof valueFormatted === 'string' && valueFormatted !== '') {
           if (yAxisWidth) {
             const scale = 0.15; // how to have a better calculation for this
-            const trimmed = valueFormatted.substring(0, Math.floor(yAxisWidth * scale));
+            const trimmed = valueFormatted.slice(0, Math.floor(yAxisWidth * scale));
             const postfix = trimmed.length < valueFormatted.length ? '...' : '';
             valueFormatted = `${trimmed}${postfix}`;
           }

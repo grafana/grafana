@@ -91,11 +91,11 @@ export const GrafanaClient = class GrafanaClient {
 export const BaseClient = class BaseClient {
   constructor(url, subUrl) {
     if (url.endsWith('/')) {
-      url = url.substring(0, url.length - 1);
+      url = url.slice(0, -1);
     }
 
     if (subUrl.endsWith('/')) {
-      subUrl = subUrl.substring(0, subUrl.length - 1);
+      subUrl = subUrl.slice(0, -1);
     }
 
     this.url = url + subUrl;

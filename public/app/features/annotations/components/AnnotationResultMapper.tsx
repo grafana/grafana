@@ -60,7 +60,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
         }
 
         if (description.length > 50) {
-          description = description.substring(0, 50) + '...';
+          description = description.slice(0, 50) + '...';
         }
 
         return {

@@ -5,12 +5,12 @@
 export function trimFileName(fileName: string): string {
   const nameLength = 16;
   const delimiter = fileName.lastIndexOf('.');
-  const extension = fileName.substring(delimiter);
-  const file = fileName.substring(0, delimiter);
+  const extension = fileName.slice(delimiter !== -1 ? delimiter : 0);
+  const file = fileName.slice(0, delimiter !== -1 ? delimiter : 0);
 
   if (file.length < nameLength) {
     return fileName;
   }
 
-  return `${file.substring(0, nameLength)}...${extension}`;
+  return `${file.slice(0, nameLength)}...${extension}`;
 }

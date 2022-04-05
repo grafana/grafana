@@ -9,7 +9,7 @@ import { JobInfo } from './types';
 const getJobFromProcessArgv = () => {
   const arg = process.argv[2];
   if (arg && arg.startsWith('plugin:ci-')) {
-    const task = arg.substring('plugin:ci-'.length);
+    const task = arg.slice('plugin:ci-'.length);
     if ('build' === task) {
       if ('--backend' === process.argv[3] && process.argv[4]) {
         return task + '_' + process.argv[4];
@@ -44,7 +44,7 @@ export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
       build = parseInt(process.env.CIRCLE_BUILD_NUM || '', 10);
       const url = process.env.CIRCLE_PULL_REQUEST || '';
       const idx = url.lastIndexOf('/') + 1;
-      pr = parseInt(url.substring(idx), 10);
+      pr = parseInt(url.slice(idx), 10);
     }
 
     const info: PluginBuildInfo = {
@@ -87,7 +87,7 @@ export const getPullRequestNumber = (): number | undefined => {
   } else if (process.env.CIRCLECI === 'true') {
     const url = process.env.CIRCLE_PULL_REQUEST || '';
     const idx = url.lastIndexOf('/') + 1;
-    return parseInt(url.substring(idx), 10);
+    return parseInt(url.slice(idx), 10);
   }
 
   return undefined;
@@ -137,7 +137,7 @@ export async function getCircleDownloadBaseURL(): Promise<string | undefined> {
     for (const s of rsp.data) {
       const { path, url } = s;
       if (url && path && path.endsWith('report.json')) {
-        return url.substring(url.length - 'report.json'.length);
+        return url.slice(-'report.json'.length);
       }
     }
   } catch (e) {

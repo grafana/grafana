@@ -7,8 +7,11 @@ if (window.public_cdn_path) {
 }
 
 // This is a path to the public folder without '/build'
-window.__grafana_public_path__ =
-  __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
+if(__webpack_public_path__.indexOf('build/') !== -1) {
+  window.__grafana_public_path__ = __webpack_public_path__.slice(0, __webpack_public_path__.lastIndexOf('build/'));
+} else {
+  window.__grafana_public_path__ = __webpack_public_path__;
+}
 
 if (window.nonce) {
   __webpack_nonce__ = window.nonce;

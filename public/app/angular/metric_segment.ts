@@ -125,10 +125,10 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
         }
         let str = this.query;
         if (str[0] === '/') {
-          str = str.substring(1);
+          str = str.slice(1);
         }
         if (str[str.length - 1] === '/') {
-          str = str.substring(0, str.length - 1);
+          str = str.slice(0, -1);
         }
         try {
           return item.toLowerCase().match(str.toLowerCase());

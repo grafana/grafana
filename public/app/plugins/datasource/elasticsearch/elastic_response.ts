@@ -339,7 +339,7 @@ export class ElasticResponse {
         const group = g1 || g2;
 
         if (group.indexOf('term ') === 0) {
-          return series.props[group.substring(5)];
+          return series.props[group.slice(5)];
         }
         if (series.props[group] !== void 0) {
           return series.props[group];

@@ -104,7 +104,7 @@ export class DashboardExporter {
       // ignore data source properties that contain a variable
       if (datasourceUid) {
         if (datasourceUid.indexOf('$') === 0) {
-          datasourceVariable = variableLookup[datasourceUid.substring(1)];
+          datasourceVariable = variableLookup[datasourceUid.slice(1)];
           if (datasourceVariable && datasourceVariable.current) {
             datasource = datasourceVariable.current.value;
           }

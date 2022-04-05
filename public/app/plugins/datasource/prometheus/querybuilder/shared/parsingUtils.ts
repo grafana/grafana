@@ -81,7 +81,7 @@ export function getString(expr: string, node: SyntaxNode | TreeCursor | null | u
   if (!node) {
     return '';
   }
-  return returnVariables(expr.substring(node.from, node.to));
+  return returnVariables(expr.slice(node.from, node.to));
 }
 
 /**

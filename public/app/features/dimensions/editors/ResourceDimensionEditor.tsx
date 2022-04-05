@@ -130,7 +130,7 @@ export function niceName(value?: string): string | undefined {
   }
   const idx = value.lastIndexOf('/');
   if (idx > 0) {
-    return value.substring(idx + 1);
+    return value.slice(idx + 1);
   }
   return value;
 }

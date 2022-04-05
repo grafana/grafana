@@ -65,8 +65,8 @@ export default class LogAnalyticsQuerystringBuilder {
 
   getMultiContains(inputs: string) {
     const firstCommaIndex = inputs.indexOf(',');
-    const field = inputs.substring(0, firstCommaIndex);
-    const templateVar = inputs.substring(inputs.indexOf(',') + 1);
+    const field = inputs.slice(0, firstCommaIndex !== -1 ? firstCommaIndex : 0);
+    const templateVar = inputs.slice(firstCommaIndex + 1);
 
     if (templateVar && templateVar.toLowerCase().trim() === 'all') {
       return '1 == 1';
@@ -77,7 +77,7 @@ export default class LogAnalyticsQuerystringBuilder {
 
   escape(inputs: string) {
     return inputs
-      .substring(1, inputs.length - 1)
+      .slice(1, -1)
       .split(`','`)
       .map((v) => `@'${v}'`)
       .join(', ');

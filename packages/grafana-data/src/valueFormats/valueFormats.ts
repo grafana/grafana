@@ -214,8 +214,8 @@ export function getValueFormat(id?: string | null): ValueFormatter {
     let idx = id.indexOf(':');
 
     if (idx > 0) {
-      const key = id.substring(0, idx);
-      const sub = id.substring(idx + 1);
+      const key = id.slice(0, idx);
+      const sub = id.slice(idx + 1);
 
       if (key === 'prefix') {
         return toFixedUnit(sub, true);
@@ -231,7 +231,7 @@ export function getValueFormat(id?: string | null): ValueFormatter {
 
       if (key === 'si') {
         const offset = getOffsetFromSIPrefix(sub.charAt(0));
-        const unit = offset === 0 ? sub : sub.substring(1);
+        const unit = offset === 0 ? sub : sub.slice(1);
         return SIPrefix(unit, offset);
       }
 
@@ -246,8 +246,8 @@ export function getValueFormat(id?: string | null): ValueFormatter {
       if (key === 'bool') {
         idx = sub.indexOf('/');
         if (idx >= 0) {
-          const t = sub.substring(0, idx);
-          const f = sub.substring(idx + 1);
+          const t = sub.slice(0, idx);
+          const f = sub.slice(idx + 1);
           return booleanValueFormatter(t, f);
         }
         return booleanValueFormatter(sub, '-');

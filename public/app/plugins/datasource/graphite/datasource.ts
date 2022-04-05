@@ -427,7 +427,7 @@ export class GraphiteDatasource
       if (date === 'now') {
         return 'now';
       } else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
-        date = date.substring(3);
+        date = date.slice(3);
         date = date.replace('m', 'min');
         date = date.replace('M', 'mon');
         return date;

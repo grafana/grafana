@@ -131,7 +131,7 @@ export function locationSearchToObject(search: string | number): UrlQueryMap {
 
   if (queryString.length > 0) {
     if (queryString.startsWith('?')) {
-      return urlUtil.parseKeyValue(queryString.substring(1));
+      return urlUtil.parseKeyValue(queryString.slice(1));
     }
     return urlUtil.parseKeyValue(queryString);
   }

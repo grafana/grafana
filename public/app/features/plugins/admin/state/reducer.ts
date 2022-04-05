@@ -19,7 +19,7 @@ const isRejectedRequest = (action: AnyAction) => new RegExp(`${STATE_PREFIX}\/(.
 const getOriginalActionType = (type: string) => {
   const separator = type.lastIndexOf('/');
 
-  return type.substring(0, separator);
+  return type.slice(0, separator !== -1 ? separator : 0);
 };
 
 const slice = createSlice({

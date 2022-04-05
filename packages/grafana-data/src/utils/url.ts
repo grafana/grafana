@@ -107,7 +107,7 @@ function appendQueryToUrl(url: string, stringToAppend: string) {
  * Return search part (as object) of current url
  */
 function getUrlSearchParams(): UrlQueryMap {
-  const search = window.location.search.substring(1);
+  const search = window.location.search.slice(1);
   const searchParamsSegments = search.split('&');
   const params: UrlQueryMap = {};
   for (const p of searchParamsSegments) {
@@ -149,8 +149,8 @@ export function parseKeyValue(keyValue: string) {
       splitPoint = keyValue.indexOf('=');
 
       if (splitPoint !== -1) {
-        key = keyValue.substring(0, splitPoint);
-        val = keyValue.substring(splitPoint + 1);
+        key = keyValue.slice(0, splitPoint);
+        val = keyValue.slice(splitPoint + 1);
       }
 
       key = tryDecodeURIComponent(key);

@@ -126,7 +126,7 @@ export function decomposeColor(color: string | DecomposeColor): DecomposeColor {
   }
 
   const marker = color.indexOf('(');
-  const type = color.substring(0, marker);
+  const type = color.slice(0, marker !== -1 ? marker : 0);
 
   if (['rgb', 'rgba', 'hsl', 'hsla', 'color'].indexOf(type) === -1) {
     throw new Error(
@@ -134,7 +134,7 @@ export function decomposeColor(color: string | DecomposeColor): DecomposeColor {
     );
   }
 
-  let values: any = color.substring(marker + 1, color.length - 1);
+  let values: any = color.slice(marker + 1, -1);
   let colorSpace;
 
   if (type === 'color') {
@@ -264,7 +264,7 @@ export function alpha(color: string, value: number) {
   // hex 3, hex 4 (w/alpha), hex 6, hex 8 (w/alpha)
   if (color[0] === '#') {
     if (color.length === 9) {
-      color = color.substring(0, 7);
+      color = color.slice(0, 7);
     } else if (color.length <= 5) {
       let c = '#';
       for (let i = 1; i < 4; i++) {
@@ -288,7 +288,8 @@ export function alpha(color: string, value: number) {
   }
   // rgba(, hsla(
   else if (color[4] === '(') {
-    return color.substring(0, color.lastIndexOf(',')) + `, ${value})`;
+    const lastComma = color.lastIndexOf(',');
+    return color.slice(0, lastComma !== -1 ? lastComma : 0) + `, ${value})`;
   }
 
   const parts = decomposeColor(color);

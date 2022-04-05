@@ -250,7 +250,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
 function shortenValue(value: string, length: number) {
   if (value.length > length) {
-    return value.substring(0, length).concat('...');
+    return value.slice(0, length).concat('...');
   } else {
     return value;
   }

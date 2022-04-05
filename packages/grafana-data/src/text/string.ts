@@ -97,5 +97,5 @@ export function toFloatOrUndefined(value: string): number | undefined {
 
 export const toPascalCase = (string: string) => {
   const str = camelCase(string);
-  return str.charAt(0).toUpperCase() + str.substring(1);
+  return str.charAt(0).toUpperCase() + str.slice(1);
 };

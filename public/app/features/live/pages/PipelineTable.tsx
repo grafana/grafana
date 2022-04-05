@@ -62,13 +62,13 @@ export const PipelineTable: React.FC<Props> = (props) => {
     if (pattern.startsWith('ds/')) {
       const idx = pattern.indexOf('/', 4);
       if (idx > 3) {
-        const uid = pattern.substring(3, idx);
+        const uid = pattern.slice(3, idx);
         const ds = getDatasourceSrv().getInstanceSettings(uid);
         if (ds) {
           return (
             <div>
               <Tag name={ds.name} colorIndex={1} /> &nbsp;
-              <span>{pattern.substring(idx + 1)}</span>
+              <span>{pattern.slice(idx + 1)}</span>
             </div>
           );
         }

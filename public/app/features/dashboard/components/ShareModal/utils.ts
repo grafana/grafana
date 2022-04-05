@@ -47,7 +47,7 @@ export function buildBaseUrl() {
   const queryStart = baseUrl.indexOf('?');
 
   if (queryStart !== -1) {
-    baseUrl = baseUrl.substring(0, queryStart);
+    baseUrl = baseUrl.slice(0, queryStart);
   }
 
   return baseUrl;

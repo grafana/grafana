@@ -34,7 +34,7 @@ function mockLocationHref(href: string) {
   let search = '';
   const searchPos = href.indexOf('?');
   if (searchPos >= 0) {
-    search = href.substring(searchPos);
+    search = href.slice(searchPos);
   }
 
   // @ts-ignore

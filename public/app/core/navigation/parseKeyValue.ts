@@ -133,8 +133,8 @@ function parseKeyValue(keyValue: string | null) {
       key = keyValue = keyValue.replace(/\+/g, '%20');
       splitPoint = keyValue.indexOf('=');
       if (splitPoint !== -1) {
-        key = keyValue.substring(0, splitPoint);
-        val = keyValue.substring(splitPoint + 1);
+        key = keyValue.slice(0, splitPoint);
+        val = keyValue.slice(splitPoint + 1);
       }
       key = tryDecodeURIComponent(key);
       if (key) {

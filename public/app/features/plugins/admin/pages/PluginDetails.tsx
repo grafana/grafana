@@ -26,7 +26,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
     params: { pluginId = '' },
     url,
   } = match;
-  const parentUrl = url.substring(0, url.lastIndexOf('/'));
+  const parentUrl = url.slice(0, url.lastIndexOf('/') !== -1 ? url.lastIndexOf('/') : 0);
   const defaultTabs: PluginDetailsTab[] = [
     {
       label: PluginTabLabels.OVERVIEW,

@@ -15,7 +15,7 @@ export class SqlPartDef {
     if (options.label) {
       this.label = options.label;
     } else {
-      this.label = this.type[0].toUpperCase() + this.type.substring(1) + ':';
+      this.label = this.type[0].toUpperCase() + this.type.slice(1) + ':';
     }
     this.style = options.style;
     if (this.style === 'function') {

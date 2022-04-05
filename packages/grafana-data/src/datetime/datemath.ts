@@ -15,7 +15,7 @@ export function isMathString(text: string | DateTime | Date): boolean {
     return false;
   }
 
-  if (typeof text === 'string' && (text.substring(0, 3) === 'now' || text.includes('||'))) {
+  if (typeof text === 'string' && (text.slice(0, 3) === 'now' || text.includes('||'))) {
     return true;
   } else {
     return false;
@@ -54,17 +54,17 @@ export function parse(
     let index;
     let parseString;
 
-    if (text.substring(0, 3) === 'now') {
+    if (text.slice(0, 3) === 'now') {
       time = dateTimeForTimeZone(timezone);
-      mathString = text.substring('now'.length);
+      mathString = text.slice('now'.length);
     } else {
       index = text.indexOf('||');
       if (index === -1) {
         parseString = text;
         mathString = ''; // nothing else
       } else {
-        parseString = text.substring(0, index);
-        mathString = text.substring(index + 2);
+        parseString = text.slice(0, index);
+        mathString = text.slice(index + 2);
       }
       // We're going to just require ISO8601 timestamps, k?
       time = dateTime(parseString, ISO_8601);
@@ -143,7 +143,7 @@ export function parseDateMath(
           return undefined;
         }
       }
-      num = parseInt(strippedMathString.substring(numFrom, i), 10);
+      num = parseInt(strippedMathString.slice(numFrom, i), 10);
     }
 
     if (type === 0) {

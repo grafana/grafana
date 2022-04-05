@@ -60,7 +60,7 @@ const getManualChunk = (id: string) => {
   if (id.endsWith('module.ts') || id.endsWith('module.js') || id.endsWith('module.tsx')) {
     const idx = id.lastIndexOf(path.sep + 'src' + path.sep);
     if (idx > 0) {
-      const name = id.substring(idx + 5, id.lastIndexOf('.'));
+      const name = id.slice(idx + 5, id.lastIndexOf('.'));
 
       return {
         name,
@@ -120,7 +120,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
           },
           {
             search: '%TODAY%',
-            replace: new Date().toISOString().substring(0, 10),
+            replace: new Date().toISOString().slice(0, 10),
           },
         ],
       },

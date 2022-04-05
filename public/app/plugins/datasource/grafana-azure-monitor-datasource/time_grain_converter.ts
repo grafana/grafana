@@ -55,12 +55,12 @@ export default class TimeGrainConverter {
 
   static createTimeGrainFromISO8601Duration(duration: string) {
     let offset = 1;
-    if (duration.substring(0, 2) === 'PT') {
+    if (duration.slice(0, 2) === 'PT') {
       offset = 2;
     }
 
-    const value = duration.substring(offset, duration.length - 1);
-    const unit = duration.substring(duration.length - 1);
+    const value = duration.slice(offset, -1);
+    const unit = duration.slice(-1);
 
     return value + ' ' + TimeGrainConverter.timeUnitToText(+value, unit);
   }
@@ -94,12 +94,12 @@ export default class TimeGrainConverter {
     }
 
     let offset = 1;
-    if (duration.substring(0, 2) === 'PT') {
+    if (duration.slice(0, 2) === 'PT') {
       offset = 2;
     }
 
-    const value = duration.substring(offset, duration.length - 1);
-    const unit = duration.substring(duration.length - 1);
+    const value = duration.slice(offset, -1);
+    const unit = duration.slice(-1);
 
     return value + TimeGrainConverter.timeUnitToKbn(+value, unit);
   }

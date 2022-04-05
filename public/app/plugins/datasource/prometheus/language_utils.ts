@@ -329,7 +329,7 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
                 break;
               case 'label-value':
                 labelValue = contentTokens[currentToken].content as string;
-                labelValue = labelValue.substring(1, labelValue.length - 1);
+                labelValue = labelValue.slice(1, -1);
                 const labelComparator = FromPromLikeMap[labelOperator];
                 if (labelComparator) {
                   labelMatchers.push({ name: labelKey, operator: labelComparator, value: labelValue });

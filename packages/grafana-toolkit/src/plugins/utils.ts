@@ -36,7 +36,7 @@ export function getFileSizeReportInFolder(dir: string, info?: ExtensionSize): Ex
         let ext = '_none_';
         const idx = file.lastIndexOf('.');
         if (idx > 0) {
-          ext = file.substring(idx + 1).toLowerCase();
+          ext = file.slice(idx + 1).toLowerCase();
         }
         const current = acc[ext];
         if (current) {
@@ -64,7 +64,7 @@ export async function getPackageDetails(zipFile: string, zipSrc: string, writeCh
   try {
     const exe = await execa('shasum', [zipFile]);
     const idx = exe.stdout.indexOf(' ');
-    const sha1 = exe.stdout.substring(0, idx);
+    const sha1 = exe.stdout.slice(0, idx !== -1 ? idx : 0);
     if (writeChecksum) {
       fs.writeFile(zipFile + '.sha1', sha1, (err) => {});
     }
