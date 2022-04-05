@@ -351,8 +351,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
-    const suffix = line.substr(cursorOffset);
-    const prefix = line.substr(0, cursorOffset);
+    const suffix = line.slice(cursorOffset);
+    const prefix = line.slice(0, cursorOffset);
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
     const isValueEnd = suffix.match(/^"?[,}]|$/);
     // Detect cursor in front of value, e.g., {key=|"}
