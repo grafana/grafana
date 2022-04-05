@@ -18,7 +18,7 @@ A namespace contains one or more groups. The rules within a group are run sequen
 To rename a namespace:
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Find a Mimir or Loki managed rule with the group that belongs to the namespace you want to edit.
+1. Find a Grafana Mimir or Loki managed rule with the group that belongs to the namespace you want to edit.
 1. Click the **Edit** (pen) icon.
 1. Enter a new name in the **Namespace** field, then click **Save changes**.
 
