@@ -1,53 +1,86 @@
 import React, { useRef } from 'react';
+import CSSTransition from 'react-transition-group/CSSTransition';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { isMatchOrChildMatch } from '../utils';
+import { NavBarToggle } from './NavBarToggle';
+import { useLocalStorage } from 'react-use';
 
 export interface Props {
   activeItem?: NavModelItem;
+  isOpen: boolean;
   navItems: NavModelItem[];
+  setMenuAnimationInProgress: (isInProgress: boolean) => void;
   onClose: () => void;
 }
 
-export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
-  const styles = useStyles2(getStyles);
+export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnimationInProgress }: Props) {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  const ANIMATION_DURATION = theme.transitions.duration.standard;
+  const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
-  const { overlayProps } = useOverlay(
+  const { overlayProps, underlayProps } = useOverlay(
     {
       isDismissable: true,
-      isOpen: true,
+      isOpen,
       onClose,
     },
     ref
   );
 
   return (
-    <div data-testid="navbarmenu" className={styles.container}>
+    <OverlayContainer>
       <FocusScope contain restoreFocus autoFocus>
-        <nav className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
-          <CustomScrollbar hideHorizontalTrack>
-            <ul className={styles.itemList}>
-              {navItems.map((link) => (
-                <NavItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
-              ))}
-            </ul>
-          </CustomScrollbar>
-        </nav>
+        <CSSTransition
+          onEnter={() => setMenuAnimationInProgress(true)}
+          onExited={() => setMenuAnimationInProgress(false)}
+          appear={isOpen}
+          in={isOpen}
+          classNames={animStyles.overlay}
+          timeout={ANIMATION_DURATION}
+        >
+          <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
+            <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
+            <nav className={styles.content}>
+              <CustomScrollbar hideHorizontalTrack>
+                <ul className={styles.itemList}>
+                  {navItems.map((link) => (
+                    <NavItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
+                  ))}
+                </ul>
+              </CustomScrollbar>
+            </nav>
+          </div>
+        </CSSTransition>
       </FocusScope>
-    </div>
+      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.backdrop} timeout={ANIMATION_DURATION}>
+        <div className={styles.backdrop} {...underlayProps} />
+      </CSSTransition>
+    </OverlayContainer>
   );
 }
 
 NavBarMenu.displayName = 'NavBarMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  backdrop: css({
+    backdropFilter: 'blur(1px)',
+    backgroundColor: theme.components.overlay.background,
+    bottom: 0,
+    left: 0,
+    position: 'fixed',
+    right: 0,
+    top: 0,
+    zIndex: theme.zIndex.modalBackdrop,
+  }),
   container: css({
     bottom: 0,
     display: 'flex',
@@ -56,9 +89,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
     paddingTop: theme.spacing(1),
     marginRight: theme.spacing(1.5),
-    overflow: 'hidden',
     right: 0,
-    zIndex: theme.zIndex.sidemenu,
+    zIndex: theme.zIndex.modal,
+    position: 'fixed',
     top: 0,
     boxSizing: 'content-box',
     [theme.breakpoints.up('md')]: {
@@ -75,7 +108,68 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
   }),
+  menuCollapseIcon: css({
+    position: 'absolute',
+    top: '43px',
+    right: '0px',
+    transform: `translateX(50%)`,
+  }),
 });
+
+const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
+  const commonTransition = {
+    transitionProperty: 'width, background-color, opacity',
+    transitionDuration: `${animationDuration}ms`,
+    transitionTimingFunction: theme.transitions.easing.easeInOut,
+  };
+
+  const overlayTransition = {
+    ...commonTransition,
+    transitionProperty: 'width, background-color, box-shadow',
+  };
+
+  const backdropTransition = {
+    ...commonTransition,
+    transitionProperty: 'opacity',
+  };
+
+  const overlayOpen = {
+    backgroundColor: theme.colors.background.canvas,
+    boxShadow: theme.shadows.z3,
+    width: '300px',
+  };
+
+  const overlayClosed = {
+    backgroundColor: theme.colors.background.primary,
+    boxShadow: 'none',
+    width: theme.spacing(7),
+  };
+
+  const backdropOpen = {
+    opacity: 1,
+  };
+
+  const backdropClosed = {
+    opacity: 0,
+  };
+
+  return {
+    backdrop: {
+      appear: css(backdropClosed),
+      appearActive: css(backdropTransition, backdropOpen),
+      appearDone: css(backdropOpen),
+      exit: css(backdropOpen),
+      exitActive: css(backdropTransition, backdropClosed),
+    },
+    overlay: {
+      appear: css(overlayClosed),
+      appearActive: css(overlayTransition, overlayOpen),
+      appearDone: css(overlayOpen),
+      exit: css(overlayOpen),
+      exitActive: css(overlayTransition, overlayClosed),
+    },
+  };
+};
 
 function NavItem({
   link,
@@ -209,6 +303,7 @@ function CollapsibleNavItem({
   className?: string;
 }) {
   const styles = useStyles2(getCollapsibleStyles);
+  const [sectionExpanded, setSectionExpanded] = useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false);
 
   return (
     <li className={cx(styles.menuItem, className)}>
@@ -227,7 +322,8 @@ function CollapsibleNavItem({
       </NavBarItemWithoutMenu>
       <div className={styles.collapsibleSectionWrapper}>
         <CollapsableSection
-          isOpen={false}
+          isOpen={Boolean(sectionExpanded)}
+          onToggle={(isOpen) => setSectionExpanded(isOpen)}
           className={styles.collapseWrapper}
           contentClassName={styles.collapseContent}
           label={

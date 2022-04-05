@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +79,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const salt = "Salt"
 
-		login.Init()
+		login.ProvideService(sc.sqlStore, &logintest.LoginServiceFake{})
 
 		bus.AddHandler("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
 			encoded, err := util.EncodePassword(password, salt)

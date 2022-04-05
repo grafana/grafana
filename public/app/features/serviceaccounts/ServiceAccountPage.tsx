@@ -16,7 +16,7 @@ import {
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import { getTimeZone, NavModel } from '@grafana/data';
-import { Button, VerticalGroup } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 import { CreateTokenModal } from './CreateTokenModal';
 import { contextSrv } from 'app/core/core';
 
@@ -110,13 +110,15 @@ const ServiceAccountPageUnconnected = ({
             />
           </>
         )}
-        <VerticalGroup spacing="md">
+        <div className="page-action-bar" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 className="page-heading" style={{ marginBottom: '0px' }}>
+            Tokens
+          </h3>
           <Button onClick={() => setIsModalOpen(true)}>Add token</Button>
-          <h3 className="page-heading">Tokens</h3>
-          {tokens && (
-            <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
-          )}
-        </VerticalGroup>
+        </div>
+        {tokens && (
+          <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
+        )}
         <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
       </Page.Contents>
     </Page>

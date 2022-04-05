@@ -169,20 +169,22 @@ type GetUserOrgListQuery struct {
 // DTO & Projections
 
 type SignedInUser struct {
-	UserId         int64
-	OrgId          int64
-	OrgName        string
-	OrgRole        RoleType
-	Login          string
-	Name           string
-	Email          string
-	ApiKeyId       int64
-	OrgCount       int
-	IsGrafanaAdmin bool
-	IsAnonymous    bool
-	HelpFlags1     HelpFlags1
-	LastSeenAt     time.Time
-	Teams          []int64
+	UserId             int64
+	OrgId              int64
+	OrgName            string
+	OrgRole            RoleType
+	ExternalAuthModule string
+	ExternalAuthId     string
+	Login              string
+	Name               string
+	Email              string
+	ApiKeyId           int64
+	OrgCount           int
+	IsGrafanaAdmin     bool
+	IsAnonymous        bool
+	HelpFlags1         HelpFlags1
+	LastSeenAt         time.Time
+	Teams              []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 }

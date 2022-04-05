@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import CSSTransition from 'react-transition-group/CSSTransition';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -16,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
+import { NavBarToggle } from './NavBarToggle';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -24,7 +24,7 @@ const onOpenSearch = () => {
 const searchItem: NavModelItem = {
   id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
-  text: 'Search dashboards',
+  text: 'Search Dashboards',
   icon: 'search',
 };
 
@@ -40,7 +40,6 @@ export const NavBarNext = React.memo(() => {
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const animStyles = useStyles2(getAnimStyles);
   const location = useLocation();
   const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
@@ -59,6 +58,7 @@ export const NavBarNext = React.memo(() => {
   );
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
   const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
 
   if (kiosk !== KioskMode.Off) {
@@ -78,6 +78,12 @@ export const NavBarNext = React.memo(() => {
             <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
               <Icon name="bars" size="xl" />
             </div>
+
+            <NavBarToggle
+              className={styles.menuExpandIcon}
+              isExpanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+            />
 
             <ul className={styles.itemList}>
               <NavBarItemWithoutMenu
@@ -128,21 +134,17 @@ export const NavBarNext = React.memo(() => {
         </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-      <div className={styles.menuWrapper}>
-        <CSSTransition in={menuOpen} classNames={animStyles} timeout={150} unmountOnExit>
+      {(menuOpen || menuAnimationInProgress) && (
+        <div className={styles.menuWrapper}>
           <NavBarMenu
             activeItem={activeItem}
+            isOpen={menuOpen}
+            setMenuAnimationInProgress={setMenuAnimationInProgress}
             navItems={[homeItem, searchItem, ...coreItems, ...pluginItems, ...configItems]}
             onClose={() => setMenuOpen(false)}
           />
-        </CSSTransition>
-        <IconButton
-          name={menuOpen ? 'angle-left' : 'angle-right'}
-          className={styles.menuToggle}
-          size="xl"
-          onClick={() => setMenuOpen(!menuOpen)}
-        />
-      </div>
+        </div>
+      )}
     </div>
   );
 });
@@ -233,68 +235,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     zIndex: theme.zIndex.sidemenu,
   }),
-  menuToggle: css({
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
+  menuExpandIcon: css({
     position: 'absolute',
-    marginRight: 0,
     top: '43px',
     right: '0px',
-    zIndex: theme.zIndex.sidemenu,
-    transform: `translateX(calc(${theme.spacing(7)} + 50%))`,
-    borderRadius: '50%',
-
-    [theme.breakpoints.down('md')]: {
-      display: 'none',
-    },
+    transform: `translateX(50%)`,
   }),
 });
-
-const getAnimStyles = (theme: GrafanaTheme2) => {
-  const transitionProps = {
-    transitionProperty: 'width, background-color',
-    transitionDuration: '150ms',
-    transitionTimingFunction: 'ease-in-out',
-  };
-
-  const openStyles = {
-    backgroundColor: theme.colors.background.canvas,
-    width: '300px',
-  };
-
-  const closedStyles = {
-    backgroundColor: theme.colors.background.primary,
-    width: theme.spacing(7),
-  };
-
-  const buttonShift = {
-    '& + button': {
-      transform: 'translateX(0%)',
-    },
-  };
-
-  return {
-    enter: css({
-      ...closedStyles,
-      ...buttonShift,
-    }),
-    enterActive: css({
-      ...transitionProps,
-      ...openStyles,
-      ...buttonShift,
-    }),
-    enterDone: css({
-      ...openStyles,
-      ...buttonShift,
-    }),
-    exit: css({
-      ...openStyles,
-      ...buttonShift,
-    }),
-    exitActive: css({
-      ...transitionProps,
-      ...closedStyles,
-      ...buttonShift,
-    }),
-  };
-};

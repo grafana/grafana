@@ -118,7 +118,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	login.Init()
+	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login)
 	social.ProvideService(s.cfg)
 
 	if err := s.roleRegistry.RegisterFixedRoles(); err != nil {

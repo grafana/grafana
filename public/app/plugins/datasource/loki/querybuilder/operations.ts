@@ -10,7 +10,7 @@ import { FUNCTIONS } from '../syntax';
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
-export function getOperationDefintions(): QueryBuilderOperationDef[] {
+export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const aggregations = [
     LokiOperationId.Sum,
     LokiOperationId.Min,
@@ -55,7 +55,64 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expressions and used as values for a range aggregation via the unwrap operation. `,
+        `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
+    },
+    {
+      id: LokiOperationId.Regexp,
+      name: 'Regexp',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: '<re>',
+          description: 'The regexp expression that matches the structure of a log line.',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | regexp \`${model.params[0]}\``,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `The [regexp parser](https://grafana.com/docs/loki/latest/logql/log_queries/#regular-expression) takes a single parameter | regexp "<re>" which is the regular expression using the Golang RE2 syntax. The regular expression must contain a least one named sub-match (e.g (?P<name>re)), each sub-match will extract a different label. The expression matches the structure of a log line. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
+    },
+    {
+      id: LokiOperationId.Pattern,
+      name: 'Pattern',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: '<pattern-expression>',
+          description: 'The expression that matches the structure of a log line.',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | pattern \`${model.params[0]}\``,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `The [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern) allows the explicit extraction of fields from log lines by defining a pattern expression (| pattern \`<pattern-expression>\`). The expression matches the structure of a log line. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
+    },
+    {
+      id: LokiOperationId.Unpack,
+      name: 'Unpack',
+      params: [],
+      defaultParams: [],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: pipelineRenderer,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will extract all keys and values from a JSON log line, [unpacking](https://grafana.com/docs/loki/latest/logql/log_queries/#unpack) all embedded labels in the pack stage. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
     },
     {
       id: LokiOperationId.LineFormat,
@@ -74,7 +131,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.LineFormats,
-      renderer: (model, def, innerExpr) => `${innerExpr} | line_format "${model.params[0]}"`,
+      renderer: (model, def, innerExpr) => `${innerExpr} | line_format \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
@@ -212,7 +269,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.LabelFilters,
       orderRank: LokiOperationOrder.NoErrors,
-      renderer: (model, def, innerExpr) => `${innerExpr} | __error__=""`,
+      renderer: (model, def, innerExpr) => `${innerExpr} | __error__=\`\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `Filter out all formatting and parsing errors.`,
     },
@@ -303,7 +360,7 @@ function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOper
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
-  return `${innerExpr} | ${model.params[0]}${model.params[1]}"${model.params[2]}"`;
+  return `${innerExpr} | ${model.params[0]}${model.params[1]}\`${model.params[2]}\``;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
@@ -360,7 +417,7 @@ export function addLokiOperation(
           modeller,
           (def) => def.category === LokiVisualQueryOperationCategory.Functions
         );
-        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['auto'] });
+        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['$__interval'] });
       }
       operations.push(newOperation);
       break;
