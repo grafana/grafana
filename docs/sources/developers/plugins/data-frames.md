@@ -93,33 +93,48 @@ Dimensions: 3 fields by 2 rows
 +---------------------+-----------------+-----------------+
 ```
 
-However, if the two time series don't share the same time values, they are represented as two distinct data frames.
+The wide format can typically be used when multiple time series are collected by the same process. In this case, every measurement is made at the same interval and will therefore share the same time values.
+
+### Multi format
+
+The _multi_ format is used when data consists of two or more time series that don't share the same time index. Each time series is represented by a separate data frame with a single time field and a single numeric value field.
 
 ```text
-Name: cpu
+Name: a
 Dimensions: 2 fields by 2 rows
 +---------------------+-----------------+
 | Name: time          | Name: cpu       |
-| Labels:             | Labels: host=a  |
+| Labels:             | Labels:
 | Type: []time.Time   | Type: []float64 |
 +---------------------+-----------------+
 | 2020-01-02 03:04:00 | 3               |
 | 2020-01-02 03:05:00 | 6               |
 +---------------------+-----------------+
 
-Name: cpu
+Name: b
 Dimensions: 2 fields by 2 rows
 +---------------------+-----------------+
 | Name: time          | Name: cpu       |
-| Labels:             | Labels: host=b  |
+| Labels:             | Labels:
 | Type: []time.Time   | Type: []float64 |
 +---------------------+-----------------+
 | 2020-01-02 03:04:01 | 4               |
 | 2020-01-02 03:05:01 | 7               |
 +---------------------+-----------------+
-```
 
-The wide format can typically be used when multiple time series are collected by the same process. In this case, every measurement is made at the same interval and will therefore share the same time values.
+Name: c
+Dimensions: 2 fields by 4 rows
++---------------------+-----------------+
+| Name: time          | Name: cpu       |
+| Labels:             | Labels:
+| Type: []time.Time   | Type: []float64 |
++---------------------+-----------------+
+| 2020-01-02 03:04:02 | 2               |
+| 2020-01-02 03:05:04 | 4               |
+| 2020-01-02 03:05:06 | 6               |
+| 2020-01-02 03:05:08 | 8               |
++---------------------+-----------------+
+```
 
 ### Long format
 
