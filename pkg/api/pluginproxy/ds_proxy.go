@@ -187,7 +187,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	switch proxy.ds.Type {
 	case models.DS_INFLUXDB_08:
-		password, err := proxy.dataSourcesService.DecryptedPassword(proxy.ctx.Req.Context(), proxy.ds)
+		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
 			logger.Error("Error interpolating proxy url", "error", err)
 			return
@@ -198,7 +198,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		reqQueryVals.Add("p", password)
 		req.URL.RawQuery = reqQueryVals.Encode()
 	case models.DS_INFLUXDB:
-		password, err := proxy.dataSourcesService.DecryptedPassword(proxy.ctx.Req.Context(), proxy.ds)
+		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
 			logger.Error("Error interpolating proxy url", "error", err)
 			return
@@ -224,7 +224,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.URL.Path = unescapedPath
 
 	if proxy.ds.BasicAuth {
-		password, err := proxy.dataSourcesService.DecryptedBasicAuthPassword(proxy.ctx.Req.Context(), proxy.ds)
+		password, err := proxy.dataSourcesService.DecryptedBasicAuthPassword(req.Context(), proxy.ds)
 		if err != nil {
 			logger.Error("Error interpolating proxy url", "error", err)
 			return
@@ -266,14 +266,14 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	decryptedValues, err := proxy.dataSourcesService.DecryptedValues(proxy.ctx.Req.Context(), proxy.ds)
-	if err != nil {
-		logger.Error("Error interpolating proxy url", "error", err)
-		return
-	}
-
 	if proxy.matchedRoute != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
+		decryptedValues, err := proxy.dataSourcesService.DecryptedValues(req.Context(), proxy.ds)
+		if err != nil {
+			logger.Error("Error interpolating proxy url", "error", err)
+			return
+		}
+
+		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
 			ID:                      proxy.ds.Id,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
@@ -282,7 +282,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
-		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
 			idToken, ok := token.Extra("id_token").(string)
