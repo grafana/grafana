@@ -31,11 +31,11 @@ func (f *ForkedProvisioningApi) forkRouteGetContactpoints(ctx *models.ReqContext
 	return f.svc.RouteGetContactpoints(ctx)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePostContactpoints(ctx *models.ReqContext, cp apimodels.Contactpoint) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePostContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	return f.svc.RoutePostContactpoint(ctx, cp)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePutContactpoints(ctx *models.ReqContext, cp apimodels.Contactpoint) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePutContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	return f.svc.RoutePutContactpoints(ctx, cp)
 }
 

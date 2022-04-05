@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	domain "github.com/grafana/grafana/pkg/services/ngalert/models"
+	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,15 +23,15 @@ type ProvisioningSrv struct {
 }
 
 type ContactpointService interface {
-	GetContactPoints(orgID int64) ([]domain.EmbeddedContactPoint, error)
-	CreateContactPoint(orgID int64, contactPoint domain.EmbeddedContactPoint) (domain.EmbeddedContactPoint, error)
-	UpdateContactPoint(orgID int64, contactPoint domain.EmbeddedContactPoint) error
+	GetContactPoints(orgID int64) ([]apimodels.EmbeddedContactPoint, error)
+	CreateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error)
+	UpdateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) error
 	DeleteContactPoint(orgID int64, uid string) error
 }
 
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error)
-	UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error
+	UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p alerting_models.Provenance) error
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -48,7 +48,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Re
 
 func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimodels.Route) response.Response {
 	// TODO: lift validation out of definitions.Rotue.UnmarshalJSON and friends into a dedicated validator.
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, domain.ProvenanceApi)
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceApi)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -67,16 +67,16 @@ func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response
 	return response.JSON(http.StatusOK, cps)
 }
 
-func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimodels.Contactpoint) response.Response {
-	contactPoint, err := srv.contactpointService.CreateContactPoint(c.OrgId, domain.EmbeddedContactPoint(cp))
+func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+	contactPoint, err := srv.contactpointService.CreateContactPoint(c.OrgId, cp)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, contactPoint)
 }
 
-func (srv *ProvisioningSrv) RoutePutContactpoints(c *models.ReqContext, cp apimodels.Contactpoint) response.Response {
-	err := srv.contactpointService.UpdateContactPoint(c.OrgId, domain.EmbeddedContactPoint(cp))
+func (srv *ProvisioningSrv) RoutePutContactpoints(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+	err := srv.contactpointService.UpdateContactPoint(c.OrgId, cp)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

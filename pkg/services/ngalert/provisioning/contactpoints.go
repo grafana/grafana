@@ -26,14 +26,14 @@ func NewEmbeddedContactPointService(store store.AlertingStore, encryptionService
 	}
 }
 
-func (ecp *EmbeddedContactPointService) GetContactPoints(orgID int64) ([]models.EmbeddedContactPoint, error) {
+func (ecp *EmbeddedContactPointService) GetContactPoints(orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
 	cfg, _, err := ecp.getCurrentConfig(orgID)
 	if err != nil {
 		return nil, err
 	}
-	contactPoints := []models.EmbeddedContactPoint{}
+	contactPoints := []apimodels.EmbeddedContactPoint{}
 	for _, contactPoint := range cfg.GetGrafanaReceiverMap() {
-		embeddedContactPoint := models.EmbeddedContactPoint{
+		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   contactPoint.UID,
 			Type:                  contactPoint.Type,
 			Name:                  contactPoint.Name,
@@ -49,7 +49,7 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(orgID int64) ([]models.
 			if decryptedValue == "" {
 				continue
 			}
-			embeddedContactPoint.Settings.Set(k, models.RedactedValue)
+			embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
 		}
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
@@ -57,16 +57,16 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(orgID int64) ([]models.
 }
 
 // internal only
-func (ecp *EmbeddedContactPointService) getContactPointUncrypted(orgID int64, uid string) (models.EmbeddedContactPoint, error) {
+func (ecp *EmbeddedContactPointService) getContactPointUncrypted(orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
 	cfg, _, err := ecp.getCurrentConfig(orgID)
 	if err != nil {
-		return models.EmbeddedContactPoint{}, err
+		return apimodels.EmbeddedContactPoint{}, err
 	}
 	for _, receiver := range cfg.GetGrafanaReceiverMap() {
 		if receiver.UID != uid {
 			continue
 		}
-		embeddedContactPoint := models.EmbeddedContactPoint{
+		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   receiver.UID,
 			Type:                  receiver.Type,
 			Name:                  receiver.Name,
@@ -87,25 +87,25 @@ func (ecp *EmbeddedContactPointService) getContactPointUncrypted(orgID int64, ui
 		}
 		return embeddedContactPoint, nil
 	}
-	return models.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
+	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
 }
 
-func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactPoint models.EmbeddedContactPoint) (models.EmbeddedContactPoint, error) {
+func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error) {
 	if !contactPoint.IsValid() {
-		return models.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid")
+		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid")
 	}
 	cfg, _, err := ecp.getCurrentConfig(orgID)
 	if err != nil {
-		return models.EmbeddedContactPoint{}, err
+		return apimodels.EmbeddedContactPoint{}, err
 	}
 	extracedSecrets, err := contactPoint.ExtractSecrtes()
 	if err != nil {
-		return models.EmbeddedContactPoint{}, err
+		return apimodels.EmbeddedContactPoint{}, err
 	}
 	for k, v := range extracedSecrets {
 		encryptedValue, err := ecp.encryptValue(v)
 		if err != nil {
-			return models.EmbeddedContactPoint{}, err
+			return apimodels.EmbeddedContactPoint{}, err
 		}
 		extracedSecrets[k] = encryptedValue
 	}
@@ -137,9 +137,9 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactP
 	}
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return models.EmbeddedContactPoint{}, err
+		return apimodels.EmbeddedContactPoint{}, err
 	}
-	return contactPoint, ecp.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
+	return contactPoint, ecp.amStore.UpdateAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(data),
 		ConfigurationVersion:      "v1",
 		Default:                   false,
@@ -147,7 +147,7 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactP
 	})
 }
 
-func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactPoint models.EmbeddedContactPoint) error {
+func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) error {
 	// set all redacted values with the latest known value from the store
 	rawContactPoint, err := ecp.getContactPointUncrypted(orgID, contactPoint.UID)
 	if err != nil {
@@ -159,7 +159,7 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactP
 	}
 	for _, secretKey := range secretKeys {
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
-		if secretValue == models.RedactedValue {
+		if secretValue == apimodels.RedactedValue {
 			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
 		}
 	}
@@ -212,7 +212,7 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactP
 	if err != nil {
 		return err
 	}
-	return ecp.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
+	return ecp.amStore.UpdateAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(data),
 		FetchedConfigurationHash:  fetchedHash,
 		ConfigurationVersion:      "v1",

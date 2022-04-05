@@ -22,7 +22,9 @@ import (
 type ProvisioningApiForkingService interface {
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
+	RouteGetPolicyTree(*models.ReqContext) response.Response
 	RoutePostContactpoints(*models.ReqContext) response.Response
+	RoutePostPolicyTree(*models.ReqContext) response.Response
 	RoutePutContactpoints(*models.ReqContext) response.Response
 }
 
@@ -34,16 +36,28 @@ func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) re
 	return f.forkRouteGetContactpoints(ctx)
 }
 
+func (f *ForkedProvisioningApi) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetPolicyTree(ctx)
+}
+
 func (f *ForkedProvisioningApi) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
-	conf := apimodels.Contactpoint{}
+	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.forkRoutePostContactpoints(ctx, conf)
 }
 
+func (f *ForkedProvisioningApi) RoutePostPolicyTree(ctx *models.ReqContext) response.Response {
+	conf := apimodels.Route{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePostPolicyTree(ctx, conf)
+}
+
 func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) response.Response {
-	conf := apimodels.Contactpoint{}
+	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -72,6 +86,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				m,
 			),
 		)
+		group.Get(
+			toMacaronPath("/api/provisioning/policies"),
+			api.authorize(http.MethodGet, "/api/provisioning/policies"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/provisioning/policies",
+				srv.RouteGetPolicyTree,
+				m,
+			),
+		)
 		group.Post(
 			toMacaronPath("/api/provisioning/contactpoints"),
 			api.authorize(http.MethodPost, "/api/provisioning/contactpoints"),
@@ -79,6 +103,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodPost,
 				"/api/provisioning/contactpoints",
 				srv.RoutePostContactpoints,
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/provisioning/policies"),
+			api.authorize(http.MethodPost, "/api/provisioning/policies"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/provisioning/policies",
+				srv.RoutePostPolicyTree,
 				m,
 			),
 		)
