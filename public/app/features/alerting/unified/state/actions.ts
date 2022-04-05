@@ -58,7 +58,6 @@ import {
   getAllRulesSourceNames,
   getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
-  isGrafanaRulesSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
@@ -73,7 +72,7 @@ import {
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute, isFetchError } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
-import { isEmpty } from 'lodash';
+import { isEmpty, reject } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
@@ -253,12 +252,6 @@ export const fetchEditableRuleAction = createAsyncThunk(
 
 async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
-  // in case of GRAFANA, each group implicitly only has one rule. delete the group.
-  if (isGrafanaRulesSource(ruleSourceName)) {
-    await deleteRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group.name);
-    return;
-  }
-  // in case of CLOUD
   // it was the last rule, delete the entire group
   if (group.rules.length === 1) {
     await deleteRulerRulesGroup(ruleSourceName, namespace, group.name);
@@ -385,16 +378,38 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
     }
 
     // if same folder, repost the group with updated rule
-    if (freshExisting.namespace === folder.title) {
-      const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid!;
+    const sameNamespace = freshExisting.namespace === folder.title;
+    if (sameNamespace) {
+      const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid;
+      const newName = values.name;
+
+      const ungroupedGroup = isUngroupedGroup(freshExisting.group as RulerRuleGroupDTO<RulerGrafanaRuleDTO>);
+
       formRule.grafana_alert.uid = uid;
+
+      const newRules = ungroupedGroup
+        ? [formRule]
+        : existing.group.rules
+            .filter((rule): rule is RulerGrafanaRuleDTO => 'grafana_alert' in rule)
+            .filter((rule) => rule.grafana_alert.uid !== uid)
+            .concat(formRule as RulerGrafanaRuleDTO);
+
       await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, freshExisting.namespace, {
-        name: freshExisting.group.name,
+        name: ungroupedGroup ? newName : existing.group.name,
         interval: evaluateEvery,
-        rules: [formRule],
+        // if we are updating an ungrouped group, replace the only rule and update the group name too
+        rules: newRules,
       });
+
       return { uid };
     }
+  }
+
+  function isUngroupedGroup(group: RulerRuleGroupDTO<RulerGrafanaRuleDTO>) {
+    const hasOnlyOneRule = group.rules.length === 1;
+    const hasMatchingGroupNameAndRuleName = group.rules[0].grafana_alert.title === group.name;
+
+    return hasOnlyOneRule && hasMatchingGroupNameAndRuleName;
   }
 
   // if creating new rule or folder was changed, create rule in a new group

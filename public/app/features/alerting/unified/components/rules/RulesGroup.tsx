@@ -116,7 +116,13 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
 
   // ungrouped rules are rules that are in the "default" group name
   const isUngrouped = group.name === 'default';
-  const groupName = isUngrouped ? namespace.name : `${namespace.name} > ${group.name}`;
+  const groupName = isUngrouped ? (
+    namespace.name
+  ) : (
+    <span>
+      {namespace.name} <Icon name="angle-right" /> {group.name}
+    </span>
+  );
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">

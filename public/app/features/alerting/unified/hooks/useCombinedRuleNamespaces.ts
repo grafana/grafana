@@ -102,9 +102,8 @@ export function transformGrafanaManagedRules(namespaces: CombinedRuleNamespace[]
 
     let ungroupedRules: CombinedRule[] = [];
     namespace.groups.forEach((group) => {
-      // if the group only has a single rule and the group name matches the rule name we assume it to be an ungrouped group
-      const ungroupedGroup = group.rules.length === 1 && group.name === group.rules[0].name;
-      if (ungroupedGroup) {
+      const isUngrouped = isUngroupedGroup(group);
+      if (isUngrouped) {
         ungroupedRules = ungroupedRules.concat(group.rules);
       } else {
         newNamespace.groups.push(group);
@@ -119,6 +118,15 @@ export function transformGrafanaManagedRules(namespaces: CombinedRuleNamespace[]
 
     return newNamespace;
   });
+}
+
+// this function checks if the group from the rulesSource is a "ungrouped" group – this means that the group only
+// consists of a single rule with the same name, essentially a fake group
+function isUngroupedGroup(group: CombinedRuleGroup) {
+  const onlyHasOneRule = group.rules.length === 1;
+  const groupNameMatchesRuleName = group.name === group.rules[0].name;
+
+  return onlyHasOneRule && groupNameMatchesRuleName;
 }
 
 export function sortRulesByName(rules: CombinedRule[]) {
