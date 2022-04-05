@@ -59,7 +59,7 @@ export const NavBarNext = React.memo(() => {
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
-  const [menuIdOpen, setMenuIdOpen] = useState<string | null>(null);
+  const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
 
   if (kiosk !== KioskMode.Off) {
     return null;
