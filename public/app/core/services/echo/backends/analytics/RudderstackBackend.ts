@@ -8,7 +8,7 @@ import {
   PageviewEchoEvent,
 } from '@grafana/runtime';
 import { CurrentUserDTO } from '@grafana/data';
-import { getUserIdentifier } from '../utils';
+import { getUserIdentifier } from '../../utils';
 
 export interface RudderstackBackendOptions {
   writeKey: string;

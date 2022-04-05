@@ -32,7 +32,7 @@ describe('echo getUserIdentifier', () => {
   });
 
   it('should fall back to the email address', () => {
-    const id = getUserIdentifier(gcomUser);
+    const id = getUserIdentifier(baseUser);
     expect(id).toBe('email@example.com');
   });
 });
