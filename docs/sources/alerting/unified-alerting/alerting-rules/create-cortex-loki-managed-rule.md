@@ -11,7 +11,7 @@ Grafana allows you to create alerting rules for an external Grafana Mimir or Lok
 
 ## Before you begin
 
-- Verify that you have write permission to the Prometheus data source. Otherwise, you will not be able to create or update Mimir managed alerting rules.
+- Verify that you have write permission to the Prometheus data source. Otherwise, you will not be able to create or update Grafana Mimir managed alerting rules.
 
 - For Mimir and Loki data sources, enable the ruler API by configuring their respective services.
 
