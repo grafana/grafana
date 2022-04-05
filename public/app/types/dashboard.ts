@@ -39,6 +39,7 @@ export interface DashboardMeta {
 }
 
 export interface AnnotationActions {
+  canAdd: boolean;
   canEdit: boolean;
   canDelete: boolean;
 }
