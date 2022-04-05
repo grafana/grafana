@@ -76,16 +76,16 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 		}
 
 		// fake plugin route so we will try to find a source map there
-		pm := fakePluginStore{
+		pluginStore := fakePluginStore{
 			plugins: map[string]plugins.PluginDTO{
 				"telepathic": {
+					JSONData:  plugins.JSONData{ID: "telepathic"},
 					PluginDir: "/usr/local/telepathic-panel",
 				},
 			},
 		}
 
-		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap)
-
+		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pluginStore, readSourceMap)
 		loggingHandler := NewFrontendLogMessageHandler(sourceMapStore)
 
 		handler := routing.Wrap(func(c *models.ReqContext) response.Response {

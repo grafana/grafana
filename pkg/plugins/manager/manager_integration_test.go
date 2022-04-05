@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -91,7 +91,6 @@ func TestPluginManager_int_init(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(sqlstore.InitTestDB(t))
 	graf := grafanads.ProvideService(cfg, sv2, nil)
-
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
@@ -102,12 +101,13 @@ func TestPluginManager_int_init(t *testing.T) {
 		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), process.ProvideProcessManager(pluginRegistry))
 	require.NoError(t, err)
 
-	verifyCorePluginCatalogue(t, pm)
-	verifyBundledPlugins(t, pm)
-	verifyPluginStaticRoutes(t, pm)
+	pluginStore := store.ProvideService(pm.pluginRegistry)
+
+	verifyCorePluginCatalogue(t, pluginStore)
+	verifyBundledPlugins(t, pluginStore)
 }
 
-func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
+func verifyCorePluginCatalogue(t *testing.T, pm plugins.Store) {
 	t.Helper()
 
 	expPanels := map[string]struct{}{
@@ -180,7 +180,6 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expPanels, p.ID)
-		assert.Contains(t, pm.registeredPlugins(context.Background()), p.ID)
 	}
 
 	dataSources := pm.Plugins(context.Background(), plugins.DataSource)
@@ -190,7 +189,6 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
-		assert.Contains(t, pm.registeredPlugins(context.Background()), ds.ID)
 	}
 
 	apps := pm.Plugins(context.Background(), plugins.App)
@@ -200,13 +198,12 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expApps, app.ID)
-		assert.Contains(t, pm.registeredPlugins(context.Background()), app.ID)
 	}
 
 	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins(context.Background())))
 }
 
-func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
+func verifyBundledPlugins(t *testing.T, pm plugins.Store) {
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
@@ -214,37 +211,10 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 
-	pluginRoutes := make(map[string]*plugins.StaticRoute)
-	for _, r := range pm.Routes() {
-		pluginRoutes[r.PluginID] = r
-	}
-
 	inputPlugin, exists := pm.Plugin(context.Background(), "input")
 	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
 	assert.True(t, exists)
 	assert.NotNil(t, dsPlugins["input"])
-
-	for _, pluginID := range []string{"input"} {
-		assert.Contains(t, pluginRoutes, pluginID)
-		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, inputPlugin.PluginDir))
-	}
-}
-
-func verifyPluginStaticRoutes(t *testing.T, pm *PluginManager) {
-	routes := make(map[string]*plugins.StaticRoute)
-	for _, route := range pm.Routes() {
-		routes[route.PluginID] = route
-	}
-
-	assert.Len(t, routes, 2)
-
-	inputPlugin, _ := pm.Plugin(context.Background(), "input")
-	assert.NotNil(t, routes["input"])
-	assert.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
-
-	testAppPlugin, _ := pm.Plugin(context.Background(), "test-app")
-	assert.Contains(t, routes, "test-app")
-	assert.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
 }
 
 type fakeTracer struct {
