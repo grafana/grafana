@@ -333,10 +333,13 @@ describe('PanelAlertTabContent', () => {
       ],
     });
 
-    expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
-      dashboardUID: dashboard.uid,
-      panelId: panel.id,
-    });
+    expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(
+      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
+      {
+        dashboardUID: dashboard.uid,
+        panelId: panel.id,
+      }
+    );
     expect(mocks.api.fetchRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
       dashboardUID: dashboard.uid,
       panelId: panel.id,
