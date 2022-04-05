@@ -321,6 +321,9 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 onCreateOption={(v) => {
                   this.setCustomLogGroups(v);
                 }}
+                onBlur={() => {
+                  console.log('hey!');
+                }}
                 className={containerClass}
                 closeMenuOnSelect={false}
                 isClearable={true}
