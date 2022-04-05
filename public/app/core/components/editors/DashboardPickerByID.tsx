@@ -10,7 +10,7 @@ import { SelectableValue } from '@grafana/data';
 export interface DashboardPickerItem {
   id: number;
   uid: string;
-  label: string;
+  [key: string]: any;
 }
 
 interface Props {
@@ -38,7 +38,7 @@ export const DashboardPickerByID: FC<Props> = ({
   optionLabel = 'label',
 }) => {
   const debouncedSearch = debounce((query: string) => getDashboards(query || '', optionLabel), 300);
-  const option = value ? { value, label: value.label } : undefined;
+  const option = value ? { value, [optionLabel]: value[optionLabel] } : undefined;
   const onChange = (item: SelectableValue<DashboardPickerItem>) => {
     propsOnChange(item?.value);
   };
@@ -68,9 +68,9 @@ async function getDashboards(query: string, label: string): Promise<Array<Select
     const value: DashboardPickerItem = {
       id,
       uid,
-      label: `${folderTitle ?? 'General'}/${title}`,
+      [label]: `${folderTitle ?? 'General'}/${title}`,
     };
 
-    return { value, [label]: value.label };
+    return { value, [label]: value[label] };
   });
 }
