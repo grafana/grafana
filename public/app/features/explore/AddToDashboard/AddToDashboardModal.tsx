@@ -9,6 +9,7 @@ import { DeepMap, FieldError, useForm } from 'react-hook-form';
 import { css } from '@emotion/css';
 import { config, locationService } from '@grafana/runtime';
 import { getExploreItemSelector } from '../state/selectors';
+import { partial } from 'lodash';
 
 enum SaveTarget {
   NewDashboard,
@@ -46,10 +47,6 @@ function assertIsSaveToExistingDashboardError(
   // the shape of the errors object is always compatible with the type above, but we need to
   // explicitly assert its type so that TS can narrow down FormDTO to SaveToExistingDashboard
   // when we use it in the form.
-}
-
-function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}, redirect: boolean) {
-  return async (...args: T) => fn(redirect, ...args);
 }
 
 function openDashboard(openInNewTab: boolean, dashboardUid?: string) {
@@ -143,12 +140,12 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
           <Button
             type="submit"
             variant="secondary"
-            onClick={handleSubmit(withRedirect(onSubmit, true))}
+            onClick={handleSubmit(partial(onSubmit, true))}
             icon="external-link-alt"
           >
             Open in new tab
           </Button>
-          <Button type="submit" variant="primary" onClick={handleSubmit(withRedirect(onSubmit, false))} icon="apps">
+          <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
             Open
           </Button>
         </Modal.ButtonRow>
