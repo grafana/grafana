@@ -9,7 +9,6 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { DefinePlugin } = require('webpack');
 const getBabelConfig = require('./babel.config');
-const perconaSaasProdHostRegex = /check.percona.com/gm;
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -77,14 +76,6 @@ module.exports = (env = {}) =>
         inject: false,
         excludeChunks: ['manifest', 'dark', 'light'],
         chunksSortMode: 'none',
-      }),
-      new DefinePlugin({
-        'process.env': {
-          PERCONA_SAAS_HOST:
-            perconaSaasProdHostRegex.exec(process.env.PERCONA_TEST_SAAS_HOST) === null
-              ? JSON.stringify('https://platform-dev.percona.com')
-              : JSON.stringify('https://portal.percona.com'),
-        },
       }),
       function () {
         this.hooks.done.tap('Done', function (stats) {

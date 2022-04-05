@@ -18,10 +18,10 @@ export const Connect: FC = () => {
   const styles = useStyles(getStyles);
   const [connecting, setConnecting] = useState(false);
   const dispatch = useDispatch();
-  const { result = { serverId: '' } } = useSelector(getPerconaServer);
+  const { serverId: pmmServerId = '', saasHost } = useSelector(getPerconaServer);
   const initialValues: ConnectRenderProps = {
     pmmServerName: '',
-    pmmServerId: result.serverId,
+    pmmServerId,
     accessToken: '',
   };
 
@@ -66,7 +66,7 @@ export const Connect: FC = () => {
           showErrorOnBlur
           required
         />
-        <a href={`${process.env.PERCONA_SAAS_HOST}/profile`} rel="noreferrer" target="_blank">
+        <a href={`${saasHost}/profile`} rel="noreferrer noopener" target="_blank">
           Get token
         </a>
       </div>

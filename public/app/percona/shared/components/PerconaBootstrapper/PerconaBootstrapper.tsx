@@ -5,8 +5,10 @@ import {
   setSettingsLoading,
   setAuthorized,
   fetchServerInfoAction,
+  fetchServerSaasHostAction,
   setIsPlatformUser,
 } from 'app/percona/shared/core/reducers';
+import { contextSrv } from 'app/core/services/context_srv';
 import { SettingsService } from 'app/percona/settings/Settings.service';
 import { UserService } from '../../services/user/User.service';
 import { logger } from '@percona/platform-core';
@@ -39,9 +41,16 @@ export const PerconaBootstrapper = () => {
       }
     };
 
-    getSettings();
-    getUserStatus();
-    dispatch(fetchServerInfoAction());
+    const bootstrap = async () => {
+      await getSettings();
+      await getUserStatus();
+      await dispatch(fetchServerInfoAction());
+      await dispatch(fetchServerSaasHostAction());
+    };
+
+    if (contextSrv.user.isSignedIn) {
+      bootstrap();
+    }
   }, [dispatch]);
 
   return <></>;

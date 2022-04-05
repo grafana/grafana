@@ -16,7 +16,7 @@ export const Connected: FC = () => {
   const styles = useStyles(getStyles);
   const dispatch = useDispatch();
   const [disconnecting, setDisconnecting] = useState(false);
-  const { result = { serverId: '', serverName: '' } } = useSelector(getPerconaServer);
+  const { serverId = '', serverName = '' } = useSelector(getPerconaServer);
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
@@ -36,7 +36,7 @@ export const Connected: FC = () => {
       <header className={styles.title}>{Messages.title}</header>
       <p>{Messages.connected}</p>
       <Form
-        initialValues={{ pmmServerId: result.serverId, pmmServerName: result.serverName }}
+        initialValues={{ pmmServerId: serverId, pmmServerName: serverName }}
         onSubmit={() => {}}
         render={() => (
           <form>
