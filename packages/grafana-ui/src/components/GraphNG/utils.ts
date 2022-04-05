@@ -41,7 +41,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
       let fr = applyNullInsertThreshold(frame, null, timeRange?.to.valueOf());
 
       // prevent minesweeper-expansion of nulls (gaps) when joining bars
-      // since bar width is determined from the minimum distance between non-null values
+      // since bar width is determined from the minimum distance between non-undefined values
       // (this strategy will still retain any original pre-join nulls, though)
       fr.fields.forEach((f) => {
         if (f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars) {
