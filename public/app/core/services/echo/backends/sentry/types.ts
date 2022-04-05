@@ -12,5 +12,4 @@ export interface User {
   email: string;
   id: number;
   orgId: number;
-  externalUserId: string;
 }
