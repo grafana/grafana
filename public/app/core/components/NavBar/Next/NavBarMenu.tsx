@@ -184,7 +184,7 @@ function NavItem({
 
   if (linkHasChildren(link)) {
     return (
-      <CollapsibleNavItem link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
+      <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
           {link.children.map(
             (childLink) =>
@@ -210,7 +210,12 @@ function NavItem({
     );
   } else if (link.id === 'saved-items') {
     return (
-      <CollapsibleNavItem link={link} isActive={isMatchOrChildMatch(link, activeItem)} className={styles.savedItems}>
+      <CollapsibleNavItem
+        onClose={onClose}
+        link={link}
+        isActive={isMatchOrChildMatch(link, activeItem)}
+        className={styles.savedItems}
+      >
         <em className={styles.savedItemsText}>No saved items</em>
       </CollapsibleNavItem>
     );
@@ -301,11 +306,13 @@ function CollapsibleNavItem({
   isActive,
   children,
   className,
+  onClose,
 }: {
   link: NavModelItem;
   isActive?: boolean;
   children: React.ReactNode;
   className?: string;
+  onClose: () => void;
 }) {
   const styles = useStyles2(getCollapsibleStyles);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false);
@@ -317,7 +324,10 @@ function CollapsibleNavItem({
         label={link.text}
         url={link.url}
         target={link.target}
-        onClick={link.onClick}
+        onClick={() => {
+          link.onClick?.();
+          onClose();
+        }}
         className={styles.collapsibleMenuItem}
       >
         {link.img && (
