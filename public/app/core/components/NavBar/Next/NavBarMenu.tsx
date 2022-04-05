@@ -9,6 +9,7 @@ import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { isMatchOrChildMatch } from '../utils';
 import { NavBarToggle } from './NavBarToggle';
+import { useLocalStorage } from 'react-use';
 
 export interface Props {
   activeItem?: NavModelItem;
@@ -217,6 +218,7 @@ function CollapsibleNavItem({
   className?: string;
 }) {
   const styles = useStyles2(getCollapsibleStyles);
+  const [sectionExpanded, setSectionExpanded] = useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false);
 
   return (
     <li className={cx(styles.menuItem, className)}>
@@ -235,7 +237,8 @@ function CollapsibleNavItem({
       </NavBarItemWithoutMenu>
       <div className={styles.collapsibleSectionWrapper}>
         <CollapsableSection
-          isOpen={false}
+          isOpen={Boolean(sectionExpanded)}
+          onToggle={(isOpen) => setSectionExpanded(isOpen)}
           className={styles.collapseWrapper}
           contentClassName={styles.collapseContent}
           label={
