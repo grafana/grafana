@@ -140,8 +140,3 @@ export const isSearchActive = (location: Location<unknown>) => {
 export function getNavModelItemKey(item: NavModelItem) {
   return item.id ?? item.text;
 }
-
-//New navigation: We only want to show + icons for overlay menus
-export function getAllowedItemKeyIdIcons(): string[] {
-  return ['new-dashboard', 'new-folder', 'import'];
-}

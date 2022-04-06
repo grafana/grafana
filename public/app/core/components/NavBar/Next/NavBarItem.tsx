@@ -113,7 +113,7 @@ const NavBarItem = ({
                     url={item.url}
                     onClick={item.onClick}
                     styleOverrides={cx(styles.primaryText, { [styles.header]: isSection })}
-                    itemKey={item.id}
+                    showIconInNavbar={item.showIconInNavbar}
                   />
                 </Item>
               );
