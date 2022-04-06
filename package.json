@@ -72,6 +72,9 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*.{star}": [
+      "make drone"
     ]
   },
   "devDependencies": {

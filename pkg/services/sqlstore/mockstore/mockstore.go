@@ -156,6 +156,7 @@ func (m *SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByI
 }
 
 func (m *SQLStoreMock) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
+	query.Result = m.ExpectedUser
 	return m.ExpectedError
 }
 
