@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     display: 'flex',
     justifyContent: 'space-between',
-    padding: `${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(2)}`,
+    padding: `${theme.spacing(1, 2, 2)}`,
     [theme.breakpoints.up('md')]: {
       display: 'none',
     },
