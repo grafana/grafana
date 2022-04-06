@@ -18,10 +18,10 @@ type InMemory struct {
 }
 
 func ProvideService(grafanaCfg *setting.Cfg) *InMemory {
-	return NewPluginRegistry(plugins.FromGrafanaCfg(grafanaCfg))
+	return NewInMemory(plugins.FromGrafanaCfg(grafanaCfg))
 }
 
-func NewPluginRegistry(cfg *plugins.Cfg) *InMemory {
+func NewInMemory(cfg *plugins.Cfg) *InMemory {
 	return &InMemory{
 		cfg:   cfg,
 		store: make(map[string]*plugins.Plugin),

@@ -25,7 +25,7 @@ const (
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
-		pm := New(&plugins.Cfg{}, newRegistry(), []PluginSource{
+		pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
@@ -310,7 +310,7 @@ func TestPluginManager_registeredPlugins(t *testing.T) {
 		)
 		require.True(t, decommissionedPlugin.IsDecommissioned())
 
-		pm := New(&plugins.Cfg{}, &fakeInternalRegistry{
+		pm := New(&plugins.Cfg{}, &fakePluginRegistry{
 			store: map[string]*plugins.Plugin{
 				testPluginID: decommissionedPlugin,
 				"test-app":   {},
@@ -523,7 +523,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, newRegistry(), nil, &fakeLoader{})
+	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), nil, &fakeLoader{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -584,7 +584,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		ManagedIdentityClientId: "client-id",
 	}
 
-	manager := New(cfg, registry.NewPluginRegistry(cfg), nil, &fakeLoader{})
+	manager := New(cfg, registry.NewInMemory(cfg), nil, &fakeLoader{})
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}
@@ -769,22 +769,22 @@ func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
 	return nil
 }
 
-type fakeInternalRegistry struct {
+type fakePluginRegistry struct {
 	store map[string]*plugins.Plugin
 }
 
-func newRegistry() *fakeInternalRegistry {
-	return &fakeInternalRegistry{
+func newFakePluginRegistry() *fakePluginRegistry {
+	return &fakePluginRegistry{
 		store: make(map[string]*plugins.Plugin),
 	}
 }
 
-func (f *fakeInternalRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
+func (f *fakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
 	p, exists := f.store[id]
 	return p, exists
 }
 
-func (f *fakeInternalRegistry) Plugins(_ context.Context) []*plugins.Plugin {
+func (f *fakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
 	var res []*plugins.Plugin
 
 	for _, p := range f.store {
@@ -794,12 +794,12 @@ func (f *fakeInternalRegistry) Plugins(_ context.Context) []*plugins.Plugin {
 	return res
 }
 
-func (f *fakeInternalRegistry) Add(_ context.Context, p *plugins.Plugin) error {
+func (f *fakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
 	f.store[p.ID] = p
 	return nil
 }
 
-func (f *fakeInternalRegistry) Remove(_ context.Context, id string) error {
+func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
 	delete(f.store, id)
 	return nil
 }

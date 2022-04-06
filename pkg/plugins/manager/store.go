@@ -40,11 +40,7 @@ func (m *PluginManager) Plugins(ctx context.Context, pluginTypes ...plugins.Type
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
 	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists {
-		return nil, false
-	}
-
-	if p.IsDecommissioned() {
+	if !exists || p.IsDecommissioned() {
 		return nil, false
 	}
 
