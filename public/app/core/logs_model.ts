@@ -416,19 +416,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       }
 
       let logLevel = LogLevel.unknown;
-      if (logLevelField && logLevelField.values.get(j)) {
-        logLevel = getLogLevelFromKey(logLevelField.values.get(j));
+      const logLevelKey = (logLevelField && logLevelField.values.get(j)) || (labels && labels['level']);
+      if (logLevelKey) {
+        logLevel = getLogLevelFromKey(logLevelKey);
       } else {
-        let fromLabelLogLevel: LogLevel | undefined = undefined;
-        if (labels && Object.keys(labels).indexOf('level') !== -1) {
-          fromLabelLogLevel = getLogLevelFromKey(labels['level']);
-        }
-        if (fromLabelLogLevel) {
-          logLevel = fromLabelLogLevel;
-        } else {
-          logLevel = getLogLevel(entry);
-        }
+        logLevel = getLogLevel(entry);
       }
+
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
