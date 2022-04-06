@@ -45,7 +45,7 @@ const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries
  */
-export function lokiStreamsToRawDataframe(streams: LokiStreamResult[], reverse?: boolean, refId?: string): DataFrame {
+export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], reverse?: boolean, refId?: string): DataFrame {
   const labels = new ArrayVector<{}>([]);
   const times = new ArrayVector<string>([]);
   const timesNs = new ArrayVector<string>([]);
@@ -355,7 +355,7 @@ export function lokiStreamsToDataFrames(
     preferredVisualisationType: 'logs',
   };
 
-  const dataFrame = lokiStreamsToRawDataframe(data, reverse, target.refId);
+  const dataFrame = lokiStreamsToRawDataFrame(data, reverse, target.refId);
   enhanceDataFrame(dataFrame, config);
 
   if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {

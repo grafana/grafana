@@ -64,9 +64,9 @@ describe('loki result transformer', () => {
     jest.clearAllMocks();
   });
 
-  describe('lokiStreamsToRawDataframe', () => {
+  describe('lokiStreamsToRawDataFrame', () => {
     it('converts streams to series', () => {
-      const data = ResultTransformer.lokiStreamsToRawDataframe(streamResult);
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult);
 
       expect(data.fields[0].values.get(0)).toStrictEqual({ foo: 'bar' });
       expect(data.fields[1].values.get(0)).toEqual('2020-01-24T09:19:22.021Z');
@@ -102,7 +102,7 @@ describe('loki result transformer', () => {
         },
       ];
 
-      const data = ResultTransformer.lokiStreamsToRawDataframe(streamResultWithDuplicateLogs);
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResultWithDuplicateLogs);
 
       expect(data.fields[4].values.get(0)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa');
       expect(data.fields[4].values.get(1)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_1');
@@ -112,7 +112,7 @@ describe('loki result transformer', () => {
     });
 
     it('should append refId to the unique ids if refId is provided', () => {
-      const data = ResultTransformer.lokiStreamsToRawDataframe(streamResult, false, 'B');
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult, false, 'B');
       expect(data.fields[4].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc_B');
       expect(data.fields[4].values.get(1)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1_B');
     });

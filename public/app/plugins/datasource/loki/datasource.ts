@@ -41,7 +41,7 @@ import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import {
   lokiResultsToTableModel,
   lokiStreamsToDataFrames,
-  lokiStreamsToRawDataframe,
+  lokiStreamsToRawDataFrame,
   processRangeQueryResponse,
 } from './result_transformer';
 import { transformBackendResult } from './backendResultTransformer';
@@ -537,7 +537,7 @@ export class LokiDatasource
         }),
         switchMap((res) =>
           of({
-            data: res.data ? [lokiStreamsToRawDataframe(res.data.data.result, reverse)] : [],
+            data: res.data ? [lokiStreamsToRawDataFrame(res.data.data.result, reverse)] : [],
           })
         )
       )
