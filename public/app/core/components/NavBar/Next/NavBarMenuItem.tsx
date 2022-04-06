@@ -98,7 +98,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], showIconIn
     flex: 1,
     fontSize: 'inherit',
     height: '100%',
-    padding: !showIconInNavbar ? `${theme.spacing(1)} ${theme.spacing(2)}` : '5px 12px 5px 10px',
+    padding: !showIconInNavbar ? `${theme.spacing(0.5)} ${theme.spacing(2)}` : '5px 12px 5px 10px',
     textAlign: 'left',
     whiteSpace: 'nowrap',
     '&:hover, &:focus-visible': {
