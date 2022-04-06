@@ -28,10 +28,10 @@ type channelsPerOrg map[int64][]*notificationChannel
 // channelMap maps notification channels per organisation
 type defaultChannelsPerOrg map[int64][]*notificationChannel
 
-// Union type for receiver map that contains both uid -> receiver and ID -> receiver
+// uidOrID contains both uid -> receiver and ID -> receiver
 type uidOrID interface{}
 
-// Start channel and alert migrations. This creates Alertmanager configs as well as migrates receivers and creates the initial root-level route.
+// setupAlertmanagerConfigs starts channel and alert migrations. This creates Alertmanager configs as well as migrates receivers and creates the initial root-level route.
 // Returns per org maps containing: The alertmanager config, all migrated receivers, all migrated default receivers
 func (m *migration) setupAlertmanagerConfigs() (amConfigsPerOrg, map[int64]map[uidOrID]*PostableApiReceiver, map[int64]map[string]struct{}, error) {
 	// allChannels: channelUID -> channelConfig
@@ -60,12 +60,12 @@ func (m *migration) setupAlertmanagerConfigs() (amConfigsPerOrg, map[int64]map[u
 			defaultReceiversPerOrg[orgID][c.Name] = struct{}{}
 		}
 
-		// Create all new receivers and add to amConfig
-		contactPoints, err := m.createReceivers(amConfig, allChannelsPerOrg[orgID], defaultChannels)
+		// Create all new receivers and add to amConfig.
+		receivers, err := m.createReceivers(amConfig, allChannelsPerOrg[orgID], defaultChannels)
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		receiversPerOrg[orgID] = contactPoints
+		receiversPerOrg[orgID] = receivers
 
 		amConfig.AlertmanagerConfig.Route = createDefaultRoute(defaultChannels)
 	}
