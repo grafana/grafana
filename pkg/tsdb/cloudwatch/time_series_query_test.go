@@ -30,7 +30,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	var cwClient fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return cwClient
+		return &cwClient
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
