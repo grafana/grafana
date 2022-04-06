@@ -124,6 +124,7 @@ const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   { key: 'data' as any },
   { key: 'panelId' },
   { key: 'alertId' },
+  { key: 'dashboardId' },
 ];
 
 export function getAnnotationsFromData(

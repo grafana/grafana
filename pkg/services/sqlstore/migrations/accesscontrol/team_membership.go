@@ -130,9 +130,9 @@ func (p *teamPermissionMigrator) migrateMemberships() error {
 	}
 
 	// Sort roles that:
-	// * need to be created and assigned (rolesToCreate, assignments)
+	// * need to be created and assigned (rolesToCreate)
 	// * are already created and assigned (rolesByOrg)
-	rolesToCreate, assignments, rolesByOrg, errOrganizeRoles := p.sortRolesToAssign(userPermissionsByOrg)
+	rolesToCreate, rolesByOrg, errOrganizeRoles := p.sortRolesToAssign(userPermissionsByOrg)
 	if errOrganizeRoles != nil {
 		return errOrganizeRoles
 	}
@@ -149,7 +149,7 @@ func (p *teamPermissionMigrator) migrateMemberships() error {
 	}
 
 	// Assign newly created roles
-	if errAssign := p.bulkAssignRoles(rolesByOrg, assignments); errAssign != nil {
+	if errAssign := p.bulkAssignRoles(createdRoles); errAssign != nil {
 		return errAssign
 	}
 
@@ -173,10 +173,8 @@ func (p *teamPermissionMigrator) setRolePermissionsForOrgs(userPermissionsByOrg 
 	return nil
 }
 
-func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int64]map[int64][]accesscontrol.Permission) ([]*accesscontrol.Role, map[int64]map[string]struct{}, map[int64]map[string]*accesscontrol.Role, error) {
+func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int64]map[int64][]accesscontrol.Permission) ([]*accesscontrol.Role, map[int64]map[string]*accesscontrol.Role, error) {
 	var rolesToCreate []*accesscontrol.Role
-
-	assignments := map[int64]map[string]struct{}{}
 
 	rolesByOrg := map[int64]map[string]*accesscontrol.Role{}
 	for orgID, userPermissions := range userPermissionsByOrg {
@@ -184,7 +182,7 @@ func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int6
 			roleName := fmt.Sprintf("managed:users:%d:permissions", userID)
 			role, errFindingRoles := p.findRole(orgID, roleName)
 			if errFindingRoles != nil {
-				return nil, nil, nil, errFindingRoles
+				return nil, nil, errFindingRoles
 			}
 
 			if rolesByOrg[orgID] == nil {
@@ -194,24 +192,12 @@ func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int6
 			if role.ID != 0 {
 				rolesByOrg[orgID][roleName] = &role
 			} else {
-				roleToCreate := &accesscontrol.Role{
-					Name:  roleName,
-					OrgID: orgID,
-				}
-				rolesToCreate = append(rolesToCreate, roleToCreate)
-
-				userAssignments, initialized := assignments[orgID]
-				if !initialized {
-					userAssignments = map[string]struct{}{}
-				}
-
-				userAssignments[roleName] = struct{}{}
-				assignments[orgID] = userAssignments
+				rolesToCreate = append(rolesToCreate, &accesscontrol.Role{Name: roleName, OrgID: orgID})
 			}
 		}
 	}
 
-	return rolesToCreate, assignments, rolesByOrg, nil
+	return rolesToCreate, rolesByOrg, nil
 }
 
 func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships []*models.TeamMember,

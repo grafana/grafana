@@ -10,18 +10,19 @@ export interface FooterRowProps {
   totalColumnsWidth: number;
   footerGroups: HeaderGroup[];
   footerValues: FooterItem[];
+  isPaginationVisible: boolean;
   height: number;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, height } = props;
+  const { totalColumnsWidth, footerGroups, height, isPaginationVisible } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
 
   return (
     <table
       style={{
-        position: 'absolute',
+        position: isPaginationVisible ? 'relative' : 'absolute',
         width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
         bottom: '0px',
       }}

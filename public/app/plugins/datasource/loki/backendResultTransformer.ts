@@ -23,6 +23,10 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
+    custom: {
+      // used by logs_model
+      lokiQueryStatKey: 'Summary: total bytes processed',
+    },
   };
   const newFrame = setFrameMeta(frame, meta);
   const newFields = frame.fields.map((field) => {

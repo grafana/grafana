@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import {
   DataSourceJsonData,
+  DataSourceInstanceSettings,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme,
   KeyValue,
@@ -44,12 +45,13 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            pluginId="loki"
+            logs
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
                 datasourceUid: ds.uid,
                 tags: options.jsonData.tracesToLogs?.tags,
               })

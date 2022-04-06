@@ -5,11 +5,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,13 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 type Service struct {
 	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
+	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
 
@@ -57,7 +61,7 @@ type cachedDecryptedJSON struct {
 }
 
 func ProvideService(
-	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
+	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
@@ -70,6 +74,7 @@ func ProvideService(
 		dsDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
+		cfg:                cfg,
 		features:           features,
 		permissionsService: permissionsServices.GetDataSourceService(),
 	}
@@ -83,7 +88,7 @@ func ProvideService(
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
-	ac.RegisterAttributeScopeResolver(NewUidScopeResolver(store))
+	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))
 
 	return s
 }
@@ -95,10 +100,10 @@ type DataSourceRetriever interface {
 }
 
 // NewNameScopeResolver provides an AttributeScopeResolver able to
-// translate a scope prefixed with "datasources:name:" into an id based scope.
+// translate a scope prefixed with "datasources:name:" into an uid based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
 	prefix := datasources.ScopeProvider.GetResourceScopeName("")
-	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
@@ -113,35 +118,36 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", err
 		}
 
-		return datasources.ScopeProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
+		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
 	}
-
-	return prefix, dsNameResolver
 }
 
-// NewUidScopeResolver provides an AttributeScopeResolver able to
-// translate a scope prefixed with "datasources:uid:" into an id based scope.
-func NewUidScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
-	prefix := datasources.ScopeProvider.GetResourceScopeUID("")
-	dsUIDResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+// NewIDScopeResolver provides an AttributeScopeResolver able to
+// translate a scope prefixed with "datasources:id:" into an uid based scope.
+func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+	prefix := datasources.ScopeProvider.GetResourceScope("")
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		dsUID := initialScope[len(prefix):]
-		if dsUID == "" {
+		id := initialScope[len(prefix):]
+		if id == "" {
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		query := models.GetDataSourceQuery{Uid: dsUID, OrgId: orgID}
+		dsID, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		query := models.GetDataSourceQuery{Id: dsID, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return "", err
 		}
 
-		return datasources.ScopeProvider.GetResourceScope(strconv.FormatInt(query.Result.Id, 10)), nil
+		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
 	}
-
-	return prefix, dsUIDResolver
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
@@ -180,7 +186,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 		if cmd.UserId != 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
 		}
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), permissions...); err != nil {
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
 			return err
 		}
 	}
@@ -232,7 +238,7 @@ func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Pr
 		return nil, err
 	}
 
-	opts.Middlewares = customMiddlewares
+	opts.Middlewares = append(opts.Middlewares, customMiddlewares...)
 
 	rt, err := provider.GetTransport(*opts)
 	if err != nil {
@@ -336,7 +342,8 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		}
 	}
 
-	if ds.JsonData != nil {
+	// Azure authentication
+	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
 		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), s.DecryptedValues(ds))
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
@@ -344,7 +351,22 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		}
 
 		if credentials != nil {
-			opts.CustomOptions["_azureCredentials"] = credentials
+			resourceIdStr := ds.JsonData.Get("azureEndpointResourceId").MustString()
+			if resourceIdStr == "" {
+				err := fmt.Errorf("endpoint resource ID (audience) not provided")
+				return nil, err
+			}
+
+			resourceId, err := url.Parse(resourceIdStr)
+			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+				err := fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
+				return nil, err
+			}
+
+			resourceId.Path = path.Join(resourceId.Path, ".default")
+			scopes := []string{resourceId.String()}
+
+			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
 		}
 	}
 

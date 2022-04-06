@@ -93,12 +93,15 @@ describe('AlertingQueryRunner', () => {
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
+
+      // these test are flakey since the absolute computed "timeRange" can differ from the relative "defaultRelativeTimeRange"
+      // so instead we will check if the size of the timeranges match
       const relativeA = rangeUtil.timeRangeToRelative(data.A.timeRange);
       const relativeB = rangeUtil.timeRangeToRelative(data.B.timeRange);
-      const expected = getDefaultRelativeTimeRange();
+      const defaultRange = getDefaultRelativeTimeRange();
 
-      expect(relativeA).toEqual(expected);
-      expect(relativeB).toEqual(expected);
+      expect(relativeA.from - defaultRange.from).toEqual(relativeA.to - defaultRange.to);
+      expect(relativeB.from - defaultRange.from).toEqual(relativeB.to - defaultRange.to);
     });
   });
 

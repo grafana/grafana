@@ -92,7 +92,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TracePageHeader/TracePageHeader.test.js:3669774385": [
       [15, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:1298620967": [
+    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:2095199604": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:793239444": [
@@ -200,7 +200,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.test.tsx:1262111696": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1044891955": [
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:809006195": [
       [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:1798654441": [
@@ -229,21 +229,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/features/explore/LiveLogs.test.tsx:1667605379": [
       [2, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RichHistory/RichHistory.test.tsx:409631018": [
-      [1, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RichHistory/RichHistoryCard.test.tsx:689438177": [
-      [1, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RichHistory/RichHistoryContainer.test.tsx:396471778": [
-      [1, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RichHistory/RichHistoryQueriesTab.test.tsx:3436519226": [
-      [1, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RichHistory/RichHistorySettings.test.tsx:538589654": [
-      [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3948011811": [
       [1, 17, 13, "RegExp match", "2409514259"]
@@ -284,7 +269,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/teams/TeamMembers.test.tsx:3993436101": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/teams/TeamPages.test.tsx:2493626076": [
+    "public/app/features/teams/TeamPages.test.tsx:1265047708": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/teams/TeamSettings.test.tsx:2628968507": [
@@ -305,7 +290,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:2974837543": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:4272466995": [
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:132770839": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:1089831034": [
@@ -329,7 +314,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:1661240493": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:3844880066": [
+    "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:2909181412": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:1527527456": [
@@ -341,7 +326,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:1231427": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1206229922": [
+    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1527575498": [
       [1, 31, 13, "RegExp match", "2409514259"]
     ]
   }`

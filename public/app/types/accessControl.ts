@@ -1,12 +1,10 @@
 /**
  * UserPermission is a map storing permissions in a form of
  * {
- *   action: { scope: scope }
+ *   action: true;
  * }
  */
-export type UserPermission = {
-  [key: string]: { [key: string]: string };
-};
+export type UserPermission = Record<string, boolean>;
 
 // Permission actions
 export enum AccessControlAction {

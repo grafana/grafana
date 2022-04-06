@@ -118,10 +118,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore.ExpectedDashboard = fakeDash
 
 		hs := &HTTPServer{
-			Cfg:         setting.NewCfg(),
-			pluginStore: &fakePluginStore{},
-			SQLStore:    mockSQLStore,
-			Features:    featuremgmt.WithFeatures(),
+			Cfg:           setting.NewCfg(),
+			pluginStore:   &fakePluginStore{},
+			SQLStore:      mockSQLStore,
+			AccessControl: accesscontrolmock.New(),
+			Features:      featuremgmt.WithFeatures(),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -224,6 +225,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              mockSQLStore,
+			AccessControl:         accesscontrolmock.New(),
 			dashboardService: service.ProvideDashboardService(
 				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
 			),
@@ -890,6 +892,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryElementService:        &mockLibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
+				AccessControl:                accesscontrolmock.New(),
 			}
 			hs.callGetDashboard(sc)
 
@@ -927,6 +930,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		LibraryElementService: &libraryElementsService,
 		SQLStore:              sc.sqlStore,
 		ProvisioningService:   provisioningService,
+		AccessControl:         accesscontrolmock.New(),
 		dashboardProvisioningService: service.ProvideDashboardService(
 			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
 		),

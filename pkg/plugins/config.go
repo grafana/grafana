@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +21,7 @@ type Cfg struct {
 	AWSAssumeRoleEnabled    bool
 
 	// Azure Cloud settings
-	Azure setting.AzureSettings
+	Azure *azsettings.AzureSettings
 
 	BuildVersion string // TODO Remove
 }

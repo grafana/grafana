@@ -81,6 +81,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     return (
       <div ref={topOfExploreViewRef}>
         <PageToolbar
+          aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
           leftItems={[
@@ -115,6 +116,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
+            <AddToDashboard exploreId={exploreId} />
+
             {!isLive && (
               <ExploreTimeControls
                 exploreId={exploreId}
@@ -130,8 +133,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               />
             )}
-
-            <AddToDashboard exploreId={exploreId} />
 
             <RunButton
               refreshInterval={refreshInterval}
