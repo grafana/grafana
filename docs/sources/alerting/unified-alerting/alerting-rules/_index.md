@@ -12,9 +12,9 @@ While queries and expressions select the data set to evaluate, a condition sets 
 
 You can:
 
-- [Create Cortex or Loki managed alert rule]({{< relref "./create-cortex-loki-managed-rule.md" >}})
-- [Create Cortex or Loki managed recording rule]({{< relref "./create-cortex-loki-managed-recording-rule.md" >}})
-- [Edit Cortex or Loki rule groups and namespaces]({{< relref "./edit-cortex-loki-namespace-group.md" >}})
+- [Create Grafana Mimir or Loki managed alert rule]({{< relref "./create-mimir-loki-managed-rule.md" >}})
+- [Create Grafana Mimir or Loki managed recording rule]({{< relref "./create-mimir-loki-managed-recording-rule.md" >}})
+- [Edit Grafana Mimir or Loki rule groups and namespaces]({{< relref "./edit-mimir-loki-namespace-group.md" >}})
 - [Create Grafana managed alert rule]({{< relref "./create-grafana-managed-rule.md" >}})
 - [State and health of alerting rules]({{< relref "../fundamentals/state-and-health.md" >}})
 - [Manage alerting rules]({{< relref "./rule-list.md" >}})

@@ -10,7 +10,8 @@ import config from 'app/core/config';
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
   timeFormatter: (v: number) => string;
-  editable: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -18,7 +19,8 @@ interface AnnotationTooltipProps {
 export const AnnotationTooltip = ({
   annotation,
   timeFormatter,
-  editable,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: AnnotationTooltipProps) => {
@@ -51,11 +53,11 @@ export const AnnotationTooltip = ({
     text = annotation.title + '<br />' + (typeof text === 'string' ? text : '');
   }
 
-  if (editable) {
+  if (canEdit || canDelete) {
     editControls = (
       <div className={styles.editControls}>
-        <IconButton name={'pen'} size={'sm'} onClick={onEdit} />
-        <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} />
+        {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} />}
+        {canDelete && <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} />}
       </div>
     );
   }

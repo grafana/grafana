@@ -26,6 +26,7 @@ export const CollapseToggle: FC<Props> = ({
 
   return (
     <Button
+      type="button"
       fill="text"
       aria-expanded={!isCollapsed}
       aria-controls={idControlled}

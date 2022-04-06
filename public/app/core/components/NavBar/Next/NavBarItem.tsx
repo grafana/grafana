@@ -8,10 +8,11 @@ import { locationService } from '@grafana/runtime';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
-import { NavBarItemMenu } from '../NavBarItemMenu';
+import { NavBarItemMenu } from './NavBarItemMenu';
 import { getNavModelItemKey } from '../utils';
 import { useLingui } from '@lingui/react';
 import menuItemTranslations from '../navBarItem-translations';
+import { useNavBarContext } from '../context';
 
 export interface Props {
   isActive?: boolean;
@@ -33,6 +34,7 @@ const NavBarItem = ({
   const { i18n } = useLingui();
   const theme = useTheme2();
   const menuItems = link.children ?? [];
+  const { menuIdOpen } = useNavBarContext();
 
   // Spreading `menuItems` here as otherwise we'd be mutating props
   const menuItemsSorted = reverseMenuDirection ? [...menuItems].reverse() : menuItems;
@@ -81,8 +83,13 @@ const NavBarItem = ({
     );
   } else {
     return (
-      <li className={cx(styles.container, className)}>
-        <NavBarItemMenuTrigger item={section} isActive={isActive} label={linkText}>
+      <li className={cx(styles.container, { [styles.containerHover]: section.id === menuIdOpen }, className)}>
+        <NavBarItemMenuTrigger
+          item={section}
+          isActive={isActive}
+          label={linkText}
+          reverseMenuDirection={reverseMenuDirection}
+        >
           <NavBarItemMenu
             items={items}
             reverseMenuDirection={reverseMenuDirection}
@@ -121,6 +128,10 @@ export default NavBarItem;
 
 const getStyles = (theme: GrafanaTheme2, adjustHeightForBorder: boolean, isActive?: boolean) => ({
   ...getNavBarItemWithoutMenuStyles(theme, isActive),
+  containerHover: css({
+    backgroundColor: theme.colors.action.hover,
+    color: theme.colors.text.primary,
+  }),
   primaryText: css({
     color: theme.colors.text.primary,
   }),

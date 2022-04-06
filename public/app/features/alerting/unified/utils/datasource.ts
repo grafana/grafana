@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData, DataSourceInstanceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { RulesSource } from 'app/types/unified-alerting';
 import { getAllDataSources } from './config';
@@ -18,6 +18,10 @@ export function getRulesDataSources() {
   return getAllDataSources()
     .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function getRulesDataSource(rulesSourceName: string) {
+  return getAllDataSources().find((x) => x.name === rulesSourceName);
 }
 
 export function getAlertManagerDataSources() {

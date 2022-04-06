@@ -177,8 +177,6 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 
 	logSect, err := cfg.NewSection("log")
 	require.NoError(t, err)
-	_, err = logSect.NewKey("mode", "console")
-	require.NoError(t, err)
 	_, err = logSect.NewKey("level", "debug")
 	require.NoError(t, err)
 
