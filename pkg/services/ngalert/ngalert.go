@@ -137,6 +137,8 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
+	encryption := notifier.NewEncryption(ng.SecretsService, store)
+
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
@@ -150,6 +152,7 @@ func (ng *AlertNG) init() error {
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		SecretsService:       ng.SecretsService,
+		Encryption:           encryption,
 		TransactionManager:   store,
 		InstanceStore:        store,
 		RuleStore:            store,
