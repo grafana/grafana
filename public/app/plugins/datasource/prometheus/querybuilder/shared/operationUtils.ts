@@ -172,7 +172,7 @@ export function createAggregationOperation<T extends QueryWithOperations>(
       alternativesKey: 'plain aggregations',
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
-      paramChangedHandler: getOnLabelAdddedHandler(`__${name}_by`),
+      paramChangedHandler: getOnLabelAddedHandler(`__${name}_by`),
       explainHandler: getAggregationExplainer(name, ''),
       addOperationHandler: defaultAddOperationHandler,
       ...overrides,
@@ -291,14 +291,14 @@ function getAggregationByRendererWithParameter(aggregation: string) {
 /**
  * This function will transform operations without labels to their plan aggregation operation
  */
-function getLastLabelRemovedHandler(changeToOperartionId: string) {
+function getLastLabelRemovedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
-    // If definition has more params then is defined there are no optional rest params anymore
+    // If definition has more params then is defined there are no optional rest params anymore.
     // We then transform this operation into a different one
     if (op.params.length < def.params.length) {
       return {
         ...op,
-        id: changeToOperartionId,
+        id: changeToOperationId,
       };
     }
 
@@ -306,11 +306,11 @@ function getLastLabelRemovedHandler(changeToOperartionId: string) {
   };
 }
 
-function getOnLabelAdddedHandler(changeToOperartionId: string) {
+function getOnLabelAddedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation) {
     return {
       ...op,
-      id: changeToOperartionId,
+      id: changeToOperationId,
     };
   };
 }
