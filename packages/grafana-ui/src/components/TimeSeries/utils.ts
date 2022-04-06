@@ -26,7 +26,14 @@ import {
   VizLegendOptions,
   StackingMode,
 } from '@grafana/schema';
-import { collectStackingGroups, INTERNAL_NEGATIVE_Y_PREFIX, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
+import {
+  getStackingBands,
+  getStackingGroups,
+  INTERNAL_NEGATIVE_Y_PREFIX,
+  orderIdsByCalcs,
+  preparePlotData,
+  preparePlotData2,
+} from '../uPlot/utils';
 import uPlot from 'uplot';
 import { buildScaleKey } from '../GraphNG/utils';
 
@@ -56,7 +63,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
-  builder.setPrepData((prepData) => preparePlotData(prepData, undefined, legend));
+  builder.setPrepData((frames) => preparePlotData2(frames[0], builder.getStackingGroups()));
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
@@ -121,8 +128,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
   let customRenderedFields =
     renderers?.flatMap((r) => Object.values(r.fieldMap).filter((name) => r.indicesOnly.indexOf(name) === -1)) ?? [];
-
-  const stackingGroups: Map<string, number[]> = new Map();
 
   let indexByName: Map<string, number> | undefined;
 
@@ -328,20 +333,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         });
       }
     }
-    collectStackingGroups(field, stackingGroups, seriesIndex);
   }
 
-  if (stackingGroups.size !== 0) {
-    for (const [group, seriesIds] of stackingGroups.entries()) {
-      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
-      for (let j = seriesIdxs.length - 1; j > 0; j--) {
-        builder.addBand({
-          series: [seriesIdxs[j], seriesIdxs[j - 1]],
-          dir: group.startsWith(INTERNAL_NEGATIVE_Y_PREFIX) ? 1 : -1,
-        });
-      }
-    }
-  }
+  let stackingGroups = getStackingGroups(frame);
+
+  builder.setStackingGroups(stackingGroups);
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
