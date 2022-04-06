@@ -1430,15 +1430,9 @@ func (g *GrafanaLive) collectLiveStats(_ context.Context) (map[string]interface{
 		liveHAEnabled = 1
 	}
 
-	var originsSet int
-	if len(g.Cfg.LiveAllowedOrigins) > 0 {
-		originsSet = 1
-	}
-
 	metrics := map[string]interface{}{
 		"stats.live_enabled.count":      liveEnabled,
 		"stats.live_ha_enabled.count":   liveHAEnabled,
-		"stats.live_origins_set.count":  originsSet,
 		"stats.live_samples.count":      g.usageStats.sampleCount,
 		"stats.live_users_max.count":    g.usageStats.numUsersMax,
 		"stats.live_users_min.count":    g.usageStats.numUsersMin,
