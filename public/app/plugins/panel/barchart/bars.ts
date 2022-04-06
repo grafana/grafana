@@ -11,7 +11,11 @@ import {
   VizTextDisplayOptions,
   VizLegendOptions,
 } from '@grafana/schema';
-import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import {
+  preparePlotData,
+  preparePlotData2,
+  StackingGroup,
+} from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 
@@ -564,16 +568,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let alignedTotals: AlignedData | null = null;
 
-  function prepData(frames: DataFrame[]) {
+  function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
     alignedTotals = null;
-
-    return preparePlotData(
-      frames,
-      ({ totals }) => {
-        alignedTotals = totals;
-      },
-      opts.legend
-    );
+    return preparePlotData2(frames[0], stackingGroups, ({ totals }) => {
+      alignedTotals = totals;
+    });
   }
 
   return {

@@ -25,9 +25,9 @@ import {
   StackingMode,
   VizLegendOptions,
 } from '@grafana/schema';
-import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { orderBy } from 'lodash';
 import { findField } from 'app/features/dimensions';
+import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
@@ -156,7 +156,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   let seriesIndex = 0;
   const legendOrdered = isLegendOrdered(legend);
-  const stackingGroups: Map<string, number[]> = new Map();
 
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
@@ -237,20 +236,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         grid: { show: customConfig.axisGridShow },
       });
     }
-
-    collectStackingGroups(field, stackingGroups, seriesIndex);
   }
 
-  if (stackingGroups.size !== 0) {
-    for (const [_, seriesIds] of stackingGroups.entries()) {
-      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
-      for (let j = seriesIdxs.length - 1; j > 0; j--) {
-        builder.addBand({
-          series: [seriesIdxs[j], seriesIdxs[j - 1]],
-        });
-      }
-    }
-  }
+  let stackingGroups = getStackingGroups(frame);
+
+  builder.setStackingGroups(stackingGroups);
 
   return builder;
 };

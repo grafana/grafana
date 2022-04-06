@@ -245,8 +245,6 @@ export function getStackingGroups(frame: DataFrame) {
     group.series.push(i);
   });
 
-  console.log(...groups.values());
-
   return [...groups.values()];
 }
 
@@ -263,14 +261,16 @@ export function preparePlotData2(
   let accums = Array.from({ length: stackingGroups.length }, () => zeroArr.slice());
 
   frame.fields.forEach((field, i) => {
+    let vals = field.values.toArray();
+
     if (i === 0) {
       if (field.type === FieldType.time) {
         data[i] = ensureTimeField(field).values.toArray();
+      } else {
+        data[i] = vals;
       }
       return;
     }
-
-    let vals = field.values.toArray();
 
     let { custom } = field.config;
 
@@ -311,6 +311,11 @@ export function preparePlotData2(
       }
     }
   });
+
+  onStackMeta &&
+    onStackMeta({
+      totals: accums as AlignedData,
+    });
 
   // re-compute by percent
   frame.fields.forEach((field, i) => {

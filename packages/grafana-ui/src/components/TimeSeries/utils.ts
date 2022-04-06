@@ -26,14 +26,7 @@ import {
   VizLegendOptions,
   StackingMode,
 } from '@grafana/schema';
-import {
-  getStackingBands,
-  getStackingGroups,
-  INTERNAL_NEGATIVE_Y_PREFIX,
-  orderIdsByCalcs,
-  preparePlotData,
-  preparePlotData2,
-} from '../uPlot/utils';
+import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 import uPlot from 'uplot';
 import { buildScaleKey } from '../GraphNG/utils';
 

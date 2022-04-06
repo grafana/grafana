@@ -33,6 +33,7 @@ const cursorDefaults: Cursor = {
 };
 
 type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
+type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -160,10 +161,10 @@ export class UPlotConfigBuilder {
     return this.tooltipInterpolator;
   }
 
-  setPrepData(prepData: PrepData) {
+  setPrepData(prepData: PreDataStacked) {
     this.prepData = (frames) => {
       this.frames = frames;
-      return prepData(frames);
+      return prepData(frames, this.getStackingGroups());
     };
   }
 
