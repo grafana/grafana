@@ -47,7 +47,6 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
             ResourceRowType.Variable,
           ]}
           setResource={setResource}
-          resourceUri={query.azureLogAnalytics?.resource}
         />
       </InlineFieldRow>
 

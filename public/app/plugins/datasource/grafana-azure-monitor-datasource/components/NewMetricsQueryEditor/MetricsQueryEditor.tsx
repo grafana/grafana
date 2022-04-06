@@ -43,7 +43,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           setError={setError}
           selectableEntryTypes={[ResourceRowType.Resource]}
           setResource={setResource}
-          resourceUri={query.azureMonitor?.resourceUri}
         />
       </InlineFieldRow>
 

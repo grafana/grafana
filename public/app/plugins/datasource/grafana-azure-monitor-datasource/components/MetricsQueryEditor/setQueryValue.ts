@@ -6,6 +6,11 @@ export function setResource(query: AzureMonitorQuery, resourceURI: string | unde
     azureMonitor: {
       ...query.azureMonitor,
       resourceUri: resourceURI,
+      metricNamespace: undefined,
+      metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
     },
   };
 }

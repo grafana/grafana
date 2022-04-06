@@ -25,9 +25,14 @@ const resourcePickerData = createMockResourcePickerData({
 });
 
 describe('MetricsQueryEditor', () => {
+  const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
   });
+  afterEach(() => {
+    window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  });
+
   it('should render', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData });
 

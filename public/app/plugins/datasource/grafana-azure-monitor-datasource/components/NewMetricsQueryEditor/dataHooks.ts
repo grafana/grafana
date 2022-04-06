@@ -65,21 +65,24 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
   );
 };
 
+const defaultMetricMetadata: MetricMetadata = {
+  aggOptions: [],
+  timeGrains: [],
+  dimensions: [],
+  isLoading: false,
+  supportedAggTypes: [],
+  primaryAggType: undefined,
+};
+
 export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasource, onChange: OnChangeFn) => {
-  const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>({
-    aggOptions: [],
-    timeGrains: [],
-    dimensions: [],
-    isLoading: false,
-    supportedAggTypes: [],
-    primaryAggType: undefined,
-  });
+  const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>(defaultMetricMetadata);
 
   const { resourceUri, metricNamespace, metricName, aggregation, timeGrain } = query.azureMonitor ?? {};
 
   // Fetch new metric metadata when the fields change
   useEffect(() => {
     if (!(resourceUri && metricNamespace && metricName)) {
+      setMetricMetadata(defaultMetricMetadata);
       return;
     }
 
