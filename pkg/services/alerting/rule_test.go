@@ -164,7 +164,6 @@ func TestAlertRuleModel(t *testing.T) {
 
 		require.Contains(t, alertRule.Notifications, "notifier2")
 		require.Contains(t, alertRule.Notifications, "notifier1")
-
 	})
 
 	t.Run("Testing alert rule with non existing notification id", func(t *testing.T) {
