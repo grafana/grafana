@@ -20,7 +20,7 @@ var (
 // lineage is the canonical specification of the datasource schema, all past
 // schema versions, and mappings that allow migration between schema versions.
 func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("internal", "components", "datasource"), cueFS, lib, opts...)
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("internal", "coremodel", "datasource"), cueFS, lib, opts...)
 }
 
 // Model is the canonical Go representation of the current Thema schema version
