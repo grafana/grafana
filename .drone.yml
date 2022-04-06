@@ -727,6 +727,8 @@ steps:
     paths:
       include:
       - .drone.yml
+    repo:
+    - grafana/grafana
 - image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
@@ -921,6 +923,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: store-storybook
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - yarn wait-on http://$HOST:$PORT
   - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
@@ -944,6 +949,9 @@ steps:
   failure: ignore
   image: grafana/build-container:1.5.3
   name: publish-frontend-metrics
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -993,6 +1001,9 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-oss --base alpine
     --base ubuntu --arch amd64 --arch arm64 --arch armv7
@@ -1011,6 +1022,9 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./scripts/circle-release-canary-packages.sh
   depends_on:
@@ -1023,6 +1037,9 @@ steps:
       from_secret: npm_token
   image: grafana/build-container:1.5.3
   name: release-canary-npm-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
@@ -1037,6 +1054,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
   depends_on:
@@ -1048,6 +1068,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
+  when:
+    repo:
+    - grafana/grafana
 trigger:
   branch: main
   event:
@@ -1197,6 +1220,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1281,6 +1306,8 @@ trigger:
   branch: main
   event:
   - push
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3317,6 +3344,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
@@ -3331,6 +3361,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+  when:
+    repo:
+    - grafana/grafana
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -3849,6 +3882,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   depends_on:
@@ -3860,6 +3896,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise --variants linux-amd64 --sign
@@ -4413,6 +4452,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 44e231d2b9a32f86b414ad57bd5d144eb6746baf3b01b037e3a1f4cb94df8a76
+hmac: 5085b8b1ecc48d9efb2a43644f250e208c453ffcd9b9a04b04a374afb089fb5c
 
 ...
