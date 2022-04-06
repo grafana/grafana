@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/internal/components"
 	"github.com/grafana/grafana/internal/components/staticregistry"
 	"github.com/grafana/grafana/internal/coremodel/datasource"
+	datasourcecrd "github.com/grafana/grafana/internal/coremodel/datasource/crd"
 	"github.com/grafana/grafana/internal/cuectx"
 	"github.com/grafana/grafana/internal/intentapi"
 	"github.com/grafana/grafana/internal/k8sbridge"
@@ -249,12 +250,14 @@ var wireIntentAPISet = wire.NewSet(
 	schema.ProvideSchemaLoader,
 	sqlstore.SchemaStoreProvidersSet,
 	datasource.ProvideCoremodel,
+	datasourcecrd.ProvideKubeController,
 	staticregistry.ProvideRegistry,
+	staticregistry.ProvideKubeControllerRegistry,
 	k8sbridge.ProvideService,
 	intentapi.ProvideApiserverProxy,
 	intentapi.ProvideHTTPServer,
 	wire.Bind(new(components.SchemaLoader), new(*schema.SchemaLoader)),
-	wire.Bind(new(k8sbridge.CoremodelLister), new(*components.Registry)),
+	wire.Bind(new(k8sbridge.CoremodelLister), new(*components.KubeControllerRegistry)),
 	wire.Bind(new(intentapi.Handler), new(*intentapi.ApiserverProxy)),
 )
 
