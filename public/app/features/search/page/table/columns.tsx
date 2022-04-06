@@ -214,7 +214,7 @@ function makeDataSourceColumn(
                       onDatasourceChange(settings.uid);
                     }}
                   >
-                    <SVG src={icon} width={14} height={14} title={settings.type} className={iconClass} />
+                    <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
                     {settings.name}
                   </span>
                 );
