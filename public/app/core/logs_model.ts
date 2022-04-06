@@ -310,8 +310,9 @@ interface LogFields {
 }
 
 function getAllLabels(fields: LogFields): Labels[] {
-  // there are two types of dataframes we handle.
-  // either labels-on-the-string-field, or labels-in-the-labels-field
+  // there are two types of dataframes we handle:
+  // 1. labels are in a separate field (more efficient when labels change by every log-row)
+  // 2. labels are in in the string-field's `.labels` attribute
 
   const { stringField, labelsField } = fields;
 
