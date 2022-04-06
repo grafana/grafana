@@ -55,7 +55,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		return err
 	}
 
-	err := loginUsingGrafanaDB(ctx, query)
+	err := loginUsingGrafanaDB(ctx, query, a.store)
 	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
 		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
