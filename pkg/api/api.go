@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var plog = log.New("api")
@@ -417,7 +418,14 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notifiers", reqSignedIn, routing.Wrap(
+		var notifiersAuthHandler web.Handler
+		if hs.Cfg.UnifiedAlerting.IsEnabled() {
+			notifiersAuthHandler = reqSignedIn
+		} else {
+			notifiersAuthHandler = reqEditorRole
+		}
+
+		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, routing.Wrap(
 			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
 		)
 
