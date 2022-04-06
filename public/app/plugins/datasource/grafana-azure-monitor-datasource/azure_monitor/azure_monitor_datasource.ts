@@ -9,6 +9,9 @@ import TimegrainConverter from '../time_grain_converter';
 import {
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
+  AzureMonitorMetricNamespacesResponse,
+  AzureMonitorMetricNamesResponse,
+  AzureMonitorMetricsMetadataResponse,
   AzureMonitorQuery,
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
@@ -256,7 +259,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiPreviewVersion
     );
 
-    return this.getResource(url).then((result: any) => {
+    return this.getResource(url).then((result: AzureMonitorMetricNamespacesResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });
   }
@@ -292,7 +295,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiVersion
     );
 
-    return this.getResource(url).then((result: any) => {
+    return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
@@ -329,7 +332,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiVersion
     );
 
-    return this.getResource(url).then((result: any) => {
+    return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
       return ResponseParser.parseMetadata(result, metricName);
     });
   }
