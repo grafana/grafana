@@ -218,7 +218,10 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 	}
 
 	if query.Result.Name != cmd.Name {
-		s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+		err = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+		if err != nil {
+			return err
+		}
 	}
 
 	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
