@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
@@ -48,6 +48,16 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           timeout={ANIMATION_DURATION}
         >
           <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
+            <div className={styles.mobileHeader}>
+              <Icon name="bars" size="xl" />
+              <IconButton
+                aria-label="Close navigation menu"
+                name="times"
+                onClick={onClose}
+                size="xl"
+                variant="secondary"
+              />
+            </div>
             <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
             <nav className={styles.content}>
               <CustomScrollbar hideHorizontalTrack>
@@ -82,8 +92,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.modalBackdrop,
   }),
   container: css({
-    bottom: 0,
     display: 'flex',
+    bottom: 0,
     flexDirection: 'column',
     left: 0,
     whiteSpace: 'nowrap',
@@ -104,6 +114,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     overflow: 'auto',
   }),
+  mobileHeader: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: theme.spacing(1, 2, 2),
+    [theme.breakpoints.up('md')]: {
+      display: 'none',
+    },
+  }),
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
@@ -118,14 +137,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const commonTransition = {
-    transitionProperty: 'width, background-color, opacity',
     transitionDuration: `${animationDuration}ms`,
     transitionTimingFunction: theme.transitions.easing.easeInOut,
+    [theme.breakpoints.down('md')]: {
+      overflow: 'hidden',
+    },
   };
 
   const overlayTransition = {
     ...commonTransition,
-    transitionProperty: 'width, background-color, box-shadow',
+    transitionProperty: 'background-color, box-shadow, width',
   };
 
   const backdropTransition = {
@@ -136,13 +157,19 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     backgroundColor: theme.colors.background.canvas,
     boxShadow: theme.shadows.z3,
-    width: '300px',
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      width: '300px',
+    },
   };
 
   const overlayClosed = {
-    backgroundColor: theme.colors.background.primary,
     boxShadow: 'none',
-    width: theme.spacing(7),
+    width: 0,
+    [theme.breakpoints.up('md')]: {
+      backgroundColor: theme.colors.background.primary,
+      width: theme.spacing(7),
+    },
   };
 
   const backdropOpen = {

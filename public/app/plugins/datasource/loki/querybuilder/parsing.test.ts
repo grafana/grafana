@@ -2,6 +2,15 @@ import { buildVisualQueryFromString } from './parsing';
 import { LokiVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  it('creates no errors for empty query', () => {
+    expect(buildVisualQueryFromString('')).toEqual(
+      noErrors({
+        labels: [],
+        operations: [],
+      })
+    );
+  });
+
   it('parses simple query with label-values', () => {
     expect(buildVisualQueryFromString('{app="frontend"}')).toEqual(
       noErrors({
