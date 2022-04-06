@@ -130,7 +130,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       appUrl: '',
       appSubUrl: '',
       buildInfo: {
-        version: 'v1.0',
+        version: '1.0',
         commit: '1',
         env: 'production',
       },
