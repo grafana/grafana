@@ -2,6 +2,7 @@ import React from 'react';
 import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 import { act, render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 
 const options = [
   {
@@ -45,24 +46,32 @@ describe('Cascader', () => {
   const placeholder = 'cascader-placeholder';
 
   describe('options from state change', () => {
+    let user: UserEvent;
+
     beforeEach(() => {
       jest.useFakeTimers('modern');
+      // Need to use delay: null here to work with fakeTimers
+      // see https://github.com/testing-library/user-event/issues/833
+      user = userEvent.setup({ delay: null });
     });
 
-    it('displays updated options', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('displays updated options', async () => {
       render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
 
-      act(async () => {
-        await userEvent.click(screen.getByPlaceholderText(placeholder));
-      });
+      await user.click(screen.getByPlaceholderText(placeholder));
 
       expect(screen.getByText('Initial state option')).toBeInTheDocument();
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
-      act(async () => {
+      act(() => {
         jest.runAllTimers();
-        await userEvent.click(screen.getByPlaceholderText(placeholder));
       });
+
+      await user.click(screen.getByPlaceholderText(placeholder));
 
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
       expect(screen.getByText('First')).toBeInTheDocument();
@@ -75,7 +84,7 @@ describe('Cascader', () => {
         jest.runAllTimers();
       });
 
-      await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
+      await user.type(screen.getByPlaceholderText(placeholder), 'Third');
       expect(screen.queryByText('Second')).not.toBeInTheDocument();
       expect(screen.getByText('First / Third')).toBeInTheDocument();
     });
