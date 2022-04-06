@@ -24,7 +24,7 @@ In your [config file]({{< relref "../../administration/configuration.md#config-f
 enable = service-accounts
 ```
 
-### Enable service accounts with an environment variable
+## Enable service accounts with an environment variable
 
 You can use `GF_FEATURE_TOGGLES_ENABLE = service-accounts` environment variable to override the configuration file.
 
