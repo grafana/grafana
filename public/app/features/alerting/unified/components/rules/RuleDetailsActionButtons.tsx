@@ -19,6 +19,7 @@ import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { isFederatedRuleGroup } from '../../utils/rules';
 import { AccessControlAction } from 'app/types';
+import { getRulesPermissions } from 'app/features/alerting/accessControl';
 
 interface Props {
   rule: CombinedRule;
@@ -38,12 +39,15 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
     ? rulesSource
     : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
+  const rulesSourceName = getRulesSourceName(rulesSource);
+
+  const rulesPermissions = getRulesPermissions(rulesSourceName);
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
 
   const isFederated = isFederatedRuleGroup(group);
-  const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule);
+  const { isEditable } = useIsRuleEditable(rulesSourceName, rulerRule);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
 
@@ -180,6 +184,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
+  // TODO Maybe there is a way to unify isEditable with FGAC permissions
   if (isEditable && rulerRule && !isFederated) {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
@@ -210,22 +215,28 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       );
     }
 
-    rightButtons.push(
-      <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
-        Edit
-      </LinkButton>,
-      <Button
-        className={style.button}
-        size="xs"
-        type="button"
-        key="delete"
-        variant="secondary"
-        icon="trash-alt"
-        onClick={() => setRuleToDelete(rule)}
-      >
-        Delete
-      </Button>
-    );
+    if (rulesPermissions.update) {
+      rightButtons.push(
+        <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
+          Edit
+        </LinkButton>
+      );
+    }
+    if (rulesPermissions.delete) {
+      rightButtons.push(
+        <Button
+          className={style.button}
+          size="xs"
+          type="button"
+          key="delete"
+          variant="secondary"
+          icon="trash-alt"
+          onClick={() => setRuleToDelete(rule)}
+        >
+          Delete
+        </Button>
+      );
+    }
   }
   if (leftButtons.length || rightButtons.length) {
     return (

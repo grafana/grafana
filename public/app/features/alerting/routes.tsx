@@ -6,6 +6,8 @@ import { RouteDescriptor } from 'app/core/navigation/types';
 import { uniq } from 'lodash';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
+import { evaluateAccess } from './accessControl';
+import { OrgRole } from '@grafana/data';
 
 const commonRoutes: RouteDescriptor[] = [
   {
@@ -89,6 +91,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
     path: '/alerting/list',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead],
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/unified/RuleList')
     ),
@@ -193,6 +199,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/:id/edit',
     pageClass: 'page-alerting',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite],
+      [OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
     ),
@@ -200,6 +210,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/:sourceName/:id/view',
     pageClass: 'page-alerting',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead],
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRule"*/ 'app/features/alerting/unified/RuleViewer')
     ),

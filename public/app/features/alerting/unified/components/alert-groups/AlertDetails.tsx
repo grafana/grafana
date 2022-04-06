@@ -53,8 +53,11 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
             </LinkButton>
           )}
         </Authorize>
+        {/* alert.generatorURL points to the alert rule edit page so the Update permission is required  */}
         <Authorize
-          actions={isExternalAM ? [AccessControlAction.DataSourcesExplore] : [AccessControlAction.AlertingInstanceRead]}
+          actions={
+            isExternalAM ? [AccessControlAction.AlertingRuleExternalWrite] : [AccessControlAction.AlertingRuleUpdate]
+          }
         >
           {alert.generatorURL && (
             <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
