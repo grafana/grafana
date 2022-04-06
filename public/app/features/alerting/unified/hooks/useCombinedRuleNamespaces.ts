@@ -80,9 +80,7 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
             addPromGroupsToCombinedNamespace(ns, groups);
           });
 
-          const result = isGrafanaRulesSource(rulesSource)
-            ? transformGrafanaManagedRules(Object.values(namespaces))
-            : Object.values(namespaces);
+          const result = Object.values(namespaces);
 
           cache.current[rulesSourceName] = { promRules, rulerRules, result };
           return result;
@@ -100,20 +98,20 @@ export function transformGrafanaManagedRules(namespaces: CombinedRuleNamespace[]
       groups: [],
     };
 
-    let ungroupedRules: CombinedRule[] = [];
-    namespace.groups.forEach((group) => {
-      const isUngrouped = isUngroupedGroup(group);
-      if (isUngrouped) {
-        ungroupedRules = ungroupedRules.concat(group.rules);
-      } else {
-        newNamespace.groups.push(group);
-      }
-    });
+    // let ungroupedRules: CombinedRule[] = [];
+    // namespace.groups.forEach((group) => {
+    //   const isUngrouped = isUngroupedGroup(group);
+    //   if (isUngrouped) {
+    //     ungroupedRules = ungroupedRules.concat();
+    //   } else {
+    //     newNamespace.groups.push(group);
+    //   }
+    // });
 
     // add default group with ungrouped rules
     newNamespace.groups.push({
       name: 'default',
-      rules: sortRulesByName(ungroupedRules),
+      rules: sortRulesByName(namespace.groups.flatMap((group) => group.rules)),
     });
 
     return newNamespace;
@@ -122,12 +120,12 @@ export function transformGrafanaManagedRules(namespaces: CombinedRuleNamespace[]
 
 // this function checks if the group from the rulesSource is a "ungrouped" group – this means that the group only
 // consists of a single rule with the same name, essentially a fake group
-function isUngroupedGroup(group: CombinedRuleGroup) {
-  const onlyHasOneRule = group.rules.length === 1;
-  const groupNameMatchesRuleName = group.name === group.rules[0].name;
+// function isUngroupedGroup(group: CombinedRuleGroup) {
+//   const onlyHasOneRule = group.rules.length === 1;
+//   const groupNameMatchesRuleName = group.name === group.rules[0].name;
 
-  return onlyHasOneRule && groupNameMatchesRuleName;
-}
+//   return onlyHasOneRule && groupNameMatchesRuleName;
+// }
 
 export function sortRulesByName(rules: CombinedRule[]) {
   return rules.sort((a, b) => a.name.localeCompare(b.name));

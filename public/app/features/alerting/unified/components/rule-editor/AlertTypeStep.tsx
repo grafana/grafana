@@ -118,26 +118,37 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
       {ruleFormType === RuleFormType.grafana && (
-        <Field
-          label="Folder"
-          className={styles.formInput}
-          error={errors.folder?.message}
-          invalid={!!errors.folder?.message}
-          data-testid="folder-picker"
-        >
-          <InputControl
-            render={({ field: { ref, ...field } }) => (
-              <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
-            )}
-            name="folder"
-            rules={{
-              required: { value: true, message: 'Please select a folder' },
-              validate: {
-                pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-              },
-            }}
-          />
-        </Field>
+        <div className={styles.flexRow}>
+          <Field
+            label="Folder"
+            className={styles.formInput}
+            error={errors.folder?.message}
+            invalid={!!errors.folder?.message}
+            data-testid="folder-picker"
+          >
+            <InputControl
+              render={({ field: { ref, ...field } }) => (
+                <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
+              )}
+              name="folder"
+              rules={{
+                required: { value: true, message: 'Please select a folder' },
+                validate: {
+                  pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                },
+              }}
+            />
+          </Field>
+          <Field
+            label="Group"
+            className={styles.formInput}
+            error={errors.group?.message}
+            invalid={!!errors.group?.message}
+            data-testid="group"
+          >
+            <Input id="group" {...register('group')} />
+          </Field>
+        </div>
       )}
     </RuleEditorSection>
   );
