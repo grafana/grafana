@@ -1719,6 +1719,7 @@ func TestStaleResultsHandler(t *testing.T) {
 							EvaluationTime:  evaluationTime.Add(3 * time.Minute),
 							EvaluationState: eval.Normal,
 							Values:          make(map[string]*float64),
+							Condition:       "A",
 						},
 					},
 					LastEvaluationTime: evaluationTime.Add(3 * time.Minute),

@@ -7,6 +7,7 @@ package log
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -41,8 +42,10 @@ func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
 
-	// Use console by default
-	format := getLogFormat("console")
+	// Use discard by default
+	format := func(w io.Writer) gokitlog.Logger {
+		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(ioutil.Discard))
+	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
 }

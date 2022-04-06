@@ -12,7 +12,7 @@ import { loadFeed } from './feed';
 import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
 import { NewsItem } from './types';
 import { PanelOptions } from './models.gen';
-import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
+import { DEFAULT_FEED_URL } from './constants';
 import { css, cx } from '@emotion/css';
 import { RefreshEvent } from '@grafana/runtime';
 import { Unsubscribable } from 'rxjs';
@@ -50,20 +50,18 @@ export class NewsPanel extends PureComponent<Props, State> {
   async loadChannel() {
     const { options } = this.props;
     try {
-      const url = options.feedUrl
-        ? options.useProxy
-          ? `${PROXY_PREFIX}${options.feedUrl}`
-          : options.feedUrl
-        : DEFAULT_FEED_URL;
+      const url = options.feedUrl || DEFAULT_FEED_URL;
 
       const feed = await loadFeed(url);
       const frame = feedToDataFrame(feed);
+
       this.setState({
         news: new DataFrameView<NewsItem>(frame),
         isError: false,
       });
     } catch (err) {
       console.error('Error Loading News', err);
+
       this.setState({
         news: undefined,
         isError: true,
@@ -79,10 +77,10 @@ export class NewsPanel extends PureComponent<Props, State> {
     const useWideLayout = width > 600;
 
     if (isError) {
-      return <div>Error Loading News</div>;
+      return <div>Error loading RSS feed.</div>;
     }
     if (!news) {
-      return <div>loading...</div>;
+      return <div>Loading...</div>;
     }
 
     return (

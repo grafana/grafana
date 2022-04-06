@@ -1,11 +1,11 @@
 import { LokiAndPromQueryModellerBase } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter } from '../../prometheus/querybuilder/shared/types';
-import { getOperationDefintions } from './operations';
+import { getOperationDefinitions } from './operations';
 import { LokiOperationId, LokiQueryPattern, LokiVisualQueryOperationCategory } from './types';
 
 export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
   constructor() {
-    super(getOperationDefintions);
+    super(getOperationDefinitions);
 
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Aggregations,
