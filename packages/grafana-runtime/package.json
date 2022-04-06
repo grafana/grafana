@@ -44,7 +44,7 @@
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
     "@types/jest": "27.4.1",
-    "@types/lodash": "4.14.149",
+    "@types/lodash": "4.14.181",
     "@types/react": "17.0.42",
     "@types/react-dom": "17.0.14",
     "@types/systemjs": "^0.20.6",

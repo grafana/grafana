@@ -3035,7 +3035,7 @@
             },
             "collectionFormat": "multi",
             "x-go-name": "Tags",
-            "description": "Use this to filter global annotations. Global annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.",
+            "description": "Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.",
             "name": "tags",
             "in": "query"
           },
@@ -3068,7 +3068,7 @@
         }
       },
       "post": {
-        "description": "Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then a global annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.\nThe format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.\nThe response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and timeEnd properties.",
+        "description": "Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then an organization annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.\nThe format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.\nThe response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and timeEnd properties.",
         "tags": ["annotations"],
         "summary": "Create Annotation.",
         "operationId": "createAnnotation",
@@ -8299,10 +8299,11 @@
     },
     "/tsdb/query": {
       "post": {
-        "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
+        "description": "Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead\n\nQueries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
         "tags": ["datasources"],
         "summary": "Query metrics.",
         "operationId": "queryDatasource",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -13100,7 +13101,9 @@
           "x-go-name": "Queries",
           "example": [
             {
-              "datasourceId": 86,
+              "datasource": {
+                "uid": "PD8C576611E62080A"
+              },
               "format": "table",
               "intervalMs": 86400000,
               "maxDataPoints": 1092,
@@ -18299,7 +18302,7 @@
       "name": "legacy_alerts_notification_channels"
     },
     {
-      "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be global annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
+      "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
       "name": "annotations"
     },
     {

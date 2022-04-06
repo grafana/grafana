@@ -200,7 +200,7 @@ For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../ad
 
 The Prometheus data source works with other projects that implement the [Prometheus query API](https://prometheus.io/docs/prometheus/latest/querying/api/) including:
 
-- [Cortex](https://cortexmetrics.io/docs/)
+- [Grafana Mimir](https://grafana.com/docs/mimir/latest/)
 - [Thanos](https://thanos.io/v0.17/components/query.md/)
 
 For more information on how to query other Prometheus-compatible projects from Grafana, refer to the specific project documentation.

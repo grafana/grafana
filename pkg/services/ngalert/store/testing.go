@@ -208,7 +208,7 @@ func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRules
 	q.Result = result
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 

@@ -38,7 +38,8 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
-    'test_a11y_frontend_step'
+    'test_a11y_frontend_step',
+    'trigger_oss'
 )
 
 load(
@@ -118,23 +119,23 @@ def get_steps(edition, is_downstream=False):
         e2e_tests_step('various-suite', edition=edition),
         e2e_tests_artifacts(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
-        store_storybook_step(edition=edition, ver_mode=ver_mode),
+        store_storybook_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
-        frontend_metrics_step(edition=edition),
+        frontend_metrics_step(edition=edition, trigger=trigger_oss),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
-        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', ubuntu=False),
-        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', ubuntu=True)
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', trigger=trigger_oss),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', trigger=trigger_oss)
     ])
 
     if include_enterprise2:
       integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
 
     build_steps.extend([
-        release_canary_npm_packages_step(edition),
-        upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        upload_cdn_step(edition=edition, ver_mode=ver_mode)
+        release_canary_npm_packages_step(edition, trigger=trigger_oss),
+        upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, trigger=trigger_oss),
+        upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)
     ])
 
     if include_enterprise2:
@@ -180,7 +181,10 @@ def trigger_test_release():
                 'include': [
                     '.drone.yml',
                 ]
-            }
+            },
+            'repo': [
+                'grafana/grafana',
+            ]
         }
     }
 
@@ -194,6 +198,9 @@ def main_pipelines(edition):
     drone_change_trigger = {
         'event': ['push',],
         'branch': 'main',
+        'repo': [
+            'grafana/grafana',
+        ],
         'paths': {
             'include': [
                 '.drone.yml',
@@ -227,7 +234,7 @@ def main_pipelines(edition):
             volumes=volumes,
         ),
         pipeline(
-            name='windows-main', edition=edition, trigger=trigger,
+            name='windows-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
             steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
             depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
         ), notify_pipeline(
@@ -236,7 +243,7 @@ def main_pipelines(edition):
     ]
     if edition != 'enterprise':
         pipelines.append(pipeline(
-            name='publish-main', edition=edition, trigger=trigger,
+            name='publish-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + store_steps,
             depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main',],
         ))

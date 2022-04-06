@@ -155,7 +155,7 @@ export function changePage(page: number): ThunkResult<void> {
 }
 
 export function deleteServiceAccount(serviceAccountId: number): ThunkResult<void> {
-  return async (dispatch) => {
+  return async () => {
     await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
     locationService.push('/org/serviceaccounts');
   };

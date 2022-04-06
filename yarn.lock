@@ -3239,7 +3239,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:^5.1.7":
+"@betterer/betterer@npm:5.1.7, @betterer/betterer@npm:^5.1.7":
   version: 5.1.7
   resolution: "@betterer/betterer@npm:5.1.7"
   dependencies:
@@ -4002,7 +4002,7 @@ __metadata:
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/marked": 4.0.3
     "@types/node": 16.11.26
     "@types/papaparse": 5.3.2
@@ -4020,7 +4020,7 @@ __metadata:
     marked: 4.0.12
     moment: 2.29.1
     moment-timezone: 0.5.34
-    ol: 6.13.0
+    ol: 6.14.1
     papaparse: 5.3.2
     react: 17.0.2
     react-dom: 17.0.2
@@ -4070,7 +4070,7 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.2
     "@rollup/plugin-node-resolve": 13.1.3
     "@types/chrome-remote-interface": 0.31.4
-    "@types/lodash": 4.14.180
+    "@types/lodash": 4.14.181
     "@types/node": 16.11.26
     "@types/uuid": 8.3.4
     babel-loader: 8.2.4
@@ -4156,6 +4156,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-logql@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "@grafana/lezer-logql@npm:0.0.11"
+  dependencies:
+    lezer: ^0.13.5
+  peerDependencies:
+    "@lezer/lr": ^0.15.8
+  checksum: 0427e59528ea5092e53a70b9b6be37b0ed29ca4c0ddf452cc192f8bd14d21a725ba1959b2e33e7567b42e4d0391cff4e4f36c249d7099a157d0f1e9093ba64e4
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -4173,7 +4184,7 @@ __metadata:
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/react": 17.0.42
     "@types/react-dom": 17.0.14
     "@types/systemjs": ^0.20.6
@@ -4310,7 +4321,7 @@ __metadata:
     sass: 1.27.0
     sass-loader: 8.0.2
     semver: ^7.1.3
-    simple-git: ^2.46.0
+    simple-git: ^3.5.0
     style-loader: 1.1.3
     terser-webpack-plugin: 2.3.7
     ts-jest: 26.4.4
@@ -4388,7 +4399,7 @@ __metadata:
     "@types/is-hotkey": 0.1.7
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.26
     "@types/prismjs": 1.26.0
@@ -4431,7 +4442,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.1
     monaco-editor: ^0.31.1
-    ol: 6.13.0
+    ol: 6.14.1
     postcss: 8.4.12
     postcss-loader: 6.2.1
     prismjs: 1.27.0
@@ -4585,7 +4596,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/prop-types": ^15
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
@@ -6234,14 +6245,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor-model@npm:7.15.4":
-  version: 7.15.4
-  resolution: "@microsoft/api-extractor-model@npm:7.15.4"
+"@microsoft/api-extractor-model@npm:7.16.0":
+  version: 7.16.0
+  resolution: "@microsoft/api-extractor-model@npm:7.16.0"
   dependencies:
     "@microsoft/tsdoc": 0.13.2
     "@microsoft/tsdoc-config": ~0.15.2
     "@rushstack/node-core-library": 3.45.1
-  checksum: 9e4cce0d2575da97413c7df8a26da39ed1d73e654035f811cbc001d231650647dd0692881f46cdfd3a08b53c89589960464347050953a8dfe8f4172367104273
+  checksum: ba1bf057f5eed213aea45887a93c0cdabd0d7c9da2644aeb7460748fa33a01f04b91507923e7ea511452a7dfb849498089a2c3a844986ffc4c2abf8ab6d831a6
   languageName: node
   linkType: hard
 
@@ -7359,16 +7370,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/dragscroll@npm:^1.0.1, @scena/dragscroll@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "@scena/dragscroll@npm:1.0.3"
-  dependencies:
-    "@daybrush/utils": 1.6.0
-    "@scena/event-emitter": ^1.0.2
-  checksum: d7f3695cba4503d39292e899bed5d61aa24b98cb0443450b434fad29fa05d671837022eae4d324eb6e23cd5c1a179d2b4a1236245e6025b932a722eca26bcb83
-  languageName: node
-  linkType: hard
-
 "@scena/dragscroll@npm:^1.1.1":
   version: 1.1.1
   resolution: "@scena/dragscroll@npm:1.1.1"
@@ -7388,7 +7389,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/matrix@npm:1.1.1, @scena/matrix@npm:^1.0.0, @scena/matrix@npm:^1.1.1":
+"@scena/matrix@npm:^1.0.0, @scena/matrix@npm:^1.1.1":
   version: 1.1.1
   resolution: "@scena/matrix@npm:1.1.1"
   dependencies:
@@ -10099,6 +10100,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/js-yaml@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "@types/js-yaml@npm:4.0.5"
+  checksum: 7dcac8c50fec31643cc9d6444b5503239a861414cdfaa7ae9a38bc22597c4d850c4b8cec3d82d73b3fbca408348ce223b0408d598b32e094470dfffc6d486b4d
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:*, @types/json-schema@npm:^7.0.4, @types/json-schema@npm:^7.0.5, @types/json-schema@npm:^7.0.7, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
   version: 7.0.9
   resolution: "@types/json-schema@npm:7.0.9"
@@ -10138,10 +10146,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.180":
-  version: 4.14.180
-  resolution: "@types/lodash@npm:4.14.180"
-  checksum: fc42ae3473695cac6e91553f832fef8eb51a31c1c0381cafa81b00dc3efe18e279786bdda77caf0b90a8340ba2ba7aa46ae6541d69870565f775d04c89128bc1
+"@types/lodash@npm:4.14.181":
+  version: 4.14.181
+  resolution: "@types/lodash@npm:4.14.181"
+  checksum: 0d1863d8383fd2f8bb42e9e3fc1d6255bb88ff034d6df848941063698944313dae944fc1270315613e3d303fae7c7a9a86085ad3235ed6204c56c4b0b3699aa9
   languageName: node
   linkType: hard
 
@@ -10534,7 +10542,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.10":
+"@types/react-table@npm:7.7.10, @types/react-table@npm:^7":
   version: 7.7.10
   resolution: "@types/react-table@npm:7.7.10"
   dependencies:
@@ -19889,16 +19897,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.2.1, gesto@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "gesto@npm:1.4.0"
-  dependencies:
-    "@daybrush/utils": ^1.0.0
-    "@scena/event-emitter": ^1.0.2
-  checksum: 2514adc783f42e3012564618d67eae65fc6557703b559bbf6c223975137fd7956d4aea8bbc4e7d988cc1940f78f9ed1a554403c63c4053f3d113506ab84de2be
-  languageName: node
-  linkType: hard
-
 "gesto@npm:^1.7.0":
   version: 1.7.0
   resolution: "gesto@npm:1.7.0"
@@ -20405,6 +20403,7 @@ __metadata:
     "@babel/preset-env": 7.16.11
     "@babel/preset-react": 7.16.7
     "@babel/preset-typescript": 7.16.7
+    "@betterer/betterer": 5.1.7
     "@betterer/cli": 5.1.7
     "@betterer/regexp": 5.1.7
     "@emotion/css": 11.7.1
@@ -20418,6 +20417,7 @@ __metadata:
     "@grafana/eslint-config": 3.0.0
     "@grafana/experimental": 0.0.2-canary.22
     "@grafana/google-sdk": 0.0.3
+    "@grafana/lezer-logql": ^0.0.11
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -20482,9 +20482,10 @@ __metadata:
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 27.4.1
     "@types/jquery": 3.5.14
+    "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
-    "@types/lodash": 4.14.149
+    "@types/lodash": 4.14.181
     "@types/logfmt": ^1.2.1
     "@types/mousetrap": 1.6.9
     "@types/node": 16.11.26
@@ -20500,6 +20501,7 @@ __metadata:
     "@types/react-loadable": 5.5.6
     "@types/react-redux": 7.1.23
     "@types/react-router-dom": 5.3.3
+    "@types/react-table": ^7
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.4
     "@types/react-virtualized-auto-sizer": 1.0.1
@@ -20589,6 +20591,7 @@ __metadata:
     jest-matcher-utils: 27.5.1
     jest-mock-console: 1.2.3
     jquery: 3.6.0
+    js-yaml: ^4.1.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     lerna: ^4.0.0
@@ -20606,12 +20609,12 @@ __metadata:
     monaco-promql: ^1.7.2
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
-    moveable: 0.27.3
+    moveable: 0.28.0
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
     nodemon: 2.0.15
-    ol: 6.13.0
+    ol: 6.14.1
     papaparse: 5.3.2
     pluralize: ^8.0.0
     postcss: 8.4.12
@@ -20648,6 +20651,7 @@ __metadata:
     react-select: 5.2.2
     react-select-event: ^5.1.0
     react-split-pane: 0.1.92
+    react-table: ^7.7.0
     react-test-renderer: 17.0.2
     react-transition-group: 4.4.2
     react-use: 17.3.2
@@ -24750,6 +24754,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lezer-tree@npm:^0.13.2":
+  version: 0.13.2
+  resolution: "lezer-tree@npm:0.13.2"
+  checksum: b8be213c780191e0669c7f440aa563218ada762d2cf399b94e755a563cc7da8951929fa3ee65df9ef6586a81223c55cd662e1ec5b49060d892acca4198cf3596
+  languageName: node
+  linkType: hard
+
+"lezer@npm:^0.13.5":
+  version: 0.13.5
+  resolution: "lezer@npm:0.13.5"
+  dependencies:
+    lezer-tree: ^0.13.2
+  checksum: a5c3aa01c539aba3377a927063bcd63b311737a7abfd71ad2c2229ed4e48b7858f2e8e11e925f8f5286c2629251f77dfabf7505ea6c707499cd9917ca90934c8
+  languageName: node
+  linkType: hard
+
 "libnpmaccess@npm:^4.0.1":
   version: 4.0.3
   resolution: "libnpmaccess@npm:4.0.3"
@@ -26288,14 +26308,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.27.3":
-  version: 0.27.3
-  resolution: "moveable@npm:0.27.3"
+"moveable@npm:0.28.0":
+  version: 0.28.0
+  resolution: "moveable@npm:0.28.0"
   dependencies:
     "@scena/event-emitter": ^1.0.3
-    react-compat-moveable: ~0.15.2
+    react-compat-moveable: ~0.16.0
     react-simple-compat: ^1.2.1
-  checksum: 2c99a866da521ebdfb6111fd7e732f94ebfa19a7caa20125f2f0fcc4e4d378a5f8039e58bdb28111a6c1eb18ec8ecd935386acbc572bf5b2d8a0748594a5be19
+  checksum: 1fee85a8c72ad80e55f7c009986fe579ef409afd909a2774f32470a2784dc83e97bd6b8694c5e3d2f73129a84099b009f08ff2565530dbf93009ec9d858ec093
   languageName: node
   linkType: hard
 
@@ -26569,12 +26589,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.6.1":
-  version: 2.6.5
-  resolution: "node-fetch@npm:2.6.5"
+"node-fetch@npm:2.6.7":
+  version: 2.6.7
+  resolution: "node-fetch@npm:2.6.7"
   dependencies:
     whatwg-url: ^5.0.0
-  checksum: 4e83db450718e70762882f00d96f647a7f2f3170035225934ddd5450cb1d91ef339ceb180d3687bcb0a6ed78c3fa5636ce8d3e44ec81ab59e0224ebf8965f65f
+  peerDependencies:
+    encoding: ^0.1.0
+  peerDependenciesMeta:
+    encoding:
+      optional: true
+  checksum: 8d816ffd1ee22cab8301c7756ef04f3437f18dace86a1dae22cf81db8ef29c0bf6655f3215cb0cdb22b420b6fe141e64b26905e7f33f9377a7fa59135ea3e10b
   languageName: node
   linkType: hard
 
@@ -27217,26 +27242,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "ol-mapbox-style@npm:7.0.0"
+"ol-mapbox-style@npm:^7.1.1":
+  version: 7.1.1
+  resolution: "ol-mapbox-style@npm:7.1.1"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.20.1
     mapbox-to-css-font: ^2.4.1
     webfont-matcher: ^1.1.0
-  checksum: a18b0049850845fb35b69fee6ec95c45c7d7b78a212174f819a88aacf2012666f33d98fd9cb1a21e41eb085309b2b94fa8801bd99ed56e52d2d53dc2dfa59009
+  checksum: 3f5f9c528163a0f74a582c0cbec58b833cc76b212d334a497a085e0b562164a05054ab2a5a78cde92e9ea560433bbae9511344e894d5440700515af07365426c
   languageName: node
   linkType: hard
 
-"ol@npm:6.13.0":
-  version: 6.13.0
-  resolution: "ol@npm:6.13.0"
+"ol@npm:6.14.1":
+  version: 6.14.1
+  resolution: "ol@npm:6.14.1"
   dependencies:
     geotiff: ^2.0.2
-    ol-mapbox-style: ^7.0.0
+    ol-mapbox-style: ^7.1.1
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 1655d87a47338bcc42ff011b516804759d9c8be0c1bc0d732092792bf53c64f8f5f2998004016771f085b44fef238f3508e95364b7a3ef3ba8d8cae8b6207953
+  checksum: 118ae5b40fb3f98efb7c2cbf230edc3788567fac872f80e09b9dbcc3845c0179de95c2ef771be2307e6f8b4162e9dbc68818757c874d7d4fdd855e56dd43ea12
   languageName: node
   linkType: hard
 
@@ -30464,15 +30489,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compat-moveable@npm:~0.15.2":
-  version: 0.15.2
-  resolution: "react-compat-moveable@npm:0.15.2"
+"react-compat-moveable@npm:~0.16.0":
+  version: 0.16.0
+  resolution: "react-compat-moveable@npm:0.16.0"
   dependencies:
     "@daybrush/utils": ^1.6.0
-    "@scena/dragscroll": ^1.0.1
+    "@egjs/agent": ^2.2.1
+    "@egjs/children-differ": ^1.0.1
+    "@scena/dragscroll": ^1.1.1
+    "@scena/matrix": ^1.1.1
+    css-to-mat: ^1.0.3
+    framework-utils: ^1.1.0
+    gesto: ^1.7.0
+    overlap-area: ^1.0.0
     react-compat-css-styled: ^1.0.8
-    react-moveable: ~0.30.3
-  checksum: 65c8e8b54af6df4b4fddeab957ed97f2fe6d73cdc903903e70f2391d3f179b8b75772fae07754a1e26dfd1c60320be7f720b5b511124e5d7e74e9cef786a2c03
+    react-css-styled: ^1.0.3
+    react-moveable: ~0.31.0
+  checksum: b20bd91698d51a0f7e05534d09c246c4995e26c8e598c169ecc2f81602e3df5124d0327e5eeceef6cb1dc5df97efd81f8e6ee467a022ff4b83c2ae8704295a4a
   languageName: node
   linkType: hard
 
@@ -30866,7 +30899,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.31.1":
+"react-moveable@npm:0.31.1, react-moveable@npm:~0.31.0":
   version: 0.31.1
   resolution: "react-moveable@npm:0.31.1"
   dependencies:
@@ -30881,24 +30914,6 @@ __metadata:
     overlap-area: ^1.0.0
     react-css-styled: ^1.0.3
   checksum: 8a786de00783cb5315aecaa81b21b84719edfb28d8982ffa0d1a96195e269311286729b93dcf264e83af6703b30258ad1a32929703caafa5698a90f9824c8879
-  languageName: node
-  linkType: hard
-
-"react-moveable@npm:~0.30.3":
-  version: 0.30.3
-  resolution: "react-moveable@npm:0.30.3"
-  dependencies:
-    "@daybrush/utils": ^1.6.0
-    "@egjs/agent": ^2.2.1
-    "@egjs/children-differ": ^1.0.1
-    "@scena/dragscroll": ^1.0.3
-    "@scena/matrix": ^1.1.1
-    css-to-mat: ^1.0.3
-    framework-utils: ^1.1.0
-    gesto: ^1.2.1
-    overlap-area: ^1.0.0
-    react-css-styled: ^1.0.3
-  checksum: 552528854d01ce4abb7a6346c489f1fcf920f288e7a06d03ab893fef2ad1586900dc7c1241dd332d41bf8256ac378fd265f8c33c2bbfcc9e522b5572564c1cb7
   languageName: node
   linkType: hard
 
@@ -31185,7 +31200,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-table@npm:7.7.0":
+"react-table@npm:7.7.0, react-table@npm:^7.7.0":
   version: 7.7.0
   resolution: "react-table@npm:7.7.0"
   peerDependencies:
@@ -33024,17 +33039,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"simple-git@npm:^2.46.0":
-  version: 2.47.0
-  resolution: "simple-git@npm:2.47.0"
-  dependencies:
-    "@kwsites/file-exists": ^1.1.1
-    "@kwsites/promise-deferred": ^1.1.1
-    debug: ^4.3.2
-  checksum: 0fefd12a2aaec9b27bcd13e713991769cab3eb185fcf0ad3e1afff17d34c63a7dbb80c4acd3220b2d9522dd9d171f84b237e6dedb4e17545c8bb7aadf746efb9
-  languageName: node
-  linkType: hard
-
 "simple-git@npm:^3.1.1":
   version: 3.4.0
   resolution: "simple-git@npm:3.4.0"
@@ -33043,6 +33047,17 @@ __metadata:
     "@kwsites/promise-deferred": ^1.1.1
     debug: ^4.3.3
   checksum: 9b05f05dcca69631317fdfa30288d342ac08b9822daea3a939c24fbbe24048ef768cae22e3e72b7a78c268635a63f72536e4530927c12d815a21be6e1e7a294e
+  languageName: node
+  linkType: hard
+
+"simple-git@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "simple-git@npm:3.5.0"
+  dependencies:
+    "@kwsites/file-exists": ^1.1.1
+    "@kwsites/promise-deferred": ^1.1.1
+    debug: ^4.3.3
+  checksum: be078d9e898d1dea99bb15d4f6927c0f61aafde73114c7423fb0efca6d6f99012da2a2f43b5e2151a1707994cc9c75139bc12e3d307dd25da48ed1dce1167748
   languageName: node
   linkType: hard
 
