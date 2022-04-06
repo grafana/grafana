@@ -24,7 +24,7 @@ import (
 
 // CoremodelLister provides a list of coremodels to be registered to Service.
 type CoremodelLister interface {
-	List() []components.Coremodel
+	List() []components.KubeModel
 }
 
 // Service is the service that registers all schemas, CRDs and clients to Kubernetes.
@@ -101,7 +101,7 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 // RegisterModels registers models to clientset and controller manager.
-func (s *Service) RegisterModels(ctx context.Context, models ...components.Coremodel) error {
+func (s *Service) RegisterModels(ctx context.Context, models ...components.KubeModel) error {
 	for _, m := range models {
 		if err := s.clientset.RegisterSchema(ctx, m.Schema()); err != nil {
 			return err
@@ -139,7 +139,7 @@ func LoadRestConfig(cfg *setting.Cfg) (*rest.Config, error) {
 }
 
 // GenerateScheme generates a kubernetes runtime Scheme from a list of models.
-func GenerateScheme(models []components.Coremodel) (*runtime.Scheme, error) {
+func GenerateScheme(models []components.KubeModel) (*runtime.Scheme, error) {
 	res := runtime.NewScheme()
 
 	for _, m := range models {

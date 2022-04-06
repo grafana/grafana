@@ -10,30 +10,41 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-// Coremodel is an interface that must be implemented by each coremodel.
-type Coremodel interface {
+// KubeModel is an interface that must be implemented by each KubeModel-style representation of a Grafana model.
+type KubeModel interface {
 	// Schema should return coremodel's schema.
-	Schema() schema.ObjectSchema
+	Schema() schema.KubeResource
 
 	// RegisterController should optionally register coremodel's controller to the manager.
 	// If no controller is needed for the coremodel, it's safe to simply return nil from this method.
 	RegisterController(ctrl.Manager) error
 }
 
-type CoremodelBase interface {
+// Coremodel is an interface that must be implemented by all Grafana coremodels.
+// A coremodel is the foundational, canonical schema for some
+// known-at-compile-time Grafana object.
+//
+// Coremodels are expressed as Thema lineages.
+type Coremodel interface {
+	// Lineage should return the canonical Thema lineage for the coremodel.
 	Lineage() thema.Lineage
-	CurrentVersion() thema.SyntacticVersion
+
+	// Current should return the schema of the version that the Grafana backend
+	// is currently written against. (While Grafana can accept data from all
+	// older versions of the Thema schema, backend Go code is written against a
+	// single version for simplicity)
+	Current() thema.Schema
+
+	// GoType should return a pointer to the Go struct type that corresponds to
+	// the Current() schema.
 	GoType() interface{}
 }
-
-// CoremodelProvider is a wire-friendly func that provides a coremodel.
-type CoremodelProvider func(store Store, loader SchemaLoader) (*Coremodel, error)
 
 // SchemaLoader is a generic schema loader, that can load different schema types.
 type SchemaLoader interface {
 	LoadSchema(
 		context.Context, schema.SchemaType, schema.ThemaLoaderOpts, schema.GoLoaderOpts,
-	) (schema.ObjectSchema, error)
+	) (schema.KubeResource, error)
 }
 
 // Store is a generic durable storage for coremodels.

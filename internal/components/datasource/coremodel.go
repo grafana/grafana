@@ -12,8 +12,14 @@ func (c *Coremodel) Lineage() thema.Lineage {
 	return c.lin
 }
 
-func (c *Coremodel) CurrentVersion() thema.SyntacticVersion {
-	return currentVersion
+func (c *Coremodel) Schema() thema.Schema {
+	sch, err := c.lin.Schema(currentVersion)
+	if err != nil {
+		// Only reachable if our own schema currentVersion does not exist, which
+		// can only happen as a development error
+		panic(err)
+	}
+	return sch
 }
 
 func (c *Coremodel) GoType() interface{} {
