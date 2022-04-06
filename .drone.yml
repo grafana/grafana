@@ -1612,15 +1612,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: store-storybook
 - commands:
-  - ./scripts/build/build-npm-packages.sh ${DRONE_TAG}
-  depends_on:
-  - store-storybook
-  image: grafana/build-container:1.5.3
-  name: build-npm-packages
-- commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
   depends_on:
-  - build-npm-packages
+  - build-frontend-packages
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -2186,6 +2180,17 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+- commands:
+  - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
+  depends_on:
+  - build-frontend-packages
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: store-npm-packages
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --sign ${DRONE_TAG}
@@ -4443,6 +4448,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 83c3edb3a353f2a1f41e4f32b7b24fed3906bb6dabbe9a933fee5829e4c33768
+hmac: ec763e70ae08f79845dd4a59c56e6d08ef8e6b39a1f59663aabcc6d9fe758287
 
 ...
