@@ -251,7 +251,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	//Use service account linked to API key as the signed in user
 	query := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := bus.Dispatch(reqContext.Req.Context(), &query); err != nil {
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
 			"id", query.UserId,
@@ -308,7 +308,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
 			"id", user.Id,
@@ -344,7 +344,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}
