@@ -320,3 +320,46 @@ func getBaseJsonQuery() *simplejson.Json {
 		"period":     "900",
 	})
 }
+
+func Test_migrateLegacyQuery(t *testing.T) {
+	t.Run("legacy alias field is migrated", func(t *testing.T) {
+		oldQuery := &backend.DataQuery{
+			MaxDataPoints: 0,
+			QueryType:     "timeSeriesQuery",
+			Interval:      0,
+		}
+		oldQuery.RefID = "A"
+		oldQuery.JSON = []byte(`{
+				"region": "us-east-1",
+				"namespace": "ec2",
+				"metricName": "CPUUtilization",
+				"alias": "{{period}} {{fluffles}}",
+				"dimensions": {
+				  "InstanceId": ["test"]
+				},
+				"statistics": ["Average", "Sum"],
+				"period": "600",
+				"hide": false
+			  }`)
+		migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery})
+		require.NoError(t, err)
+		require.Equal(t, 1, len(migratedQueries))
+
+		assert.JSONEq(t,
+			`{
+					   "alias":"nope",
+					   "dimensions":{
+						  "InstanceId":[
+							 "test"
+						  ]
+					   },
+					   "hide":false,
+					   "metricName":"CPUUtilization",
+					   "namespace":"ec2",
+					   "period":"600",
+					   "region":"us-east-1",
+					   "statistic":"Average"
+					}`,
+			string(migratedQueries[0].JSON))
+	})
+}

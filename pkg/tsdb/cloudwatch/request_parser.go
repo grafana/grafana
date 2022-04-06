@@ -82,6 +82,49 @@ func migrateLegacyQuery(queries []backend.DataQuery) ([]*backend.DataQuery, erro
 		migratedQueries = append(migratedQueries, &query)
 	}
 
+	return migrateAliasToDynamicLabel(migratedQueries)
+}
+
+var aliasPatterns = map[string]string{
+	"metric":    `${PROP('MetricName')}`,
+	"namespace": `${PROP('Namespace')}`,
+	"period":    `${PROP('Period')}`,
+	"region":    `${PROP('Region')}`,
+	"stat":      `${PROP('Stat')}`,
+	"label":     `${LABEL}`,
+}
+
+var aliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
+
+func migrateAliasToDynamicLabel(queries []*backend.DataQuery) ([]*backend.DataQuery, error) {
+	migratedQueries := []*backend.DataQuery{}
+
+	for _, query := range queries {
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, err
+		}
+
+		jsonAlias, err := model.Get("alias").String()
+
+		matches := aliasRegexp.FindAllStringSubmatch(jsonAlias, -1)
+		for _, m := range matches {
+			oldAlias := m[0]
+			group := m[1]
+			if dynamicLabel, ok := aliasPatterns[group]; ok {
+				jsonAlias = strings.ReplaceAll(jsonAlias, oldAlias, dynamicLabel)
+			} else {
+				jsonAlias = strings.ReplaceAll(jsonAlias, oldAlias, fmt.Sprintf(`$PROP{'Dim.%s'}`, group))
+			}
+
+		}
+
+		model.Set("alias", jsonAlias)
+		query.JSON, err = model.MarshalJSON()
+
+		migratedQueries = append(migratedQueries, query)
+	}
+
 	return migratedQueries, nil
 }
 
