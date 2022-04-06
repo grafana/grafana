@@ -387,7 +387,8 @@ type Cfg struct {
 	Env string
 
 	// Analytics
-	CheckForUpdates                     bool
+	CheckForGrafanaUpdates              bool
+	CheckForPluginUpdates               bool
 	ReportingDistributor                string
 	ReportingEnabled                    bool
 	ApplicationInsightsConnectionString string
@@ -929,7 +930,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
-	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
