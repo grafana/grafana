@@ -141,7 +141,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     merge(this, defaults, options);
 
-    this.buildInfo = options.buildInfo;
+    this.buildInfo = options.buildInfo || defaults.buildInfo;
 
     if (this.dateFormats) {
       systemDateFormats.update(this.dateFormats);
