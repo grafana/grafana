@@ -10,8 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/grafana/grafana/internal/components"
 	"github.com/grafana/grafana/internal/coremodel/datasource"
+	"github.com/grafana/grafana/internal/framework/kubecontroller"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/schema"
@@ -21,7 +21,7 @@ import (
 // reconciliation control loop.
 type KubeController struct {
 	crd    schema.CRD
-	store  components.Store
+	store  kubecontroller.Store
 	client client.Client
 	logger log.Logger
 }
@@ -31,8 +31,8 @@ type KubeController struct {
 //
 // TODO: this is currently done manually and is statically enumerated in the registry.
 // We should figure out a way to dynamically register this to registry and automate schema loading too,
-// since the loading process will be exactly the same for all components (except for schema options).
-func ProvideKubeController(cm *datasource.Coremodel, store components.Store) (*KubeController, error) {
+// since the loading process will be exactly the same for all coremodel (except for schema options).
+func ProvideKubeController(cm *datasource.Coremodel, store kubecontroller.Store) (*KubeController, error) {
 	return &KubeController{
 		store:  store,
 		crd:    schema.NewThemaSchema(cm.Lineage(), groupName, groupVersion, schemaOpenapi, &Datasource{}, &DatasourceList{}),

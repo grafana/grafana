@@ -1,4 +1,4 @@
-package components
+package kubecontroller
 
 import (
 	"errors"
@@ -12,18 +12,18 @@ var (
 	ErrModelAlreadyRegistered = errors.New("error registering duplicate model")
 )
 
-// KubeControllerRegistry is a registry of KubeControllers.
-type KubeControllerRegistry struct {
+// Registry is a registry of KubeControllers.
+type Registry struct {
 	lock     sync.RWMutex
-	models   []KubeController
-	modelIdx map[registryKey]KubeController
+	models   []Interface
+	modelIdx map[registryKey]Interface
 }
 
-// NewKubeControllerRegistry returns a new KubeControllerRegistry with the provided KubeControllers.
-func NewKubeControllerRegistry(models ...KubeController) (*KubeControllerRegistry, error) {
-	r := &KubeControllerRegistry{
-		models:   make([]KubeController, 0, len(models)),
-		modelIdx: make(map[registryKey]KubeController, len(models)),
+// NewRegistry returns a new Registry with the provided KubeControllers.
+func NewRegistry(models ...Interface) (*Registry, error) {
+	r := &Registry{
+		models:   make([]Interface, 0, len(models)),
+		modelIdx: make(map[registryKey]Interface, len(models)),
 	}
 
 	if err := r.addModels(models); err != nil {
@@ -33,20 +33,20 @@ func NewKubeControllerRegistry(models ...KubeController) (*KubeControllerRegistr
 	return r, nil
 }
 
-// Register adds models to the Registry.
-func (r *KubeControllerRegistry) Register(models ...KubeController) error {
+// Register adds controllers to the Registry.
+func (r *Registry) Register(models ...Interface) error {
 	return r.addModels(models)
 }
 
-// List returns all coremodels registered in this Registry.
-func (r *KubeControllerRegistry) List() []KubeController {
+// List returns all kube controllers in this Registry.
+func (r *Registry) List() []Interface {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	return r.models
 }
 
-func (r *KubeControllerRegistry) addModels(models []KubeController) error {
+func (r *Registry) addModels(models []Interface) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 

@@ -1,18 +1,17 @@
-package components
+package kubecontroller
 
 import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/schema"
-	"github.com/grafana/thema"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-// KubeController is an interface that must be implemented by each
-// KubeController-style representation of a Grafana model.
-type KubeController interface {
+// Interface must be implemented by each Kubernetes-style controller of a
+// Grafana model.
+type Interface interface {
 	// CRD should return the KubeController's CRD - the collection of schemas and
 	// objects that Kubernetes requires to register and manage a
 	// CustomResourceDefinition.
@@ -21,33 +20,6 @@ type KubeController interface {
 	// RegisterController should optionally register coremodel's controller to the manager.
 	// If no controller is needed for the coremodel, it's safe to simply return nil from this method.
 	RegisterController(ctrl.Manager) error
-}
-
-// Coremodel is an interface that must be implemented by all Grafana coremodels.
-// A coremodel is the foundational, canonical schema for some
-// known-at-compile-time Grafana object.
-//
-// All Coremodels are expressed as Thema lineages.
-type Coremodel interface {
-	// Lineage should return the canonical Thema lineage for the coremodel.
-	Lineage() thema.Lineage
-
-	// CurrentSchema should return the schema of the version that the Grafana backend
-	// is currently written against. (While Grafana can accept data from all
-	// older versions of the Thema schema, backend Go code is written against a
-	// single version for simplicity)
-	CurrentSchema() thema.Schema
-
-	// GoType should return a pointer to the Go struct type that corresponds to
-	// the Current() schema.
-	GoType() interface{}
-}
-
-// SchemaLoader is a generic schema loader, that can load different schema types.
-type SchemaLoader interface {
-	LoadSchema(
-		context.Context, schema.SchemaType, schema.ThemaLoaderOpts, schema.GoLoaderOpts,
-	) (schema.CRD, error)
 }
 
 // Store is a generic durable storage for coremodels.

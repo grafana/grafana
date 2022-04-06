@@ -6,11 +6,12 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/internal/components"
-	"github.com/grafana/grafana/internal/components/staticregistry"
 	"github.com/grafana/grafana/internal/coremodel/datasource"
 	datasourcecrd "github.com/grafana/grafana/internal/coremodel/datasource/crd"
 	"github.com/grafana/grafana/internal/cuectx"
+	cmreg "github.com/grafana/grafana/internal/framework/coremodel/staticregistry"
+	"github.com/grafana/grafana/internal/framework/kubecontroller"
+	kcreg "github.com/grafana/grafana/internal/framework/kubecontroller/staticregistry"
 	"github.com/grafana/grafana/internal/intentapi"
 	"github.com/grafana/grafana/internal/k8sbridge"
 	"github.com/grafana/grafana/pkg/api"
@@ -251,13 +252,12 @@ var wireIntentAPISet = wire.NewSet(
 	sqlstore.SchemaStoreProvidersSet,
 	datasource.ProvideCoremodel,
 	datasourcecrd.ProvideKubeController,
-	staticregistry.ProvideRegistry,
-	staticregistry.ProvideKubeControllerRegistry,
+	cmreg.ProvideRegistry,
+	kcreg.ProvideRegistry,
 	k8sbridge.ProvideService,
 	intentapi.ProvideApiserverProxy,
 	intentapi.ProvideHTTPServer,
-	wire.Bind(new(components.SchemaLoader), new(*schema.SchemaLoader)),
-	wire.Bind(new(k8sbridge.CoremodelLister), new(*components.KubeControllerRegistry)),
+	wire.Bind(new(k8sbridge.CoremodelLister), new(*kubecontroller.Registry)),
 	wire.Bind(new(intentapi.Handler), new(*intentapi.ApiserverProxy)),
 )
 

@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/google/wire"
-	"github.com/grafana/grafana/internal/components"
 	"github.com/grafana/grafana/internal/coremodel/datasource"
 	"github.com/grafana/grafana/internal/coremodel/datasource/crd"
+	"github.com/grafana/grafana/internal/framework/kubecontroller"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,7 +27,7 @@ Until this comment is removed, if you are wondering if you should use things in 
 
 var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
 	ProvideDataSourceSchemaStore,
-	wire.Bind(new(components.Store), new(*storeDS)),
+	wire.Bind(new(kubecontroller.Store), new(*storeDS)),
 )
 
 func ProvideDataSourceSchemaStore(ss *SQLStore) *storeDS {

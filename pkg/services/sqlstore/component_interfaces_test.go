@@ -11,15 +11,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/internal/components"
-	"github.com/grafana/grafana/internal/components/datasource"
+	"github.com/grafana/grafana/internal/framework/coremodel"
+	"github.com/grafana/grafana/internal/framework/coremodel/datasource"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestStoreDSStoreCRUD(t *testing.T) {
 	ctx := context.Background()
 	sqlStore := InitTestDB(t)
-	dsStore := components.Store(ProvideDataSourceSchemaStore(sqlStore))
+	dsStore := coremodel.Store(ProvideDataSourceSchemaStore(sqlStore))
 
 	uid := types.UID("MySpecialUIDisDEARtoMe")
 	name := "test-datasource"
