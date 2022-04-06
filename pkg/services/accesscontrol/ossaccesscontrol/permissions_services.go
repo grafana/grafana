@@ -169,13 +169,18 @@ func ProvideDashboardPermissions(
 
 			return nil
 		},
+		InheritedScopePrefixes: []string{"folders:uid:"},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
 			}
 			if dashboard.FolderId > 0 {
-				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.Uid)}, nil
+				query := &models.GetDashboardQuery{Id: dashboard.FolderId, OrgId: orgID}
+				if err := sql.GetDashboard(ctx, query); err != nil {
+					return nil, err
+				}
+				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.Result.Uid)}, nil
 			}
 			return []string{}, nil
 		},

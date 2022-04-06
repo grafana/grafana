@@ -93,28 +93,22 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     border: 'none',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     display: 'flex',
+    flex: 1,
     fontSize: 'inherit',
     height: '100%',
     padding: '5px 12px 5px 10px',
     textAlign: 'left',
     whiteSpace: 'nowrap',
-
-    '&:focus-visible + .pin-button': {
-      opacity: '100%',
+    '&:hover, &:focus-visible': {
+      backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
     },
-
     '&:focus-visible': {
-      outline: 'none',
       boxShadow: 'none',
-
-      '&::after': {
-        boxShadow: 'none',
-        outline: `${theme.shape.borderRadius} solid ${theme.colors.primary.main}`,
-        outlineOffset: `-${theme.shape.borderRadius(1)}`,
-        transition: 'none',
-      },
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '-2px',
+      transition: 'none',
     },
-
     '&::before': {
       display: isActive ? 'block' : 'none',
       content: '" "',
@@ -125,15 +119,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       width: theme.spacing(0.5),
       borderRadius: theme.shape.borderRadius(1),
       backgroundImage: theme.colors.gradients.brandVertical,
-    },
-
-    '&::after': {
-      position: 'absolute',
-      content: '" "',
-      left: 0,
-      top: 0,
-      bottom: 0,
-      right: 0,
     },
   }),
   listItem: css({
@@ -147,14 +132,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       '> *:first-child::after': {
         backgroundColor: theme.colors.action.hover,
       },
-    },
-
-    '> .pin-button': {
-      opacity: 0,
-    },
-
-    '&:hover > .pin-button, &:focusVisible > .pin-button': {
-      opacity: '100%',
     },
   }),
   divider: css({

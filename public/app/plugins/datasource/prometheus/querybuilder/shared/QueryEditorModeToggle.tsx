@@ -1,5 +1,6 @@
-import { RadioButtonGroup } from '@grafana/ui';
+import { RadioButtonGroup, Tag } from '@grafana/ui';
 import React from 'react';
+import { css } from '@emotion/css';
 import { QueryEditorMode } from './types';
 
 export interface Props {
@@ -9,7 +10,21 @@ export interface Props {
 
 const editorModes = [
   { label: 'Explain', value: QueryEditorMode.Explain },
-  { label: 'Builder', value: QueryEditorMode.Builder },
+  {
+    label: 'Builder',
+    value: QueryEditorMode.Builder,
+    component: () => (
+      <Tag
+        className={css({
+          fontSize: 10,
+          padding: '1px 5px',
+          verticalAlign: 'text-bottom',
+        })}
+        name={'Beta'}
+        colorIndex={1}
+      />
+    ),
+  },
   { label: 'Code', value: QueryEditorMode.Code },
 ];
 
