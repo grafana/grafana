@@ -24,16 +24,16 @@ type KubeModel interface {
 // A coremodel is the foundational, canonical schema for some
 // known-at-compile-time Grafana object.
 //
-// Coremodels are expressed as Thema lineages.
+// All Coremodels are expressed as Thema lineages.
 type Coremodel interface {
 	// Lineage should return the canonical Thema lineage for the coremodel.
 	Lineage() thema.Lineage
 
-	// Current should return the schema of the version that the Grafana backend
+	// Schema should return the schema of the version that the Grafana backend
 	// is currently written against. (While Grafana can accept data from all
 	// older versions of the Thema schema, backend Go code is written against a
 	// single version for simplicity)
-	Current() thema.Schema
+	Schema() thema.Schema
 
 	// GoType should return a pointer to the Go struct type that corresponds to
 	// the Current() schema.
