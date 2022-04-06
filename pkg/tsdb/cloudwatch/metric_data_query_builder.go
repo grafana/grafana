@@ -14,6 +14,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 	mdq := &cloudwatch.MetricDataQuery{
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
+		Label:      aws.String(query.Alias),
 	}
 
 	switch query.getGMDAPIMode() {

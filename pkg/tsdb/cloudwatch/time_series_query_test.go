@@ -135,4 +135,52 @@ func TestTimeSeriesQuery(t *testing.T) {
 		}}}})
 		assert.EqualError(t, err, "invalid time range: start time must be before end time")
 	})
+
+	t.Run("GetMetricDataWithContext passes query alias input label", func(t *testing.T) {
+		cwClient = fakeCWClient{}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID: "A",
+					TimeRange: backend.TimeRange{
+						From: time.Now().Add(time.Hour * -2),
+						To:   time.Now().Add(time.Hour * -1),
+					},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"subtype":   "metrics",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkOut",
+						"expression": "",
+						"dimensions": {
+						  "InstanceId": "i-00645d91ed77d87ac"
+						},
+						"region": "us-east-2",
+						"id": "a",
+						"alias": "${PROP('Period')} some words ${PROP('Dim.InstanceId')}",
+						"statistics": [
+						  "Maximum"
+						],
+						"period": "300",
+						"hide": false,
+						"matchExact": true,
+						"refId": "A"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Len(t, cwClient.calls.getMetricDataWithContext, 1)
+		assert.Len(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries, 1)
+		require.NotNil(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
+
+		assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
+	})
 }
