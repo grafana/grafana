@@ -9,13 +9,14 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '..
 import { RuleState } from '../rules/RuleState';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { Annotation } from '../../utils/constants';
-import { findAlertRulesWithMatchers } from '../../utils/matchers';
+import { findAlertInstancesWithMatchers } from '../../utils/matchers';
 import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { Alert, AlertingRule, CombinedRule } from 'app/types/unified-alerting';
 import { MatcherFieldValue, SilenceFormFields } from '../../types/silence-form';
+import { isAlertingRule } from '../../utils/rules';
 
 type MatchedRulesTableItemProps = DynamicTableItemProps<{
-  matchedRule: CombinedRule;
+  matchedInstance: Alert;
 }>;
 type MatchedRulesTableColumnProps = DynamicTableColumnProps<{ matchedRule: CombinedRule }>;
 
@@ -35,12 +36,17 @@ export const MatchedSilencedRules = () => {
   const combinedNamespaces = useCombinedRuleNamespaces();
   useDebounce(
     () => {
-      const matchedRules = combinedNamespaces.flatMap((namespace) => {
+      const matchedInstances = combinedNamespaces.flatMap((namespace) => {
         return namespace.groups.flatMap((group) => {
-          return findAlertRulesWithMatchers(group.rules, matchers);
+          return group.rules
+            .filter((rule) => isAlertingRule(rule.promRule) && rule.promRule.alerts)
+            .flatMap((rule) => {
+              const prometheusRule = rule.promRule as AlertingRule;
+              return findAlertInstancesWithMatchers(prometheusRule.alerts, matchers);
+            });
         });
       });
-      setMatchedAlertRules(matchedRules);
+      setMatchedAlertRules(matchedInstances);
     },
     500,
     [combinedNamespaces, matchers]
