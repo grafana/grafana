@@ -30,7 +30,7 @@ export const getMatcherQueryParams = (labels: Labels) => {
 interface MatchedInstance {
   id: string;
   data: {
-    matchedRule: Alert;
+    matchedInstance: Alert;
   };
 }
 
@@ -64,7 +64,7 @@ export const findAlertInstancesWithMatchers = (
   });
   const mappedInstances = filteredInstances.map((instance) => ({
     id: `${instance.activeAt}-${instance.value}`,
-    data: { matchedRule: instance },
+    data: { matchedInstance: instance },
   }));
 
   return mappedInstances;

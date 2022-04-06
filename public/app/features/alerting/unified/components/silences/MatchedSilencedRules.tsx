@@ -6,19 +6,19 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { RuleState } from '../rules/RuleState';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
-import { Annotation } from '../../utils/constants';
 import { findAlertInstancesWithMatchers } from '../../utils/matchers';
 import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
-import { Alert, AlertingRule, CombinedRule } from 'app/types/unified-alerting';
+import { Alert, AlertingRule } from 'app/types/unified-alerting';
 import { MatcherFieldValue, SilenceFormFields } from '../../types/silence-form';
 import { isAlertingRule } from '../../utils/rules';
+import { AlertStateTag } from '../rules/AlertStateTag';
+import { AlertLabels } from '../AlertLabels';
 
 type MatchedRulesTableItemProps = DynamicTableItemProps<{
   matchedInstance: Alert;
 }>;
-type MatchedRulesTableColumnProps = DynamicTableColumnProps<{ matchedRule: CombinedRule }>;
+type MatchedRulesTableColumnProps = DynamicTableColumnProps<{ matchedInstance: Alert }>;
 
 export const MatchedSilencedRules = () => {
   const [matchedAlertRules, setMatchedAlertRules] = useState<MatchedRulesTableItemProps[]>([]);
@@ -39,11 +39,9 @@ export const MatchedSilencedRules = () => {
       const matchedInstances = combinedNamespaces.flatMap((namespace) => {
         return namespace.groups.flatMap((group) => {
           return group.rules
-            .filter((rule) => isAlertingRule(rule.promRule) && rule.promRule.alerts)
-            .flatMap((rule) => {
-              const prometheusRule = rule.promRule as AlertingRule;
-              return findAlertInstancesWithMatchers(prometheusRule.alerts, matchers);
-            });
+            .map((combinedRule) => combinedRule.promRule)
+            .filter((rule): rule is AlertingRule => isAlertingRule(rule))
+            .flatMap((rule) => findAlertInstancesWithMatchers(rule.alerts ?? [], matchers));
         });
       });
       setMatchedAlertRules(matchedInstances);
@@ -81,24 +79,30 @@ function useColumns(): MatchedRulesTableColumnProps[] {
     {
       id: 'state',
       label: 'State',
-      renderCell: function renderStateTag({ data: { matchedRule } }) {
-        return <RuleState rule={matchedRule} isCreating={false} isDeleting={false} />;
+      renderCell: function renderStateTag({ data: { matchedInstance } }) {
+        return <AlertStateTag state={matchedInstance.state} />;
       },
       size: '160px',
     },
     {
-      id: 'name',
-      label: 'Name',
-      renderCell: function renderName({ data: { matchedRule } }) {
-        return matchedRule.name;
+      id: 'labels',
+      label: 'Labels',
+      renderCell: function renderName({ data: { matchedInstance } }) {
+        return <AlertLabels labels={matchedInstance.labels} />;
       },
       size: '250px',
     },
     {
-      id: 'summary',
-      label: 'Summary',
-      renderCell: function renderSummary({ data: { matchedRule } }) {
-        return matchedRule.annotations[Annotation.summary] ?? '';
+      id: 'created',
+      label: 'Created',
+      renderCell: function renderSummary({ data: { matchedInstance } }) {
+        return (
+          <>
+            {matchedInstance.activeAt.startsWith('0001')
+              ? '-'
+              : matchedInstance.activeAt.substr(0, 19).replace('T', ' ')}
+          </>
+        );
       },
       size: '400px',
     },
