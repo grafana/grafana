@@ -142,6 +142,27 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with with simple unwrap', () => {
+    expect(
+      buildVisualQueryFromString('sum_over_time({app="frontend"} | logfmt | unwrap bytes_processed [1m])')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: 'unwrap', params: ['bytes_processed'] },
+          { id: 'sum_over_time', params: ['1m'] },
+        ],
+      })
+    );
+  });
+
   it('parses metrics query with function', () => {
     expect(buildVisualQueryFromString('rate({app="frontend"} | json [5m])')).toEqual(
       noErrors({
@@ -174,6 +195,44 @@ describe('buildVisualQueryFromString', () => {
           { id: 'json', params: [] },
           { id: 'rate', params: ['5m'] },
           { id: 'sum', params: [] },
+        ],
+      })
+    );
+  });
+
+  it('parses metrics query with function and aggregation with grouping', () => {
+    expect(buildVisualQueryFromString('sum by (job,name) (rate({app="frontend"} | json [5m]))')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'json', params: [] },
+          { id: 'rate', params: ['5m'] },
+          { id: '__sum_by', params: ['job', 'name'] },
+        ],
+      })
+    );
+  });
+
+  it('parses metrics query with function and aggregation with grouping at the end', () => {
+    expect(buildVisualQueryFromString('sum(rate({app="frontend"} | json [5m])) without(job,name)')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'json', params: [] },
+          { id: 'rate', params: ['5m'] },
+          { id: '__sum_without', params: ['job', 'name'] },
         ],
       })
     );

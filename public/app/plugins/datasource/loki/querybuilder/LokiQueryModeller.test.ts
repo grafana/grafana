@@ -121,6 +121,15 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} | line_format "{{.status_code}}"');
   });
 
+  it('Can render with label_format operation', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.LabelFormat, params: ['new', 'old'] }],
+      })
+    ).toBe('{app="grafana"} | label_format old=`new`');
+  });
+
   it('Can render simply binary operation with scalar', () => {
     expect(
       modeller.renderQuery({
