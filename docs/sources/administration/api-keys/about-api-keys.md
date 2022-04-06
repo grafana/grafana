@@ -2,7 +2,7 @@
 title: About API keys in Grafana
 menuTitle: About API keys
 aliases: [docs/sources/administration/api-keys/about-api-keys.md]
-description: 'This contains detailed information about API keys in Grafana'
+description: 'Learn about using API keys in Grafana'
 weight: 30
 ---
 
