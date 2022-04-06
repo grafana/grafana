@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -47,8 +48,9 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
 		valString := ""
-		if alertState.State == eval.Alerting {
-			valString = alertState.LastEvaluationString
+
+		if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+			valString = formatValues(alertState)
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
@@ -61,6 +63,34 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	}
 
 	return response.JSON(http.StatusOK, alertResponse)
+}
+
+func formatValues(alertState *state.State) string {
+	var fv string
+	values := alertState.GetLastEvaluationValuesForCondition()
+
+	switch len(values) {
+	case 0:
+		fv = alertState.LastEvaluationString
+	case 1:
+		for _, v := range values {
+			fv = strconv.FormatFloat(v, 'e', -1, 64)
+			break
+		}
+
+	default:
+		vs := make([]string, 0, len(values))
+
+		for k, v := range values {
+			vs = append(vs, fmt.Sprintf("%s: %s", k, strconv.FormatFloat(v, 'e', -1, 64)))
+		}
+
+		// Ensure we have a consistent natural ordering after formatting e.g. A0, A1, A10, A11, A3, etc.
+		sort.Strings(vs)
+		fv = strings.Join(vs, ", ")
+	}
+
+	return fv
 }
 
 func getPanelIDFromRequest(r *http.Request) (int64, error) {
@@ -178,8 +208,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 			activeAt := alertState.StartsAt
 			valString := ""
-			if alertState.State == eval.Alerting {
-				valString = alertState.LastEvaluationString
+			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+				valString = formatValues(alertState)
 			}
 
 			alert := &apimodels.Alert{
@@ -187,7 +217,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				Annotations: alertState.Annotations,
 				State:       alertState.State.String(),
 				ActiveAt:    &activeAt,
-				Value:       valString, // TODO: set this once it is added to the evaluation results
+				Value:       valString,
 			}
 
 			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {

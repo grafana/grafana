@@ -1,9 +1,12 @@
 import {
   DataFrame,
   DataLink,
+  DataQuery,
+  DataSourceInstanceSettings,
   dateTime,
   Field,
   KeyValue,
+  LinkModel,
   mapInternalLinkToExplore,
   rangeUtil,
   SplitOpen,
@@ -70,6 +73,7 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
   }
 
   const dataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
+  const isSplunkDS = dataSourceSettings?.type === 'grafana-splunk-datasource';
 
   if (!dataSourceSettings) {
     return undefined;
@@ -80,35 +84,37 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
+    let dataLink: DataLink<LokiQuery | DataQuery> | undefined = {} as DataLink<LokiQuery | DataQuery> | undefined;
+    let link: LinkModel<Field>;
 
-    const expr = getLokiQueryFromSpan(span, traceToLogsOptions);
-    if (!expr) {
-      return undefined;
+    switch (dataSourceSettings?.type) {
+      case 'loki':
+        dataLink = getLinkForLoki(span, traceToLogsOptions, dataSourceSettings);
+        if (!dataLink) {
+          return undefined;
+        }
+        break;
+      case 'grafana-splunk-datasource':
+        dataLink = getLinkForSplunk(span, traceToLogsOptions, dataSourceSettings);
+        break;
+      default:
+        return undefined;
     }
 
-    const dataLink: DataLink<LokiQuery> = {
-      title: dataSourceSettings.name,
-      url: '',
-      internal: {
-        datasourceUid: dataSourceSettings.uid,
-        datasourceName: dataSourceSettings.name,
-        query: {
-          expr,
-          refId: '',
-        },
-      },
-    };
-
-    const link = mapInternalLinkToExplore({
+    link = mapInternalLinkToExplore({
       link: dataLink,
-      internalLink: dataLink.internal!,
+      internalLink: dataLink?.internal!,
       scopedVars: {},
-      range: getTimeRangeFromSpan(span, {
-        startMs: traceToLogsOptions.spanStartTimeShift
-          ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-          : 0,
-        endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
-      }),
+      range: getTimeRangeFromSpan(
+        span,
+        {
+          startMs: traceToLogsOptions.spanStartTimeShift
+            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+            : 0,
+          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
+        },
+        isSplunkDS
+      ),
       field: {} as Field,
       onClickFn: splitOpenFn,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
@@ -126,13 +132,11 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
  * Default keys to use when there are no configured tags.
  */
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
-
-function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): string | undefined {
+function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSourceSettings: DataSourceInstanceSettings) {
   const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
 
   // In order, try to use mapped tags -> tags -> default tags
   const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
-
   // Build tag portion of query
   const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
     if (mapTagNamesEnabled) {
@@ -152,17 +156,79 @@ function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): str
   if (!tags.length) {
     return undefined;
   }
-
-  let query = `{${tags.join(', ')}}`;
-
+  let expr = `{${tags.join(', ')}}`;
   if (filterByTraceID && span.traceID) {
-    query += ` |="${span.traceID}"`;
+    expr += ` |="${span.traceID}"`;
   }
   if (filterBySpanID && span.spanID) {
-    query += ` |="${span.spanID}"`;
+    expr += ` |="${span.spanID}"`;
   }
 
-  return query;
+  const dataLink: DataLink<LokiQuery> = {
+    title: dataSourceSettings.name,
+    url: '',
+    internal: {
+      datasourceUid: dataSourceSettings.uid,
+      datasourceName: dataSourceSettings.name,
+      query: {
+        expr: expr,
+        refId: '',
+      },
+    },
+  };
+
+  return dataLink;
+}
+
+function getLinkForSplunk(
+  span: TraceSpan,
+  options: TraceToLogsOptions,
+  dataSourceSettings: DataSourceInstanceSettings
+) {
+  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
+
+  // In order, try to use mapped tags -> tags -> default tags
+  const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
+  // Build tag portion of query
+  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
+    if (mapTagNamesEnabled) {
+      const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
+      if (keyValue) {
+        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}="${tag.value}"`);
+      }
+    } else {
+      if ((keysToCheck as string[]).includes(tag.key)) {
+        acc.push(`${tag.key}="${tag.value}"`);
+      }
+    }
+    return acc;
+  }, [] as string[]);
+
+  let query = '';
+  if (tags.length > 0) {
+    query += `${tags.join(' ')}`;
+  }
+  if (filterByTraceID && span.traceID) {
+    query += ` "${span.traceID}"`;
+  }
+  if (filterBySpanID && span.spanID) {
+    query += ` "${span.spanID}"`;
+  }
+
+  const dataLink: DataLink<DataQuery> = {
+    title: dataSourceSettings.name,
+    url: '',
+    internal: {
+      datasourceUid: dataSourceSettings.uid,
+      datasourceName: dataSourceSettings.name,
+      query: {
+        query: query,
+        refId: '',
+      },
+    },
+  } as DataLink<DataQuery>;
+
+  return dataLink;
 }
 
 /**
@@ -170,18 +236,23 @@ function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): str
  */
 function getTimeRangeFromSpan(
   span: TraceSpan,
-  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 }
+  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 },
+  isSplunkDS = false
 ): TimeRange {
   const adjustedStartTime = Math.floor(span.startTime / 1000 + timeShift.startMs);
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
   let adjustedEndTime = Math.floor(spanEndMs + timeShift.endMs);
 
-  // Because we can only pass milliseconds in the url we need to check if they equal.
-  // We need end time to be later than start time
-  if (adjustedStartTime === adjustedEndTime) {
+  // Splunk requires a time interval of >= 1s, rather than >=1ms like Loki timerange in below elseif block
+  if (isSplunkDS && adjustedEndTime - adjustedStartTime < 1000) {
+    adjustedEndTime = adjustedStartTime + 1000;
+  } else if (adjustedStartTime === adjustedEndTime) {
+    // Because we can only pass milliseconds in the url we need to check if they equal.
+    // We need end time to be later than start time
     adjustedEndTime++;
   }
+
   const to = dateTime(adjustedEndTime);
 
   // Beware that public/app/features/explore/state/main.ts SplitOpen fn uses the range from here. No matter what is in the url.

@@ -187,9 +187,9 @@ function expectExplain() {
 
 function switchToMode(mode: QueryEditorMode) {
   const label = {
-    [QueryEditorMode.Code]: 'Code',
-    [QueryEditorMode.Explain]: 'Explain',
-    [QueryEditorMode.Builder]: 'Builder',
+    [QueryEditorMode.Code]: /Code/,
+    [QueryEditorMode.Explain]: /Explain/,
+    [QueryEditorMode.Builder]: /Builder/,
   }[mode];
 
   const switchEl = screen.getByLabelText(label);

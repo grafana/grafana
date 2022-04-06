@@ -1136,6 +1136,59 @@
         }
       }
     },
+    "/api/provisioning/policies": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Get the notification policy tree.",
+        "operationId": "RouteGetPolicyTree",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Sets the notification policy tree.",
+        "operationId": "RoutePostPolicyTree",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
     "/api/ruler/grafana/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -4564,9 +4617,8 @@
       "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -4599,7 +4651,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -4796,7 +4848,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -4819,6 +4870,8 @@
           "$ref": "#/definitions/receiver"
         }
       },
+      "x-go-name": "AlertGroup",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
@@ -4948,7 +5001,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5008,6 +5060,8 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
@@ -5019,7 +5073,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5072,6 +5125,8 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
@@ -5210,6 +5265,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5250,8 +5306,6 @@
           "x-go-name": "StartsAt"
         }
       },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
