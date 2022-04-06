@@ -7,6 +7,8 @@ import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../h
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 import { migrateVariableQuery } from '../../migrations';
 import { VariableQueryField } from './VariableQueryField';
+import { Dimensions } from '..';
+import { InlineField } from '@grafana/ui';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData, VariableQuery>;
 
@@ -25,11 +27,12 @@ const queryTypes: Array<{ value: string; label: string }> = [
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const parsedQuery = migrateVariableQuery(query);
 
-  const { region, namespace, metricName, dimensionKey } = parsedQuery;
+  const { region, namespace, metricName, dimensionKey, valueDimensions } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
   const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
+  const valueDimensionKeys = useDimensionKeys(datasource, region, namespace, metricName, valueDimensions ?? {});
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -48,17 +51,19 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   };
 
   const onQueryChange = (newQuery: VariableQuery) => {
-    onChange({ ...newQuery, refId: 'CloudWatchVariableQueryEditor-VariableQuery' });
+    onChange({
+      ...newQuery,
+      refId: 'CloudWatchVariableQueryEditor-VariableQuery',
+    });
   };
 
   // Reset dimensionValue parameters if namespace or region change
   const sanitizeQuery = async (query: VariableQuery) => {
-    let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
+    let { metricName, dimensionKey, namespace, region } = query;
     if (metricName) {
       await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
-          dimensionFilters = '';
         }
       });
     }
@@ -66,11 +71,10 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       await datasource.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
-          dimensionFilters = '';
         }
       });
     }
-    return { ...query, metricName, dimensionKey, dimensionFilters };
+    return { ...query, metricName, dimensionKey };
   };
 
   const hasRegionField = [
@@ -126,13 +130,21 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
             label="Dimension Key"
           />
-          <VariableTextField
-            value={query.dimensionFilters}
-            tooltip='A JSON object representing dimensions and the values to filter on. Ex. { "filter_name1": [ "filter_value1" ], "filter_name2": [ "*" ] }'
-            placeholder='{"key":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, dimensionFilters: value })}
-            label="Filters"
-          />
+          <InlineField
+            label="Dimensions"
+            labelWidth={20}
+            tooltip="A JSON object representing dimensions and the values to filter on"
+          >
+            <Dimensions
+              query={{ ...parsedQuery, dimensions: parsedQuery.valueDimensions }}
+              onChange={(dimensions) => {
+                onChange({ ...parsedQuery, valueDimensions: dimensions });
+              }}
+              dimensionKeys={valueDimensionKeys}
+              disableExpressions={true}
+              datasource={datasource}
+            />
+          </InlineField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.EBSVolumeIDs && (

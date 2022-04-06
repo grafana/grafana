@@ -11,7 +11,6 @@ const defaultQuery = {
   region: '',
   metricName: '',
   dimensionKey: '',
-  dimensionFilters: '',
   ec2Filters: '',
   instanceID: '',
   attributeName: '',

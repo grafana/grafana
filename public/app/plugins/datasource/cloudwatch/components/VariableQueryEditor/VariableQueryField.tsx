@@ -24,7 +24,7 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   isLoading = false,
 }: VariableQueryFieldProps<T>) => {
   return (
-    <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={'inline-field'}>
+    <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={label}>
       <Select
         menuShouldPortal
         aria-label={label}
@@ -34,7 +34,7 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
         onChange={({ value }) => onChange(value!)}
         options={options}
         isLoading={isLoading}
-        inputId="inline-field"
+        inputId={label}
       />
     </InlineField>
   );

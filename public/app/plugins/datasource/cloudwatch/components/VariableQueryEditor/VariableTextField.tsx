@@ -2,7 +2,6 @@ import { InlineField, Input } from '@grafana/ui';
 import React, { FC, useState } from 'react';
 
 const LABEL_WIDTH = 20;
-const TEXT_WIDTH = 100;
 
 interface VariableTextFieldProps {
   onBlur: (value: string) => void;
@@ -15,14 +14,13 @@ interface VariableTextFieldProps {
 export const VariableTextField: FC<VariableTextFieldProps> = ({ label, onBlur, placeholder, value, tooltip }) => {
   const [localValue, setLocalValue] = useState(value);
   return (
-    <InlineField label={label} labelWidth={LABEL_WIDTH} tooltip={tooltip}>
+    <InlineField label={label} labelWidth={LABEL_WIDTH} tooltip={tooltip} grow={true}>
       <Input
         aria-label={label}
         placeholder={placeholder}
         value={localValue}
         onChange={(e) => setLocalValue(e.currentTarget.value)}
         onBlur={() => onBlur(localValue)}
-        width={TEXT_WIDTH}
       />
     </InlineField>
   );

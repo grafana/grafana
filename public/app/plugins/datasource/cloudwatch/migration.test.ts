@@ -206,7 +206,7 @@ describe('migration', () => {
           expect(query.namespace).toBe('AWS/RDS');
           expect(query.metricName).toBe('CPUUtilization');
           expect(query.dimensionKey).toBe('DBInstanceIdentifier');
-          expect(query.dimensionFilters).toBe('');
+          expect(query.valueDimensions).toStrictEqual({});
         });
       });
       describe('and filter param is defined by user', () => {
@@ -219,7 +219,7 @@ describe('migration', () => {
           expect(query.namespace).toBe('AWS/RDS');
           expect(query.metricName).toBe('CPUUtilization');
           expect(query.dimensionKey).toBe('DBInstanceIdentifier');
-          expect(query.dimensionFilters).toBe('{"InstanceId":"$instance_id"}');
+          expect(query.valueDimensions).toStrictEqual({ InstanceId: '$instance_id' });
         });
       });
     });

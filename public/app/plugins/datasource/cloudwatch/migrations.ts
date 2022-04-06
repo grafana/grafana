@@ -80,7 +80,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     region: '',
     metricName: '',
     dimensionKey: '',
-    dimensionFilters: '',
+    valueDimensions: {},
     ec2Filters: '',
     instanceID: '',
     attributeName: '',
@@ -122,7 +122,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.namespace = dimensionValuesQuery[2];
     newQuery.metricName = dimensionValuesQuery[3];
     newQuery.dimensionKey = dimensionValuesQuery[4];
-    newQuery.dimensionFilters = dimensionValuesQuery[6] || '';
+    newQuery.valueDimensions = dimensionValuesQuery[6] ? JSON.parse(dimensionValuesQuery[6]) : {};
     return newQuery;
   }
 
