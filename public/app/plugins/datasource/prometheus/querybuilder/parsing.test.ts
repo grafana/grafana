@@ -2,6 +2,15 @@ import { buildVisualQueryFromString } from './parsing';
 import { PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  it('creates no errors for empty query', () => {
+    expect(buildVisualQueryFromString('')).toEqual(
+      noErrors({
+        labels: [],
+        operations: [],
+        metric: '',
+      })
+    );
+  });
   it('parses simple query', () => {
     expect(buildVisualQueryFromString('counters_logins{app="frontend"}')).toEqual(
       noErrors({
