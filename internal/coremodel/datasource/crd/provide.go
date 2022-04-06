@@ -17,23 +17,23 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-// CRD is the CRD representation for datasource resources, including its
+// KubeController contains the CRD representation for datasource resources, including its
 // reconciliation control loop.
-type KubeModel struct {
+type KubeController struct {
 	crd    schema.CRD
 	store  components.Store
 	client client.Client
 	logger log.Logger
 }
 
-// ProvideKubeModel provides a new datasource KubeModel based on the provided datasource
+// ProvideKubeController provides a new datasource KubeController based on the provided datasource
 // Coremodel, and the provided storage interface backed by traditional Grafana storage.
 //
 // TODO: this is currently done manually and is statically enumerated in the registry.
 // We should figure out a way to dynamically register this to registry and automate schema loading too,
 // since the loading process will be exactly the same for all components (except for schema options).
-func ProvideKubeModel(cm *datasource.Coremodel, store components.Store) (*KubeModel, error) {
-	return &KubeModel{
+func ProvideKubeController(cm *datasource.Coremodel, store components.Store) (*KubeController, error) {
+	return &KubeController{
 		store:  store,
 		crd:    schema.NewThemaSchema(cm.Lineage(), groupName, groupVersion, schemaOpenapi, &Datasource{}, &DatasourceList{}),
 		logger: log.New("coremodel.datasource.crd"),
@@ -42,14 +42,14 @@ func ProvideKubeModel(cm *datasource.Coremodel, store components.Store) (*KubeMo
 
 // CRD returns the collection of schemas and objects for datasources that
 // Kubernetes requires to register and manage a CustomResourceDefinition.
-func (m *KubeModel) CRD() schema.CRD {
+func (m *KubeController) CRD() schema.CRD {
 	return m.crd
 }
 
 // RegisterController registers the controller for this coremodel.
 // Not all coremodels are required to have controllers,
 // so if we don't need to register anything, we can just return immediately.
-func (m *KubeModel) RegisterController(mgr ctrl.Manager) error {
+func (m *KubeController) RegisterController(mgr ctrl.Manager) error {
 	m.client = mgr.GetClient()
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -58,7 +58,7 @@ func (m *KubeModel) RegisterController(mgr ctrl.Manager) error {
 }
 
 // Reconcile implements Kubernetes controller reconciliation logic.
-func (m *KubeModel) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+func (m *KubeController) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	m.logger.Debug(
 		"received reconciliation request",
 		"request", req.String(),

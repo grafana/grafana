@@ -17,13 +17,13 @@ func ProvideRegistry(
 	)
 }
 
-// ProvideKubeModelRegistry provides a simple static KubeModelRegistry.
-// KubeModels must be manually added.
+// ProvideKubeControllerRegistry provides a simple static KubeControllerRegistry.
+// KubeControllers must be manually added.
 // TODO dynamism
-func ProvideKubeModelRegistry(
-	datasourceModel *datasourcecrd.KubeModel,
-) (*components.KubeModelRegistry, error) {
-	return components.NewKubeModelRegistry(
+func ProvideKubeControllerRegistry(
+	datasourceModel *datasourcecrd.KubeController,
+) (*components.KubeControllerRegistry, error) {
+	return components.NewKubeControllerRegistry(
 		datasourceModel,
 	)
 }

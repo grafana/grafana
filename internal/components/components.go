@@ -10,9 +10,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-// KubeModel is an interface that must be implemented by each KubeModel-style representation of a Grafana model.
-type KubeModel interface {
-	// CRD should return the KubeModel's CRD - the collection of schemas and
+// KubeController is an interface that must be implemented by each
+// KubeController-style representation of a Grafana model.
+type KubeController interface {
+	// CRD should return the KubeController's CRD - the collection of schemas and
 	// objects that Kubernetes requires to register and manage a
 	// CustomResourceDefinition.
 	CRD() schema.CRD
