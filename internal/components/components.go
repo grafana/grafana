@@ -12,8 +12,10 @@ import (
 
 // KubeModel is an interface that must be implemented by each KubeModel-style representation of a Grafana model.
 type KubeModel interface {
-	// Schema should return coremodel's schema.
-	Schema() schema.KubeResource
+	// CRD should return the KubeModel's CRD - the collection of schemas and
+	// objects that Kubernetes requires to register and manage a
+	// CustomResourceDefinition.
+	CRD() schema.CRD
 
 	// RegisterController should optionally register coremodel's controller to the manager.
 	// If no controller is needed for the coremodel, it's safe to simply return nil from this method.
@@ -44,7 +46,7 @@ type Coremodel interface {
 type SchemaLoader interface {
 	LoadSchema(
 		context.Context, schema.SchemaType, schema.ThemaLoaderOpts, schema.GoLoaderOpts,
-	) (schema.KubeResource, error)
+	) (schema.CRD, error)
 }
 
 // Store is a generic durable storage for coremodels.

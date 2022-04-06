@@ -55,7 +55,7 @@ func NewClientset(cfg *rest.Config) (*Clientset, error) {
 }
 
 // RegisterSchema registers a new client and CRD for schema s.
-func (c *Clientset) RegisterSchema(ctx context.Context, s schema.ObjectSchema) error {
+func (c *Clientset) RegisterSchema(ctx context.Context, s schema.CRD) error {
 	ver := k8schema.GroupVersion{
 		Group:   s.GroupName(),
 		Version: s.GroupVersion(),

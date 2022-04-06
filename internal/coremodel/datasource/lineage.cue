@@ -23,7 +23,7 @@ seqs: [
                 jsonData: string
                 version: int32
                 readOnly: bool | *false
-            }
+            },
         ]
     },
 ]

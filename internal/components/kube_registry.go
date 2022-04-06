@@ -12,18 +12,18 @@ var (
 	ErrModelAlreadyRegistered = errors.New("error registering duplicate model")
 )
 
-// Registry is a registry of coremodels.
-type Registry struct {
+// KubeModelRegistry is a registry of KubeModels.
+type KubeModelRegistry struct {
 	lock     sync.RWMutex
-	models   []Coremodel
-	modelIdx map[registryKey]Coremodel
+	models   []KubeModel
+	modelIdx map[registryKey]KubeModel
 }
 
-// NewRegistry returns a new Registry with models.
-func NewRegistry(models ...Coremodel) (*Registry, error) {
-	r := &Registry{
-		models:   make([]Coremodel, 0, len(models)),
-		modelIdx: make(map[registryKey]Coremodel, len(models)),
+// NewKubeModelRegistry returns a new KubeControllerRegistry with the provided KubeControllers.
+func NewKubeModelRegistry(models ...KubeModel) (*KubeModelRegistry, error) {
+	r := &KubeModelRegistry{
+		models:   make([]KubeModel, 0, len(models)),
+		modelIdx: make(map[registryKey]KubeModel, len(models)),
 	}
 
 	if err := r.addModels(models); err != nil {
@@ -34,25 +34,25 @@ func NewRegistry(models ...Coremodel) (*Registry, error) {
 }
 
 // Register adds models to the Registry.
-func (r *Registry) Register(models ...Coremodel) error {
+func (r *KubeModelRegistry) Register(models ...KubeModel) error {
 	return r.addModels(models)
 }
 
 // List returns all coremodels registered in this Registry.
-func (r *Registry) List() []Coremodel {
+func (r *KubeModelRegistry) List() []KubeModel {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	return r.models
 }
 
-func (r *Registry) addModels(models []Coremodel) error {
+func (r *KubeModelRegistry) addModels(models []KubeModel) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
 	// Update model index and return an error if trying to register a duplicate.
 	for _, m := range models {
-		k := makeRegistryKey(m.Schema())
+		k := makeRegistryKey(m.CRD())
 
 		if _, ok := r.modelIdx[k]; ok {
 			return ErrModelAlreadyRegistered
@@ -77,7 +77,7 @@ type registryKey struct {
 	groupVersion string
 }
 
-func makeRegistryKey(s schema.ObjectSchema) registryKey {
+func makeRegistryKey(s schema.CRD) registryKey {
 	return registryKey{
 		modelName:    s.Name(),
 		groupName:    s.GroupName(),

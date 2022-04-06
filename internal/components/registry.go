@@ -50,8 +50,8 @@ func (r *Registry) addModels(models []Coremodel) error {
 		k := m.Lineage().Name()
 
 		// Ensure assignability first. TODO will this blow up for dashboards?
-		if err := thema.AssignableTo(m.Current(), m.GoType()); err != nil {
-			return fmt.Errorf("%s schema version %v not assignable to provided Go type: %w", k, m.Current().Version(), err)
+		if err := thema.AssignableTo(m.Schema(), m.GoType()); err != nil {
+			return fmt.Errorf("%s schema version %v not assignable to provided Go type: %w", k, m.Schema().Version(), err)
 		}
 
 		if _, ok := r.modelIdx[k]; ok {

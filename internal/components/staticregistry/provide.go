@@ -2,8 +2,8 @@ package staticregistry
 
 import (
 	"github.com/grafana/grafana/internal/components"
-	"github.com/grafana/grafana/internal/components/datasource"
-	datasourcecrd "github.com/grafana/grafana/internal/components/datasource/crd"
+	"github.com/grafana/grafana/internal/coremodel/datasource"
+	datasourcecrd "github.com/grafana/grafana/internal/coremodel/datasource/crd"
 )
 
 // ProvideRegistry provides a simple static Registry.
