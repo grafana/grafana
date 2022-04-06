@@ -93,6 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   container: css({
     display: 'flex',
+    bottom: 0,
     flexDirection: 'column',
     left: 0,
     whiteSpace: 'nowrap',
@@ -117,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     display: 'flex',
     justifyContent: 'space-between',
-    padding: `${theme.spacing(1, 2, 2)}`,
+    padding: theme.spacing(1, 2, 2),
     [theme.breakpoints.up('md')]: {
       display: 'none',
     },
@@ -138,11 +139,14 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const commonTransition = {
     transitionDuration: `${animationDuration}ms`,
     transitionTimingFunction: theme.transitions.easing.easeInOut,
+    [theme.breakpoints.down('md')]: {
+      overflow: 'hidden',
+    },
   };
 
   const overlayTransition = {
     ...commonTransition,
-    transitionProperty: 'background-color, box-shadow, height, width',
+    transitionProperty: 'background-color, box-shadow, width',
   };
 
   const backdropTransition = {
@@ -154,7 +158,6 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
     backgroundColor: theme.colors.background.canvas,
     boxShadow: theme.shadows.z3,
     width: '100%',
-    height: '100%',
     [theme.breakpoints.up('md')]: {
       width: '300px',
     },
@@ -162,11 +165,10 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
 
   const overlayClosed = {
     boxShadow: 'none',
-    width: theme.spacing(7),
-    height: '56px',
+    width: 0,
     [theme.breakpoints.up('md')]: {
       backgroundColor: theme.colors.background.primary,
-      height: '100%',
+      width: theme.spacing(7),
     },
   };
 
