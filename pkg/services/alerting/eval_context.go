@@ -42,15 +42,16 @@ type EvalContext struct {
 
 // NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
+	prevEvalMatches := make([]*EvalMatch, len(rule.EvalMatches))
+	copy(prevEvalMatches, rule.EvalMatches)
+
 	return &EvalContext{
-		Ctx:         alertCtx,
-		StartTime:   time.Now(),
-		Rule:        rule,
-		Logs:        make([]*ResultLogEntry, 0),
-		EvalMatches: make([]*EvalMatch, 0),
-		// TODO: is it better to make a copy of the slice to prevent modifications
-		// to the underlying array of rule.EvalMatches affecting PrevEvalMatches?
-		PrevEvalMatches:  rule.EvalMatches,
+		Ctx:              alertCtx,
+		StartTime:        time.Now(),
+		Rule:             rule,
+		Logs:             make([]*ResultLogEntry, 0),
+		EvalMatches:      make([]*EvalMatch, 0),
+		PrevEvalMatches:  prevEvalMatches,
 		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
