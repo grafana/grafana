@@ -1,6 +1,7 @@
 package featuremgmt
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -73,4 +74,13 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 // ProvideToggles allows read-only access to the feature state
 func ProvideToggles(mgmt *FeatureManager) FeatureToggles {
 	return mgmt
+}
+
+func (fm *FeatureManager) GetUsageStats(ctx context.Context) map[string]int {
+	enabled := fm.GetEnabled(ctx)
+	stats := make(map[string]int, len(enabled))
+	for featureName := range enabled {
+		stats[fmt.Sprintf("stats.features.%s.count", featureName)] = 1
+	}
+	return stats
 }
