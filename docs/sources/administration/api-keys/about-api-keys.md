@@ -10,6 +10,6 @@ weight: 30
 
 An API key is a encrypted string that identifies as a specific role to your Grafana instance when talking to apis. You can more easily use Grafana HTTP APIs by leveraging API keys.
 
-To create an API key, use the following procedure. An API key is valid for a limited time that you specify when you create it, up to 30 days.
+An API key is valid for up to 30 days.
 
-When you create an API key, you specify a role for the key. The role determines the level of administrative power that users of the key have. For more information about creating API keys, refer to [Create API key]({{< relref "./create-api-key.md#">}}).
+When you create an API key, you specify a role that determines which permissions the key has. For more information about creating API keys, refer to [Create an API key]({{< relref "./create-api-key.md#">}}).

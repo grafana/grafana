@@ -1,7 +1,7 @@
 ---
 title: 'Enable service accounts in Grafana'
 menuTitle: 'Enable service accounts'
-description: 'This contains information to enable service accounts feature in Grafana'
+description: 'This topic shows you how to to enable the service accounts feature in Grafana'
 aliases: [docs/sources/administration/service-accounts/enable-service-accounts.md]
 weight: 40
 keywords:

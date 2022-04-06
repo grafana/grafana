@@ -1,11 +1,11 @@
 ---
 title: 'Service accounts in Grafana'
 menuTitle: 'Service accounts'
-description: 'This contains information about service accounts in Grafana'
+description: 'This page contains information about service accounts in Grafana'
 aliases: [docs/sources/administration/service-accounts/_index.md]
 weight: 300
 keywords:
-  - Api keys
+  - API keys
   - Service accounts
 ---
 

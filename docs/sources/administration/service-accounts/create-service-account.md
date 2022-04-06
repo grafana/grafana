@@ -12,7 +12,7 @@ keywords:
 
 You can create a service account in the service account tab of the organization. To manage your computed workload with a user that is not tied to a user specifically.
 
-Consider the following restriction when you create a service account:
+Consider the following restrictions when you create a service account:
 
 - A service account is identified by its name, which is unique to the entire suite of organizations. The name is set upon creation of the service account
 - Service accounts live on a organizational level and are restricted as such
