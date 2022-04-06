@@ -1,22 +1,25 @@
 import { FC, useEffect, useState } from 'react';
 import { useRegisterActions, useKBar, Action } from 'kbar';
-import { connect, ConnectedProps } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { StoreState, ExploreId } from 'app/types';
 import { splitOpen, splitClose } from './state/main';
 import { isSplit } from './state/selectors';
 import { runQueries } from './state/query';
 
-interface OwnProps {
+interface Props {
   exploreId: ExploreId;
 }
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
-
-// class components need a child functional component to use hooks
-
-const ExploreActionsFunction: FC<Props> = ({ exploreId, splitted }: Props) => {
+export const ExploreActions: FC<Props> = ({ exploreId }: Props) => {
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
+  const dispatch = useDispatch();
+  const { splitted } = useSelector((state: StoreState) => {
+    const splitted = isSplit(state);
+    return {
+      splitted,
+    };
+  });
 
   useEffect(() => {
     const actionsArr: Action[] = [
@@ -25,7 +28,7 @@ const ExploreActionsFunction: FC<Props> = ({ exploreId, splitted }: Props) => {
         name: 'Run Query',
         keywords: 'query',
         perform: () => {
-          runQueries(exploreId);
+          dispatch(runQueries(exploreId));
         },
         section: 'Explore',
       },
@@ -36,7 +39,9 @@ const ExploreActionsFunction: FC<Props> = ({ exploreId, splitted }: Props) => {
         id: 'explore/split-view-close',
         name: 'Close split view',
         keywords: 'split',
-        perform: () => splitClose(exploreId),
+        perform: () => {
+          dispatch(splitClose(exploreId));
+        },
         section: 'Explore',
       });
     } else {
@@ -44,30 +49,16 @@ const ExploreActionsFunction: FC<Props> = ({ exploreId, splitted }: Props) => {
         id: 'explore/split-view-open',
         name: 'Open split view',
         keywords: 'split',
-        perform: () => splitOpen(),
+        perform: () => {
+          dispatch(splitOpen());
+        },
         section: 'Explore',
       });
     }
-
     setActions(actionsArr);
-  }, [exploreId, splitted, query]);
+  }, [exploreId, splitted, query, dispatch]);
 
   useRegisterActions(!query ? [] : actions, [actions, query]);
 
   return null;
 };
-
-const mapStateToProps = (state: StoreState) => {
-  return {
-    splitted: isSplit(state),
-  };
-};
-
-const mapDispatchToProps = {
-  splitClose,
-  splitOpen,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export const ExploreActions = connector(ExploreActionsFunction);

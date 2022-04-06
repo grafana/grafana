@@ -1,12 +1,13 @@
 import { locationService, getBackendSrv } from '@grafana/runtime';
-import { Action } from 'kbar';
+import { Action, Priority } from 'kbar';
 
 async function getDashboardNav(): Promise<Action[]> {
   const data: Array<{ type: string; title: string; url: string }> = await getBackendSrv().get('/api/search');
 
   const parentAction: Action = {
     id: 'go/dashboard',
-    name: 'Go to dashboard',
+    name: 'Go to dashboard...',
+    priority: Priority.NORMAL,
   };
 
   const goToDashboardActions: Action[] = data

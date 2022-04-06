@@ -15,6 +15,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { ResultItem } from './ResultItem';
 import getGlobalActions from './actions/global.static.actions';
 import getDashboardNavActions from './actions/dashboard.nav.actions';
+import { useSelector } from 'react-redux';
+import { StoreState } from 'app/types';
 import { css } from '@emotion/css';
 
 /**
@@ -26,10 +28,15 @@ export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
+  const { navBarTree } = useSelector((state: StoreState) => {
+    return {
+      navBarTree: state.navBarTree,
+    };
+  });
 
   useEffect(() => {
     const addDashboardActions = async () => {
-      const staticActions = getGlobalActions();
+      const staticActions = getGlobalActions(navBarTree);
       const dashAct = await getDashboardNavActions();
       setActions([...staticActions, ...dashAct]);
     };
