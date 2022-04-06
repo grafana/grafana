@@ -302,7 +302,6 @@ func TestPluginManager_Installer(t *testing.T) {
 
 func TestPluginManager_registeredPlugins(t *testing.T) {
 	t.Run("Decommissioned plugins are included in registeredPlugins", func(t *testing.T) {
-
 		decommissionedPlugin, _ := createPlugin(t, testPluginID, "", plugins.Core, false, true,
 			func(plugin *plugins.Plugin) {
 				err := plugin.Decommission()
