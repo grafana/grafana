@@ -33,7 +33,7 @@ func Logger(cfg *setting.Cfg) web.Handler {
 		c.Next()
 
 		timeTaken := time.Since(start) / time.Millisecond
-
+		duration := time.Since(start).String()
 		ctx := contexthandler.FromContext(c.Req.Context())
 		if ctx != nil && ctx.PerfmonTimer != nil {
 			ctx.PerfmonTimer.Observe(float64(timeTaken))
@@ -53,6 +53,7 @@ func Logger(cfg *setting.Cfg) web.Handler {
 				"status", status,
 				"remote_addr", c.RemoteAddr(),
 				"time_ms", int64(timeTaken),
+				"duration", duration,
 				"size", rw.Size(),
 				"referer", req.Referer(),
 			}
