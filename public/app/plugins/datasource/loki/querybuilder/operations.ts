@@ -1,5 +1,6 @@
 import {
   createAggregationOperation,
+  createAggregationOperationWithParam,
   getPromAndLokiOperationDisplayName,
 } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
@@ -13,18 +14,12 @@ import { binaryScalarOperations } from './binaryScalarOperations';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefintions(): QueryBuilderOperationDef[] {
-  const aggregations = [
-    LokiOperationId.Sum,
-    LokiOperationId.Min,
-    LokiOperationId.Max,
-    LokiOperationId.Avg,
-    LokiOperationId.TopK,
-    LokiOperationId.BottomK,
-  ].flatMap((opId) =>
-    createAggregationOperation(opId, {
-      addOperationHandler: addLokiOperation,
-      orderRank: LokiOperationOrder.Last,
-    })
+  const aggregations = [LokiOperationId.Sum, LokiOperationId.Min, LokiOperationId.Max, LokiOperationId.Avg].flatMap(
+    (opId) =>
+      createAggregationOperation(opId, {
+        addOperationHandler: addLokiOperation,
+        orderRank: LokiOperationOrder.Last,
+      })
   );
 
   const list: QueryBuilderOperationDef[] = [
@@ -35,6 +30,14 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     createRangeOperation(LokiOperationId.BytesOverTime),
     createRangeOperation(LokiOperationId.AbsentOverTime),
     ...aggregations,
+    ...createAggregationOperationWithParam(LokiOperationId.TopK, {
+      params: [{ name: 'K-value', type: 'number' }],
+      defaultParams: [5],
+    }),
+    ...createAggregationOperationWithParam(LokiOperationId.BottomK, {
+      params: [{ name: 'K-value', type: 'number' }],
+      defaultParams: [5],
+    }),
     {
       id: LokiOperationId.Json,
       name: 'Json',
