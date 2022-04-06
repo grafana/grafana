@@ -97,7 +97,7 @@ func TestAlertRuleModel(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {
-		json := `
+		settingsRawJSON := `
 				{
 					"name": "name2",
 					"description": "desc2",
@@ -117,8 +117,26 @@ func TestAlertRuleModel(t *testing.T) {
 					]
 				}
 				`
+		evalDataRawJSON := `
+				{
+					"evalMatches": [
+						{
+							"value": 123.5,
+							"metric": "test",
+							"tags": { "key": "value", "instance": "host.docker.internal:3000", "job": "grafana" }
+						},
+						{
+							"value": 50,
+							"metric": "test2",
+							"tags": {"__name__": "test2", "instance": "localhost:9090", "job": "prometheus"}
+						}
+					]
+				}
+		`
 
-		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+		settingsJSON, jsonErr := simplejson.NewJson([]byte(settingsRawJSON))
+		require.Nil(t, jsonErr)
+		evalDataJSON, jsonErr := simplejson.NewJson([]byte(evalDataRawJSON))
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
@@ -127,7 +145,8 @@ func TestAlertRuleModel(t *testing.T) {
 			DashboardId: 1,
 			PanelId:     1,
 
-			Settings: alertJSON,
+			Settings: settingsJSON,
+			EvalData: evalDataJSON,
 		}
 
 		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
@@ -135,9 +154,17 @@ func TestAlertRuleModel(t *testing.T) {
 
 		require.Len(t, alertRule.Conditions, 1)
 		require.Len(t, alertRule.Notifications, 2)
+		require.Len(t, alertRule.EvalMatches, 2)
+
+		if len(alertRule.EvalMatches) > 0 {
+			require.Equal(t, alertRule.EvalMatches[0].Value.Float64, 123.5)
+			require.Equal(t, alertRule.EvalMatches[0].Metric, "test")
+			require.Equal(t, alertRule.EvalMatches[0].Tags["key"], "value")
+		}
 
 		require.Contains(t, alertRule.Notifications, "notifier2")
 		require.Contains(t, alertRule.Notifications, "notifier1")
+
 	})
 
 	t.Run("Testing alert rule with non existing notification id", func(t *testing.T) {

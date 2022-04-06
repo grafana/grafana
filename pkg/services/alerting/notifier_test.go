@@ -26,6 +26,17 @@ func TestNotificationService(t *testing.T) {
 	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{}, store)
 
 	testRuleTemplated := &Rule{Name: "Test latency ${quantile}", Message: "Something is bad on instance ${instance}"}
+	testRuleWithEvalMatches := &Rule{
+		Name:    "Test latency ${quantile}",
+		Message: "Something is bad on instance ${instance}",
+		EvalMatches: []*EvalMatch{{
+			Tags: map[string]string{
+				"instance": "localhost:3000",
+				"quantile": "0.99",
+			},
+		}},
+	}
+
 	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store)
 	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
 		Tags: map[string]string{
@@ -33,6 +44,7 @@ func TestNotificationService(t *testing.T) {
 			"quantile": "0.99",
 		},
 	}}
+	evalCtxFromRuleWithPrevMatches := NewEvalContext(context.Background(), testRuleWithEvalMatches, &validations.OSSPluginRequestValidator{}, store)
 	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store)
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification",
@@ -134,6 +146,19 @@ func TestNotificationService(t *testing.T) {
 			require.NoError(sc.t, err)
 
 			ctx := evalCtxWithMatch
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
+			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but wasn't")
+			require.Truef(sc.t, ctx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+			assert.Equal(t, "Test latency 0.99", ctx.Rule.Name)
+			assert.Equal(t, "Something is bad on instance localhost:3000", ctx.Rule.Message)
+		})
+
+	notificationServiceScenario(t, "Given unmatched alert rule with previous matches and templated notification fields should template message",
+		evalCtxFromRuleWithPrevMatches, true, func(sc *scenarioContext) {
+			err := sc.notificationService.SendIfNeeded(evalCtxFromRuleWithPrevMatches)
+			require.NoError(sc.t, err)
+
+			ctx := evalCtxFromRuleWithPrevMatches
 			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
 			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but wasn't")
 			require.Truef(sc.t, ctx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")

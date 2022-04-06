@@ -42,8 +42,7 @@ type EvalContext struct {
 
 // NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
-	prevEvalMatches := make([]*EvalMatch, len(rule.EvalMatches))
-	copy(prevEvalMatches, rule.EvalMatches)
+	prevEvalMatches := rule.EvalMatches
 
 	return &EvalContext{
 		Ctx:              alertCtx,
