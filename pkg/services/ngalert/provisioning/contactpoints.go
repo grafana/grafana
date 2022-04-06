@@ -91,10 +91,10 @@ func (ecp *EmbeddedContactPointService) getContactPointUncrypted(orgID int64, ui
 }
 
 func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error) {
-	if !contactPoint.IsValid() {
-		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid")
+	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
+		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
 	}
-	cfg, _, err := ecp.getCurrentConfig(orgID)
+	cfg, fetchedHash, err := ecp.getCurrentConfig(orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -141,6 +141,7 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactP
 	}
 	return contactPoint, ecp.amStore.UpdateAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(data),
+		FetchedConfigurationHash:  fetchedHash,
 		ConfigurationVersion:      "v1",
 		Default:                   false,
 		OrgID:                     orgID,
@@ -164,7 +165,7 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactP
 		}
 	}
 	// validate merged values
-	if !contactPoint.IsValid() {
+	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
 		return fmt.Errorf("contact point is not valid: %w", err)
 	}
 	fmt.Printf("%+v\n", *contactPoint.Settings)
@@ -222,7 +223,29 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactP
 }
 
 func (ecp *EmbeddedContactPointService) DeleteContactPoint(orgID int64, uid string) error {
-	return nil
+	cfg, fetchedHash, err := ecp.getCurrentConfig(orgID)
+	if err != nil {
+		return err
+	}
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		for index, grafanaReceiver := range receiver.GrafanaManagedReceivers {
+			if grafanaReceiver.UID == uid {
+				receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:index], receiver.GrafanaManagedReceivers[index+1:]...)
+				break
+			}
+		}
+	}
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	return ecp.amStore.UpdateAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(data),
+		FetchedConfigurationHash:  fetchedHash,
+		ConfigurationVersion:      "v1",
+		Default:                   false,
+		OrgID:                     orgID,
+	})
 }
 
 func (ecp *EmbeddedContactPointService) getCurrentConfig(orgID int64) (*apimodels.PostableUserConfig, string, error) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 // swagger:route GET /api/provisioning/contactpoints provisioning RouteGetContactpoints
@@ -57,23 +58,33 @@ type ContactpointPayload struct {
 // by grafanas embedded alertmanager implementation.
 type EmbeddedContactPoint struct {
 	UID                   string           `json:"uid"`
-	Name                  string           `json:"name"`
-	Type                  string           `json:"type"`
+	Name                  string           `json:"name" binding:"required"`
+	Type                  string           `json:"type" binding:"required"`
+	Settings              *simplejson.Json `json:"settings" binding:"required"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Settings              *simplejson.Json `json:"settings"`
 	Provenance            string           `json:"provanance"`
 }
 
 const RedactedValue = "[REDACTED]"
 
-func (e *EmbeddedContactPoint) IsValid() bool {
+func (e *EmbeddedContactPoint) IsValid(decryptFunc channels.GetDecryptedValueFn) error {
 	if e.Type == "" {
-		return false
+		return fmt.Errorf("type should not be an empty string")
 	}
 	if e.Settings == nil {
-		return false
+		return fmt.Errorf("settings should not be empty")
 	}
-	return true
+	factory, exists := channels.Factory(e.Type)
+	if !exists {
+		return fmt.Errorf("unkown type '%s'", e.Type)
+	}
+	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
+		Settings: e.Settings,
+	}, nil, decryptFunc, nil)
+	if _, err := factory(cfg); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {

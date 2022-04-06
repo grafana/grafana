@@ -181,16 +181,15 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
-	case http.MethodGet + "/api/provisioning/policies":
+	case http.MethodGet + "/api/provisioning/policies",
+		http.MethodGet + "/api/provisioning/contactpoints":
 		return middleware.ReqSignedIn
 
-	case http.MethodPost + "/api/provisioning/policies":
-		return middleware.ReqEditorRole
-	case http.MethodGet + "/api/provisioning/contactpoints",
+	case http.MethodPost + "/api/provisioning/policies",
 		http.MethodPost + "/api/provisioning/contactpoints",
 		http.MethodPut + "/api/provisioning/contactpoints",
 		http.MethodDelete + "/api/provisioning/contactpoints/{ID}":
-		return middleware.ReqOrgAdmin
+		return middleware.ReqEditorRole
 	}
 
 	if eval != nil {
