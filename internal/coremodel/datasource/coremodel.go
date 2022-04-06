@@ -9,11 +9,12 @@ type Coremodel struct {
 	lin thema.Lineage
 }
 
+// Lineage returns the canonical datasource Lineage.
 func (c *Coremodel) Lineage() thema.Lineage {
 	return c.lin
 }
 
-func (c *Coremodel) Schema() thema.Schema {
+func (c *Coremodel) CurrentSchema() thema.Schema {
 	sch, err := c.lin.Schema(currentVersion)
 	if err != nil {
 		// Only reachable if our own schema currentVersion does not exist, which

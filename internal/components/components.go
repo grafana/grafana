@@ -32,11 +32,11 @@ type Coremodel interface {
 	// Lineage should return the canonical Thema lineage for the coremodel.
 	Lineage() thema.Lineage
 
-	// Schema should return the schema of the version that the Grafana backend
+	// CurrentSchema should return the schema of the version that the Grafana backend
 	// is currently written against. (While Grafana can accept data from all
 	// older versions of the Thema schema, backend Go code is written against a
 	// single version for simplicity)
-	Schema() thema.Schema
+	CurrentSchema() thema.Schema
 
 	// GoType should return a pointer to the Go struct type that corresponds to
 	// the Current() schema.
