@@ -32,12 +32,21 @@ export class EventEditorCtrl {
     this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time!);
   }
 
+  getParentDashboardId(annotationId: number): number {
+    let annotations: any = this.panelCtrl.annotations;
+    return annotations?.find((it: { id: number }) => it.id === annotationId).dashboardId;
+  }
+
   canDelete(): boolean {
     if (contextSrv.accessControlEnabled()) {
-      if (this.event.source.type === 'dashboard') {
-        return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
+      let annotationId = 0;
+      if (this.event.id) {
+        annotationId = parseInt(this.event.id, 10);
+        if (this.getParentDashboardId(annotationId) !== 0) {
+          return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
+        }
+        return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.organization.canDelete;
       }
-      return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.organization.canDelete;
     }
     return true;
   }

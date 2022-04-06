@@ -35,6 +35,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   querySubscription?: Unsubscribable | null;
   useDataFrames = false;
   panelData?: PanelData;
+  annotations?: any[];
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
