@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/thema"
 )
 
+// Coremodel contains the foundational schema declaration for datasources.
 type Coremodel struct {
 	lin thema.Lineage
 }
@@ -16,7 +17,7 @@ func (c *Coremodel) Schema() thema.Schema {
 	sch, err := c.lin.Schema(currentVersion)
 	if err != nil {
 		// Only reachable if our own schema currentVersion does not exist, which
-		// can only happen as a development error
+		// can really only happen transitionally during development
 		panic(err)
 	}
 	return sch

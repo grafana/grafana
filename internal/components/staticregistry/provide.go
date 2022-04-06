@@ -3,14 +3,27 @@ package staticregistry
 import (
 	"github.com/grafana/grafana/internal/components"
 	"github.com/grafana/grafana/internal/components/datasource"
+	datasourcecrd "github.com/grafana/grafana/internal/components/datasource/crd"
 )
 
 // ProvideRegistry provides a simple static Registry.
-// Coremodels have to be manually added to this Registry.
+// Coremodels have to be manually added.
+// TODO dynamism
 func ProvideRegistry(
-	datasourceModel *datasource.Coremodel,
+	datasource *datasource.Coremodel,
 ) (*components.Registry, error) {
-	return components.NewRegistry(
+	return components.NewCoremodelRegistry(
+		datasource,
+	)
+}
+
+// ProvideKubeModelRegistry provides a simple static KubeModelRegistry.
+// KubeModels must be manually added.
+// TODO dynamism
+func ProvideKubeModelRegistry(
+	datasourceModel *datasourcecrd.KubeModel,
+) (*components.KubeModelRegistry, error) {
+	return components.NewKubeModelRegistry(
 		datasourceModel,
 	)
 }

@@ -1,24 +1,29 @@
 package components
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 
-	"github.com/grafana/thema"
+	"github.com/grafana/grafana/pkg/schema"
 )
 
-// Registry is a registry of Coremodels.
+var (
+	// ErrModelAlreadyRegistered is returned when trying to register duplicate model to Registry.
+	ErrModelAlreadyRegistered = errors.New("error registering duplicate model")
+)
+
+// Registry is a registry of coremodels.
 type Registry struct {
 	lock     sync.RWMutex
 	models   []Coremodel
-	modelIdx map[string]Coremodel
+	modelIdx map[registryKey]Coremodel
 }
 
-// NewCoremodelRegistry returns a new KubeControllerRegistry with the provided KubeControllers.
-func NewCoremodelRegistry(models ...Coremodel) (*Registry, error) {
+// NewRegistry returns a new Registry with models.
+func NewRegistry(models ...Coremodel) (*Registry, error) {
 	r := &Registry{
 		models:   make([]Coremodel, 0, len(models)),
-		modelIdx: make(map[string]Coremodel, len(models)),
+		modelIdx: make(map[registryKey]Coremodel, len(models)),
 	}
 
 	if err := r.addModels(models); err != nil {
@@ -47,12 +52,7 @@ func (r *Registry) addModels(models []Coremodel) error {
 
 	// Update model index and return an error if trying to register a duplicate.
 	for _, m := range models {
-		k := m.Lineage().Name()
-
-		// Ensure assignability first. TODO will this blow up for dashboards?
-		if err := thema.AssignableTo(m.Current(), m.GoType()); err != nil {
-			return fmt.Errorf("%s schema version %v not assignable to provided Go type: %w", k, m.Current().Version(), err)
-		}
+		k := makeRegistryKey(m.Schema())
 
 		if _, ok := r.modelIdx[k]; ok {
 			return ErrModelAlreadyRegistered
@@ -69,4 +69,18 @@ func (r *Registry) addModels(models []Coremodel) error {
 	}
 
 	return nil
+}
+
+type registryKey struct {
+	modelName    string
+	groupName    string
+	groupVersion string
+}
+
+func makeRegistryKey(s schema.ObjectSchema) registryKey {
+	return registryKey{
+		modelName:    s.Name(),
+		groupName:    s.GroupName(),
+		groupVersion: s.GroupVersion(),
+	}
 }
