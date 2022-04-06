@@ -4,7 +4,7 @@
 
 ## Scope Glossary
 
-###`[ADMIN]`
+### `[ADMIN]`
 The ADMIN scope denotes a change that affect the structure and layout of this repository. This includes updates to the following:
 
 - CODEOWNERS
