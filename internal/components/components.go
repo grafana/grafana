@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/schema"
+	"github.com/grafana/thema"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -17,6 +18,12 @@ type Coremodel interface {
 	// RegisterController should optionally register coremodel's controller to the manager.
 	// If no controller is needed for the coremodel, it's safe to simply return nil from this method.
 	RegisterController(ctrl.Manager) error
+}
+
+type CoremodelBase interface {
+	Lineage() thema.Lineage
+	CurrentVersion() thema.SyntacticVersion
+	GoType() interface{}
 }
 
 // CoremodelProvider is a wire-friendly func that provides a coremodel.
