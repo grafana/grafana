@@ -1,7 +1,6 @@
 ---
 title: Create an API key in Grafana
 menuTitle: Create an API key
-aliases: [docs/sources/administration/service-accounts/create-api-key.md]
 description: 'How to create an API key in Grafana'
 weight: 50
 keywords:
@@ -23,12 +22,12 @@ Before you begin:
 
 - Ensure you have permission to create and edit API keys. For more information about permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
 
-1. In the Grafana console side menu, pause on the Configuration (gear) icon, then choose API Keys.
+1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
 1. Click **New API key**.
 1. Enter a unique name for the key.
 1. In the **Role** field, select one of the following access levels you want to assign to the key.
 
-- **Admin**: Enables a user to use APIs at the broadest, most powerful administrative level. 
+- **Admin**: Enables a user to use APIs at the broadest, most powerful administrative level.
 - **Editor** or **Viewer** to limit the key's users to those levels of power.
 
 1. For Time to live, specify how long you want the key to be valid. The maximum is 30 days (one month). You enter a number and a letter. The valid letters are s for seconds, m for minutes, h for hours, d for days, w for weeks, and M for month. For example, 12h is 12 hours and 1M is 1 month (30 days).

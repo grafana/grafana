@@ -2,7 +2,6 @@
 title: 'Service accounts in Grafana'
 menuTitle: 'Service accounts'
 description: 'This page contains information about service accounts in Grafana'
-aliases: [docs/sources/administration/service-accounts/_index.md]
 weight: 300
 keywords:
   - API keys
@@ -11,6 +10,6 @@ keywords:
 
 # Service accounts in Grafana
 
-A service account is generally a regular user account, but used to run automated or compute workloads with care for specific use cases.
+A service account can be used to run automated or compute workloads.
 
 {{< section >}}

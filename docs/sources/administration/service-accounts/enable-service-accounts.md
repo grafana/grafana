@@ -2,7 +2,6 @@
 title: 'Enable service accounts in Grafana'
 menuTitle: 'Enable service accounts'
 description: 'This topic shows you how to to enable the service accounts feature in Grafana'
-aliases: [docs/sources/administration/service-accounts/enable-service-accounts.md]
 weight: 40
 keywords:
   - Feature toggle
@@ -13,6 +12,7 @@ keywords:
 
 Service accounts are available behind the `service-accounts` feature toggle available in Grafana 9.0+.
 You can enable service accounts by:
+
 - modifying the Grafana configuration file, or
 - configuring an environment variable
 
