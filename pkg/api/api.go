@@ -4,7 +4,6 @@ package api
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -542,8 +541,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service.
-	avatarCacheServer := avatar.NewCacheServer(hs.Cfg)
-	r.Get("/avatar/:hash", avatarCacheServer.Handler)
+	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)
 
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.CreateDashboardSnapshot)

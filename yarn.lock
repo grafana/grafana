@@ -4321,7 +4321,7 @@ __metadata:
     sass: 1.27.0
     sass-loader: 8.0.2
     semver: ^7.1.3
-    simple-git: ^2.46.0
+    simple-git: ^3.5.0
     style-loader: 1.1.3
     terser-webpack-plugin: 2.3.7
     ts-jest: 26.4.4
@@ -33041,17 +33041,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"simple-git@npm:^2.46.0":
-  version: 2.47.0
-  resolution: "simple-git@npm:2.47.0"
-  dependencies:
-    "@kwsites/file-exists": ^1.1.1
-    "@kwsites/promise-deferred": ^1.1.1
-    debug: ^4.3.2
-  checksum: 0fefd12a2aaec9b27bcd13e713991769cab3eb185fcf0ad3e1afff17d34c63a7dbb80c4acd3220b2d9522dd9d171f84b237e6dedb4e17545c8bb7aadf746efb9
-  languageName: node
-  linkType: hard
-
 "simple-git@npm:^3.1.1":
   version: 3.4.0
   resolution: "simple-git@npm:3.4.0"
@@ -33060,6 +33049,17 @@ __metadata:
     "@kwsites/promise-deferred": ^1.1.1
     debug: ^4.3.3
   checksum: 9b05f05dcca69631317fdfa30288d342ac08b9822daea3a939c24fbbe24048ef768cae22e3e72b7a78c268635a63f72536e4530927c12d815a21be6e1e7a294e
+  languageName: node
+  linkType: hard
+
+"simple-git@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "simple-git@npm:3.5.0"
+  dependencies:
+    "@kwsites/file-exists": ^1.1.1
+    "@kwsites/promise-deferred": ^1.1.1
+    debug: ^4.3.3
+  checksum: be078d9e898d1dea99bb15d4f6927c0f61aafde73114c7423fb0efca6d6f99012da2a2f43b5e2151a1707994cc9c75139bc12e3d307dd25da48ed1dce1167748
   languageName: node
   linkType: hard
 

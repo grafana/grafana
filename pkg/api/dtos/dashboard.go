@@ -40,6 +40,7 @@ type AnnotationPermission struct {
 }
 
 type AnnotationActions struct {
+	CanAdd    bool `json:"canAdd"`
 	CanEdit   bool `json:"canEdit"`
 	CanDelete bool `json:"canDelete"`
 }

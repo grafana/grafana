@@ -79,21 +79,12 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const salt = "Salt"
 
-		login.ProvideService(sc.sqlStore, &logintest.LoginServiceFake{})
+		encoded, err := util.EncodePassword(password, salt)
+		require.NoError(t, err)
 
-		bus.AddHandler("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
-			encoded, err := util.EncodePassword(password, salt)
-			if err != nil {
-				return err
-			}
-			query.Result = &models.User{
-				Password: encoded,
-				Id:       id,
-				Salt:     salt,
-			}
-			return nil
-		})
-
+		sc.mockSQLStore.ExpectedUser = &models.User{Password: encoded, Id: id, Salt: salt}
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id}
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{})
 		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{UserId: query.UserId}
 			return nil

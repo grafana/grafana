@@ -10,7 +10,7 @@ import { FUNCTIONS } from '../syntax';
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
-export function getOperationDefintions(): QueryBuilderOperationDef[] {
+export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const aggregations = [
     LokiOperationId.Sum,
     LokiOperationId.Min,
@@ -18,6 +18,9 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     LokiOperationId.Avg,
     LokiOperationId.TopK,
     LokiOperationId.BottomK,
+    LokiOperationId.Stddev,
+    LokiOperationId.Stdvar,
+    LokiOperationId.Count,
   ].flatMap((opId) =>
     createAggregationOperation(opId, {
       addOperationHandler: addLokiOperation,
@@ -32,6 +35,14 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
     createRangeOperation(LokiOperationId.BytesRate),
     createRangeOperation(LokiOperationId.BytesOverTime),
     createRangeOperation(LokiOperationId.AbsentOverTime),
+    createRangeOperation(LokiOperationId.AvgOverTime),
+    createRangeOperation(LokiOperationId.MaxOverTime),
+    createRangeOperation(LokiOperationId.MinOverTime),
+    createRangeOperation(LokiOperationId.FirstOverTime),
+    createRangeOperation(LokiOperationId.LastOverTime),
+    createRangeOperation(LokiOperationId.StdvarOverTime),
+    createRangeOperation(LokiOperationId.StddevOverTime),
+    createRangeOperation(LokiOperationId.QuantileOverTime),
     ...aggregations,
     {
       id: LokiOperationId.Json,
@@ -55,7 +66,64 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted lables can be used in label filter expressions and used as values for a range aggregation via the unwrap operation. `,
+        `This will extract all keys and values from a [logfmt](https://grafana.com/docs/loki/latest/logql/log_queries/#logfmt) formatted log line as labels. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
+    },
+    {
+      id: LokiOperationId.Regexp,
+      name: 'Regexp',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: '<re>',
+          description: 'The regexp expression that matches the structure of a log line.',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | regexp \`${model.params[0]}\``,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `The [regexp parser](https://grafana.com/docs/loki/latest/logql/log_queries/#regular-expression) takes a single parameter | regexp "<re>" which is the regular expression using the Golang RE2 syntax. The regular expression must contain a least one named sub-match (e.g (?P<name>re)), each sub-match will extract a different label. The expression matches the structure of a log line. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
+    },
+    {
+      id: LokiOperationId.Pattern,
+      name: 'Pattern',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: '<pattern-expression>',
+          description: 'The expression that matches the structure of a log line.',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: (model, def, innerExpr) => `${innerExpr} | pattern \`${model.params[0]}\``,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `The [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern) allows the explicit extraction of fields from log lines by defining a pattern expression (| pattern \`<pattern-expression>\`). The expression matches the structure of a log line. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
+    },
+    {
+      id: LokiOperationId.Unpack,
+      name: 'Unpack',
+      params: [],
+      defaultParams: [],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.LineFormats,
+      renderer: pipelineRenderer,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will extract all keys and values from a JSON log line, [unpacking](https://grafana.com/docs/loki/latest/logql/log_queries/#unpack) all embedded labels in the pack stage. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
     },
     {
       id: LokiOperationId.LineFormat,
@@ -74,7 +142,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.LineFormats,
-      renderer: (model, def, innerExpr) => `${innerExpr} | line_format "${model.params[0]}"`,
+      renderer: (model, def, innerExpr) => `${innerExpr} | line_format \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
@@ -212,7 +280,7 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       category: LokiVisualQueryOperationCategory.LabelFilters,
       orderRank: LokiOperationOrder.NoErrors,
-      renderer: (model, def, innerExpr) => `${innerExpr} | __error__=""`,
+      renderer: (model, def, innerExpr) => `${innerExpr} | __error__=\`\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `Filter out all formatting and parsing errors.`,
     },
@@ -246,15 +314,28 @@ export function getOperationDefintions(): QueryBuilderOperationDef[] {
 }
 
 function createRangeOperation(name: string): QueryBuilderOperationDef {
+  const params = [getRangeVectorParamDef()];
+  const defaultParams = ['$__interval'];
+  let renderer = operationWithRangeVectorRenderer;
+
+  if (name === LokiOperationId.QuantileOverTime) {
+    defaultParams.push('0.95');
+    params.push({
+      name: 'Quantile',
+      type: 'number',
+    });
+    renderer = operationWithRangeVectorRendererAndParam;
+  }
+
   return {
     id: name,
     name: getPromAndLokiOperationDisplayName(name),
-    params: [getRangeVectorParamDef()],
-    defaultParams: ['$__interval'],
+    params,
+    defaultParams,
     alternativesKey: 'range function',
     category: LokiVisualQueryOperationCategory.RangeFunctions,
     orderRank: LokiOperationOrder.RangeVectorFunction,
-    renderer: operationWithRangeVectorRenderer,
+    renderer,
     addOperationHandler: addLokiOperation,
     explainHandler: (op, def) => {
       let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
@@ -285,6 +366,17 @@ function operationWithRangeVectorRenderer(
   return `${def.id}(${innerExpr} [${rangeVector}])`;
 }
 
+function operationWithRangeVectorRendererAndParam(
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDef,
+  innerExpr: string
+) {
+  const params = model.params ?? [];
+  const rangeVector = params[0] ?? '$__interval';
+  const param = params[1];
+  return `${def.id}(${param}, ${innerExpr} [${rangeVector}])`;
+}
+
 function getLineFilterRenderer(operation: string) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     if (model.params[0] === '') {
@@ -303,7 +395,7 @@ function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOper
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
-  return `${innerExpr} | ${model.params[0]}${model.params[1]}"${model.params[2]}"`;
+  return `${innerExpr} | ${model.params[0]}${model.params[1]}\`${model.params[2]}\``;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {

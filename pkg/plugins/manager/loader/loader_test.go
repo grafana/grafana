@@ -378,7 +378,7 @@ func TestLoader_Load(t *testing.T) {
 						Plugins:           []plugins.Dependency{},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory", DefaultNav: true},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
 						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 					},
 					Backend: false,
@@ -409,6 +409,60 @@ func TestLoader_Load(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLoader_setDefaultNavURL(t *testing.T) {
+	t.Run("When including a dashboard with DefaultNav: true", func(t *testing.T) {
+		pluginWithDashboard := &plugins.Plugin{
+			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
+				{
+					Type:       "dashboard",
+					DefaultNav: true,
+					UID:        "",
+				},
+			}},
+		}
+		logger := &fakeLogger{loggedLines: []string{}}
+		pluginWithDashboard.SetLogger(logger)
+
+		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
+			setDefaultNavURL(pluginWithDashboard)
+			require.Equal(t, "", pluginWithDashboard.DefaultNavURL)
+			require.Equal(t, []string{"Included dashboard is missing a UID field"}, logger.loggedLines)
+		})
+
+		t.Run("Default nav URL is set if dashboard UID field is set", func(t *testing.T) {
+			pluginWithDashboard.Includes[0].UID = "a1b2c3"
+
+			setDefaultNavURL(pluginWithDashboard)
+			require.Equal(t, "/d/a1b2c3", pluginWithDashboard.DefaultNavURL)
+		})
+	})
+
+	t.Run("When including a page with DefaultNav: true", func(t *testing.T) {
+		pluginWithPage := &plugins.Plugin{
+			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
+				{
+					Type:       "page",
+					DefaultNav: true,
+					Slug:       "testPage",
+				},
+			}},
+		}
+
+		t.Run("Default nav URL is set using slug", func(t *testing.T) {
+			setDefaultNavURL(pluginWithPage)
+			require.Equal(t, "/plugins/page/testPage", pluginWithPage.DefaultNavURL)
+		})
+
+		t.Run("Default nav URL is set using slugified Name field if Slug field is empty", func(t *testing.T) {
+			pluginWithPage.Includes[0].Slug = ""
+			pluginWithPage.Includes[0].Name = "My Test Page"
+
+			setDefaultNavURL(pluginWithPage)
+			require.Equal(t, "/plugins/page/my-test-page", pluginWithPage.DefaultNavURL)
+		})
+	})
 }
 
 func TestLoader_Load_MultiplePlugins(t *testing.T) {
@@ -1126,20 +1180,22 @@ func (*fakeLicensingService) FeatureEnabled(feature string) bool {
 
 type fakeLogger struct {
 	log.Logger
+
+	loggedLines []string
 }
 
-func (fl fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
+func (fl *fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
 	return &log.ConcreteLogger{}
 }
 
-func (fl fakeLogger) Info(_ string, _ ...interface{}) {
-
+func (fl *fakeLogger) Info(l string, _ ...interface{}) {
+	fl.loggedLines = append(fl.loggedLines, l)
 }
 
-func (fl fakeLogger) Debug(_ string, _ ...interface{}) {
-
+func (fl *fakeLogger) Debug(l string, _ ...interface{}) {
+	fl.loggedLines = append(fl.loggedLines, l)
 }
 
-func (fl fakeLogger) Warn(_ string, _ ...interface{}) {
-
+func (fl *fakeLogger) Warn(l string, _ ...interface{}) {
+	fl.loggedLines = append(fl.loggedLines, l)
 }
