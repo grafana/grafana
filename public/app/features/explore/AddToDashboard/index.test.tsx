@@ -68,7 +68,7 @@ describe('AddToDashboardButton', () => {
 
     it('Navigates to dashboard in a new tab when clicking on "Open in a new tab"', async () => {
       locationService.push = jest.fn();
-      global.open = jest.fn();
+      global.open = jest.fn(() => new Window());
 
       setup(<AddToDashboard exploreId={ExploreId.left} />);
 
@@ -78,8 +78,6 @@ describe('AddToDashboardButton', () => {
 
       await waitForAddToDashboardResponse();
 
-      expect(screen.queryByRole('dialog', { name: 'Add panel to dashboard' })).not.toBeInTheDocument();
-
       expect(global.open).toHaveBeenCalledWith(expect.anything(), '_blank');
       expect(locationService.push).not.toHaveBeenCalled();
     });
@@ -88,7 +86,7 @@ describe('AddToDashboardButton', () => {
   describe('Save to new dashboard', () => {
     describe('Navigate to correct dashboard when saving', () => {
       it('Opens the new dashboard in a new tab', async () => {
-        global.open = jest.fn();
+        global.open = jest.fn(() => new Window());
 
         setup(<AddToDashboard exploreId={ExploreId.left} />);
 
@@ -97,8 +95,6 @@ describe('AddToDashboardButton', () => {
         userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
         await waitForAddToDashboardResponse();
-
-        expect(screen.queryByRole('dialog', { name: 'Add panel to dashboard' })).not.toBeInTheDocument();
 
         expect(global.open).toHaveBeenCalledWith('dashboard/new', '_blank');
       });

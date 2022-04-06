@@ -1,7 +1,7 @@
-import React from 'react';
-import { Button, Field, InputControl, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
-import { addPanelToDashboard } from './addToDashboard';
+import React, { useState } from 'react';
+import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, locationUtil, SelectableValue } from '@grafana/data';
+import { addPanelToDashboard, AddToDashboardError } from './addToDashboard';
 import { useSelector } from 'react-redux';
 import { ExploreId } from 'app/types';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -49,14 +49,24 @@ function assertIsSaveToExistingDashboardError(
   // when we use it in the form.
 }
 
-function openDashboard(openInNewTab: boolean, dashboardUid?: string) {
-  const url = dashboardUid ? `d/${dashboardUid}` : 'dashboard/new';
+function getDashboardURL(dashboardUid?: string) {
+  return dashboardUid ? `d/${dashboardUid}` : 'dashboard/new';
+}
 
-  if (!openInNewTab) {
-    locationService.push(url);
-  } else {
-    global.open(config.appUrl + url, '_blank');
-  }
+function getStyles(theme: GrafanaTheme2) {
+  return css`
+    margin-bottom: ${theme.spacing(2)};
+  `;
+}
+
+enum GenericError {
+  UNKNOWN = 'unknown-error',
+  NAVIGATION = 'navigation-error',
+}
+
+interface SubmissionError {
+  error: AddToDashboardError | GenericError;
+  message: string;
 }
 
 interface Props {
@@ -66,11 +76,7 @@ interface Props {
 
 export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
-  const radioGroupStyles = useStyles2(
-    (theme) => css`
-      margin-bottom: ${theme.spacing(2)};
-    `
-  );
+  const [submissionError, setSubmissionError] = useState<SubmissionError | undefined>();
   const {
     handleSubmit,
     control,
@@ -80,18 +86,52 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     defaultValues: { saveTarget: SaveTarget.NewDashboard },
   });
   const saveTarget = watch('saveTarget');
+  const radioGroupStyles = useStyles2(getStyles);
 
   const onSubmit = async (openInNewTab: boolean, data: FormDTO) => {
+    setSubmissionError(undefined);
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
-    addPanelToDashboard({
-      dashboardUid,
-      datasource: exploreItem.datasourceInstance?.getRef(),
-      queries: exploreItem.queries,
-      queryResponse: exploreItem.queryResponse,
-    });
 
+    try {
+      await addPanelToDashboard({
+        dashboardUid,
+        datasource: exploreItem.datasourceInstance?.getRef(),
+        queries: exploreItem.queries,
+        queryResponse: exploreItem.queryResponse,
+      });
+    } catch (error) {
+      switch (error) {
+        case AddToDashboardError.FETCH_DASHBOARD:
+          setSubmissionError({ error, message: 'Could not fetch dashboard information. Please try again.' });
+          break;
+        case AddToDashboardError.SET_DASHBOARD_LS:
+          setSubmissionError({ error, message: 'Could not add panel to dashboard. Please try again.' });
+          break;
+        default:
+          setSubmissionError({ error: GenericError.UNKNOWN, message: 'Something went wrong. Please try again.' });
+      }
+      return;
+    }
+
+    const dashboardURL = getDashboardURL(dashboardUid);
+    if (!openInNewTab) {
+      onClose();
+      locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
+      return;
+    }
+
+    const didTabOpen = !!global.open(config.appUrl + dashboardURL, '_blank');
+    if (!didTabOpen) {
+      setSubmissionError({
+        error: GenericError.NAVIGATION,
+        message: 'Could not navigate to the selected dashboard. Please try again.',
+      });
+      // TODO: the dashboard is saved in localStorage but we weren't able to navigate to it.
+      // if the user navigates to the a dashboard it will pick up the Explore panel.
+      // should we try to clear the storage?
+      return;
+    }
     onClose();
-    openDashboard(openInNewTab, dashboardUid);
   };
 
   return (
@@ -132,6 +172,12 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
               />
             );
           })()}
+
+        {submissionError && (
+          <Alert severity="error" title="Error adding the panel">
+            {submissionError.message}
+          </Alert>
+        )}
 
         <Modal.ButtonRow>
           <Button type="reset" onClick={onClose} fill="outline" variant="secondary">

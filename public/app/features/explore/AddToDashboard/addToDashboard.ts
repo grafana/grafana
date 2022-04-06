@@ -4,7 +4,12 @@ import {
   getNewDashboardModelData,
   setDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
-import { ExplorePanelData } from 'app/types';
+import { DashboardDTO, ExplorePanelData } from 'app/types';
+
+export enum AddToDashboardError {
+  FETCH_DASHBOARD = 'fetch-dashboard',
+  SET_DASHBOARD_LS = 'set-dashboard-ls-error',
+}
 
 interface AddPanelToDashboardOptions {
   queries: DataQuery[];
@@ -13,7 +18,7 @@ interface AddPanelToDashboardOptions {
   dashboardUid?: string;
 }
 
-function createDashboard() {
+function createDashboard(): DashboardDTO {
   const dto = getNewDashboardModelData();
 
   // getNewDashboardModelData adds by default the "add-panel" panel. We don't want that.
@@ -32,11 +37,25 @@ export async function addPanelToDashboard(options: AddPanelToDashboardOptions) {
     datasource: options.datasource,
   };
 
-  const dto = options.dashboardUid ? await backendSrv.getDashboardByUid(options.dashboardUid) : createDashboard();
+  let dto: DashboardDTO;
+
+  if (options.dashboardUid) {
+    try {
+      dto = await backendSrv.getDashboardByUid(options.dashboardUid);
+    } catch (e) {
+      throw AddToDashboardError.FETCH_DASHBOARD;
+    }
+  }
+
+  dto = createDashboard();
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
 
-  setDashboardToFetchFromLocalStorage(dto);
+  try {
+    setDashboardToFetchFromLocalStorage(dto);
+  } catch {
+    throw AddToDashboardError.SET_DASHBOARD_LS;
+  }
 }
 
 const isVisible = (query: DataQuery) => !query.hide;
