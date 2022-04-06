@@ -23,7 +23,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg) *Service {
 	}
 }
 
-func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preferences, error) {
+func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
 	listQuery := &pref.ListPreferenceQuery{
 		Teams:  query.Teams,
 		OrgID:  query.OrgID,
@@ -45,8 +45,8 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		if p.WeekStart != "" {
 			res.WeekStart = p.WeekStart
 		}
-		if p.HomeDashboardId != 0 {
-			res.HomeDashboardId = p.HomeDashboardId
+		if p.HomeDashboardID != 0 {
+			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JsonData != nil {
 			res.JsonData = p.JsonData
@@ -56,7 +56,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 	return res, err
 }
 
-func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preferences, error) {
+func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
 	prefs, err := s.store.Get(ctx, query)
 	if err != nil && err != pref.ErrPrefNotFound {
 		return nil, err
@@ -69,7 +69,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
-	var preference *pref.Preferences
+	var preference *pref.Preference
 	var exist bool
 	prefs, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
 		OrgID:  cmd.OrgID,
@@ -81,10 +81,10 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if err == pref.ErrPrefNotFound {
-		preference = &pref.Preferences{
-			UserId:   cmd.UserID,
-			OrgId:    cmd.OrgID,
-			TeamId:   cmd.TeamID,
+		preference = &pref.Preference{
+			UserID:   cmd.UserID,
+			OrgID:    cmd.OrgID,
+			TeamID:   cmd.TeamID,
 			Created:  time.Now(),
 			JsonData: &pref.PreferencesJsonData{},
 		}
@@ -101,8 +101,8 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		}
 	}
 
-	if cmd.HomeDashboardId != nil {
-		preference.HomeDashboardId = *cmd.HomeDashboardId
+	if cmd.HomeDashboardID != nil {
+		preference.HomeDashboardID = *cmd.HomeDashboardID
 	}
 
 	if cmd.Timezone != nil {
@@ -133,12 +133,12 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	return s.store.Upsert(ctx, preference, exist)
 }
 
-func (s *Service) GetDefaults() *pref.Preferences {
-	defaults := &pref.Preferences{
+func (s *Service) GetDefaults() *pref.Preference {
+	defaults := &pref.Preference{
 		Theme:           s.cfg.DefaultTheme,
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
 		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
-		HomeDashboardId: 0,
+		HomeDashboardID: 0,
 		JsonData:        &pref.PreferencesJsonData{},
 	}
 

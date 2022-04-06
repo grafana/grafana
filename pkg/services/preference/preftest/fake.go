@@ -7,7 +7,7 @@ import (
 )
 
 type FakePreferenceService struct {
-	ExpectedPreference *pref.Preferences
+	ExpectedPreference *pref.Preference
 	ExpectedError      error
 }
 
@@ -15,11 +15,11 @@ func NewPreferenceServiceFake() *FakePreferenceService {
 	return &FakePreferenceService{}
 }
 
-func (f *FakePreferenceService) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preferences, error) {
+func (f *FakePreferenceService) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
 	return f.ExpectedPreference, f.ExpectedError
 }
 
-func (f *FakePreferenceService) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preferences, error) {
+func (f *FakePreferenceService) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
 	return f.ExpectedPreference, f.ExpectedError
 }
 
@@ -27,13 +27,13 @@ func (f *FakePreferenceService) Save(ctx context.Context, cmd *pref.SavePreferen
 	return f.ExpectedError
 }
 
-func (f *FakePreferenceService) GetDefaults() *pref.Preferences {
+func (f *FakePreferenceService) GetDefaults() *pref.Preference {
 	return f.ExpectedPreference
 }
 
 type FakePreferenceStore struct {
-	ExpectedPreference      *pref.Preferences
-	ExpectedListPreferences []*pref.Preferences
+	ExpectedPreference      *pref.Preference
+	ExpectedListPreferences []*pref.Preference
 	ExpectedError           error
 }
 
@@ -41,11 +41,11 @@ func NewPreferenceStoreFake() *FakePreferenceStore {
 	return &FakePreferenceStore{}
 }
 
-func (f *FakePreferenceStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([]*pref.Preferences, error) {
+func (f *FakePreferenceStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([]*pref.Preference, error) {
 	return f.ExpectedListPreferences, f.ExpectedError
 }
 
-func (f *FakePreferenceStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preferences, error) {
+func (f *FakePreferenceStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
 	return f.ExpectedPreference, f.ExpectedError
 }
 
@@ -53,6 +53,6 @@ func (f *FakePreferenceStore) Set(ctx context.Context, cmd *pref.SavePreferenceC
 	return f.ExpectedError
 }
 
-func (f *FakePreferenceStore) Upsert(ctx context.Context, cmd *pref.Preferences, exist bool) error {
+func (f *FakePreferenceStore) Upsert(ctx context.Context, cmd *pref.Preference, exist bool) error {
 	return f.ExpectedError
 }

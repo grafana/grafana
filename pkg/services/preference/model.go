@@ -9,13 +9,13 @@ import (
 
 var ErrPrefNotFound = errors.New("preference not found")
 
-type Preferences struct {
+type Preference struct {
 	Id              int64
-	OrgId           int64
-	UserId          int64
-	TeamId          int64
+	OrgID           int64 `xorm:"org_id"`
+	UserID          int64 `xorm:"user_id"`
+	TeamID          int64 `xorm:"team_id"`
 	Version         int
-	HomeDashboardId int64
+	HomeDashboardID int64 `xorm:"home_dashboard_id"`
 	Timezone        string
 	WeekStart       string
 	Theme           string
@@ -41,7 +41,7 @@ type SavePreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardId int64             `json:"homeDashboardId,omitempty"`
+	HomeDashboardID int64             `json:"homeDashboardId,omitempty"`
 	Timezone        string            `json:"timezone,omitempty"`
 	WeekStart       string            `json:"weekStart,omitempty"`
 	Theme           string            `json:"theme,omitempty"`
@@ -59,7 +59,7 @@ type PatchPreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardId *int64            `json:"homeDashboardId,omitempty"`
+	HomeDashboardID *int64            `json:"homeDashboardId,omitempty"`
 	Timezone        *string           `json:"timezone,omitempty"`
 	WeekStart       *string           `json:"weekStart,omitempty"`
 	Theme           *string           `json:"theme,omitempty"`
@@ -67,7 +67,7 @@ type PatchPreferenceCommand struct {
 }
 
 type NavLink struct {
-	Id     string `json:"id,omitempty"`
+	ID     string `json:"id,omitempty"`
 	Text   string `json:"text,omitempty"`
 	Url    string `json:"url,omitempty"`
 	Target string `json:"target,omitempty"`
@@ -94,3 +94,5 @@ func (j *PreferencesJsonData) ToDB() ([]byte, error) {
 
 	return json.Marshal(j)
 }
+
+func (p Preference) TableName() string { return "preferences" }

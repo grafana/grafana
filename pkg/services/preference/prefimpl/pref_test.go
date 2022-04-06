@@ -20,28 +20,28 @@ func TestPreferencesService(t *testing.T) {
 	emptyNavbarPreferences := pref.NavbarPreference{}
 	userNavbarPreferences := pref.NavbarPreference{
 		SavedItems: []pref.NavLink{{
-			Id:   "explore",
+			ID:   "explore",
 			Text: "Explore",
 			Url:  "/explore",
 		}},
 	}
 	orgNavbarPreferences := pref.NavbarPreference{
 		SavedItems: []pref.NavLink{{
-			Id:   "alerting",
+			ID:   "alerting",
 			Text: "Alerting",
 			Url:  "/alerting",
 		}},
 	}
 	team1NavbarPreferences := pref.NavbarPreference{
 		SavedItems: []pref.NavLink{{
-			Id:   "dashboards",
+			ID:   "dashboards",
 			Text: "Dashboards",
 			Url:  "/dashboards",
 		}},
 	}
 	team2NavbarPreferences := pref.NavbarPreference{
 		SavedItems: []pref.NavLink{{
-			Id:   "home",
+			ID:   "home",
 			Text: "Home",
 			Url:  "/home",
 		}},
@@ -69,10 +69,10 @@ func TestPreferencesService(t *testing.T) {
 		prefService.cfg.DateFormats.DefaultTimezone = "UTC"
 
 		preferences := prefService.GetDefaults()
-		expected := &pref.Preferences{
+		expected := &pref.Preference{
 			Theme:           "light",
 			Timezone:        "UTC",
-			HomeDashboardId: 0,
+			HomeDashboardID: 0,
 			JsonData:        &pref.PreferencesJsonData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
@@ -81,17 +81,17 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("GetDefaults with no saved preferences should return defaults", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{
+		prefStoreFake.ExpectedPreference = &pref.Preference{
 			Theme:    "light",
 			Timezone: "UTC",
 		}
 		query := &pref.GetPreferenceWithDefaultsQuery{}
 		preferences, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
-		expected := &pref.Preferences{
+		expected := &pref.Preference{
 			Theme:           "light",
 			Timezone:        "UTC",
-			HomeDashboardId: 0,
+			HomeDashboardID: 0,
 			JsonData:        &emptyPreferencesJsonData,
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
@@ -100,18 +100,18 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("GetWithDefaults with saved org and user home dashboard should return user home dashboard", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{}
-		prefStoreFake.ExpectedListPreferences = []*pref.Preferences{
+		prefStoreFake.ExpectedPreference = &pref.Preference{}
+		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
-				OrgId:           1,
-				HomeDashboardId: 1,
+				OrgID:           1,
+				HomeDashboardID: 1,
 				Theme:           "dark",
 				Timezone:        "UTC",
 			},
 			{
-				OrgId:           1,
-				UserId:          1,
-				HomeDashboardId: 4,
+				OrgID:           1,
+				UserID:          1,
+				HomeDashboardID: 4,
 				Theme:           "light",
 				WeekStart:       "1",
 			},
@@ -119,11 +119,11 @@ func TestPreferencesService(t *testing.T) {
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
 		preferences, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
-		expected := &pref.Preferences{
+		expected := &pref.Preference{
 			Theme:           "light",
 			Timezone:        "UTC",
 			WeekStart:       "1",
-			HomeDashboardId: 4,
+			HomeDashboardID: 4,
 			JsonData:        &pref.PreferencesJsonData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
@@ -132,33 +132,33 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("GetWithDefaults with saved org and other user home dashboard should return org home dashboard", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{}
-		prefStoreFake.ExpectedListPreferences = []*pref.Preferences{
+		prefStoreFake.ExpectedPreference = &pref.Preference{}
+		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
-				OrgId:           1,
-				HomeDashboardId: 1,
+				OrgID:           1,
+				HomeDashboardID: 1,
 				Theme:           "dark",
 				Timezone:        "UTC",
 				WeekStart:       "1",
 			},
 			{
-				OrgId:           1,
-				UserId:          1,
-				HomeDashboardId: 4,
+				OrgID:           1,
+				UserID:          1,
+				HomeDashboardID: 4,
 				Theme:           "light",
 				Timezone:        "browser",
 				WeekStart:       "2",
 			},
 		}
-		prefService.GetDefaults().HomeDashboardId = 1
+		prefService.GetDefaults().HomeDashboardID = 1
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 2}
 		preferences, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
-		expected := &pref.Preferences{
+		expected := &pref.Preference{
 			Theme:           "light",
 			Timezone:        "browser",
 			WeekStart:       "2",
-			HomeDashboardId: 4,
+			HomeDashboardID: 4,
 			JsonData:        &pref.PreferencesJsonData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
@@ -167,22 +167,22 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("GetPreferencesWithDefaults with saved org and user json data should return user json data", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{}
-		prefStoreFake.ExpectedListPreferences = []*pref.Preferences{
+		prefStoreFake.ExpectedPreference = &pref.Preference{}
+		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
-				OrgId:    1,
+				OrgID:    1,
 				JsonData: &orgPreferencesJsonData,
 			},
 			{
-				OrgId:    1,
-				UserId:   1,
+				OrgID:    1,
+				UserID:   1,
 				JsonData: &userPreferencesJsonData,
 			},
 		}
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
-		require.Equal(t, &pref.Preferences{
+		require.Equal(t, &pref.Preference{
 			Theme:    "light",
 			JsonData: &userPreferencesJsonData,
 			Timezone: "UTC",
@@ -190,8 +190,8 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	// t.Run("GetPreferencesWithDefaults with saved org, other teams and user home dashboard should return org home dashboard", func(t *testing.T) {
-	// 	prefStoreFake.ExpectedPreference = &pref.Preferences{}
-	// 	prefStoreFake.ExpectedListPreferences = []*pref.Preferences{
+	// 	prefStoreFake.ExpectedPreference = &pref.Preference{}
+	// 	prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 	// 		{
 	// 			OrgId:           1,
 	// 			HomeDashboardId: 1,
@@ -223,20 +223,20 @@ func TestPreferencesService(t *testing.T) {
 
 	t.Run("GetWithDefaults with saved org and teams json data should return last team json data", func(t *testing.T) {
 
-		prefStoreFake.ExpectedPreference = &pref.Preferences{}
-		prefStoreFake.ExpectedListPreferences = []*pref.Preferences{
+		prefStoreFake.ExpectedPreference = &pref.Preference{}
+		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
-				OrgId:    1,
+				OrgID:    1,
 				JsonData: &orgPreferencesJsonData,
 			},
 			{
-				OrgId:    1,
-				TeamId:   2,
+				OrgID:    1,
+				TeamID:   2,
 				JsonData: &team1PreferencesJsonData,
 			},
 			{
-				OrgId:    1,
-				TeamId:   3,
+				OrgID:    1,
+				TeamID:   3,
 				JsonData: &team2PreferencesJsonData,
 			},
 		}
@@ -245,7 +245,7 @@ func TestPreferencesService(t *testing.T) {
 		}
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
-		require.Equal(t, &pref.Preferences{
+		require.Equal(t, &pref.Preference{
 			Timezone: "UTC",
 			Theme:    "light",
 			JsonData: &team2PreferencesJsonData,
@@ -253,22 +253,22 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("GetWithDefaults with saved org and teams home dashboard should return last team home dashboard", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{
+		prefStoreFake.ExpectedPreference = &pref.Preference{
 			Theme:    "dark",
 			Timezone: "UTC",
 		}
-		prefStoreFake.ExpectedListPreferences = []*pref.Preferences{
+		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
-				OrgId:           1,
-				HomeDashboardId: 1,
+				OrgID:           1,
+				HomeDashboardID: 1,
 				Theme:           "light",
 				Timezone:        "browser",
 				WeekStart:       "1",
 			},
 			{
-				OrgId:           1,
-				UserId:          1,
-				HomeDashboardId: 4,
+				OrgID:           1,
+				UserID:          1,
+				HomeDashboardID: 4,
 				Theme:           "light",
 				Timezone:        "browser",
 				WeekStart:       "2",
@@ -278,11 +278,11 @@ func TestPreferencesService(t *testing.T) {
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, Teams: []int64{2, 3}}
 		preferences, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
-		expected := &pref.Preferences{
+		expected := &pref.Preference{
 			Theme:           "light",
 			Timezone:        "browser",
 			WeekStart:       "2",
-			HomeDashboardId: 4,
+			HomeDashboardID: 4,
 			JsonData:        &pref.PreferencesJsonData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
@@ -291,8 +291,8 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("SavePreferences for a user should store correct values", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{
-			HomeDashboardId: 5,
+		prefStoreFake.ExpectedPreference = &pref.Preference{
+			HomeDashboardID: 5,
 			Timezone:        "browser",
 			WeekStart:       "1",
 			Theme:           "dark",
@@ -301,15 +301,15 @@ func TestPreferencesService(t *testing.T) {
 			&pref.SavePreferenceCommand{
 				Theme:           "dark",
 				Timezone:        "browser",
-				HomeDashboardId: 5,
+				HomeDashboardID: 5,
 				WeekStart:       "1"},
 		)
 		require.NoError(t, err)
 	})
 
 	t.Run("Get for a user should store correct values", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{
-			HomeDashboardId: 5,
+		prefStoreFake.ExpectedPreference = &pref.Preference{
+			HomeDashboardID: 5,
 			Timezone:        "browser",
 			WeekStart:       "1",
 			Theme:           "dark",
@@ -317,10 +317,10 @@ func TestPreferencesService(t *testing.T) {
 		preference, err := prefService.Get(context.Background(), &pref.GetPreferenceQuery{})
 		require.NoError(t, err)
 
-		expected := &pref.Preferences{
+		expected := &pref.Preference{
 			Id:              preference.Id,
 			Version:         preference.Version,
-			HomeDashboardId: 5,
+			HomeDashboardID: 5,
 			Timezone:        "browser",
 			WeekStart:       "1",
 			Theme:           "dark",
@@ -333,8 +333,8 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("Patch for a user should store correct values", func(t *testing.T) {
-		prefStoreFake.ExpectedPreference = &pref.Preferences{
-			HomeDashboardId: 5,
+		prefStoreFake.ExpectedPreference = &pref.Preference{
+			HomeDashboardID: 5,
 			Timezone:        "browser",
 			WeekStart:       "1",
 			Theme:           "dark",
