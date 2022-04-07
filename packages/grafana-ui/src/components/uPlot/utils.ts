@@ -42,119 +42,13 @@ interface StackMeta {
 }
 
 /** @internal */
-export function preparePlotData(
-  frames: DataFrame[],
-  onStackMeta?: (meta: StackMeta) => void,
-  legend?: VizLegendOptions
-): AlignedData {
-  const frame = frames[0];
-  const result: any[] = [];
-  const stackingGroups: Map<string, number[]> = new Map();
-  for (let i = 0; i < frame.fields.length; i++) {
-    const f = frame.fields[i];
-
-    if (f.type === FieldType.time) {
-      result.push(ensureTimeField(f).values.toArray());
-      continue;
-    }
-
-    collectStackingGroups(f, stackingGroups, i);
-    const customConfig: GraphFieldConfig = f.config.custom || {};
-
-    const values = f.values.toArray();
-
-    if (customConfig.transform === GraphTransform.NegativeY) {
-      result.push(values.map((v) => (v == null ? v : v * -1)));
-    } else if (customConfig.transform === GraphTransform.Constant) {
-      result.push(new Array(values.length).fill(values[0]));
-    } else {
-      result.push(values);
-    }
-  }
-
-  // Stacking
-  if (stackingGroups.size !== 0) {
-    const byPct = frame.fields[1].config.custom?.stacking?.mode === StackingMode.Percent;
-    const dataLength = result[0].length;
-    const alignedTotals = Array(stackingGroups.size);
-    alignedTotals[0] = null;
-
-    // array or stacking groups
-    for (const [_, seriesIds] of stackingGroups.entries()) {
-      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
-      const noValueStack = Array(dataLength).fill(true);
-      const groupTotals = byPct ? Array(dataLength).fill(0) : null;
-
-      if (byPct) {
-        for (let j = 0; j < seriesIdxs.length; j++) {
-          const currentlyStacking = result[seriesIdxs[j]];
-
-          for (let k = 0; k < dataLength; k++) {
-            const v = currentlyStacking[k];
-            groupTotals![k] += v == null ? 0 : +v;
-          }
-        }
-      }
-
-      const acc = Array(dataLength).fill(0);
-
-      for (let j = 0; j < seriesIdxs.length; j++) {
-        let seriesIdx = seriesIdxs[j];
-
-        alignedTotals[seriesIdx] = groupTotals;
-
-        const currentlyStacking = result[seriesIdx];
-
-        for (let k = 0; k < dataLength; k++) {
-          const v = currentlyStacking[k];
-          if (v != null && noValueStack[k]) {
-            noValueStack[k] = false;
-          }
-          acc[k] += v == null ? 0 : v / (byPct ? groupTotals![k] : 1);
-        }
-
-        result[seriesIdx] = acc.slice().map((v, i) => (noValueStack[i] ? null : v));
-      }
-    }
-
-    onStackMeta &&
-      onStackMeta({
-        totals: alignedTotals as AlignedData,
-      });
-  }
-
-  return result as AlignedData;
-}
-
-export function collectStackingGroups(f: Field, groups: Map<string, number[]>, seriesIdx: number) {
-  const customConfig = f.config.custom;
-  if (!customConfig) {
-    return;
-  }
-  if (
-    customConfig.stacking?.mode !== StackingMode.None &&
-    customConfig.stacking?.group &&
-    !customConfig.hideFrom?.viz
-  ) {
-    const group =
-      customConfig.transform === GraphTransform.NegativeY
-        ? `${INTERNAL_NEGATIVE_Y_PREFIX}-${customConfig.stacking.group}`
-        : customConfig.stacking.group;
-
-    if (!groups.has(group)) {
-      groups.set(group, [seriesIdx]);
-    } else {
-      groups.set(group, groups.get(group)!.concat(seriesIdx));
-    }
-  }
-}
-
 export interface StackingGroup {
   series: number[];
   dir: number;
 }
 
 // generates bands between adjacent group series
+/** @internal */
 export function getStackingBands(group: StackingGroup) {
   let bands: uPlot.Band[] = [];
   let { series, dir } = group;
@@ -177,6 +71,7 @@ export function getStackingBands(group: StackingGroup) {
 }
 
 // expects an AlignedFrame
+/** @internal */
 export function getStackingGroups(frame: DataFrame) {
   let groups: Map<string, StackingGroup> = new Map();
 
@@ -198,7 +93,13 @@ export function getStackingGroups(frame: DataFrame) {
       return;
     }
 
-    let { mode: stackingMode, group: stackingGroup } = custom.stacking;
+    let { stacking } = custom;
+
+    if (stacking == null) {
+      return;
+    }
+
+    let { mode: stackingMode, group: stackingGroup } = stacking;
 
     // not stacking
     if (stackingMode === StackingMode.None) {
@@ -274,7 +175,8 @@ export function preparePlotData2(
 
     let { custom } = field.config;
 
-    if (!custom) {
+    if (!custom || custom.hideFrom?.viz) {
+      data[i] = vals;
       return;
     }
 
@@ -293,10 +195,18 @@ export function preparePlotData2(
       }
     }
 
-    if (custom.stacking.mode === StackingMode.None) {
+    let stackingMode = custom.stacking?.mode;
+
+    if (!stackingMode || stackingMode === StackingMode.None) {
       data[i] = vals;
     } else {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
+
+      // if (stackIdx === -1) {
+      //   data[i] = vals;
+      //   return;
+      // }
+
       let accum = accums[stackIdx];
       let stacked = (data[i] = Array(dataLen));
 
@@ -319,11 +229,13 @@ export function preparePlotData2(
 
   // re-compute by percent
   frame.fields.forEach((field, i) => {
-    if (i === 0) {
+    if (i === 0 || field.config.custom?.hideFrom?.viz) {
       return;
     }
 
-    if (field.config.custom?.stacking.mode === StackingMode.Percent) {
+    let stackingMode = field.config.custom?.stacking?.mode;
+
+    if (stackingMode === StackingMode.Percent) {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
       let accum = accums[stackIdx];
       let group = stackingGroups[stackIdx];
@@ -407,23 +319,3 @@ export const pluginLogger = createLogger('uPlot');
 export const pluginLog = pluginLogger.logger;
 // pluginLogger.enable();
 attachDebugger('graphng', undefined, pluginLogger);
-
-type OrderIdsByCalcsOptions = {
-  legend?: VizLegendOptions;
-  ids: number[];
-  frame: DataFrame;
-};
-export function orderIdsByCalcs({ legend, ids, frame }: OrderIdsByCalcsOptions) {
-  if (!legend?.sortBy || legend.sortDesc == null) {
-    return ids;
-  }
-  const orderedIds = orderBy<number>(
-    ids,
-    (id) => {
-      return frame.fields[id].state?.calcs?.[legend.sortBy!.toLowerCase()];
-    },
-    legend.sortDesc ? 'desc' : 'asc'
-  );
-
-  return orderedIds;
-}
