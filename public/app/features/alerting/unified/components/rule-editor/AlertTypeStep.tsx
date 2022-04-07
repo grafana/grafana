@@ -146,7 +146,12 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             invalid={!!errors.group?.message}
             data-testid="group"
           >
-            <Input id="group" {...register('group')} />
+            <Input
+              id="group"
+              {...register('group', {
+                required: { value: true, message: 'Must enter a group name' },
+              })}
+            />
           </Field>
         </div>
       )}
