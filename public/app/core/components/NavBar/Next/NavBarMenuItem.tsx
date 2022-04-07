@@ -14,7 +14,6 @@ export interface Props {
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
-  showIconInNavbar?: boolean;
 }
 
 export function NavBarMenuItem({
