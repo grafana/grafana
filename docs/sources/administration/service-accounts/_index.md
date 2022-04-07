@@ -10,6 +10,6 @@ keywords:
 
 # Service accounts in Grafana
 
-A service account can be used to run automated or compute workloads.
+You can use service accounts to run automated or compute workloads.
 
 {{< section >}}

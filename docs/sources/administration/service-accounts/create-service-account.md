@@ -9,11 +9,11 @@ keywords:
 
 # Create a service account in Grafana
 
-A service account is a user account that can be used to run automated or compute workloads. For more information, refer to [About service accounts]({{< relref "../service-accounts/about-service-accounts.md#">}}).
+A service account is a user account that you can use to run automated or compute workloads. For more information about how you can use service accounts, refer to [About service accounts]({{< relref "../service-accounts/about-service-accounts.md#">}}).
 
 For more information about creating service accounts via the API, refer to [Create service account via API]({{< relref "../../http_api/serviceaccount.md#create-service-account">}}).
 
-Before you begin:
+## Before you begin
 
 - Ensure you have added the feature toggle for service accounts `service-accounts`. [Enable service accounts]({{< relref "./enable-service-accounts.md#">}})
 - Ensure you have permission to create and edit service accounts, for more information refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}})

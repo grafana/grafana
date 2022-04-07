@@ -10,13 +10,13 @@ keywords:
 
 # Create an API key in Grafana
 
-To manage your computed workload with a user that is not tied to a user specifically.
+Create an API key when you want to manage your computed workload with a user that is not associated with a user.
 
-For more information about API keys refer to [About API keys in Grafana]({{< relref "./about-api-keys.md">}}).
+For more information about API keys, refer to [About API keys in Grafana]({{< relref "./about-api-keys.md">}}).
 
 For more information about creating API keys via the API, refer to [Create API key via API]({{< relref "../../http_api/create-api-tokens-for-org.md#how-to-create-a-new-organization-and-an-api-token">}}).
 
-Before you begin:
+## Before you begin:
 
 **To create an API key:**
 
@@ -34,4 +34,4 @@ Before you begin:
 
 - If you are unsure about how long an API key should be valid, we recommend that you choose a short duration, such as a few hours. This approach limits the risk of having API keys that are valid for a long time.
 
-1. Choose Add.
+1. Click **Add**.
