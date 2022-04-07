@@ -26,7 +26,7 @@ For more information about creating service accounts via the API, refer to [Crea
 1. Enter a display name.
 
 - This name needs to be unique to start with, as it determines the id.
-- We recommend that you use a consistent naming convention when you name service accounts. A consistent naming convention can help you scale and maintain service accounts in the future.
+  - We recommend that you use a consistent naming convention when you name service accounts. A consistent naming convention can help you scale and maintain service accounts in the future.
 - Do not worry about the naming you can change this name later.
 
 1. Click **Create service account**.
