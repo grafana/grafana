@@ -143,11 +143,6 @@ require (
 )
 
 require (
-	github.com/google/subcommands v1.0.1 // indirect
-	golang.org/x/mod v0.5.0 // indirect
-)
-
-require (
 	cloud.google.com/go v0.99.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0 // indirect
