@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
-    "clean": "rimraf ./dist ./compiled tsconfig.tsbuildinfo",
+    "clean": "rimraf ./dist ./compiled",
     "precommit": "npm run lint & npm run typecheck",
     "typecheck": "tsc --noEmit"
   },
