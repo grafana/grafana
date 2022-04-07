@@ -231,7 +231,6 @@ See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explana
 | Action               | Scope              |
 | -------------------- | ------------------ |
 | serviceaccounts:read | serviceaccounts:\* |
-| apikeys:read         | apikeys:\*         |
 
 **Example Request**:
 
@@ -274,7 +273,6 @@ See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explana
 | Action                | Scope              |
 | --------------------- | ------------------ |
 | serviceaccounts:write | serviceaccounts:\* |
-| apikeys:write         | apikeys:\*         |
 
 **Example Request**:
 
@@ -316,7 +314,6 @@ See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explana
 | Action                | Scope              |
 | --------------------- | ------------------ |
 | serviceaccounts:write | serviceaccounts:\* |
-| apikeys:write         | apikeys:\*         |
 
 **Example Request**:
 
