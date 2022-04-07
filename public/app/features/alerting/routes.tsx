@@ -101,11 +101,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/routes',
-    roles: () =>
-      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsExternalRead,
-      ]),
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead],
+      [OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
     ),
@@ -263,6 +262,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/:sourceName/:name/find',
     pageClass: 'page-alerting',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead],
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRedirectToRule"*/ 'app/features/alerting/unified/RedirectToRuleViewer')
     ),
