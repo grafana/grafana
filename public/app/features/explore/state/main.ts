@@ -257,6 +257,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       richHistorySettings,
     };
   }
+
   if (action.payload) {
     const { exploreId } = action.payload;
     if (exploreId !== undefined) {
