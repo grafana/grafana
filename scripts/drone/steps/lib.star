@@ -273,7 +273,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
                         'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
                         'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
                     ] + [
-                        'gsutil -m rm -r gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{} && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
+                        'gsutil -m rm -r gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{} || true && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
                             c, c)
                         for c in channels
                     ])
