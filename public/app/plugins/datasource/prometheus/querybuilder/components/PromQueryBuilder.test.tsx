@@ -178,7 +178,7 @@ describe('PromQueryBuilder', () => {
     );
     await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_sum'));
-    await waitFor(() => expect(screen.getAllByText(/hint:/g)).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByText(/hint:/)).toHaveLength(2));
   });
 });
 

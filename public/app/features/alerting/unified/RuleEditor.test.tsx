@@ -364,7 +364,8 @@ describe('RuleEditor', () => {
     expect(mocks.api.setRulerRuleGroup).not.toBeCalled();
 
     // fix name and re-submit
-    await userEvent.type(await ui.inputs.name.find(), '{selectall}{del}my:great:new:recording:rule');
+    await userEvent.clear(await ui.inputs.name.find());
+    await userEvent.type(await ui.inputs.name.find(), 'my:great:new:recording:rule');
     await userEvent.click(ui.buttons.save.get());
 
     // save and check what was sent to backend

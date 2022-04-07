@@ -50,12 +50,10 @@ describe('NavBarItem', () => {
     });
 
     describe('and clicking on the menu trigger button', () => {
-      it('then the onClick handler should be called', () => {
+      it('then the onClick handler should be called', async () => {
         getTestContext();
 
-        act(async () => {
-          await userEvent.click(screen.getByRole('button'));
-        });
+        await userEvent.click(screen.getByRole('button'));
         expect(onClickMock).toHaveBeenCalledTimes(1);
       });
     });
@@ -195,9 +193,7 @@ describe('NavBarItem', () => {
           expect(screen.getByText('New')).toBeInTheDocument();
         });
 
-        act(async () => {
-          await userEvent.click(screen.getByText('New'));
-        });
+        await userEvent.click(screen.getByText('New'));
         await waitFor(() => {
           expect(pushMock).toHaveBeenCalledTimes(1);
           expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
@@ -221,9 +217,7 @@ describe('NavBarItem', () => {
           expect(screen.getByText('New')).toBeInTheDocument();
         });
 
-        act(async () => {
-          await userEvent.click(screen.getByText('New'));
-        });
+        await userEvent.click(screen.getByText('New'));
         await waitFor(() => {
           expect(pushMock).toHaveBeenCalledTimes(1);
           expect(pushMock).toHaveBeenCalledWith('/grafana/dashboard/new');

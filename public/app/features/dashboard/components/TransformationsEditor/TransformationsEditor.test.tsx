@@ -33,7 +33,7 @@ describe('TransformationsEditor', () => {
           options: {},
         },
       ]);
-      const editors = screen.getAllByLabelText(/^Transformation editor/g);
+      const editors = screen.getAllByLabelText(/^Transformation editor/);
       expect(editors).toHaveLength(1);
     });
   });

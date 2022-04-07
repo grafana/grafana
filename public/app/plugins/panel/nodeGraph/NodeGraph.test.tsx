@@ -183,9 +183,7 @@ describe('NodeGraph', () => {
     expect(node).toBeInTheDocument();
 
     const marker = await screen.findByLabelText(/Hidden nodes marker: 3/);
-    act(async () => {
-      await userEvent.click(marker);
-    });
+    await userEvent.click(marker);
 
     expect(screen.queryByLabelText(/Node: service:0/)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/Node: service:4/)).toBeInTheDocument();

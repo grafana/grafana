@@ -474,15 +474,18 @@ describe('RuleList', () => {
     expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
 
     // Check for different label matchers
-    await userEvent.type(filterInput, '{selectall}{del}{{foo!="bar",foo!="baz"}');
+    await userEvent.clear(filterInput);
+    await userEvent.type(filterInput, '{{foo!="bar",foo!="baz"}');
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
-    await userEvent.type(filterInput, '{selectall}{del}{{foo=~"b.+"}');
+    await userEvent.clear(filterInput);
+    await userEvent.type(filterInput, '{{foo=~"b.+"}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
-    await userEvent.type(filterInput, '{selectall}{del}{{region="US"}');
+    await userEvent.clear(filterInput);
+    await userEvent.type(filterInput, '{{region="US"}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
