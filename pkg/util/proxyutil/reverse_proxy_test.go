@@ -51,68 +51,53 @@ func TestReverseProxy(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 	})
 
-	t.Run("When proxying a request that's being cancelled should return 400 bad request", func(t *testing.T) {
-		upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))
-		t.Cleanup(upstream.Close)
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, upstream.URL, nil)
-
-		rp := NewReverseProxy(
-			log.New("test"),
-			func(req *http.Request) {},
-			WithTransport(cancelledRoundTripper{}),
-		)
-		rp.ServeHTTP(rec, req)
-
-		resp := rec.Result()
-		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.NoError(t, resp.Body.Close())
-	})
-
-	t.Run("When proxying a request that's being timed out should return 504 gateway timeout", func(t *testing.T) {
-		upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			time.Sleep(10 * time.Millisecond)
-			w.WriteHeader(http.StatusOK)
-		}))
-		t.Cleanup(upstream.Close)
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, upstream.URL, nil)
-
+	t.Run("Error handling should convert status codes depending on what kind of error it is", func(t *testing.T) {
 		timedOutTransport := http.DefaultTransport.(*http.Transport)
 		timedOutTransport.ResponseHeaderTimeout = time.Nanosecond
 
-		rp := NewReverseProxy(
-			log.New("test"),
-			func(req *http.Request) {},
-			WithTransport(timedOutTransport),
-		)
-		rp.ServeHTTP(rec, req)
+		testCases := []struct {
+			desc               string
+			transport          http.RoundTripper
+			expectedStatusCode int
+		}{
+			{
+				desc:               "Cancelled request should return 400 Bad request",
+				transport:          &cancelledRoundTripper{},
+				expectedStatusCode: http.StatusBadRequest,
+			},
+			{
+				desc:               "Timed out request should return 504 Gateway timeout",
+				transport:          timedOutTransport,
+				expectedStatusCode: http.StatusGatewayTimeout,
+			},
+			{
+				desc:               "Failed request should return 502 Bad gateway",
+				transport:          &failingRoundTripper{},
+				expectedStatusCode: http.StatusBadGateway,
+			},
+		}
 
-		resp := rec.Result()
-		require.Equal(t, http.StatusGatewayTimeout, resp.StatusCode)
-		require.NoError(t, resp.Body.Close())
-	})
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}))
+				t.Cleanup(upstream.Close)
+				rec := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, upstream.URL, nil)
 
-	t.Run("When proxying a request that fails should return 502 bad gateway", func(t *testing.T) {
-		upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))
-		t.Cleanup(upstream.Close)
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, upstream.URL, nil)
+				rp := NewReverseProxy(
+					log.New("test"),
+					func(req *http.Request) {},
+					WithTransport(tc.transport),
+				)
+				rp.ServeHTTP(rec, req)
 
-		rp := NewReverseProxy(
-			log.New("test"),
-			func(req *http.Request) {},
-			WithTransport(failingRoundTripper{}),
-		)
-		rp.ServeHTTP(rec, req)
-
-		resp := rec.Result()
-		require.Equal(t, http.StatusBadGateway, resp.StatusCode)
-		require.NoError(t, resp.Body.Close())
+				resp := rec.Result()
+				require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+				require.NoError(t, resp.Body.Close())
+			})
+		}
 	})
 }
 
