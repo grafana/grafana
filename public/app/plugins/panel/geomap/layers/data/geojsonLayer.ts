@@ -27,6 +27,10 @@ import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { findField, getColorDimension } from '../../../../../features/dimensions';
 
+enum ConfigMode {
+  Json = 'json',
+  Data = 'data',
+}
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -34,7 +38,7 @@ export interface GeoJSONMapperConfig {
   // The default style (applied if no rules match)
   style: StyleConfig;
 
-  mode: 'data' | 'json';
+  mode: ConfigMode;
 
   // Pick style based on a rule
   rules: FeatureStyleConfig[];
@@ -46,7 +50,7 @@ const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
   rules: [],
   style: defaultStyleConfig,
-  mode: 'json',
+  mode: ConfigMode.Json,
   dataStyle: {},
 };
 
@@ -231,11 +235,11 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           .addRadio({
             path: 'config.mode',
             name: 'Mode',
-            description: 'tbd',
+            description: '',
             settings: {
               options: [
-                { value: 'data', label: 'Data' },
-                { value: 'json', label: 'GeoJSON' },
+                { label: 'Data', value: ConfigMode.Data },
+                { label: 'GeoJSON', value: ConfigMode.Json },
               ],
             },
             defaultValue: defaultOptions.mode,
