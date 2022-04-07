@@ -16,7 +16,7 @@ import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../.
 import { Fill, Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
-import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../../style/types';
+import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { polyStyle } from '../../style/markers';
 import { StyleEditor } from './StyleEditor';
@@ -25,7 +25,8 @@ import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { findField, getColorDimension } from '../../../../../features/dimensions';
+import { findField } from '../../../../../features/dimensions';
+import { getStyleDimension } from '../../utils/utils';
 
 enum ConfigMode {
   Json = 'json',
@@ -179,22 +180,18 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
-        if (config.mode === 'json') {
+        if (config.mode === ConfigMode.Json) {
           return;
         }
 
         const frame = data.series[0];
-        const dims: StyleDimensions = {};
-
         if (frame) {
-          dims.color = getColorDimension(frame, config.dataStyle.color ?? defaultStyleConfig.color, theme);
           const field = findField(frame, config.idField);
-
           if (field) {
             field.values.toArray().forEach((v, i) => idToIdx.set(v, i));
           }
 
-          style.dims = dims;
+          style.dims = getStyleDimension(frame, style, theme, config.dataStyle);
         }
 
         vectorLayer.changed();
@@ -236,18 +233,18 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             path: 'config.mode',
             name: 'Mode',
             description: '',
+            defaultValue: defaultOptions.mode,
             settings: {
               options: [
                 { label: 'Data', value: ConfigMode.Data },
                 { label: 'GeoJSON', value: ConfigMode.Json },
               ],
             },
-            defaultValue: defaultOptions.mode,
           })
           .addFieldNamePicker({
             path: 'config.idField',
             name: 'ID Field',
-            showIf: (cfg) => !(cfg.config.mode === 'json')
+            showIf: (cfg) => !(cfg.config.mode === ConfigMode.Json)
           })
           .addCustomEditor({
             id: 'config.dataStyle',
@@ -258,7 +255,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
               displayRotation: false,
             },
             defaultValue: defaultOptions.dataStyle,
-            showIf: (cfg) => !(cfg.config.mode === 'json')
+            showIf: (cfg) => !(cfg.config.mode === ConfigMode.Json)
           })
           .addCustomEditor({
             id: 'config.rules',
@@ -271,7 +268,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
               layerInfo,
             },
             defaultValue: [],
-            showIf: (cfg) => cfg.config.mode === 'json'
+            showIf: (cfg) => cfg.config.mode === ConfigMode.Json
           });
       },
     };
