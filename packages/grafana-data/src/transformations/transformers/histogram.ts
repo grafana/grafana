@@ -159,7 +159,9 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     for (const frame of frames) {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
-          allValues = allValues.concat(field.values.toArray());
+          allValues = allValues.concat(
+            field.values.toArray().map((val: number) => Number(val.toFixed(field.config.decimals ?? 0)))
+          );
         }
       }
     }
@@ -217,7 +219,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
             unit: undefined,
           },
         });
-        if (!config && field.config.unit) {
+        if (!config && Object.keys(field.config).length) {
           config = field.config;
         }
       }
