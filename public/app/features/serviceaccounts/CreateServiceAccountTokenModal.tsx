@@ -64,8 +64,11 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
           <FieldSet>
             <Field
               label="Display name"
-              description="Optional name to easily identify the token"
+              description="name to easily identify the token"
               className={styles.modalRow}
+              // for now this is required
+              // need to make this optional in backend as well
+              required={true}
             >
               <Input
                 name="tokenName"
