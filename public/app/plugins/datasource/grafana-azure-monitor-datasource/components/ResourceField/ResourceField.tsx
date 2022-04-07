@@ -28,6 +28,7 @@ function parseResourceDetails(resourceURI: string) {
 interface ResourceFieldProps extends AzureQueryEditorFieldProps {
   setResource: (query: AzureMonitorQuery, resourceURI?: string) => AzureMonitorQuery;
   selectableEntryTypes: ResourceRowType[];
+  resourceUri?: string;
 }
 
 const ResourceField: React.FC<ResourceFieldProps> = ({
@@ -36,10 +37,10 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
   onQueryChange,
   setResource,
   selectableEntryTypes,
+  resourceUri,
 }) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
-  const resourceUri = query.azureLogAnalytics?.resource || query.azureMonitor?.resourceUri || '';
 
   const handleOpenPicker = useCallback(() => {
     setPickerIsOpen(true);
