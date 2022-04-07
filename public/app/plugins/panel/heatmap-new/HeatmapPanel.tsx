@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import {
+  DataFrame,
   Field,
   formattedValueToString,
   GrafanaTheme2,
@@ -25,7 +26,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { HeatmapData, prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
-import { HeatmapHoverEvent, prepConfig } from './utils';
+import { findExemplarFrameInPanelData, findDataFramesInPanelData, HeatmapHoverEvent, prepConfig } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from './ColorScale';
@@ -54,11 +55,16 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
+  console.log('data', data);
+  const info = useMemo(
+    () => prepareHeatmapData(findDataFramesInPanelData(data), options, theme),
+    [data, options, theme]
+  );
   const exemplars: HeatmapData | undefined = useMemo((): HeatmapData | undefined => {
-    if (data.annotations) {
+    const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
+    if (exemplarsFrame) {
       return prepareHeatmapData(
-        data.annotations,
+        [exemplarsFrame],
         {
           ...options,
           heatmap: {
@@ -73,8 +79,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
     return undefined;
   }, [data, info, options, theme]);
-
-  console.log('data.series', data.series, 'data.annotations', data.annotations, 'info', info, 'exemplars', exemplars);
+  console.log('info', info);
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
   const { onSplitOpen } = usePanelContext();
 
