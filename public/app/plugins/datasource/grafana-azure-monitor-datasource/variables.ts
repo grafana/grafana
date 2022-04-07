@@ -32,7 +32,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
         try {
           const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
           return {
-            data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
+            data: (templateVariablesResults && templateVariablesResults.length > 0) ? [toDataFrame(templateVariablesResults)] : [],
           };
         } catch (err) {
           return { data: [], error: { message: messageFromError(err) } };
