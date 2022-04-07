@@ -346,6 +346,10 @@ func TestPutAlert(t *testing.T) {
 // implement a custom maintenance function for silences, because we snapshot
 // our data differently, so we test that functionality.
 func TestSilenceCleanup(t *testing.T) {
+	// TODO: This test intermittently fails. Un-skip me!
+	// https://github.com/grafana/grafana/issues/47470
+	t.Skip("intermittent test")
+
 	require := require.New(t)
 
 	oldRetention := retentionNotificationsAndSilences
