@@ -2,6 +2,7 @@ package prefimpl
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -58,7 +59,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 
 func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
 	prefs, err := s.store.Get(ctx, query)
-	if err != nil && err != pref.ErrPrefNotFound {
+	if err != nil && !errors.Is(err, pref.ErrPrefNotFound) {
 		return nil, err
 	}
 	return prefs, nil
@@ -76,11 +77,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		UserID: cmd.UserID,
 		TeamID: cmd.TeamID,
 	})
-	if err != nil && err != pref.ErrPrefNotFound {
+	if err != nil && !errors.Is(err, pref.ErrPrefNotFound) {
 		return err
 	}
 
-	if err == pref.ErrPrefNotFound {
+	if errors.Is(err, pref.ErrPrefNotFound) {
 		preference = &pref.Preference{
 			UserID:   cmd.UserID,
 			OrgID:    cmd.OrgID,

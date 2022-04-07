@@ -188,7 +188,6 @@ func TestPreferencesService(t *testing.T) {
 			Timezone: "UTC",
 		}, preference)
 	})
-
 	// t.Run("GetPreferencesWithDefaults with saved org, other teams and user home dashboard should return org home dashboard", func(t *testing.T) {
 	// 	prefStoreFake.ExpectedPreference = &pref.Preference{}
 	// 	prefStoreFake.ExpectedListPreferences = []*pref.Preference{
@@ -220,7 +219,6 @@ func TestPreferencesService(t *testing.T) {
 	// 	require.NoError(t, err)
 	// 	require.Equal(t, int64(1), preference.HomeDashboardId)
 	// })
-
 	t.Run("GetWithDefaults with saved org and teams json data should return last team json data", func(t *testing.T) {
 
 		prefStoreFake.ExpectedPreference = &pref.Preference{}
