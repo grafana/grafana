@@ -47,5 +47,5 @@ export default interface RichHistoryStorage {
   updateComment(id: string, comment: string | undefined): Promise<RichHistoryQuery>;
 
   getSettings(): Promise<RichHistorySettings>;
-  updateSettings(settings: RichHistorySettings): void;
+  updateSettings(settings: RichHistorySettings): Promise<void>;
 }

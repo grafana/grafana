@@ -5,6 +5,7 @@ import { DataQuery } from '@grafana/data';
 import { afterEach, beforeEach } from '../../../test/lib/common';
 import { RichHistoryStorageWarning } from './RichHistoryStorage';
 import { backendSrv } from '../services/backend_srv';
+import { RichHistorySettings } from '../utils/richHistoryTypes';
 
 const key = 'grafana.explore.richHistory';
 
@@ -98,6 +99,19 @@ describe('RichHistoryLocalStorage', () => {
       await storage.deleteRichHistory(mockItem.id);
       expect(await storage.getRichHistory()).toEqual([]);
       expect(store.getObject(key)).toEqual([]);
+    });
+
+    it('should save and read settings', async () => {
+      const settings: RichHistorySettings = {
+        retentionPeriod: 2,
+        starredTabAsFirstTab: true,
+        activeDatasourceOnly: true,
+        lastUsedDatasourceFilters: [{ value: 'foobar' }],
+      };
+      await storage.updateSettings(settings);
+      const storageSettings = storage.getSettings();
+
+      expect(settings).toMatchObject(storageSettings);
     });
   });
 
