@@ -987,7 +987,7 @@ func TestAnnotationListingWithFGAC(t *testing.T) {
 			"title": "Dashboard 2",
 		}),
 	}
-	dashboard, err = dashboardStore.SaveDashboard(testDashboard2)
+	_, err = dashboardStore.SaveDashboard(testDashboard2)
 	require.NoError(t, err)
 
 	dash1Annotation := &annotations.Item{
