@@ -1,12 +1,8 @@
 import { contextSrv } from 'app/core/services/context_srv';
-import { isGrafanaRulerRule } from '../utils/rules';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { isGrafanaRulerRule } from '../utils/rules';
 import { useFolder } from './useFolder';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
-import { useDispatch } from 'react-redux';
-import { useEffect } from 'react';
-import { checkIfLotexSupportsEditingRulesAction } from '../state/actions';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface ResultBag {
   isEditable?: boolean;
@@ -14,17 +10,10 @@ interface ResultBag {
 }
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
-  const checkEditingRequests = useUnifiedAlertingSelector((state) => state.lotexSupportsRuleEditing);
-  const dispatch = useDispatch();
+  const dataSources = useUnifiedAlertingSelector((state) => state.dataSources);
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const { folder, loading } = useFolder(folderUID);
-
-  useEffect(() => {
-    if (checkEditingRequests[rulesSourceName] === undefined && rulesSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-      dispatch(checkIfLotexSupportsEditingRulesAction(rulesSourceName));
-    }
-  }, [rulesSourceName, checkEditingRequests, dispatch]);
 
   if (!rule) {
     return { isEditable: false, loading: false };
@@ -45,7 +34,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
 
   // prom rules are only editable by users with Editor role and only if rules source supports editing
   return {
-    isEditable: contextSrv.isEditor && !!checkEditingRequests[rulesSourceName]?.result,
-    loading: !!checkEditingRequests[rulesSourceName]?.loading,
+    isEditable: contextSrv.isEditor && Boolean(dataSources[rulesSourceName]?.result?.rulerConfig),
+    loading: dataSources[rulesSourceName]?.loading,
   };
 }

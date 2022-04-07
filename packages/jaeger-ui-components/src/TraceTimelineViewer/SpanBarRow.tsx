@@ -166,17 +166,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     rowMatchingFilter: css`
       label: rowMatchingFilter;
-      background-color: ${autoColor(theme, '#fffce4')};
+      background-color: ${autoColor(theme, '#fffbde')};
       &:hover .${nameWrapperClassName} {
         background: linear-gradient(
           90deg,
-          ${autoColor(theme, '#fff5e1')},
-          ${autoColor(theme, '#fff5e1')} 75%,
-          ${autoColor(theme, '#ffe6c9')}
+          ${autoColor(theme, '#fffbde')},
+          ${autoColor(theme, '#fffbde')} 75%,
+          ${autoColor(theme, '#f7f1c6')}
         );
       }
       &:hover .${viewClassName} {
-        background-color: ${autoColor(theme, '#fff3d7')};
+        background-color: ${autoColor(theme, '#f7f1c6')};
         outline: 1px solid ${autoColor(theme, '#ddd')};
       }
     `,

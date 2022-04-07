@@ -177,9 +177,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(serverError500Query),
-		Name:    "Server Error (500)",
-		handler: s.handleServerError500Scenario,
+		// Is no longer strictly a _server_ error scenario, but ID is kept for legacy :)
+		ID:          string(serverError500Query),
+		Name:        "Conditional Error",
+		handler:     s.handleServerError500Scenario,
+		StringInput: "1,20,90,30,5,0",
+		Description: "Returns an error when the String Input field is empty",
 	})
 
 	s.registerScenario(&Scenario{
@@ -449,7 +452,19 @@ func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backe
 }
 
 func (s *Service) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	panic("Test Data Panic!")
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		stringInput := model.Get("stringInput").MustString()
+		if stringInput == "" {
+			panic("Test Data Panic!")
+		}
+	}
+
+	return s.handleCSVMetricValuesScenario(ctx, req)
 }
 
 func (s *Service) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

@@ -3,12 +3,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
 import React, { FC } from 'react';
-import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { Authorize } from '../Authorize';
+import { getInstancesPermissions } from '../../utils/access-control';
 
 interface AmNotificationsAlertDetailsProps {
   alertManagerSourceName: string;
@@ -17,18 +16,11 @@ interface AmNotificationsAlertDetailsProps {
 
 export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, alertManagerSourceName }) => {
   const styles = useStyles2(getStyles);
-  const isExternalAM = !isGrafanaRulesSource(alertManagerSourceName);
+  const permissions = getInstancesPermissions(alertManagerSourceName);
   return (
     <>
       <div className={styles.actionsRow}>
-        <Authorize
-          actions={
-            isExternalAM
-              ? [AccessControlAction.AlertingInstancesExternalWrite]
-              : [AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingInstanceUpdate]
-          }
-          fallback={contextSrv.isEditor}
-        >
+        <Authorize actions={[permissions.update, permissions.create]} fallback={contextSrv.isEditor}>
           {alert.status.state === AlertState.Suppressed && (
             <LinkButton
               href={`${makeAMLink(
@@ -53,9 +45,7 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
             </LinkButton>
           )}
         </Authorize>
-        <Authorize
-          actions={isExternalAM ? [AccessControlAction.DataSourcesExplore] : [AccessControlAction.AlertingInstanceRead]}
-        >
+        <Authorize actions={[permissions.viewSource]}>
           {alert.generatorURL && (
             <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
               See source

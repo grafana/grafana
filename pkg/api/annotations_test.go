@@ -247,7 +247,7 @@ func NewFakeAnnotationsRepo() *fakeAnnotationsRepo {
 	}
 }
 
-func (repo *fakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+func (repo *fakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
 	if params.Id != 0 {
 		delete(repo.annotations, params.Id)
 	} else {
@@ -277,7 +277,7 @@ func (repo *fakeAnnotationsRepo) Find(_ context.Context, query *annotations.Item
 	annotations := []*annotations.ItemDTO{{Id: 1, DashboardId: 0}}
 	return annotations, nil
 }
-func (repo *fakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (repo *fakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	result := annotations.FindTagsResult{
 		Tags: []*annotations.TagsDTO{},
 	}
@@ -495,7 +495,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations with correct permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll}},
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
@@ -504,7 +504,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations without correct permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead}},
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},

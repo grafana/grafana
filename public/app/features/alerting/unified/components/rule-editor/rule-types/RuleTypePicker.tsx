@@ -4,8 +4,8 @@ import React, { FC } from 'react';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType } from '../../../types/rule-form';
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
-import { CortexFlavoredType } from './CortexOrLokiAlert';
-import { RecordingRuleType } from './CortexOrLokiRecordingRule';
+import { MimirFlavoredType } from './MimirOrLokiAlert';
+import { RecordingRuleType } from './MimirOrLokiRecordingRule';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Stack } from '@grafana/experimental';
@@ -25,7 +25,7 @@ const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
     <>
       <Stack direction="row" gap={2}>
         <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={onChange} />
-        <CortexFlavoredType
+        <MimirFlavoredType
           selected={selected === RuleFormType.cloudAlerting}
           onClick={onChange}
           disabled={!hasLotexDatasources}
@@ -37,7 +37,8 @@ const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
         />
       </Stack>
       <small className={styles.meta}>
-        Select &ldquo;Grafana managed&rdquo; unless you have a Cortex or Loki data source with the Ruler API enabled.
+        Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API
+        enabled.
       </small>
     </>
   );

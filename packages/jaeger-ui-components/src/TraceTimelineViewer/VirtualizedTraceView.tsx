@@ -101,6 +101,7 @@ type TVirtualizedTraceViewOwnProps = {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
+  focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfExploreViewRef?: RefObject<HTMLDivElement>;
 };
@@ -223,6 +224,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       trace: nextTrace,
       uiFind,
       focusedSpanId,
+      focusedSpanIdForSearch,
     } = this.props;
 
     if (trace !== nextTrace) {
@@ -240,6 +242,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
     if (focusedSpanId !== prevProps.focusedSpanId) {
       this.scrollToSpan(focusedSpanId);
+    }
+
+    if (focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
+      this.scrollToSpan(focusedSpanIdForSearch);
     }
   }
 
@@ -378,6 +384,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       theme,
       createSpanLink,
       focusedSpanId,
+      focusedSpanIdForSearch,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -387,7 +394,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
-    const isFocused = spanID === focusedSpanId;
+    const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 
     // Check for direct child "server" span if the span is a "client" span.

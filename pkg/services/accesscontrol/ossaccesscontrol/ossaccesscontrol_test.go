@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,35 +22,14 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	ac := &OSSAccessControlService{
 		features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
-		usageStats:    &usagestats.UsageStatsMock{T: t},
 		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		scopeResolver: accesscontrol.NewScopeResolver(),
 		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
+		roles:         macroRoles(),
 	}
+	require.NoError(t, ac.RegisterFixedRoles())
 	return ac
-}
-
-func removeRoleHelper(role string) {
-	delete(accesscontrol.FixedRoles, role)
-
-	// Compute new grants removing any appearance of the role in the list
-	replaceGrants := map[string][]string{}
-
-	for builtInRole, grants := range accesscontrol.FixedRoleGrants {
-		newGrants := make([]string, len(grants))
-		for _, r := range grants {
-			if r != role {
-				newGrants = append(newGrants, r)
-			}
-		}
-		replaceGrants[builtInRole] = newGrants
-	}
-
-	// Replace grants
-	for br, grants := range replaceGrants {
-		accesscontrol.FixedRoleGrants[br] = grants
-	}
 }
 
 // extractRawPermissionsHelper extracts action and scope fields only from a permission slice
@@ -112,6 +90,13 @@ func TestEvaluatingPermissions(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			ac := setupTestEnv(t)
 
+			// Use OSS roles for this test to pass
+			err := accesscontrol.DeclareFixedRoles(ac)
+			require.NoError(t, err)
+
+			errRegisterRoles := ac.RegisterFixedRoles()
+			require.NoError(t, errRegisterRoles)
+
 			user := &models.SignedInUser{
 				UserId:         1,
 				OrgId:          1,
@@ -149,13 +134,16 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideService(
+			usagestatsmock := &usagestats.UsageStatsMock{T: t}
+
+			_, errInitAc := ProvideService(
 				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
-				&usagestats.UsageStatsMock{T: t},
+				usagestatsmock,
 				database.ProvideService(sqlstore.InitTestDB(t)),
 				routing.NewRouteRegister(),
 			)
-			report, err := s.usageStats.GetUsageReport(context.Background())
+			require.NoError(t, errInitAc)
+			report, err := usagestatsmock.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
 			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
@@ -163,151 +151,35 @@ func TestUsageMetrics(t *testing.T) {
 	}
 }
 
-type assignmentTestCase struct {
-	role         accesscontrol.RoleDTO
-	builtInRoles []string
-}
-
 func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
-	tests := []struct {
-		name string
-		runs []assignmentTestCase
-	}{
-		{
-			name: "Successfully register role no assignments",
-			runs: []assignmentTestCase{
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
-					},
-				},
-			},
-		},
-		{
-			name: "Successfully ignore overwriting existing role",
-			runs: []assignmentTestCase{
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
-					},
-				},
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
-					},
-				},
-			},
-		},
-		{
-			name: "Successfully register and assign role",
-			runs: []assignmentTestCase{
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
-					},
-					builtInRoles: []string{"Viewer", "Editor", "Admin"},
-				},
-			},
-		},
-		{
-			name: "Successfully ignore unchanged assignment",
-			runs: []assignmentTestCase{
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
-					},
-					builtInRoles: []string{"Viewer"},
-				},
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 2,
-						Name:    "fixed:test:test",
-					},
-					builtInRoles: []string{"Viewer"},
-				},
-			},
-		},
-		{
-			name: "Successfully add a new assignment",
-			runs: []assignmentTestCase{
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
-					},
-					builtInRoles: []string{"Viewer"},
-				},
-				{
-					role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
-					},
-					builtInRoles: []string{"Editor"},
-				},
-			},
-		},
+	perm := accesscontrol.Permission{Action: "test:test", Scope: "test:*"}
+
+	role := accesscontrol.RoleDTO{
+		Version:     1,
+		Name:        "fixed:test:test",
+		Permissions: []accesscontrol.Permission{perm},
+	}
+	builtInRoles := []string{"Editor"}
+
+	// Admin is going to get the role as well
+	includedBuiltInRoles := []string{"Editor", "Admin"}
+
+	// Grafana Admin and Viewer won't get the role
+	excludedbuiltInRoles := []string{"Viewer", "Grafana Admin"}
+
+	ac := setupTestEnv(t)
+	ac.registerFixedRole(role, builtInRoles)
+
+	for _, br := range includedBuiltInRoles {
+		builtinRole, ok := ac.roles[br]
+		assert.True(t, ok)
+		assert.Contains(t, builtinRole.Permissions, perm)
 	}
 
-	// Check all runs performed so far to get the number of assignments seeder
-	// should have recorded
-	getTotalAssignCount := func(curRunIdx int, runs []assignmentTestCase) int {
-		builtIns := map[string]struct{}{}
-		for i := 0; i < curRunIdx+1; i++ {
-			for _, br := range runs[i].builtInRoles {
-				builtIns[br] = struct{}{}
-			}
-		}
-		return len(builtIns)
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ac := &OSSAccessControlService{
-				features:   featuremgmt.WithFeatures(),
-				usageStats: &usagestats.UsageStatsMock{T: t},
-				log:        log.New("accesscontrol-test"),
-			}
-
-			for i, run := range tc.runs {
-				// Remove any inserted role after the test case has been run
-				t.Cleanup(func() { removeRoleHelper(run.role.Name) })
-
-				ac.registerFixedRole(run.role, run.builtInRoles)
-
-				// Check role has been registered
-				storedRole, ok := accesscontrol.FixedRoles[run.role.Name]
-				assert.True(t, ok, "role should have been registered")
-
-				// Check registered role has not been altered
-				assert.Equal(t, run.role, storedRole, "role should not have been altered")
-
-				// Check assignments
-				// Count number of times the role has been assigned
-				assignCnt := 0
-				for _, grants := range accesscontrol.FixedRoleGrants {
-					for _, r := range grants {
-						if r == run.role.Name {
-							assignCnt++
-						}
-					}
-				}
-				assert.Equal(t, getTotalAssignCount(i, tc.runs), assignCnt,
-					"assignments should only be added, never removed")
-
-				for _, br := range run.builtInRoles {
-					assigns, ok := accesscontrol.FixedRoleGrants[br]
-					assert.True(t, ok,
-						fmt.Sprintf("role %s should have been assigned to %s", run.role.Name, br))
-					assert.Contains(t, assigns, run.role.Name,
-						fmt.Sprintf("role %s should have been assigned to %s", run.role.Name, br))
-				}
-			}
-		})
+	for _, br := range excludedbuiltInRoles {
+		builtinRole, ok := ac.roles[br]
+		assert.True(t, ok)
+		assert.NotContains(t, builtinRole.Permissions, perm)
 	}
 }
 
@@ -388,6 +260,9 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := setupTestEnv(t)
 
+			// Reset the registations
+			ac.registrations = accesscontrol.RegistrationList{}
+
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
 			if tt.wantErr {
@@ -423,10 +298,11 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Version:     1,
+						Name:        "fixed:test:test",
+						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
-					Grants: []string{"Admin"},
+					Grants: []string{"Editor"},
 				},
 			},
 			wantErr: false,
@@ -436,17 +312,22 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Version:     1,
+						Name:        "fixed:test:test",
+						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
-					Grants: []string{"Admin"},
+					Grants: []string{"Editor"},
 				},
 				{
 					Role: accesscontrol.RoleDTO{
 						Version: 1,
 						Name:    "fixed:test2:test2",
+						Permissions: []accesscontrol.Permission{
+							{Action: "test:test2"},
+							{Action: "test:test3", Scope: "test:*"},
+						},
 					},
-					Grants: []string{"Admin"},
+					Grants: []string{"Viewer"},
 				},
 			},
 			wantErr: false,
@@ -455,13 +336,8 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Remove any inserted role after the test case has been run
-			t.Cleanup(func() {
-				for _, registration := range tt.registrations {
-					removeRoleHelper(registration.Role.Name)
-				}
-			})
 			ac := setupTestEnv(t)
+
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
@@ -474,18 +350,24 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 			// Check
 			for _, registration := range tt.registrations {
-				role, ok := accesscontrol.FixedRoles[registration.Role.Name]
-				assert.True(t, ok,
-					fmt.Sprintf("role %s should have been registered", registration.Role.Name))
-				assert.NotNil(t, role,
-					fmt.Sprintf("role %s should have been registered", registration.Role.Name))
-
+				// Prepare list of builtin roles to check
+				brAndParents := map[string]struct{}{}
 				for _, br := range registration.Grants {
-					rolesWithGrant, ok := accesscontrol.FixedRoleGrants[br]
-					assert.True(t, ok,
-						fmt.Sprintf("role %s should have been assigned to %s", registration.Role.Name, br))
-					assert.Contains(t, rolesWithGrant, registration.Role.Name,
-						fmt.Sprintf("role %s should have been assigned to %s", registration.Role.Name, br))
+					brAndParents[br] = struct{}{}
+					if br != accesscontrol.RoleGrafanaAdmin {
+						for _, parent := range models.RoleType(br).Parents() {
+							brAndParents[string(parent)] = struct{}{}
+						}
+					}
+				}
+
+				// Check builtin roles (parents included) have been granted with the permissions
+				for br := range brAndParents {
+					builtinRole, ok := ac.roles[br]
+					assert.True(t, ok)
+					for _, expectedPermission := range registration.Role.Permissions {
+						assert.Contains(t, builtinRole.Permissions, expectedPermission)
+					}
 				}
 			}
 		})
@@ -529,11 +411,6 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Remove any inserted role after the test case has been run
-			t.Cleanup(func() {
-				removeRoleHelper(registration.Role.Name)
-			})
-
 			// Setup
 			ac := setupTestEnv(t)
 
@@ -614,11 +491,6 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Remove any inserted role after the test case has been run
-			t.Cleanup(func() {
-				removeRoleHelper(registration.Role.Name)
-			})
-
 			// Setup
 			ac := setupTestEnv(t)
 			ac.RegisterAttributeScopeResolver("users:login:", userLoginScopeSolver)

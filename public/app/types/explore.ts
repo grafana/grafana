@@ -42,10 +42,6 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right?: ExploreItemState;
-  /**
-   * History of all queries
-   */
-  richHistory: RichHistoryQuery[];
 
   /**
    * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
@@ -152,6 +148,11 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+
+  /**
+   * History of all queries
+   */
+  richHistory: RichHistoryQuery[];
 
   /**
    * We are using caching to store query responses of queries run from logs navigation.

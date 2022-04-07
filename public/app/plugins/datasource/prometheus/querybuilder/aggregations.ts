@@ -7,7 +7,12 @@ import {
   getPromAndLokiOperationDisplayName,
   getRangeVectorParamDef,
 } from './shared/operationUtils';
-import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
+  QueryWithOperations,
+} from './shared/types';
 import { PromVisualQueryOperationCategory, PromOperationId } from './types';
 
 export function getAggregationOperations(): QueryBuilderOperationDef[] {
@@ -17,7 +22,7 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperation(PromOperationId.Min),
     ...createAggregationOperation(PromOperationId.Max),
     ...createAggregationOperation(PromOperationId.Count),
-    ...createAggregationOperation(PromOperationId.Topk),
+    ...createAggregationOperation(PromOperationId.TopK),
     ...createAggregationOperation(PromOperationId.BottomK),
     createAggregationOverTime(PromOperationId.SumOverTime),
     createAggregationOverTime(PromOperationId.AvgOverTime),
@@ -31,7 +36,13 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
   ];
 }
 
-function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
+/**
+ * This function is shared between Prometheus and Loki variants
+ */
+export function createAggregationOperation<T extends QueryWithOperations>(
+  name: string,
+  overrides: Partial<QueryBuilderOperationDef> = {}
+): QueryBuilderOperationDef[] {
   const operations: QueryBuilderOperationDef[] = [
     {
       id: name,
@@ -48,8 +59,10 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       alternativesKey: 'plain aggregations',
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
-      addOperationHandler: defaultAddOperationHandler,
       paramChangedHandler: getOnLabelAdddedHandler(`__${name}_by`),
+      explainHandler: getAggregationExplainer(name, ''),
+      addOperationHandler: defaultAddOperationHandler,
+      ...overrides,
     },
     {
       id: `__${name}_by`,
@@ -67,10 +80,11 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       alternativesKey: 'aggregations by',
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: getAggregationByRenderer(name),
-      addOperationHandler: defaultAddOperationHandler,
       paramChangedHandler: getLastLabelRemovedHandler(name),
       explainHandler: getAggregationExplainer(name, 'by'),
+      addOperationHandler: defaultAddOperationHandler,
       hideFromList: true,
+      ...overrides,
     },
     {
       id: `__${name}_without`,
@@ -88,10 +102,11 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       alternativesKey: 'aggregations by',
       category: PromVisualQueryOperationCategory.Aggregations,
       renderer: getAggregationWithoutRenderer(name),
-      addOperationHandler: defaultAddOperationHandler,
       paramChangedHandler: getLastLabelRemovedHandler(name),
       explainHandler: getAggregationExplainer(name, 'without'),
+      addOperationHandler: defaultAddOperationHandler,
       hideFromList: true,
+      ...overrides,
     },
   ];
 
@@ -126,14 +141,18 @@ function getAggregationWithoutRenderer(aggregation: string) {
 /**
  * Very simple poc implementation, needs to be modified to support all aggregation operators
  */
-function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without') {
+function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
   return function aggregationExplainer(model: QueryBuilderOperation) {
     const labels = model.params.map((label) => `\`${label}\``).join(' and ');
     const labelWord = pluralize('label', model.params.length);
-    if (mode === 'by') {
-      return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
-    } else {
-      return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
+
+    switch (mode) {
+      case 'by':
+        return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+      case 'without':
+        return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
+      default:
+        return `Calculates ${aggregationName} over the dimensions.`;
     }
   };
 }
@@ -164,7 +183,7 @@ function getLastLabelRemovedHandler(changeToOperartionId: string) {
   };
 }
 
-function getOnLabelAdddedHandler(changeToOperartionId: string) {
+export function getOnLabelAdddedHandler(changeToOperartionId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation) {
     return {
       ...op,

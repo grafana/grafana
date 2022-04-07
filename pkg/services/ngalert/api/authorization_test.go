@@ -47,7 +47,7 @@ func TestAuthorize(t *testing.T) {
 		}
 		paths[p] = methods
 	}
-	require.Len(t, paths, 29)
+	require.Len(t, paths, 30)
 
 	ac := acmock.New()
 	api := &API{AccessControl: ac}
@@ -91,7 +91,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				var scopes []string
 				for _, rule := range c.New {
 					for _, query := range rule.Data {
-						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 					}
 				}
 				return map[string][]string{
@@ -126,7 +126,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				var scopes []string
 				for _, update := range c.Update {
 					for _, query := range update.New.Data {
-						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 					}
 				}
 
@@ -164,7 +164,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				var scopes []string
 				for _, update := range c.Update {
 					for _, query := range update.New.Data {
-						scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 					}
 				}
 				return map[string][]string{
@@ -221,7 +221,7 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 		var scopes []string
 		for _, rule := range rules {
 			for _, query := range rule.Data {
-				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID))
+				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 			}
 		}
 		return scopes
@@ -375,7 +375,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 	expectedExecutions := rand.Intn(3) + 2
 	for i := 0; i < expectedExecutions; i++ {
 		q := models.GenerateAlertQuery()
-		scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.DatasourceUID))
+		scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(q.DatasourceUID))
 		data = append(data, q)
 	}
 

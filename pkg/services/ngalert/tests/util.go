@@ -39,6 +39,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	cfg.UnifiedAlerting.Enabled = new(bool)
 	*cfg.UnifiedAlerting.Enabled = true
 
+	cfg.IsFeatureToggleEnabled = func(key string) bool {
+		// Enable alert provisioning FF when running tests.
+		return key == featuremgmt.FlagAlertProvisioning
+	}
+
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))

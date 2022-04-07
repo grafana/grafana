@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -33,9 +34,11 @@ type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
 	// Values contains the RefID and value of reduce and math expressions.
-	// It does not contain values for classic conditions as the values
-	// in classic conditions do not have a RefID.
+	// Classic conditions can have different values for the same RefID as they can include multiple conditions.
+	// For these, we use the index of the condition in addition RefID as the key e.g. "A0, A1, A2, etc.".
 	Values map[string]*float64
+	// Condition is the refID specified as the condition in the alerting rule at the time of the evaluation.
+	Condition string
 }
 
 // NewEvaluationValues returns the labels and values for each RefID in the capture.
@@ -84,16 +87,10 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
-	if a.StartsAt.IsZero() {
-		a.StartsAt = result.EvaluatedAt
-	}
-	a.setEndsAt(alertRule, result)
-
+	execErrState := eval.Error
 	if alertRule.ExecErrState == ngModels.AlertingErrState {
-		a.State = eval.Alerting
+		execErrState = eval.Alerting
 	} else if alertRule.ExecErrState == ngModels.ErrorErrState {
-		a.State = eval.Error
-
 		// If the evaluation failed because a query returned an error then
 		// update the state with the Datasource UID as a label and the error
 		// message as an annotation so other code can use this metadata to
@@ -109,6 +106,28 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 			}
 			a.Annotations["Error"] = queryError.Error()
 		}
+		execErrState = eval.Error
+	}
+
+	switch a.State {
+	case eval.Alerting, eval.Error:
+		a.setEndsAt(alertRule, result)
+	case eval.Pending:
+		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
+			a.State = execErrState
+			a.StartsAt = result.EvaluatedAt
+			a.setEndsAt(alertRule, result)
+		}
+	default:
+		// For is observed when Alerting is chosen for the alert state
+		// if execution error or timeout.
+		if execErrState == eval.Alerting && alertRule.For > 0 {
+			a.State = eval.Pending
+		} else {
+			a.State = execErrState
+		}
+		a.StartsAt = result.EvaluatedAt
+		a.setEndsAt(alertRule, result)
 	}
 }
 
@@ -186,4 +205,21 @@ func (a *State) GetLabels(opts ...ngModels.LabelOption) map[string]string {
 	}
 
 	return labels
+}
+
+func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
+	if len(a.Results) <= 0 {
+		return nil
+	}
+
+	lastResult := a.Results[len(a.Results)-1]
+	r := make(map[string]float64, len(lastResult.Values))
+
+	for refID, value := range lastResult.Values {
+		if strings.Contains(refID, lastResult.Condition) {
+			r[refID] = *value
+		}
+	}
+
+	return r
 }

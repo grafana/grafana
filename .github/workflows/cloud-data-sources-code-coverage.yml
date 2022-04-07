@@ -1,0 +1,17 @@
+name: Cloud data sources test code coverage
+on:
+  pull_request:
+    paths:
+      - 'pkg/tsdb/azuremonitor/**'
+      - 'pkg/tsdb/cloudwatch/**'
+      - 'pkg/tsdb/cloudmonitoring/**'
+      - 'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
+      - 'public/app/plugins/datasource/cloudwatch/**'
+      - 'public/app/plugins/datasource/cloud-monitoring/**'
+    branches-ignore:
+      - dependabot/**
+      - backport-**
+
+jobs:
+  workflow-call:
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.2
