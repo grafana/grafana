@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import { NodeGraph } from './NodeGraph';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
-import { act } from 'react-dom/test-utils';
 
 jest.mock('react-use/lib/useMeasure', () => {
   return {
@@ -84,17 +83,11 @@ describe('NodeGraph', () => {
       />
     );
     const node = await screen.findByLabelText(/Node: service:0/);
-    // This shows warning because there is no position for the click. We cannot add any because we use pageX/Y in the
-    // context menu which is experimental (but supported) property and userEvents does not seem to support that
-    act(async () => {
-      await userEvent.click(node);
-    });
+    await userEvent.click(node);
     await screen.findByText(/Node traces/);
 
     const edge = await screen.findByLabelText(/Edge from/);
-    act(async () => {
-      await userEvent.click(edge);
-    });
+    await userEvent.click(edge);
     await screen.findByText(/Edge traces/);
   });
 

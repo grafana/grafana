@@ -95,9 +95,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     expect(mockedMeta.getTagKeysForMeasurementAndTags).toHaveBeenCalledTimes(1);
 
     // we click the WHERE/cpu button
-    await act(async () => {
-      await userEvent.click(screen.getByRole('button', { name: 'cpu' }));
-    });
+    await userEvent.click(screen.getByRole('button', { name: 'cpu' }));
 
     // and verify getTagKeysForMeasurementAndTags was called again,
     // and in the tags-param we did not receive the `field1` part.
@@ -105,18 +103,14 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     expect((mockedMeta.getTagKeysForMeasurementAndTags as jest.Mock).mock.calls[1][2]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the WHERE/host2 button
-    await act(async () => {
-      await userEvent.click(screen.getByRole('button', { name: 'host2' }));
-    });
+    await userEvent.click(screen.getByRole('button', { name: 'host2' }));
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getTagValues).toHaveBeenCalledTimes(1);
     expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][3]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the FROM/cpudata button
-    await act(async () => {
-      await userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
-    });
+    await userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getAllMeasurementsForTags).toHaveBeenCalledTimes(1);

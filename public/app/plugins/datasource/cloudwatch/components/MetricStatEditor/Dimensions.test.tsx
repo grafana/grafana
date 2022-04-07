@@ -101,18 +101,14 @@ describe('Dimensions', () => {
 
       const keyElement = container.querySelector('#cloudwatch-dimensions-filter-item-key');
       expect(keyElement).toBeInTheDocument();
-      await act(async () => {
-        await userEvent.type(keyElement!, 'my-key');
-        fireEvent.keyDown(keyElement!, { keyCode: 13 });
-      });
+      await userEvent.type(keyElement!, 'my-key');
+      fireEvent.keyDown(keyElement!, { keyCode: 13 });
       expect(onChange).not.toHaveBeenCalled();
 
       const valueElement = container.querySelector('#cloudwatch-dimensions-filter-item-value');
       expect(valueElement).toBeInTheDocument();
-      await act(async () => {
-        await userEvent.type(valueElement!, 'my-value');
-        fireEvent.keyDown(valueElement!, { keyCode: 13 });
-      });
+      await userEvent.type(valueElement!, 'my-value');
+      fireEvent.keyDown(valueElement!, { keyCode: 13 });
       expect(onChange).not.toHaveBeenCalledWith({
         ...props.query,
         dimensions: {
