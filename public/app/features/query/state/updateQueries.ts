@@ -1,27 +1,51 @@
-import { DataQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  getDataSourceRef,
+  hasQueryExportSupport,
+  hasQueryImportSupport,
+} from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
-export function updateQueries(
+export async function updateQueries(
   newSettings: DataSourceInstanceSettings,
   queries: DataQuery[],
   dsSettings?: DataSourceInstanceSettings
-): DataQuery[] {
+): Promise<DataQuery[]> {
+  let nextQueries = queries;
   const datasource = getDataSourceRef(newSettings);
+  const nextDS = await getDataSourceSrv().get(newSettings.uid);
+  let currentDS;
+
+  if (dsSettings) {
+    currentDS = await getDataSourceSrv().get(dsSettings.uid);
+  }
 
   // we are changing data source type
-  if (dsSettings?.type !== newSettings.type) {
+  if (currentDS?.meta.id !== nextDS.meta.id) {
     // If changing to mixed do nothing
-    if (newSettings.meta.mixed) {
+    if (nextDS.meta.mixed) {
       return queries;
-    } else {
-      // Changing to another datasource type clear queries
+    }
+    // when both data sources support abstract queries
+    else if (hasQueryExportSupport(currentDS) && hasQueryImportSupport(nextDS)) {
+      const abstractQueries = await currentDS.exportToAbstractQueries(queries);
+      nextQueries = await nextDS.importFromAbstractQueries(abstractQueries);
+    }
+    // when datasource supports query import
+    else if (currentDS && nextDS.importQueries) {
+      nextQueries = await nextDS.importQueries(queries, currentDS);
+    }
+    // Otherwise clear queries
+    else {
       return [{ refId: 'A', datasource }];
     }
   }
 
   // Set data source on all queries except expression queries
-  return queries.map((query) => {
-    if (!isExpressionReference(query.datasource) && !newSettings.meta.mixed) {
+  return nextQueries.map((query) => {
+    if (!isExpressionReference(query.datasource) && !nextDS.meta.mixed) {
       query.datasource = datasource;
     }
     return query;
