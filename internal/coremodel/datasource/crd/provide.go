@@ -1,4 +1,4 @@
-package datasource
+package crd
 
 import (
 	"context"
@@ -10,57 +10,46 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/grafana/grafana/internal/components"
+	"github.com/grafana/grafana/internal/coremodel/datasource"
+	"github.com/grafana/grafana/internal/framework/kubecontroller"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-// Coremodel is the coremodel for Datasource component.
-type Coremodel struct {
-	schema schema.ObjectSchema
-	store  components.Store
+// KubeController contains the CRD representation for datasource resources, including its
+// reconciliation control loop.
+type KubeController struct {
+	crd    schema.CRD
+	store  kubecontroller.Store
 	client client.Client
 	logger log.Logger
 }
 
-// ProvideCoremodel provides a new Coremodel with store and schema loaded from loader.
+// ProvideKubeController provides a new datasource KubeController based on the provided datasource
+// Coremodel, and the provided storage interface backed by traditional Grafana storage.
 //
 // TODO: this is currently done manually and is statically enumerated in the registry.
 // We should figure out a way to dynamically register this to registry and automate schema loading too,
-// since the loading process will be exactly the same for all components (except for schema options).
-func ProvideCoremodel(store components.Store, loader components.SchemaLoader) (*Coremodel, error) {
-	schema, err := loader.LoadSchema(context.TODO(), schema.SchemaTypeThema, schema.ThemaLoaderOpts{
-		SchemaFS:         cueFS,
-		SchemaPath:       cuePath,
-		SchemaVersion:    schemaVersion,
-		GroupName:        groupName,
-		GroupVersion:     groupVersion,
-		SchemaOpenapi:    schemaOpenapi,
-		SchemaType:       &DatasourceSpec{},
-		SchemaObject:     &Datasource{},
-		SchemaListObject: &DatasourceList{},
-	}, schema.GoLoaderOpts{})
-	if err != nil {
-		return nil, err
-	}
-
-	return &Coremodel{
+// since the loading process will be exactly the same for all coremodel (except for schema options).
+func ProvideKubeController(cm *datasource.Coremodel, store kubecontroller.Store) (*KubeController, error) {
+	return &KubeController{
 		store:  store,
-		schema: schema,
-		logger: log.New("components.datasource.coremodel"),
+		crd:    schema.NewThemaSchema(cm.Lineage(), groupName, groupVersion, schemaOpenapi, &Datasource{}, &DatasourceList{}),
+		logger: log.New("coremodel.datasource.crd"),
 	}, nil
 }
 
-// Schema returns the object schema for this Coremodel.
-func (m *Coremodel) Schema() schema.ObjectSchema {
-	return m.schema
+// CRD returns the collection of schemas and objects for datasources that
+// Kubernetes requires to register and manage a CustomResourceDefinition.
+func (m *KubeController) CRD() schema.CRD {
+	return m.crd
 }
 
 // RegisterController registers the controller for this coremodel.
 // Not all coremodels are required to have controllers,
 // so if we don't need to register anything, we can just return immediately.
-func (m *Coremodel) RegisterController(mgr ctrl.Manager) error {
+func (m *KubeController) RegisterController(mgr ctrl.Manager) error {
 	m.client = mgr.GetClient()
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -69,7 +58,7 @@ func (m *Coremodel) RegisterController(mgr ctrl.Manager) error {
 }
 
 // Reconcile implements Kubernetes controller reconciliation logic.
-func (m *Coremodel) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+func (m *KubeController) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	m.logger.Debug(
 		"received reconciliation request",
 		"request", req.String(),

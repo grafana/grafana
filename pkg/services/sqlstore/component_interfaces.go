@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	"github.com/google/wire"
-	"github.com/grafana/grafana/internal/components"
-	"github.com/grafana/grafana/internal/components/datasource"
+	"github.com/grafana/grafana/internal/coremodel/datasource"
+	"github.com/grafana/grafana/internal/coremodel/datasource/crd"
+	"github.com/grafana/grafana/internal/framework/kubecontroller"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,7 +27,7 @@ Until this comment is removed, if you are wondering if you should use things in 
 
 var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
 	ProvideDataSourceSchemaStore,
-	wire.Bind(new(components.Store), new(*storeDS)),
+	wire.Bind(new(kubecontroller.Store), new(*storeDS)),
 )
 
 func ProvideDataSourceSchemaStore(ss *SQLStore) *storeDS {
@@ -58,7 +59,7 @@ func (s storeDS) Get(ctx context.Context, name types.NamespacedName, into runtim
 }
 
 func (s storeDS) Insert(ctx context.Context, obj runtime.Object) error {
-	ds, ok := obj.(*datasource.Datasource)
+	ds, ok := obj.(*crd.Datasource)
 	if !ok {
 		return errors.New("error: expected object to be a datasource")
 	}
@@ -85,7 +86,7 @@ func (s storeDS) Insert(ctx context.Context, obj runtime.Object) error {
 }
 
 func (s storeDS) Update(ctx context.Context, obj runtime.Object) error {
-	ds, ok := obj.(*datasource.Datasource)
+	ds, ok := obj.(*crd.Datasource)
 	if !ok {
 		return errors.New("error: expected object to be a datasource")
 	}
@@ -129,7 +130,7 @@ func (s storeDS) Delete(ctx context.Context, name types.NamespacedName) error {
 
 // oldToNew doesn't need to be method, but keeps things bundled
 func (s storeDS) oldToNew(ds *models.DataSource, result runtime.Object) error {
-	out, ok := result.(*datasource.Datasource)
+	out, ok := result.(*crd.Datasource)
 	if !ok {
 		return errors.New("error: expected object to be a datasource")
 	}
@@ -143,7 +144,7 @@ func (s storeDS) oldToNew(ds *models.DataSource, result runtime.Object) error {
 	out.UID = types.UID(ds.Uid)
 	out.Name = ds.Name
 	out.ResourceVersion = strconv.Itoa(ds.Version)
-	out.Spec = datasource.DatasourceSpec{
+	out.Spec = datasource.Model{
 		Type:              ds.Type,
 		Access:            string(ds.Access),
 		Url:               ds.Url,
@@ -161,7 +162,7 @@ func (s storeDS) oldToNew(ds *models.DataSource, result runtime.Object) error {
 	return nil
 }
 
-func (s storeDS) parseJSONData(ds *datasource.Datasource) *simplejson.Json {
+func (s storeDS) parseJSONData(ds *crd.Datasource) *simplejson.Json {
 	jd := simplejson.New()
 
 	if d := ds.Spec.JsonData; d != "" {

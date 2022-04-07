@@ -168,3 +168,9 @@ lerna.json @grafana/frontend-ops
 # Grafana authentication and authorization
 /pkg/services/accesscontrol @grafana/grafana-enterprise-operations-team
 /pkg/services/serviceaccounts @grafana/grafana-enterprise-operations-team
+
+# Intent API
+/internal/coremodel/datasource/crd @grafana/cloud-middleware
+/internal/framework/kubecontroller @grafana/cloud-middleware
+/internal/intentapi @grafana/cloud-middleware
+/internal/k8sbridge @grafana/cloud-middleware

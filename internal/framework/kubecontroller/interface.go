@@ -1,4 +1,4 @@
-package components
+package kubecontroller
 
 import (
 	"context"
@@ -9,24 +9,17 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-// Coremodel is an interface that must be implemented by each coremodel.
-type Coremodel interface {
-	// Schema should return coremodel's schema.
-	Schema() schema.ObjectSchema
+// Interface must be implemented by each Kubernetes-style controller of a
+// Grafana model.
+type Interface interface {
+	// CRD should return the KubeController's CRD - the collection of schemas and
+	// objects that Kubernetes requires to register and manage a
+	// CustomResourceDefinition.
+	CRD() schema.CRD
 
 	// RegisterController should optionally register coremodel's controller to the manager.
 	// If no controller is needed for the coremodel, it's safe to simply return nil from this method.
 	RegisterController(ctrl.Manager) error
-}
-
-// CoremodelProvider is a wire-friendly func that provides a coremodel.
-type CoremodelProvider func(store Store, loader SchemaLoader) (*Coremodel, error)
-
-// SchemaLoader is a generic schema loader, that can load different schema types.
-type SchemaLoader interface {
-	LoadSchema(
-		context.Context, schema.SchemaType, schema.ThemaLoaderOpts, schema.GoLoaderOpts,
-	) (schema.ObjectSchema, error)
 }
 
 // Store is a generic durable storage for coremodels.

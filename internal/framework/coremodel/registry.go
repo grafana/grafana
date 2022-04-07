@@ -1,10 +1,11 @@
-package components
+package coremodel
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/schema"
+	"github.com/grafana/thema"
 )
 
 var (
@@ -12,18 +13,18 @@ var (
 	ErrModelAlreadyRegistered = errors.New("error registering duplicate model")
 )
 
-// Registry is a registry of coremodels.
+// Registry is a registry of coremodel instances.
 type Registry struct {
 	lock     sync.RWMutex
-	models   []Coremodel
-	modelIdx map[registryKey]Coremodel
+	models   []Interface
+	modelIdx map[string]Interface
 }
 
-// NewRegistry returns a new Registry with models.
-func NewRegistry(models ...Coremodel) (*Registry, error) {
+// NewRegistry returns a new Registry with the provided coremodel instances.
+func NewRegistry(models ...Interface) (*Registry, error) {
 	r := &Registry{
-		models:   make([]Coremodel, 0, len(models)),
-		modelIdx: make(map[registryKey]Coremodel, len(models)),
+		models:   make([]Interface, 0, len(models)),
+		modelIdx: make(map[string]Interface, len(models)),
 	}
 
 	if err := r.addModels(models); err != nil {
@@ -33,26 +34,31 @@ func NewRegistry(models ...Coremodel) (*Registry, error) {
 	return r, nil
 }
 
-// Register adds models to the Registry.
-func (r *Registry) Register(models ...Coremodel) error {
+// Register adds coremodels to the Registry.
+func (r *Registry) Register(models ...Interface) error {
 	return r.addModels(models)
 }
 
 // List returns all coremodels registered in this Registry.
-func (r *Registry) List() []Coremodel {
+func (r *Registry) List() []Interface {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	return r.models
 }
 
-func (r *Registry) addModels(models []Coremodel) error {
+func (r *Registry) addModels(models []Interface) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
 	// Update model index and return an error if trying to register a duplicate.
 	for _, m := range models {
-		k := makeRegistryKey(m.Schema())
+		k := m.Lineage().Name()
+
+		// Ensure assignability first. TODO will this blow up for dashboards?
+		if err := thema.AssignableTo(m.CurrentSchema(), m.GoType()); err != nil {
+			return fmt.Errorf("%s schema version %v not assignable to provided Go type: %w", k, m.CurrentSchema().Version(), err)
+		}
 
 		if _, ok := r.modelIdx[k]; ok {
 			return ErrModelAlreadyRegistered
@@ -69,18 +75,4 @@ func (r *Registry) addModels(models []Coremodel) error {
 	}
 
 	return nil
-}
-
-type registryKey struct {
-	modelName    string
-	groupName    string
-	groupVersion string
-}
-
-func makeRegistryKey(s schema.ObjectSchema) registryKey {
-	return registryKey{
-		modelName:    s.Name(),
-		groupName:    s.GroupName(),
-		groupVersion: s.GroupVersion(),
-	}
 }

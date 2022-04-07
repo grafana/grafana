@@ -12,16 +12,16 @@ import (
 // SchemaType is the type of ObjectSchema (Go / Thema / etc.).
 type SchemaType int
 
-// Known schema types.
+// Known model types.
 const (
-	SchemaTypeUnknown SchemaType = iota
-	SchemaTypeThema
-	SchemaTypeGo
+	ModelTypeUnknown SchemaType = iota
+	ModelTypeThema
+	ModelTypeGo
 )
 
-// A ObjectSchema returns a SchemeBuilder. Produced by schema components
+// A CRD returns a SchemeBuilder. Produced by model components
 // to make their schema available to things relying on k8s
-type ObjectSchema interface {
+type CRD interface {
 	Name() string
 	GroupName() string
 	GroupVersion() string
@@ -43,13 +43,13 @@ type schemaRegistry struct {
 	M sync.Map
 }
 
-func (r *schemaRegistry) Store(sch ObjectSchema) {
+func (r *schemaRegistry) Store(sch CRD) {
 	r.M.Store(sch.Name(), sch)
 }
 
-func (r *schemaRegistry) Load(name string) (ObjectSchema, bool) {
+func (r *schemaRegistry) Load(name string) (CRD, bool) {
 	if sch, ok := r.M.Load(name); ok {
-		return sch.(ObjectSchema), ok
+		return sch.(CRD), ok
 	}
 	return nil, false
 }
@@ -79,7 +79,7 @@ var regguard int32
 // NOTE: Attempting to registering the same schema name twice will panic.
 // Attempting to call this from anywhere but an init function is likely to
 // panic.
-func RegisterCoreSchema(sch ObjectSchema) {
+func RegisterCoreSchema(sch CRD) {
 	// panic if guard has been set by a read
 	if !atomic.CompareAndSwapInt32(&regguard, 0, 0) {
 		panic("do not call RegisterCoreSchema() outside of an init() function; core registry has been read from and may no longer be written to;")
@@ -96,7 +96,7 @@ func RegisterCoreSchema(sch ObjectSchema) {
 	cr.Store(sch)
 }
 
-func LoadCoreSchema(name string) (ObjectSchema, bool) {
+func LoadCoreSchema(name string) (CRD, bool) {
 	// No more writes allowed
 	atomic.CompareAndSwapInt32(&regguard, 0, 1)
 	return cr.Load(name)
@@ -104,7 +104,7 @@ func LoadCoreSchema(name string) (ObjectSchema, bool) {
 
 // TODO: remove after registry in components is done.
 // CoreSchemaList
-type CoreSchemaList []ObjectSchema
+type CoreSchemaList []CRD
 
 // ProvideReadonlyCoreSchemaList provides a listing of all known core ObjectSchema
 // - those known at compile time.
@@ -115,9 +115,9 @@ func ProvideReadonlyCoreSchemaList() CoreSchemaList {
 	// No more writes allowed
 	atomic.CompareAndSwapInt32(&regguard, 0, 1)
 
-	var sl []ObjectSchema
+	var sl []CRD
 	cr.M.Range(func(key, value interface{}) bool {
-		sl = append(sl, value.(ObjectSchema))
+		sl = append(sl, value.(CRD))
 		return true
 	})
 	return sl

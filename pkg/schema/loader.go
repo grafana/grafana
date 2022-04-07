@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"path/filepath"
@@ -37,11 +38,11 @@ func ProvideSchemaLoader(goLoader *GoSchemaLoader, themaLoader *ThemaSchemaLoade
 // It's important that the options for the correct type are provided.
 func (l *SchemaLoader) LoadSchema(
 	ctx context.Context, typ SchemaType, themaOpts ThemaLoaderOpts, goOpts GoLoaderOpts,
-) (ObjectSchema, error) {
+) (CRD, error) {
 	switch typ {
-	case SchemaTypeThema:
+	case ModelTypeThema:
 		return l.themaLoader.LoadSchema(ctx, themaOpts)
-	case SchemaTypeGo:
+	case ModelTypeGo:
 		return l.goLoader.LoadSchema(ctx, goOpts), nil
 	default:
 		return nil, ErrUnknownSchemaType
@@ -107,7 +108,7 @@ func (l *ThemaSchemaLoader) LoadSchema(ctx context.Context, opts ThemaLoaderOpts
 
 	zsch, err := lin.Schema(opts.SchemaVersion)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("no schema with version %v in lineage %s: %w", opts.SchemaVersion, lin.Name(), err)
 	}
 
 	if err := thema.AssignableTo(zsch, opts.SchemaType); err != nil {
