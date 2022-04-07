@@ -27,14 +27,13 @@ export function NavBarMenuItem({
   text,
   url,
   isMobile = false,
-  showIconInNavbar = false,
 }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, showIconInNavbar);
+  const styles = getStyles(theme, isActive, Boolean(icon));
   const elStyle = cx(styles.element, styleOverrides);
   const linkContent = (
     <div className={styles.linkContent}>
-      {icon && showIconInNavbar && <Icon data-testid="dropdown-child-icon" name={icon} />}
+      {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
       <span>{text}</span>
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
@@ -78,7 +77,7 @@ export function NavBarMenuItem({
 
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], showIconInNavbar: Props['showIconInNavbar']) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], hasIcon: boolean) => ({
   linkContent: css({
     display: 'grid',
     placeItems: 'center',
@@ -98,7 +97,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], showIconIn
     flex: 1,
     fontSize: 'inherit',
     height: '100%',
-    padding: !showIconInNavbar ? `${theme.spacing(0.5)} ${theme.spacing(2)}` : '5px 12px 5px 10px',
+    padding: !hasIcon ? `${theme.spacing(0.5, 2)}` : '5px 12px 5px 10px',
     textAlign: 'left',
     whiteSpace: 'nowrap',
     '&:hover, &:focus-visible': {

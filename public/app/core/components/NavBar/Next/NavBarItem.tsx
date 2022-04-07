@@ -107,13 +107,12 @@ const NavBarItem = ({
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
                     isDivider={!isSection && item.divider}
-                    icon={isSection ? undefined : (item.icon as IconName)}
+                    icon={item.showIconInNavbar && !isSection ? (item.icon as IconName) : undefined}
                     target={item.target}
                     text={itemText}
                     url={item.url}
                     onClick={item.onClick}
                     styleOverrides={cx(styles.primaryText, { [styles.header]: isSection })}
-                    showIconInNavbar={item.showIconInNavbar}
                   />
                 </Item>
               );
