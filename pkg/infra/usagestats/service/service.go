@@ -16,7 +16,7 @@ type UsageStats struct {
 	Cfg           *setting.Cfg
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
-	plugins       plugins.Store
+	pluginStore   plugins.Store
 
 	log log.Logger
 
@@ -28,7 +28,7 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, kvStore kvstore
 	s := &UsageStats{
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
-		plugins:       pluginStore,
+		pluginStore:   pluginStore,
 		kvStore:       kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:           log.New("infra.usagestats"),
 	}
@@ -93,7 +93,7 @@ func (uss *UsageStats) RegisterSendReportCallback(c usagestats.SendReportCallbac
 }
 
 func (uss *UsageStats) ShouldBeReported(ctx context.Context, dsType string) bool {
-	ds, exists := uss.plugins.Plugin(ctx, dsType)
+	ds, exists := uss.pluginStore.Plugin(ctx, dsType)
 	if !exists {
 		return false
 	}

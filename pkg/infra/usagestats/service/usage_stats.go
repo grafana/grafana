@@ -35,17 +35,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 		UsageStatsId: uss.GetUsageStatsId(ctx),
 	}
 
-	for _, fn := range uss.externalMetrics {
-		fnMetrics, err := fn(ctx)
-		if err != nil {
-			uss.log.Error("Failed to fetch external metrics", "error", err)
-			continue
-		}
-
-		for name, value := range fnMetrics {
-			metrics[name] = value
-		}
-	}
+	uss.gatherMetrics(ctx, metrics)
 
 	// must run after registration of external metrics
 	if v, ok := metrics["stats.valid_license.count"]; ok {
@@ -57,8 +47,18 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	return report, nil
 }
 
-func (uss *UsageStats) registerExternalMetrics(ctx context.Context, metrics map[string]interface{}) {
+func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]interface{}) {
+	for _, fn := range uss.externalMetrics {
+		fnMetrics, err := fn(ctx)
+		if err != nil {
+			uss.log.Error("Failed to fetch external metrics", "error", err)
+			continue
+		}
 
+		for name, value := range fnMetrics {
+			metrics[name] = value
+		}
+	}
 }
 
 func (uss *UsageStats) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
