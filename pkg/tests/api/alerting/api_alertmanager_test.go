@@ -101,7 +101,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -171,7 +171,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -234,7 +234,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -340,7 +340,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -615,7 +615,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:             "viewer request should fail",
 			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"message": "user does not have permissions to edit the namespace: user does not have permissions to edit the namespace"}`,
+			expectedResponse: `{"message": "Permission denied"}`,
 		},
 		{
 			desc:             "editor request should succeed",
@@ -1890,7 +1890,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	client := &http.Client{}
 	// Finally, make sure we can delete it.
 	{
-		t.Run("fail if he rule group name does not exists", func(t *testing.T) {
+		t.Run("succeed if the rule group name does not exists", func(t *testing.T) {
 			u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default/groupnotexist", grafanaListedAddr)
 			req, err := http.NewRequest(http.MethodDelete, u, nil)
 			require.NoError(t, err)
@@ -1903,8 +1903,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 			b, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			require.Equal(t, http.StatusNotFound, resp.StatusCode)
-			require.JSONEq(t, `{"message": "failed to delete rule group: rule group not found under this namespace"}`, string(b))
+			require.Equal(t, http.StatusAccepted, resp.StatusCode)
+			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
 		})
 
 		t.Run("succeed if the rule group name does exist", func(t *testing.T) {
@@ -1921,7 +1921,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
+			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
 		})
 	}
 }

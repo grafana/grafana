@@ -87,7 +87,7 @@ export class CSVReader {
           // #{columkey}#a,b,c
           const idx = first.indexOf('#', 2);
           if (idx > 0) {
-            const k = first.substr(1, idx - 1);
+            const k = first.slice(1, idx);
             const isName = 'name' === k;
 
             // Simple object used to check if headers match
@@ -103,7 +103,7 @@ export class CSVReader {
                 this.data.push(this.current);
               }
 
-              const v = first.substr(idx + 1);
+              const v = first.slice(idx + 1);
               if (isName) {
                 this.current.addFieldFor(undefined, v);
                 for (let j = 1; j < line.length; j++) {

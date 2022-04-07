@@ -39,6 +39,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	cfg.UnifiedAlerting.Enabled = new(bool)
 	*cfg.UnifiedAlerting.Enabled = true
 
+	cfg.IsFeatureToggleEnabled = func(key string) bool {
+		// Enable alert provisioning FF when running tests.
+		return key == featuremgmt.FlagAlertProvisioning
+	}
+
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
@@ -54,7 +59,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	)
 	folderService := dashboardservice.ProvideFolderService(
 		cfg, dashboardService, dashboardStore, nil,
-		features, permissionsServices, ac,
+		features, permissionsServices, ac, nil,
 	)
 
 	ng, err := ngalert.ProvideService(
@@ -109,12 +114,12 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 	})
 	require.NoError(t, err)
 
-	q := models.ListRuleGroupAlertRulesQuery{
+	q := models.GetAlertRulesQuery{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
-		RuleGroup:    ruleGroup,
+		RuleGroup:    &ruleGroup,
 	}
-	err = dbstore.GetRuleGroupAlertRules(ctx, &q)
+	err = dbstore.GetAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, q.Result)
 

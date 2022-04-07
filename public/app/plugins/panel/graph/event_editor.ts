@@ -4,6 +4,7 @@ import { AnnotationEvent, dateTime } from '@grafana/data';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../../features/annotations/api';
 import { getDashboardQueryRunner } from '../../../features/query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { contextSrv } from '../../../core/services/context_srv';
 
 export class EventEditorCtrl {
   // @ts-ignore initialized through Angular not constructor
@@ -29,6 +30,16 @@ export class EventEditorCtrl {
     }
 
     this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time!);
+  }
+
+  canDelete(): boolean {
+    if (contextSrv.accessControlEnabled()) {
+      if (this.event.source.type === 'dashboard') {
+        return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
+      }
+      return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.organization.canDelete;
+    }
+    return true;
   }
 
   async save(): Promise<void> {

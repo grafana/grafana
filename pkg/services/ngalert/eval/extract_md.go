@@ -22,6 +22,7 @@ func extractEvalString(frame *data.Frame) (s string) {
 
 		for i, m := range evalMatches {
 			sb.WriteString("[ ")
+			sb.WriteString(fmt.Sprintf("var='%s%v' ", frame.RefID, i))
 			sb.WriteString(fmt.Sprintf("metric='%s' ", m.Metric))
 			sb.WriteString(fmt.Sprintf("labels={%s} ", m.Labels))
 
@@ -66,10 +67,10 @@ func extractEvalString(frame *data.Frame) (s string) {
 	return ""
 }
 
-// extractValues returns the RefID and value for all reduce and math expressions
-// in the frame. It does not return values for classic conditions as the values
-// in classic conditions do not have a RefID. It returns nil if there are
-// no results in the frame.
+// extractValues returns the RefID and value for all classic conditions, reduce, and math expressions in the frame.
+// For classic conditions the same refID can have multiple values due to multiple conditions, for them we use the index of
+// the condition in addition to the refID to distinguish between different values.
+// It returns nil if there are no results in the frame.
 func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	if frame == nil {
 		return nil
@@ -77,6 +78,24 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	if frame.Meta == nil || frame.Meta.Custom == nil {
 		return nil
 	}
+
+	if matches, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
+		// Classic evaluations only have a single match but it can contain multiple conditions.
+		// Conditions have a strict ordering which we can rely on to distinguish between values.
+		v := make(map[string]NumberValueCapture, len(matches))
+		for i, match := range matches {
+			// In classic conditions we use refID and the condition position as a way to distinguish between values.
+			// We can guarantee determinism as conditions are ordered and this order is preserved when marshaling.
+			refID := fmt.Sprintf("%s%d", frame.RefID, i)
+			v[refID] = NumberValueCapture{
+				Var:    frame.RefID,
+				Labels: match.Labels,
+				Value:  match.Value,
+			}
+		}
+		return v
+	}
+
 	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
 		v := make(map[string]NumberValueCapture, len(caps))
 		for _, c := range caps {

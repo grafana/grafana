@@ -62,7 +62,7 @@ export { Modal } from './Modal/Modal';
 export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
 export { ModalTabContent } from './Modal/ModalTabContent';
-export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
+export { ModalsProvider, ModalRoot, ModalsController, ModalsContext } from './Modal/ModalsContext';
 export { PageToolbar } from './PageLayout/PageToolbar';
 
 // Renderless
@@ -84,6 +84,7 @@ export {
   BigValueJustifyMode,
   BigValueTextMode,
 } from './BigValue/BigValue';
+export { Sparkline } from './Sparkline/Sparkline';
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';

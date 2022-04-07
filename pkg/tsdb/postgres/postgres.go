@@ -122,18 +122,36 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 		host = dsInfo.URL
 		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	} else {
+		index := strings.LastIndex(dsInfo.URL, ":")
+		v6Index := strings.Index(dsInfo.URL, "]")
 		sp := strings.SplitN(dsInfo.URL, ":", 2)
 		host = sp[0]
-		if len(sp) > 1 {
-			var err error
-			port, err = strconv.Atoi(sp[1])
-			if err != nil {
-				return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
-			}
+		if v6Index == -1 {
+			if len(sp) > 1 {
+				var err error
+				port, err = strconv.Atoi(sp[1])
+				if err != nil {
+					return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
+				}
 
-			logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+			} else {
+				logger.Debug("Generating connection string with network host", "host", host)
+			}
 		} else {
-			logger.Debug("Generating connection string with network host", "host", host)
+			if index == v6Index+1 {
+				host = dsInfo.URL[0:index]
+				var err error
+				port, err = strconv.Atoi(dsInfo.URL[index+1:])
+				if err != nil {
+					return "", errutil.Wrapf(err, "invalid port in host specifier %q", dsInfo.URL[index+1:])
+				}
+
+				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
+			} else {
+				host = dsInfo.URL
+				logger.Debug("Generating ipv6 connection string with network host", "host", host)
+			}
 		}
 	}
 
