@@ -10,4 +10,8 @@ export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
     margin-bottom: ${spacing.md};
     margin-top: ${spacing.md};
   `,
+  noDataLabel: css`
+    display: flex;
+    justify-content: center;
+  `,
 });
