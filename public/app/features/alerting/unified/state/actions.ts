@@ -427,7 +427,7 @@ async function addRuleToNamespaceAndGroup(
 ): Promise<RuleIdentifier> {
   const existingGroup = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group);
   if (!existingGroup) {
-    throw new Error('This group does not exist'); // TODO better error
+    throw new Error(`No group found with name "${group}"`);
   }
 
   const payload: PostableRulerRuleGroupDTO = {
