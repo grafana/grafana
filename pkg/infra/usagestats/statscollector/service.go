@@ -39,10 +39,10 @@ func ProvideService(usagestats usagestats.Service, cfg *setting.Cfg, store sqlst
 		usageStats: usagestats,
 
 		startTime: time.Now(),
-		log:       log.New("infra.usagestats.statscollector"),
+		log:       log.New("infra.usagestats.collector"),
 	}
 
-	usagestats.RegisterMetricsFunc(s.metrics)
+	usagestats.RegisterMetricsFunc(s.collect)
 
 	return s
 }
@@ -62,7 +62,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Service) metrics(ctx context.Context) (map[string]interface{}, error) {
+func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -251,15 +251,15 @@ func (s *Service) metrics(ctx context.Context) (map[string]interface{}, error) {
 	return m, nil
 }
 
-func (s *Service) updateTotalStats(ctx context.Context) {
+func (s *Service) updateTotalStats(ctx context.Context) bool {
 	if !s.cfg.MetricsEndpointEnabled || s.cfg.MetricsEndpointDisableTotalStats {
-		return
+		return false
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
 	if err := s.sqlstore.GetSystemStats(ctx, &statsQuery); err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
-		return
+		return false
 	}
 
 	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
@@ -283,12 +283,13 @@ func (s *Service) updateTotalStats(ctx context.Context) {
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
-		return
+		return true
 	}
 
 	for _, dsStat := range dsStats.Result {
 		metrics.StatsTotalDataSources.WithLabelValues(dsStat.Type).Set(float64(dsStat.Count))
 	}
+	return true
 }
 
 func (s *Service) appCount(ctx context.Context) int {
@@ -301,53 +302,4 @@ func (s *Service) panelCount(ctx context.Context) int {
 
 func (s *Service) dataSourceCount(ctx context.Context) int {
 	return len(s.plugins.Plugins(ctx, plugins.DataSource))
-}
-
-const concurrentUserStatsCacheLifetime = time.Hour
-
-type concurrentUsersStats struct {
-	BucketLE3   int32 `xorm:"bucket_le_3"`
-	BucketLE6   int32 `xorm:"bucket_le_6"`
-	BucketLE9   int32 `xorm:"bucket_le_9"`
-	BucketLE12  int32 `xorm:"bucket_le_12"`
-	BucketLE15  int32 `xorm:"bucket_le_15"`
-	BucketLEInf int32 `xorm:"bucket_le_inf"`
-}
-
-type memoConcurrentUserStats struct {
-	stats *concurrentUsersStats
-
-	memoized time.Time
-}
-
-func (s *Service) concurrentUsers(ctx context.Context) (*concurrentUsersStats, error) {
-	memoizationPeriod := time.Now().Add(-concurrentUserStatsCacheLifetime)
-	if !s.concurrentUserStatsCache.memoized.Before(memoizationPeriod) {
-		return s.concurrentUserStatsCache.stats, nil
-	}
-
-	s.concurrentUserStatsCache.stats = &concurrentUsersStats{}
-	err := s.sqlstore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// Retrieves concurrent users stats as a histogram. Buckets are accumulative and upper bound is inclusive.
-		rawSQL := `
-SELECT
-    COUNT(CASE WHEN tokens <= 3 THEN 1 END) AS bucket_le_3,
-    COUNT(CASE WHEN tokens <= 6 THEN 1 END) AS bucket_le_6,
-    COUNT(CASE WHEN tokens <= 9 THEN 1 END) AS bucket_le_9,
-    COUNT(CASE WHEN tokens <= 12 THEN 1 END) AS bucket_le_12,
-    COUNT(CASE WHEN tokens <= 15 THEN 1 END) AS bucket_le_15,
-    COUNT(1) AS bucket_le_inf
-FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
-		_, err := sess.SQL(rawSQL).Get(s.concurrentUserStatsCache.stats)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get concurrent users stats from database: %w", err)
-	}
-
-	s.concurrentUserStatsCache.memoized = time.Now()
-	return s.concurrentUserStatsCache.stats, nil
 }
