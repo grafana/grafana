@@ -40,6 +40,7 @@ type SQLStoreMock struct {
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedAPIKey                 *models.ApiKey
 	ExpectedUserStars              map[int64]bool
 	ExpectedLoginAttempts          int64
 
@@ -622,6 +623,7 @@ func (m *SQLStoreMock) GetApiKeyById(ctx context.Context, query *models.GetApiKe
 }
 
 func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
+	query.Result = m.ExpectedAPIKey
 	return m.ExpectedError
 }
 

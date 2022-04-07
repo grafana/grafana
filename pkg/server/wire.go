@@ -263,7 +263,7 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	mockstore.NewSQLStoreMock,
-	wire.Bind(new(sqlstore.Store), new(*mockstore.SQLStoreMock)),
+	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
