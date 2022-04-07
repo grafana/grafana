@@ -123,6 +123,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               settings.jsonData.derivedFields
                 ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
                 .map((field) => field.matcherRegex) || [];
+
             if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
               return throwError(
                 () =>

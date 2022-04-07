@@ -61,6 +61,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   logsResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
+  richHistory: [],
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
   graphStyle: loadGraphStyle(),

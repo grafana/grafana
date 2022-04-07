@@ -38,6 +38,7 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
+import { contextSrv } from '../../../core/services/context_srv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -87,13 +88,52 @@ export class PanelChrome extends PureComponent<Props, State> {
         onAnnotationCreate: this.onAnnotationCreate,
         onAnnotationUpdate: this.onAnnotationUpdate,
         onAnnotationDelete: this.onAnnotationDelete,
-        canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
+        canAddAnnotations: this.canAddAnnotation,
         onInstanceStateChange: this.onInstanceStateChange,
         onToggleLegendSort: this.onToggleLegendSort,
+        canEditAnnotations: this.canEditAnnotation,
+        canDeleteAnnotations: this.canDeleteAnnotation,
       },
       data: this.getInitialPanelDataState(),
     };
   }
+
+  canEditDashboard = () => Boolean(this.props.dashboard.meta.canEdit || this.props.dashboard.meta.canMakeEditable);
+
+  canAddAnnotation = () => {
+    let canAdd = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      canAdd = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canAdd;
+    }
+    return canAdd && this.canEditDashboard();
+  };
+
+  canEditAnnotation = (dashboardId: number) => {
+    let canEdit = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      if (dashboardId !== 0) {
+        canEdit = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canEdit;
+      } else {
+        canEdit = !!this.props.dashboard.meta.annotationsPermissions?.organization.canEdit;
+      }
+    }
+    return canEdit && this.canEditDashboard();
+  };
+
+  canDeleteAnnotation = (dashboardId: number) => {
+    let canDelete = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      if (dashboardId !== 0) {
+        canDelete = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
+      } else {
+        canDelete = !!this.props.dashboard.meta.annotationsPermissions?.organization.canDelete;
+      }
+    }
+    return canDelete && this.canEditDashboard();
+  };
 
   // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
   getSync = () => (this.props.isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip);

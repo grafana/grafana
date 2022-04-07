@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -199,7 +198,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 			}
 
 			// Since the user was not in the LDAP server. Let's disable it.
-			err := login.DisableExternalUser(c.Req.Context(), query.Result.Login)
+			err := hs.Login.DisableExternalUser(c.Req.Context(), query.Result.Login)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}

@@ -71,6 +71,7 @@ export const Basic: Story<StoryProps> = ({
       name: '',
       values: new ArrayVector([1, 2, 3, 4, 3]),
       type: FieldType.number,
+      state: { range: { min: 1, max: 4, delta: 3 } },
       config: {},
     },
   };
