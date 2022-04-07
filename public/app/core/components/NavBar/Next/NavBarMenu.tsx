@@ -283,7 +283,6 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   }),
   item: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
-    whiteSpace: 'normal',
     '&::before': {
       display: 'none',
     },
@@ -403,7 +402,9 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
   collapseWrapper: css({
     paddingLeft: theme.spacing(0.5),
     paddingRight: theme.spacing(4.25),
-    height: theme.spacing(6),
+    minHeight: theme.spacing(6),
+    overflowWrap: 'anywhere',
+    whiteSpace: 'normal',
     alignItems: 'center',
     color: theme.colors.text.secondary,
     '&:hover, &:focus-within': {
