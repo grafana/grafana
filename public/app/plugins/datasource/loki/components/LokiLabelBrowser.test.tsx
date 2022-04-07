@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
@@ -270,7 +270,7 @@ describe('LokiLabelBrowser', () => {
     // Click value1-1 which triggers facetting for value3-x, and still show all value1-x
     const value1 = await screen.findByRole('option', { name: 'value1-1', selected: false });
     await userEvent.click(value1);
-    await waitForElementToBeRemoved(screen.queryByRole('option', { name: 'value2-2' }));
+    await waitFor(() => expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument());
     expect(screen.queryByRole('option', { name: 'value1-2' })).toBeInTheDocument();
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label1="value1-1"}');
     expect(screen.queryByRole('option', { name: /label3/ })).toHaveTextContent('label3 (1)');

@@ -64,8 +64,8 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
 
-    inputQuery('query #2');
-    runQuery();
+    await inputQuery('query #2');
+    await runQuery();
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
