@@ -84,7 +84,8 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       color: 'inherit',
       display: 'block',
       padding: 0,
-      textAlign: 'center',
+      overflowWrap: 'anywhere',
+      whiteSpace: 'normal',
 
       '&::before': {
         display: isActive ? 'block' : 'none',

@@ -126,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
+    width: '300px',
   }),
   menuCollapseIcon: css({
     position: 'absolute',
@@ -311,6 +312,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
   }),
   iconContainer: css({
+    display: 'flex',
     placeContent: 'center',
   }),
   savedItemsMenuItemWrapper: css({
@@ -323,7 +325,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
-    paddingLeft: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 4.25, 0.5, 0.5),
   }),
 });
 
