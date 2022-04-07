@@ -1,5 +1,4 @@
 import {
-  AnnotationQuery,
   DataFrame,
   DataQueryError,
   DataQueryErrorType,
@@ -104,7 +103,7 @@ export class CloudWatchDatasource
   annotations = {
     prepareAnnotation: (json: any) => {
       console.log({ json });
-      return {} as AnnotationQuery<CloudWatchQuery>;
+      return json;
     },
 
     // QueryEditor: AnnotationQueryEditor,
