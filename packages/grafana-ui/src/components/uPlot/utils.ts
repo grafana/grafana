@@ -1,13 +1,11 @@
-import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig, GraphTransform, StackingMode, VizLegendOptions } from '@grafana/schema';
-import { orderBy } from 'lodash';
+import { DataFrame, ensureTimeField, FieldType } from '@grafana/data';
+import { GraphDrawStyle, GraphTransform, StackingMode } from '@grafana/schema';
 import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 import { buildScaleKey } from '../GraphNG/utils';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
-export const INTERNAL_NEGATIVE_Y_PREFIX = '__internalNegY';
 
 export function timeFormatToTemplate(f: string) {
   return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
@@ -202,11 +200,6 @@ export function preparePlotData2(
     } else {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
 
-      // if (stackIdx === -1) {
-      //   data[i] = vals;
-      //   return;
-      // }
-
       let accum = accums[stackIdx];
       let stacked = (data[i] = Array(dataLen));
 
@@ -222,10 +215,16 @@ export function preparePlotData2(
     }
   });
 
-  onStackMeta &&
-    onStackMeta({
-      totals: accums as AlignedData,
+  if (onStackMeta) {
+    let accumsBySeriesIdx: AlignedData = data.map((vals, i) => {
+      let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
+      return stackIdx !== -1 ? accums[stackIdx] : vals;
     });
+
+    onStackMeta({
+      totals: accumsBySeriesIdx,
+    });
+  }
 
   // re-compute by percent
   frame.fields.forEach((field, i) => {
