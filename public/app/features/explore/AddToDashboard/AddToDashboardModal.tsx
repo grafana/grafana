@@ -10,6 +10,7 @@ import { css } from '@emotion/css';
 import { config, locationService } from '@grafana/runtime';
 import { getExploreItemSelector } from '../state/selectors';
 import { partial } from 'lodash';
+import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 
 enum SaveTarget {
   NewDashboard,
@@ -126,9 +127,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
         error: GenericError.NAVIGATION,
         message: 'Could not navigate to the selected dashboard. Please try again.',
       });
-      // TODO: the dashboard is saved in localStorage but we weren't able to navigate to it.
-      // if the user navigates to the a dashboard it will pick up the Explore panel.
-      // should we try to clear the storage?
+      removeDashboardToFetchFromLocalStorage();
       return;
     }
     onClose();

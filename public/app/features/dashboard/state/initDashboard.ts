@@ -38,7 +38,7 @@ async function fetchDashboard(
   // When creating new or adding panels to a dashboard from explore we load it from local storage
   const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
   if (model) {
-    store.delete(DASHBOARD_FROM_LS_KEY);
+    removeDashboardToFetchFromLocalStorage();
     return model;
   }
 
@@ -239,4 +239,8 @@ const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
 
 export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
   store.setObject(DASHBOARD_FROM_LS_KEY, model);
+}
+
+export function removeDashboardToFetchFromLocalStorage() {
+  store.delete(DASHBOARD_FROM_LS_KEY);
 }

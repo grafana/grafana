@@ -268,6 +268,7 @@ describe('AddToDashboardButton', () => {
     });
     it('Shows an error if opening a new tab fails', async () => {
       jest.spyOn(global, 'open').mockReturnValue(null);
+      const removeDashboardSpy = jest.spyOn(initDashboard, 'removeDashboardToFetchFromLocalStorage');
 
       setup(<AddToDashboard exploreId={ExploreId.left} />);
 
@@ -279,6 +280,8 @@ describe('AddToDashboardButton', () => {
       await waitFor(async () => {
         expect(await screen.findByRole('alert')).toBeInTheDocument();
       });
+
+      expect(removeDashboardSpy).toHaveBeenCalled();
     });
 
     it('Shows an error if saving to localStorage fails', async () => {
@@ -335,7 +338,7 @@ describe('AddToDashboardButton', () => {
       });
     });
 
-    it('Shows an error if fetching dashboard fails', async () => {
+    it('Shows an error if an unknown error happens', async () => {
       jest.spyOn(api, 'setDashboardInLocalStorage').mockRejectedValue('SOME ERROR');
 
       setup(<AddToDashboard exploreId={ExploreId.left} />);
