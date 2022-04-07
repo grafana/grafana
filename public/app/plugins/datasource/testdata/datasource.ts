@@ -158,10 +158,13 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   getQueryDisplayText(query: TestDataQuery) {
+    const scenario = query.scenarioId ?? 'Default scenario';
+
     if (query.alias) {
-      return query.scenarioId + ' as ' + query.alias;
+      return scenario + ' as ' + query.alias;
     }
-    return query.scenarioId;
+
+    return scenario;
   }
 
   testDatasource() {
